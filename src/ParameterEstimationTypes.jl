@@ -667,10 +667,39 @@ function CovFull(; absolute::Bool = false,
     return CovFull(absolute, ce, w)
 end
 
+"""
+```
 @kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
-    corrected = true
+    corrected::Bool = true
+end
+```
+
+Simple variance/standard deviation estimator.
+
+# Parameters
+
+  - `corrected`: if `true` corrects the bias by dividing by `N-1`, if `false` divides by `N`.
+  - `w`: weights for computing the variance/standard deviation.
+"""
+mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
+    corrected::Bool
+    w::Union{<:AbstractWeights, Nothing}
+end
+function SimpleVariance(; corrected::Bool = true,
+                        w::Union{<:AbstractWeights, Nothing} = nothing)
+    return SimpleVariance(corrected, w)
 end
 
+"""
+```
+@kwdef mutable struct CovSemi <: CorPearson
+    absolute::Bool = false
+    ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
+    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
+    w::Union{<:AbstractWeights, Nothing} = nothing
+end
+```
+"""
 @kwdef mutable struct CovSemi <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
@@ -692,7 +721,6 @@ mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
 end
 ```
 """
@@ -700,16 +728,14 @@ mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
 end
 function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
                        normalise::Bool = true,
-                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                       std_w::Union{<:AbstractWeights, Nothing} = nothing)
+                       ve::StatsBase.CovarianceEstimator = SimpleVariance())
     if isa(bins, Integer)
         @smart_assert(bins > zero(bins))
     end
-    return CorMutualInfo(bins, normalise, ve, std_w)
+    return CorMutualInfo(bins, normalise, ve)
 end
 
 """
@@ -745,19 +771,16 @@ end
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
 end
 ```
 """
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
 end
-function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing)
+function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance())
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CorLTD(alpha, ve, std_w)
+    return CorLTD(alpha, ve)
 end
 
 abstract type CorGerber <: PortfolioOptimiserCovCor end
@@ -769,51 +792,45 @@ mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CorGerber0{typeof(threshold)}(normalise, threshold, ve, mean_w, posdef)
 end
 
 mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CorGerber1{typeof(threshold)}(normalise, threshold, ve, mean_w, posdef)
 end
 
 mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CorGerber2{typeof(threshold)}(normalise, threshold, ve, mean_w, posdef)
 end
 function Base.setproperty!(obj::CorGerberBasic, sym::Symbol, val)
     if sym == :threshold
@@ -830,14 +847,12 @@ mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     c3::T4
     n::T5
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                 posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
@@ -849,7 +864,6 @@ function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     c1, c2,
                                                                                     c3, n,
                                                                                     ve,
-                                                                                    std_w,
                                                                                     mean_w,
                                                                                     posdef)
 end
@@ -862,14 +876,12 @@ mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     c3::T4
     n::T5
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                 posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
@@ -881,7 +893,6 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     c1, c2,
                                                                                     c3, n,
                                                                                     ve,
-                                                                                    std_w,
                                                                                     mean_w,
                                                                                     posdef)
 end
@@ -894,14 +905,12 @@ mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     c3::T4
     n::T5
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                      std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                       posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
@@ -915,7 +924,6 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           c3,
                                                                                           n,
                                                                                           ve,
-                                                                                          std_w,
                                                                                           mean_w,
                                                                                           posdef)
 end
@@ -930,7 +938,6 @@ mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     c3::T4
     n::T5
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
@@ -944,14 +951,12 @@ mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     c3::T4
     n::T5
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
 function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                      std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                       posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
@@ -965,7 +970,6 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           c3,
                                                                                           n,
                                                                                           ve,
-                                                                                          std_w,
                                                                                           mean_w,
                                                                                           posdef)
 end
@@ -1239,7 +1243,6 @@ end
 
 @kwdef mutable struct DRR <: RegressionType
     ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
-    std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
     pcr::DimensionReductionTarget = PCATarget(;)
 end
@@ -1249,7 +1252,6 @@ end
     B::Union{Nothing, DataFrame} = nothing
     method::RegressionType = FReg(;)
     ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
-    var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
 
 # ## Black Litterman
@@ -1272,7 +1274,6 @@ end
     delta::Union{<:Real, Nothing} = 1.0
     rf::T1 = 0.0
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
-    var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
 
 @kwdef mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
