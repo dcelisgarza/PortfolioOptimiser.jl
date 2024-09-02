@@ -2507,10 +2507,8 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    @test isapprox(var(SimpleVariance(; corrected = false, w = w), portfolio.returns),
-                   std(SimpleVariance(; corrected = false, w = w), portfolio.returns) .^ 2)
-    @test !isapprox(var(SimpleVariance(; corrected = false, w = w), portfolio.returns, w),
-                    var(SimpleVariance(; corrected = false), portfolio.returns))
+    @test isapprox(var(ve, portfolio.returns, w), std(ve, portfolio.returns, w) .^ 2)
+    @test !isapprox(var(ve, portfolio.returns, w), var(ve, portfolio.returns))
 
     c1 = PortCovCor(; ce = CorGerber1(; normalise = normalise, mean_w = w, ve = ve))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
