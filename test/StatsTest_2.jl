@@ -2509,7 +2509,7 @@ end
 
     @test isapprox(var(SimpleVariance(; corrected = false, w = w), portfolio.returns),
                    std(SimpleVariance(; corrected = false, w = w), portfolio.returns) .^ 2)
-    @test !isapprox(var(SimpleVariance(; corrected = false, w = w), portfolio.returns),
+    @test !isapprox(var(SimpleVariance(; corrected = false, w = w), portfolio.returns, w),
                     var(SimpleVariance(; corrected = false), portfolio.returns))
 
     c1 = PortCovCor(; ce = CorGerber1(; normalise = normalise, mean_w = w, ve = ve))
