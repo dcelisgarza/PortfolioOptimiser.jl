@@ -65,7 +65,7 @@ makedocs(;
                                   assets = String[]),
          pages = ["Home" => "index.md", "Examples" => examples_nav,
                   "API" => ["Risk Measures" => "RiskMeasures.md",
-                            "Portfolio Types" => "PortfolioTypes.md",
+                            "Portfolio Types" => "PortfolioTypes.md", "DBHTs" => "DBHTs.md",
                             "Parameter Estimation Types" => "ParameterEstimationTypes.md",
                             "Parameter Estimation" => "ParameterEstimation.md",
                             "Portfolio Statistics" => "Statistics.md",

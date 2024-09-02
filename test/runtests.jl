@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
 @safetestset "WC Stats tests" begin
     include("WCStatsTest.jl")
 end
@@ -30,10 +38,6 @@ end
 
 @safetestset "OWA Weights" begin
     include("OWAWeightsTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
 end
 
 @safetestset "Efficient frontier" begin
@@ -94,8 +98,4 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
 end

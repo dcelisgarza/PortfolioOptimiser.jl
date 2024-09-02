@@ -16,7 +16,7 @@ abstract type PosdefFix end
 struct NoPosdef <: PosdefFix end
 ```
 
-Non positive definite matrices will not be fixed.
+Non positive definite matrices will not be fixed in in [`posdef_fix!`](@ref).
 """
 struct NoPosdef <: PosdefFix end
 
@@ -86,8 +86,8 @@ Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; C
 
   - `mkt_comp`: the number of largest eigenvalues to remove from the correlation matrix.
   - `kernel`: kernel for fitting the average shifted histograms from [AverageShiftedHistograms.jl Kernel Functions](https://joshday.github.io/AverageShiftedHistograms.jl/latest/kernels/).
-  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
-  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.jl Usage](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `m`: number of adjacent histograms to smooth over [AverageShiftedHistograms.ash](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
+  - `n`: number of points used when creating the range of values to which the average shifted histogram is to be fitted [AverageShiftedHistograms.ash](https://joshday.github.io/AverageShiftedHistograms.jl/latest/#Usage).
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
@@ -342,7 +342,7 @@ abstract type AbstractBins end
 abstract type AstroBins <: AbstractBins end
 ```
 
-Abstract type for defining bin function types using [`astropy`](https://docs.astropy.org/en/stable/visualization/histogram.html).
+Abstract type for defining which bin width function to use from [`astropy`](https://docs.astropy.org/en/stable/visualization/histogram.html).
 """
 abstract type AstroBins <: AbstractBins end
 
@@ -440,12 +440,71 @@ function HAC(; linkage::Symbol = :ward)
     return HAC(linkage)
 end
 
+"""
+```
 abstract type DBHTSimilarity end
+```
+
+Abstract type for subtyping methods for defining functions for computing similarity matrices used in DBHT clustering [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
+"""
+abstract type DBHTSimilarity end
+
+"""
+```
 struct DBHTExp <: DBHTSimilarity end
+```
+
+Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise exponential decay of the dissimilarity matrix in [`dbht_similarity`](@ref).
+"""
+struct DBHTExp <: DBHTSimilarity end
+
+"""
+```
 struct DBHTMaxDist <: DBHTSimilarity end
+```
+
+Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise distance from the maximum value of the dissimilarity matrix [`dbht_similarity`](@ref).
+"""
+struct DBHTMaxDist <: DBHTSimilarity end
+
+"""
+```
 abstract type DBHTRootMethod end
+```
+
+Abstract type for subtyping methods creating roots of cliques in [`CliqueRoot`](@ref) [NHPG](@cite).
+"""
+abstract type DBHTRootMethod end
+
+"""
+```
 struct UniqueDBHT <: DBHTRootMethod end
+```
+
+Create a unique root for a clique in [`CliqueRoot`](@ref) [NHPG](@cite).
+"""
+struct UniqueDBHT <: DBHTRootMethod end
+
+"""
+```
 struct EqualDBHT <: DBHTRootMethod end
+```
+
+Create a clique's root from its adjacency tree in [CliqueRoot](@ref).
+"""
+struct EqualDBHT <: DBHTRootMethod end
+
+"""
+```
+mutable struct DBHT <: HClustAlg
+    distance::DistanceMethod
+    similarity::DBHTSimilarity
+    root_method::DBHTRootMethod
+end
+```
+
+Defines the parameters for computing [`DBHTs`](@ref) and [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
+"""
 mutable struct DBHT <: HClustAlg
     distance::DistanceMethod
     similarity::DBHTSimilarity
@@ -821,8 +880,9 @@ end
 
 abstract type AbstractJLoGo end
 struct NoJLoGo <: AbstractJLoGo end
-@kwdef mutable struct JLoGo <: AbstractJLoGo
-    DBHT::DBHT = DBHT(;)
+@kwdef mutable struct LoGo <: AbstractJLoGo
+    distance::DistanceMethod = DistanceMLP()
+    similarity::DBHTSimilarity = DBHTMaxDist()
 end
 
 abstract type KurtEstimator end
@@ -1192,7 +1252,7 @@ export NoPosdef, PosdefNearest, NoDenoise, Fixed, Spectral, Shrink, DistanceMLP,
        DistanceVarInfo, HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT, TwoDiff,
        StdSilhouette, HCOpt, ClusterNode, CovFull, SimpleVariance, CovSemi, CorSpearman,
        CorKendall, CorMutualInfo, CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2,
-       CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoJLoGo, JLoGo, KurtFull, KurtSemi,
+       CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoJLoGo, LoGo, KurtFull, KurtSemi,
        SkewFull, SkewSemi, PortCovCor, GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP, Box,
        Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
        KNormalWC, KGeneralWC, WCType, AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget, FReg,

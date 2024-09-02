@@ -1804,10 +1804,10 @@ end
     @test isapprox(portfolio.dist, distt)
 end
 
-@testset "JLoGo" begin
+@testset "LoGo" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    c1 = PortCovCor(; jlogo = JLoGo())
+    c1 = PortCovCor(; jlogo = LoGo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)
@@ -2209,7 +2209,7 @@ end
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = PortCovCor(; jlogo = JLoGo(; DBHT = DBHT(; similarity = DBHTExp())))
+    c1 = PortCovCor(; jlogo = LoGo(; similarity = DBHTExp()))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1,
                       cor_type = c1)

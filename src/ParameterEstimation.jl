@@ -88,6 +88,11 @@ function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
 
     return nothing
 end
+"""
+```
+dbht_similarity(::DBHTExp, S, D)
+```
+"""
 function dbht_similarity(::DBHTExp, S, D)
     return exp.(-D)
 end
@@ -1579,7 +1584,7 @@ end
 function jlogo!(::NoJLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
 end
-function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
+function jlogo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     if isnothing(D)
         s = diag(X)
         iscov = any(.!isone.(s))
@@ -1589,11 +1594,10 @@ function jlogo!(je::JLoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
         else
             X
         end
-        D = dist(je.DBHT.distance, S, nothing)
+        D = dist(je.distance, S, nothing)
     end
 
-    S = dbht_similarity(je.DBHT.similarity, S, D)
-
+    S = dbht_similarity(je.similarity, S, D)
     separators, cliques = PMFG_T2s(S, 4)[3:4]
     X .= J_LoGo(X, separators, cliques) \ I
 

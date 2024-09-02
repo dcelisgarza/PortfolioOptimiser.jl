@@ -503,6 +503,45 @@ end
 
 """
 ```
+function CliqueRoot(::UniqueDBHT, Root, Pred, Nc, args...)
+```
+"""
+function CliqueRoot(::UniqueDBHT, Root, Pred, Nc, args...)
+    if length(Root) > 1
+        push!(Pred, 0)
+        Pred[Root] .= length(Pred)
+    end
+
+    H = spzeros(Int, Nc + 1, Nc + 1)
+    for n ∈ eachindex(Pred)
+        if Pred[n] != 0
+            H[n, Pred[n]] = 1
+        end
+    end
+    return H = H + transpose(H)
+end
+function CliqueRoot(::EqualDBHT, Root, Pred, Nc, A, CliqList)
+    if length(Root) > 1
+        Adj = AdjCliq(A, CliqList, Root)
+    end
+
+    H = spzeros(Int, Nc, Nc)
+    for n ∈ eachindex(Pred)
+        if Pred[n] != 0
+            H[n, Pred[n]] = 1
+        end
+    end
+
+    return if !isempty(Pred)
+        H .+= transpose(H)
+        H .+= Adj
+    else
+        H = spzeros(Int, 0, 0)
+    end
+end
+
+"""
+```
 CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
 ```
 
@@ -512,10 +551,10 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 
   - `Apm`: `N×N` adjacency matrix of an MPG.
 
-  - `method`: method for finding the root of the graph [`DBHTRootMethods`](@ref). Uses Voronoi tesselation between tiling triangles.
+  - `method`: method for finding the root of the graph [`DBHTRootMethod`](@ref). Uses Voronoi tesselation between tiling triangles.
 
-      + `:Unique`: create a unique root.
-      + `:Equal`: the root is created from the candidate's adjacency tree.
+      + [`UniqueDBHT()`](@ref): create a unique root.
+      + [`EqualDBHT()`](@ref): the root is created from the candidate's adjacency tree.
 
 # Outputs
 
@@ -553,38 +592,40 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
     Pred = BuildHierarchy(M)
     Root = findall(Pred .== 0)
 
-    if isa(method, UniqueDBHT)
-        if length(Root) > 1
-            push!(Pred, 0)
-            Pred[Root] .= length(Pred)
-        end
+    # if isa(method, UniqueDBHT)
+    #     if length(Root) > 1
+    #         push!(Pred, 0)
+    #         Pred[Root] .= length(Pred)
+    #     end
 
-        H = spzeros(Int, Nc + 1, Nc + 1)
-        for n ∈ eachindex(Pred)
-            if Pred[n] != 0
-                H[n, Pred[n]] = 1
-            end
-        end
-        H = H + transpose(H)
-    else
-        if length(Root) > 1
-            Adj = AdjCliq(A, CliqList, Root)
-        end
+    #     H = spzeros(Int, Nc + 1, Nc + 1)
+    #     for n ∈ eachindex(Pred)
+    #         if Pred[n] != 0
+    #             H[n, Pred[n]] = 1
+    #         end
+    #     end
+    #     H = H + transpose(H)
+    # else
+    #     if length(Root) > 1
+    #         Adj = AdjCliq(A, CliqList, Root)
+    #     end
 
-        H = spzeros(Int, Nc, Nc)
-        for n ∈ eachindex(Pred)
-            if Pred[n] != 0
-                H[n, Pred[n]] = 1
-            end
-        end
+    #     H = spzeros(Int, Nc, Nc)
+    #     for n ∈ eachindex(Pred)
+    #         if Pred[n] != 0
+    #             H[n, Pred[n]] = 1
+    #         end
+    #     end
 
-        if !isempty(Pred)
-            H .+= transpose(H)
-            H .+= Adj
-        else
-            H = spzeros(Int, 0, 0)
-        end
-    end
+    #     if !isempty(Pred)
+    #         H .+= transpose(H)
+    #         H .+= Adj
+    #     else
+    #         H = spzeros(Int, 0, 0)
+    #     end
+    # end
+
+    H = CliqueRoot(method, Root, Pred, Nc, A, CliqList)
 
     if !isempty(H)
         H2, Mb = BubbleHierarchy(Pred, Sb)
@@ -1045,8 +1086,8 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
       + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``.
 
     Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\circ`` the Hadamard (elementwise) operator.
-  - `branchorder`: is a parameter for ordering the final dendrogram's branches. The choices are defined by [`BranchOrderTypes`](@ref).
-  - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethods`](@ref).
+  - `branchorder`: is a parameter for ordering the final dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
+  - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethod`](@ref).
 
       + `:Unique`: create a unique root.
       + `:Equal`: the root is created from the candidate's adjacency tree.
