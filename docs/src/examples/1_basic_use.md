@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/1_basic_use.jl"
 ```
@@ -163,7 +164,7 @@ pretty_table(w1; formatters = fmt1)
 
 We now have the portfolio for these assets and this period of time that minimises the variance. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial.
 
-## 5. Asset allocation
+# ## 5. Asset allocation
 
 For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, [`Portfolio`](@ref) will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the [`allocate!`](@ref) function, though the order of the prices must be the same as the original asset order.
 
@@ -239,7 +240,23 @@ display(plot_range(portfolio, :LP_Trad; allocated = true))
 display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
 ````
 
----
+## 7. Efficient frontier
+
+We have seen how you can optimise a single portfolio, but in reality there are an infinite number of optimal portfolios which exist along what is called the efficient frontier. We can compute and view this frontier, as well as viewing its composition very easily using [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl).
+
+The idea is to first compute the minimum risk and maximum return portfolios. From these we generate a range of risks and returns. We then loop over all these values. At each step we maximise the expected return whilst constraining the risk to be lower than or equal to current risk value in the range of risks. If an optimisation fails, we instead minimise the risk whilst constraining the expected return to be bigger than or equal to the corresponding value in the range of expected returns. We save the results for each step. We can then use these to plot the efficient frontier and its composition at each point.
+
+````@example 1_basic_use
+# Compute 50 points in the efficient frontier.
+frontier = efficient_frontier!(portfolio; rm = rm, points = 50)
+
+# Plot the efficient frontier.
+display(plot_frontier(portfolio; rm = rm))
+
+# Plot frontier asset composition.
+display(plot_frontier_area(portfolio; rm = rm))
+````
+
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
