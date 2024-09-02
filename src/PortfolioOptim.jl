@@ -2501,8 +2501,11 @@ function _rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::DRR)
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
     model = fit(regression.pcr, X_std)
     Vp = projection(model)
-    sdev = vec(std(regression.ve, X; dims = 2))
-
+    sdev = if isnothing(regression.std_w)
+        vec(std(regression.ve, X; dims = 2))
+    else
+        vec(std(regression.ve, X, regression.std_w; dims = 2))
+    end
     return transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
 end
 function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,

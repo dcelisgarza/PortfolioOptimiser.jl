@@ -128,18 +128,18 @@ function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
 end
 function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix; dims::Int = 1, mean = nothing)
-    if isnothing(ve.w)
-        std(X; dims = dims, corrected = ve.corrected, mean = mean)
-    else
-        std(X, ve.w, dims; corrected = ve.corrected, mean = mean)
-    end
+    return std(X; dims = dims, corrected = ve.corrected, mean = mean)
+end
+function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix, w::AbstractWeights;
+                       dims::Int = 1, mean = nothing)
+    return std(X, w, dims; corrected = ve.corrected, mean = mean)
 end
 function StatsBase.var(ve::SimpleVariance, X::AbstractMatrix; dims::Int = 1, mean = nothing)
-    if isnothing(ve.w)
-        var(X; dims = dims, corrected = ve.corrected, mean = mean)
-    else
-        var(X, ve.w, dims; corrected = ve.corrected, mean = mean)
-    end
+    return var(X; dims = dims, corrected = ve.corrected, mean = mean)
+end
+function StatsBase.var(ve::SimpleVariance, X::AbstractMatrix, w::AbstractWeights;
+                       dims::Int = 1, mean = nothing)
+    return var(X, w, dims; corrected = ve.corrected, mean = mean)
 end
 # # Correlation Matrices
 function StatsBase.cov(ce::CovFull, X::AbstractMatrix; dims::Int = 1)
@@ -434,7 +434,11 @@ function StatsBase.cov(ce::CorMutualInfo, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    std_vec = vec(std(ce.ve, X; dims = 1))
+    std_vec = vec(if isnothing(ce.std_w)
+                      std(ce.ve, X; dims = 1)
+                  else
+                      std(ce.ve, X, ce.std_w; dims = 1)
+                  end)
     return Symmetric(mutual_info(X, ce.bins, ce.normalise) .*
                      (std_vec * transpose(std_vec)))
 end
@@ -586,7 +590,11 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    std_vec = vec(std(ce.ve, X; dims = 1))
+    std_vec = vec(if isnothing(ce.std_w)
+                      std(ce.ve, X; dims = 1)
+                  else
+                      std(ce.ve, X, ce.std_w; dims = 1)
+                  end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end
 function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
@@ -1242,11 +1250,19 @@ function _gerber(ce::Union{CorSB, CorGerberSB}, X::AbstractMatrix, std_vec::Abst
     end
 end
 function cor_gerber(ce::CorGerber, X::AbstractMatrix)
-    std_vec = vec(std(ce.ve, X; dims = 1))
+    std_vec = vec(if isnothing(ce.std_w)
+                      std(ce.ve, X; dims = 1)
+                  else
+                      std(ce.ve, X, ce.std_w; dims = 1)
+                  end)
     return Symmetric(_gerber(ce, X, std_vec))
 end
 function cov_gerber(ce::CorGerber, X::AbstractMatrix)
-    std_vec = vec(std(ce.ve, X; dims = 1))
+    std_vec = vec(if isnothing(ce.std_w)
+                      std(ce.ve, X; dims = 1)
+                  else
+                      std(ce.ve, X, ce.std_w; dims = 1)
+                  end)
     return Symmetric(_gerber(ce, X, std_vec) .* (std_vec * transpose(std_vec)))
 end
 function StatsBase.cor(ce::CorGerber, X::AbstractMatrix; dims::Int = 1)
@@ -1863,7 +1879,11 @@ function _regression(method::DRR, X::AbstractMatrix, x1::AbstractMatrix, Vp::Abs
               else
                   mean(X, method.mean_w; dims = 2)
               end)
-    sdev = vec(std(method.ve, X; dims = 2))
+    sdev = vec(if isnothing(method.std_w)
+                   std(method.ve, X; dims = 2)
+               else
+                   std(method.ve, X, method.std_w; dims = 2)
+               end)
 
     fit_result = lm(x1, y)
     beta_pc = coef(fit_result)[2:end]
@@ -2216,7 +2236,11 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
 
     sigma = if factor_type.error
         e = Matrix(y) - returns
-        S_e = diagm(vec(var(factor_type.ve, e; dims = 1)))
+        S_e = diagm(vec(if isnothing(factor_type.var_w)
+                            var(factor_type.ve, e; dims = 1)
+                        else
+                            var(factor_type.ve, e, factor_type.var_w; dims = 1)
+                        end))
         B_mtx * f_cov * transpose(B_mtx) + S_e
     else
         B_mtx * f_cov * transpose(B_mtx)
@@ -2326,7 +2350,11 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
 
     if bl.error
         D = X - F * transpose(B)
-        D = Diagonal(vec(var(factor_type.ve, e; dims = 1)))
+        D = Diagonal(vec(if isnothing(bl.var_w)
+                             var(bl.ve, D; dims = 1)
+                         else
+                             var(bl.ve, D, bl.var_w; dims = 1)
+                         end))
         sigma .+= D
     end
 
