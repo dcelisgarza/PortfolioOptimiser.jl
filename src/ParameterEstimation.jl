@@ -434,10 +434,10 @@ function StatsBase.cov(ce::CorMutualInfo, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    std_vec = vec(if isnothing(ce.std_w)
+    std_vec = vec(if isnothing(ce.w)
                       std(ce.ve, X; dims = 1)
                   else
-                      std(ce.ve, X, ce.std_w; dims = 1)
+                      std(ce.ve, X, ce.w; dims = 1)
                   end)
     return Symmetric(mutual_info(X, ce.bins, ce.normalise) .*
                      (std_vec * transpose(std_vec)))
@@ -590,10 +590,10 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    std_vec = vec(if isnothing(ce.std_w)
+    std_vec = vec(if isnothing(ce.w)
                       std(ce.ve, X; dims = 1)
                   else
-                      std(ce.ve, X, ce.std_w; dims = 1)
+                      std(ce.ve, X, ce.w; dims = 1)
                   end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end

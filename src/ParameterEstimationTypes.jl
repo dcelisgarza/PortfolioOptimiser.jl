@@ -641,9 +641,27 @@ end
 ```
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 ```
+
+Abstract type for subtyping portfolio optimiser covaraince and correlation estimators.
 """
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
+
+"""
+```
 abstract type CorPearson <: PortfolioOptimiserCovCor end
+```
+
+Abstract type for subtyping Pearson type covariance estimators.
+"""
+abstract type CorPearson <: PortfolioOptimiserCovCor end
+
+"""
+```
+abstract type CorRank <: PortfolioOptimiserCovCor end
+```
+
+Abstract type for subtyping rank based covariance estimators.
+"""
 abstract type CorRank <: PortfolioOptimiserCovCor end
 
 """
@@ -654,6 +672,14 @@ abstract type CorRank <: PortfolioOptimiserCovCor end
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
 ```
+
+Full Pearson-type covariance and correlation estimator.
+
+# Parameters
+
+  - `absolute`: whether or not to compute an absolute correlation.
+  - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `w`: weights for computing the covariance, if `nothing` apply no weights.
 """
 mutable struct CovFull <: CorPearson
     absolute::Bool
@@ -667,49 +693,136 @@ function CovFull(; absolute::Bool = false,
     return CovFull(absolute, ce, w)
 end
 
+"""
+```
 @kwdef mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
-    corrected = true
+    corrected::Bool = true
+end
+```
+
+Simple variance estimator.
+
+# Parameters
+
+  - `corrected`: if true `correct` the bias by dividing by `N-1`, if `false` the bias is not corrected and the division is by `N`.
+"""
+mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
+    corrected::Bool
+end
+function SimpleVariance(; corrected::Bool = true)
+    return SimpleVariance(corrected)
 end
 
+"""
+```
 @kwdef mutable struct CovSemi <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
+```
 
+Semi Pearson-type covariance and correlation estimator.
+
+# Parameters
+
+  - `absolute`: whether or not to compute an absolute correlation, `abs.(cor(X))`.
+
+  - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `target`: minimum acceptable return target.
+
+      + `if isa(target, Real)`: apply the same target to all assets.
+      + `if isa(target, AbstractVector)`: apply individual target to each asset.
+  - `w`: weights for computing the covariance, if `nothing` apply no weights.
+"""
+mutable struct CovSemi <: CorPearson
+    absolute::Bool
+    ce::StatsBase.CovarianceEstimator
+    target::Union{<:Real, AbstractVector{<:Real}}
+    w::Union{<:AbstractWeights, Nothing}
+end
+function CovSemi(; absolute::Bool = false,
+                 ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
+                                                                                corrected = true),
+                 target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+                 w::Union{<:AbstractWeights, Nothing} = nothing)
+    return CovSemi(absolute, ce, target, w)
+end
+
+"""
+```
 @kwdef mutable struct CorSpearman <: CorRank
     absolute::Bool = false
 end
+```
 
+Spearman type correlation estimator.
+
+# Parameters
+
+  - `absolute`: whether or not to compute an absolute correlation, `abs.(corspearman(X))`.
+"""
+mutable struct CorSpearman <: CorRank
+    absolute::Bool
+end
+function CorSpearman(; absolute::Bool = false)
+    return CorSpearman(absolute)
+end
+
+"""
+```
 @kwdef mutable struct CorKendall <: CorRank
     absolute::Bool = false
 end
+```
+
+Kendall type correlation estimator.
+
+# Parameters
+
+  - `absolute`: whether or not to compute an absolute correlation, `abs.(corkendall(X))`.
+"""
+mutable struct CorKendall <: CorRank
+    absolute::Bool
+end
+function CorKendall(; absolute::Bool = false)
+    return CorKendall(absolute)
+end
 
 """
 ```
-mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
-    bins::Union{<:Integer, <:AbstractBins}
-    normalise::Bool
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
+@kwdef mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
+    bins::Union{<:Integer, <:AbstractBins} = HGR()
+    normalise::Bool = true
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    w::Union{<:AbstractWeights, Nothing} = nothing
 end
 ```
+
+Define the mutual information correlation matrix.
+
+# Parameters
+
+  - `bins`: defines the bin function, or bin width directly and if so `bins > 0`.
+  - `normalise`: whether or not to normalise the mutual information.
+  - `ve`: variance estimator.
+  - `w`: variance weights, if `nothing`
 """
 mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
 end
 function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
                        normalise::Bool = true,
                        ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                       std_w::Union{<:AbstractWeights, Nothing} = nothing)
+                       w::Union{<:AbstractWeights, Nothing} = nothing)
     if isa(bins, Integer)
         @smart_assert(bins > zero(bins))
     end
-    return CorMutualInfo(bins, normalise, ve, std_w)
+    return CorMutualInfo(bins, normalise, ve, w)
 end
 
 """
@@ -745,19 +858,19 @@ end
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
 end
 ```
 """
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
 end
 function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
-                std_w::Union{<:AbstractWeights, Nothing} = nothing)
+                w::Union{<:AbstractWeights, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CorLTD(alpha, ve, std_w)
+    return CorLTD(alpha, ve, w)
 end
 
 abstract type CorGerber <: PortfolioOptimiserCovCor end
