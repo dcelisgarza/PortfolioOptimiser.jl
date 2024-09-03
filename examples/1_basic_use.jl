@@ -236,7 +236,7 @@ display(plot_frontier(portfolio; rm = rm))
 display(plot_frontier_area(portfolio; rm = rm))
 
 #=
-The efficient frontier is outputted by [`efficient_frontier`](@ref), but also saves it in the `portfolio` instance. It is a dictionary whose keys are the symbols of the risk measure used to compute the efficient frontier. We've only computed the efficient frontier for the SD, so we can access the efficient frontier data by indexing into the `:SD` key. The documentation for [`Portfolio`](@ref) contains more details.
+The efficient frontier is outputted by [`efficient_frontier!`](@ref), but also saves it in the `portfolio` instance. It is a dictionary whose keys are the symbols of the risk measure used to compute the efficient frontier. We've only computed the efficient frontier for the SD, so we can access the efficient frontier data by indexing into the `:SD` key. The documentation for [`Portfolio`](@ref) contains more details.
 
 As the last demo we will display a heatmap of the portfolio composition of the efficient frontier in `SD()`.
 =#

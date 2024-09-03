@@ -82,6 +82,12 @@ function asset_statistics!(port::AbstractPortfolio;
     return nothing
 end
 
+"""
+```
+wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
+                        set_ellipse::Bool = true)
+```
+"""
 function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
                         set_ellipse::Bool = true)
     returns = port.returns
@@ -128,6 +134,13 @@ function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = 
     return nothing
 end
 
+"""
+```
+factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
+                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            mu_type::MeanEstimator = MuSimple())
+```
+"""
 function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                             mu_type::MeanEstimator = MuSimple())
@@ -149,6 +162,15 @@ function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorTyp
     return nothing
 end
 
+"""
+```
+black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
+                                     w::AbstractVector = port.bl_bench_weights,
+                                     cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                     mu_type::MeanEstimator = MuSimple(),
+                                     bl_type::BLType = BLType())
+```
+"""
 function black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
                                      w::AbstractVector = port.bl_bench_weights,
                                      cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -170,6 +192,23 @@ function black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::Abst
     return nothing
 end
 
+"""
+```
+black_litterman_factor_statistics!(port::Portfolio;
+                                            w::AbstractVector = port.bl_bench_weights,
+                                            B::Union{DataFrame, Nothing} = port.loadings,
+                                            P::Union{AbstractMatrix, Nothing} = nothing,
+                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                            Q::Union{AbstractVector, Nothing} = nothing,
+                                            Q_f::Union{AbstractVector, Nothing} = nothing,
+                                            factor_type::FactorType = FactorType(),
+                                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                            mu_type::MeanEstimator = MuSimple(),
+                                            f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                            f_mu_type::MeanEstimator = MuSimple(),
+                                            bl_type::BlackLittermanFactor = BBLType())
+```
+"""
 function black_litterman_factor_statistics!(port::Portfolio;
                                             w::AbstractVector = port.bl_bench_weights,
                                             B::Union{DataFrame, Nothing} = port.loadings,

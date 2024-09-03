@@ -2786,6 +2786,16 @@ function frontier_limits!(port::Portfolio;
     return port.limits[rmstr]
 end
 
+"""
+```
+efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
+                             rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
+                             kelly::RetType = NoKelly(), class::PortClass = Classic(),
+                             w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             points::Integer = 20, rf::Real = 0.0)
+```
+"""
 function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                              rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic(),

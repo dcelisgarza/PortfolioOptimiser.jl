@@ -612,6 +612,44 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.alloc_fail),
                                               copy(obj.alloc_model))
 end
+
+"""
+```
+mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
+                           tsskew, tsv, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
+                           tf, tlp, taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio
+    assets::ast
+    timestamps::dat
+    returns::r
+    mu::tmu
+    cov::tcov
+    kurt::tkurt
+    skurt::tskurt
+    L_2::tl2
+    S_2::ts2
+    skew::tskew
+    V::tv
+    sskew::tsskew
+    SV::tsv
+    w_min::wmi
+    w_max::wma
+    cor_type::ttco
+    cor::tco
+    dist::tdist
+    clusters::tcl
+    k::tk
+    optimal::topt
+    solvers::tsolv
+    fail::tf
+    latest_prices::tlp
+    alloc_optimal::taopt
+    alloc_leftover::talo
+    alloc_solvers::tasolv
+    alloc_fail::taf
+    alloc_model::tamod
+end
+```
+"""
 mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
                            tsskew, tsv, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,
                            tf, tlp, taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio
