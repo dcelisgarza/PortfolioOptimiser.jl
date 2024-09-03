@@ -226,10 +226,37 @@ The idea is to first compute the minimum risk and maximum return portfolios. Fro
 =#
 
 ## Compute 50 points in the efficient frontier.
-frontier = efficient_frontier!(portfolio; rm = rm, points = 50)
+points = 50
+frontier = efficient_frontier!(portfolio; rm = rm, points = points)
 
 ## Plot the efficient frontier.
 display(plot_frontier(portfolio; rm = rm))
 
 ## Plot frontier asset composition.
 display(plot_frontier_area(portfolio; rm = rm))
+
+#=
+The efficient frontier is outputted by [`efficient_frontier`](@ref), but also saves it in the `portfolio` instance. It is a dictionary whose keys are the symbols of the risk measure used to compute the efficient frontier. We've only computed the efficient frontier for the SD, so we can access the efficient frontier data by indexing into the `:SD` key. The documentation for [`Portfolio`](@ref) contains more details.
+
+As the last demo we will display a heatmap of the portfolio composition of the efficient frontier in `SD()`.
+=#
+
+## Check if the sharpe ratio is found in the frontier.
+if portfolio.frontier[:SD][:sharpe]
+    risks = portfolio.frontier[:SD][:risks]
+    weights = DataFrames.rename(portfolio.frontier[:SD][:weights],
+                                Symbol.(1:length(risks)) .=>
+                                    Symbol.(round.(risks * 100, digits = 2)))
+    idx = sortperm(portfolio.frontier[:SD][:risks])
+    weights = weights[!, [1; idx .+ 1]]
+    risks = risks[idx]
+else
+    weights = Matrix(portfolio.frontier[:SD][:weights])
+    risks = portfolio.frontier[:SD][:risks]
+end
+
+display(plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
+             yticks = (1:N, portfolio.assets), yflip = true,
+             xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
+             xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",
+             color = cgrad(:Spectral)))

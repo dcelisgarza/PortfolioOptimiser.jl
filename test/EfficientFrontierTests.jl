@@ -16,7 +16,7 @@ l = 2.0
 #     limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
 #     if haskey(portfolio.frontier, RDaR)
 #         @test ncol(portfolio.frontier[:RDaR][:weights]) == 6
-#         @test length(portfolio.frontier[:RDaR][:risk]) == 5
+#         @test length(portfolio.frontier[:RDaR][:risks]) == 5
 #     end
 # end
 

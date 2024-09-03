@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
 end
@@ -40,16 +48,8 @@ end
     include("OWAWeightsTests.jl")
 end
 
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
 @safetestset "Near Optimal Centering" begin
     include("NearOptimalCenteringTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
 end
 
 @safetestset "HC Optimistaion" begin

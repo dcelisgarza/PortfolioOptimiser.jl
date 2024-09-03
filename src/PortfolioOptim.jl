@@ -2820,7 +2820,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     risks = range(risk1; stop = risk2, length = points)
 
     frontier = Vector{typeof(risk1)}(undef, 0)
-    srisk = Vector{typeof(risk1)}(undef, 0)
+    optim_risk = Vector{typeof(risk1)}(undef, 0)
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
@@ -2853,7 +2853,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         end
         rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
-        push!(srisk, rk)
+        push!(optim_risk, rk)
         i += 1
     end
     rmi.settings.ub = Inf
@@ -2863,7 +2863,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     if !isempty(w)
         rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
-        push!(srisk, rk)
+        push!(optim_risk, rk)
         i += 1
         sharpe = true
     end
@@ -2871,7 +2871,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     port.frontier[rmstr] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
                                                  DataFrame(reshape(frontier, length(w1), :),
                                                            string.(range(1, i)))),
-                                :risk => srisk, :sharpe => sharpe)
+                                :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
     unset_set_rm_properties(rmi, solver_flag, sigma_flag)

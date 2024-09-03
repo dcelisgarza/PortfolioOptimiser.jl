@@ -92,7 +92,8 @@ T, N = size(portfolio.returns)
 There are a variety of weights, but the only ones that make sense with no prior knowledge are exponential weights. Now lets use this to compute the asset expected returns vector, we do this by passing the argument `mu_type = mu_type_1` to the function, we've also set the `set_cov = false` so it doesn't recompute the covariance.
 =#
 
-## Play around with the value of lambda (1/T, in the example) to see the effect it has on the weights and computed expected returns vector.
+## Play around with the value of lambda (1/T, in the example) to see the effect 
+## it has on the weights and computed expected returns vector.
 w = eweights(1:T, 1 / T; scale = true)
 mu_type_1 = MuSimple(; w = w)
 asset_statistics!(portfolio; mu_type = mu_type_1, set_cov = false, set_kurt = false,
@@ -119,7 +120,8 @@ asset_statistics!(portfolio; mu_type = mu_type_3, set_cov = false, set_kurt = fa
                   set_skurt = false, set_skew = false, set_sskew = false)
 mu4 = copy(portfolio.mu)
 
-## Using a custom covariance with random noise. It's not guaranteed to be positive definite.
+## Using a custom covariance with random noise. 
+## It's not guaranteed to be positive definite.
 noise = randn(N, N) / N^2
 noise = transpose(noise) * noise
 mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
@@ -134,13 +136,14 @@ All targets subtype [`MeanTarget`](@ref). It is possible for users to define a o
 struct CustomMeanTarget <: MeanTarget
     ...
 end
-function target_mean(ct::CustomMeanTarget, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
-                     N::Integer)
+function target_mean(ct::CustomMeanTarget, mu::AbstractVector, 
+                     sigma::AbstractMatrix, inv_sigma, 
+                     T::Integer, N::Integer)
     ...                     
 end
 ```
 
-however, this limits the target to using the same data as the current ones. It's easier to define a new concrete subtype of [`MeanEstimator`](@ref). We will do this in the following section.
+However, this limits the target to using the same data as the current ones. It's easier to define a new concrete subtype of [`MeanEstimator`](@ref). We will do this in the following section.
 
 ### 3.2 Defining a custom mean method
 
@@ -196,7 +199,8 @@ As far as my recommendation/preference, I like the [`CorGerberSB1`](@ref) as it'
 ## `corrected = true` does not support weights
 ce0_a = StatsBase.SimpleCovariance(; corrected = false)
 
-## A method from [CovarianceEstimation](https://github.com/mateuszbaran/CovarianceEstimation.jl), does not support weights.
+## Method from [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl), 
+## does not support weights.
 ce0_b = CovarianceEstimation.AnalyticalNonlinearShrinkage()
 
 ## Exponential weights, try something else if you wish.
@@ -211,7 +215,8 @@ ces = CovarianceEstimator[]
 ## Full covariance.
 push!(ces, CovFull(; ce = ce0_a, w = w))
 
-## Semi covariance, only focuses on variations that take the returns below the target value.
+## Semi covariance, only focuses on variations that take 
+## the returns below the target value.
 push!(ces, CovSemi(; ce = ce0_b, target = rf))
 
 ## This bins the data and uses the information overlap between variables.
@@ -224,23 +229,27 @@ push!(ces, CorDistance())
 ## It combines the idea behind the Value at Risk and rank correlation.
 push!(ces, CorLTD())
 
-## The Gerber family of robust covariance estimators that count co-movements and filters
-## large and small movements by classifying them into zones. They are a rank-based (counting) approach.
+## The Gerber family of robust covariance estimators that count 
+## co-movements and filters large and small movements by classifying 
+## them into zones. They are a rank-based (counting) approach.
 push!(ces, CorGerber0())
 push!(ces, CorGerber1())
 push!(ces, CorGerber2())
 
-## Smyth-Broby family of covariance estimators that modifies the Gerber statistics by scoring
-## the quality of the classification of co-movements (instead of adding 1 they add a score).
+## Smyth-Broby family of covariance estimators that modifies the 
+## Gerber statistics by scoring the quality of the classification 
+## of co-movements (instead of adding 1 they add a score).
 push!(ces, CorSB0())
 push!(ces, CorSB1())
 
-## Smyth-Broby-Gerber family of covariance estimators that modifies the Gerber statistics by 
-## counting co-movements, scoring them, and then it multiplies the scores by the counts.
+## Smyth-Broby-Gerber family of covariance estimators that modifies 
+## the Gerber statistics by counting co-movements, scoring them, 
+## and then it multiplies the scores by the counts.
 push!(ces, CorGerberSB0())
 push!(ces, CorGerberSB1());
 
 # We then instantiate some [`PortCovCor`](@ref) estimators and push them to a vector for convenience.
+
 pces = PortCovCor[]
 for ce ∈ ces
     push!(pces, PortCovCor(; ce = ce))
@@ -305,7 +314,9 @@ The market prices are not independent of each other, they are subject to market 
 
 ces_detone = PortCovCor[]
 push!(ces_detone, PortCovCor(;))
-## `mkt_comp` defaults to 1 when `detone == true`, the value of `mkt_comp` defines how many of the largest eigenvalues are removed from the denoised matrix.
+
+## `mkt_comp` defaults to 1 when `detone == true`, the value of `mkt_comp` 
+## defines how many of the largest eigenvalues are removed from the denoised matrix.
 push!(ces_detone,
       PortCovCor(; posdef = NoPosdef(),
                  denoise = DenoiseFixed(; detone = true, mkt_comp = 1)))

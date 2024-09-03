@@ -200,7 +200,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
                                           kelly::PortfolioOptimiser.RetType = NoKelly(),
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
-    risks = copy(frontier[:risk])
+    risks = copy(frontier[:risks])
     weights = Matrix(frontier[:weights][!, 2:end])
 
     rets = if isa(kelly, NoKelly)
@@ -303,7 +303,7 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
                                                t_factor = 252, kwargs_a = (;),
                                                theme = :Spectral, kwargs_l = (;),
                                                show_sharpe = true)
-    risks = copy(frontier[:risk])
+    risks = copy(frontier[:risks])
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[:weights][!, 2:end]))
 
