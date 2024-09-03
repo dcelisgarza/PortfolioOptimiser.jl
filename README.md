@@ -23,75 +23,77 @@ This type of optimisation is the traditional efficient frontier optimisation wit
 
 ##### Classes, [`PortClass`](@ref)
 
-- Classic, [`Classic`](@ref).
-- Factor model, [`FM`](@ref).
-- Black Litterman, [`BL`](@ref).
-- Black Litterman Factor model, [`BLFM`](@ref).
+  - Classic, [`Classic`](@ref).
+  - Factor model, [`FM`](@ref).
+  - Black Litterman, [`BL`](@ref).
+  - Black Litterman Factor model, [`BLFM`](@ref).
 
 ##### Expected returns
 
-- Arithmetic returns, [`NoKelly`](@ref).
-- Approximate logarithmic mean returns, [`AKelly`](@ref).
-- Exact logarithmic mean returns, [`EKelly`](@ref).
-  
+  - Arithmetic returns, [`NoKelly`](@ref).
+  - Approximate logarithmic mean returns, [`AKelly`](@ref).
+  - Exact logarithmic mean returns, [`EKelly`](@ref).
+
 ##### Objective functions
 
-- Minimum risk, [`MinRisk`](@ref).
-- Maximum utility, [`Utility`](@ref).
-- Maximum risk adjusted return ratio, [`Sharpe`](@ref).
-- Maximum return, [`MaxRet`](@ref).
+  - Minimum risk, [`MinRisk`](@ref).
+  - Maximum utility, [`Utility`](@ref).
+  - Maximum risk adjusted return ratio, [`Sharpe`](@ref).
+  - Maximum return, [`MaxRet`](@ref).
 
 ##### Constraints
 
-- Maximum expected risk constraints.
-- Minimum expected return constraint.
-- Linear weight constraints.
-- Connected asset centrality constraints.
-- Asset network constraints.
-- Leverage constraints.
-- Maximum number of assets constraint.
-- Minimum number of effective assets constraint.
-- Tracking error (weights or returns) constraint.
-- Turnover constraint.
-- Rebalancing penalty.
+  - Maximum expected risk constraints.
+  - Minimum expected return constraint.
+  - Linear weight constraints.
+  - Connected asset centrality constraints.
+  - Asset network constraints.
+  - Leverage constraints.
+  - Maximum number of assets constraint.
+  - Minimum number of effective assets constraint.
+  - Tracking error (weights or returns) constraint.
+  - Turnover constraint.
+  - Rebalancing penalty.
 
 ##### Risk measures
 
 ###### Dispersion
 
-- Full dispersion.
-  - Standard deviation, [`SD`](@ref).
-  - Mean absolute deviation (MAD), [`MAD`](@ref).
-  - Square root kurtosis, [`Kurt`](@ref).
-  - Range, [`RG`](@ref).
-  - Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-  - Tail Gini range, [`RTG`](@ref).
-  - Gini mean difference (GMD), [`GMD`](@ref).
-  - Quadratic negative skewness, [`Skew`](@ref).
-  - Brownian distance variance (dVar), [`dVar`](@ref).
-- Downside dispersion.
-  - Semi standard deviation, [`SSD`](@ref).
-  - First lower partial moment (Omega ratio), [`FLPM`](@ref).
-  - Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
-  - Square root semi kurtosis, [`SKurt`](@ref).
-  - Quadratic negative semi skewness, [`SSkew`](@ref).
+  - Full dispersion.
+    
+      + Standard deviation, [`SD`](@ref).
+      + Mean absolute deviation (MAD), [`MAD`](@ref).
+      + Square root kurtosis, [`Kurt`](@ref).
+      + Range, [`RG`](@ref).
+      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
+      + Tail Gini range, [`RTG`](@ref).
+      + Gini mean difference (GMD), [`GMD`](@ref).
+      + Quadratic negative skewness, [`Skew`](@ref).
+      + Brownian distance variance (dVar), [`dVar`](@ref).
+  - Downside dispersion.
+    
+      + Semi standard deviation, [`SSD`](@ref).
+      + First lower partial moment (Omega ratio), [`FLPM`](@ref).
+      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
+      + Square root semi kurtosis, [`SKurt`](@ref).
+      + Quadratic negative semi skewness, [`SSkew`](@ref).
 
 ###### Downside
 
-- Worst case realisation (Minimax), [`WR`](@ref).
-- Conditional value at risk (CVaR), [`CVaR`](@ref).
-- Entropic value at risk (EVaR), [`EVaR`](@ref).
-- Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
-- Tail Gini, [`TG`](@ref).
+  - Worst case realisation (Minimax), [`WR`](@ref).
+  - Conditional value at risk (CVaR), [`CVaR`](@ref).
+  - Entropic value at risk (EVaR), [`EVaR`](@ref).
+  - Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
+  - Tail Gini, [`TG`](@ref).
 
 ###### Drawdown
 
-- Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
-- Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
-- Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
-- Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
-- Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
-- Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
+  - Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
+  - Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
+  - Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
+  - Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
+  - Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
+  - Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
 
 #### Worst case mean variance, [`WC`](@ref)
 
@@ -99,17 +101,17 @@ This type of optimisation requires worst case sets for the covariance and expect
 
 ##### Constraints
 
-- Maximum expected worst case standard deviation constraint.
-- Minimum expected worst case return constraint.
-- Linear weight constraints.
-- Connected asset centrality constraints.
-- Asset network constraints.
-- Leverage constraints.
-- Maximum number of assets constraint.
-- Minimum number of effective assets constraint.
-- Tracking error (weights or returns) constraint.
-- Turnover constraint.
-- Rebalancing penalty.
+  - Maximum expected worst case standard deviation constraint.
+  - Minimum expected worst case return constraint.
+  - Linear weight constraints.
+  - Connected asset centrality constraints.
+  - Asset network constraints.
+  - Leverage constraints.
+  - Maximum number of assets constraint.
+  - Minimum number of effective assets constraint.
+  - Tracking error (weights or returns) constraint.
+  - Turnover constraint.
+  - Rebalancing penalty.
 
 #### Risk parity, [`RP`](@ref)
 
@@ -117,52 +119,54 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
 
 ##### Classes, [`PortClass`](@ref)
 
-- Classic, [`Classic`](@ref).
-- Factor model, [`FM`](@ref).
-- Factor risk contribution, [`FC`](@ref).
+  - Classic, [`Classic`](@ref).
+  - Factor model, [`FM`](@ref).
+  - Factor risk contribution, [`FC`](@ref).
 
 ##### Constraints
 
-- Minimum expected return constraint.
-- Linear weight constraints.
+  - Minimum expected return constraint.
+  - Linear weight constraints.
 
 ##### Risk measures
 
 ###### Dispersion
 
-- Full dispersion.
-  - Standard deviation, [`SD`](@ref).
-  - Mean absolute deviation (MAD), [`MAD`](@ref).
-  - Square root kurtosis, [`Kurt`](@ref).
-  - Range, [`RG`](@ref).
-  - Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-  - Tail Gini range, [`RTG`](@ref).
-  - Gini mean difference (GMD), [`GMD`](@ref).
-  - Quadratic negative skewness, [`Skew`](@ref).
-  - Brownian distance variance (dVar), [`dVar`](@ref).
-- Downside dispersion.
-  - Semi standard deviation, [`SSD`](@ref).
-  - First lower partial moment (Omega ratio), [`FLPM`](@ref).
-  - Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
-  - Square root semi kurtosis, [`SKurt`](@ref).
-  - Quadratic negative semi skewness, [`SSkew`](@ref).
+  - Full dispersion.
+    
+      + Standard deviation, [`SD`](@ref).
+      + Mean absolute deviation (MAD), [`MAD`](@ref).
+      + Square root kurtosis, [`Kurt`](@ref).
+      + Range, [`RG`](@ref).
+      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
+      + Tail Gini range, [`RTG`](@ref).
+      + Gini mean difference (GMD), [`GMD`](@ref).
+      + Quadratic negative skewness, [`Skew`](@ref).
+      + Brownian distance variance (dVar), [`dVar`](@ref).
+  - Downside dispersion.
+    
+      + Semi standard deviation, [`SSD`](@ref).
+      + First lower partial moment (Omega ratio), [`FLPM`](@ref).
+      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
+      + Square root semi kurtosis, [`SKurt`](@ref).
+      + Quadratic negative semi skewness, [`SSkew`](@ref).
 
 ###### Downside
 
-- Worst case realisation (Minimax), [`WR`](@ref).
-- Conditional value at risk (CVaR), [`CVaR`](@ref).
-- Entropic value at risk (EVaR), [`EVaR`](@ref).
-- Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
-- Tail Gini, [`TG`](@ref).
+  - Worst case realisation (Minimax), [`WR`](@ref).
+  - Conditional value at risk (CVaR), [`CVaR`](@ref).
+  - Entropic value at risk (EVaR), [`EVaR`](@ref).
+  - Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
+  - Tail Gini, [`TG`](@ref).
 
 ###### Drawdown
 
-- Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
-- Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
-- Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
-- Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
-- Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
-- Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
+  - Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
+  - Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
+  - Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
+  - Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
+  - Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
+  - Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
 
 #### Relaxed risk parity mean variance, [`RRP`](@ref)
 
@@ -170,71 +174,73 @@ This type of optimisation requires a risk budget per asset. The optimisation att
 
 ##### Classes, [`PortClass`](@ref)
 
-- Classic, [`Classic`](@ref).
-- Factor model, [`FM`](@ref).
+  - Classic, [`Classic`](@ref).
+  - Factor model, [`FM`](@ref).
 
 ##### Constraints
 
-- Minimum expected return constraint.
-- Linear weight constraints.
+  - Minimum expected return constraint.
+  - Linear weight constraints.
 
 #### Near Optimal Centering, [`NOC`](@ref)
 
 ##### Classes, [`PortClass`](@ref)
 
-- Classic, [`Classic`](@ref).
-- Factor model, [`FM`](@ref).
-- Black Litterman, [`BL`](@ref).
-- Black Litterman Factor model, [`BLFM`](@ref).
+  - Classic, [`Classic`](@ref).
+  - Factor model, [`FM`](@ref).
+  - Black Litterman, [`BL`](@ref).
+  - Black Litterman Factor model, [`BLFM`](@ref).
 
 ##### Expected returns
 
-- Arithmetic returns, [`NoKelly`](@ref).
-- Approximate logarithmic mean returns, [`AKelly`](@ref).
-- Exact logarithmic mean returns, [`EKelly`](@ref).
-  
+  - Arithmetic returns, [`NoKelly`](@ref).
+  - Approximate logarithmic mean returns, [`AKelly`](@ref).
+  - Exact logarithmic mean returns, [`EKelly`](@ref).
+
 ##### Constraints
 
-- Maximum expected risk constraints.
-- Minimum expected return constraint.
+  - Maximum expected risk constraints.
+  - Minimum expected return constraint.
 
 ##### Risk measures
 
 ###### Dispersion
 
-- Full dispersion.
-  - Standard deviation, [`SD`](@ref).
-  - Mean absolute deviation (MAD), [`MAD`](@ref).
-  - Square root kurtosis, [`Kurt`](@ref).
-  - Range, [`RG`](@ref).
-  - Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-  - Tail Gini range, [`RTG`](@ref).
-  - Gini mean difference (GMD), [`GMD`](@ref).
-  - Quadratic negative skewness, [`Skew`](@ref).
-  - Brownian distance variance (dVar), [`dVar`](@ref).
-- Downside dispersion.
-  - Semi standard deviation, [`SSD`](@ref).
-  - First lower partial moment (Omega ratio), [`FLPM`](@ref).
-  - Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
-  - Square root semi kurtosis, [`SKurt`](@ref).
-  - Quadratic negative semi skewness, [`SSkew`](@ref).
+  - Full dispersion.
+    
+      + Standard deviation, [`SD`](@ref).
+      + Mean absolute deviation (MAD), [`MAD`](@ref).
+      + Square root kurtosis, [`Kurt`](@ref).
+      + Range, [`RG`](@ref).
+      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
+      + Tail Gini range, [`RTG`](@ref).
+      + Gini mean difference (GMD), [`GMD`](@ref).
+      + Quadratic negative skewness, [`Skew`](@ref).
+      + Brownian distance variance (dVar), [`dVar`](@ref).
+  - Downside dispersion.
+    
+      + Semi standard deviation, [`SSD`](@ref).
+      + First lower partial moment (Omega ratio), [`FLPM`](@ref).
+      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
+      + Square root semi kurtosis, [`SKurt`](@ref).
+      + Quadratic negative semi skewness, [`SSkew`](@ref).
 
 ###### Downside
 
-- Worst case realisation (Minimax), [`WR`](@ref).
-- Conditional value at risk (CVaR), [`CVaR`](@ref).
-- Entropic value at risk (EVaR), [`EVaR`](@ref).
-- Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
-- Tail Gini, [`TG`](@ref).
+  - Worst case realisation (Minimax), [`WR`](@ref).
+  - Conditional value at risk (CVaR), [`CVaR`](@ref).
+  - Entropic value at risk (EVaR), [`EVaR`](@ref).
+  - Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
+  - Tail Gini, [`TG`](@ref).
 
 ###### Drawdown
 
-- Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
-- Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
-- Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
-- Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
-- Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
-- Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
+  - Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
+  - Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
+  - Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
+  - Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
+  - Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
+  - Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
 
 ### Hierarchical portfolio optimisation
 
