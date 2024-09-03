@@ -468,7 +468,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "RDaR" begin
+@testset "RLDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -476,7 +476,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    rm = RDaR()
+    rm = RLDaR()
 
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -703,7 +703,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 end
 
-@testset "EDaR < RDaR" begin
+@testset "EDaR < RLDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -713,14 +713,14 @@ end
     asset_statistics!(portfolio)
 
     obj = MinRisk()
-    rm = RDaR(; kappa = 5e-3)
+    rm = RLDaR(; kappa = 5e-3)
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm = EDaR()
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     @test isapprox(w1.weights, w2.weights, rtol = 0.0001)
 
     obj = Sharpe(; rf = rf)
-    rm = RDaR(; kappa = 5e-3)
+    rm = RLDaR(; kappa = 5e-3)
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm = EDaR()
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)

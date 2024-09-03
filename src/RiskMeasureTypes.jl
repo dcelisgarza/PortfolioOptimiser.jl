@@ -101,19 +101,19 @@ function Base.setproperty!(obj::EVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RVaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+mutable struct RLVaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RVaR(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-              kappa = 0.3, solvers::Union{<:AbstractDict, Nothing} = nothing)
+function RLVaR(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+               kappa = 0.3, solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
+    return RLVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
-function Base.setproperty!(obj::RVaR, sym::Symbol, val)
+function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -164,19 +164,19 @@ function Base.setproperty!(obj::EDaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RDaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+mutable struct RLDaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RDaR(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
-              solvers::Union{<:AbstractDict, Nothing} = nothing)
+function RLDaR(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
+               solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
+    return RLDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
-function Base.setproperty!(obj::RDaR, sym::Symbol, val)
+function Base.setproperty!(obj::RLDaR, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -446,6 +446,6 @@ end
 end
 
 export RiskMeasureSettings, HCRiskMeasureSettings, QuadSD, SOCSD, SimpleSD, SD, MAD, SSD,
-       FLPM, SLPM, WR, CVaR, EVaR, RVaR, MDD, ADD, CDaR, UCI, EDaR, RDaR, Kurt, SKurt, RG,
+       FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG,
        RCVaR, OWASettings, GMD, TG, RTG, OWA, dVar, Skew, SSkew, Variance, VaR, DaR, DaR_r,
        MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Equal

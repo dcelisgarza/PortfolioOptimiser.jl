@@ -25,8 +25,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
              0.23276849033778024, 0.02742352667080502, 0.1529564256640314,
              0.04740180533190617, 0.18166001933455683, 0.2039781842753333]
 
-    rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RVaR(), MDD(), ADD(),
-           CDaR(), UCI(), EDaR(), RDaR(), Kurt(), SKurt(), GMD(), RG(), RCVaR(), TG(),
+    rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RLVaR(), MDD(), ADD(),
+           CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), RCVaR(), TG(),
            RTG(), OWA(), dVar(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
            DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RDaR_r()]
 
@@ -82,7 +82,7 @@ end
     @test Symbol(rm) == :EVaR
     @test String(rm) == "EVaR"
 
-    rm = RVaR()
+    rm = RLVaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
@@ -91,8 +91,8 @@ end
     @test rm.alpha == 0.5
     rm.kappa = 0.5
     @test rm.kappa == 0.5
-    @test Symbol(rm) == :RVaR
-    @test String(rm) == "RVaR"
+    @test Symbol(rm) == :RLVaR
+    @test String(rm) == "RLVaR"
 
     rm = DaR()
     @test_throws AssertionError rm.alpha = 1
@@ -114,7 +114,7 @@ end
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = RDaR()
+    rm = RLDaR()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
@@ -123,8 +123,8 @@ end
     @test rm.alpha == 0.5
     rm.kappa = 0.5
     @test rm.kappa == 0.5
-    @test Symbol(rm) == :RDaR
-    @test String(rm) == "RDaR"
+    @test Symbol(rm) == :RLDaR
+    @test String(rm) == "RLDaR"
 
     rm = DaR_r()
     @test_throws AssertionError rm.alpha = 1

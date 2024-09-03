@@ -37,13 +37,13 @@ portfolio = Portfolio(; prices = prices, solvers = solvers, alloc_solvers = allo
 
 # I often have too many assets to start with (a few hundreds to thoudands), so I filter them first just to keep the best ones. There are multiple ways of doing this, the first is to use the maximum number of assets constraint. This may not be suitable when the number of assets is too large, and I haven't tried it with thousands of assets yet.
 
-# I like to minimise my drawdown risk so I like to minimise the relativistic drawdown at risk (`:RDaR`) with default parameters. Say we want to use only the top `x%` least risky assets. Since we only have 20 assets, we'll make this the top `25%`. We can do this by setting the maximum number of assets to equal the number of assets divided by two.
+# I like to minimise my drawdown risk so I like to minimise the relativistic drawdown at risk (`:RLDaR`) with default parameters. Say we want to use only the top `x%` least risky assets. Since we only have 20 assets, we'll make this the top `25%`. We can do this by setting the maximum number of assets to equal the number of assets divided by two.
 
 portfolio.num_assets_u = div(length(portfolio.assets), 4);
 
 # Because this is a drawdown risk measure, and we're minimising the risk, we don't need to compute any statistics. We can optimise directly.
 
-w = optimise!(portfolio, OptimiseOpt(; rm = :RDaR, obj = :Min_Risk))
+w = optimise!(portfolio, OptimiseOpt(; rm = :RLDaR, obj = :Min_Risk))
 
 # We'll save the significant tickers for later.
 
@@ -87,8 +87,8 @@ end;
 
 # I like to use downside and drawdown risk measures, but for our example we'll only use drawdown risk measures.
 
-tickers_2 = get_best_tickers(hcportfolio.assets, 0.25, [:DaR, :CDaR, :EDaR, :RDaR], cor_opt,
-                             cluster_opt)
+tickers_2 = get_best_tickers(hcportfolio.assets, 0.25, [:DaR, :CDaR, :EDaR, :RLDaR],
+                             cor_opt, cluster_opt)
 
 # `tickers_2` contains the filtered tickers.
 
@@ -114,7 +114,7 @@ asset_statistics!(hcportfolio; calc_mu = false, calc_cov = false, calc_kurt = fa
 
 # Since we filtered the assets by minimising the risk measure, we can be more comfortable in using a different objective function. As such we'll maximise the risk-return (Sharpe) ratio using exact kelly returns, which have to be computed in accordance to the asset weights that are being optimised, which is why we didn't need to compute the mean return vector.
 
-opt = OptimiseOpt(; rm = :RDaR, obj = :Sharpe, kelly = :Exact);
+opt = OptimiseOpt(; rm = :RLDaR, obj = :Sharpe, kelly = :Exact);
 
 # Perform the traditional optimisation,
 
@@ -130,7 +130,7 @@ w2 = optimise!(hcportfolio; type = :NCO, nco_opt = opt, cluster_opt = cluster_op
 
 # ## Discrete Allocation of Assets
 
-# Again we have a few things we can do here, we can either allocate each portfolio individually, or we can combine them in some way. We'll combine them into a single portfolio using the risk return ratio for `:RDaR`. For this need to compute the mean returns vector. The type of the mean return doesn't matter because we'll be using the same for both, and we'll be using a ratio to compute the linear combination coefficients.
+# Again we have a few things we can do here, we can either allocate each portfolio individually, or we can combine them in some way. We'll combine them into a single portfolio using the risk return ratio for `:RLDaR`. For this need to compute the mean returns vector. The type of the mean return doesn't matter because we'll be using the same for both, and we'll be using a ratio to compute the linear combination coefficients.
 
 asset_statistics!(portfolio; calc_mu = true, calc_cov = false, calc_kurt = false,
                   calc_skew = false)
@@ -139,11 +139,11 @@ asset_statistics!(hcportfolio; calc_mu = true, calc_cov = false, calc_kurt = fal
 
 # We don't need to provide the portfolio type since it defaults to `:Trad` for `Portfolio` variables.
 
-sr1 = sharpe_ratio(portfolio; rm = :RDaR)
+sr1 = sharpe_ratio(portfolio; rm = :RLDaR)
 
 # We need to set `type = :NCO` because the function defaults to `:HRP` for `HCPortfolio` variables.
 
-sr2 = sharpe_ratio(hcportfolio; type = :NCO, rm = :RDaR)
+sr2 = sharpe_ratio(hcportfolio; type = :NCO, rm = :RLDaR)
 
 # The value of an NCO portfolio's objective function will never be as good as that of a traditional portfolio (higher min risk, lower utility, lower sharpe ratio, lower max return), but there is also less overfitting thanks to the hierarchical clustering, especially if using a robust correlation matrix. Which is why I tend to prefer them over the traditional approach. For the example, I will assign it the larger coefficient (alpha) for our linear combination.
 

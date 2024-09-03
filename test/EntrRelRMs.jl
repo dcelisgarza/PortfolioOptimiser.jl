@@ -25,9 +25,9 @@ l = 2.0
     test_logger = TestLogger()
     with_logger(test_logger) do
         calc_risk(portfolio; rm = EDaR())
-        calc_risk(portfolio; rm = RDaR())
+        calc_risk(portfolio; rm = RLDaR())
         portfolio.solvers = solvers_mip
-        calc_risk(portfolio; rm = RDaR())
+        calc_risk(portfolio; rm = RLDaR())
         return nothing
     end
 

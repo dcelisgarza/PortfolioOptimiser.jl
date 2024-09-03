@@ -12,11 +12,11 @@ l = 2.0
 #                                                                             "max_step_fraction" => 0.75))))
 #     asset_statistics!(portfolio)
 
-#     rm = RDaR()
+#     rm = RLDaR()
 #     limits = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
-#     if haskey(portfolio.frontier, RDaR)
-#         @test ncol(portfolio.frontier[:RDaR][:weights]) == 6
-#         @test length(portfolio.frontier[:RDaR][:risks]) == 5
+#     if haskey(portfolio.frontier, RLDaR)
+#         @test ncol(portfolio.frontier[:RLDaR][:weights]) == 6
+#         @test length(portfolio.frontier[:RLDaR][:risks]) == 5
 #     end
 # end
 

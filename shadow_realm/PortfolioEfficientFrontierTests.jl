@@ -406,7 +406,7 @@ end
     @test isapprox(fw1[:weights][!, end], w3.weights)
 end
 
-@testset "$(:Classic), $(:Trad), $(:RVaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RLVaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
@@ -424,7 +424,7 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    rm = :RVaR
+    rm = :RLVaR
     opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                       rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
                       obj = :Min_Risk, kelly = :None)
@@ -435,7 +435,7 @@ end
     w3 = optimise!(portfolio, opt)
     fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
-    risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RVaR, rf = rf, sigma = sigma,
+    risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RLVaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
                         solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]
@@ -706,7 +706,7 @@ end
     @test isapprox(fw1[:weights][!, end], w3.weights)
 end
 
-@testset "$(:Classic), $(:Trad), $(:RDaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RLDaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
@@ -724,7 +724,7 @@ end
     owa_w = portfolio.owa_w
     solvers = portfolio.solvers
 
-    rm = :RDaR
+    rm = :RLDaR
     opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, hist = 1, type = :Trad,
                       rrp_ver = :None, u_mu = :None, u_cov = :None, rm = rm,
                       obj = :Min_Risk, kelly = :None)
@@ -735,7 +735,7 @@ end
     w3 = optimise!(portfolio, opt)
     fw1 = efficient_frontier!(portfolio, opt; points = 5)
 
-    risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RDaR, rf = rf, sigma = sigma,
+    risks1 = [calc_risk(fw1[:weights][!, i], returns; rm = :RLDaR, rf = rf, sigma = sigma,
                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                         beta = beta, b_sim = b_sim, kappa = kappa, owa_w = owa_w,
                         solvers = solvers,) for i ∈ 2:size(Matrix(fw1[:weights]), 2)]

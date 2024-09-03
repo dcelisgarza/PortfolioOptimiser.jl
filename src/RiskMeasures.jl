@@ -414,7 +414,7 @@ _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05, κ::Real = 0
 Compute the Relativistic Value at Risk.
 
 ```math
-\\mathrm{RVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,.
 ```
 
 Where ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
@@ -1224,7 +1224,7 @@ end
 function calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EVaR(X * w, evar.solvers, evar.alpha)
 end
-function calc_risk(rvar::RVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+function calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
 function calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
@@ -1245,7 +1245,7 @@ end
 function calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR(X * w, edar.solvers, edar.alpha)
 end
-function calc_risk(rdar::RDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+function calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 function calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
@@ -1389,11 +1389,11 @@ function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
 end
 
 for (op, name) ∈
-    zip((SD, Variance, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, EVaR, RVaR, DaR, MDD, ADD, CDaR,
-         UCI, EDaR, RDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Kurt, SKurt,
-         GMD, RG, RCVaR, TG, RTG, OWA, dVar, Skew, SSkew, Equal),
+    zip((SD, Variance, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR, MDD, ADD,
+         CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Kurt,
+         SKurt, GMD, RG, RCVaR, TG, RTG, OWA, dVar, Skew, SSkew, Equal),
         ("SD", "Variance", "MAD", "SSD", "FLPM", "SLPM", "WR", "VaR", "CVaR", "EVaR",
-         "RVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RDaR", "DaR_r", "MDD_r",
+         "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r", "MDD_r",
          "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RDaR_r", "Kurt", "SKurt", "GMD", "RG",
          "RCVaR", "TG", "RTG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
     eval(quote

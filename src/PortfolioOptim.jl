@@ -827,10 +827,10 @@ end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_evar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RVaR, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::RLVaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rvar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RVaR}, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rvar]), obj)
 end
 function get_z_from_model(model::JuMP.Model, ::EDaR, obj::Any)
@@ -839,10 +839,10 @@ end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_edar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RDaR, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::RLDaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rdar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR}, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
 end
 """
@@ -901,7 +901,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RVaR, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
@@ -936,7 +936,7 @@ function set_rm(port::Portfolio, rm::RVaR, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RVaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
@@ -1109,7 +1109,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RDaR, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
@@ -1141,7 +1141,7 @@ function set_rm(port::Portfolio, rm::RDaR, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RDaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
