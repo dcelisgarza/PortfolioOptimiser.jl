@@ -1,4 +1,4 @@
-@testset "RLDaR vec" begin
+@testset "RDaR vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -18,7 +18,7 @@
     riskt0 = 0.07576350913162658
     rett0 = 0.0005794990185578756
 
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -38,7 +38,7 @@
     @test isapprox(r1, riskt, rtol = 1.0e-7)
     @test isapprox(ret1, rett, rtol = 5.0e-7)
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r2 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret2 = dot(portfolio.mu, w2.weights)
@@ -69,7 +69,7 @@
     riskt0 = 0.09342425156101017
     rett0 = 0.0009783083257672756
 
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -89,7 +89,7 @@
     @test isapprox(r3, riskt, rtol = 5.0e-8)
     @test isapprox(ret3, rett)
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r4 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret4 = dot(portfolio.mu, w4.weights)
@@ -111,25 +111,25 @@
 
     # Risk upper bound
     obj = MaxRet()
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
           abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-7
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-7
 
     obj = Sharpe(; rf = rf)
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = r1 * 1.000001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.000001
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
@@ -137,24 +137,24 @@
 
     # Ret lower bound
     obj = MinRisk()
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w5.weights) >= ret1
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     portfolio.mu_l = ret2
     w6 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RDaR(; settings = RiskMeasureSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     portfolio.mu_l = ret2
     w8 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w8.weights) >= ret2
@@ -179,7 +179,7 @@
            3.4286429938206516e-8, 6.349008574376557e-8]
     riskt1 = 0.045712870660457844
     rett1 = 0.0010916439887987248
-    rm = [[RLDaR(), RLDaR(; alpha = 0.75)]]
+    rm = [[RDaR(), RDaR(; alpha = 0.75)]]
     w9 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r9 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)
@@ -2265,12 +2265,12 @@ end
     z2 = get_z(portfolio, rm, obj)
     @test isapprox(z2, 0.00916553108191174, rtol = 5.0e-5)
 
-    rm = RLVaR()
+    rm = RVaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z3 = get_z(portfolio, rm, obj)
     @test isapprox(z3, 0.0018050418972062146, rtol = 5.0e-6)
 
-    rm = RLDaR()
+    rm = RDaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z4 = get_z(portfolio, rm, obj)
     @test isapprox(z4, 0.003567371641778554, rtol = 5.0e-8)
@@ -2285,12 +2285,12 @@ end
     z6 = get_z(portfolio, rm[1], obj)
     @test isapprox(z6[1], z6[2], rtol = 5.0e-6)
 
-    rm = [[RLVaR(), RLVaR()]]
+    rm = [[RVaR(), RVaR()]]
     optimise!(portfolio; rm = rm, obj = obj)
     z7 = get_z(portfolio, rm[1], obj)
     @test isapprox(z7[1], z7[2], rtol = 1.0e-5)
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     optimise!(portfolio; rm = rm, obj = obj)
     z8 = get_z(portfolio, rm[1], obj)
     @test isapprox(z8[1], z8[2], rtol = 5.0e-6)
@@ -2319,12 +2319,12 @@ end
     z10 = get_z(portfolio, rm, obj)
     @test isapprox(z10, 0.01165505512394213, rtol = 5.0e-7)
 
-    rm = RLVaR()
+    rm = RVaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z11 = get_z(portfolio, rm, obj)
     @test isapprox(z11, 0.002530053705676598)
 
-    rm = RLDaR()
+    rm = RDaR()
     optimise!(portfolio; rm = rm, obj = obj)
     z12 = get_z(portfolio, rm, obj)
     @test isapprox(z12, 0.0041978310601217435, rtol = 5.0e-5)
@@ -2339,12 +2339,12 @@ end
     z14 = get_z(portfolio, rm[1], obj)
     @test isapprox(z14[1], z14[2], rtol = 5.0e-7)
 
-    rm = [[RLVaR(), RLVaR()]]
+    rm = [[RVaR(), RVaR()]]
     optimise!(portfolio; rm = rm, obj = obj)
     z15 = get_z(portfolio, rm[1], obj)
     @test isapprox(z15[1], z15[2])
 
-    rm = [[RLDaR(), RLDaR()]]
+    rm = [[RDaR(), RDaR()]]
     optimise!(portfolio; rm = rm, obj = obj)
     z16 = get_z(portfolio, rm[1], obj)
     @test isapprox(z16[1], z16[2])

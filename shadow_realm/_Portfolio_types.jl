@@ -209,7 +209,7 @@ Some constraints define decision variables using scaling factors. The scaling fa
       + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
   - `alpha`:
 
-      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+      + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
   - `beta_i`:
 
       + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
@@ -221,7 +221,7 @@ Some constraints define decision variables using scaling factors. The scaling fa
       + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
   - `kappa`:
 
-      + `rm ∈ (:RLVaR, :RLDaR, :RDaR_r)`: relativistic deformation parameter.
+      + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
   - `max_num_assets_kurt`:
 
       + `iszero(max_num_assets_kurt)`: use the full kurtosis model.
@@ -1564,7 +1564,7 @@ Some of these require external information from the arguments of functions that 
       + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
   - `alpha`:
 
-      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+      + `rm ∈ (:VaR, :CVaR, :EVaR, :RVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
   - `beta_i`:
 
       + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
@@ -1576,7 +1576,7 @@ Some of these require external information from the arguments of functions that 
       + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
   - `kappa`:
 
-      + `rm ∈ (:RLVaR, :RLDaR, :RDaR_r)`: relativistic deformation parameter.
+      + `rm ∈ (:RVaR, :RDaR, :RDaR_r)`: relativistic deformation parameter.
   - `max_num_assets_kurt`:
 
       + `type == :NCO`:

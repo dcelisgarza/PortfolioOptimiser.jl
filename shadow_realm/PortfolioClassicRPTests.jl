@@ -472,14 +472,14 @@ end
     @test isapprox(hrc2 / lrc2, 20, atol = 3e-2)
 end
 
-@testset "$(:Classic), $(:RP), $(:RLVaR)" begin
+@testset "$(:Classic), $(:RP), $(:RVaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
                                                                                   "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = :RLVaR
+    rm = :RVaR
     opt = OptimiseOpt(; type = :RP, rm = rm)
 
     portfolio.risk_budget = []
@@ -724,14 +724,14 @@ end
     @test isapprox(hrc2 / lrc2, 20, atol = 6.1e0)
 end
 
-@testset "$(:Classic), $(:RP), $(:RLDaR)" begin
+@testset "$(:Classic), $(:RP), $(:RDaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
                                                                                   "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = :RLDaR
+    rm = :RDaR
     opt = OptimiseOpt(; type = :RP, rm = rm)
 
     portfolio.risk_budget = []

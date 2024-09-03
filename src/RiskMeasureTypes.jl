@@ -101,19 +101,19 @@ function Base.setproperty!(obj::EVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RLVaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+mutable struct RVaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RLVaR(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-               kappa = 0.3, solvers::Union{<:AbstractDict, Nothing} = nothing)
+function RVaR(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+              kappa = 0.3, solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RLVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
+    return RVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
-function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
+function Base.setproperty!(obj::RVaR, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -125,10 +125,6 @@ end
 end
 
 @kwdef struct ADD <: TradRiskMeasure
-    settings::RiskMeasureSettings = RiskMeasureSettings()
-end
-
-@kwdef struct UCI <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 
@@ -145,6 +141,10 @@ function Base.setproperty!(obj::CDaR, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+
+@kwdef struct UCI <: TradRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 
 mutable struct EDaR{T1 <: Real} <: TradRiskMeasure
@@ -164,19 +164,19 @@ function Base.setproperty!(obj::EDaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RLDaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+mutable struct RDaR{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RLDaR(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, Nothing} = nothing)
+function RDaR(; settings = RiskMeasureSettings(), alpha::Real = 0.05, kappa = 0.3,
+              solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RLDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
+    return RDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
-function Base.setproperty!(obj::RLDaR, sym::Symbol, val)
+function Base.setproperty!(obj::RDaR, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -386,11 +386,7 @@ end
     settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
 end
 
-@kwdef struct UCI_r <: HCRiskMeasure
-    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
-end
-
-mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
+mutable struct CDaR_r{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
 end
@@ -405,7 +401,11 @@ function Base.setproperty!(obj::CDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+@kwdef struct UCI_r <: HCRiskMeasure
+    settings::HCRiskMeasureSettings = HCRiskMeasureSettings()
+end
+
+mutable struct EDaR_r{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     solvers::Union{<:AbstractDict, Nothing}
@@ -422,7 +422,7 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasure
+mutable struct RDaR_r{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
@@ -446,6 +446,6 @@ end
 end
 
 export RiskMeasureSettings, HCRiskMeasureSettings, QuadSD, SOCSD, SimpleSD, SD, MAD, SSD,
-       FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG,
+       FLPM, SLPM, WR, CVaR, EVaR, RVaR, MDD, ADD, CDaR, UCI, EDaR, RDaR, Kurt, SKurt, RG,
        RCVaR, OWASettings, GMD, TG, RTG, OWA, dVar, Skew, SSkew, Variance, VaR, DaR, DaR_r,
        MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Equal

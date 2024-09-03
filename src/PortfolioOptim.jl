@@ -827,10 +827,10 @@ end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_evar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RLVaR, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::RVaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rvar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLVaR}, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RVaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rvar]), obj)
 end
 function get_z_from_model(model::JuMP.Model, ::EDaR, obj::Any)
@@ -839,10 +839,10 @@ end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_edar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::RLDaR, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::RDaR, obj::Any)
     return adjust_model_value_for_obj(model, value(model[:z_rdar]), obj)
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLDaR}, obj::Any)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RDaR}, obj::Any)
     return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
 end
 """
@@ -901,7 +901,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::RVaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
@@ -936,7 +936,7 @@ function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:RVaR}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
@@ -1109,7 +1109,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::RDaR, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
@@ -1141,7 +1141,7 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:RDaR}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DaR_setup(model, returns)
@@ -1956,14 +1956,14 @@ function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP}, obj; kwargs..
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function risk_constraints(port, obj, type::Union{Trad, RP, NOC}, rm::TradRiskMeasure, mu,
-                          sigma, returns, kelly_approx_idx = nothing)
+function risk_constraints(port, obj, type::Union{Trad, RP}, rm::TradRiskMeasure, mu, sigma,
+                          returns, kelly_approx_idx = nothing)
     set_rm(port, rm, type, obj; mu = mu, sigma = sigma, returns = returns,
            kelly_approx_idx = kelly_approx_idx)
     return nothing
 end
-function risk_constraints(port, obj, type::Union{Trad, RP, NOC}, rms::AbstractVector, mu,
-                          sigma, returns, kelly_approx_idx = nothing)
+function risk_constraints(port, obj, type::Union{Trad, RP}, rms::AbstractVector, mu, sigma,
+                          returns, kelly_approx_idx = nothing)
     for rm ∈ rms
         set_rm(port, rm, type, obj; mu = mu, sigma = sigma, returns = returns,
                kelly_approx_idx = kelly_approx_idx)
@@ -2751,7 +2751,7 @@ function _optimise!(type::NOC, port::Portfolio,
     set_string_names_on_creation(port.model, str_names)
     initial_w(port, w_ini)
     kelly_approx_idx = Int[]
-    risk_constraints(port, nothing, type, rm, mu, sigma, returns, kelly_approx_idx)
+    risk_constraints(port, nothing, Trad(), rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
     weight_constraints(port, nothing)
     noc_constraints(port.model, risk0, ret0)

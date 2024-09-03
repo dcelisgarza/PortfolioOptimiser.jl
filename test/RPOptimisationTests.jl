@@ -429,7 +429,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.001)
 end
 
-@testset "RLVaR" begin
+@testset "RVaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -438,7 +438,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = RLVaR()
+    rm = RVaR()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
@@ -470,7 +470,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.1)
 end
 
-@testset "EVaR < RLVaR < WR" begin
+@testset "EVaR < RVaR < WR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -479,9 +479,9 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = RLVaR(; kappa = 5e-4)
+    rm = RVaR(; kappa = 5e-4)
     w1 = optimise!(portfolio; rm = rm, type = RP())
-    rm = RLVaR(; kappa = 1 - 5e-4)
+    rm = RVaR(; kappa = 1 - 5e-4)
     w2 = optimise!(portfolio; rm = rm, type = RP())
     rm = EVaR()
     w3 = optimise!(portfolio; rm = rm, type = RP())
@@ -699,7 +699,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.5)
 end
 
-@testset "RLDaR" begin
+@testset "RDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -708,7 +708,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = RLDaR()
+    rm = RDaR()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
@@ -740,7 +740,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.25)
 end
 
-@testset "EDaR < RLDaR" begin
+@testset "EDaR < RDaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -751,7 +751,7 @@ end
     asset_statistics!(portfolio)
 
     obj = MinRisk()
-    rm = RLDaR(; kappa = 5e-3)
+    rm = RDaR(; kappa = 5e-3)
     w1 = optimise!(portfolio; rm = rm, type = RP())
     rm = EDaR()
     w2 = optimise!(portfolio; rm = rm, type = RP())

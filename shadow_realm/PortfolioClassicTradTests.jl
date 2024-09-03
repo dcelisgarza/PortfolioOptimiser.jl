@@ -2327,14 +2327,14 @@ end
     @test isapprox(w19.weights, w1.weights, rtol = 1e0)
 end
 
-@testset "$(:Classic), $(:Trad), $(:RLVaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RVaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
                                                                                   "max_step_fraction" => 0.65))))
     asset_statistics!(portfolio)
 
-    rm = :RLVaR
+    rm = :RVaR
     opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
                       obj = :Min_Risk, kelly = :None)
 
@@ -3472,14 +3472,14 @@ end
     @test isapprox(w19.weights, w1.weights, rtol = 1e-1)
 end
 
-@testset "$(:Classic), $(:Trad), $(:RLDaR)" begin
+@testset "$(:Classic), $(:Trad), $(:RDaR)" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false,
                                                                                   "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = :RLDaR
+    rm = :RDaR
     opt = OptimiseOpt(; rf = rf, l = l, class = :Classic, type = :Trad, rm = rm,
                       obj = :Min_Risk, kelly = :None)
 
