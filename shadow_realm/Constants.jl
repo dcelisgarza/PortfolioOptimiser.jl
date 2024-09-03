@@ -913,13 +913,13 @@ RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
                     SLPM = "Second Lower Partial Moment", WR = "Worst Realisation",
                     CVaR = "Conditional Value at Risk",
                     EVaR = "Entropic Value at Risk",
-                    RVaR = "Relativistic Value at Risk",
+                    RLVaR = "Relativistic Value at Risk",
                     MDD = "Uncompounded Max Drawdown",
                     ADD = "Uncompounded Average Drawdown",
                     CDaR = "Conditional Uncompounded Drawdown at Risk",
                     UCI = "Uncompounded Ulcer Index",
                     EDaR = "Entropic Uncompounded Drawdown at Risk",
-                    RDaR = "Relativistic Uncompounded Drawdown at Risk",
+                    RLDaR = "Relativistic Uncompounded Drawdown at Risk",
                     Kurt = "Square Root Kurtosis",
                     SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
                     RG = "Range", RCVaR = "Conditional Value at Risk Range",
@@ -944,13 +944,13 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           SLPM = "Second Lower Partial Moment", WR = "Worst Realisation",
                           CVaR = "Conditional Value at Risk",
                           EVaR = "Entropic Value at Risk",
-                          RVaR = "Relativistic Value at Risk",
+                          RLVaR = "Relativistic Value at Risk",
                           MDD = "Uncompounded Max Drawdown",
                           ADD = "Uncompounded Average Drawdown",
                           CDaR = "Conditional Uncompounded Drawdown at Risk",
                           UCI = "Uncompounded Ulcer Index",
                           EDaR = "Entropic Uncompounded Drawdown at Risk",
-                          RDaR = "Relativistic Uncompounded Drawdown at Risk",
+                          RLDaR = "Relativistic Uncompounded Drawdown at Risk",
                           Kurt = "Square Root Kurtosis",
                           SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
                           RG = "Range", RCVaR = "Conditional Value at Risk Range",
@@ -971,8 +971,8 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
 
 """
 ```
-RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD, :CDaR,
-                :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA. :DVar, :Skew)
+RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD, :CDaR,
+                :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA. :DVar, :Skew)
 ```
 
 Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
@@ -989,13 +989,13 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
   - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
   - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
   - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLVaR`: relativistic value at risk, [`RLVaR`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
   - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
   - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
   - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). Solver must support `MOI.SecondOrderCone`.
   - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
@@ -1008,14 +1008,14 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
   - `:Skew`: quadratic negative skewness, [`Skew`](@ref) [Skew](@cite).
   - `:SSkew`: quadratic negative semi skewness, [`Skew`](@ref) [Skew](@cite).
 """
-const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
-                      :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
+const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD,
+                      :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
                       :RTG, :OWA, :DVar, :Skew, :SSkew)
 
 """
 ```
-HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RVaR, :MDD, :ADD,
-                  :CDaR, :UCI, :EDaR, :RDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
+HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD,
+                  :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
                   :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
                   :UCI_r, :EDaR_r, :RDaR_r, :DVar)
 ```
@@ -1042,7 +1042,7 @@ These risk measures are available for all optimisation types.
   - `:WR`: worst realisation (Minimax), [`WR`](@ref) [WR](@cite).
   - `:CVaR`: conditional value at risk, [`CVaR`](@ref) [CVaR](@cite).
   - `:EVaR`: entropic value at risk, [`EVaR`](@ref) [EVaR1, EVaR2, EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RVaR`: relativistic value at risk, [`RVaR`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLVaR`: relativistic value at risk, [`RLVaR`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:MDD`: maximum drawdown of uncompounded cumulative returns (Calmar ratio), [`MDD_abs`](@ref) [DDs](@cite).
   - `:ADD`: average drawdown of uncompounded cumulative returns, [`ADD_abs`](@ref) [DDs](@cite).
   - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
@@ -1050,7 +1050,7 @@ These risk measures are available for all optimisation types.
 
       + If `:NCO`: solver must support `MOI.SecondOrderCone`.
   - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite).
 
       + If `:NCO`: solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.

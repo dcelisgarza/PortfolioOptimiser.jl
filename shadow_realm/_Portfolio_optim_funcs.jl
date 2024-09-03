@@ -286,7 +286,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     evar_u = portfolio.evar_u
     rvar_u = portfolio.rvar_u
 
-    if !(rm ∈ (:CVaR, :RCVaR, :EVaR, :RVaR) ||
+    if !(rm ∈ (:CVaR, :RCVaR, :EVaR, :RLVaR) ||
          isfinite(cvar_u) ||
          isfinite(rcvar_u) ||
          isfinite(evar_u) ||
@@ -374,7 +374,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if !(rm == :RVaR || isfinite(rvar_u))
+    if !(rm == :RLVaR || isfinite(rvar_u))
         return nothing
     end
 
@@ -409,7 +409,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if rm == :RVaR
+    if rm == :RLVaR
         @expression(model, risk, rvar_risk)
     end
 
@@ -424,7 +424,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
     edar_u = portfolio.edar_u
     rdar_u = portfolio.rdar_u
 
-    if !(rm ∈ (:MDD, :ADD, :CDaR, :UCI, :EDaR, :RDaR) ||
+    if !(rm ∈ (:MDD, :ADD, :CDaR, :UCI, :EDaR, :RLDaR) ||
          isfinite(mdd_u) ||
          isfinite(add_u) ||
          isfinite(cdar_u) ||
@@ -539,7 +539,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if !(rm == :RDaR || isfinite(rdar_u))
+    if !(rm == :RLDaR || isfinite(rdar_u))
         return nothing
     end
 
@@ -573,7 +573,7 @@ function _drawdown_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if rm == :RDaR
+    if rm == :RLDaR
         @expression(model, risk, rdar_risk)
     end
 
@@ -1881,7 +1881,7 @@ function _finalise_portfolio(portfolio, class, returns, N, solvers_tried, type, 
         tmp * String(type)
     end
 
-    if type ∈ (:Trad, :RP) && rm ∈ (:EVaR, :EDaR, :RVaR, :RDaR)
+    if type ∈ (:Trad, :RP) && rm ∈ (:EVaR, :EDaR, :RLVaR, :RLDaR)
         z_key = "z_" * lowercase(string(rm))
         z_key2 = Symbol(strtype * "_" * z_key)
         portfolio.z[z_key2] = value(portfolio.model[Symbol(z_key)])

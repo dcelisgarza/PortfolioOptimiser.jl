@@ -71,7 +71,7 @@
 #     rc = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta, marginal = marginal,
 #                            kwargs...)
 
-#     DDs = (DaR, MDD, ADD, CDaR, EDaR, RDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
+#     DDs = (DaR, MDD, ADD, CDaR, EDaR, RLDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
 #            RDaR_r, UCI_r)
 
 #     if !any(typeof(rm) .<: DDs)
@@ -87,13 +87,13 @@
 #     rmstr = rmstr[1:(findfirst('{', rmstr) - 1)]
 #     title = "Risk Contribution - $rmstr"
 #     if any(typeof(rm) .<:
-#            (CVaR, TG, EVaR, RVaR, RCVaR, RTG, CDaR, EDaR, RDaR, CDaR_r, EDaR_r, RDaR_r))
+#            (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR, CDaR_r, EDaR_r, RDaR_r))
 #         title *= " α = $(round(rm.alpha*100, digits=2))%"
 #     end
 #     if any(typeof(rm) .<: (RCVaR, RTG))
 #         title *= ", β = $(round(rm.beta*100, digits=2))%"
 #     end
-#     if any(typeof(rm) .<: (RVaR, RDaR, RDaR_r))
+#     if any(typeof(rm) .<: (RLVaR, RLDaR, RDaR_r))
 #         title *= ", κ = $(round(rm.kappa, digits=2))"
 #     end
 
@@ -162,7 +162,7 @@
 
 #     rets .*= t_factor
 
-#     if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RDaR, UCI))
+#     if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
 #         risks .*= sqrt(t_factor)
 #     end
 
@@ -170,13 +170,13 @@
 #     N = length(ratios)
 
 #     title = "$(get_rm_string(rm))"
-#     if any(typeof(rm) .<: (CVaR, TG, EVaR, RVaR, RCVaR, RTG, CDaR, EDaR, RDaR))
+#     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR))
 #         title *= " α = $(round(rm.alpha*100, digits=2))%"
 #     end
 #     if any(typeof(rm) .<: (RCVaR, RTG))
 #         title *= ", β = $(round(rm.beta*100, digits=2))%"
 #     end
-#     if any(typeof(rm) .<: (RVaR, RDaR))
+#     if any(typeof(rm) .<: (RLVaR, RLDaR))
 #         title *= ", κ = $(round(rm.kappa, digits=2))"
 #     end
 
@@ -217,7 +217,7 @@
 #     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
 #     weights = Matrix(frontier[:weights][!, 2:end])
 
-#     if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RDaR, UCI))
+#     if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
 #         risks .*= sqrt(t_factor)
 #     end
 
@@ -231,13 +231,13 @@
 #     weights = weights[:, idx]
 
 #     title = "$(get_rm_string(rm))"
-#     if any(typeof(rm) .<: (CVaR, TG, EVaR, RVaR, RCVaR, RTG, CDaR, EDaR, RDaR))
+#     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR))
 #         title *= " α = $(round(rm.alpha*100, digits=2))%"
 #     end
 #     if any(typeof(rm) .<: (RCVaR, RTG))
 #         title *= ", β = $(round(rm.beta*100, digits=2))%"
 #     end
-#     if any(typeof(rm) .<: (RVaR, RDaR))
+#     if any(typeof(rm) .<: (RLVaR, RLDaR))
 #         title *= ", κ = $(round(rm.kappa, digits=2))"
 #     end
 
@@ -313,7 +313,7 @@
 #                    "$(conf)% Confidence DaR: $(round(risks[3], digits = 2))%",
 #                    "$(conf)% Confidence CDaR: $(round(risks[4], digits = 2))%",
 #                    "$(conf)% Confidence EDaR: $(round(risks[5], digits = 2))%",
-#                    "$(conf)% Confidence RDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
+#                    "$(conf)% Confidence RLDaR ($(round(kappa, digits=2))): $(round(risks[6], digits = 2))%",
 #                    "Maximum Drawdown: $(round(risks[7], digits = 2))%")
 
 #     f = Figure()
@@ -372,7 +372,7 @@
 #                    "$(conf)% Confidence CVaR: $(round(risks[6], digits=2))%",
 #                    "$(conf)% Confidence Tail Gini: $(round(risks[7], digits=2))%",
 #                    "$(conf)% Confidence EVaR: $(round(risks[8], digits=2))%",
-#                    "$(conf)% Confidence RVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",
+#                    "$(conf)% Confidence RLVaR ($(round(kappa, digits=2))): $(round(risks[9], digits=2))%",
 #                    "Worst Realisation: $(round(risks[10], digits=2))%")
 
 #     D = fit(Normal, ret)

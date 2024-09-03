@@ -394,12 +394,12 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 """
 ```julia
-RVaR(
+RLVaR(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    κ::Real = 0.3)
 ```
 Compute the Relativistic Value at Risk.
 ```math
-\\mathrm{RVaR}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)\\,,```
+\\mathrm{RLVaR}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)\\,,```
 where ``\\mathrm{RRM}(\\bm{x},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
@@ -407,8 +407,8 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-              kappa::Real = 0.3)
+function RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+               kappa::Real = 0.3)
     return RRM(x, solvers, alpha, kappa)
 end
 
@@ -1146,8 +1146,8 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         CVaR(x, alpha)
     elseif rm == :EVaR
         EVaR(x, solvers, alpha)
-    elseif rm == :RVaR
-        RVaR(x, solvers, alpha, kappa)
+    elseif rm == :RLVaR
+        RLVaR(x, solvers, alpha, kappa)
     elseif rm == :DaR
         DaR_abs(x, alpha)
     elseif rm == :MDD
@@ -1160,7 +1160,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         UCI_abs(x)
     elseif rm == :EDaR
         EDaR_abs(x, solvers, alpha)
-    elseif rm == :RDaR
+    elseif rm == :RLDaR
         RDaR_abs(x, solvers, alpha, kappa)
     elseif rm == :DaR_r
         DaR_rel(x, alpha)
@@ -1254,9 +1254,9 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
     elseif rm == :EVaR
         r1 = EVaR(a1, solvers, alpha)
         r2 = EVaR(a2, solvers, alpha)
-    elseif rm == :RVaR
-        r1 = RVaR(a1, solvers, alpha, kappa)
-        r2 = RVaR(a2, solvers, alpha, kappa)
+    elseif rm == :RLVaR
+        r1 = RLVaR(a1, solvers, alpha, kappa)
+        r2 = RLVaR(a2, solvers, alpha, kappa)
     elseif rm == :DaR
         r1 = DaR_abs(a1, alpha)
         r2 = DaR_abs(a2, alpha)
@@ -1275,7 +1275,7 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
     elseif rm == :EDaR
         r1 = EDaR_abs(a1, solvers, alpha)
         r2 = EDaR_abs(a2, solvers, alpha)
-    elseif rm == :RDaR
+    elseif rm == :RLDaR
         r1 = RDaR_abs(a1, solvers, alpha, kappa)
         r2 = RDaR_abs(a2, solvers, alpha, kappa)
     elseif rm == :DaR_r
@@ -1490,7 +1490,7 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
                         SV = portfolio.SV, solvers = portfolio.solvers)
 end
 
-export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RVaR, DaR_abs,
+export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RLVaR, DaR_abs,
        MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
        CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
        DVar, Skew, calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution

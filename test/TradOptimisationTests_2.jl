@@ -1173,7 +1173,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "RVaR" begin
+@testset "RLVaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -1181,7 +1181,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    rm = RVaR()
+    rm = RLVaR()
 
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1407,7 +1407,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "EVaR < RVaR < WR" begin
+@testset "EVaR < RLVaR < WR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -1417,9 +1417,9 @@ end
     asset_statistics!(portfolio)
 
     obj = MinRisk()
-    rm = RVaR(; kappa = 5e-4)
+    rm = RLVaR(; kappa = 5e-4)
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
-    rm = RVaR(; kappa = 1 - 5e-4)
+    rm = RLVaR(; kappa = 1 - 5e-4)
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm = EVaR()
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1429,9 +1429,9 @@ end
     @test isapprox(w2.weights, w4.weights, rtol = 5.0e-8)
 
     obj = Sharpe(; rf = rf)
-    rm = RVaR(; kappa = 7e-4)
+    rm = RLVaR(; kappa = 7e-4)
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
-    rm = RVaR(; kappa = 1 - 7e-4)
+    rm = RLVaR(; kappa = 1 - 7e-4)
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm = EVaR()
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)

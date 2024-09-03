@@ -1,4 +1,11 @@
 module PortfolioOptimiser
+
+@doc let
+    path = joinpath(dirname(@__DIR__), "README.md")
+    include_dependency(path)
+    read(path, String)
+end PortfolioOptimiser
+
 using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distributions,
       GLM, JuMP, LinearAlgebra, MultivariateStats, NearestCorrelationMatrix, Optim, Graphs,
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
