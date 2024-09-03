@@ -1956,14 +1956,14 @@ function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP}, obj; kwargs..
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function risk_constraints(port, obj, type::Union{Trad, RP}, rm::TradRiskMeasure, mu, sigma,
-                          returns, kelly_approx_idx = nothing)
+function risk_constraints(port, obj, type::Union{Trad, RP, NOC}, rm::TradRiskMeasure, mu,
+                          sigma, returns, kelly_approx_idx = nothing)
     set_rm(port, rm, type, obj; mu = mu, sigma = sigma, returns = returns,
            kelly_approx_idx = kelly_approx_idx)
     return nothing
 end
-function risk_constraints(port, obj, type::Union{Trad, RP}, rms::AbstractVector, mu, sigma,
-                          returns, kelly_approx_idx = nothing)
+function risk_constraints(port, obj, type::Union{Trad, RP, NOC}, rms::AbstractVector, mu,
+                          sigma, returns, kelly_approx_idx = nothing)
     for rm ∈ rms
         set_rm(port, rm, type, obj; mu = mu, sigma = sigma, returns = returns,
                kelly_approx_idx = kelly_approx_idx)
