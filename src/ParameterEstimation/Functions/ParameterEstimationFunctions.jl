@@ -18,6 +18,7 @@ function cov_returns(x::AbstractMatrix; iters::Integer = 5, len::Integer = 10,
     C = cholesky(x)
     return a * C.U
 end
+export cov_returns
 
 include("./PosdefFixFunctions.jl")
 include("./MatrixDenoisingFunctions.jl")
@@ -28,7 +29,6 @@ include("./MeanEstimatorFunctions.jl")
 include("./WorstCaseFunctions.jl")
 include("./RegressionFunctions.jl")
 include("./BlackLittermanFunctions.jl")
-# include("./NetworkFunctions.jl")
+include("./NetworkFunctions.jl")
 include("./OWAFunctions.jl")
-
-export cov_returns
+include("./DBHTs.jl")
