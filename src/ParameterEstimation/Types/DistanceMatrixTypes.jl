@@ -190,6 +190,14 @@ function DistanceVarInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
     end
     return DistanceVarInfo(bins, normalise)
 end
+function Base.setproperty!(obj::DistanceVarInfo, sym::Symbol, val)
+    if sym == :bins
+        if isa(val, Integer)
+            @smart_assert(val > zero(val))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
 
 export DistanceMLP, DistanceSqMLP, DistanceLog, DistanceCanonical, Knuth, Freedman, Scott,
        HGR, DistanceVarInfo

@@ -17,6 +17,12 @@ function PVal(; threshold::Real = 0.05)
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return PVal{typeof(threshold)}(threshold)
 end
+function Base.setproperty!(obj::PVal, sym::Symbol, val)
+    if sym == :threshold
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
 
 abstract type DimensionReductionTarget end
 @kwdef mutable struct PCATarget <: DimensionReductionTarget

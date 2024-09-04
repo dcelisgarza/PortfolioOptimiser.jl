@@ -185,6 +185,14 @@ function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
     end
     return CorMutualInfo(bins, normalise, ve, w)
 end
+function Base.setproperty!(obj::CorMutualInfo, sym::Symbol, val)
+    if sym == :bins
+        if isa(val, Integer)
+            @smart_assert(val > zero(val))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
 
 """
 ```
@@ -232,6 +240,12 @@ function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = Simple
                 w::Union{<:AbstractWeights, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return CorLTD(alpha, ve, w)
+end
+function Base.setproperty!(obj::CorLTD, sym::Symbol, val)
+    if sym == :alpha
+        @smart_assert(zero(val) <= val <= one(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 abstract type CorGerber <: PortfolioOptimiserCovCor end
