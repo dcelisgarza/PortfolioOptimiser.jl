@@ -118,6 +118,7 @@ All covariance estimators can be used for correlation estimation.
 ###### Regression criteria
 
   - p-value threshold, [`PVal`](@ref).
+
   - Model quality indicators.
     
       + Akaike's Information Criterion, [`AIC`](@ref).
@@ -128,9 +129,10 @@ All covariance estimators can be used for correlation estimation.
 
 ##### Dimensionality reduction
 
-- Principal component analysis (PCA) based regression, [`PCAReg`](@ref).
-  - PCA target, [`PCATarget`](@ref).
-  - Probabilistic PCA target, [`PPCATarget`](@ref).
+  - Principal component analysis (PCA) based regression, [`PCAReg`](@ref).
+    
+      + PCA target, [`PCATarget`](@ref).
+      + Probabilistic PCA target, [`PPCATarget`](@ref).
 
 #### Matrix processing
 

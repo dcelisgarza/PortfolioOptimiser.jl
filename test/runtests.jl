@@ -1,17 +1,5 @@
 using SafeTestsets
 
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
@@ -98,4 +86,16 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
 end
