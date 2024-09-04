@@ -1,8 +1,35 @@
-function calc_centrality(method::DegreeCentrality, G)
-    return Graphs.degree_centrality(G, method.args...; method.kwargs...)
+function calc_centrality(method::BetweennessCentrality, G)
+    return Graphs.betweenness_centrality(G, method.args...; method.kwargs...)
 end
-function _tree_func(::KruskalTree)
-    return Graphs.kruskal_mst
+function calc_centrality(method::ClosenessCentrality, G)
+    return Graphs.closeness_centrality(G, method.args...; method.kwargs...)
+end
+function calc_centrality(method::DegreeCentrality, G)
+    return Graphs._degree_centrality(G, method.type; method.kwargs...)
+end
+function calc_centrality(::EigenvectorCentrality, G)
+    return Graphs.eigenvector_centrality(G)
+end
+function calc_centrality(method::KatzCentrality, G)
+    return Graphs.katz_centrality(G, method.alpha)
+end
+function calc_centrality(method::Pagerank, G)
+    return Graphs.pagerank(G, method.alpha, method.n, method.epsilon)
+end
+function calc_centrality(::RadialityCentrality, G)
+    return Graphs.radiality_centrality(G)
+end
+function calc_centrality(method::StressCentrality, G)
+    return Graphs.stress_centrality(G, method.args...; method.kwargs...)
+end
+function clac_mst(method::KruskalTree, G)
+    return Graphs.kruskal_mst(G, method.args...; method.kwargs...)
+end
+function clac_mst(method::BoruvkaTree, G)
+    return Graphs.boruvka_mst(G, method.args...; method.kwargs...)
+end
+function clac_mst(method::PrimTree, G)
+    return Graphs.prim_mst(G, method.args...; method.kwargs...)
 end
 function _calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
     S = dbht_similarity(nt.similarity, rho, delta)
@@ -11,8 +38,8 @@ function _calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
 end
 function _calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
     G = SimpleWeightedGraph(delta)
-    tree_func = _tree_func(nt.tree)
-    return adjacency_matrix(SimpleGraph(G[tree_func(G, nt.tree.args...; nt.tree.kwargs...)]))
+    tree = clac_mst(nt.tree, G)
+    return adjacency_matrix(SimpleGraph(G[tree]))
 end
 function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
                          cor_type::PortfolioOptimiserCovCor, dist_type::DistanceMethod)

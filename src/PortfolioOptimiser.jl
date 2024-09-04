@@ -6,10 +6,9 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
 
 include("./RiskMeasureTypes.jl")
 include("./ParameterEstimationTypes.jl")
+include("./OWA.jl")
 include("./OptimisationTypes.jl")
 include("./PortfolioTypes.jl")
-include("./Misc.jl")
-include("./OWA.jl")
 include("./DBHTs.jl")
 include("./ParameterEstimation.jl")
 include("./Constraints.jl")

@@ -1,3 +1,27 @@
+function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
+    rmstr = ""
+    if !isa(rm, AbstractVector)
+        rmstr *= String(rm)
+    else
+        rm = reduce(vcat, rm)
+        for (i, r) ∈ enumerate(rm)
+            rmstr *= String(r)
+            if i != length(rm)
+                rmstr *= '_'
+            end
+        end
+    end
+    return Symbol(rmstr)
+end
+
+function get_first_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+    return if !isa(rm, AbstractVector)
+        rm
+    else
+        reduce(vcat, rm)[1]
+    end
+end
+
 """
 ```
 _Variance(w::AbstractVector, Σ::AbstractMatrix)
@@ -1482,5 +1506,5 @@ function sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
     return risk
 end
 
-export ERM, RRM, calc_risk, risk_bounds, risk_contribution, set_rm_properties,
-       unset_set_rm_properties, factor_risk_contribution, sharpe_ratio
+export get_rm_string, get_first_rm, ERM, RRM, calc_risk, risk_bounds, risk_contribution,
+       set_rm_properties, unset_set_rm_properties, factor_risk_contribution, sharpe_ratio

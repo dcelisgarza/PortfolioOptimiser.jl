@@ -1383,15 +1383,6 @@ abstract type BlackLittermanFactor <: BlackLitterman end
     logo::AbstractLoGo = NoLoGo()
 end
 
-@kwdef mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
-    constant::Bool = true
-    error::Bool = true
-    delta::Union{<:Real, Nothing} = 1.0
-    rf::T1 = 0.0
-    ve::StatsBase.CovarianceEstimator = SimpleVariance()
-    var_w::Union{<:AbstractWeights, Nothing} = nothing
-end
-
 @kwdef mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
     constant::Bool = true
     eq::Bool = true
@@ -1402,65 +1393,56 @@ end
     logo::AbstractLoGo = NoLoGo()
 end
 
-# ## Ordered Weight Array statistics
-
-"""
-```
-OWAMethods = (:CRRA, :E, :SS, :SD)
-```
-
-Methods for computing the weights used to combine L-moments higher than 2 [OWAL](@cite).
-
-  - `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-  - `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
-  - `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
-  - `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
-"""
-abstract type OWAMethods end
-
-mutable struct CRRA{T1 <: Real} <: OWAMethods
-    g::T1
-end
-function CRRA(; g::Real = 0.5)
-    @smart_assert(zero(g) < g < one(g))
-    return CRRA{typeof(g)}(g)
-end
-
-mutable struct MaxEntropy{T1 <: Real} <: OWAMethods
-    max_phi::T1
-end
-function MaxEntropy(; max_phi::Real = 0.5)
-    @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MaxEntropy{typeof(max_phi)}(max_phi)
-end
-
-mutable struct MinSumSq{T1 <: Real} <: OWAMethods
-    max_phi::T1
-end
-function MinSumSq(; max_phi::Real = 0.5)
-    @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MinSumSq{typeof(max_phi)}(max_phi)
-end
-
-mutable struct MinSqDist{T1 <: Real} <: OWAMethods
-    max_phi::T1
-end
-function MinSqDist(; max_phi::Real = 0.5)
-    @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MinSqDist{typeof(max_phi)}(max_phi)
+@kwdef mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
+    constant::Bool = true
+    error::Bool = true
+    delta::Union{<:Real, Nothing} = 1.0
+    rf::T1 = 0.0
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
 
 # ## Network statistics
 
 abstract type CentralityType end
 
-@kwdef mutable struct DegreeCentrality <: CentralityType
+@kwdef mutable struct BetweennessCentrality <: CentralityType
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+@kwdef mutable struct ClosenessCentrality <: CentralityType
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+@kwdef mutable struct DegreeCentrality{T1 <: Integer} <: CentralityType
+    type::T1 = 0
+    kwargs::NamedTuple = (;)
+end
+struct EigenvectorCentrality <: CentralityType end
+@kwdef mutable struct KatzCentrality{T1 <: Real} <: CentralityType
+    alpha::T1 = 0.3
+end
+@kwdef mutable struct Pagerank{T1 <: Real, T2 <: Integer, T3 <: Real} <: CentralityType
+    alpha::T1 = 0.85
+    n::T2 = 100
+    epsilon::T3 = 1e-6
+end
+struct RadialityCentrality <: CentralityType end
+@kwdef mutable struct StressCentrality <: CentralityType
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
 
 abstract type TreeType end
 @kwdef mutable struct KruskalTree <: TreeType
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+@kwdef mutable struct BoruvkaTree <: TreeType
+    args::Tuple = ()
+    kwargs::NamedTuple = (;)
+end
+@kwdef mutable struct PrimTree <: TreeType
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
@@ -1489,4 +1471,6 @@ export NoPosdef, PosdefNearest, NoDenoise, DenoiseFixed, DenoiseSpectral, Denois
        Box, Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
        KNormalWC, KGeneralWC, WCType, AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget,
        PPCATarget, FReg, BReg, PCAReg, FactorType, BLType, BBLType, ABLType, CRRA,
-       MaxEntropy, MinSumSq, MinSqDist, DegreeCentrality, KruskalTree, TMFG, MST
+       MaxEntropy, MinSumSq, MinSqDist, BetweennessCentrality, ClosenessCentrality,
+       DegreeCentrality, EigenvectorCentrality, KatzCentrality, Pagerank,
+       RadialityCentrality, StressCentrality, KruskalTree, BoruvkaTree, PrimTree, TMFG, MST
