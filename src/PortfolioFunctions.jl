@@ -388,4 +388,4 @@ function related_assets(port::AbstractPortfolio;
 end
 
 export asset_statistics!, wc_statistics!, factor_statistics!, black_litterman_statistics!,
-       black_litterman_factor_statistics!
+       black_litterman_factor_statistics!, cluster_asets!
