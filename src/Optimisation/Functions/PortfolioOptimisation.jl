@@ -2760,7 +2760,7 @@ function _optimise!(type::NOC, port::Portfolio,
 end
 
 function optimise!(port::Portfolio; rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
-                   type::PortType = Trad(), obj::ObjectiveFunction = MinRisk(),
+                   type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
                    str_names::Bool = false)

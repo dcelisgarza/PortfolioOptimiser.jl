@@ -1,0 +1,5 @@
+include("./ObjectiveFunctionTypes.jl")
+include("./OptimisationKindTypes.jl")
+include("./PortfolioClassTypes.jl")
+include("./AssetAllocTypes.jl")
+include("./OptimisationConstraintTypes.jl")
