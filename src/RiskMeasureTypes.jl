@@ -1,46 +1,6 @@
-# # Risk measures
-
-# ## Abstract and support types
-
-abstract type RiskMeasure end
-abstract type TradRiskMeasure <: RiskMeasure end
-abstract type HCRiskMeasure <: RiskMeasure end
-@kwdef mutable struct RiskMeasureSettings{T1 <: Real, T2 <: Real}
-    flag::Bool = true
-    scale::T1 = 1.0
-    ub::T2 = Inf
-end
-@kwdef mutable struct HCRiskMeasureSettings{T1 <: Real}
-    scale::T1 = 1.0
-end
-
-# ## Portfolio risk measures
-
-abstract type SDFormulation end
-abstract type SDSquaredFormulation <: SDFormulation end
-struct QuadSD <: SDSquaredFormulation end
-struct SOCSD <: SDSquaredFormulation end
-struct SimpleSD <: SDFormulation end
-mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: TradRiskMeasure
-    settings::RiskMeasureSettings
-    formulation::SDFormulation
-    sigma::T1
-end
-function SD(; settings::RiskMeasureSettings = RiskMeasureSettings(), formulation = SOCSD(),
-            sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(sigma)
-        @smart_assert(size(sigma, 1) == size(sigma, 2))
-    end
-    return SD{Union{<:AbstractMatrix, Nothing}}(settings, formulation, sigma)
-end
-function Base.setproperty!(obj::SD, sym::Symbol, val)
-    if sym == :sigma
-        if !isnothing(val)
-            @smart_assert(size(val, 1) == size(val, 2))
-        end
-    end
-    return setfield!(obj, sym, val)
-end
+# Risk measures
+include("./RiskMeasureAbstractTypes.jl")
+include("./RiskMeasureConcreteTypes.jl")
 
 @kwdef mutable struct MAD <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()

@@ -432,7 +432,7 @@ end
 
 """
 ```
-_RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05, κ::Real = 0.3)
+_RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05, κ::Real = 0.3)
 ```
 
 Compute the Relativistic Value at Risk.
@@ -449,8 +449,8 @@ Where ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Ris
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter.
 """
-function _RVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-               kappa::Real = 0.3)
+function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                kappa::Real = 0.3)
     return RRM(x, solvers, alpha, kappa)
 end
 
@@ -682,13 +682,13 @@ end
 
 """
 ```
-_RDaR(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Real = 0.3)
+_RLDaR(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Real = 0.3)
 ```
 
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
-\\mathrm{RDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 ```
 
 Where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{X})`` the drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
@@ -699,8 +699,8 @@ Where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is th
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter.
 """
-function _RDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-               kappa::Real = 0.3)
+function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                kappa::Real = 0.3)
     pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -942,13 +942,13 @@ end
 
 """
 ```
-_RDaR_r(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Real = 0.3)
+_RLDaR_r(x::AbstractVector, solvers::AbstractDict; alpha::Real = 0.05, kappa::Real = 0.3)
 ```
 
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 
 ```math
-\\mathrm{RDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 ```
 
 Where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{X})`` the drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
@@ -959,8 +959,8 @@ Where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is th
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter.
 """
-function _RDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-                 kappa::Real = 0.3)
+function _RLDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                  kappa::Real = 0.3)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -1068,7 +1068,7 @@ end
 
 """
 ```
-_RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+_CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
 ```
 
 Compute the _CVaR Range.
@@ -1083,7 +1083,7 @@ Compute the _CVaR Range.
 
     In-place sorts the input vector.
 """
-function _RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+function _CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
@@ -1116,7 +1116,7 @@ end
 
 """
 ```
-_RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
+_TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
      beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
 ```
 
@@ -1136,9 +1136,9 @@ Compute the Tail Gini Range.
 
     In-place sorts the input vector.
 """
-function _RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-              a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-              b_sim::Integer = a_sim)
+function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+               a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+               b_sim::Integer = a_sim)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                 beta = beta, b_sim = b_sim)
@@ -1249,7 +1249,7 @@ function calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EVaR(X * w, evar.solvers, evar.alpha)
 end
 function calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
+    return _RLVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
 end
 function calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR(X * w, dar.alpha)
@@ -1270,7 +1270,7 @@ function calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR(X * w, edar.solvers, edar.alpha)
 end
 function calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+    return _RLDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 function calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR_r(X * w, dar.alpha)
@@ -1290,8 +1290,8 @@ end
 function calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR_r(X * w, edar.solvers, edar.alpha)
 end
-function calc_risk(rdar::RDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RDaR_r(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+function calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _RLDaR_r(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
 end
 function calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _Kurt(X * w, kt.w)
@@ -1305,15 +1305,15 @@ end
 function calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RG(X * w)
 end
-function calc_risk(rcvar::RCVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RCVaR(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
+function calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _CVaRRG(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
 end
 function calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
 end
-function calc_risk(rtg::RTG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RTG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
-                beta_i = rtg.beta_i, beta = rtg.beta, b_sim = rtg.b_sim)
+function calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _TGRG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
+                 beta_i = rtg.beta_i, beta = rtg.beta, b_sim = rtg.b_sim)
 end
 function calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
@@ -1414,12 +1414,12 @@ end
 
 for (op, name) ∈
     zip((SD, Variance, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR, MDD, ADD,
-         CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Kurt,
-         SKurt, GMD, RG, RCVaR, TG, RTG, OWA, dVar, Skew, SSkew, Equal),
+         CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Kurt,
+         SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, dVar, Skew, SSkew, Equal),
         ("SD", "Variance", "MAD", "SSD", "FLPM", "SLPM", "WR", "VaR", "CVaR", "EVaR",
          "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r", "MDD_r",
-         "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RDaR_r", "Kurt", "SKurt", "GMD", "RG",
-         "RCVaR", "TG", "RTG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
+         "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD", "RG",
+         "CVaRRG", "TG", "TGRG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)
