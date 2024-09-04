@@ -2495,11 +2495,11 @@ end
 function _rebuild_B(B::DataFrame, ::Any, ::Any)
     return Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
 end
-function _rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::DRR)
+function _rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::PCAReg)
     B = Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
     X = transpose(factors)
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
-    model = fit(regression.pcr, X_std)
+    model = fit(regression.target, X_std)
     Vp = projection(model)
     sdev = if isnothing(regression.std_w)
         vec(std(regression.ve, X; dims = 2))

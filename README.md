@@ -99,13 +99,38 @@ All covariance estimators can be used for correlation estimation.
       + Stationary bootstrap, [`StationaryBS`](@ref).
       + Circular bootstrap, [`CircularBS`](@ref).
       + Moving bootstrap, [`MovingBS`](@ref).
+
   - Normal, [`NormalWC`](@ref).
   - Delta, [`DeltaWC`](@ref).
 
 ##### Elliptical constraint error size estimation
 
-- Normal, [`KNormalWC`](@ref).
-- General, [`KGeneralWC`](@ref)
+  - Normal, [`KNormalWC`](@ref).
+  - General, [`KGeneralWC`](@ref)
+
+#### Regression methods
+
+##### Stepwise methods
+
+  - Forward regression, [`FReg`](@reg).
+  - Backward regression, [`BReg`](@reg).
+
+###### Regression criteria
+
+  - p-value threshold, [`PVal`](@ref).
+  - Model quality indicators.
+    
+      + Akaike's Information Criterion, [`AIC`](@ref).
+      + Corrected Akaike's Information Criterion for small sample sizes, [`AICC`](@ref).
+      + Bayesian Information Criterion, [`BIC`](@ref).
+      + R² of a linear model, [`RSq`](@ref).
+      + adjusted R² for a linear model, [`AdjRSq`](@ref).
+
+##### Dimensionality reduction
+
+- Principal component analysis (PCA) based regression, [`PCAReg`](@ref).
+  - PCA target, [`PCATarget`](@ref).
+  - Probabilistic PCA target, [`PPCATarget`](@ref).
 
 #### Matrix processing
 

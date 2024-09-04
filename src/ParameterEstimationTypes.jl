@@ -1320,6 +1320,7 @@ end
 
 abstract type RegressionType end
 abstract type StepwiseRegression <: RegressionType end
+abstract type DimensionReductionRegression <: RegressionType end
 abstract type RegressionCriteria end
 abstract type MinValRegressionCriteria <: RegressionCriteria end
 abstract type MaxValRegressionCriteria <: RegressionCriteria end
@@ -1341,6 +1342,9 @@ abstract type DimensionReductionTarget end
 @kwdef mutable struct PCATarget <: DimensionReductionTarget
     kwargs::NamedTuple = (;)
 end
+@kwdef mutable struct PPCATarget <: DimensionReductionTarget
+    kwargs::NamedTuple = (;)
+end
 
 @kwdef mutable struct FReg <: StepwiseRegression
     criterion::RegressionCriteria = PVal(;)
@@ -1350,11 +1354,11 @@ end
     criterion::RegressionCriteria = PVal(;)
 end
 
-@kwdef mutable struct DRR <: RegressionType
+@kwdef mutable struct PCAReg <: DimensionReductionRegression
     ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    pcr::DimensionReductionTarget = PCATarget(;)
+    target::DimensionReductionTarget = PCATarget(;)
 end
 
 @kwdef mutable struct FactorType
@@ -1483,6 +1487,6 @@ export NoPosdef, PosdefNearest, NoDenoise, DenoiseFixed, DenoiseSpectral, Denois
        CorGerber2, CorSB0, CorSB1, CorGerberSB0, CorGerberSB1, NoLoGo, LoGo, KurtFull,
        KurtSemi, SkewFull, SkewSemi, PortCovCor, GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP,
        Box, Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
-       KNormalWC, KGeneralWC, WCType, AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget, FReg,
-       BReg, DRR, FactorType, BLType, BBLType, ABLType, CRRA, MaxEntropy, MinSumSq,
-       MinSqDist, DegreeCentrality, KruskalTree, TMFG, MST
+       KNormalWC, KGeneralWC, WCType, AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget,
+       PPCATarget, FReg, BReg, PCAReg, FactorType, BLType, BBLType, ABLType, CRRA,
+       MaxEntropy, MinSumSq, MinSqDist, DegreeCentrality, KruskalTree, TMFG, MST

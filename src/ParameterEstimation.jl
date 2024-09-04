@@ -1859,21 +1859,24 @@ end
 function MultivariateStats.fit(method::PCATarget, X::AbstractMatrix)
     return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
 end
-function prep_dim_red_reg(method::DRR, x::DataFrame)
+function MultivariateStats.fit(method::PPCATarget, X::AbstractMatrix)
+    return MultivariateStats.fit(MultivariateStats.PPCA, X; method.kwargs...)
+end
+function prep_dim_red_reg(method::PCAReg, x::DataFrame)
     N = nrow(x)
     X = transpose(Matrix(x))
 
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
 
-    model = fit(method.pcr, X_std)
+    model = fit(method.target, X_std)
     Xp = transpose(predict(model, X_std))
     Vp = projection(model)
     x1 = [ones(N) Xp]
 
     return X, x1, Vp
 end
-function _regression(method::DRR, X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix,
-                     y::AbstractVector)
+function _regression(method::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
+                     Vp::AbstractMatrix, y::AbstractVector)
     avg = vec(if isnothing(method.mean_w)
                   mean(X; dims = 2)
               else
@@ -1894,7 +1897,7 @@ function _regression(method::DRR, X::AbstractMatrix, x1::AbstractMatrix, Vp::Abs
 
     return beta
 end
-function regression(method::DRR, x::DataFrame, y::DataFrame)
+function regression(method::PCAReg, x::DataFrame, y::DataFrame)
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1

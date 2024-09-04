@@ -94,10 +94,10 @@ end
     asset_statistics!(portfolio)
     factor_statistics!(portfolio;
                        factor_type = FactorType(;
-                                                method = DRR(;
-                                                             pcr = PCATarget(;
-                                                                             kwargs = (;
-                                                                                       pratio = 0.95)))))
+                                                method = PCAReg(;
+                                                                target = PCATarget(;
+                                                                                   kwargs = (;
+                                                                                             pratio = 0.95)))))
     w1 = optimise!(portfolio; type = RP(), class = FC())
     frc1 = factor_risk_contribution(portfolio; type = :RP)
     frc1_l, frc1_h = extrema(frc1[1:3])
