@@ -4,7 +4,7 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
       StatsBase, TimeSeries
 
-include("./RiskMeasures/RiskMeasureTypes.jl")
+include("./RiskMeasures/Types/RiskMeasureTypes.jl")
 include("./ParameterEstimation/Types/ParameterEstimationTypes.jl")
 include("./OWA.jl")
 include("./OptimisationTypes.jl")
@@ -12,7 +12,7 @@ include("./PortfolioTypes.jl")
 include("./DBHTs.jl")
 include("./ParameterEstimation/Functions/ParameterEstimation.jl")
 include("./Constraints.jl")
-include("./RiskMeasures/RiskMeasures.jl")
+include("./RiskMeasures/Functions/RiskMeasures.jl")
 include("./HClustering.jl")
 include("./NetworkConstraints.jl")
 include("./Statistics.jl")
