@@ -1258,7 +1258,7 @@ end
     @test isapprox(ret9, rett)
 end
 
-@testset "RCVaR vec" begin
+@testset "CVaRRG vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -1277,7 +1277,7 @@ end
     riskt0 = 0.03439845483008025
     rett0 = 0.00038005938396668074
 
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -1297,7 +1297,7 @@ end
     @test isapprox(r1, riskt)
     @test isapprox(ret1, rett)
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r2 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret2 = dot(portfolio.mu, w2.weights)
@@ -1328,7 +1328,7 @@ end
     riskt0 = 0.0642632537835233
     rett0 = 0.0015273688513609762
 
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -1348,7 +1348,7 @@ end
     @test isapprox(r3, riskt)
     @test isapprox(ret3, rett)
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r4 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret4 = dot(portfolio.mu, w4.weights)
@@ -1370,26 +1370,26 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
           abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-10
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-10
 
     obj = Sharpe(; rf = rf)
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
           abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-9
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 ||
@@ -1397,24 +1397,24 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w5.weights) >= ret1
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     portfolio.mu_l = ret2
     w6 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = RCVaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = CVaRRG(; settings = RiskMeasureSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
 
-    rm = [[RCVaR(), RCVaR()]]
+    rm = [[CVaRRG(), CVaRRG()]]
     portfolio.mu_l = ret2
     w8 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w8.weights) >= ret2
@@ -1440,7 +1440,7 @@ end
     riskt1 = 0.006188174906237033
     rett1 = 0.00031019900389441354
 
-    rm = [[RCVaR(), RCVaR(; alpha = 0.75, beta = 0.75)]]
+    rm = [[CVaRRG(), CVaRRG(; alpha = 0.75, beta = 0.75)]]
     w9 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r9 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)

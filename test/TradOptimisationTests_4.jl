@@ -956,7 +956,7 @@ end
     @test dot(portfolio.mu, w40.weights) >= ret8
 end
 
-@testset "RTG" begin
+@testset "TGRG" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -966,7 +966,7 @@ end
                                                                            "max_iter" => 150,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = RTG(; owa = OWASettings(; approx = false))
+    rm = TGRG(; owa = OWASettings(; approx = false))
 
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1195,7 +1195,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = RTG(; owa = OWASettings())
+    rm = TGRG(; owa = OWASettings())
 
     obj = MinRisk()
     w21 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)

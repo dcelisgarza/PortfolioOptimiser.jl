@@ -246,8 +246,8 @@ This type of optimisation is the traditional efficient frontier optimisation.
       + Mean absolute deviation (MAD), [`MAD`](@ref).
       + Square root kurtosis, [`Kurt`](@ref).
       + Range, [`RG`](@ref).
-      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-      + Tail Gini range, [`RTG`](@ref).
+      + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
+      + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
@@ -324,8 +324,8 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
       + Mean absolute deviation (MAD), [`MAD`](@ref).
       + Square root kurtosis, [`Kurt`](@ref).
       + Range, [`RG`](@ref).
-      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-      + Tail Gini range, [`RTG`](@ref).
+      + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
+      + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
@@ -417,8 +417,8 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
       + Mean absolute deviation (MAD), [`MAD`](@ref).
       + Square root kurtosis, [`Kurt`](@ref).
       + Range, [`RG`](@ref).
-      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-      + Tail Gini range, [`RTG`](@ref).
+      + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
+      + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
@@ -483,8 +483,8 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
       + Mean absolute deviation (MAD), [`MAD`](@ref).
       + Square root kurtosis, [`Kurt`](@ref).
       + Range, [`RG`](@ref).
-      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
-      + Tail Gini range, [`RTG`](@ref).
+      + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
+      + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).

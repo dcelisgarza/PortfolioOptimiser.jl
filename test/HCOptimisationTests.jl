@@ -2018,7 +2018,7 @@ end
           0.03800312958595158, 0.07429015950210269]
     @test isapprox(w30.weights, wt, rtol = 5.0e-7)
 
-    w31 = optimise!(portfolio; rm = RDaR_r(), cluster = false, type = type,
+    w31 = optimise!(portfolio; rm = RLDaR_r(), cluster = false, type = type,
                     hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     wt = [0.055263520718878155, 0.05470886033764548, 0.04729258737064928,
           0.03659066826504964, 0.06763240307582324, 0.03707186354483175,
@@ -2368,7 +2368,7 @@ end
           0.13520236310900652]
     @test isapprox(w30.weights, wt, rtol = 1.0e-7)
 
-    w31 = optimise!(portfolio; rm = RDaR_r(), cluster = false, type = type,
+    w31 = optimise!(portfolio; rm = RLDaR_r(), cluster = false, type = type,
                     hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     wt = [0.14968299216723, 0.08274800409125811, 0.12809346731596793, 0.0484163890815167,
           0.08949048752314671, 0.009338809076442186, 0.013100309780119947,

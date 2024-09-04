@@ -3524,7 +3524,7 @@ end
     @test isapprox(rc2, rc2t, rtol = 1e-1)
 end
 
-@testset "$(:HRP), $(:HERC), $(:RDaR_r)" begin
+@testset "$(:HRP), $(:HERC), $(:RLDaR_r)" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                     :params => Dict("verbose" => false,
@@ -3533,11 +3533,12 @@ end
     cluster_opt = ClusterOpt(; linkage = :ward,
                              max_k = ceil(Int, sqrt(size(portfolio.returns, 2))))
 
-    w1 = optimise!(portfolio; type = :HRP, rm = :RDaR_r, rf = rf, cluster_opt = cluster_opt)
-    rc1 = risk_contribution(portfolio; type = :HRP, rm = :RDaR_r)
+    w1 = optimise!(portfolio; type = :HRP, rm = :RLDaR_r, rf = rf,
+                   cluster_opt = cluster_opt)
+    rc1 = risk_contribution(portfolio; type = :HRP, rm = :RLDaR_r)
 
-    w2 = optimise!(portfolio; type = :HERC, rm = :RDaR_r, rf = rf, cluster = false)
-    rc2 = risk_contribution(portfolio; type = :HERC, rm = :RDaR_r)
+    w2 = optimise!(portfolio; type = :HERC, rm = :RLDaR_r, rf = rf, cluster = false)
+    rc2 = risk_contribution(portfolio; type = :HERC, rm = :RLDaR_r)
 
     w1t = [0.055263517441901736, 0.054708858603147746, 0.04729258532814955,
            0.03659066794751168, 0.0676324029986855, 0.03707186730732357,

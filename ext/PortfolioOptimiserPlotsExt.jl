@@ -97,7 +97,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
     rc = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta, marginal = marginal)
 
     DDs = (DaR, MDD, ADD, CDaR, EDaR, RLDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
-           RDaR_r, UCI_r)
+           RLDaR_r, UCI_r)
 
     if !any(typeof(rm) .<: DDs)
         rc *= sqrt(t_factor)
@@ -112,13 +112,14 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
     rmstr = rmstr[1:(findfirst('{', rmstr) - 1)]
     title = "Risk Contribution - $rmstr"
     if any(typeof(rm) .<:
-           (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR, CDaR_r, EDaR_r, RDaR_r))
+           (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR, CDaR_r, EDaR_r,
+            RLDaR_r))
         title *= " α = $(round(rm.alpha*100, digits=2))%"
     end
-    if any(typeof(rm) .<: (RCVaR, RTG))
+    if any(typeof(rm) .<: (CVaRRG, TGRG))
         title *= ", β = $(round(rm.beta*100, digits=2))%"
     end
-    if any(typeof(rm) .<: (RLVaR, RLDaR, RDaR_r))
+    if any(typeof(rm) .<: (RLVaR, RLDaR, RLDaR_r))
         title *= ", κ = $(round(rm.kappa, digits=2))"
     end
 
@@ -217,10 +218,10 @@ function PortfolioOptimiser.plot_frontier(frontier;
     ratios = (rets .- rf) ./ risks
 
     msg = "$(get_rm_string(rm))"
-    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR))
+    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
-    if any(typeof(rm) .<: (RCVaR, RTG))
+    if any(typeof(rm) .<: (CVaRRG, TGRG))
         msg *= ", β = $(round(rm.beta*100, digits=2))%"
     end
     if any(typeof(rm) .<: (RLVaR, RLDaR))
@@ -319,10 +320,10 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
     end
 
     msg = "$(get_rm_string(rm))"
-    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, RCVaR, RTG, CDaR, EDaR, RLDaR))
+    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
-    if any(typeof(rm) .<: (RCVaR, RTG))
+    if any(typeof(rm) .<: (CVaRRG, TGRG))
         msg *= ", β = $(round(rm.beta*100, digits=2))%"
     end
     if any(typeof(rm) .<: (RLVaR, RLDaR))
@@ -415,7 +416,7 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
     risks = [-PortfolioOptimiser._ADD(ret), -PortfolioOptimiser._UCI(ret),
              -PortfolioOptimiser._DaR(ret, alpha), -PortfolioOptimiser._CDaR(ret, alpha),
              -PortfolioOptimiser._EDaR(ret, solvers, alpha),
-             -PortfolioOptimiser._RDaR(ret, solvers, alpha, kappa),
+             -PortfolioOptimiser._RLDaR(ret, solvers, alpha, kappa),
              -PortfolioOptimiser._MDD(ret)] * 100
 
     conf = round((1 - alpha) * 100; digits = 2)
@@ -522,7 +523,7 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
              -PortfolioOptimiser._CVaR(ret, alpha),
              -PortfolioOptimiser._TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
              -PortfolioOptimiser._EVaR(ret, solvers, alpha),
-             -PortfolioOptimiser._RVaR(x, solvers, alpha, kappa),
+             -PortfolioOptimiser._RLVaR(x, solvers, alpha, kappa),
              -PortfolioOptimiser._WR(ret))
 
     conf = round((1 - alpha) * 100; digits = 2)
@@ -607,9 +608,9 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
     ret = returns * w * 100
 
     risks = (PortfolioOptimiser._RG(ret),
-             PortfolioOptimiser._RCVaR(ret; alpha = alpha, beta = beta),
-             PortfolioOptimiser._RTG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                                     beta_i = beta_i, beta = beta, b_sim = b_sim))
+             PortfolioOptimiser._CVaRRG(ret; alpha = alpha, beta = beta),
+             PortfolioOptimiser._TGRG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                                      beta_i = beta_i, beta = beta, b_sim = b_sim))
 
     lo_conf = 1 - alpha
     hi_conf = 1 - beta

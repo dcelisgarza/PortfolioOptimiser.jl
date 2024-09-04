@@ -751,7 +751,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RCVaR, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)
@@ -775,7 +775,7 @@ function set_rm(port::Portfolio, rm::RCVaR, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RCVaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
 
@@ -1569,7 +1569,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RTG, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1658,7 +1658,7 @@ function set_rm(port::Portfolio, rm::RTG, type::Union{Trad, RP}, obj;
     _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RTG}, type::Union{Trad, RP}, obj;
+function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     if !haskey(model, :X)

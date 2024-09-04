@@ -65,13 +65,13 @@ l = 2.0
     @test isapprox(lrc2, lrc4)
 end
 
-@testset "$(:Classic), $(:RP), $(:RCVaR)" begin
+@testset "$(:Classic), $(:RP), $(:CVaRRG)" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    rm = :RCVaR
+    rm = :CVaRRG
     opt = OptimiseOpt(; type = :RP, rm = rm, owa_approx = false)
 
     portfolio.risk_budget = []
@@ -285,13 +285,13 @@ end
     @test isapprox(lrc2, lrc4)
 end
 
-@testset "$(:Classic), $(:RP), $(:RTG)" begin
+@testset "$(:Classic), $(:RP), $(:TGRG)" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = OrderedDict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                   :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    rm = :RTG
+    rm = :TGRG
     opt = OptimiseOpt(; type = :RP, rm = rm)
 
     portfolio.risk_budget = []

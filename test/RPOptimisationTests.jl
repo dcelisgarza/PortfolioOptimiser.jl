@@ -347,7 +347,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.005)
 end
 
-@testset "RCVaR" begin
+@testset "CVaRRG" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -356,7 +356,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = RCVaR()
+    rm = CVaRRG()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
@@ -1189,7 +1189,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.1)
 end
 
-@testset "RTG" begin
+@testset "TGRG" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -1197,7 +1197,7 @@ end
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    rm = RTG(;)
+    rm = TGRG(;)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)

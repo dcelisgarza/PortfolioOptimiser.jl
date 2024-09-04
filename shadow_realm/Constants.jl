@@ -922,8 +922,8 @@ RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
                     RLDaR = "Relativistic Uncompounded Drawdown at Risk",
                     Kurt = "Square Root Kurtosis",
                     SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
-                    RG = "Range", RCVaR = "Conditional Value at Risk Range",
-                    TG = "Tail Gini", RTG = "Tail Gini Range",
+                    RG = "Range", CVaRRG = "Conditional Value at Risk Range",
+                    TG = "Tail Gini", TGRG = "Tail Gini Range",
                     OWA = "Ordered Weight Average", Variance = "Variance",
                     Equal = "Equal Risk", VaR = "Value at Risk",
                     DaR = "Uncompounded Drawdown at Risk",
@@ -933,7 +933,7 @@ RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviation",
                     CDaR_r = "Conditional Uncompounded Drawdown at Risk",
                     UCI_r = "Compounded Ulcer Index",
                     EDaR_r = "Entropic Compounded Drawdown at Risk",
-                    RDaR_r = "Relativistic Compounded Drawdown at Risk")
+                    RLDaR_r = "Relativistic Compounded Drawdown at Risk")
 ```
 
 Risk measure names [`RiskMeasures`](@ref) and [`HCRiskMeasures`](@ref).
@@ -953,8 +953,8 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           RLDaR = "Relativistic Uncompounded Drawdown at Risk",
                           Kurt = "Square Root Kurtosis",
                           SKurt = "Square Root Semi Kurtosis", GMD = "Gini Mean Difference",
-                          RG = "Range", RCVaR = "Conditional Value at Risk Range",
-                          TG = "Tail Gini", RTG = "Tail Gini Range",
+                          RG = "Range", CVaRRG = "Conditional Value at Risk Range",
+                          TG = "Tail Gini", TGRG = "Tail Gini Range",
                           OWA = "Ordered Weight Average", Variance = "Variance",
                           Equal = "Equal Risk", VaR = "Value at Risk",
                           DaR = "Uncompounded Drawdown at Risk",
@@ -964,7 +964,7 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
                           CDaR_r = "Conditional Uncompounded Drawdown at Risk",
                           UCI_r = "Compounded Ulcer Index",
                           EDaR_r = "Entropic Compounded Drawdown at Risk",
-                          RDaR_r = "Relativistic Compounded Drawdown at Risk",
+                          RLDaR_r = "Relativistic Compounded Drawdown at Risk",
                           DVar = "Distance Variance",
                           Skew = "Square Root Negative Skewness",
                           SSkew = "Square Root Negative Semi Skewness")
@@ -972,7 +972,7 @@ const RiskMeasureNames = (SD = "Standard Deviation", MAD = "Mean Absolute Deviat
 """
 ```
 RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD, :CDaR,
-                :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG, :OWA. :DVar, :Skew)
+                :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :CVaRRG, :TG, :TGRG, :OWA. :DVar, :Skew)
 ```
 
 Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
@@ -995,29 +995,29 @@ Available risk measures for `:Trad` and `:RP` [`PortTypes`](@ref).
   - `:CDaR`: conditional drawdown at risk of uncompounded cumulative returns, [`CDaR_abs`](@ref) [DDs](@cite).
   - `:UCI`: ulcer index of uncompounded cumulative returns, [`UCI_abs`](@ref) [UCI](@cite). Solver must support `MOI.SecondOrderCone`.
   - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RLDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:SKurt`: square root semi-kurtosis, [`SKurt`](@ref) [KT1, KT2](@cite). Solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
   - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
-  - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
+  - `:CVaRRG`: range of conditional value at risk, [`CVaRRG`](@ref) [OWA](@cite).
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
-  - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
+  - `:TGRG`: range of tail gini, [`TGRG`](@ref) [OWA](@cite).
   - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
   - `:DVar`: distance variance, [`DVar`](@ref) [DVar](@cite).
   - `:Skew`: quadratic negative skewness, [`Skew`](@ref) [Skew](@cite).
   - `:SSkew`: quadratic negative semi skewness, [`Skew`](@ref) [Skew](@cite).
 """
 const RiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD,
-                      :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG,
-                      :RTG, :OWA, :DVar, :Skew, :SSkew)
+                      :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :CVaRRG, :TG,
+                      :TGRG, :OWA, :DVar, :Skew, :SSkew)
 
 """
 ```
 HCRiskMeasures = (:SD, :MAD, :SSD, :FLPM, :SLPM, :WR, :CVaR, :EVaR, :RLVaR, :MDD, :ADD,
-                  :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :RCVaR, :TG, :RTG,
+                  :CDaR, :UCI, :EDaR, :RLDaR, :Kurt, :SKurt, :GMD, :RG, :CVaRRG, :TG, :TGRG,
                   :OWA, :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r, :ADD_r, :CDaR_r,
-                  :UCI_r, :EDaR_r, :RDaR_r, :DVar)
+                  :UCI_r, :EDaR_r, :RLDaR_r, :DVar)
 ```
 
 Available risk measures for optimisations of [`HCPortfolio`](@ref).
@@ -1050,7 +1050,7 @@ These risk measures are available for all optimisation types.
 
       + If `:NCO`: solver must support `MOI.SecondOrderCone`.
   - `:EDaR`: entropic drawdown at risk of uncompounded cumulative returns, [`EDaR_abs`](@ref) [EVaR3](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLDaR`: relativistic drawdown at risk of uncompounded cumulative returns, [`RLDaR_abs`](@ref) [RLVaR](@cite). Solver must support `MOI.PowerCone`.
   - `:Kurt`: square root kurtosis, [`Kurt`](@ref) [KT1, KT2](@cite).
 
       + If `:NCO`: solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
@@ -1059,9 +1059,9 @@ These risk measures are available for all optimisation types.
       + If `:NCO`: solver must support `MOI.PSDCone` and `MOI.SecondOrderCone`.
   - `:GMD`: gini mean difference, [`GMD`](@ref) [GMD, OWA](@cite).
   - `:RG`: range of returns, [`RG`](@ref) [OWA](@cite).
-  - `:RCVaR`: range of conditional value at risk, [`RCVaR`](@ref) [OWA](@cite).
+  - `:CVaRRG`: range of conditional value at risk, [`CVaRRG`](@ref) [OWA](@cite).
   - `:TG`: tail gini, [`TG`](@ref) [TG, OWA](@cite).
-  - `:RTG`: range of tail gini, [`RTG`](@ref) [OWA](@cite).
+  - `:TGRG`: range of tail gini, [`TGRG`](@ref) [OWA](@cite).
   - `:OWA`: ordered weight array, used with generic OWA weights [OWA, OWAL](@cite). The risk function [`OWA`](@ref) uses the array and returns to compute the risk.
   - `:DVar`: distance variance, [`DVar`](@ref) [DVar](@cite).
   - `:Skew`:
@@ -1086,10 +1086,10 @@ These risk measures are not available with `:NCO` optimisations.
   - `:CDaR_r`: conditional drawdown at risk of compounded cumulative returns, [`CDaR_rel`](@ref) [DDs](@cite).
   - `:UCI_r`: ulcer index of compounded cumulative returns, [`UCI_rel`](@ref) [DDs](@cite).
   - `:EDaR_r`: entropic drawdown at risk of compounded cumulative returns, [`EDaR_rel`](@ref) [DDs](@cite). Solver must support `MOI.ExponentialCone`.
-  - `:RDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RDaR_rel`](@ref) [DDs](@cite). Solver must support `MOI.PowerCone`.
+  - `:RLDaR_r`: relativistic drawdown at risk of compounded cumulative returns, [`RLDaR_rel`](@ref) [DDs](@cite). Solver must support `MOI.PowerCone`.
 """
 const HCRiskMeasures = (RiskMeasures..., :Variance, :Equal, :VaR, :DaR, :DaR_r, :MDD_r,
-                        :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RDaR_r)
+                        :ADD_r, :CDaR_r, :UCI_r, :EDaR_r, :RLDaR_r)
 
 """
 ```

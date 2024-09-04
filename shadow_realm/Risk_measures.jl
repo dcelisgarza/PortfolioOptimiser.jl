@@ -618,12 +618,12 @@ end
 
 """
 ```julia
-RDaR_abs(
+RLDaR_abs(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 ```math
-\\mathrm{RDaR_{a}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
+\\mathrm{RLDaR_{a}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
 where ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the relativistic risk measure as defined in [`RRM`](@ref), and ``\\mathrm{DD_{a}}(\\bm{x})`` the drawdown of uncompounded cumulative returns as defined in [`DaR_abs`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
@@ -631,8 +631,8 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-                  kappa::Real = 0.3)
+function RLDaR_abs(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                   kappa::Real = 0.3)
     pushfirst!(x, 1)
     cs = cumsum(x)
     peak = -Inf
@@ -854,12 +854,12 @@ end
 
 """
 ```julia
-RDaR_rel(
+RLDaR_rel(
     x::AbstractVector,    solvers::AbstractDict,    alpha::Real = 0.05,    kappa::Real = 0.3)
 ```
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 ```math
-\\mathrm{RDaR_{r}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
+\\mathrm{RLDaR_{r}}(\\bm{x},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)\\,,```
 where ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{x}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref) where the returns vector, and ``\\mathrm{DD_{r}}(\\bm{x})`` the drawdown of compounded cumulative returns as defined in [`DaR_rel`](@ref).
 # Inputs
 - `x`: vector of portfolio returns.
@@ -867,8 +867,8 @@ $(_solver_desc("the `JuMP` model.", "", "`MOI.PowerCone`"))
 - `alpha`: significance level, alpha in (0, 1).
 - `κ`: relativistic deformation parameter.
 """
-function RDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-                  kappa::Real = 0.3)
+function RLDaR_rel(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
+                   kappa::Real = 0.3)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
     peak = -Inf
@@ -972,7 +972,7 @@ end
 
 """
 ```julia
-RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
 ```
 
 Compute the CVaR Range.
@@ -983,7 +983,7 @@ Compute the CVaR Range.
   - `alpha`: significance level of CVaR losses, `alpha in (0, 1)`.
   - `beta`: significance level of CVaR gains, `beta in (0, 1)`.
 """
-function RCVaR(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+function CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
@@ -1011,8 +1011,8 @@ end
 
 """
 ```julia
-RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
-    beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
+TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
+     beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
 ```
 
 Compute the Tail Gini Range.
@@ -1027,9 +1027,9 @@ Compute the Tail Gini Range.
   - `beta`: end value of the significance level of CVaR gains, `beta in (0, 1)`.
   - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
-function RTG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-             a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-             b_sim::Integer = a_sim)
+function TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+              a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+              b_sim::Integer = a_sim)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                 beta = beta, b_sim = b_sim)
@@ -1161,7 +1161,7 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
     elseif rm == :EDaR
         EDaR_abs(x, solvers, alpha)
     elseif rm == :RLDaR
-        RDaR_abs(x, solvers, alpha, kappa)
+        RLDaR_abs(x, solvers, alpha, kappa)
     elseif rm == :DaR_r
         DaR_rel(x, alpha)
     elseif rm == :MDD_r
@@ -1174,8 +1174,8 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         UCI_rel(x)
     elseif rm == :EDaR_r
         EDaR_rel(x, solvers, alpha)
-    elseif rm == :RDaR_r
-        RDaR_rel(x, solvers, alpha, kappa)
+    elseif rm == :RLDaR_r
+        RLDaR_rel(x, solvers, alpha, kappa)
     elseif rm == :Kurt
         Kurt(x)
     elseif rm == :SKurt
@@ -1184,13 +1184,13 @@ function calc_risk(w::AbstractVector, returns::AbstractMatrix; rm::Symbol = :SD,
         GMD(x)
     elseif rm == :RG
         RG(x)
-    elseif rm == :RCVaR
-        RCVaR(x; alpha = alpha, beta = beta)
+    elseif rm == :CVaRRG
+        CVaRRG(x; alpha = alpha, beta = beta)
     elseif rm == :TG
         TG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-    elseif rm == :RTG
-        RTG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-            beta = beta, b_sim = b_sim)
+    elseif rm == :TGRG
+        TGRG(x; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+             beta = beta, b_sim = b_sim)
     elseif rm == :OWA
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
@@ -1276,8 +1276,8 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
         r1 = EDaR_abs(a1, solvers, alpha)
         r2 = EDaR_abs(a2, solvers, alpha)
     elseif rm == :RLDaR
-        r1 = RDaR_abs(a1, solvers, alpha, kappa)
-        r2 = RDaR_abs(a2, solvers, alpha, kappa)
+        r1 = RLDaR_abs(a1, solvers, alpha, kappa)
+        r2 = RLDaR_abs(a2, solvers, alpha, kappa)
     elseif rm == :DaR_r
         r1 = DaR_rel(a1, alpha)
         r2 = DaR_rel(a2, alpha)
@@ -1296,9 +1296,9 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
     elseif rm == :EDaR_r
         r1 = EDaR_rel(a1, solvers, alpha)
         r2 = EDaR_rel(a2, solvers, alpha)
-    elseif rm == :RDaR_r
-        r1 = RDaR_rel(a1, solvers, alpha, kappa)
-        r2 = RDaR_rel(a2, solvers, alpha, kappa)
+    elseif rm == :RLDaR_r
+        r1 = RLDaR_rel(a1, solvers, alpha, kappa)
+        r2 = RLDaR_rel(a2, solvers, alpha, kappa)
     elseif rm == :Kurt
         r1 = Kurt(a1) * 0.5
         r2 = Kurt(a2) * 0.5
@@ -1311,17 +1311,17 @@ function _ul_risk(rm, returns, w1, w2, sigma, rf, solvers, alpha, kappa, alpha_i
     elseif rm == :RG
         r1 = RG(a1)
         r2 = RG(a2)
-    elseif rm == :RCVaR
-        r1 = RCVaR(a1; alpha = alpha, beta = beta)
-        r2 = RCVaR(a2; alpha = alpha, beta = beta)
+    elseif rm == :CVaRRG
+        r1 = CVaRRG(a1; alpha = alpha, beta = beta)
+        r2 = CVaRRG(a2; alpha = alpha, beta = beta)
     elseif rm == :TG
         r1 = TG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
         r2 = TG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-    elseif rm == :RTG
-        r1 = RTG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                 beta = beta, b_sim = b_sim)
-        r2 = RTG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                 beta = beta, b_sim = b_sim)
+    elseif rm == :TGRG
+        r1 = TGRG(a1; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                  beta = beta, b_sim = b_sim)
+        r2 = TGRG(a2; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                  beta = beta, b_sim = b_sim)
     elseif rm == :OWA
         T = size(returns, 1)
         w = isempty(owa_w) ? owa_gmd(T) : owa_w
@@ -1491,6 +1491,6 @@ function sharpe_ratio(portfolio::AbstractPortfolio;
 end
 
 export Variance, SD, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, ERM, EVaR, RRM, RLVaR, DaR_abs,
-       MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RDaR_abs, DaR_rel, MDD_rel, ADD_rel,
-       CDaR_rel, UCI_rel, EDaR_rel, RDaR_rel, Kurt, SKurt, GMD, RG, RCVaR, TG, RTG, OWA,
+       MDD_abs, ADD_abs, CDaR_abs, UCI_abs, EDaR_abs, RLDaR_abs, DaR_rel, MDD_rel, ADD_rel,
+       CDaR_rel, UCI_rel, EDaR_rel, RLDaR_rel, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA,
        DVar, Skew, calc_risk, risk_contribution, sharpe_ratio, factor_risk_contribution

@@ -1374,7 +1374,7 @@ Structure and keyword constructor for storing the options for optimising all [`P
           * `false`: use the quadratic expression for the standard deviation.
   - `owa_approx`:
 
-      + `rm ∈ (:GMD, :TG, :RTG, :OWA)`:
+      + `rm ∈ (:GMD, :TG, :TGRG, :OWA)`:
 
           * `true`: use the power cone expansion approximation [OWAA](@cite).
           * `false`: use the full Ordered Weight formulation.

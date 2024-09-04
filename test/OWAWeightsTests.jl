@@ -13,7 +13,7 @@ l = 2.0
                          length = length(w1) - 1))
 end
 
-@testset "OWA WRCVaR" begin
+@testset "OWA WCVaRRG" begin
     w1 = owa_rtg(100)
     alpha_i = 0.0001
     alpha = 0.05

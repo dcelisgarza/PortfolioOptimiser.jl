@@ -286,7 +286,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
     evar_u = portfolio.evar_u
     rvar_u = portfolio.rvar_u
 
-    if !(rm ∈ (:CVaR, :RCVaR, :EVaR, :RLVaR) ||
+    if !(rm ∈ (:CVaR, :CVaRRG, :EVaR, :RLVaR) ||
          isfinite(cvar_u) ||
          isfinite(rcvar_u) ||
          isfinite(evar_u) ||
@@ -320,7 +320,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
         end
     end
 
-    if rm == :RCVaR || isfinite(rcvar_u)
+    if rm == :CVaRRG || isfinite(rcvar_u)
         if !haskey(model, :cvar_risk)
             invat = portfolio.invat
             @variable(model, var)
@@ -345,7 +345,7 @@ function _var_setup(portfolio, rm, T, returns, obj, type)
             end
         end
 
-        if rm == :RCVaR
+        if rm == :CVaRRG
             @expression(model, risk, rcvar_risk)
         end
     end
@@ -878,7 +878,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
     rtg_u = portfolio.rtg_u
     owa_u = portfolio.owa_u
 
-    if !(rm ∈ (:GMD, :TG, :RTG, :OWA) ||
+    if !(rm ∈ (:GMD, :TG, :TGRG, :OWA) ||
          isfinite(gmd_u) ||
          isfinite(tg_u) ||
          isfinite(rtg_u) ||
@@ -1019,7 +1019,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
         end
     end
 
-    if rm == :RTG || isfinite(rtg_u)
+    if rm == :TGRG || isfinite(rtg_u)
         alpha = portfolio.alpha
         a_sim = portfolio.a_sim
         alpha_i = portfolio.alpha_i
@@ -1112,7 +1112,7 @@ function _owa_setup(portfolio, rm, T, returns, obj, type, owa_approx)
             end
         end
 
-        if rm == :RTG
+        if rm == :TGRG
             @expression(model, risk, rtg_risk)
         end
     end

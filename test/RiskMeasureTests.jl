@@ -26,9 +26,9 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
              0.04740180533190617, 0.18166001933455683, 0.2039781842753333]
 
     rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RLVaR(), MDD(), ADD(),
-           CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), RCVaR(), TG(),
-           RTG(), OWA(), dVar(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
-           DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RDaR_r()]
+           CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), CVaRRG(), TG(),
+           TGRG(), OWA(), dVar(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
+           DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
         @test isapprox(risk, calc_risk(portfolio; type = :Trad, rm = rm), rtol = 5e-7)
@@ -144,7 +144,7 @@ end
     rm.alpha = 0.5
     @test rm.alpha == 0.5
 
-    rm = RDaR_r()
+    rm = RLDaR_r()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.kappa = 1
@@ -154,7 +154,7 @@ end
     rm.kappa = 0.5
     @test rm.kappa == 0.5
 
-    rm = RCVaR()
+    rm = CVaRRG()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.beta = 1
@@ -179,7 +179,7 @@ end
     rm.a_sim = 5
     @test rm.a_sim == 5
 
-    rm = RTG()
+    rm = TGRG()
     @test_throws AssertionError rm.alpha = 1
     @test_throws AssertionError rm.alpha = 0
     @test_throws AssertionError rm.alpha_i = 1

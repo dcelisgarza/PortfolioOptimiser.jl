@@ -203,25 +203,25 @@ Some constraints define decision variables using scaling factors. The scaling fa
           * else: the target for each column of the `returns` matrix is `rf`.
   - `alpha_i`:
 
-      + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
+      + `rm ∈ (:TG, :TGRG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
   - `a_sim`:
 
-      + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+      + `rm ∈ (:TG, :TGRG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
   - `alpha`:
 
-      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :CVaRRG, :TG, :TGRG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RLDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
   - `beta_i`:
 
-      + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
+      + `rm == :TGRG`: initial significance level of gains, `0 < beta_i < beta < 1`.
   - `b_sim`:
 
-      + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
+      + `rm == :TGRG`: number of CVaRs to approximate the gains, `b_sim > 0`.
   - `beta`:
 
-      + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
+      + `rm ∈ (:CVaRRG, :TGRG)`: significance level of gains, `beta ∈ (0, 1)`.
   - `kappa`:
 
-      + `rm ∈ (:RLVaR, :RLDaR, :RDaR_r)`: relativistic deformation parameter.
+      + `rm ∈ (:RLVaR, :RLDaR, :RLDaR_r)`: relativistic deformation parameter.
   - `max_num_assets_kurt`:
 
       + `iszero(max_num_assets_kurt)`: use the full kurtosis model.
@@ -367,7 +367,7 @@ The risk upper bounds are named after their corresponding [`RiskMeasures`](@ref)
 
 ## OWA parameters
 
-Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+Only relevant when `rm ∈ (:GMD, :TG, :TGRG, :OWA)`.
 
   - `owa_p`:
 
@@ -1557,26 +1557,26 @@ Some of these require external information from the arguments of functions that 
 
   - `alpha_i`:
 
-      + `rm ∈ (:TG, :RTG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
+      + `rm ∈ (:TG, :TGRG)`: initial significance level of losses, `0 < alpha_i < alpha < 1`.
 
   - `a_sim`:
 
-      + `rm ∈ (:TG, :RTG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
+      + `rm ∈ (:TG, :TGRG)`: number of CVaRs to approximate the losses, `a_sim > 0`.
   - `alpha`:
 
-      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :RCVaR, :TG, :RTG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
+      + `rm ∈ (:VaR, :CVaR, :EVaR, :RLVaR, :CVaRRG, :TG, :TGRG, :DaR, :CDaR, :EDaR, :RLDaR, :DaR_r, :CDaR_r, :EDaR_r, :RLDaR_r)`: significance level of losses, `alpha ∈ (0, 1)`.
   - `beta_i`:
 
-      + `rm == :RTG`: initial significance level of gains, `0 < beta_i < beta < 1`.
+      + `rm == :TGRG`: initial significance level of gains, `0 < beta_i < beta < 1`.
   - `b_sim`:
 
-      + `rm == :RTG`: number of CVaRs to approximate the gains, `b_sim > 0`.
+      + `rm == :TGRG`: number of CVaRs to approximate the gains, `b_sim > 0`.
   - `beta`:
 
-      + `rm ∈ (:RCVaR, :RTG)`: significance level of gains, `beta ∈ (0, 1)`.
+      + `rm ∈ (:CVaRRG, :TGRG)`: significance level of gains, `beta ∈ (0, 1)`.
   - `kappa`:
 
-      + `rm ∈ (:RLVaR, :RLDaR, :RDaR_r)`: relativistic deformation parameter.
+      + `rm ∈ (:RLVaR, :RLDaR, :RLDaR_r)`: relativistic deformation parameter.
   - `max_num_assets_kurt`:
 
       + `type == :NCO`:
@@ -1589,7 +1589,7 @@ Some of these require external information from the arguments of functions that 
 
 ##. OWA parameters
 
-Only relevant when `rm ∈ (:GMD, :TG, :RTG, :OWA)`.
+Only relevant when `rm ∈ (:GMD, :TG, :TGRG, :OWA)`.
 
   - `owa_p`:
 

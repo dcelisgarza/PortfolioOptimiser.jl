@@ -199,18 +199,18 @@ end
     settings::RiskMeasureSettings = RiskMeasureSettings()
 end
 
-mutable struct RCVaR{T1, T2} <: TradRiskMeasure
+mutable struct CVaRRG{T1, T2} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     beta::T2
 end
-function RCVaR(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-               beta::Real = 0.05)
+function CVaRRG(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
+                beta::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(beta) < beta < one(beta))
-    return RCVaR{typeof(alpha), typeof(beta)}(settings, alpha, beta)
+    return CVaRRG{typeof(alpha), typeof(beta)}(settings, alpha, beta)
 end
-function Base.setproperty!(obj::RCVaR, sym::Symbol, val)
+function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
     if sym ∈ (:alpha, :beta)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -253,7 +253,7 @@ function Base.setproperty!(obj::TG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RTG{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
+mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     settings::RiskMeasureSettings
     owa::OWASettings
     alpha_i::T1
@@ -263,17 +263,18 @@ mutable struct RTG{T1, T2, T3, T4, T5, T6} <: TradRiskMeasure
     beta::T5
     b_sim::T6
 end
-function RTG(; settings::RiskMeasureSettings = RiskMeasureSettings(),
-             owa::OWASettings = OWASettings(), alpha_i = 0.0001, alpha::Real = 0.05,
-             a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05, b_sim::Integer = 100)
+function TGRG(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+              owa::OWASettings = OWASettings(), alpha_i = 0.0001, alpha::Real = 0.05,
+              a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05,
+              b_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
-    return RTG{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
-               typeof(b_sim)}(settings, owa, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
+    return TGRG{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
+                typeof(b_sim)}(settings, owa, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
 end
-function Base.setproperty!(obj::RTG, sym::Symbol, val)
+function Base.setproperty!(obj::TGRG, sym::Symbol, val)
     if sym == :alpha_i
         @smart_assert(zero(val) < val < obj.alpha < one(val))
     elseif sym == :alpha
@@ -422,19 +423,20 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RDaR_r{T1 <: Real, T2 <: Real} <: TradRiskMeasure
+mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RDaR_r(; settings::RiskMeasureSettings = RiskMeasureSettings(), alpha::Real = 0.05,
-                kappa = 0.3, solvers::Union{<:AbstractDict, Nothing} = nothing)
+function RLDaR_r(; settings::RiskMeasureSettings = RiskMeasureSettings(),
+                 alpha::Real = 0.05, kappa = 0.3,
+                 solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
-    return RDaR_r{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
+    return RLDaR_r{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
 end
-function Base.setproperty!(obj::RDaR_r, sym::Symbol, val)
+function Base.setproperty!(obj::RLDaR_r, sym::Symbol, val)
     if sym ∈ (:alpha, :kappa)
         @smart_assert(zero(val) < val < one(val))
     end
@@ -447,5 +449,5 @@ end
 
 export RiskMeasureSettings, HCRiskMeasureSettings, QuadSD, SOCSD, SimpleSD, SD, MAD, SSD,
        FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG,
-       RCVaR, OWASettings, GMD, TG, RTG, OWA, dVar, Skew, SSkew, Variance, VaR, DaR, DaR_r,
-       MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RDaR_r, Equal
+       CVaRRG, OWASettings, GMD, TG, TGRG, OWA, dVar, Skew, SSkew, Variance, VaR, DaR,
+       DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal

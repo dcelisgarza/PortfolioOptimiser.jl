@@ -703,14 +703,14 @@ end
           abs(dot(portfolio.mu, w16.weights) - ret4) < 1e-10
 end
 
-@testset "RCVaR" begin
+@testset "CVaRRG" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
                                                                           allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    rm = RCVaR()
+    rm = CVaRRG()
 
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
