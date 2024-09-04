@@ -11,7 +11,119 @@
 
 PortfolioOptimiser is a library for portfolio optimisation. It was written with composability and extensibility in mind. It offers a broad range of functionality out of the box.
 
-There are two main types which define what kinds of portfolio can be optimised.
+### Parameter estimation
+
+#### Expected mean returns estimators
+
+  - Simple mean estimator, [`MuSimple`](@ref).
+  - James-Stein estimator, [`JS`](@ref).
+  - Bayes-Stein estimator, [`BS`](@ref).
+  - Bodnar-Okhrin-Parolya estimator, [`BOP`](@ref).
+
+The JS, BS and BOP estimators also use a target for correcting their estimates.
+
+  - Grand mean, [`GM`](@ref).
+  - Bolatility-weighted grand mean, [`VW`](@ref).
+  - Mean square error of sample mean, [`SE`](@ref).
+
+#### Covariance estimators
+
+  - Full, [`CovFull`](@ref).
+  - Semi, [`CovSemi`](@ref).
+  - Mutual information, [`CorMutualInfo`](@ref).
+  - Brownian distance, [`CorDistance`](@ref).
+  - Lower tail dependence, [`CorLTD`](@ref).
+  - Gerber type 0, [`CorGerber0`](@ref).
+  - Gerber type 1, [`CorGerber1`](@ref).
+  - Gerber type 2, [`CorGerber2`](@ref).
+  - Smyth-Broby modification of Gerber type 0, [`CorSB0`](@ref).
+  - Smyth-Broby modification of Gerber type 1, [`CorSB1`](@ref).
+  - Smyth-Broby-Gerber modification of Gerber type 0, [`CorGerberSB0`](@ref).
+  - Smyth-Broby-Gerber modification of Gerber type 1, [`CorGerberSB1`](@ref).
+
+#### Correlation estimators
+
+All covariance estimators can be used for correlation estimation.
+
+  - Spearman rank, [`CorSpearman`](@ref).
+  - Kendall rank, [`CorKendall`](@ref).
+
+#### Disimilarity/distance matrix functions
+
+  - Marcos López de Prado, [`DistanceMLP`](@ref).
+  - Marcos López de Prado distance of distance, [`DistanceSqMLP`](@ref).
+  - Negative log, [`DistanceLog`](@ref).
+  - Variation of information, [`DistanceVarInfo`](@ref).
+
+#### Triangulated maximally filtered graph similarity matrix functions
+
+  - Exponential decay, [`DBHTExp`](@ref).
+  - Square distance from maximum, [`DBHTExp`](@ref).
+
+#### Bin width estimation functions
+
+  - Knuth, require `PyCall` and `astropy` to be installed, [`Knuth`](@ref).
+  - Freedman, require `PyCall` and `astropy` to be installed, [`Freedman`](@ref).
+  - Scott, require `PyCall` and `astropy` to be installed, [`Scott`](@ref).
+  - Hacine-Gharbi and Ravier, [`HGR`](@ref).
+
+#### Cokurtosis estimators
+
+  - Full cokurtosis, [`KurtFull`](@ref).
+  - Semi cokurtosis, [`KurtSemi`](@ref).
+
+#### Coskewness estimators
+
+  - Full coskewness, [`SkewFull`](@ref).
+  - Semi coskewness, [`SkewSemi`](@ref).
+
+#### Clustering
+
+  - Hierarchical clustering, [`HAC`](@ref).
+  - Direct Bubble Hierarchy Trees clustering, [`DBHT`](@ref).
+
+##### Determining number of methods
+
+  - Two different gap statistic, [`TwoDiff`](@ref).
+  - Standardised silhouette scores, [`StdSilhouette`](@ref).
+
+#### Worst case expected mean returns sets and covariance
+
+  - Box sets, [`Box`](@ref).
+  - Ellipse, [`Ellipse`](@ref).
+
+##### Bootstrapping methods
+
+  - ARCH methods, require `PyCall` and `ARCH` to be installed, [`ArchWC`](@ref).
+    
+      + Stationary bootstrap, [`StationaryBS`](@ref).
+      + Circular bootstrap, [`CircularBS`](@ref).
+      + Moving bootstrap, [`MovingBS`](@ref).
+  - Normal, [`NormalWC`](@ref).
+  - Delta, [`DeltaWC`](@ref).
+
+##### Elliptical constraint error size estimation
+
+- Normal, [`KNormalWC`](@ref).
+- General, [`KGeneralWC`](@ref)
+
+#### Matrix processing
+
+These only apply to covariance, correlation, and cokurtosis estimators. Dissimilarity and similarity matrices use the results of correlation estimators, so they are indirectly used there.
+
+##### Sparsification
+
+  - Local/Global parsimonious estimator (LoGo), [`LoGo`](@ref).
+
+##### Fixing non-positive definite matrices
+
+  - Nearest correlation matrix, [`PosdefNearest`](@ref).
+
+##### Denoising methods
+
+  - Fixed, [`DenoiseFixed`](@ref).
+  - Spectral, [`DenoiseSpectral`](@ref).
+  - Shrink, [`DenoiseShrink`](@ref).
 
 ### Portfolio optimisation
 
@@ -70,6 +182,7 @@ This type of optimisation is the traditional efficient frontier optimisation.
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
+
   - Downside dispersion.
     
       + Semi standard deviation, [`SSD`](@ref).
@@ -143,6 +256,7 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
+
   - Downside dispersion.
     
       + Semi standard deviation, [`SSD`](@ref).
@@ -184,6 +298,20 @@ This type of optimisation requires a risk budget per asset. The optimisation att
 
 #### Near Optimal Centering, [`NOC`](@ref)
 
+Near optimal centering utilise the weights of an optimised portfolio. It computes a region of near optimality using the bounds of the efficient frontier, the expected risk and return of the optimal portfolio, and a user-provided parameter. It then optimises for a portfolio that best describes the region. It provides more diversification and robustness than [`Trad`](@ref) and smooths out the weight transitions as the efficient frontier is traversed.
+
+##### Classes, [`PortClass`](@ref)
+
+  - Classic, [`Classic`](@ref).
+  - Factor model, [`FM`](@ref).
+  - Black Litterman, [`BL`](@ref).
+  - Black Litterman Factor model, [`BLFM`](@ref).
+
+##### Constraints
+
+  - Minimum expected return constraint.
+  - Linear weight constraints.
+
 ##### Classes, [`PortClass`](@ref)
 
   - Classic, [`Classic`](@ref).
@@ -217,6 +345,7 @@ This type of optimisation requires a risk budget per asset. The optimisation att
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
       + Brownian distance variance (dVar), [`dVar`](@ref).
+
   - Downside dispersion.
     
       + Semi standard deviation, [`SSD`](@ref).
@@ -246,10 +375,104 @@ This type of optimisation requires a risk budget per asset. The optimisation att
 
 These types of optimisations act on instances of [`HCPortfolio`](@ref).
 
-#### Hierarchical risk parity, [`HRP`](@ref)
+#### Hierarchical risk parity, [`HRP`](@ref), and hierarchical equal risk parity, [`HERC`](@ref)
 
-Hierarchical risk parity optimisations use the relationships between assets to assign risk contributions by iteratively splitting the dendrogram in half and assigning weights to each half according to the risk it poses in comparison to the other side. It does this until it splits the dendrogram all the way down to single leaves.
+##### Hierarchical risk parity, [`HRP`](@ref)
 
-#### Hierarchical Equal Risk Contribution, [`HERC`](@ref)
+Hierarchical risk parity optimisations use the hierarchical clustering of assets to assign risk contributions by iteratively splitting the dendrogram in half and assigning weights to each half according to the relative risk each half represents with respect to the other. It does this until it splits the dendrogram all the way down to single leaves.
 
-#### Nested Clustered Optimisation, [`NOC`](@ref)
+##### Hierarchical equal risk parity, [`HERC`](@ref)
+
+Hierarchical equal risk parity optimisations use the hierarchical clustering relationships between assets to assign risk contributions by splitting the dendrogram into `k` clusters. It starts with the full dendrogram and progressively cuts it into `k-1` levels (since the comparison for each side belongs to the `k`-th level). At each step, it loops through the clusters and checks to which side of the sub-dendrogram the cluster belongs. It accumulates the risk of that cluster to the risk of the side it belongs to. The weights for the assets on each side of the dendrogram are assigned based on the relative (with respect to the other side) aggregate risk from all clusters belonging to it, these are the inter-cluster weights. It then computes the risk for each cluster, assigning weights to each asset according to the relative risk it represents with respect to other assets, these are the intra-cluster weights. It then elementwise multiplies both weights to get the final asset weights.
+
+[`HERC`](@ref) can make use of two risk measure arguments, one for the intra-cluster and one for the inter-cluster risk calculation. They can take linear combinations of risk measures.
+
+##### Constraints
+
+  - Minimum and maximum weights per asset.
+
+##### Risk measures
+
+###### Dispersion
+
+  - Full dispersion.
+    
+      + Variance, [`Variance`](@ref).
+      + Standard deviation, [`SD`](@ref).
+      + Mean absolute deviation (MAD), [`MAD`](@ref).
+      + Square root kurtosis, [`Kurt`](@ref).
+      + Range, [`RG`](@ref).
+      + Conditional value at risk range (CVaR range), [`RCVaR`](@ref).
+      + Tail Gini range, [`RTG`](@ref).
+      + Gini mean difference (GMD), [`GMD`](@ref).
+      + Quadratic negative skewness, [`Skew`](@ref).
+      + Brownian distance variance (dVar), [`dVar`](@ref).
+
+  - Downside dispersion.
+    
+      + Semi standard deviation, [`SSD`](@ref).
+      + First lower partial moment (Omega ratio), [`FLPM`](@ref).
+      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
+      + Square root semi kurtosis, [`SKurt`](@ref).
+      + Quadratic negative semi skewness, [`SSkew`](@ref).
+
+###### Downside
+
+  - Worst case realisation (Minimax), [`WR`](@ref).
+  - Value at risk (VaR), [`VaR`](@ref).
+  - Conditional value at risk (CVaR), [`CVaR`](@ref).
+  - Entropic value at risk (EVaR), [`EVaR`](@ref).
+  - Relativistic value at risk (RLVaR), [`RLVaR`](@ref).
+  - Tail Gini, [`TG`](@ref).
+
+###### Drawdown
+
+  - Maximum drawdown (Calmar ratio) for uncompounded cumulative returns, [`MDD`](@ref).
+  - Average drawdown for uncompounded cumulative returns, [`ADD`](@ref).
+  - Ulcer index for uncompounded cumulative returns, [`UCI`](@ref).
+  - Drawdown at for uncompounded cumulative returns risk (DaR), [`DaR`](@ref).
+  - Conditional drawdown at risk for uncompounded cumulative returns (CDaR), [`CDaR`](@ref).
+  - Entropic drawdown at risk for uncompounded cumulative returns (EDaR), [`EDaR`](@ref).
+  - Relativistic drawdown at risk for uncompounded cumulative returns (RLDaR), [`RLDaR`](@ref).
+  - Maximum drawdown (Calmar ratio) for compounded cumulative returns, [`MDD_r`](@ref).
+  - Average drawdown for compounded cumulative returns, [`ADD_r`](@ref).
+  - Ulcer index for compounded cumulative returns, [`UCI_r`](@ref).
+  - Drawdown at for compounded cumulative returns risk (DaR), [`DaR_r`](@ref).
+  - Conditional drawdown at risk for compounded cumulative returns (CDaR), [`CDaR_r`](@ref).
+  - Entropic drawdown at risk for compounded cumulative returns (EDaR), [`EDaR_r`](@ref).
+  - Relativistic drawdown at risk for compounded cumulative returns (RLDaR), [`RLDaR_r`](@ref).
+
+#### Nested clustered optimisation, [`NCO`](@ref)
+
+Nested clustered optimisation combines the ideas of hierarchical equal risk parity optimisations and portfolio optimisations. They use the hierarchical clustering relationships between assets and splitting the dendrogram into `k` clusters. It then treats each cluster as its own isntance of [`Portfolio`](@ref) which is optimised in the usual way. The weights of each cluster are saved in a matrix, these are the intra-cluster weights. Then each cluster as a whole is treated as a synthetic asset, it statistics are internally computed from the fields in the [`NCO`](@ref) type. An instance of [`Portfolio`](@ref) is created from these synthetic assets and then optimised, these are the inter-cluster weights. The inter-cluster and intra-cluster weights are multiplied to give the asset weights.
+
+[`NCO`](@ref) can make use of two risk measure arguments, one for the intra-cluster and one for the inter-cluster risk calculation. They can take linear combinations of risk measures.
+
+##### Sub-types
+
+[`NCO`](@ref) can take keyword arguments that define the supported by optimisations of [`Portfolio`](@ref). Since there are intra- and inter-cluster optimisations, it can take individual arguments for both. This means it can perform any combination of [`Portfolio`](@ref) optimisations, except for [`WC`](@ref).
+
+###### NCO-Trad, NCO-NOC-Trad
+
+**Objective functions**
+
+  - Minimum risk, [`MinRisk`](@ref).
+  - Maximum utility, [`Utility`](@ref).
+  - Maximum risk adjusted return ratio, [`Sharpe`](@ref).
+  - Maximum return, [`MaxRet`](@ref).
+
+**Constraints**
+
+When applied to the intra-cluster optimisation the same constraint will be applied to all every cluster.
+
+  - Maximum expected risk constraints.
+  - Minimum expected return constraint.
+  - Leverage constraints.
+
+###### NCO-RP, NCO-RRP, NCO-NOC-RP, NCO-NOC-RRP
+
+**Constraints**
+
+When applied to the intra-cluster optimisation the same constraint will be applied to all every cluster.
+
+  - Minimum expected return constraint.
