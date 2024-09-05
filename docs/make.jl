@@ -1,6 +1,6 @@
-using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser
+using Documenter, DocumenterTools, DocumenterCitations, Literate, PortfolioOptimiser,
+      StatsPlots, GraphRecipes
 
-import PortfolioOptimiser: MeanEstimator, MeanTarget, PortfolioOptimiserCovCor
 # utility function from https://github.com/JuliaOpt/Convex.jl/blob/master/docs/make.jl
 function pre_process_content_md(content)
     return replace(content, r"\$\$(.*?)\$\$"s => s"```math\1```",
@@ -55,8 +55,8 @@ for file ∈ code_files
 end
 
 makedocs(;
-         #modules = [PortfolioOptimiser],
-         #             Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotExt)],
+         modules = [PortfolioOptimiser,
+                    Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotsExt)],
          authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
          sitename = "PortfolioOptimiser.jl",
@@ -64,13 +64,12 @@ makedocs(;
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[]),
          pages = ["Home" => "index.md", "Examples" => examples_nav,
-                  "API" => ["Risk Measures" => "RiskMeasures.md",
-                            "Portfolio Types" => "PortfolioTypes.md", "DBHTs" => "DBHTs.md",
-                            "Parameter Estimation Types" => "ParameterEstimationTypes.md",
+                  "API" => ["Constraints" => "Constraints.md",
                             "Parameter Estimation" => "ParameterEstimation.md",
-                            "Portfolio Statistics" => "Statistics.md",
-                            "Portfolio Optimisation" => "PortfolioOptim.md",
-                            "Asset Allocation" => "AssetAllocation.md",
+                            "Portfolio and HCPortfolio" => "Portfolio.md",
+                            "Portfolio Optimisation" => "Optimisation.md",
+                            "Plots Extension" => "PlotsExtension.md",
+                            "Risk Measures" => "RiskMeasures.md",
                             "References" => "References.md"]],
          plugins = [CitationBibliography(joinpath(@__DIR__, "src", "refs.bib");
                                          style = :numeric)])

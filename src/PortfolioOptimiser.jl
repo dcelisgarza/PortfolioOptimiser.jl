@@ -15,14 +15,14 @@ include("./Optimisation/Types/OptimisationTypes.jl")
 include("./Portfolio/Types/PortfolioTypes.jl")
 
 # Functions
-## Constraints
-include("./Constraints/Constraints.jl")
-## Parameter estimation
-include("./ParameterEstimation/Functions/ParameterEstimationFunctions.jl")
 ## Risk measures
 include("./RiskMeasures/Functions/RiskMeasureFunctions.jl")
+## Parameter estimation
+include("./ParameterEstimation/Functions/ParameterEstimationFunctions.jl")
 ## Portfolio
 include("./Portfolio/Functions/PortfolioFunctions.jl")
+## Constraints
+include("./Constraints/Constraints.jl")
 ## Optimisation
 include("./Optimisation/Functions/OptimisationFunctions.jl")
 

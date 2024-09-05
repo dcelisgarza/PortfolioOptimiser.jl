@@ -1,4 +1,4 @@
-# Risk Measures
+# Risk measaures
 
 ## Public
 
@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["RiskMeasures.jl"]
+Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["RiskMeasures.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["RiskMeasures.jl"]
+Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
 ```
