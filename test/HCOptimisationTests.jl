@@ -1,7 +1,7 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -253,9 +253,8 @@ end
 
     w1 = optimise!(portfolio; cluster = true, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = EKelly()),
-                              opt_kwargs_o = (; obj = Utility(; l = 10 * l),
-                                              kelly = NoKelly())))
+                   obj = Sharpe(; rf = rf), kelly = EKelly(), objo = Utility(; l = 10 * l),
+                   kellyo = NoKelly(), type = NCO())
     wt = [8.749535903078065e-9, 0.021318202697098224, 0.010058873436520996,
           0.0006391710067219409, 0.23847337816224912, 5.078733996478347e-9,
           0.03433819538761402, 0.00922817630772192, 3.9969791626882106e-8,
@@ -267,9 +266,8 @@ end
 
     w2 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = NoKelly()),
-                              opt_kwargs_o = (; obj = Utility(; l = 10 * l),
-                                              kelly = EKelly())))
+                   obj = Sharpe(; rf = rf), kelly = NoKelly(), objo = Utility(; l = 10 * l),
+                   kellyo = EKelly(), type = NCO())
     wt = [3.1657435876961315e-10, 0.011350048898726263, 0.005901925005901058,
           4.145858254573504e-9, 0.24703174384250007, 1.1554588711505922e-10,
           0.03571166800872377, 2.0093176507817576e-9, 1.1359578457903453e-9,
@@ -281,10 +279,8 @@ end
 
     w3 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
-                   type = NCO(;
-                              opt_kwargs = (; obj = Utility(; l = 10 * l),
-                                            kelly = EKelly()),
-                              opt_kwargs_o = (; obj = Sharpe(; rf = rf), kelly = NoKelly())))
+                   obj = Utility(; l = 10 * l), kelly = EKelly(), objo = Sharpe(; rf = rf),
+                   kellyo = NoKelly(), type = NCO())
     wt = [6.4791954821063925e-9, 0.029812930861426164, 0.010894696408080332,
           0.011896393137335998, 0.044384433675000466, 2.746543990901563e-9,
           0.005106858724009885, 0.06946926268324362, 3.8491579305047204e-9,
@@ -296,10 +292,8 @@ end
 
     w4 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
                    hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
-                   type = NCO(;
-                              opt_kwargs = (; obj = Utility(; l = 10 * l),
-                                            kelly = NoKelly()),
-                              opt_kwargs_o = (; obj = Sharpe(; rf = rf), kelly = EKelly())))
+                   obj = Utility(; l = 10 * l), kelly = NoKelly(), objo = Sharpe(; rf = rf),
+                   kellyo = EKelly(), type = NCO())
     wt = [2.0554538223172535e-8, 0.029818986226667964, 0.010923608025930946,
           0.01186842576568594, 0.04541568191043348, 9.983988311413258e-9,
           0.005261250564448335, 0.06930507652058161, 2.1332962817997016e-8,
@@ -355,9 +349,8 @@ end
     portfolio.w_min = -0.2
     portfolio.w_max = 0.8
     w1 = optimise!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt,
-                   cluster = true,
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true)))
+                   cluster = true, obj = Sharpe(),
+                   type = NCO(; port_kwargs = (; short = true)))
     wt = [-0.087301210473091, 0.011322088745794164, 0.013258683926176839,
           0.004456088735487908, 0.22464713851216647, -0.04347232765939294,
           0.04304321233588089, 0.02538694929635001, 3.6391344665779835e-10,
@@ -783,7 +776,7 @@ end
     w31 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     w32 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
-                    hclust_opt = hclust_opt,
+                    hclust_opt = hclust_opt, obj = Utility(; l = l),
                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
     w33 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt,

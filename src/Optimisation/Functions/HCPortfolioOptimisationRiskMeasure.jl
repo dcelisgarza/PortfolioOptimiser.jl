@@ -30,17 +30,38 @@ function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, p
     end
     return V
 end
-# function objective(::MinRisk, risk, ::Any, ::Any)
-#     return risk
-# end
-# function objective(obj::Utility, risk, returns, w)
-#     return inv(returns * w - obj.l * risk)
-# end
-function _naive_risk(::Equal, returns, ::Any)
+
+function _calc_hc_ret(::NoKelly, mu, w, args...)
+    return dot(mu, w)
+end
+function _calc_hc_ret(::Any, ::Any, w, X::AbstractVector)
+    return sum(log.(one(eltype(X)) .+ X * w)) / size(X, 1)
+end
+function hc_objective(::MinRisk, ::Any, ::Any, w, rm, returns, V)
+    return calc_risk(rm, w; X = returns, V = V, SV = V)
+end
+function hc_objective(obj::Utility, kelly::RetType, mu, w, rm, returns, V)
+    ret = _calc_hc_ret(kelly, mu, w, returns)
+    risk = calc_risk(rm, w; X = returns, V = V, SV = V)
+    utility = ret - obj.l * risk
+    return utility <= zero(utility) ? risk : inv(utility)
+end
+function hc_objective(obj::Sharpe, kelly::RetType, mu, w, rm, returns, V)
+    ret = _calc_hc_ret(kelly, mu, w, returns)
+    risk = calc_risk(rm, w; X = returns, V = V, SV = V)
+    inv_sharpe = risk / (ret - obj.rf)
+    return inv_sharpe <= zero(inv_sharpe) ? risk : inv_sharpe
+end
+function hc_objective(::MaxRet, kelly::RetType, mu, w, rm, returns, V)
+    ret = _calc_hc_ret(kelly, mu, w, returns)
+    return ret <= zero(ret) ? calc_risk(rm, w; X = returns, V = V, SV = V) : inv(ret)
+end
+
+function _naive_risk(::Any, ::Any, ::Any, ::Equal, returns, ::Any)
     N = size(returns, 2)
     return fill(eltype(returns)(inv(N)), N)
 end
-function _naive_risk(rm::RiskMeasure, returns, cV)
+function _naive_risk(obj, kelly, mu, rm::RiskMeasure, returns, V)
     N = size(returns, 2)
     inv_risk = Vector{eltype(returns)}(undef, N)
     w = Vector{eltype(returns)}(undef, N)
@@ -48,31 +69,35 @@ function _naive_risk(rm::RiskMeasure, returns, cV)
     for i ∈ eachindex(w)
         w .= zero(eltype(returns))
         w[i] = one(eltype(returns))
-        risk = calc_risk(rm, w; X = returns, V = cV, SV = cV)
+        # risk = calc_risk(rm, w; X = returns, V = V, SV = V)
+        risk = hc_objective(obj, kelly, mu, w, rm, returns, V)
         inv_risk[i] = inv(risk)
     end
     return inv_risk / sum(inv_risk)
 end
-function cluster_risk(port, cluster, rm)
+function cluster_risk(port, obj, kelly, cluster, rm)
     if hasproperty(rm, :sigma)
         rm.sigma = view(port.cov, cluster, cluster)
     end
     cret = view(port.returns, :, cluster)
+    cmu = view(port.mu, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
-    cw = _naive_risk(rm, cret, cV)
-    crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
+    cw = _naive_risk(obj, kelly, cmu, rm, cret, cV)
+    # crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
+    crisk = hc_objective(obj, kelly, cmu, cw, rm, cret, cV)
     if hasproperty(rm, :sigma)
         rm.sigma = nothing
     end
     return crisk
 end
-function naive_risk(port, cluster, rm)
+function naive_risk(port, obj, kelly, cluster, rm)
     if hasproperty(rm, :sigma)
         rm.sigma = view(port.cov, cluster, cluster)
     end
     cret = view(port.returns, :, cluster)
+    cmu = view(port.mu, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = _naive_risk(rm, cret, cV)
+    crisk = _naive_risk(obj, kelly, cmu, rm, cret, cV)
     if hasproperty(rm, :sigma)
         rm.sigma = nothing
     end

@@ -1,5 +1,6 @@
 function _optimise!(::HRP, port::HCPortfolio, rm::Union{AbstractVector, <:RiskMeasure},
-                    ::Any, w_min, w_max)
+                    ::Any, obj::ObjectiveFunction, ::Any, kelly::RetType, ::Any, w_min,
+                    w_max)
     N = size(port.returns, 2)
     weights = ones(eltype(port.returns), N)
     items = [port.clusters.order]
@@ -22,9 +23,9 @@ function _optimise!(::HRP, port::HCPortfolio, rm::Union{AbstractVector, <:RiskMe
                 end
                 scale = r.settings.scale
                 # Left risk.
-                lrisk += cluster_risk(port, lc, r) * scale
+                lrisk += cluster_risk(port, obj, kelly, lc, r) * scale
                 # Right risk.
-                rrisk += cluster_risk(port, rc, r) * scale
+                rrisk += cluster_risk(port, obj, kelly, rc, r) * scale
                 if solver_flag
                     r.solvers = nothing
                 end
