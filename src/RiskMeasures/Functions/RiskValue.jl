@@ -214,10 +214,15 @@ ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
 Compute the Entropic Risk Measure.
 
 ```math
-\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) = z \\ln \\left(\\dfrac{M_{\\bm{X}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,
+\\begin{align}
+\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) &= z \\ln \\left(\\dfrac{M_{\\bm{X}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\,.
+\\end{align}
 ```
 
-Where ``M_{\\bm{X}}\\left(z^{-1}\\right)`` is the moment generating function of ``\\bm{X}``.
+Where:
+
+  - ``M_{\\bm{X}}\\left(z\\right)`` is the moment generating function of ``\\bm{X}``.
+  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
 
 # Inputs
 
@@ -232,14 +237,22 @@ ERM(x::AbstractVector, solvers:AbstractDict, α::Real = 0.05)
 Compute the Entropic Risk Measure by minimising the function with respect to `z`. Used in [`_EVaR`](@ref), [`_EDaR`](@ref) and [`_EDaR_r`](@ref).
 
 ```math
-\\mathrm{ERM} = \\begin{cases}
-\\underset{z,\\, t,\\, u}{\\min} & t + z \\ln\\left(\\dfrac{1}{\\alpha T}\\right)\\\\
-\\mathrm{s.t.} & z \\geq \\sum\\limits_{i=1}^{T} u_{i}\\\\
-& (-x_{i}-t,\\, z,\\, u_{i}) \\in \\mathcal{K}_{\\exp} \\, \\forall \\, i=1,\\,\\dots{},\\, T
-\\end{cases}\\,.
+\\begin{align}
+\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) &= 
+    \\begin{cases}
+        \\underset{z,\\, t,\\, u}{\\min} & t + z \\ln\\left(\\dfrac{1}{\\alpha T}\\right)\\\\
+        \\mathrm{s.t.} & z \\geq \\sum\\limits_{i=1}^{T} u_{i}\\nonumber\\\\
+        & (-x_{i}-t,\\, z,\\, u_{i}) \\in \\mathcal{K}_{\\exp} \\, \\forall \\, i=1,\\,\\dots{},\\, T
+    \\end{cases}\\\\
+&= \\underset{z>0}{\\inf}\\left\\{ z \\ln \\left(\\dfrac{M_{\\bm{X}}\\left(z^{-1}\\right)}{\\alpha} \\right)\\right\\}\\,.
+\\end{align}
 ```
 
-Where ``\\mathcal{K}_{\\exp}`` is the exponential cone.
+Where:
+
+  - ``M_{\\bm{X}}\\left(z\\right)`` is the moment generating function of ``\\bm{X}``.
+  - ``\\mathcal{K}_{\\mathrm{exp}}`` is the exponential cone.
+  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
 
 # Inputs
 
@@ -327,7 +340,9 @@ _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 Compute the Entropic Value at Risk.
 
 ```math
+\\begin{aligned}
 \\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,.
+\\end{aligned}
 ```
 
 Where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
@@ -340,11 +355,33 @@ Where ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure 
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
 end
+
 """
 ```
 RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
 ```
+
+```math
+\\begin{align}
+\\mathrm{RRM}^{\\kappa}_{\\alpha}(X) &= \\left\\{
+    \\begin{align}
+        &\\underset{z,\\, t,\\, \\psi,\\, \\theta,\\,  \\varepsilon,\\, \\omega}{\\text{inf}} && t + z \\ln_{\\kappa} \\left(\\dfrac{1}{\\alpha T}\\right) + \\sum\\limits_{i=1}^T \\left(\\psi_{i} + \\theta_{i}  \\right) \\nonumber\\\\
+        &\\mathrm{s.t.} && -X  - t + \\varepsilon + \\omega \\leq 0 \\nonumber\\\\
+        &&&z \\geq 0 \\\\
+        &&&\\left( z\\left[\\dfrac{1+\\kappa}{2\\kappa}\\right],\\, \\psi_{i}\\left[\\dfrac{1+\\kappa}{\\kappa}\\right],\\, \\varepsilon_{i} \\right) \\in \\mathcal{P}_{3}^{1/(1+\\kappa),\\, \\kappa/(1+\\kappa)}\\nonumber\\\\
+        &&&\\left( \\omega_{i}\\left[\\dfrac{1}{1-\\kappa}\\right],\\, \\theta_{i}\\left[\\dfrac{1}{\\kappa}\\right],\\, -z \\left[\\dfrac{1}{2\\kappa}\\right] \\right) \\in \\mathcal{P}_{3}^{1-\\kappa,\\, \\kappa}\\nonumber\\\\
+        &&&\\forall \\, i=1,\\,\\dots{},\\, T \\nonumber
+    \\end{align}
+\\right.\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the power cone 3D.
+  - ``\\kappa \\in (0,\\,1)`` is the relativistic deformation parameter.
+  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
