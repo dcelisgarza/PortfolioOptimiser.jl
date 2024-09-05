@@ -79,7 +79,7 @@ These statistics are not very robust, so they're not very reliable. We can make 
 
 ### 3.1 Mean estimators
 
-Lets start with the easier one, [`MeanEstimator`](@ref). There are four of these, [`MuSimple`](@ref), [`MuJS`](@ref), [`MuBS`](@ref), [`MuBOP`](@ref). As you can see, they are all subtypes of [`MeanEstimator`](@ref), we will use this later on to define our own method. Lets first focus on the first estimator, which is also the default.
+Lets start with the easier one, [`PortfolioOptimiser.MeanEstimator`](@ref). There are four of these, [`MuSimple`](@ref), [`MuJS`](@ref), [`MuBS`](@ref), [`MuBOP`](@ref). As you can see, they are all subtypes of [`PortfolioOptimiser.MeanEstimator`](@ref), we will use this later on to define our own method. Lets first focus on the first estimator, which is also the default.
 
 We've already seen its default behaviour, we know from above it's the same as the arithmetic mean. But it can take a vector of [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/).
 
@@ -130,7 +130,7 @@ asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = fa
 mu5 = copy(portfolio.mu);
 
 #=
-All targets subtype [`MeanTarget`](@ref). It is possible for users to define a one by creating a concrete subtype of [`MeanTarget`](@ref) and defining a new [`target_mean`](@ref) for the custom target.
+All targets subtype [`PortfolioOptimiser.MeanTarget`](@ref). It is possible for users to define a one by creating a concrete subtype of [`PortfolioOptimiser.MeanTarget`](@ref) and defining a new [`target_mean`](@ref) for the custom target.
 
 ```
 struct CustomMeanTarget <: MeanTarget
@@ -143,7 +143,7 @@ function target_mean(ct::CustomMeanTarget, mu::AbstractVector,
 end
 ```
 
-However, this limits the target to using the same data as the current ones. It's easier to define a new concrete subtype of [`MeanEstimator`](@ref). We will do this in the following section.
+However, this limits the target to using the same data as the current ones. It's easier to define a new concrete subtype of [`PortfolioOptimiser.MeanEstimator`](@ref). We will do this in the following section.
 
 ### 3.2 Defining a custom mean method
 
@@ -347,7 +347,7 @@ for idx ∈ 1:4
 end
 
 #=
-Denoising and detoning can be applied to any [`PortfolioOptimiserCovCor`](@ref) method, but others already have contingencies for capturing true signals. Denoising has to be applied with care, otherwise you risk washing out true effects. Denoising and detoning can be quite powerful for clustering assets, since it can remove market noise as well as systemic market effects.
+Denoising and detoning can be applied to any [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref) method, but others already have contingencies for capturing true signals. Denoising has to be applied with care, otherwise you risk washing out true effects. Denoising and detoning can be quite powerful for clustering assets, since it can remove market noise as well as systemic market effects.
 =#
 
 #=

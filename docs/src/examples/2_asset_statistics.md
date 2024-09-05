@@ -147,7 +147,7 @@ nothing #hide
 All targets subtype [`PortfolioOptimiser.MeanTarget`](@ref). It is possible for users to define a one by creating a concrete subtype of [`PortfolioOptimiser.MeanTarget`](@ref) and defining a new [`target_mean`](@ref) for the custom target.
 
 ```
-struct CustomMeanTarget <: PortfolioOptimiser.MeanTarget
+struct CustomMeanTarget <: MeanTarget
     ...
 end
 function target_mean(ct::CustomMeanTarget, mu::AbstractVector,
@@ -161,12 +161,12 @@ However, this limits the target to using the same data as the current ones. It's
 
 ### 3.2 Defining a custom mean method
 
-In order to define a new method all you need to do is create a new subtype of [`PortfolioOptimiser.PortfolioOptimiser.MeanEstimator`](@ref) (it's not exported so it must be qualified) and define a new [`StatsBase.mean`](https://juliastats.org/StatsBase.jl/stable/scalarstats/#Weighted-sum-and-mean) function.
+In order to define a new method all you need to do is create a new subtype of [`PortfolioOptimiser.MeanEstimator`](@ref) (it's not exported so it must be qualified) and define a new [`StatsBase.mean`](https://juliastats.org/StatsBase.jl/stable/scalarstats/#Weighted-sum-and-mean) function.
 
 This is all we need, we can now define a custom mean that is the same as the [`MuSimple`](@ref), but scales the vector. You can scale the vector uniformly, by providing a scalar, or scale each item individually by providing an `AbstractVector`.
 
 ````@example 2_asset_statistics
-mutable struct MyScaledMean{T1, T2} <: PortfolioOptimiser.PortfolioOptimiser.MeanEstimator
+mutable struct MyScaledMean{T1, T2} <: PortfolioOptimiser.MeanEstimator
     scale::T1
     w::T2
 end
