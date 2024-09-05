@@ -26,7 +26,7 @@ function clac_mst(method::KruskalTree, G)
     return Graphs.kruskal_mst(G, method.args...; method.kwargs...)
 end
 function clac_mst(method::BoruvkaTree, G)
-    return Graphs.boruvka_mst(G, method.args...; method.kwargs...)
+    return Graphs.boruvka_mst(G, method.args...; method.kwargs...)[1]
 end
 function clac_mst(method::PrimTree, G)
     return Graphs.prim_mst(G, method.args...; method.kwargs...)
