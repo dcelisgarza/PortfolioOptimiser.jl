@@ -487,6 +487,7 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
 
   - Downside dispersion.
     
+      + Semi Variance, [`Variance`](@ref).
       + Semi standard deviation, [`SSD`](@ref).
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
       + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).

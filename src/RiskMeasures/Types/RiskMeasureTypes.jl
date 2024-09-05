@@ -45,6 +45,13 @@ end
     mu::Union{<:AbstractVector, Nothing} = nothing
 end
 
+@kwdef mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
+    settings::RiskMeasureSettings = RiskMeasureSettings()
+    target::T1 = 0.0
+    w::Union{<:AbstractWeights, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
+end
+
 @kwdef mutable struct SSD{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
     target::T1 = 0.0
@@ -186,8 +193,9 @@ end
     kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
 
-@kwdef mutable struct SKurt <: TradRiskMeasure
+@kwdef mutable struct SKurt{T1 <: Real} <: TradRiskMeasure
     settings::RiskMeasureSettings = RiskMeasureSettings()
+    target::T1 = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
     kt::Union{<:AbstractMatrix, Nothing} = nothing
 end
@@ -445,13 +453,13 @@ end
 end
 
 for (op, name) ∈
-    zip((SD, Variance, MAD, SSD, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR, MDD, ADD,
-         CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Kurt,
-         SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, dVar, Skew, SSkew, Equal),
-        ("SD", "Variance", "MAD", "SSD", "FLPM", "SLPM", "WR", "VaR", "CVaR", "EVaR",
-         "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r", "MDD_r",
-         "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD", "RG",
-         "CVaRRG", "TG", "TGRG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
+    zip((SD, Variance, MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR,
+         MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
+         RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, dVar, Skew, SSkew, Equal),
+        ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
+         "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
+         "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
+         "RG", "CVaRRG", "TG", "TGRG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)

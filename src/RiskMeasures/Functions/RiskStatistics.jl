@@ -7,6 +7,15 @@ function risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
     r2 = calc_risk(rm, w2; X = X, V = V, SV = SV, delta = -delta, scale = scale, kwargs...)
     return r1, r2
 end
+"""
+```
+risk_contribution(rm::RiskMeasure, w::AbstractVector;
+                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                           delta::Real = 1e-6, marginal::Bool = false, kwargs...)
+```
+"""
 function risk_contribution(rm::RiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
