@@ -4,14 +4,28 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
       SimpleWeightedGraphs, PyCall, Random, SmartAsserts, SparseArrays, Statistics,
       StatsBase, TimeSeries
 
+# Types
+## Risk measures
 include("./RiskMeasures/Types/RiskMeasureTypes.jl")
+## Parameter estimation
 include("./ParameterEstimation/Types/ParameterEstimationTypes.jl")
+## Optimisation
 include("./Optimisation/Types/OptimisationTypes.jl")
+## Portfolio
 include("./Portfolio/Types/PortfolioTypes.jl")
+
+# Functions
+## Constraints
+include("./Constraints/Constraints.jl")
+## Parameter estimation
 include("./ParameterEstimation/Functions/ParameterEstimationFunctions.jl")
-include("./Constraints.jl")
+## Risk measures
 include("./RiskMeasures/Functions/RiskMeasureFunctions.jl")
+## Portfolio
 include("./Portfolio/Functions/PortfolioFunctions.jl")
+## Optimisation
 include("./Optimisation/Functions/OptimisationFunctions.jl")
-include("./PortfolioOptimiserPlotsExtDefinitions.jl")
+
+# Extensions
+include("./Extensions/PortfolioOptimiserPlotsExtDefinitions.jl")
 end
