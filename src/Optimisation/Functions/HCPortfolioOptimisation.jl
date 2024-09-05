@@ -8,9 +8,7 @@ include("./HCPortfolioOptimisationNCO.jl")
 
 function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    rmo::Union{AbstractVector, <:RiskMeasure} = rm,
-                   type::HCOptimType = HRP(), obj::ObjectiveFunction = MinRisk(),
-                   objo::ObjectiveFunction = obj, kelly::RetType = NoKelly(),
-                   kellyo::RetType = kelly, cluster::Bool = true,
+                   type::HCOptimType = HRP(), cluster::Bool = true,
                    hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt(),
                    max_iter::Int = 100)
     if cluster
@@ -18,6 +16,6 @@ function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} =
     end
     lo, hi = w_limits(type, eltype(port.returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
-    w = _optimise!(type, port, rm, rmo, obj, objo, kelly, kellyo, w_min, w_max)
+    w = _optimise!(type, port, rm, rmo, w_min, w_max)
     return finalise_weights(type, port, w, w_min, w_max, max_iter)
 end

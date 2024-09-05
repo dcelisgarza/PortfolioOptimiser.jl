@@ -1,6 +1,5 @@
 function _optimise!(::HERC, port::HCPortfolio, rmi::Union{AbstractVector, <:RiskMeasure},
-                    rmo::Union{AbstractVector, <:RiskMeasure}, obji::ObjectiveFunction,
-                    objo::ObjectiveFunction, kellyi::RetType, kellyo::RetType, w_min, w_max)
+                    rmo::Union{AbstractVector, <:RiskMeasure}, w_min, w_max)
     nodes = to_tree(port.clusters)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
@@ -38,7 +37,7 @@ function _optimise!(::HERC, port::HCPortfolio, rmi::Union{AbstractVector, <:Risk
             end
             scale = r.settings.scale
             for cluster ∈ clusters
-                _risk = cluster_risk(port, objo, kellyo, cluster, r) * scale
+                _risk = cluster_risk(port, cluster, r) * scale
                 if issubset(cluster, ln)
                     lrisk += _risk
                     append!(lc, cluster)
@@ -71,7 +70,7 @@ function _optimise!(::HERC, port::HCPortfolio, rmi::Union{AbstractVector, <:Risk
                 solver_flag = true
             end
             scale = r.settings.scale
-            risk[cidx] .+= naive_risk(port, obji, kellyi, clusters, r) * scale
+            risk[cidx] .+= naive_risk(port, clusters, r) * scale
             if solver_flag
                 r.solvers = nothing
             end

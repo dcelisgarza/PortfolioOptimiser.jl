@@ -79,7 +79,7 @@ function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
                       SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                       rf::Real = 0.0, kelly::Bool = false)
     ret = if kelly
-        sum(log.(one(eltype(X)) .+ X * w)) / size(X, 1)
+        1 / size(X, 1) * sum(log.(one(eltype(X)) .+ X * w))
     else
         dot(mu, w)
     end
