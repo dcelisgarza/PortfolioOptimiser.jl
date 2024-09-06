@@ -69,7 +69,7 @@ function _optimise_allocation(port, label, tickers, latest_prices)
          Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
     end
 end
-function _lp_sub_allocation!(port, key, label, tickers, weights, latest_prices, investment,
+function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, investment,
                              string_names, total_investment)
     if isempty(tickers)
         return String[], Vector{Int}(undef, 0), Vector{eltype(latest_prices)}(undef, 0),
@@ -133,7 +133,8 @@ function _combine_allocations!(port, key, long_tickers, short_tickers, long_shar
 
     return nothing
 end
-function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, string_names)
+function _lp_allocation!(port, port_type, latest_prices, investment, short, long_u, short_u,
+                         string_names)
     key = Symbol("LP_" * string(port_type))
 
     weights = port.optimal[port_type].weights
@@ -141,10 +142,11 @@ function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, s
 
     long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
                                                                                 investment,
-                                                                                reinvest)
+                                                                                short,
+                                                                                long_u,
+                                                                                short_u)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _lp_sub_allocation!(port,
-                                                                                                                          key,
                                                                                                                           :long,
                                                                                                                           tickers[long_idx],
                                                                                                                           weights[long_idx],
@@ -154,7 +156,6 @@ function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, s
                                                                                                                           investment)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _lp_sub_allocation!(port,
-                                                                                                                                key,
                                                                                                                                 :short,
                                                                                                                                 tickers[short_idx],
                                                                                                                                 -weights[short_idx],

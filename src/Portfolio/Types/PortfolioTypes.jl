@@ -423,7 +423,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
 end
 function Base.getproperty(obj::Portfolio, sym::Symbol)
     if sym == :sum_short_long
-        obj.short ? obj.long_u - obj.short_u : one(eltype(obj.returns))
+        obj.short ? obj.long_u - obj.short_u : obj.long_u
     else
         getfield(obj, sym)
     end

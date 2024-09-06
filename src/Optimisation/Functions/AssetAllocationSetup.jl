@@ -1,24 +1,13 @@
-function _setup_alloc_optim(weights, investment, reinvest)
-    long_idx = weights .>= 0
-    short_idx = .!long_idx
+function _setup_alloc_optim(weights, investment, short, long_u, short_u)
+    long_idx = weights .>= zero(eltype(weights))
+    long_investment = investment * long_u
 
-    long_ratio = if !isempty(long_idx)
-        sum(weights[long_idx])
+    if short
+        short_idx = .!long_idx
+        short_investment = investment * short_u
     else
-        zero(eltype(weights))
-    end
-
-    short_ratio = if !isempty(short_idx)
-        -sum(weights[short_idx])
-    else
-        zero(eltype(weights))
-    end
-
-    short_investment = investment * short_ratio
-    long_investment = investment * long_ratio
-
-    if reinvest
-        long_investment += short_investment
+        short_idx = Vector{eltype(weights)}(undef, 0)
+        short_investment = zero(eltype(weights))
     end
 
     return long_idx, short_idx, long_investment, short_investment
