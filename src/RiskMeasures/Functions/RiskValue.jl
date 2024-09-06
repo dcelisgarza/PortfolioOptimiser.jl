@@ -25,7 +25,7 @@ end
 _SVariance(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
 ```
 
-Compute the Semi-Standard Deviation.
+Compute the Semi-Variance, this is the square of [`_SSD`](@ref).
 
 ```math
 \\begin{align}
@@ -1146,6 +1146,24 @@ end
 ```
 _Skew(w::AbstractVector, V::AbstractArray)
 ```
+
+Compute the Quadratic Skewness/Semi Skewness.
+
+```math
+\\begin{align}
+\\nu &= \\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\\\
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}`` is the vector of asset weights.
+  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of coskewness or semicoskewness as computed by [`coskew`](@ref).
+
+# Inputs
+
+  - `w`: `N×1` vector of weights.
+  - `V`: `N×N` matrix of sum of negative spectral slices of coskewness or semi coskewness.
 """
 function _Skew(w::AbstractVector, V::AbstractArray)
     return sqrt(dot(w, V, w))
@@ -1281,7 +1299,7 @@ Compute the Ordered Weight Array risk measure.
 
 # Inputs
 
-  - `w`: vector of asset weights.
+  - `w`: `T×1` precomputed vector of OWA weights. Can be computed with [`owa_gmd`](@ref), [`owa_rg`](@ref), [`owa_rcvar`](@ref), [`owa_tg`](@ref), [`owa_rtg`](@ref), [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
   - `x`: `T×1` returns vector.
 
 !!! warning

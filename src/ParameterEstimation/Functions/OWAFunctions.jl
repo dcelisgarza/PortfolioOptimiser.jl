@@ -334,29 +334,6 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     return w
 end
 
-"""
-```julia
-owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
-                 max_phi::Real = 0.5, solvers = Dict())
-```
-
-Compute the OWA weights for the convex risk measure considering higher order L-moments [OWAL](@cite).
-
-# Inputs
-
-  - `k`: order of the L-moment, `k ≥ 2`.
-
-  - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
-
-      + `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
-      + `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
-      + `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
-      + `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
-  - `g`: the risk aversion coefficient.
-  - `max_phi`: maximum weight constraint of the L-moments.
-
-# Outputs
-"""
 function _owa_l_moment_crm(method::CRRA, ::Any, k, weights, ::Any)
     return _crra_method(weights, k, method.g)
 end
@@ -413,6 +390,29 @@ function _owa_l_moment_crm(method::MinSqDist, T, k, weights, solvers)
     @objective(model, Min, t)
     return _owa_model_solve(model, weights, solvers, k)
 end
+"""
+```julia
+owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
+                 max_phi::Real = 0.5, solvers = Dict())
+```
+
+Compute the OWA weights for the convex risk measure considering higher order L-moments [OWAL](@cite).
+
+# Inputs
+
+  - `k`: order of the L-moment, `k ≥ 2`.
+
+  - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
+
+      + `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
+      + `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
+      + `:SS`: Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
+      + `:SD`: Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
+  - `g`: the risk aversion coefficient.
+  - `max_phi`: maximum weight constraint of the L-moments.
+
+# Outputs
+"""
 function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = MinSqDist(),
                           solvers = Dict())
     @smart_assert(k >= 2)

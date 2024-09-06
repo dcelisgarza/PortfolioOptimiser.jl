@@ -1217,6 +1217,11 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
 
     return scokurt
 end
+"""
+```
+coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
+```
+"""
 function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
     y = X .- transpose(mu)
@@ -1239,6 +1244,11 @@ function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
 
     return coskew, V
 end
+"""
+```
+coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
+```
+"""
 function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
     y = X .- transpose(mu)
