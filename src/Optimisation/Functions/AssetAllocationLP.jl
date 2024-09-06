@@ -70,10 +70,9 @@ function _optimise_allocation(port, label, tickers, latest_prices)
     end
 end
 function _lp_sub_allocation!(port, key, label, tickers, weights, latest_prices, investment,
-                             string_names, ratio)
+                             string_names, total_investment)
     if isempty(tickers)
-        return String[], Vector{eltype(latest_prices)}(undef, 0),
-               Vector{eltype(latest_prices)}(undef, 0),
+        return String[], Vector{Int}(undef, 0), Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices))
     end
@@ -105,8 +104,11 @@ function _lp_sub_allocation!(port, key, label, tickers, weights, latest_prices, 
     shares, cost, allocated_weights, available_funds = _optimise_allocation(port, label,
                                                                             tickers,
                                                                             latest_prices)
-
-    allocated_weights *= ratio
+    if !isempty(shares)
+        alpha = dot(latest_prices, shares)
+        alpha /= total_investment
+        allocated_weights .*= alpha
+    end
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
 function _combine_allocations!(port, key, long_tickers, short_tickers, long_shares,
@@ -137,9 +139,9 @@ function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, s
     weights = port.optimal[port_type].weights
     tickers = port.assets
 
-    long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio = _setup_alloc_optim(weights,
-                                                                                                         investment,
-                                                                                                         reinvest)
+    long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
+                                                                                investment,
+                                                                                reinvest)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _lp_sub_allocation!(port,
                                                                                                                           key,
@@ -149,7 +151,7 @@ function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, s
                                                                                                                           latest_prices[long_idx],
                                                                                                                           long_investment,
                                                                                                                           string_names,
-                                                                                                                          long_ratio)
+                                                                                                                          investment)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _lp_sub_allocation!(port,
                                                                                                                                 key,
@@ -159,7 +161,7 @@ function _lp_allocation!(port, port_type, latest_prices, investment, reinvest, s
                                                                                                                                 latest_prices[short_idx],
                                                                                                                                 short_investment,
                                                                                                                                 string_names,
-                                                                                                                                short_ratio)
+                                                                                                                                investment)
 
     _combine_allocations!(port, key, long_tickers, short_tickers, long_shares, short_shares,
                           long_latest_prices, short_latest_prices, long_cost, short_cost,

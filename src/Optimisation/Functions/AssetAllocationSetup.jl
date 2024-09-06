@@ -21,5 +21,5 @@ function _setup_alloc_optim(weights, investment, reinvest)
         long_investment += short_investment
     end
 
-    return long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio
+    return long_idx, short_idx, long_investment, short_investment
 end

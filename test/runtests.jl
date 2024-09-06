@@ -1,33 +1,5 @@
 using SafeTestsets
 
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
-@safetestset "Factor Stats tests" begin
-    include("FactorStatsTest.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
 @safetestset "Allocation tests" begin
     include("AllocationTests.jl")
 end
@@ -98,4 +70,32 @@ end
 
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
 end

@@ -15,7 +15,7 @@ function roundmult(val, prec, args...; kwargs...)
     return round(div(val, prec) * prec, args...; kwargs...)
 end
 function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, rounding,
-                                 ratio)
+                                 total_investment)
     if isempty(tickers)
         return String[], Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0),
@@ -75,8 +75,10 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
     end
 
     cost = latest_prices .* shares
-    allocated_weights = cost / sum(cost)
-    allocated_weights *= ratio
+    alpha = sum(cost)
+    allocated_weights = cost / alpha
+    alpha /= total_investment
+    allocated_weights .*= alpha
 
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
@@ -86,23 +88,23 @@ function _greedy_allocation!(port, port_type, latest_prices, investment, roundin
     weights = port.optimal[port_type].weights
     tickers = port.assets
 
-    long_idx, short_idx, long_investment, short_investment, long_ratio, short_ratio = _setup_alloc_optim(weights,
-                                                                                                         investment,
-                                                                                                         reinvest)
+    long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
+                                                                                investment,
+                                                                                reinvest)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _greedy_sub_allocation!(tickers[long_idx],
                                                                                                                               weights[long_idx],
                                                                                                                               latest_prices[long_idx],
                                                                                                                               long_investment,
                                                                                                                               rounding,
-                                                                                                                              long_ratio)
+                                                                                                                              investment)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _greedy_sub_allocation!(tickers[short_idx],
                                                                                                                                     -weights[short_idx],
                                                                                                                                     latest_prices[short_idx],
                                                                                                                                     short_investment,
                                                                                                                                     rounding,
-                                                                                                                                    short_ratio)
+                                                                                                                                    investment)
 
     _combine_allocations!(port, key, long_tickers, short_tickers, long_shares, short_shares,
                           long_latest_prices, short_latest_prices, long_cost, short_cost,

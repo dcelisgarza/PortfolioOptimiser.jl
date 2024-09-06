@@ -1,9 +1,9 @@
 #=
-# Example 2: Asset statistics - expected returns and covariance matrix
+# Example 2: Asset statistics
 
 This tutorial follows from [Tutorial 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
-This tutorial focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the variable, both cases will perform the necessary checks so the variables have the required characteristics.
+This tutorial focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`HCPortfolio`](@ref) instance. Every case will perform validation checks.
 
 ## 1. Downloading the data
 =#
@@ -381,7 +381,7 @@ for idx ∈ 1:2
                  aspect_ratio = :equal))
 end
 
-# If you invert `covs_logo[2]` and remove very small values (the covariance is recovered by inverting the inverse and so the would-be zeros are very small values), you can see the sparsity of the ivnerse covariance.
+# The LoGo covariance algorithm computes the sparsified inverse covariance, which is inverted to recover the LoGo covariance. The inversion is numerical, so if we invert the covariance, we will get some very small, non-zero values. We remove them to show the sparsified inverse covariance.
 
 J = covs_logo[2] \ I
 J[abs.(J) .<= 1e-10] .= zero(eltype(J))
@@ -390,5 +390,5 @@ sparse(J)
 #=
 ## Other statistics
 
-There are other asset statistics that can be computed with [`asset_statistics!`](@ref). However, they do not use anything that has not been covered in this tutorial. For details on the statistics refer to the docs of [`asset_statistics!`](@ref).
+There are other asset statistics that can be computed with [`asset_statistics!`](@ref). However, they do not use anything that has not been covered in this tutorial. For further details refer to the docs of [`asset_statistics!`](@ref).
 =#

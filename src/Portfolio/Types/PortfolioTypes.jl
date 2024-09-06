@@ -223,6 +223,9 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
         returns = ret
     end
 
+    @smart_assert(short_u >= zero(short_u))
+    @smart_assert(long_u >= zero(long_u))
+
     if !isempty(f_prices)
         f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
     end
@@ -426,7 +429,13 @@ function Base.getproperty(obj::Portfolio, sym::Symbol)
     end
 end
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
-    if sym == :max_num_assets_kurt
+    if sym == :short_u
+        @smart_assert(val >= zero(val))
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :long_u
+        @smart_assert(val >= zero(val))
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
         val = clamp(val, 1, size(obj.returns, 2))
