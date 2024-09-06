@@ -2,6 +2,11 @@ abstract type AbstractOptimType end
 abstract type OptimType <: AbstractOptimType end
 abstract type HCOptimType <: AbstractOptimType end
 
+"""
+```
+struct Trad <: OptimType end
+```
+"""
 struct Trad <: OptimType end
 
 struct RP <: OptimType end
