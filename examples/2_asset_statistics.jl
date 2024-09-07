@@ -23,7 +23,7 @@ prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
 prices = hcat(prices...)
 cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]
-TimeSeries.rename!(prices, Symbol.(assets))
+TimeSeries.rename!(prices, Symbol.(assets));
 
 # ## 2. Instantiating an instance of [`Portfolio`](@ref).
 

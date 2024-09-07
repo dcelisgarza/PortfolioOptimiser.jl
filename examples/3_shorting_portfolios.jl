@@ -35,7 +35,7 @@ prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
 prices = hcat(prices...)
 cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]
-TimeSeries.rename!(prices, Symbol.(assets))
+TimeSeries.rename!(prices, Symbol.(assets));
 
 # ## 2. Instantiating an instance of [`Portfolio`](@ref).
 
@@ -180,7 +180,7 @@ Lets allocate the short-long portfolio.
 ## Allocating the short-long portfolio.
 portfolio.optimal[:sal] = allocate!(portfolio, :s; investment = investment)
 portfolio.optimal[:sag] = allocate!(portfolio, :s; method = Greedy(; rounding = 0.3),
-                                    investment = investment)
+                                    investment = investment);
 
 #=
 Lets verify that the allocations used the money we have available.
@@ -264,7 +264,7 @@ Lets allocate the short-long portfolio.
 ## Allocating the short-long portfolio.
 portfolio.optimal[:sral] = allocate!(portfolio, :sr; investment = investment)
 portfolio.optimal[:srag] = allocate!(portfolio, :sr; method = Greedy(; rounding = 0.3),
-                                     investment = investment)
+                                     investment = investment);
 
 #=
 Lets verify that the allocations used the money we have available.
