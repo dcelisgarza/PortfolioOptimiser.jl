@@ -9,8 +9,8 @@ This tutorial focuses on using the optimisation constraints available to [`Trad`
 =#
 
 ## using Pkg
-## Pkg.add.(["StatsPlots", "GraphRecipes", "MarketData", "Clarabel", "HiGHS", "CovarianceEstimation", "SparseArrays"])
-using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, MarketData,
+## Pkg.add.(["StatsPlots", "GraphRecipes", "YFinance", "Clarabel", "HiGHS", "CovarianceEstimation", "SparseArrays"])
+using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YFinance,
       PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
       PrettyTables
 
@@ -26,30 +26,16 @@ fmt1 = (v, i, j) -> begin
     end
 end;
 
-assets = Symbol.(["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC",
-                  "LULU", "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT",
-                  "SAVE", "SBUX", "SIRI", "STX", "TLRY", "TSLA"])
-
-Date_0 = DateTime(2019, 01, 01)
-Date_1 = DateTime(2023, 01, 01)
-
-function get_prices(assets)
-    prices = TimeSeries.rename!(yahoo(assets[1],
-                                      YahooOpt(; period1 = Date_0, period2 = Date_1))[:AdjClose],
-                                assets[1])
-    for asset ∈ assets[2:end]
-        ## Yahoo doesn't like regular calls to their API.
-        sleep(rand() / 10)
-        prices = merge(prices,
-                       TimeSeries.rename!(yahoo(asset,
-                                                YahooOpt(; period1 = Date_0,
-                                                         period2 = Date_1))[:AdjClose],
-                                          asset), :outer)
-    end
-    return prices
-end
-
-prices = get_prices(assets)
+assets = ["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC", "LULU",
+          "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT", "SAVE", "SBUX",
+          "SIRI", "STX", "TLRY", "TSLA"]
+Date_0 = "2019-01-01"
+Date_1 = "2023-01-01"
+prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
+prices = hcat(prices...)
+cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
+prices = prices[cidx]
+TimeSeries.rename!(prices, Symbol.(assets))
 
 # ## 2. Instantiating an instance of [`Portfolio`](@ref).
 

@@ -2,7 +2,7 @@
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "bc61ce0bb48635c51f9ab841de0266f280e9c49b"
+project_hash = "00060227cfeee6720d3d6466618e342dbcc975b8"
 
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
@@ -71,9 +71,9 @@ version = "3.5.1+1"
 
 [[deps.ArrayInterface]]
 deps = ["Adapt", "LinearAlgebra"]
-git-tree-sha1 = "f54c23a5d304fb87110de62bace7777d59088c34"
+git-tree-sha1 = "3640d077b6dafd64ceb8fd5c1ec76f7ca53bcf76"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "7.15.0"
+version = "7.16.0"
 
     [deps.ArrayInterface.extensions]
     ArrayInterfaceBandedMatricesExt = "BandedMatrices"
@@ -264,17 +264,18 @@ uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 version = "1.10.2"
 
 [[deps.ConstructionBase]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "a33b7ced222c6165f624a3f2b55945fac5a598d9"
+git-tree-sha1 = "76219f1ed5771adbb096743bff43fb5fdd4c1157"
 uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
-version = "1.5.7"
+version = "1.5.8"
 
     [deps.ConstructionBase.extensions]
     ConstructionBaseIntervalSetsExt = "IntervalSets"
+    ConstructionBaseLinearAlgebraExt = "LinearAlgebra"
     ConstructionBaseStaticArraysExt = "StaticArrays"
 
     [deps.ConstructionBase.weakdeps]
     IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
+    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [[deps.Contour]]
@@ -382,9 +383,9 @@ version = "0.9.3"
 
 [[deps.Documenter]]
 deps = ["ANSIColoredPrinters", "AbstractTrees", "Base64", "CodecZlib", "Dates", "DocStringExtensions", "Downloads", "Git", "IOCapture", "InteractiveUtils", "JSON", "LibGit2", "Logging", "Markdown", "MarkdownAST", "Pkg", "PrecompileTools", "REPL", "RegistryInstances", "SHA", "TOML", "Test", "Unicode"]
-git-tree-sha1 = "9d29b99b6b2b6bc2382a4c8dbec6eb694f389853"
+git-tree-sha1 = "5a1ee886566f2fa9318df1273d8b778b9d42712d"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-version = "1.6.0"
+version = "1.7.0"
 
 [[deps.DocumenterCitations]]
 deps = ["AbstractTrees", "Bibliography", "Dates", "Documenter", "Logging", "Markdown", "MarkdownAST", "OrderedCollections", "Unicode"]
@@ -599,11 +600,16 @@ git-tree-sha1 = "39783f639367ea6d6673540134e62f6c1bc2b4d2"
 uuid = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 version = "0.3.12"
 
+[[deps.GeoFormatTypes]]
+git-tree-sha1 = "59107c179a586f0fe667024c5eb7033e81333271"
+uuid = "68eda718-8dee-11e9-39e7-89f7f65f511f"
+version = "0.4.2"
+
 [[deps.GeoInterface]]
-deps = ["Extents"]
-git-tree-sha1 = "9fff8990361d5127b770e3454488360443019bb3"
+deps = ["Extents", "GeoFormatTypes"]
+git-tree-sha1 = "5921fc0704e40c024571eca551800c699f86ceb4"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.3.5"
+version = "1.3.6"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
@@ -790,9 +796,9 @@ version = "0.1.8"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
-git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
+git-tree-sha1 = "f389674c99bfcde17dc57454011aa44d5a260a40"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.5.0"
+version = "1.6.0"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
@@ -1039,12 +1045,6 @@ deps = ["AbstractTrees", "Markdown"]
 git-tree-sha1 = "465a70f0fc7d443a00dcdc3267a497397b8a3899"
 uuid = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
 version = "0.1.2"
-
-[[deps.MarketData]]
-deps = ["CSV", "Dates", "HTTP", "JSON3", "Random", "Reexport", "TimeSeries"]
-git-tree-sha1 = "58432ac47e951ba8b32373df97298bb13eb60205"
-uuid = "945b72a4-3b13-509d-9b46-1525bb5c06de"
-version = "0.14.1"
 
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test", "Unicode"]
@@ -1378,9 +1378,15 @@ version = "6.5.2+2"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
-git-tree-sha1 = "e237232771fdafbae3db5c31275303e056afaa9f"
+git-tree-sha1 = "1d587203cf851a51bf1ea31ad7ff89eff8d625ea"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
-version = "2.10.1"
+version = "2.11.0"
+
+    [deps.QuadGK.extensions]
+    QuadGKEnzymeExt = "Enzyme"
+
+    [deps.QuadGK.weakdeps]
+    Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -2010,6 +2016,20 @@ deps = ["Base64", "Dates", "Printf", "StringEncodings"]
 git-tree-sha1 = "dea63ff72079443240fbd013ba006bcbc8a9ac00"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 version = "0.4.12"
+
+[[deps.YFinance]]
+deps = ["Base64", "Dates", "HTTP", "JSON3", "OrderedCollections", "PrecompileTools", "Random"]
+git-tree-sha1 = "4bca92d40013cb02992fefa74e034b8caf5b8eb7"
+uuid = "e4b3b0a2-f9a3-42f3-aabb-32142cceaf77"
+version = "0.1.7"
+
+    [deps.YFinance.extensions]
+    YFinance_TSFrames = "TSFrames"
+    YFinance_TimeSeries = "TimeSeries"
+
+    [deps.YFinance.weakdeps]
+    TSFrames = "9f90e835-9451-4aaa-bcb1-743a1b8d2f84"
+    TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
