@@ -1193,7 +1193,7 @@ end
                                                                        :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    rm = [SD(; settings = RiskMeasureSettings(; flag = false)), CDaR()]
+    rm = [SD(; settings = RMSettings(; flag = false)), CDaR()]
 
     portfolio.network_method = SDP(; A = B)
     w19 = optimise!(portfolio; kelly = AKelly(), obj = Sharpe(; rf = rf), rm = rm)

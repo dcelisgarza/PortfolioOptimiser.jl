@@ -2,7 +2,7 @@
 # using PortfolioOptimiser, Makie, SmartAsserts, Statistics, MultivariateStats, Distributions,
 #       Clustering, Graphs, SimpleWeightedGraphs, LinearAlgebra
 
-# import PortfolioOptimiser: AbstractPortfolio, RiskMeasure, RetType
+# import PortfolioOptimiser: AbstractPortfolio, AbstractRiskMeasure, RetType
 
 # """
 # ```
@@ -57,7 +57,7 @@
 
 # function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
 #                                                    w::AbstractVector, X::AbstractMatrix;
-#                                                    rm::RiskMeasure = SD(),
+#                                                    rm::AbstractRiskMeasure = SD(),
 #                                                    V::AbstractMatrix = Matrix{Float64}(undef,
 #                                                                                        0,
 #                                                                                        0),
@@ -126,7 +126,7 @@
 #                                                    else
 #                                                        :Trad
 #                                                    end; X = port.returns,
-#                                                    rm::RiskMeasure = SD(),
+#                                                    rm::AbstractRiskMeasure = SD(),
 #                                                    percentage::Bool = false,
 #                                                    erc_line::Bool = true, t_factor = 252,
 #                                                    delta::Real = 1e-6,
@@ -146,7 +146,7 @@
 # function PortfolioOptimiser.plot_frontier(frontier;
 #                                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
 #                                           mu::AbstractVector = Vector{Float64}(undef, 0),
-#                                           rf::Real = 0.0, rm::RiskMeasure = SD(),
+#                                           rf::Real = 0.0, rm::AbstractRiskMeasure = SD(),
 #                                           kelly::RetType = NoKelly(), t_factor = 252,
 #                                           palette = :Spectral)
 #     risks = copy(frontier[:risk])
@@ -200,7 +200,7 @@
 # function PortfolioOptimiser.plot_frontier(port::AbstractPortfolio, key = nothing;
 #                                           X::AbstractMatrix = port.returns,
 #                                           mu::AbstractVector = port.mu,
-#                                           rm::RiskMeasure = SD(), rf::Real = 0.0,
+#                                           rm::AbstractRiskMeasure = SD(), rf::Real = 0.0,
 #                                           kelly::RetType = NoKelly(), t_factor = 252,
 #                                           palette = :Spectral)
 #     if isnothing(key)
@@ -211,7 +211,7 @@
 #                                             palette = palette)
 # end
 
-# function PortfolioOptimiser.plot_frontier_area(frontier; rm::RiskMeasure = SD(),
+# function PortfolioOptimiser.plot_frontier_area(frontier; rm::AbstractRiskMeasure = SD(),
 #                                                t_factor = 252, palette = :Spectral)
 #     risks = copy(frontier[:risk])
 #     assets = reshape(frontier[:weights][!, "tickers"], 1, :)

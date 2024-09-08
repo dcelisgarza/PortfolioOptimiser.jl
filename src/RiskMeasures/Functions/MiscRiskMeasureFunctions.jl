@@ -1,4 +1,4 @@
-function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
+function get_rm_string(rm::Union{AbstractVector, <:RiskMeasure})
     rmstr = ""
     if !isa(rm, AbstractVector)
         rmstr *= String(rm)
@@ -14,7 +14,7 @@ function get_rm_string(rm::Union{AbstractVector, <:TradRiskMeasure})
     return Symbol(rmstr)
 end
 
-function get_first_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+function get_first_rm(rm::Union{AbstractVector, <:RiskMeasure})
     return if !isa(rm, AbstractVector)
         rm
     else

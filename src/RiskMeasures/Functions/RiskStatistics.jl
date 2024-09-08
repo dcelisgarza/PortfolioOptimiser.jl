@@ -1,4 +1,4 @@
-function risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
+function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                      V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                      SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
@@ -9,14 +9,14 @@ function risk_bounds(rm::RiskMeasure, w1::AbstractVector, w2::AbstractVector;
 end
 """
 ```
-risk_contribution(rm::RiskMeasure, w::AbstractVector;
+risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            delta::Real = 1e-6, marginal::Bool = false, kwargs...)
 ```
 """
-function risk_contribution(rm::RiskMeasure, w::AbstractVector;
+function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -48,7 +48,7 @@ function risk_contribution(rm::RiskMeasure, w::AbstractVector;
     end
     return rc
 end
-function factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
+function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                                   X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                   assets::AbstractVector = Vector{String}(undef, 0),
                                   F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -72,7 +72,7 @@ function factor_risk_contribution(rm::RiskMeasure, w::AbstractVector;
 
     return rc_f
 end
-function sharpe_ratio(rm::RiskMeasure, w::AbstractVector;
+function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                       V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),

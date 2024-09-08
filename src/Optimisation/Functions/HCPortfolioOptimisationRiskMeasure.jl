@@ -40,7 +40,7 @@ function _naive_risk(::Equal, returns, ::Any)
     N = size(returns, 2)
     return fill(eltype(returns)(inv(N)), N)
 end
-function _naive_risk(rm::RiskMeasure, returns, cV)
+function _naive_risk(rm::AbstractRiskMeasure, returns, cV)
     N = size(returns, 2)
     inv_risk = Vector{eltype(returns)}(undef, N)
     w = Vector{eltype(returns)}(undef, N)
@@ -78,7 +78,7 @@ function naive_risk(port, cluster, rm)
     end
     return crisk
 end
-function find_kurt_skew_rm(rm::Union{AbstractVector, <:TradRiskMeasure})
+function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
     set_kurt = false
     set_skurt = false
     set_skew = false

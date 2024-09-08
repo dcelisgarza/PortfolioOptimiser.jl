@@ -1,4 +1,4 @@
-function optimise!(port::Portfolio; rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
+function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
@@ -6,8 +6,7 @@ function optimise!(port::Portfolio; rm::Union{AbstractVector, <:TradRiskMeasure}
     return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
 end
 
-function frontier_limits!(port::Portfolio;
-                          rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
+function frontier_limits!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                           kelly::RetType = NoKelly(), class::PortClass = Classic(),
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
@@ -28,7 +27,7 @@ end
 """
 ```
 efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
-                             rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
+                             rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic(),
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
@@ -36,7 +35,7 @@ efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
 ```
 """
 function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
-                             rm::Union{AbstractVector, <:TradRiskMeasure} = SD(),
+                             rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic(),
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),

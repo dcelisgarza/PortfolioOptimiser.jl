@@ -174,18 +174,14 @@ end
     w1 = optimise!(portfolio; rm = SD(), type = HRP(), cluster = true)
     w2 = optimise!(portfolio; rm = CDaR(), type = HRP(), cluster = false)
     w3 = optimise!(portfolio; rm = [SD(), CDaR()], type = HRP(), cluster = false)
-    w4 = optimise!(portfolio;
-                   rm = [SD(), CDaR(; settings = RiskMeasureSettings(; scale = 1e-10))],
+    w4 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))],
                    type = HRP(), cluster = false)
-    w5 = optimise!(portfolio;
-                   rm = [SD(), CDaR(; settings = RiskMeasureSettings(; scale = 1e10))],
+    w5 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e10))],
                    type = HRP(), cluster = false)
 
-    w6 = optimise!(portfolio;
-                   rm = [CDaR(), SD(; settings = RiskMeasureSettings(; scale = 1e-10))],
+    w6 = optimise!(portfolio; rm = [CDaR(), SD(; settings = RMSettings(; scale = 1e-10))],
                    type = HRP(), cluster = false)
-    w7 = optimise!(portfolio;
-                   rm = [CDaR(), SD(; settings = RiskMeasureSettings(; scale = 1e10))],
+    w7 = optimise!(portfolio; rm = [CDaR(), SD(; settings = RMSettings(; scale = 1e10))],
                    type = HRP(), cluster = false)
     @test isapprox(w1.weights, w4.weights)
     @test isapprox(w2.weights, w5.weights)
@@ -197,11 +193,9 @@ end
     w1 = optimise!(portfolio; rm = SD(), type = HERC(), cluster = false)
     w2 = optimise!(portfolio; rm = CDaR(), type = HERC(), cluster = false)
     w3 = optimise!(portfolio; rm = [SD(), CDaR()], type = HERC(), cluster = false)
-    w4 = optimise!(portfolio;
-                   rm = [SD(), CDaR(; settings = RiskMeasureSettings(; scale = 1e-10))],
+    w4 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))],
                    type = HERC(), cluster = false)
-    w5 = optimise!(portfolio;
-                   rm = [CDaR(), SD(; settings = RiskMeasureSettings(; scale = 1e-10))],
+    w5 = optimise!(portfolio; rm = [CDaR(), SD(; settings = RMSettings(; scale = 1e-10))],
                    type = HERC(), cluster = false)
     @test isapprox(w1.weights, w4.weights)
     @test isapprox(w2.weights, w5.weights)
@@ -221,8 +215,8 @@ end
 
     w1 = optimise!(portfolio; rm = SD(), type = NCO(), cluster = true)
     w2 = optimise!(portfolio; rm = [[SD(), SD()]], type = NCO(), cluster = false)
-    w3 = optimise!(portfolio; rm = [SD(; settings = RiskMeasureSettings(; scale = 2))],
-                   type = NCO(), cluster = false)
+    w3 = optimise!(portfolio; rm = [SD(; settings = RMSettings(; scale = 2))], type = NCO(),
+                   cluster = false)
     @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
     @test isapprox(w1.weights, w3.weights, rtol = 1.0e-5)
     @test isapprox(w2.weights, w3.weights, rtol = 1.0e-5)
@@ -231,8 +225,8 @@ end
     w5 = optimise!(portfolio; rm = [[SD(), SD()], [CDaR(), CDaR()]], type = NCO(),
                    cluster = false)
     w6 = optimise!(portfolio;
-                   rm = [SD(; settings = RiskMeasureSettings(; scale = 2)),
-                         CDaR(; settings = RiskMeasureSettings(; scale = 2))], type = NCO(),
+                   rm = [SD(; settings = RMSettings(; scale = 2)),
+                         CDaR(; settings = RMSettings(; scale = 2))], type = NCO(),
                    cluster = true)
     @test isapprox(w4.weights, w5.weights, rtol = 5.0e-5)
     @test isapprox(w4.weights, w6.weights, rtol = 5.0e-9)

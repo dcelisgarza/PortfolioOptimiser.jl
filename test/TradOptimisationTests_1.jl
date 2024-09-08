@@ -1404,7 +1404,7 @@ end
     @test isapprox(w7.weights, w8.weights, rtol = 0.05)
 
     obj = MinRisk()
-    rm = [CVaR(), SD(; settings = RiskMeasureSettings(; flag = false))]
+    rm = [CVaR(), SD(; settings = RMSettings(; flag = false))]
     w9 = optimise!(portfolio; rm = rm, kelly = AKelly(; formulation = QuadSD()), obj = obj)
     wt = [9.204153687833781e-11, 0.04242033344850122, 9.85123787201143e-11,
           2.742462482595728e-10, 0.007574028452637937, 1.0444892006359854e-10,
@@ -1416,8 +1416,8 @@ end
     @test isapprox(w9.weights, wt)
 
     rm = [CVaR(),
-          [SD(; settings = RiskMeasureSettings(; flag = false)),
-           SD(; settings = RiskMeasureSettings(; flag = false))]]
+          [SD(; settings = RMSettings(; flag = false)),
+           SD(; settings = RMSettings(; flag = false))]]
     w10 = optimise!(portfolio; rm = rm, kelly = AKelly(; formulation = QuadSD()), obj = obj)
     wt = [9.204153687833781e-11, 0.04242033344850122, 9.85123787201143e-11,
           2.742462482595728e-10, 0.007574028452637937, 1.0444892006359854e-10,
@@ -1430,7 +1430,7 @@ end
     @test isapprox(w9.weights, w10.weights)
 
     obj = Sharpe(; rf = rf)
-    rm = [CVaR(), SD(; settings = RiskMeasureSettings(; flag = false))]
+    rm = [CVaR(), SD(; settings = RMSettings(; flag = false))]
     w11 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [2.304102546507255e-9, 3.4058580184231964e-9, 3.264755599420317e-9,
           2.168529122297692e-9, 0.5593117496370377, 7.139134073206089e-10,
@@ -1442,8 +1442,8 @@ end
     @test isapprox(w11.weights, wt)
 
     rm = [CVaR(),
-          [SD(; settings = RiskMeasureSettings(; flag = false)),
-           SD(; settings = RiskMeasureSettings(; flag = false))]]
+          [SD(; settings = RMSettings(; flag = false)),
+           SD(; settings = RMSettings(; flag = false))]]
     w12 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [3.196566252540456e-9, 4.80237219121404e-9, 4.464886416453463e-9,
           3.0491060989617767e-9, 0.559311725652781, 1.0002259978345894e-9,

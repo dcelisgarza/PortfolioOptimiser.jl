@@ -18,7 +18,7 @@
     riskt0 = 0.07576350913162658
     rett0 = 0.0005794990185578756
 
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -69,7 +69,7 @@
     riskt0 = 0.09342425156101017
     rett0 = 0.0009783083257672756
 
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -111,7 +111,7 @@
 
     # Risk upper bound
     obj = MaxRet()
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -124,7 +124,7 @@
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-7
 
     obj = Sharpe(; rf = rf)
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1 * 1.000001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.000001
@@ -137,7 +137,7 @@
 
     # Ret lower bound
     obj = MinRisk()
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -149,7 +149,7 @@
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = RLDaR(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = RLDaR(; settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -223,7 +223,7 @@ end
     riskt0 = 0.00013888508487777416
     rett0 = 0.0004070691284861725
 
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -274,7 +274,7 @@ end
     riskt0 = 0.00020556674631177048
     rett0 = 0.0009657710513568699
 
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -316,7 +316,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -329,7 +329,7 @@ end
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-9
 
     obj = Sharpe(; rf = rf)
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -343,7 +343,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -355,7 +355,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -386,7 +386,7 @@ end
     riskt0 = 0.0001588490319818568
     rett0 = 0.0003563680681010386
 
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -437,7 +437,7 @@ end
     riskt0 = 0.00020482110250140048
     rett0 = 0.0009552956056983061
 
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -479,7 +479,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 1.0))
+    rm = Kurt(; settings = RMSettings(; scale = 1.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -492,7 +492,7 @@ end
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-5
 
     obj = Sharpe(; rf = rf)
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -506,7 +506,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -518,7 +518,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = Kurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = Kurt(; settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -549,7 +549,7 @@ end
     riskt0 = 0.0001095671204061385
     rett0 = 0.0003976490301536407
 
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -600,7 +600,7 @@ end
     riskt0 = 0.0001695775787535489
     rett0 = 0.0010654948366056365
 
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -642,7 +642,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1 * 1.05
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.05
@@ -653,7 +653,7 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.05
 
     obj = Sharpe(; rf = rf)
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1 * 1.05
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.05
@@ -665,7 +665,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -677,7 +677,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -708,7 +708,7 @@ end
     riskt0 = 0.00011018128303928912
     rett0 = 0.00039273793904369474
 
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -759,7 +759,7 @@ end
     riskt0 = 0.00016836304121264654
     rett0 = 0.0010573999779863363
 
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -801,7 +801,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 1.0))
+    rm = SKurt(; settings = RMSettings(; scale = 1.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1
@@ -812,7 +812,7 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2
 
     obj = Sharpe(; rf = rf)
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1
@@ -824,7 +824,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -836,7 +836,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = SKurt(; settings = RiskMeasureSettings(; scale = 2.0))
+    rm = SKurt(; settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -869,8 +869,7 @@ end
     riskt0 = 0.02356383470533441
     rett0 = 0.0005937393209710076
 
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -922,8 +921,7 @@ end
     riskt0 = 0.03208927225110264
     rett0 = 0.0017686555804583674
 
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -966,8 +964,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -981,8 +978,7 @@ end
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-10
 
     obj = Sharpe(; rf = rf)
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -997,8 +993,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -1011,8 +1006,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = false))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -1079,8 +1073,7 @@ end
     riskt0 = 0.023582366401225324
     rett0 = 0.000643224255466324
 
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -1132,8 +1125,7 @@ end
     riskt0 = 0.03204366080645988
     rett0 = 0.00176571347903363
 
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -1176,8 +1168,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.001
@@ -1189,8 +1180,7 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.001
 
     obj = Sharpe(; rf = rf)
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.001
@@ -1205,8 +1195,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -1219,8 +1208,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = TG(; settings = RiskMeasureSettings(; scale = 2.0),
-            owa = OWASettings(; approx = true))
+    rm = TG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -1334,8 +1322,7 @@ end
     riskt0 = 0.040929059924343876
     rett0 = 0.00020307377724072516
 
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -1387,8 +1374,7 @@ end
     riskt0 = 0.058407554117453894
     rett0 = 0.0017136727125023712
 
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -1431,8 +1417,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -1446,8 +1431,7 @@ end
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-9
 
     obj = Sharpe(; rf = rf)
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
@@ -1462,8 +1446,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -1476,8 +1459,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = false))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = false))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -1544,8 +1526,7 @@ end
     riskt0 = 0.04095412710520921
     rett0 = 9.918096973651042e-5
 
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -1597,8 +1578,7 @@ end
     riskt0 = 0.05762076056624533
     rett0 = 0.0016919468952059898
 
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -1641,8 +1621,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.001
@@ -1654,8 +1633,7 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.001
 
     obj = Sharpe(; rf = rf)
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 * 1.001
@@ -1668,8 +1646,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio; rm = rm, obj = obj)
@@ -1682,8 +1659,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = TGRG(; settings = RiskMeasureSettings(; scale = 2.0),
-              owa = OWASettings(; approx = true))
+    rm = TGRG(; settings = RMSettings(; scale = 2.0), owa = OWASettings(; approx = true))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w7.weights) >= ret1
@@ -1778,7 +1754,7 @@ end
     riskt0 = 0.02356383470533441
     rett0 = 0.0005937393209710076
 
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
@@ -1831,7 +1807,7 @@ end
     riskt0 = 0.03208927225110264
     rett0 = 0.0017686555804583674
 
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
@@ -1875,7 +1851,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
@@ -1890,7 +1866,7 @@ end
           abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-10
 
     obj = Sharpe(; rf = rf)
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
@@ -1906,7 +1882,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
@@ -1920,7 +1896,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = false))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
@@ -1988,7 +1964,7 @@ end
     riskt0 = 0.023582366401225324
     rett0 = 0.000643224255466324
 
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
@@ -2041,7 +2017,7 @@ end
     riskt0 = 0.03204366080645988
     rett0 = 0.00176571347903363
 
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     w3 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r3 = calc_risk(portfolio; type = :Trad, rm = rm)
@@ -2085,7 +2061,7 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
@@ -2098,7 +2074,7 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.001
 
     obj = Sharpe(; rf = rf)
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
@@ -2114,7 +2090,7 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     rm.settings.ub = Inf
     portfolio.mu_l = ret1
@@ -2128,7 +2104,7 @@ end
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = OWA(; w = owa_tg(200), settings = RiskMeasureSettings(; scale = 2.0),
+    rm = OWA(; w = owa_tg(200), settings = RMSettings(; scale = 2.0),
              owa = OWASettings(; approx = true))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio; rm = rm, obj = obj)
@@ -2229,14 +2205,14 @@ end
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
-    rm = Skew(; settings = RiskMeasureSettings(; scale = 1.0))
+    rm = Skew(; settings = RMSettings(; scale = 1.0))
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm.settings.scale = 0.99
     w2 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     @test isapprox(w1.weights, w2.weights, rtol = 5e-6)
 
-    rm = SSkew(; settings = RiskMeasureSettings(; scale = 1.0))
+    rm = SSkew(; settings = RMSettings(; scale = 1.0))
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     rm.settings.scale = 0.99

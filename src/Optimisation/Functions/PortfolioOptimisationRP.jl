@@ -73,7 +73,7 @@ function rp_constraints(port, class)
     @constraint(model, sum(w) == k)
     return nothing
 end
-function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure},
+function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     ::Any, ::Any, class::Union{Classic, FM, FC}, w_ini::AbstractVector,
                     str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)

@@ -126,7 +126,7 @@ end
     rm = SD(; formulation = SimpleSD())
     w1 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
 
-    rm = SD(; formulation = SimpleSD(), settings = RiskMeasureSettings(; scale = 5))
+    rm = SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 5))
     w2 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w2.weights, w1.weights, rtol = 0.0001)
 
@@ -142,8 +142,8 @@ end
     @test isapprox(w4.weights, w3.weights, rtol = 5.0e-5)
 
     rm = [[SD(; formulation = SimpleSD()), SD(; formulation = SimpleSD()),
-           SD(; formulation = SimpleSD(), settings = RiskMeasureSettings(; scale = 0.75)),
-           SD(; formulation = SimpleSD(), settings = RiskMeasureSettings(; scale = 2.25))]]
+           SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 0.75)),
+           SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 2.25))]]
     w5 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w5.weights, w1.weights, rtol = 5.0e-5)
     @test isapprox(w5.weights, w2.weights, rtol = 5.0e-5)
@@ -207,9 +207,9 @@ end
     @test isapprox(w3, w11.weights, rtol = 0.005)
     @test isapprox(w3, w12.weights, rtol = 0.001)
 
-    rm = [SD(; formulation = SimpleSD(), settings = RiskMeasureSettings(; scale = 7.3)),
-          [CVaR(; alpha = 0.1, settings = RiskMeasureSettings(; scale = 5)),
-           CVaR(; settings = RiskMeasureSettings(; scale = 1.6))]]
+    rm = [SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 7.3)),
+          [CVaR(; alpha = 0.1, settings = RMSettings(; scale = 5)),
+           CVaR(; settings = RMSettings(; scale = 1.6))]]
     w13 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MinRisk()).weights
     w14 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MaxRet()).weights
     w15 = optimise!(portfolio; rm = rm, kelly = kelly, obj = obj).weights

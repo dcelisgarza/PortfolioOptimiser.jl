@@ -8,15 +8,16 @@ include("./HCPortfolioOptimisationNCO.jl")
 
 """
 ```
-optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                   rmo::Union{AbstractVector, <:RiskMeasure} = rm,
+optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:AbstractRiskMeasure} = SD(),
+                   rmo::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
                    type::HCOptimType = HRP(), cluster::Bool = true,
                    hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt(),
                    max_iter::Int = 100)
 ```
 """
-function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                   rmo::Union{AbstractVector, <:RiskMeasure} = rm,
+function optimise!(port::HCPortfolio;
+                   rm::Union{AbstractVector, <:AbstractRiskMeasure} = SD(),
+                   rmo::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
                    type::HCOptimType = HRP(), cluster::Bool = true,
                    hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt(),
                    max_iter::Int = 100)

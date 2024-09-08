@@ -1,4 +1,4 @@
-function _optimise!(::Trad, port::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure},
+function _optimise!(::Trad, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
                     w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)

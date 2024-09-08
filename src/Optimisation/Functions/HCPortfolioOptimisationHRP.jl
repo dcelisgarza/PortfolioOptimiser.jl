@@ -1,5 +1,5 @@
-function _optimise!(::HRP, port::HCPortfolio, rm::Union{AbstractVector, <:RiskMeasure},
-                    ::Any, w_min, w_max)
+function _optimise!(::HRP, port::HCPortfolio,
+                    rm::Union{AbstractVector, <:AbstractRiskMeasure}, ::Any, w_min, w_max)
     N = size(port.returns, 2)
     weights = ones(eltype(port.returns), N)
     items = [port.clusters.order]

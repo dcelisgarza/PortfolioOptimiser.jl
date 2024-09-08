@@ -82,7 +82,7 @@ end
 
 function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
                                                    w::AbstractVector, X::AbstractMatrix;
-                                                   rm::PortfolioOptimiser.RiskMeasure = SD(),
+                                                   rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                                    V::AbstractMatrix = Matrix{Float64}(undef,
                                                                                        0,
                                                                                        0),
@@ -169,7 +169,7 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                    else
                                                        :HRP
                                                    end; X = port.returns,
-                                                   rm::PortfolioOptimiser.RiskMeasure = SD(),
+                                                   rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                                    percentage::Bool = false,
                                                    erc_line::Bool = true, t_factor = 252,
                                                    delta::Real = 1e-6,
@@ -197,7 +197,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
                                           X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                           mu::AbstractVector = Vector{Float64}(undef, 0),
                                           rf::Real = 0.0,
-                                          rm::PortfolioOptimiser.RiskMeasure = SD(),
+                                          rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                           kelly::PortfolioOptimiser.RetType = NoKelly(),
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
@@ -285,7 +285,7 @@ end
 function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortfolio,
                                           key = nothing; X::AbstractMatrix = port.returns,
                                           mu::AbstractVector = port.mu,
-                                          rm::PortfolioOptimiser.RiskMeasure = SD(),
+                                          rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                           rf::Real = 0.0,
                                           kelly::PortfolioOptimiser.RetType = NoKelly(),
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
@@ -300,7 +300,7 @@ function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortf
 end
 
 function PortfolioOptimiser.plot_frontier_area(frontier;
-                                               rm::PortfolioOptimiser.RiskMeasure = SD(),
+                                               rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                                t_factor = 252, kwargs_a = (;),
                                                theme = :Spectral, kwargs_l = (;),
                                                show_sharpe = true)

@@ -82,10 +82,9 @@ function noc_constraints(model, risk0, ret0)
     @constraint(model, [i = 1:N], [log_1mw[i], 1, 1 - w[i]] ∈ MOI.ExponentialCone())
     return nothing
 end
-function _optimise!(type::NOC, port::Portfolio,
-                    rm::Union{AbstractVector, <:TradRiskMeasure}, obj::ObjectiveFunction,
-                    kelly::RetType, class::PortClass, w_ini::AbstractVector,
-                    str_names::Bool)
+function _optimise!(type::NOC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
+                    obj::ObjectiveFunction, kelly::RetType, class::PortClass,
+                    w_ini::AbstractVector, str_names::Bool)
     risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()

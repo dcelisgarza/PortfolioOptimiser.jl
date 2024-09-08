@@ -1,5 +1,6 @@
-function _optimise!(::HERC, port::HCPortfolio, rmi::Union{AbstractVector, <:RiskMeasure},
-                    rmo::Union{AbstractVector, <:RiskMeasure}, w_min, w_max)
+function _optimise!(::HERC, port::HCPortfolio,
+                    rmi::Union{AbstractVector, <:AbstractRiskMeasure},
+                    rmo::Union{AbstractVector, <:AbstractRiskMeasure}, w_min, w_max)
     nodes = to_tree(port.clusters)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]

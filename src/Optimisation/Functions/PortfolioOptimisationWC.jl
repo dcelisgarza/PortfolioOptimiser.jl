@@ -72,7 +72,7 @@ function wc_constraints(port, obj, type)
     _wc_sharpe_constraints(obj, port)
     return nothing
 end
-function _optimise!(type::WC, port::Portfolio, rm::Union{AbstractVector, <:TradRiskMeasure},
+function _optimise!(type::WC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, ::Any, ::Any, w_ini::AbstractVector,
                     str_names::Bool)
     port.model = JuMP.Model()

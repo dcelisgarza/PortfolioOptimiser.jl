@@ -16,7 +16,7 @@ function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ckurt, cskurt, cV, cS
 
     return w, intra_port.fail
 end
-function calc_intra_weights(port, rm::Union{AbstractVector, <:TradRiskMeasure}, opt_kwargs,
+function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_kwargs,
                             port_kwargs)
     idx = cutree(port.clusters; k = port.k)
     w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
@@ -79,8 +79,9 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, stat_kwargs)
 
     return w
 end
-function _optimise!(type::NCO, port::HCPortfolio, rmi::Union{AbstractVector, <:RiskMeasure},
-                    rmo::Union{AbstractVector, <:RiskMeasure}, ::Any, ::Any)
+function _optimise!(type::NCO, port::HCPortfolio,
+                    rmi::Union{AbstractVector, <:AbstractRiskMeasure},
+                    rmo::Union{AbstractVector, <:AbstractRiskMeasure}, ::Any, ::Any)
     port.fail = Dict()
     wi = calc_intra_weights(port, rmi, type.opt_kwargs, type.port_kwargs)
     w = calc_inter_weights(port, wi, rmo, type.opt_kwargs_o, type.port_kwargs_o,
