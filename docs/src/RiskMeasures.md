@@ -43,6 +43,7 @@ Modules = [PortfolioOptimiser]
 Public = true
 Private = false
 Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
+Order = [:types, :functions]
 ```
 
 ## Private
@@ -52,4 +53,5 @@ Modules = [PortfolioOptimiser]
 Public = false
 Private = true
 Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
+Order = [:types, :functions]
 ```

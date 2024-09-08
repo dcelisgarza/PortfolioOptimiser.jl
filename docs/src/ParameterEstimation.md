@@ -29,6 +29,7 @@ Pages = ["ParameterEstimation/Types/PosdefFixTypes.jl",
 "ParameterEstimation/Functions/BlackLittermanFunctions.jl",
 "ParameterEstimation/Functions/OWAFunctions.jl",
 "ParameterEstimation/Functions/DBHTs.jl"]
+Order = [:types, :functions]
 ```
 
 ## Private
@@ -60,4 +61,5 @@ Pages = ["ParameterEstimation/Types/PosdefFixTypes.jl",
 "ParameterEstimation/Functions/BlackLittermanFunctions.jl",
 "ParameterEstimation/Functions/OWAFunctions.jl",
 "ParameterEstimation/Functions/DBHTs.jl"]
+Order = [:types, :functions]
 ```
