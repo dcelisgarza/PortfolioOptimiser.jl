@@ -142,7 +142,7 @@ Defines the Standard Deviation risk measure.
   - `settings`: risk measure settings [`RMSettings`](@Ref).
 
   - `formulation`: formulation of the standard deviation/variance [`SDFormulation`](@ref).
-  - `sigma`: covariance matrix.
+  - `sigma`: optional `N×N` covariance matrix.
 
       + if `nothing`: use the covariance matrix stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
       + else: use this one.
@@ -232,7 +232,7 @@ end
 function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
              w::Union{<:AbstractWeights, Nothing} = nothing,
              mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SSD{typeof{target}}(settings, target, w, mu)
+    return SSD{typeof(target)}(settings, target, w, mu)
 end
 
 """
@@ -408,14 +408,61 @@ function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef struct MDD <: RiskMeasure
+"""
+```
+@kwdef mutable struct MDD{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+```
 
-@kwdef struct ADD <: RiskMeasure
-    settings::RMSettings = RMSettings()
+Defines the Maximum Drawdown (Calmar ratio) of uncompounded returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+"""
+struct MDD <: RiskMeasure
+    settings::RMSettings
+end
+function MDD(; settings::RMSettings = RMSettings())
+    return MDD(settings)
 end
 
+"""
+```
+@kwdef mutable struct ADD{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+end
+```
+
+Defines the Average Drawdown of uncompounded returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+"""
+struct ADD <: RiskMeasure
+    settings::RMSettings
+end
+function ADD(; settings::RMSettings = RMSettings())
+    return ADD(settings)
+end
+
+"""
+```
+@kwdef mutable struct CDaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Conditional Drawdown at Risk of uncompounded returns at Risk risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct CDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -431,10 +478,46 @@ function Base.setproperty!(obj::CDaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef struct UCI <: RiskMeasure
+"""
+```
+@kwdef mutable struct UCI{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+```
 
+Defines the Ulcer Index risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+"""
+struct UCI <: RiskMeasure
+    settings::RMSettings
+end
+function UCI(; settings::RMSettings = RMSettings())
+    return UCI(settings)
+end
+
+"""
+```
+@kwdef mutable struct EDaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Entropic Drawdown at Risk of uncompounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
+"""
 mutable struct EDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -452,6 +535,27 @@ function Base.setproperty!(obj::EDaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct RLDaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Relativistic Drawdown at Risk of uncompounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
+"""
 mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -471,12 +575,61 @@ function Base.setproperty!(obj::RLDaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct Kurt <: RiskMeasure
+"""
+```
+@kwdef mutable struct Kurt{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     w::Union{<:AbstractWeights, Nothing} = nothing
-    kt::Union{<:AbstractMatrix, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
+end
+```
+
+Defines the Square Root Kurtosis risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `w`: optional `T×1` vector of weights for computing the expected return in [`_Kurt`](@ref).
+  - `kt`: optional `N^2×N^2` cokurtosis matrix.
+
+      + If `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
+      + else: use this one.
+"""
+mutable struct Kurt <: RiskMeasure
+    settings::RMSettings
+    w::Union{<:AbstractWeights, Nothing}
+    kt::Union{<:AbstractMatrix, Nothing}
+end
+function Kurt(; settings::RMSettings = RMSettings(),
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              kt::Union{<:AbstractMatrix, Nothing} = nothing)
+    return Kurt(settings, w, kt)
 end
 
+"""
+```
+@kwdef mutable struct SKurt{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    target::T1 = 0.0
+    w::Union{<:AbstractWeights, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
+end
+```
+
+Defines the Square Root Semi Kurtosis risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `target`: minimum return threshold for classifying downside returns.
+  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SKurt`](@ref).
+  - `kt`: optional `N^2×N^2` cokurtosis matrix.
+
+      + If `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
+      + else: use this one.
+"""
 @kwdef mutable struct SKurt{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     target::T1 = 0.0

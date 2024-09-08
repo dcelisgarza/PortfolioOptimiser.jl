@@ -544,7 +544,7 @@ end
 _MDD(x::AbstractVector)
 ```
 
-Compute the Maximum Drawdown of uncompounded cumulative returns.
+Compute the Maximum Drawdown (Calmar ratio) of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
