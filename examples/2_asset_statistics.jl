@@ -262,18 +262,20 @@ Try changing `idx` 1 to 12, see how different the covariances look. What happens
 We're showing the correlation matrix since it makes it easier to see the differences. We've set the colour limits to go from 0 to 1 `clim = (0, 1)`, since all these assets appear to be postively correlated. Strictly speaking, only [`CorMutualInfo`](@ref), [`CorDistance`](@ref) and [`CorLTD`](@ref) are guaranteed to be only positive. More information on all the methods is found in the docs.
 =#
 
-for idx ∈ 1:12
-    #nb    display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
-    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #nb                 aspect_ratio = :equal))
-    #md    show(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
-    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #md                 aspect_ratio = :equal))
-end
+#nb for idx ∈ 1:12
+#nb    display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+#nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#nb                 aspect_ratio = :equal))
+#nb end
+#md for idx ∈ 1:12
+#md    plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+#md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#md                 aspect_ratio = :equal)
+#md end
 
 #=
 ### 3.4 Covariance denoising
@@ -297,18 +299,20 @@ end
 Try changing `idx` from 1 to 4 to see how the matrix changes.
 =#
 
-for idx ∈ 1:4
-    #nb    display(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
-    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #nb                 aspect_ratio = :equal))
-    #md    show(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
-    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #md                 aspect_ratio = :equal))
-end
+#nb for idx ∈ 1:4
+#nb    display(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+#nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#nb                 aspect_ratio = :equal))
+#nb end
+#md for idx ∈ 1:4
+#md    plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+#md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#md                 aspect_ratio = :equal)
+#md end
 
 #=
 The market prices are not independent of each other, they are subject to market forces that affect all products. Hence why most assets have positive covariances with other assets. These market forces can wash out the true relationships between assets. To do this, we can `detone` the denoised matrix by removing the largest M eigenvalues. Typically, only the one largest is removed but we give the option for removing more. This operation however, can make the matrix singular. Which means it can't be used for mean variance optimisation, but can be more useful for clustering than a standard covariance. However, [`PortCovCor`](@ref) also contains an option for fixing non-positive definite correlation matrices, which may be able to make the detoned matrix non-singular. We will pass the argument `posdef = NoPosdef()` to ensure the matrices aren't fixed.
@@ -341,19 +345,22 @@ end
 Try changing `idx` from 1 to 4 to see how the matrix changes. Try commenting out `posdef = NoPosdef()` from the cell above and see how it changes the output of this cell.
 =#
 
-for idx ∈ 1:4
-    #nb    display(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
-    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #nb                 aspect_ratio = :equal))
-    #md    show(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
-    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #md                 aspect_ratio = :equal))
-    println("idx = $idx, isposdef = $(isposdef(covs_detone[idx]))")
-end
+#nb for idx ∈ 1:4
+#nb    display(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+#nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#nb                 aspect_ratio = :equal))
+#nb println("idx = $idx, isposdef = $(isposdef(covs_detone[idx]))")
+#nb end
+#md for idx ∈ 1:4
+#md    plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+#md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#md                 aspect_ratio = :equal)
+#md    println("idx = $idx, isposdef = $(isposdef(covs_detone[idx]))")
+#md end
 
 #=
 Denoising and detoning can be applied to any [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref) method, but others already have contingencies for capturing true signals. Denoising has to be applied with care, otherwise you risk washing out true effects. Denoising and detoning can be quite powerful for clustering assets, since it can remove market noise as well as systemic market effects.
@@ -382,18 +389,20 @@ end
 Try changing `idx` from 1 to 2 to see how the matrix changes.
 =#
 
-for idx ∈ 1:2
-    #nb    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
-    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #nb                 aspect_ratio = :equal))
-    #md    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
-    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-    #md                 aspect_ratio = :equal))
-end
+#nb for idx ∈ 1:2
+#nb    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+#nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#nb                 aspect_ratio = :equal))
+#nb end
+#md for idx ∈ 1:2
+#md    plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+#md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+#md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+#md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+#md                 aspect_ratio = :equal)
+#md end
 
 # The LoGo covariance algorithm computes the sparsified inverse covariance, which is inverted to recover the LoGo covariance. The inversion is numerical, so if we invert the covariance, we will get some very small, non-zero values. We remove them to show the sparsified inverse covariance.
 

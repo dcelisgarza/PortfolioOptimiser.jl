@@ -36,7 +36,6 @@ Pages = ["Optimisation/Types/ObjectiveFunctionTypes.jl",
 "Optimisation/Functions/AssetAllocationSetup.jl",
 "Optimisation/Functions/AssetAllocationLP.jl",
 "Optimisation/Functions/AssetAllocationGreedy.jl"]
-Order = [:types, :functions]
 ```
 
 ## Private
@@ -75,5 +74,4 @@ Pages = ["Optimisation/Types/ObjectiveFunctionTypes.jl",
 "Optimisation/Functions/AssetAllocationSetup.jl",
 "Optimisation/Functions/AssetAllocationLP.jl",
 "Optimisation/Functions/AssetAllocationGreedy.jl"]
-Order = [:types, :functions]
 ```

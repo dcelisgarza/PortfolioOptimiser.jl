@@ -285,11 +285,10 @@ We're showing the correlation matrix since it makes it easier to see the differe
 
 ````@example 2_asset_statistics
 for idx ∈ 1:12
-    display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1), yticks = (1:N, portfolio.assets),
+         xticks = (1:N, portfolio.assets), xrotation = 90, colorbar = true,
+         xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5), color = cgrad(:Spectral),
+         yflip = true, aspect_ratio = :equal)
 end
 ````
 
@@ -315,11 +314,10 @@ Try changing `idx` from 1 to 4 to see how the matrix changes.
 
 ````@example 2_asset_statistics
 for idx ∈ 1:4
-    display(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+         yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets), xrotation = 90,
+         colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+         color = cgrad(:Spectral), yflip = true, aspect_ratio = :equal)
 end
 ````
 
@@ -354,11 +352,10 @@ Try changing `idx` from 1 to 4 to see how the matrix changes. Try commenting out
 
 ````@example 2_asset_statistics
 for idx ∈ 1:4
-    display(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+         yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets), xrotation = 90,
+         colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+         color = cgrad(:Spectral), yflip = true, aspect_ratio = :equal)
     println("idx = $idx, isposdef = $(isposdef(covs_detone[idx]))")
 end
 ````
@@ -388,11 +385,10 @@ Try changing `idx` from 1 to 2 to see how the matrix changes.
 
 ````@example 2_asset_statistics
 for idx ∈ 1:2
-    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+         yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets), xrotation = 90,
+         colorbar = true, xlim = (0.5, N + 0.5), ylim = (0.5, N + 0.5),
+         color = cgrad(:Spectral), yflip = true, aspect_ratio = :equal)
 end
 ````
 

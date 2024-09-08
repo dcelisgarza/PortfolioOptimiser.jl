@@ -142,7 +142,7 @@ pretty_table(w1; formatters = fmt1)
 #=
 We now have the portfolio for these assets and this period of time that minimises the variance. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial. 
 
-# ## 5. Asset allocation
+## 5. Asset allocation
 
 For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, [`Portfolio`](@ref) will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the [`allocate!`](@ref) function, though the order of the prices must be the same as the original asset order.
 
@@ -163,29 +163,29 @@ pretty_table(w2; formatters = fmt2)
 
 # This section is the one most bound to change as the plotting functions are still somewhat preliminary. There are a variety of plots but we'll only show the most basic ones. By default, the plots will take the mathematically optimal portfolio. Lets see what it looks like.
 
-## Plot the portfolio returns.
+# Plot the portfolio returns.
 #nb display(plot_returns(portfolio))
-#md show(plot_returns(portfolio))
+#md plt = plot_returns(portfolio)
 
-## Plot the portfolio returns per asset.
+# Plot the portfolio returns per asset.
 #nb display(plot_returns(portfolio; per_asset = true))
-#md show(plot_returns(portfolio; per_asset = true))
+#md plt = plot_returns(portfolio; per_asset = true)
 
-## Plot portfolio composition.
+# Plot portfolio composition.
 #nb display(plot_bar(portfolio))
-#md show(plot_bar(portfolio))
+#md plt = plot_bar(portfolio)
 
-## Plot the returns histogram.
+# Plot the returns histogram.
 #nb display(plot_hist(portfolio))
-#md show(plot_hist(portfolio))
+#md plt = plot_hist(portfolio)
 
-## Plot the portfolio range of returns.
+# Plot the portfolio range of returns.
 #nb display(plot_range(portfolio))
-#md show(plot_range(portfolio))
+#md plt = plot_range(portfolio)
 
-## Plot portfolio drawdown.
+# Plot portfolio drawdown.
 #nb display(plot_drawdown(portfolio))
-#md show(plot_drawdown(portfolio))
+#md plt = plot_drawdown(portfolio)
 
 # This is, however not our actual portfolio, it is the optimal one. To plot the allocated portfolio we need to know the key it is stored under and pass that on to the plotting functions along with a flag. The key is the symbol composed of the allocation method, in this case LP() and the portfolio type, which is something we have not discussed, but defaults to Trad(), as a Symbol.
 
@@ -198,29 +198,29 @@ pretty_table(hcat(portfolio.optimal[:Trad],
                                           portfolio.alloc_optimal[:LP_Trad].weights));
              formatters = fmt3)
 
-## Plot the portfolio returns.
+# Plot the portfolio returns.
 #nb display(plot_returns(portfolio, :LP_Trad; allocated = true))
-#md show(plot_returns(portfolio, :LP_Trad; allocated = true))
+#md plt = plot_returns(portfolio, :LP_Trad; allocated = true)
 
-## Plot the portfolio returns per asset.
+# Plot the portfolio returns per asset.
 #nb display(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
-#md show(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
+#md plt = plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true)
 
-## Plot portfolio composition.
+# Plot portfolio composition.
 #nb display(plot_bar(portfolio, :LP_Trad; allocated = true))
-#md show(plot_bar(portfolio, :LP_Trad; allocated = true))
+#md plt = plot_bar(portfolio, :LP_Trad; allocated = true)
 
-## Plot the returns histogram.
+# Plot the returns histogram.
 #nb display(plot_hist(portfolio, :LP_Trad; allocated = true))
-#md show(plot_hist(portfolio, :LP_Trad; allocated = true))
+#md plt = plot_hist(portfolio, :LP_Trad; allocated = true)
 
-## Plot the portfolio range of returns.
+# Plot the portfolio range of returns.
 #nb display(plot_range(portfolio, :LP_Trad; allocated = true))
-#md show(plot_range(portfolio, :LP_Trad; allocated = true))
+#md plt = plot_range(portfolio, :LP_Trad; allocated = true)
 
-## Plot portfolio drawdown.
+# Plot portfolio drawdown.
 #nb display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
-#md show(plot_drawdown(portfolio, :LP_Trad; allocated = true))
+#md plt = plot_drawdown(portfolio, :LP_Trad; allocated = true)
 
 #=
 ## 7. Efficient frontier
@@ -234,13 +234,13 @@ The idea is to first compute the minimum risk and maximum return portfolios. Fro
 points = 50
 frontier = efficient_frontier!(portfolio; rm = rm, points = points)
 
-## Plot the efficient frontier.
+# Plot the efficient frontier.
 #nb display(plot_frontier(portfolio; rm = rm))
-#md show(plot_frontier(portfolio; rm = rm))
+#md plt = plot_frontier(portfolio; rm = rm)
 
-## Plot frontier asset composition.
+# Plot frontier asset composition.
 #nb display(plot_frontier_area(portfolio; rm = rm))
-#md show(plot_frontier_area(portfolio; rm = rm))
+#md plt = plot_frontier_area(portfolio; rm = rm)
 
 #=
 The efficient frontier is outputted by [`efficient_frontier!`](@ref), but also saves it in the `portfolio` instance. It is a dictionary whose keys are the symbols of the risk measure used to compute the efficient frontier. We've only computed the efficient frontier for the SD, so we can access the efficient frontier data by indexing into the `:SD` key. The documentation for [`Portfolio`](@ref) contains more details.
@@ -262,8 +262,14 @@ else
     risks = portfolio.frontier[:SD][:risks]
 end
 
-display(plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
-             yticks = (1:N, portfolio.assets), yflip = true,
-             xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
-             xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",
-             color = cgrad(:Spectral)))
+#nb display(plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
+#nb              yticks = (1:N, portfolio.assets), yflip = true,
+#nb              xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
+#nb              xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",
+#nb              color = cgrad(:Spectral), size = (600, 600), 
+#nb              colorbar_title = "\nAsset Weight"))
+#md plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
+#md              yticks = (1:N, portfolio.assets), yflip = true,
+#md              xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
+#md              xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",
+#md              color = cgrad(:Spectral), size = (600, 600), colorbar_title = "\nAsset Weight")
