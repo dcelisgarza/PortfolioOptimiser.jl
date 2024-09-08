@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/3_shorting_portfolios.jl"
 ```
@@ -101,8 +102,8 @@ display(plot_frontier(portfolio, :ns))
 
 We'll now allocate the portfolio according to our means. We'll use both allocation methods:
 
-- Linear Mixed-integer Programming (LP): (default) can only allocate discrete integer shares and requires an MIP solver.
-- Greedy algorithm, can round down to the nearest `integer + N*rounding`, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.
+  - Linear Mixed-integer Programming (LP): (default) can only allocate discrete integer shares and requires an MIP solver.
+  - Greedy algorithm, can round down to the nearest `integer + N*rounding`, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.
 
 ````@example 3_shorting_portfolios
 portfolio.optimal[:nsal] = allocate!(portfolio, :ns; method = LP(), investment = investment)
@@ -173,8 +174,8 @@ nothing #hide
 
 How short- or long-heavy we want to be is mediated by the `short_u` and `long_u` properties. They set the upper bound for the absolute value of the sum of the short and long weights respectively.
 
-- `short_u`: the absolute value of the sum of the short weights will be less than this.
-- `long_u`: the sum of the long weights will be less than this.
+  - `short_u`: the absolute value of the sum of the short weights will be less than this.
+  - `long_u`: the sum of the long weights will be less than this.
 
 These values multiply the cash at our disposal when we allocate the portfolio. So when [`allocate!`](@ref) is called, the long investment will be `investment * long_u`. And if shorting is enabled, the short investment (the amount shorted) will be `short_u * investment`.
 
@@ -192,11 +193,11 @@ nothing #hide
 
 The portfolio `budget = long_u - short_u` gives us the leverage characteristics of the portfolio. This is a property that is automatically computed and cannot be cahnged. There are verious scenarios that `budget` describes.
 
-- `budget < 0`: the short sale value of the portfolio is higher than the long-sale value.
-- `budget == 0`: the short and long values of the portfolio are equal. The market neutral portfolio is found by maximising the return given these conditions.
-- `0 < budget < 1`: the portfolio is under-leveraged, meaning there is a cash reserve that is not being used.
-- ` budget == 1`: the portfolio has no leverage. If shorting is enabled, this means the profits from shorting are being invested in long positions.
-- `budget < 1`: the portfolio is leveraged, meaning it's using more money than is available.
+  - `budget < 0`: the short sale value of the portfolio is higher than the long-sale value.
+  - `budget == 0`: the short and long values of the portfolio are equal. The market neutral portfolio is found by maximising the return given these conditions.
+  - `0 < budget < 1`: the portfolio is under-leveraged, meaning there is a cash reserve that is not being used.
+  - ` budget == 1`: the portfolio has no leverage. If shorting is enabled, this means the profits from shorting are being invested in long positions.
+  - `budget < 1`: the portfolio is leveraged, meaning it's using more money than is available.
 
 Here the portfolio is under-leveraged.
 
@@ -378,7 +379,6 @@ pretty_table(DataFrame(; tickers = portfolio.assets,
                        sag_s = portfolio.optimal[:srag].shares))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/1_basic_use.jl"
 ```
@@ -276,7 +277,6 @@ display(plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
              color = cgrad(:Spectral)))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/4_hrp_portfolios.jl"
 ```
@@ -85,8 +86,8 @@ asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
 
 All [`HCPortfolio`]s use the assets' correlation structure to optimise the portfolios based on their correlation structure. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with two clustering methods.
 
-- Hierarchical clustering using [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
-- [`Direct Bubble Hierarchy Trees`](https://uk.mathworks.com/matlabcentral/fileexchange/46750-dbht).
+  - Hierarchical clustering using [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
+  - [`Direct Bubble Hierarchy Trees`](https://uk.mathworks.com/matlabcentral/fileexchange/46750-dbht).
 
 We'll use the default values for everything, see [`optimise!`](@ref) for details.
 
@@ -295,7 +296,6 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 => :weights_d);
              formatters = fmt1)
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
