@@ -133,8 +133,8 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
     cret = port.returns[:, cidx]
     cmu = port.mu[cidx]
     ccov = port.cov[cidx, cidx]
-    old_kurts = Vector{Matrix{eltype(port.returns)}}(undef, 0)
-    old_skurts = Vector{Matrix{eltype(port.returns)}}(undef, 0)
+    old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     cV = Matrix{eltype(port.returns)}(undef, 0, 0)
     cSV = Matrix{eltype(port.returns)}(undef, 0, 0)
     if !isempty(kurt_idx) || !isempty(skurt_idx) || set_skew || set_sskew
