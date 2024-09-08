@@ -128,6 +128,36 @@ function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
 
     return kurt_idx, skurt_idx, set_skew, set_sskew
 end
+function _get_port_kt(::Val{true}, port, idx)
+    return view(port.kurt, idx, idx)
+end
+function _get_port_kt(::Val{false}, port, idx)
+    return view(port.skurt, idx, idx)
+end
+function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
+    if !isa(rm, AbstractVector)
+        if isnothing(rm.kt) || isempty(rm.kt)
+            push!(old_kts, rm.kt)
+            rm.kt = _get_port_kt(val, port, idx)
+        else
+            kt_old = rm.kt
+            rm.kt = _get_port_kt(val, port, idx)
+            push!(old_kts, kt_old)
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, kt_idx)
+            if isnothing(r.kt) || isempty(r.kt)
+                push!(old_kts, r.kt)
+                r.kt = _get_port_kt(val, port, idx)
+            else
+                kt_old = r.kt
+                r.kt = _get_port_kt(val, port, idx)
+                push!(old_kts, kt_old)
+            end
+        end
+    end
+end
 function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_sskew)
     cassets = port.assets[cidx]
     cret = port.returns[:, cidx]
@@ -147,52 +177,10 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
             append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
         end
         if !isempty(kurt_idx)
-            if !isa(rm, AbstractVector)
-                if isnothing(rm.kt) || isempty(rm.kt)
-                    push!(old_kurts, rm.kt)
-                    rm.kt = view(port.kurt, idx, idx)
-                else
-                    kt_old = rm.kt
-                    rm.kt = view(kt_old, idx, idx)
-                    push!(old_kurts, kt_old)
-                end
-            else
-                rm_flat = reduce(vcat, rm)
-                for r ∈ view(rm_flat, kurt_idx)
-                    if isnothing(r.kt) || isempty(r.kt)
-                        push!(old_kurts, r.kt)
-                        r.kt = view(port.kurt, idx, idx)
-                    else
-                        kt_old = r.kt
-                        r.kt = view(kt_old, idx, idx)
-                        push!(old_kurts, kt_old)
-                    end
-                end
-            end
+            _set_kt_rm(Val(true), rm, port, kurt_idx, idx, old_kurts)
         end
         if !isempty(skurt_idx)
-            if !isa(rm, AbstractVector)
-                if isnothing(rm.kt) || isempty(rm.kt)
-                    push!(old_skurts, rm.kt)
-                    rm.kt = view(port.skurt, idx, idx)
-                else
-                    skt_old = rm.kt
-                    rm.kt = view(skt_old, idx, idx)
-                    push!(old_skurts, skt_old)
-                end
-            else
-                rm_flat = reduce(vcat, rm)
-                for r ∈ view(rm_flat, skurt_idx)
-                    if isnothing(r.kt) || isempty(r.kt)
-                        push!(old_skurts, r.kt)
-                        r.kt = view(port.skurt, idx, idx)
-                    else
-                        skt_old = r.kt
-                        r.kt = view(skt_old, idx, idx)
-                        push!(old_skurts, skt_old)
-                    end
-                end
-            end
+            _set_kt_rm(Val(false), rm, port, skurt_idx, idx, old_skurts)
         end
         if set_skew
             cV = gen_cluster_skew_sskew(Val(true), port, cluster, Nc, idx)
@@ -203,25 +191,20 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
     end
     return cassets, cret, cmu, ccov, old_kurts, old_skurts, cV, cSV
 end
+function _reset_kt_rm(rm, kt_idx, old_kts)
+    if !isempty(kt_idx)
+        if !isa(rm, AbstractVector)
+            rm.kt = old_kts[1]
+        else
+            rm_flat = reduce(vcat, rm)
+            for (r, old_kt) ∈ zip(view(rm_flat, kt_idx), old_kts)
+                r.kt = old_kt
+            end
+        end
+    end
+end
 function reset_kurt_and_skurt_rm(rm, kurt_idx, old_kurts, skurt_idx, old_skurts)
-    if !isempty(kurt_idx)
-        if !isa(rm, AbstractVector)
-            rm.kt = old_kurts[1]
-        else
-            rm_flat = reduce(vcat, rm)
-            for (r, old_kt) ∈ zip(view(rm_flat, kurt_idx), old_kurts)
-                r.kt = old_kt
-            end
-        end
-    end
-    if !isempty(skurt_idx)
-        if !isa(rm, AbstractVector)
-            rm.kt = old_skurts[1]
-        else
-            rm_flat = reduce(vcat, rm)
-            for (r, old_kt) ∈ zip(view(rm_flat, skurt_idx), old_skurts)
-                r.kt = old_kt
-            end
-        end
-    end
+    _reset_kt_rm(rm, kurt_idx, old_kurts)
+    _reset_kt_rm(rm, skurt_idx, old_skurts)
+    return nothing
 end
