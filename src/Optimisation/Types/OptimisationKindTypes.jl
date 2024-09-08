@@ -41,6 +41,8 @@ function WC(; mu::WorstCaseSet = Box(), cov::WorstCaseSet = Box())
     return WC(mu, cov)
 end
 
+"""
+```
 @kwdef mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real},
                           T3 <: AbstractVector{<:Real}, T4 <: AbstractVector{<:Real},
                           T5 <: AbstractVector{<:Real}, T6 <: AbstractVector{<:Real}} <:
@@ -52,6 +54,28 @@ end
     w_max::T4 = Vector{Float64}(undef, 0)
     w_min_ini::T5 = Vector{Float64}(undef, 0)
     w_max_ini::T6 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real}, T3 <: AbstractVector{<:Real},
+                   T4 <: AbstractVector{<:Real}, T5 <: AbstractVector{<:Real},
+                   T6 <: AbstractVector{<:Real}} <: OptimType
+    type::Union{WC, Trad}
+    bins::T1
+    w_opt::T2
+    w_min::T3
+    w_max::T4
+    w_min_ini::T5
+    w_max_ini::T6
+end
+function NOC(; type::Union{WC, Trad} = Trad(), bins::Real = 20.0,
+             w_opt::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+             w_min::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+             w_max::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+             w_min_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+             w_max_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_min_ini),
+               typeof(w_max_ini)}(type, bins, w_opt, w_min, w_max, w_min_ini, w_max_ini)
 end
 
 """

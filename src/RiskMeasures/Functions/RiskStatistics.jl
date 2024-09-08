@@ -48,6 +48,21 @@ function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
     end
     return rc
 end
+
+"""
+```
+factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
+                                  X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  assets::AbstractVector = Vector{String}(undef, 0),
+                                  F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  f_assets::AbstractVector = Vector{String}(undef, 0),
+                                  B::DataFrame = DataFrame(),
+                                  loadings_opt::RegressionType = FReg(),
+                                  V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  delta::Real = 1e-6, kwargs...)
+```
+"""
 function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                                   X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                   assets::AbstractVector = Vector{String}(undef, 0),

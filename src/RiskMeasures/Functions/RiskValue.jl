@@ -1755,7 +1755,7 @@ end
 calc_risk(::SSkew, w::AbstractVector; V::AbstractMatrix, kwargs...)
 ```
 
-Compute the [`SSkew`](@ref) via [`_SSkew`](@ref). Inputs correspond to those of [`_SSkew`](@ref).
+Compute the [`SSkew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).
 """
 function calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return _Skew(w, SV)

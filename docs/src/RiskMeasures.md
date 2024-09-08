@@ -34,7 +34,7 @@ solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                         "maxiter" => 5000)))
 ```
 
-`PortfolioOptimiser` will iterate over the solvers until it finds the first one to successfully solve the problem.
+[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) will iterate over the solvers until it finds the first one to successfully solve the problem.
 
 ## Public
 

@@ -135,11 +135,11 @@ struct SimpleSD <: SDFormulation end
 end
 ```
 
-Defines the Standard Deviation risk measure.
+Defines the Standard Deviation [`_SD`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `formulation`: formulation of the standard deviation/variance [`SDFormulation`](@ref).
   - `sigma`: optional `N×N` covariance matrix.
@@ -177,11 +177,11 @@ end
 end
 ```
 
-Defines the Mean Absolute Deviation risk measure.
+Defines the Mean Absolute Deviation [`_MAD`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_MAD`](@ref).
   - `mu`: optional `N×1` vector of expected asset returns.
@@ -210,11 +210,11 @@ end
 end
 ```
 
-Defines the Semi Standard Deviation risk measure.
+Defines the Semi Standard Deviation [`_SSD`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `target`: minimum return threshold for classifying downside returns.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SSD`](@ref).
@@ -243,11 +243,11 @@ end
 end
 ```
 
-Defines the First Lower Partial Moment (Omega ratio) risk measure.
+Defines the First Lower Partial Moment (Omega ratio) [`_FLPM`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
   - `target`: minimum return threshold for classifying downside returns.
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
@@ -266,11 +266,11 @@ end
 end
 ```
 
-Defines the Second Lower Partial Moment (Sortino ratio) risk measure.
+Defines the Second Lower Partial Moment (Sortino ratio) [`_SLPM`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
   - `target`: minimum return threshold for classifying downside returns.
 """
 mutable struct SLPM{T1 <: Real} <: RiskMeasure
@@ -288,11 +288,11 @@ end
 end
 ```
 
-Defines the Worst Realisation risk measure.
+Defines the Worst Realisation [`_WR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct WR <: RiskMeasure
     settings::RMSettings
@@ -309,11 +309,11 @@ end
 end
 ```
 
-Defines the Conditional Value at Risk risk measure.
+Defines the Conditional Value at Risk [`_CVaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CVaR{T1 <: Real} <: RiskMeasure
@@ -340,11 +340,11 @@ end
 end
 ```
 
-Defines the Entropic Value at Risk risk measure.
+Defines the Entropic Value at Risk [`_EVaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
   - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
@@ -378,11 +378,11 @@ end
 end
 ```
 
-Defines the Relativistic Value at Risk risk measure.
+Defines the Relativistic Value at Risk [`_RLVaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
   - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
@@ -417,11 +417,11 @@ end
 end
 ```
 
-Defines the Maximum Drawdown (Calmar ratio) of uncompounded returns risk measure.
+Defines the Maximum Drawdown (Calmar ratio) of uncompounded returns [`_MDD`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct MDD <: RiskMeasure
     settings::RMSettings
@@ -437,11 +437,11 @@ end
 end
 ```
 
-Defines the Average Drawdown of uncompounded returns risk measure.
+Defines the Average Drawdown of uncompounded returns [`_ADD`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct ADD <: RiskMeasure
     settings::RMSettings
@@ -458,11 +458,11 @@ end
 end
 ```
 
-Defines the Conditional Drawdown at Risk of uncompounded returns at Risk risk measure.
+Defines the Conditional Drawdown at Risk of uncompounded returns at Risk [`_CDaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CDaR{T1 <: Real} <: RiskMeasure
@@ -487,11 +487,11 @@ end
 end
 ```
 
-Defines the Ulcer Index risk measure.
+Defines the Ulcer Index [`_UCI`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct UCI <: RiskMeasure
     settings::RMSettings
@@ -509,11 +509,11 @@ end
 end
 ```
 
-Defines the Entropic Drawdown at Risk of uncompounded cumulative returns risk measure.
+Defines the Entropic Drawdown at Risk of uncompounded cumulative returns [`_EDaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
   - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
@@ -547,11 +547,11 @@ end
 end
 ```
 
-Defines the Relativistic Drawdown at Risk of uncompounded cumulative returns risk measure.
+Defines the Relativistic Drawdown at Risk of uncompounded cumulative returns [`_RLDaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
   - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
@@ -588,11 +588,11 @@ end
 end
 ```
 
-Defines the Square Root Kurtosis risk measure.
+Defines the Square Root Kurtosis [`_Kurt`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_Kurt`](@ref).
   - `kt`: optional `N^2×N^2` cokurtosis matrix.
@@ -621,11 +621,11 @@ end
 end
 ```
 
-Defines the Square Root Semi Kurtosis risk measure.
+Defines the Square Root Semi Kurtosis [`_SKurt`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `target`: minimum return threshold for classifying downside returns.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SKurt`](@ref).
@@ -653,11 +653,11 @@ end
 end
 ```
 
-Defines the Range risk measure.
+Defines the Range [`_RG`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct RG <: RiskMeasure
     settings::RMSettings
@@ -673,7 +673,7 @@ end
 end
 ```
 
-Defines the Conditional Value at Risk Range risk measure.
+Defines the Conditional Value at Risk Range [`_CVaRRG`](@ref) risk measure.
 
 # Parameters
 
@@ -735,7 +735,7 @@ end
 end
 ```
 
-Defines the Gini Mean Difference risk measure.
+Defines the Gini Mean Difference [`_GMD`](@ref) risk measure.
 
 # Parameters
 
@@ -747,7 +747,7 @@ struct GMD <: RiskMeasure
     owa::OWASettings
 end
 function GMD(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings())
-    return OWA(settings, owa)
+    return GMD(settings, owa)
 end
 
 """
@@ -761,7 +761,7 @@ end
 end
 ```
 
-Defines the Tail Gini Difference risk measure.
+Defines the Tail Gini Difference [`_TG`](@ref) risk measure.
 
 # Parameters
 
@@ -810,7 +810,7 @@ mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Rea
 end
 ```
 
-Defines the Tail Gini Difference risk measure.
+Defines the Tail Gini Difference Range [`_TGRG`](@ref) risk measure.
 
 # Parameters
 
@@ -869,7 +869,7 @@ end
 end
 ```
 
-Defines the generic Ordered Weight Array risk measure.
+Defines the generic Ordered Weight Array [`_OWA`](@ref) risk measure.
 
 # Parameters
 
@@ -898,7 +898,7 @@ end
 end
 ```
 
-Define the Brownian Distance Variance risk measure.
+Define the Brownian Distance Variance [`_dVar`](@ref) risk measure.
 
 # Parameters
 
@@ -918,7 +918,7 @@ end
 end
 ```
 
-Define the Quadratic Skewness. risk measure.
+Define the Quadratic Skewness [`_Skew`](@ref) risk measure.
 
 # Parameters
 
@@ -938,7 +938,7 @@ end
 end
 ```
 
-Define the Quadratic SSkewness. risk measure.
+Define the Quadratic SSkewness [`_Skew`](@ref) risk measure.
 
 # Parameters
 
@@ -959,11 +959,11 @@ end
 end
 ```
 
-Defines the Variance risk measure.
+Defines the Variance [`_Variance`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `settings`: risk measure settings [`RMSettings`](@ref).
 
   - `sigma`: optional `N×N` covariance matrix.
 
@@ -1000,11 +1000,11 @@ end
 end
 ```
 
-Defines the Semi Variance risk measure.
+Defines the Semi Variance [`_SVariance`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 
   - `target`: minimum return threshold for classifying downside returns.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SVariance`](@ref).
@@ -1033,11 +1033,11 @@ end
 end
 ```
 
-Defines the Conditional Value at Risk risk measure.
+Defines the Value at Risk [`_VaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct VaR{T1 <: Real} <: HCRiskMeasure
@@ -1063,11 +1063,11 @@ end
 end
 ```
 
-Defines the Drawdown at Risk of uncompounded cumulative returns risk measure.
+Defines the Drawdown at Risk of uncompounded cumulative returns [`_DaR`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct DaR{T1 <: Real} <: HCRiskMeasure
@@ -1093,11 +1093,11 @@ end
 end
 ```
 
-Defines the Drawdown at Risk of compounded cumulative returns risk measure.
+Defines the Drawdown at Risk of compounded cumulative returns [`_DaR_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
@@ -1123,11 +1123,11 @@ end
 end
 ```
 
-Defines the Maximum Drawdown (Calmar ratio) of compounded cumulative returns risk measure.
+Defines the Maximum Drawdown (Calmar ratio) of compounded cumulative returns [`_MDD_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct MDD_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1144,11 +1144,11 @@ end
 end
 ```
 
-Defines the Average Drawdown of compounded cumulative returns risk measure.
+Defines the Average Drawdown of compounded cumulative returns [`_ADD_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct ADD_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1165,11 +1165,11 @@ end
 end
 ```
 
-Defines the Conditional Drawdown at Risk of compounded cumulative returns risk measure.
+Defines the Conditional Drawdown at Risk of compounded cumulative returns [`_CDaR_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
@@ -1195,11 +1195,11 @@ end
 end
 ```
 
-Defines the Ulcer Index of compounded cumulative returns risk measure.
+Defines the Ulcer Index of compounded cumulative returns [`_UCI_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct UCI_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1217,12 +1217,17 @@ end
 end
 ```
 
-Defines the Entropic Drawdown at Risk of compounded cumulative returns risk measure.
+Defines the Entropic Drawdown at Risk of compounded cumulative returns [`_EDaR_r`](@ref) risk measure.
 
 # Parameters
 
-  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
+
   - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
 """
 mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -1241,6 +1246,28 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct RLDaR_r{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
+end
+```
+
+Defines the Relativistic Drawdown at Risk of compounded cumulative returns [`_RLDaR_r`](@ref) risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
+"""
 mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
@@ -1260,8 +1287,24 @@ function Base.setproperty!(obj::RLDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
 @kwdef struct Equal <: HCRiskMeasure
     settings::HCRMSettings = HCRMSettings()
+end
+```
+
+Defines the Equal [`_Equal_r`](@ref) risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@ref).
+"""
+mutable struct Equal <: HCRiskMeasure
+    settings::HCRMSettings
+end
+function Equal(; settings::HCRMSettings = HCRMSettings())
+    return Equal(settings)
 end
 
 for (op, name) ∈
