@@ -8,13 +8,15 @@ function gen_cluster_skew_sskew(args...)
     return Matrix(undef, 0, 0)
 end
 function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, port,
-                                cluster)
-    idx = Int[]
-    N = size(port.returns, 2)
-    Nc = length(cluster)
-    sizehint!(idx, Nc^2)
-    for c ∈ cluster
-        append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
+                                cluster, Nc = nothing, idx = nothing)
+    if isnothing(idx)
+        idx = Int[]
+        N = size(port.returns, 2)
+        Nc = length(cluster)
+        sizehint!(idx, Nc^2)
+        for c ∈ cluster
+            append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
+        end
     end
     skew = _get_skew(rm, port, cluster, idx)
     V = zeros(eltype(skew), Nc, Nc)
@@ -99,23 +101,27 @@ function naive_risk(port, cluster, rm)
     return crisk
 end
 function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
-    set_kurt = false
-    set_skurt = false
+    kurt_idx = Vector{Int}(undef, 0)
+    skurt_idx = Vector{Int}(undef, 0)
     set_skew = false
     set_sskew = false
     if !isa(rm, AbstractVector)
-        set_kurt = isa(rm, Kurt)
-        set_skurt = isa(rm, SKurt)
+        if isa(rm, Kurt)
+            push!(kurt_idx, 1)
+        end
+        if isa(rm, SKurt)
+            push!(skurt_idx, 1)
+        end
         set_skew = isa(rm, Skew)
         set_sskew = isa(rm, SSkew)
     else
         rm_flat = reduce(vcat, rm)
-        for r ∈ rm_flat
-            if !set_kurt
-                set_kurt = isa(r, Kurt)
+        for (i, r) ∈ enumerate(rm_flat)
+            if isa(r, Kurt)
+                push!(kurt_idx, i)
             end
-            if !set_skurt
-                set_skurt = isa(r, SKurt)
+            if isa(r, SKurt)
+                push!(skurt_idx, i)
             end
             if !set_skew
                 set_skew = isa(r, Skew)
@@ -126,18 +132,18 @@ function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
         end
     end
 
-    return set_kurt, set_skurt, set_skew, set_sskew
+    return kurt_idx, skurt_idx, set_skew, set_sskew
 end
-function gen_cluster_stats(port, cidx, set_kurt, set_skurt, set_skew, set_sskew)
+function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_sskew)
     cassets = port.assets[cidx]
     cret = port.returns[:, cidx]
     cmu = port.mu[cidx]
     ccov = port.cov[cidx, cidx]
-    ckurt = Matrix{eltype(port.returns)}(undef, 0, 0)
-    cskurt = Matrix{eltype(port.returns)}(undef, 0, 0)
+    old_kurts = Vector{Matrix{eltype(port.returns)}}(undef, 0)
+    old_skurts = Vector{Matrix{eltype(port.returns)}}(undef, 0)
     cV = Matrix{eltype(port.returns)}(undef, 0, 0)
     cSV = Matrix{eltype(port.returns)}(undef, 0, 0)
-    if set_kurt || set_skurt || set_skew || set_sskew
+    if !isempty(kurt_idx) || !isempty(skurt_idx) || set_skew || set_sskew
         idx = Int[]
         N = size(port.returns, 2)
         cluster = findall(cidx)
@@ -146,18 +152,82 @@ function gen_cluster_stats(port, cidx, set_kurt, set_skurt, set_skew, set_sskew)
         for c ∈ cluster
             append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
         end
-        if set_kurt
-            ckurt = view(port.kurt, idx, idx)
+        if !isempty(kurt_idx)
+            if !isa(rm, AbstractVector)
+                if isnothing(rm.kt) || isempty(rm.kt)
+                    rm.kt = view(port.kurt, idx, idx)
+                    push!(old_kurts, Matrix{eltype(port.returns)}(undef, 0, 0))
+                else
+                    kt_old = rm.kt
+                    rm.kt = view(kt_old, idx, idx)
+                    push!(old_kurts, kt_old)
+                end
+            else
+                rm_flat = reduce(vcat, rm)
+                for r ∈ view(rm_flat, kurt_idx)
+                    if isnothing(r.kt) || isempty(r.kt)
+                        r.kt = view(port.kurt, idx, idx)
+                        push!(old_kurts, Matrix{eltype(port.returns)}(undef, 0, 0))
+                    else
+                        kt_old = r.kt
+                        r.kt = view(kt_old, idx, idx)
+                        push!(old_kurts, kt_old)
+                    end
+                end
+            end
         end
-        if set_skurt
-            cskurt = view(port.skurt, idx, idx)
+        if !isempty(skurt_idx)
+            if !isa(rm, AbstractVector)
+                if isnothing(rm.kt) || isempty(rm.kt)
+                    rm.kt = view(port.skurt, idx, idx)
+                    push!(old_skurts, Matrix{eltype(port.returns)}(undef, 0, 0))
+                else
+                    skt_old = rm.kt
+                    rm.kt = view(skt_old, idx, idx)
+                    push!(old_skurts, skt_old)
+                end
+            else
+                rm_flat = reduce(vcat, rm)
+                for r ∈ view(rm_flat, skurt_idx)
+                    if isnothing(r.kt) || isempty(r.kt)
+                        r.kt = view(port.skurt, idx, idx)
+                        push!(old_skurts, Matrix{eltype(port.returns)}(undef, 0, 0))
+                    else
+                        skt_old = r.kt
+                        r.kt = view(skt_old, idx, idx)
+                        push!(old_skurts, skt_old)
+                    end
+                end
+            end
         end
         if set_skew
-            cV = gen_cluster_skew_sskew(Val(true), port, cluster)
+            cV = gen_cluster_skew_sskew(Val(true), port, cluster, Nc, idx)
         end
         if set_sskew
-            cSV = gen_cluster_skew_sskew(Val(false), port, cluster)
+            cSV = gen_cluster_skew_sskew(Val(false), port, cluster, Nc, idx)
         end
     end
-    return cassets, cret, cmu, ccov, ckurt, cskurt, cV, cSV
+    return cassets, cret, cmu, ccov, old_kurts, old_skurts, cV, cSV
+end
+function reset_kurt_and_skurt_rm(rm, kurt_idx, old_kurts, skurt_idx, old_skurts)
+    if !isempty(kurt_idx)
+        if !isa(rm, AbstractVector)
+            rm.kt = old_kurts[1]
+        else
+            rm_flat = reduce(vcat, rm)
+            for (r, old_kt) ∈ zip(view(rm_flat, kurt_idx), old_kurts)
+                r.kt = old_kt
+            end
+        end
+    end
+    if !isempty(skurt_idx)
+        if !isa(rm, AbstractVector)
+            rm.kt = old_skurts[1]
+        else
+            rm_flat = reduce(vcat, rm)
+            for (r, old_kt) ∈ zip(view(rm_flat, skurt_idx), old_skurts)
+                r.kt = old_kt
+            end
+        end
+    end
 end

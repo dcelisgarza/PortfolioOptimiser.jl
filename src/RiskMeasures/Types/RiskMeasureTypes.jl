@@ -1326,7 +1326,10 @@ for (op, name) ∈
              function Base.length(::$op)
                  return 1
              end
-             function Base.getindex(S::$op, I::Integer...)
+             function Base.getindex(S::$op, ::Any)
+                 return S
+             end
+             function Base.view(S::$op, ::Any)
                  return S
              end
          end)
