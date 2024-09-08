@@ -625,22 +625,58 @@ Defines the Square Root Semi Kurtosis risk measure.
 
   - `target`: minimum return threshold for classifying downside returns.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SKurt`](@ref).
-  - `kt`: optional `N^2×N^2` cokurtosis matrix.
+  - `kt`: optional `N^2×N^2` semi cokurtosis matrix.
 
-      + If `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
+      + If `nothing`: use the semi cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
-@kwdef mutable struct SKurt{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    kt::Union{<:AbstractMatrix, Nothing} = nothing
+mutable struct SKurt{T1 <: Real} <: RiskMeasure
+    settings::RMSettings
+    target::T1
+    w::Union{<:AbstractWeights, Nothing}
+    kt::Union{<:AbstractMatrix, Nothing}
+end
+function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+               w::Union{<:AbstractWeights, Nothing} = nothing,
+               kt::Union{<:AbstractMatrix, Nothing} = nothing)
+    return SKurt{typeof(target)}(settings, target, w, kt)
 end
 
-@kwdef struct RG <: RiskMeasure
+"""
+```
+@kwdef mutable struct RG{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+```
 
+Defines the Range risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+"""
+struct RG <: RiskMeasure
+    settings::RMSettings
+end
+function RG(; settings::RMSettings = RMSettings())
+    return RG(settings)
+end
+
+"""
+```
+@kwdef mutable struct CVaRRG{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+end
+```
+
+Defines the Conditional Value at Risk Range risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
+  - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
+"""
 mutable struct CVaRRG{T1, T2} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -659,16 +695,78 @@ function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct OWASettings{T1}
+"""
+```
+@kwdef mutable struct OWASettings{T1<:AbstractVector{<:Real}}
     approx::Bool = true
     p::T1 = Float64[2, 3, 4, 10, 50]
 end
+```
 
+Defines the settings for Ordered Weight Array (OWA) risk measures.
+
+# Parameters
+
+  - `approx`: whether or not to use the approximate formulation based on power cone norms.
+
+  - `p`:
+
+      + if `approx == true`: vector of the order of p-norms to use in the approximation.
+      + else: does nothing.
+"""
+mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
+    approx::Bool
+    p::T1
+end
+function OWASettings(; approx::Bool = true,
+                     p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50])
+    return OWASettings{typeof(p)}(approx, p)
+end
+
+"""
+```
 @kwdef struct GMD <: RiskMeasure
     settings::RMSettings = RMSettings()
     owa::OWASettings = OWASettings()
 end
+```
 
+Defines the Gini Mean Difference risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
+"""
+struct GMD <: RiskMeasure
+    settings::RMSettings
+    owa::OWASettings
+end
+function GMD(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings())
+    return OWA(settings, owa)
+end
+
+"""
+```
+@kwdef mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasure
+    settings::RMSettings
+    owa::OWASettings
+    alpha_i::T1 = 0.0001
+    alpha::T2 = 0.05
+    a_sim::T3 = 100
+end
+```
+
+Defines the Tail Gini Difference risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
+  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
+  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+"""
 mutable struct TG{T1, T2, T3} <: RiskMeasure
     settings::RMSettings
     owa::OWASettings
@@ -694,6 +792,33 @@ function Base.setproperty!(obj::TG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasure
+    settings::RMSettings
+    owa::OWASettings
+    alpha_i::T1 = 0.0001
+    alpha::T2 = 0.05
+    a_sim::T3 = 100
+    beta_i::T4 = alpha_i
+    beta::T5 = alpha
+    b_sim::T6 = a_sim
+end
+```
+
+Defines the Tail Gini Difference risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
+  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
+  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+  - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
+  - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
+  - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+"""
 mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     settings::RMSettings
     owa::OWASettings
@@ -705,8 +830,8 @@ mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     b_sim::T6
 end
 function TGRG(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
-              alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001,
-              beta::Real = 0.05, b_sim::Integer = 100)
+              alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = alpha_i,
+              beta::Real = alpha, b_sim::Integer = a_sim)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
@@ -731,22 +856,95 @@ function Base.setproperty!(obj::TGRG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef mutable struct OWA <: RiskMeasure
+"""
+```
+@kwdef struct OWA <: RiskMeasure
     settings::RMSettings = RMSettings()
     owa::OWASettings = OWASettings()
     w::Union{<:AbstractVector, Nothing} = nothing
 end
+```
 
+Defines the generic Ordered Weight Array risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+
+  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
+  - `w`: optional `T×1` vector of ordered weights.
+
+      + if `nothing`: use [`owa_gmd`](@ref) to compute the weights.
+      + else: use this value.
+"""
+mutable struct OWA <: RiskMeasure
+    settings::RMSettings
+    owa::OWASettings
+    w::Union{<:AbstractVector, Nothing}
+end
+function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
+             w::Union{<:AbstractVector, Nothing} = nothing)
+    return OWA(settings, owa, w)
+end
+
+"""
+```
 @kwdef struct dVar <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+```
 
+Define the Brownian Distance Variance risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+"""
+struct dVar <: RiskMeasure
+    settings::RMSettings
+end
+function dVar(; settings::RMSettings = RMSettings())
+    return dVar(settings)
+end
+
+"""
+```
 @kwdef struct Skew <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+```
 
+Define the Quadratic Skewness. risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+"""
+struct Skew <: RiskMeasure
+    settings::RMSettings
+end
+function Skew(; settings::RMSettings = RMSettings())
+    return Skew(settings)
+end
+
+"""
+```
 @kwdef struct SSkew <: RiskMeasure
     settings::RMSettings = RMSettings()
+end
+```
+
+Define the Quadratic SSkewness. risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@ref).
+"""
+struct SSkew <: RiskMeasure
+    settings::RMSettings
+end
+function SSkew(; settings::RMSettings = RMSettings())
+    return SSkew(settings)
 end
 
 # ## HCPortfolio risk measures
@@ -863,7 +1061,7 @@ mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
 end
-function CDaR_r(; settings::RMSettings = RMSettings(), alpha::Real = 0.05)
+function CDaR_r(; settings::HCRiskMeasure = HCRiskMeasure(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return CDaR_r{typeof(alpha)}(settings, alpha)
 end
