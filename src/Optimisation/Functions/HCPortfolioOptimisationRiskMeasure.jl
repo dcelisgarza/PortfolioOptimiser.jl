@@ -55,26 +55,46 @@ function _naive_risk(rm::AbstractRiskMeasure, returns, cV)
 end
 function cluster_risk(port, cluster, rm)
     if hasproperty(rm, :sigma)
-        rm.sigma = view(port.cov, cluster, cluster)
+        sigma_old = nothing
+        if isnothing(rm.sigma)
+            rm.sigma = view(port.cov, cluster, cluster)
+        else
+            sigma_old = rm.sigma
+            rm.sigma = view(sigma_old, cluster, cluster)
+        end
     end
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     cw = _naive_risk(rm, cret, cV)
     crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
     if hasproperty(rm, :sigma)
-        rm.sigma = nothing
+        if isnothing(sigma_old)
+            rm.sigma = nothing
+        else
+            rm.sigma = sigma_old
+        end
     end
     return crisk
 end
 function naive_risk(port, cluster, rm)
     if hasproperty(rm, :sigma)
-        rm.sigma = view(port.cov, cluster, cluster)
+        sigma_old = nothing
+        if isnothing(rm.sigma)
+            rm.sigma = view(port.cov, cluster, cluster)
+        else
+            sigma_old = rm.sigma
+            rm.sigma = view(sigma_old, cluster, cluster)
+        end
     end
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = _naive_risk(rm, cret, cV)
     if hasproperty(rm, :sigma)
-        rm.sigma = nothing
+        if isnothing(sigma_old)
+            rm.sigma = nothing
+        else
+            rm.sigma = sigma_old
+        end
     end
     return crisk
 end

@@ -125,6 +125,28 @@ struct SOCSD <: SDSquaredFormulation end
 The model will use a [`MOI.SecondOrderCone`](https://jump.dev/JuMP.jl/stable/api/JuMP/#SecondOrderCone) to define the standard deviation `dev` and make the risk expression `sd_risk = dev`.
 """
 struct SimpleSD <: SDFormulation end
+
+"""
+```
+@kwdef mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    formulation::SDFormulation = SOCSD()
+    sigma::Union{<:AbstractMatrix, Nothing} = nothing
+end
+```
+
+Defines the Standard Deviation risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `formulation`: formulation of the standard deviation/variance [`SDFormulation`](@ref).
+  - `sigma`: covariance matrix.
+
+      + if `nothing`: use the covariance matrix stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use this one.
+"""
 mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: RiskMeasure
     settings::RMSettings
     formulation::SDFormulation
@@ -146,40 +168,154 @@ function Base.setproperty!(obj::SD, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
 @kwdef mutable struct MAD <: RiskMeasure
     settings::RMSettings = RMSettings()
     w::Union{<:AbstractWeights, Nothing} = nothing
     mu::Union{<:AbstractVector, Nothing} = nothing
 end
+```
 
-@kwdef mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
+Defines the Mean Absolute Deviation risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `w`: optional `T×1` vector of weights for computing the expected return in [`_MAD`](@ref).
+  - `mu`: optional `N×1` vector of expected asset returns.
+
+      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + else: use this one.
+"""
+mutable struct MAD <: RiskMeasure
+    settings::RMSettings
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector, Nothing}
+end
+function MAD(; settings::RMSettings = RMSettings(),
+             w::Union{<:AbstractWeights, Nothing} = nothing,
+             mu::Union{<:AbstractVector, Nothing} = nothing)
+    return MAD(settings, w, mu)
 end
 
+"""
+```
 @kwdef mutable struct SSD{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     target::T1 = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
     mu::Union{<:AbstractVector, Nothing} = nothing
 end
+```
 
+Defines the Semi Standard Deviation risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `target`: minimum return threshold for classifying downside returns.
+  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SSD`](@ref).
+  - `mu`: optional `N×1` vector of expected asset returns.
+
+      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + else: use this one.
+"""
+mutable struct SSD{T1 <: Real} <: RiskMeasure
+    settings::RMSettings
+    target::T1
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector, Nothing}
+end
+function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+             w::Union{<:AbstractWeights, Nothing} = nothing,
+             mu::Union{<:AbstractVector, Nothing} = nothing)
+    return SSD{typeof{target}}(settings, target, w, mu)
+end
+
+"""
+```
 @kwdef mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     target::T1 = 0.0
 end
+```
 
+Defines the First Lower Partial Moment (Omega ratio) risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `target`: minimum return threshold for classifying downside returns.
+"""
+mutable struct FLPM{T1 <: Real} <: RiskMeasure
+    settings::RMSettings
+    target::T1
+end
+function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
+    return FLPM{typeof(target)}(settings, target)
+end
+
+"""
+```
 @kwdef mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     target::T1 = 0.0
 end
+```
 
+Defines the Second Lower Partial Moment (Sortino ratio) risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `target`: minimum return threshold for classifying downside returns.
+"""
+mutable struct SLPM{T1 <: Real} <: RiskMeasure
+    settings::RMSettings
+    target::T1
+end
+function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
+    return SLPM{typeof(target)}(settings, target)
+end
+
+"""
+```
+@kwdef mutable struct WR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+end
+```
+
+Defines the Worst Realisation risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+"""
 @kwdef struct WR <: RiskMeasure
     settings::RMSettings = RMSettings()
 end
+function WR(; settings::RMSettings = RMSettings())
+    return WR(settings)
+end
 
+"""
+```
+@kwdef mutable struct CVaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Conditional Value at Risk risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct CVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -195,6 +331,26 @@ function Base.setproperty!(obj::CVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct EVaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Entropic Value at Risk risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
+"""
 mutable struct EVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -212,6 +368,27 @@ function Base.setproperty!(obj::EVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct RLVaR{T1 <: Real} <: RiskMeasure
+    settings::RMSettings = RMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Relativistic Value at Risk risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
+
+      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use these ones.
+"""
 mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
@@ -422,15 +599,15 @@ end
 # ## HCPortfolio risk measures
 
 mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
-    sigma::T1
     settings::HCRMSettings
+    sigma::T1
 end
-function Variance(; sigma::Union{<:AbstractMatrix, Nothing} = nothing,
-                  settings::HCRMSettings = HCRMSettings())
+function Variance(; settings::HCRMSettings = HCRMSettings(),
+                  sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance{Union{<:AbstractMatrix, Nothing}}(sigma, settings)
+    return Variance{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
 end
 function Base.setproperty!(obj::Variance, sym::Symbol, val)
     if sym == :sigma
@@ -441,13 +618,48 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct VaR{T1 <: Real} <: HCRiskMeasure
-    alpha::T1
-    settings::HCRMSettings
+"""
+```
+@kwdef mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    target::T1 = 0.0
+    w::Union{<:AbstractWeights, Nothing} = nothing
+    mu::Union{<:AbstractVector, Nothing} = nothing
 end
-function VaR(; alpha::Real = 0.05, settings::HCRMSettings = HCRMSettings())
+```
+
+Defines the Semi Variance risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+
+  - `target`: minimum return threshold for classifying downside returns.
+  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SVariance`](@ref).
+  - `mu`: optional `N×1` vector of expected asset returns.
+
+      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + else: use this one.
+"""
+mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector, Nothing}
+end
+function SVariance(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+                   w::Union{<:AbstractWeights, Nothing} = nothing,
+                   mu::Union{<:AbstractVector, Nothing} = nothing)
+    return SVariance{typeof(target)}(settings, target, w, mu)
+end
+
+mutable struct VaR{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
+    alpha::T1
+end
+function VaR(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return VaR{typeof(alpha)}(alpha, settings)
+    return VaR{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::VaR, sym::Symbol, val)
     if sym == :alpha
@@ -457,12 +669,12 @@ function Base.setproperty!(obj::VaR, sym::Symbol, val)
 end
 
 mutable struct DaR{T1 <: Real} <: HCRiskMeasure
-    alpha::T1
     settings::HCRMSettings
+    alpha::T1
 end
-function DaR(; alpha::Real = 0.05, settings::HCRMSettings = HCRMSettings())
+function DaR(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR{typeof(alpha)}(alpha, settings)
+    return DaR{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::DaR, sym::Symbol, val)
     if sym == :alpha
@@ -472,12 +684,12 @@ function Base.setproperty!(obj::DaR, sym::Symbol, val)
 end
 
 mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
-    alpha::T1
     settings::HCRMSettings
+    alpha::T1
 end
-function DaR_r(; alpha::Real = 0.05, settings::HCRMSettings = HCRMSettings())
+function DaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DaR_r{typeof(alpha)}(alpha, settings)
+    return DaR_r{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::DaR_r, sym::Symbol, val)
     if sym == :alpha
@@ -494,8 +706,8 @@ end
     settings::HCRMSettings = HCRMSettings()
 end
 
-mutable struct CDaR_r{T1 <: Real} <: RiskMeasure
-    settings::RMSettings
+mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
     alpha::T1
 end
 function CDaR_r(; settings::RMSettings = RMSettings(), alpha::Real = 0.05)
@@ -513,12 +725,12 @@ end
     settings::HCRMSettings = HCRMSettings()
 end
 
-mutable struct EDaR_r{T1 <: Real} <: RiskMeasure
-    settings::RMSettings
+mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
     alpha::T1
     solvers::Union{<:AbstractDict, Nothing}
 end
-function EDaR_r(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
+function EDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05,
                 solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR_r{typeof(alpha)}(settings, alpha, solvers)
@@ -530,13 +742,13 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: RiskMeasure
-    settings::RMSettings
+mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
     alpha::T1
     kappa::T2
     solvers::Union{<:AbstractDict, Nothing}
 end
-function RLDaR_r(; settings::RMSettings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
+function RLDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05, kappa = 0.3,
                  solvers::Union{<:AbstractDict, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))

@@ -392,15 +392,15 @@ Compute the Relativistic Risk Measure. Used in [`_RLVaR`](@ref), [`_RLDaR`](@ref
 Where:
 
   - ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the power cone 3D.
-  - ``\\kappa \\in (0,\\,1)`` is the relativistic deformation parameter.
   - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
+  - ``\\kappa \\in (0,\\,1)`` is the relativistic deformation parameter.
 
 # Inputs
 
   - `x`: `T×1` returns vector.
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `κ` is the relativistic deformation parameter, `κ ∈ (0, 1)`.
   - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
@@ -483,7 +483,7 @@ Where:
 
   - `x`: `T×1` returns vector.
   - `α`: significance level, `α ∈ (0, 1)`.
-  - `κ`: relativistic deformation parameter.
+  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
 """
 function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -768,8 +768,8 @@ Where:
 
   - `x`: `T×1` returns vector.
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `κ` is the relativistic deformation parameter, `κ ∈ (0, 1)`.
   - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
 """
 function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -1063,9 +1063,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `κ` is the relativistic deformation parameter, `κ ∈ (0, 1)`.
   - `α`: significance level, `α ∈ (0, 1)`.
+  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
 """
 function _RLDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                   kappa::Real = 0.3)
@@ -1770,18 +1771,31 @@ Compute the risk as the inverse of the length of `w`.
 # Inputs
 
   - `w`: `N×1` vector of weights.
-
   - `delta`: is a displacement, used in [`risk_contribution`](@ref) and [`factor_risk_contribution`](@ref).
 """
 function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta
 end
 
+"""
+```
+calc_risk(rm::AbstractVector, w::AbstractVector; kwargs...)
+```
+
+Compute the sum of the scaled risks for each risk measure.
+
+# Inputs
+
+  - `rm`: vector of concrete subtypes of [`AbstractRiskMeasure`](@ref). It may also contain vectors of [`AbstractRiskMeasure`](@ref).
+  - `w`: `N×1` vector of weights.
+  - `kwargs...`: kwargs for the different methods of [`calc_risk`](@ref).
+"""
 function calc_risk(rm::AbstractVector, w::AbstractVector; kwargs...)
     rm = reduce(vcat, rm)
     risk = zero(eltype(w))
     for r ∈ rm
-        risk += calc_risk(r, w; kwargs...)
+        scale = r.settings.scale
+        risk += calc_risk(r, w; kwargs...) * scale
     end
     return risk
 end
