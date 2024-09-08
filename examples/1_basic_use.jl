@@ -164,22 +164,28 @@ pretty_table(w2; formatters = fmt2)
 # This section is the one most bound to change as the plotting functions are still somewhat preliminary. There are a variety of plots but we'll only show the most basic ones. By default, the plots will take the mathematically optimal portfolio. Lets see what it looks like.
 
 ## Plot the portfolio returns.
-display(plot_returns(portfolio))
+#nb display(plot_returns(portfolio))
+#md show(plot_returns(portfolio))
 
 ## Plot the portfolio returns per asset.
-display(plot_returns(portfolio; per_asset = true))
+#nb display(plot_returns(portfolio; per_asset = true))
+#md show(plot_returns(portfolio; per_asset = true))
 
 ## Plot portfolio composition.
-display(plot_bar(portfolio))
+#nb display(plot_bar(portfolio))
+#md show(plot_bar(portfolio))
 
 ## Plot the returns histogram.
-display(plot_hist(portfolio))
+#nb display(plot_hist(portfolio))
+#md show(plot_hist(portfolio))
 
 ## Plot the portfolio range of returns.
-display(plot_range(portfolio))
+#nb display(plot_range(portfolio))
+#md show(plot_range(portfolio))
 
 ## Plot portfolio drawdown.
-display(plot_drawdown(portfolio))
+#nb display(plot_drawdown(portfolio))
+#md show(plot_drawdown(portfolio))
 
 # This is, however not our actual portfolio, it is the optimal one. To plot the allocated portfolio we need to know the key it is stored under and pass that on to the plotting functions along with a flag. The key is the symbol composed of the allocation method, in this case LP() and the portfolio type, which is something we have not discussed, but defaults to Trad(), as a Symbol.
 
@@ -193,22 +199,28 @@ pretty_table(hcat(portfolio.optimal[:Trad],
              formatters = fmt3)
 
 ## Plot the portfolio returns.
-display(plot_returns(portfolio, :LP_Trad; allocated = true))
+#nb display(plot_returns(portfolio, :LP_Trad; allocated = true))
+#md show(plot_returns(portfolio, :LP_Trad; allocated = true))
 
 ## Plot the portfolio returns per asset.
-display(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
+#nb display(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
+#md show(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
 
 ## Plot portfolio composition.
-display(plot_bar(portfolio, :LP_Trad; allocated = true))
+#nb display(plot_bar(portfolio, :LP_Trad; allocated = true))
+#md show(plot_bar(portfolio, :LP_Trad; allocated = true))
 
 ## Plot the returns histogram.
-display(plot_hist(portfolio, :LP_Trad; allocated = true))
+#nb display(plot_hist(portfolio, :LP_Trad; allocated = true))
+#md show(plot_hist(portfolio, :LP_Trad; allocated = true))
 
 ## Plot the portfolio range of returns.
-display(plot_range(portfolio, :LP_Trad; allocated = true))
+#nb display(plot_range(portfolio, :LP_Trad; allocated = true))
+#md show(plot_range(portfolio, :LP_Trad; allocated = true))
 
 ## Plot portfolio drawdown.
-display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
+#nb display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
+#md show(plot_drawdown(portfolio, :LP_Trad; allocated = true))
 
 #=
 ## 7. Efficient frontier
@@ -223,10 +235,12 @@ points = 50
 frontier = efficient_frontier!(portfolio; rm = rm, points = points)
 
 ## Plot the efficient frontier.
-display(plot_frontier(portfolio; rm = rm))
+#nb display(plot_frontier(portfolio; rm = rm))
+#md show(plot_frontier(portfolio; rm = rm))
 
 ## Plot frontier asset composition.
-display(plot_frontier_area(portfolio; rm = rm))
+#nb display(plot_frontier_area(portfolio; rm = rm))
+#md show(plot_frontier_area(portfolio; rm = rm))
 
 #=
 The efficient frontier is outputted by [`efficient_frontier!`](@ref), but also saves it in the `portfolio` instance. It is a dictionary whose keys are the symbols of the risk measure used to compute the efficient frontier. We've only computed the efficient frontier for the SD, so we can access the efficient frontier data by indexing into the `:SD` key. The documentation for [`Portfolio`](@ref) contains more details.

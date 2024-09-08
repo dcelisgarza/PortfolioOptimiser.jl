@@ -263,11 +263,16 @@ We're showing the correlation matrix since it makes it easier to see the differe
 =#
 
 for idx ∈ 1:12
-    display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    #nb    display(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #nb                 aspect_ratio = :equal))
+    #md    show(plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #md                 aspect_ratio = :equal))
 end
 
 #=
@@ -293,11 +298,16 @@ Try changing `idx` from 1 to 4 to see how the matrix changes.
 =#
 
 for idx ∈ 1:4
-    display(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    #nb    display(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #nb                 aspect_ratio = :equal))
+    #md    show(plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #md                 aspect_ratio = :equal))
 end
 
 #=
@@ -332,11 +342,16 @@ Try changing `idx` from 1 to 4 to see how the matrix changes. Try commenting out
 =#
 
 for idx ∈ 1:4
-    display(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    #nb    display(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #nb                 aspect_ratio = :equal))
+    #md    show(plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #md                 aspect_ratio = :equal))
     println("idx = $idx, isposdef = $(isposdef(covs_detone[idx]))")
 end
 
@@ -368,11 +383,16 @@ Try changing `idx` from 1 to 2 to see how the matrix changes.
 =#
 
 for idx ∈ 1:2
-    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
-                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
-                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
-                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
-                 aspect_ratio = :equal))
+    #nb    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+    #nb                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #nb                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #nb                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #nb                 aspect_ratio = :equal))
+    #md    display(plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+    #md                 yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+    #md                 xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+    #md                 ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+    #md                 aspect_ratio = :equal))
 end
 
 # The LoGo covariance algorithm computes the sparsified inverse covariance, which is inverted to recover the LoGo covariance. The inversion is numerical, so if we invert the covariance, we will get some very small, non-zero values. We remove them to show the sparsified inverse covariance.
