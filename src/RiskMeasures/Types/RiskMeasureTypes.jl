@@ -294,8 +294,8 @@ Defines the Worst Realisation risk measure.
 
   - `settings`: risk measure settings [`RMSettings`](@Ref).
 """
-@kwdef struct WR <: RiskMeasure
-    settings::RMSettings = RMSettings()
+struct WR <: RiskMeasure
+    settings::RMSettings
 end
 function WR(; settings::RMSettings = RMSettings())
     return WR(settings)
@@ -336,6 +336,7 @@ end
 @kwdef mutable struct EVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
 end
 ```
 
@@ -373,6 +374,7 @@ end
 @kwdef mutable struct RLVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
 end
 ```
 
@@ -503,6 +505,7 @@ end
 @kwdef mutable struct EDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
 end
 ```
 
@@ -540,6 +543,7 @@ end
 @kwdef mutable struct RLDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings = RMSettings()
     alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
 end
 ```
 
@@ -947,8 +951,25 @@ function SSkew(; settings::RMSettings = RMSettings())
     return SSkew(settings)
 end
 
-# ## HCPortfolio risk measures
+"""
+```
+@kwdef mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    sigma::Union{<:AbstractMatrix, Nothing} = nothing
+end
+```
 
+Defines the Variance risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`RMSettings`](@Ref).
+
+  - `sigma`: optional `N×N` covariance matrix.
+
+      + if `nothing`: use the covariance matrix stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
+      + else: use this one.
+"""
 mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
     settings::HCRMSettings
     sigma::T1
@@ -1004,6 +1025,21 @@ function SVariance(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0
     return SVariance{typeof(target)}(settings, target, w, mu)
 end
 
+"""
+```
+@kwdef mutable struct VaR{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Conditional Value at Risk risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct VaR{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
@@ -1019,6 +1055,21 @@ function Base.setproperty!(obj::VaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct DaR{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Drawdown at Risk of uncompounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct DaR{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
@@ -1034,6 +1085,21 @@ function Base.setproperty!(obj::DaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+@kwdef mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Drawdown at Risk of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
@@ -1049,19 +1115,68 @@ function Base.setproperty!(obj::DaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef struct MDD_r <: HCRiskMeasure
+"""
+```
+@kwdef mutable struct MDD_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Maximum Drawdown (Calmar ratio) of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+"""
+struct MDD_r <: HCRiskMeasure
+    settings::HCRMSettings
+end
+function MDD_r(; settings::HCRMSettings = HCRMSettings())
+    return MDD_r(settings)
 end
 
-@kwdef struct ADD_r <: HCRiskMeasure
+"""
+```
+@kwdef mutable struct ADD_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Average Drawdown of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+"""
+struct ADD_r <: HCRiskMeasure
+    settings::HCRMSettings
+end
+function ADD_r(; settings::HCRMSettings = HCRMSettings())
+    return ADD_r(settings)
 end
 
+"""
+```
+@kwdef mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Conditional Drawdown at Risk of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
 end
-function CDaR_r(; settings::HCRiskMeasure = HCRiskMeasure(), alpha::Real = 0.05)
+function CDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return CDaR_r{typeof(alpha)}(settings, alpha)
 end
@@ -1072,10 +1187,43 @@ function Base.setproperty!(obj::CDaR_r, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-@kwdef struct UCI_r <: HCRiskMeasure
+"""
+```
+@kwdef mutable struct UCI_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+end
+```
+
+Defines the Ulcer Index of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+"""
+struct UCI_r <: HCRiskMeasure
+    settings::HCRMSettings
+end
+function UCI_r(; settings::HCRMSettings = HCRMSettings())
+    return UCI_r(settings)
 end
 
+"""
+```
+@kwdef mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings = HCRMSettings()
+    alpha::T1 = 0.05
+    solvers::Union{<:AbstractDict, Nothing} = nothing
+end
+```
+
+Defines the Entropic Drawdown at Risk of compounded cumulative returns risk measure.
+
+# Parameters
+
+  - `settings`: risk measure settings [`HCRMSettings`](@Ref).
+  - `alpha`: significance level, `alpha ∈ (0, 1)`.
+"""
 mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     alpha::T1
