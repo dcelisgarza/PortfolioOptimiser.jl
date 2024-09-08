@@ -6,6 +6,15 @@ include("./HCPortfolioOptimisationHRP.jl")
 include("./HCPortfolioOptimisationHERC.jl")
 include("./HCPortfolioOptimisationNCO.jl")
 
+"""
+```
+optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
+                   rmo::Union{AbstractVector, <:RiskMeasure} = rm,
+                   type::HCOptimType = HRP(), cluster::Bool = true,
+                   hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt(),
+                   max_iter::Int = 100)
+```
+"""
 function optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    rmo::Union{AbstractVector, <:RiskMeasure} = rm,
                    type::HCOptimType = HRP(), cluster::Bool = true,

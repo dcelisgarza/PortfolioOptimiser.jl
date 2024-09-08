@@ -348,12 +348,12 @@ end
     portfolio.long_u = 0.8
 
     w5 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w5.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w5.weights), portfolio.budget)
     @test sum(w5.weights[w5.weights .< 0]) <= portfolio.short_u
     @test sum(w5.weights[w5.weights .>= 0]) <= portfolio.long_u
     portfolio.num_assets_l = 17
     w6 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w6.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w6.weights), portfolio.budget)
     @test sum(w6.weights[w6.weights .< 0]) <= portfolio.short_u
     @test sum(w6.weights[w6.weights .>= 0]) <= portfolio.long_u
     @test count(abs.(w6.weights) .>= 4e-3) >= 17
@@ -362,10 +362,10 @@ end
 
     portfolio.num_assets_l = 0
     w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w7.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w7.weights), portfolio.budget)
     portfolio.num_assets_l = 13
     w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w8.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w8.weights), portfolio.budget)
     @test count(abs.(w8.weights) .>= 4e-3) >= 13
     @test count(abs.(w8.weights) .>= 4e-3) > count(abs.(w7.weights) .>= 4e-3)
     @test !isapprox(w7.weights, w8.weights)
@@ -401,12 +401,12 @@ end
     portfolio.long_u = 0.8
 
     w13 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w13.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w13.weights), portfolio.budget)
     @test sum(w13.weights[w13.weights .< 0]) <= portfolio.short_u
     @test sum(w13.weights[w13.weights .>= 0]) <= portfolio.long_u
     portfolio.num_assets_u = 7
     w14 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w14.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w14.weights), portfolio.budget)
     @test sum(w14.weights[w14.weights .< 0]) <= portfolio.short_u
     @test sum(w14.weights[w14.weights .>= 0]) <= portfolio.long_u
     @test count(abs.(w14.weights) .>= 2e-2) <= 7
@@ -415,12 +415,12 @@ end
 
     portfolio.num_assets_u = 0
     w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w15.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w15.weights), portfolio.budget)
     @test sum(w15.weights[w15.weights .< 0]) <= portfolio.short_u
     @test sum(w15.weights[w15.weights .>= 0]) <= portfolio.long_u
     portfolio.num_assets_u = 4
     w16 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w16.weights), portfolio.sum_short_long)
+    @test isapprox(sum(w16.weights), portfolio.budget)
     @test sum(w16.weights[w16.weights .< 0]) <= portfolio.short_u
     @test abs(sum(w16.weights[w16.weights .>= 0]) - portfolio.long_u) <= 20 * eps()
     @test count(abs.(w16.weights) .>= 2e-2) >= 4
@@ -809,7 +809,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.22
     portfolio.long_u = 0.88
-    ssl1 = portfolio.sum_short_long
+    ssl1 = portfolio.budget
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -954,7 +954,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.27
     portfolio.long_u = 0.81
-    ssl2 = portfolio.sum_short_long
+    ssl2 = portfolio.budget
 
     obj = Sharpe(; rf = rf)
 

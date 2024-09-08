@@ -3,22 +3,22 @@ function _cleanup_weights(port, ::Sharpe, ::Union{Trad, WC}, ::Any)
     val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k
     short = port.short
-    sum_short_long = port.sum_short_long
+    budget = port.budget
     if short == false
         sum_w = sum(abs.(weights))
         sum_w = sum_w > eps() ? sum_w : 1
-        weights .= abs.(weights) / sum_w * sum_short_long
+        weights .= abs.(weights) / sum_w * budget
     end
     return weights
 end
 function _cleanup_weights(port, ::Any, ::Union{Trad, WC}, ::Any)
     weights = value.(port.model[:w])
     short = port.short
-    sum_short_long = port.sum_short_long
+    budget = port.budget
     if short == false
         sum_w = sum(abs.(weights))
         sum_w = sum_w > eps() ? sum_w : 1
-        weights .= abs.(weights) / sum_w * sum_short_long
+        weights .= abs.(weights) / sum_w * budget
     end
     return weights
 end

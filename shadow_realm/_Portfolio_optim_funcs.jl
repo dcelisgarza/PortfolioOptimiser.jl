@@ -1486,7 +1486,7 @@ function _setup_weights(portfolio, obj, N)
     short = portfolio.short
     short_u = portfolio.short_u
     long_u = portfolio.long_u
-    sum_short_long = portfolio.sum_short_long
+    budget = portfolio.budget
     network_method = portfolio.network_method
     network_ip = portfolio.network_ip
 
@@ -1514,7 +1514,7 @@ function _setup_weights(portfolio, obj, N)
 
     # Weight constraints.
     if obj == :Sharpe
-        @constraint(model, sum(model[:w]) == sum_short_long * model[:k])
+        @constraint(model, sum(model[:w]) == budget * model[:k])
         if haskey(model, :tnau_bin)
             @constraint(model, tnau_bin_sharpe .<= model[:k])
             @constraint(model, tnau_bin_sharpe .<= scale_nau * tnau_bin)
@@ -1553,7 +1553,7 @@ function _setup_weights(portfolio, obj, N)
             end
         end
     else
-        @constraint(model, sum(model[:w]) == sum_short_long)
+        @constraint(model, sum(model[:w]) == budget)
 
         if haskey(model, :tnau_bin)
             @constraint(model, model[:w] .<= long_u * tnau_bin)
@@ -1833,11 +1833,11 @@ function _optimise_portfolio(portfolio, class, type, obj, near_opt = false)
             end
 
             short = portfolio.short
-            sum_short_long = portfolio.sum_short_long
+            budget = portfolio.budget
             if short == false
                 sum_w = sum(abs.(weights))
                 sum_w = sum_w > eps() ? sum_w : 1
-                weights .= abs.(weights) / sum_w * sum_short_long
+                weights .= abs.(weights) / sum_w * budget
             end
         elseif type == :RP
             weights .= value.(model[:w])
@@ -1901,11 +1901,11 @@ function _finalise_portfolio(portfolio, class, returns, N, solvers_tried, type, 
         end
 
         short = portfolio.short
-        sum_short_long = portfolio.sum_short_long
+        budget = portfolio.budget
         if short == false
             sum_w = sum(abs.(weights))
             sum_w = sum_w > eps() ? sum_w : 1
-            weights .= abs.(weights) / sum_w * sum_short_long
+            weights .= abs.(weights) / sum_w * budget
         end
     elseif type == :RP
         weights .= value.(model[:w])

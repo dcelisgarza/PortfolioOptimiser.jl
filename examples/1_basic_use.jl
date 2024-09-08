@@ -1,7 +1,7 @@
 #=
 # Example 1: Basic use
 
-This tutorial should serve as a minimum working example for using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/).
+This example should serve as a minimum working example for using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/).
 
 ## 1. Downloading the data
 
@@ -42,12 +42,19 @@ end;
 
 # We define our list of meme stonks and a generous date range. We will only be keeping the adjusted close price. In practice it doesn't really matter because we're using daily data.
 
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x["timestamp"], m, Symbol.(coln), x["ticker"])
+end
+
 assets = ["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC", "LULU",
           "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT", "SAVE", "SBUX",
           "SIRI", "STX", "TLRY", "TSLA"]
 Date_0 = "2019-01-01"
 Date_1 = "2023-01-01"
-prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
 prices = hcat(prices...)
 cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]

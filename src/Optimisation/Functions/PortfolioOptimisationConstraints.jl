@@ -58,7 +58,7 @@ function weight_constraints(port, ::Sharpe)
     model = port.model
     w = model[:w]
     k = model[:k]
-    @constraint(model, sum(w) == port.sum_short_long * k)
+    @constraint(model, sum(w) == port.budget * k)
     if !port.short
         @constraint(model, w .<= port.long_u * k)
         @constraint(model, w .>= 0)
@@ -78,7 +78,7 @@ function weight_constraints(port, ::Any)
     N = size(port.returns, 2)
     model = port.model
     w = model[:w]
-    @constraint(model, sum(w) == port.sum_short_long)
+    @constraint(model, sum(w) == port.budget)
     if !port.short
         @constraint(model, w .<= port.long_u)
         @constraint(model, w .>= 0)

@@ -59,22 +59,14 @@ l = 2.0
     @test isapprox(w9.weights, w15.weights, rtol = 0.7)
     @test isapprox(w9.weights, w16.weights, rtol = 0.25)
     @test isapprox(w9.weights, w17.weights, rtol = 0.25)
-    @test isapprox(portfolio.sum_short_long * 1e6, sum(w10.cost[w10.weights .>= 0]),
-                   rtol = 1e-5)
-    @test isapprox(portfolio.sum_short_long * 1e6, sum(w11.cost[w11.weights .>= 0]),
-                   rtol = 1e-5)
-    @test isapprox(portfolio.sum_short_long * 1e4, sum(w12.cost[w12.weights .>= 0]),
-                   rtol = 1e-3)
-    @test isapprox(portfolio.sum_short_long * 1e4, sum(w13.cost[w13.weights .>= 0]),
-                   rtol = 1e-2)
-    @test isapprox(portfolio.sum_short_long * 1e2, sum(w14.cost[w14.weights .>= 0]),
-                   rtol = 1e-1)
-    @test isapprox(portfolio.sum_short_long * 1e2, sum(w15.cost[w15.weights .>= 0]),
-                   rtol = 1e-2)
-    @test isapprox(portfolio.sum_short_long * 1e8, sum(w16.cost[w16.weights .>= 0]),
-                   rtol = 5e-7)
-    @test isapprox(portfolio.sum_short_long * 1e8, sum(w17.cost[w17.weights .>= 0]),
-                   rtol = 5e-7)
+    @test isapprox(portfolio.budget * 1e6, sum(w10.cost[w10.weights .>= 0]), rtol = 1e-5)
+    @test isapprox(portfolio.budget * 1e6, sum(w11.cost[w11.weights .>= 0]), rtol = 1e-5)
+    @test isapprox(portfolio.budget * 1e4, sum(w12.cost[w12.weights .>= 0]), rtol = 1e-3)
+    @test isapprox(portfolio.budget * 1e4, sum(w13.cost[w13.weights .>= 0]), rtol = 1e-2)
+    @test isapprox(portfolio.budget * 1e2, sum(w14.cost[w14.weights .>= 0]), rtol = 1e-1)
+    @test isapprox(portfolio.budget * 1e2, sum(w15.cost[w15.weights .>= 0]), rtol = 1e-2)
+    @test isapprox(portfolio.budget * 1e8, sum(w16.cost[w16.weights .>= 0]), rtol = 5e-7)
+    @test isapprox(portfolio.budget * 1e8, sum(w17.cost[w17.weights .>= 0]), rtol = 5e-7)
     @test isapprox(sum(w18.cost[w18.cost .> 0]),
                    sum(w10.cost[w10.cost .> 0]) - sum(w10.cost[w10.cost .< 0]), rtol = 3e-4)
     @test isapprox(sum(w19.cost[w19.cost .> 0]),

@@ -1,9 +1,9 @@
 #=
 # Example 2: Asset statistics
 
-This tutorial follows from [Tutorial 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
+This example follows from [Example 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
-This tutorial focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`HCPortfolio`](@ref) instance. Every case will perform validation checks.
+This example focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`HCPortfolio`](@ref) instance. Every case will perform validation checks.
 
 ## 1. Downloading the data
 =#
@@ -14,12 +14,18 @@ using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YF
       PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
       SparseArrays
 
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x["timestamp"], m, Symbol.(coln), x["ticker"])
+end
 assets = ["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC", "LULU",
           "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT", "SAVE", "SBUX",
           "SIRI", "STX", "TLRY", "TSLA"]
 Date_0 = "2019-01-01"
 Date_1 = "2023-01-01"
-prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
 prices = hcat(prices...)
 cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]
@@ -296,6 +302,8 @@ end
 
 #=
 The market prices are not independent of each other, they are subject to market forces that affect all products. Hence why most assets have positive covariances with other assets. These market forces can wash out the true relationships between assets. To do this, we can `detone` the denoised matrix by removing the largest M eigenvalues. Typically, only the one largest is removed but we give the option for removing more. This operation however, can make the matrix singular. Which means it can't be used for mean variance optimisation, but can be more useful for clustering than a standard covariance. However, [`PortCovCor`](@ref) also contains an option for fixing non-positive definite correlation matrices, which may be able to make the detoned matrix non-singular. We will pass the argument `posdef = NoPosdef()` to ensure the matrices aren't fixed.
+
+Although detoned matrices may be singular, and therefore unsuitable for traditional optimisation, they can be very useful in hierarchical optimisations since they remove market forces and thus only the true relationships between assets remain.
 =#
 
 ces_detone = PortCovCor[]

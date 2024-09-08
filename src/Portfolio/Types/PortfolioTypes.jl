@@ -422,7 +422,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                               alloc_model)
 end
 function Base.getproperty(obj::Portfolio, sym::Symbol)
-    if sym == :sum_short_long
+    if sym == :budget
         obj.short ? obj.long_u - obj.short_u : obj.long_u
     else
         getfield(obj, sym)

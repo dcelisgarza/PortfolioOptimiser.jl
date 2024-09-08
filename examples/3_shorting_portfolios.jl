@@ -1,9 +1,9 @@
 #=
 # Example 3: Shorting and leveraged portfolios
 
-This tutorial follows from previous tutorials. If something in the preamble is confusing, it is explained there.
+This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 
-This tutorial focuses on using the optimisation constraints available to [`Trad`](@ref) optimisations of [`Portfolio`](@ref).
+This example focuses on using the shorting constraints available to [`Trad`](@ref) and [`WC`](@ref) optimisations of [`Portfolio`](@ref).
 
 ## 1. Downloading the data
 =#
@@ -26,12 +26,18 @@ fmt1 = (v, i, j) -> begin
     end
 end;
 
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x["timestamp"], m, Symbol.(coln), x["ticker"])
+end
 assets = ["AAL", "AAPL", "AMC", "BB", "BBY", "DELL", "DG", "DRS", "GME", "INTC", "LULU",
           "MARA", "MCI", "MSFT", "NKLA", "NVAX", "NVDA", "PARA", "PLNT", "SAVE", "SBUX",
           "SIRI", "STX", "TLRY", "TSLA"]
 Date_0 = "2019-01-01"
 Date_1 = "2023-01-01"
-prices = get_prices.(TimeArray, assets, startdt = Date_0, enddt = Date_1)
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
 prices = hcat(prices...)
 cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]
@@ -144,12 +150,12 @@ Enabling shorting is very simple. This will allow negative weights, which corres
 portfolio.short = true;
 
 #=
-How short- or long-heavy we want to be is mediated by the `short_u` and `long_u` properties. These set the upper bound for the sum of the weights in each category.
+How short- or long-heavy we want to be is mediated by the `short_u` and `long_u` properties. They set the upper bound for the absolute value of the sum of the short and long weights respectively.
 
-- `short_u`: the absolute value of the sum of the short weights will be less than its value. 
-- `long_u`: the sum of the long weights will be less than its value.
+- `short_u`: the absolute value of the sum of the short weights will be less than this. 
+- `long_u`: the sum of the long weights will be less than this.
 
-These values multiply the cash at our disposal when we allocate the portfolio. So if they are greater than 1, the allocation will use more money than you have available, meaning the portfolio will be leveraged.
+These values multiply the cash at our disposal when we allocate the portfolio. So when [`allocate!`](@ref) is called, the long investment will be `investment * long_u`. And if shorting is enabled, the short investment (the amount shorted) will be `short_u * investment`.
 
 Lets short the market whithout reinvesting the earnings, meaning we'll have a cash reserve in our balance that is equal to the short sale value. You can change this by increasing `long_u`, if you set it to `1 + short_u` it means the profits from short selling will be reinvested into the portfolio.
 
@@ -162,10 +168,18 @@ portfolio.short_u = 0.2
 portfolio.long_u = 1;
 
 #=
-The sum of short and long weights will tell us the leverage characteristics of our portfolio. This cannot be changed, it is automatically computed `sum_short_long = long_u - short_u`, i.e. the sum of the short and long weights. It's used internally for constraints, but we'll use it to verify the portfolios have been adequately optimised.
+The portfolio `budget = long_u - short_u` gives us the leverage characteristics of the portfolio. This is a property that is automatically computed and cannot be cahnged. There are verious scenarios that `budget` describes.
+
+- `budget < 0`: the short sale value of the portfolio is higher than the long-sale value.
+- `budget == 0`: the short and long values of the portfolio are equal. The market neutral portfolio is found by maximising the return given these conditions.
+- `0 < budget < 1`: the portfolio is under-leveraged, meaning there is a cash reserve that is not being used.
+- ` budget == 1`: the portfolio has no leverage. If shorting is enabled, this means the profits from shorting are being invested in long positions.
+- `budget < 1`: the portfolio is leveraged, meaning it's using more money than is available.
+
+Here the portfolio is under-leveraged.
 =#
 
-portfolio.sum_short_long == 0.8
+portfolio.budget == 0.8
 
 # Lets optimise the short-long portfolio.
 portfolio.optimal[:s] = optimise!(portfolio; rm = rm, obj = obj)
@@ -250,7 +264,7 @@ portfolio.short_u = 0.2
 ## Long weights add up to `1.2`, which means reinvesting the gains from shorting.
 portfolio.long_u = 1 + portfolio.short_u
 ## No leverage.
-portfolio.sum_short_long == 1
+portfolio.budget == 1
 
 portfolio.optimal[:sr] = optimise!(portfolio; rm = rm, obj = obj)
 display(plot_bar(portfolio, :sr))

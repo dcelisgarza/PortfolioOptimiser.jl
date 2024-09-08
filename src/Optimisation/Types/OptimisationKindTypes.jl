@@ -25,9 +25,20 @@ end
     version::RRPVersion = BasicRRP()
 end
 
+"""
+```
 @kwdef mutable struct WC <: OptimType
     mu::WorstCaseSet = Box()
     cov::WorstCaseSet = Box()
+end
+```
+"""
+mutable struct WC <: OptimType
+    mu::WorstCaseSet
+    cov::WorstCaseSet
+end
+function WC(; mu::WorstCaseSet = Box(), cov::WorstCaseSet = Box())
+    return WC(mu, cov)
 end
 
 @kwdef mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real},
@@ -43,8 +54,18 @@ end
     w_max_ini::T6 = Vector{Float64}(undef, 0)
 end
 
+"""
+```
+struct HRP <: HCOptimType end
+```
+"""
 struct HRP <: HCOptimType end
 
+"""
+```
+struct HERC <: HCOptimType end
+```
+"""
 struct HERC <: HCOptimType end
 
 @kwdef mutable struct NCO <: HCOptimType

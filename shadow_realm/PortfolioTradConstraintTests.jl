@@ -881,7 +881,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.22
     portfolio.long_u = 0.88
-    ssl1 = portfolio.sum_short_long
+    ssl1 = portfolio.budget
 
     rm = :SD
     obj = :Min_Risk
@@ -943,7 +943,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.32
     portfolio.long_u = 0.97
-    ssl2 = portfolio.sum_short_long
+    ssl2 = portfolio.budget
 
     rm = :SD
     obj = :Utility
@@ -1010,7 +1010,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.27
     portfolio.long_u = 0.81
-    ssl3 = portfolio.sum_short_long
+    ssl3 = portfolio.budget
 
     rm = :SD
     obj = :Sharpe
@@ -1077,7 +1077,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.42
     portfolio.long_u = 0.69
-    ssl4 = portfolio.sum_short_long
+    ssl4 = portfolio.budget
 
     rm = :SD
     obj = :Max_Ret
@@ -2500,7 +2500,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.13
     portfolio.long_u = 1
-    ssl1 = portfolio.sum_short_long
+    ssl1 = portfolio.budget
 
     rm = :CDaR
     obj = :Min_Risk
@@ -2567,7 +2567,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.07
     portfolio.long_u = 0.57
-    ssl2 = portfolio.sum_short_long
+    ssl2 = portfolio.budget
 
     rm = :CDaR
     obj = :Utility
@@ -2634,7 +2634,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.18
     portfolio.long_u = 0.95
-    ssl3 = portfolio.sum_short_long
+    ssl3 = portfolio.budget
 
     rm = :CDaR
     obj = :Sharpe
@@ -2701,7 +2701,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.22
     portfolio.long_u = 0.83
-    ssl4 = portfolio.sum_short_long
+    ssl4 = portfolio.budget
 
     rm = :CDaR
     obj = :Max_Ret
@@ -2768,7 +2768,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.13
     portfolio.long_u = 1
-    ssl5 = portfolio.sum_short_long
+    ssl5 = portfolio.budget
     portfolio.network_penalty = 0.5
 
     rm = :CDaR
@@ -2838,7 +2838,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.07
     portfolio.long_u = 0.57
-    ssl6 = portfolio.sum_short_long
+    ssl6 = portfolio.budget
 
     rm = :CDaR
     obj = :Utility
@@ -2907,7 +2907,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.18
     portfolio.long_u = 0.95
-    ssl7 = portfolio.sum_short_long
+    ssl7 = portfolio.budget
 
     rm = :CDaR
     obj = :Sharpe
@@ -2976,7 +2976,7 @@ end
     portfolio.short = true
     portfolio.short_u = 0.22
     portfolio.long_u = 0.83
-    ssl8 = portfolio.sum_short_long
+    ssl8 = portfolio.budget
 
     rm = :CDaR
     obj = :Max_Ret
