@@ -32,12 +32,6 @@ function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, p
     end
     return V
 end
-# function objective(::MinRisk, risk, ::Any, ::Any)
-#     return risk
-# end
-# function objective(obj::Utility, risk, returns, w)
-#     return inv(returns * w - obj.l * risk)
-# end
 function _naive_risk(::Equal, returns, ::Any)
     N = size(returns, 2)
     return fill(eltype(returns)(inv(N)), N)
