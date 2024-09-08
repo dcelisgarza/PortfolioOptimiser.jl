@@ -149,8 +149,8 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
         if !isempty(kurt_idx)
             if !isa(rm, AbstractVector)
                 if isnothing(rm.kt) || isempty(rm.kt)
+                    push!(old_kurts, rm.kt)
                     rm.kt = view(port.kurt, idx, idx)
-                    push!(old_kurts, Matrix{eltype(port.returns)}(undef, 0, 0))
                 else
                     kt_old = rm.kt
                     rm.kt = view(kt_old, idx, idx)
@@ -160,8 +160,8 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
                 rm_flat = reduce(vcat, rm)
                 for r ∈ view(rm_flat, kurt_idx)
                     if isnothing(r.kt) || isempty(r.kt)
+                        push!(old_kurts, r.kt)
                         r.kt = view(port.kurt, idx, idx)
-                        push!(old_kurts, Matrix{eltype(port.returns)}(undef, 0, 0))
                     else
                         kt_old = r.kt
                         r.kt = view(kt_old, idx, idx)
@@ -173,8 +173,8 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
         if !isempty(skurt_idx)
             if !isa(rm, AbstractVector)
                 if isnothing(rm.kt) || isempty(rm.kt)
+                    push!(old_skurts, rm.kt)
                     rm.kt = view(port.skurt, idx, idx)
-                    push!(old_skurts, Matrix{eltype(port.returns)}(undef, 0, 0))
                 else
                     skt_old = rm.kt
                     rm.kt = view(skt_old, idx, idx)
@@ -184,8 +184,8 @@ function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_ss
                 rm_flat = reduce(vcat, rm)
                 for r ∈ view(rm_flat, skurt_idx)
                     if isnothing(r.kt) || isempty(r.kt)
+                        push!(old_skurts, r.kt)
                         r.kt = view(port.skurt, idx, idx)
-                        push!(old_skurts, Matrix{eltype(port.returns)}(undef, 0, 0))
                     else
                         skt_old = r.kt
                         r.kt = view(skt_old, idx, idx)
