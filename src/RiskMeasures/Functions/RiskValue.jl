@@ -1310,22 +1310,6 @@ function _OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
 end
 
-# function L_moment(x::AbstractVector, k = 2)
-#     T = length(x)
-#     w = owa_l_moment(T, k)
-
-#     return dot(w, sort!(x))
-# end
-
-# function L_Moment_CRM(
-#     x::AbstractVector;#     k = 2,#     method = :SD,#     g = 0.5,#     max_phi = 0.5,#     solvers = Dict(),# )
-#     T = length(x)
-#     w = owa_l_moment_crm(
-#         T;#         k = k,#         method = method,#         g = g,#         max_phi = max_phi,#         solvers = solvers,#     )
-
-#     return dot(w, sort!(x))
-# end
-
 """
 ```
 _dVar(x::AbstractVector)
@@ -1791,6 +1775,15 @@ Compute the risk as the inverse of the length of `w`.
 """
 function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta
+end
+
+function calc_risk(rm::AbstractVector, w::AbstractVector; kwargs...)
+    rm = reduce(vcat, rm)
+    risk = zero(eltype(w))
+    for r ∈ rm
+        risk += calc_risk(r, w; kwargs...)
+    end
+    return risk
 end
 
 export ERM, RRM, calc_risk

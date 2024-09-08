@@ -1,5 +1,3 @@
-# Risk measures
-
 """
 ```
 abstract type AbstractRiskMeasure end
@@ -42,8 +40,8 @@ Risk measure settings for concrete subtypes of [`RiskMeasure`](@ref).
 
 ## When optimising a [`Portfolio`](@ref).
 
-  - `flag`: if `true` the risk will contribute to the [`JuMP`] model's risk expression.
-  - `scale`: factor for scaling the risk when adding it to the [`JuMP`] model's risk expression.
+  - `flag`: if `true` the risk will contribute to the `JuMP` model's risk expression.
+  - `scale`: factor for scaling the risk when adding it to the `JuMP` model's risk expression.
   - `ub`: if is finite, sets the upper bound for the risk.
 
 ## When optimising a [`HCPortfolio`](@ref).
@@ -58,7 +56,7 @@ mutable struct RMSettings{T1 <: Real, T2 <: Real}
     ub::T2
 end
 function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
-    return RMSettings{typeof(scale), typeof{ub}}(flag, scale, ub)
+    return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
 end
 
 """
@@ -81,12 +79,51 @@ function HCRMSettings(; scale::Real = 1.0)
     return HCRMSettings{typeof(scale)}(scale)
 end
 
-# Standard deviation
-
+"""
+```
 abstract type SDFormulation end
+```
+
+Abstract type for Mean-Variance optimisation formulations.
+"""
+abstract type SDFormulation end
+
+"""
+```
 abstract type SDSquaredFormulation <: SDFormulation end
+```
+
+Mean variance formulation will produce a [`JuMP.QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for the `JuMP` model's `sd_risk`.
+
+The reason we have these is because there are multiple ways of defining the mean-variance optimisation and because [`NOC`](@ref) optimisations are only compatible with strictly convex risk functions, so they can only be performed with [`SimpleSD`](@ref).
+"""
+abstract type SDSquaredFormulation <: SDFormulation end
+
+"""
+```
 struct QuadSD <: SDSquaredFormulation end
+```
+
+The risk expression will be the explicit quadratic form of the variance, `dot(w, sigma, w)`. Where `w` is the `N×1` vector of asset weights and `sigma` the covariance matrix.
+"""
+struct QuadSD <: SDSquaredFormulation end
+
+"""
+```
 struct SOCSD <: SDSquaredFormulation end
+```
+
+The model will use a [`MOI.SecondOrderCone`](https://jump.dev/JuMP.jl/stable/api/JuMP/#SecondOrderCone) to define the standard deviation `dev` and make the risk expression `sd_risk = dev^2`.
+"""
+struct SOCSD <: SDSquaredFormulation end
+
+"""
+```
+struct SOCSD <: SDSquaredFormulation end
+```
+
+The model will use a [`MOI.SecondOrderCone`](https://jump.dev/JuMP.jl/stable/api/JuMP/#SecondOrderCone) to define the standard deviation `dev` and make the risk expression `sd_risk = dev`.
+"""
 struct SimpleSD <: SDFormulation end
 mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: RiskMeasure
     settings::RMSettings
