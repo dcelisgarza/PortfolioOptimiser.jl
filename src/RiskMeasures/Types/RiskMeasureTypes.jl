@@ -1294,7 +1294,7 @@ end
 end
 ```
 
-Defines the Equal [`_Equal_r`](@ref) risk measure.
+Defines the Equal risk measure, where risk is allocated evenly among a group of assets.
 
 # Parameters
 
