@@ -1283,8 +1283,8 @@ Compute the Tail Gini Range.
     In-place sorts the input vector.
 """
 function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-               a_sim::Real = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-               b_sim::Integer = a_sim)
+               a_sim::Real = 100, beta_i::Real = 0.0001, beta::Real = 0.05,
+               b_sim::Integer = b_sim)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                 beta = beta, b_sim = b_sim)

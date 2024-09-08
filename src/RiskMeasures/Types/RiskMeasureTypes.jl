@@ -804,9 +804,9 @@ mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Rea
     alpha_i::T1 = 0.0001
     alpha::T2 = 0.05
     a_sim::T3 = 100
-    beta_i::T4 = alpha_i
-    beta::T5 = alpha
-    b_sim::T6 = a_sim
+    beta_i::T4 = 0.0001
+    beta::T5 = 0.05
+    b_sim::T6 = 100
 end
 ```
 
@@ -834,8 +834,8 @@ mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     b_sim::T6
 end
 function TGRG(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
-              alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = alpha_i,
-              beta::Real = alpha, b_sim::Integer = a_sim)
+              alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001,
+              beta::Real = 0.05, b_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
