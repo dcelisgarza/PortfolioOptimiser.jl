@@ -1,3 +1,8 @@
+"""
+```
+abstract type RegressionType end
+```
+"""
 abstract type RegressionType end
 abstract type StepwiseRegression <: RegressionType end
 abstract type DimensionReductionRegression <: RegressionType end

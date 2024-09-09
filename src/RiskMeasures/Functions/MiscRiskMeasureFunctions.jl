@@ -30,7 +30,7 @@ end
 get_first_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
 ```
 
-Get the first risk measure, used in [`efficient_frontier`](@ref).
+Get the first risk measure, used in [`efficient_frontier!`](@ref).
 
 # Inputs
 

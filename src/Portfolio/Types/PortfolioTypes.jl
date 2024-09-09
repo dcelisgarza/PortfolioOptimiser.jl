@@ -1,4 +1,12 @@
+"""
+```
 abstract type AbstractPortfolio end
+```
+
+Abstract type for subtyping portfolios.
+"""
+abstract type AbstractPortfolio end
+
 """
 ```
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
@@ -77,6 +85,100 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     alloc_model::tamod
 end
 ```
+
+Structure for defining a traditional portfolio.
+
+# Parameters
+
+  - `assets`: `Na×1` vector of asset names.
+
+  - `timestamps`: `T×1` vector of asset returns timestamps.
+  - `returns`: `T×Na` matrix of asset returns.
+  - `short`:
+
+      + if `true`: shorting is enabled.
+      + else: long-only portfolio.
+  - `short_u`: upper bound for the absolute value of the sum of the negative weights.
+  - `long_u`: upper bound for the sum of the positive weights.
+  - `num_assets_l`: lower bound for the minimum number of significant assets.
+
+      + if `> 0`: applies the constraint.
+  - `num_assets_u`: upper bound for the maximum number of significant assets.
+
+      + if `> 0`: applies the constraint.
+  - `num_assets_u_scale`: scaling factor for the decision variable used for applying the `num_assets_u` constraint.
+  - `f_assets`: `Nf×1` vector of factor names.
+  - `f_timestamps`: `T×1` vector of factor returns timestamps.
+  - `f_returns`: `T×Nf` matrix of asset returns.
+  - `loadings`: loadings matrix for working with factor models.
+  - `regression_type`: [`RegressionType`](@ref) used for computing the loadings matrix.
+  - `max_num_assets_kurt`: maximum number of assets to use the complete kurtosis model.
+
+      + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
+  - `max_num_assets_kurt_scale`: multipies `Na` to find the number of eigenvalues when computing the approximate kurtosis model.
+  - `rebalance`: [`TR`](@ref) for defining the portfolio rebalancing penalty.
+
+    ```math
+    \\begin{align}
+    r &= \\sum\\limits_{i=1}^{Na} r_{i} \\lvert w_{i} - b_{i} \\rvert\\.
+    \\end{align}
+    ```
+
+    Where:
+    - ``p_{r}`` is the rebalancing penalty.
+    - ``r_{i}`` is the rebalancing penalty for the ``i``-th asset.
+    - ``w_{i}`` is the weight of the ``i``-th asset.
+    - ``b_{i}`` is the benchmark weight of the ``i``-th asset.
+  - `turnover`:
+  - `tracking_err`:
+  - `bl_bench_weights`:
+  - `a_mtx_ineq`:
+  - `b_vec_ineq`:
+  - `risk_budget`:
+  - `f_risk_budget`:
+  - `network_method`:
+  - `a_vec_cent`:
+  - `b_cent`:
+  - `mu_l`:
+  - `mu`:
+  - `cov`:
+  - `kurt`:
+  - `skurt`:
+  - `L_2`:
+  - `S_2`:
+  - `skew`:
+  - `V`:
+  - `sskew`:
+  - `SV`:
+  - `f_mu`:
+  - `f_cov`:
+  - `fm_returns`:
+  - `fm_mu`:
+  - `fm_cov`:
+  - `bl_mu`:
+  - `bl_cov`:
+  - `blfm_mu`:
+  - `blfm_cov`:
+  - `cov_l`:
+  - `cov_u`:
+  - `cov_mu`:
+  - `cov_sigma`:
+  - `d_mu`:
+  - `k_mu`:
+  - `k_sigma`:
+  - `optimal`:
+  - `z`:
+  - `limits`:
+  - `frontier`:
+  - `solvers`:
+  - `fail`:
+  - `model`:
+  - `latest_prices`:
+  - `alloc_optimal`:
+  - `alloc_leftover`:
+  - `alloc_solvers`:
+  - `alloc_fail`:
+  - `alloc_model`:
 """
 mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
                          mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
@@ -658,6 +760,8 @@ mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tske
     alloc_model::tamod
 end
 ```
+
+Structure for defining a hierarchical clustering portfolio.
 """
 mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
                            tsskew, tsv, wmi, wma, ttco, tco, tdist, tcl, tk, topt, tsolv,

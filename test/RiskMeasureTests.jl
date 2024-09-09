@@ -41,9 +41,9 @@ end
     rm = [SD(), [FLPM()], [SLPM(), WR()]]
 
     rm1 = PortfolioOptimiser.get_first_rm(rm)
-    rm2 = PortfolioOptimiser.get_rm_string(rm)
-    rm3 = PortfolioOptimiser.get_rm_string(WR())
-    rm4 = PortfolioOptimiser.get_rm_string(SD())
+    rm2 = PortfolioOptimiser.get_rm_symb(rm)
+    rm3 = PortfolioOptimiser.get_rm_symb(WR())
+    rm4 = PortfolioOptimiser.get_rm_symb(SD())
 
     @test rm1 == rm[1]
     # @test rm2 == :SD2_FLPM2_SLPM2_WR2
