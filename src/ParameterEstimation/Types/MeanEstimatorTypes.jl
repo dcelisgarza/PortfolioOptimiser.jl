@@ -82,7 +82,7 @@ mutable struct MuBS <: MeanSigmaEstimator
 end
 function MuBS(; target::MeanTarget = GM(), w::Union{<:AbstractWeights, Nothing} = nothing,
               sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    return MuBS{typeof(sigma)}(target, w, sigma)
+    return MuBS(target, w, sigma)
 end
 
 """
@@ -101,7 +101,7 @@ mutable struct MuBOP <: MeanSigmaEstimator
 end
 function MuBOP(; target::MeanTarget = GM(), w::Union{<:AbstractWeights, Nothing} = nothing,
                sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    return MuBOP{typeof(sigma)}(target, w, sigma)
+    return MuBOP(target, w, sigma)
 end
 
 function set_mean_sigma(mu_type::MeanSigmaEstimator, sigma)

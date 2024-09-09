@@ -32,7 +32,7 @@ function asset_statistics!(port::AbstractPortfolio;
        set_mu &&
        isa(mu_type, MeanSigmaEstimator) &&
        (isnothing(mu_type.sigma) || isempty(mu_type.sigma))
-        sigma = cov(cov_type, returns)
+        sigma = Matrix(cov(cov_type, returns))
         if set_cov
             port.cov = sigma
         end

@@ -151,7 +151,7 @@ function CorKendall(; absolute::Bool = false)
     return CorKendall(absolute)
 end
 
-const AbsoluteCor = Union{CovFull, CovSemi, CorSpearman, CorKendall}
+const AbsoluteCovCor = Union{CovFull, CovSemi, CorSpearman, CorKendall}
 
 """
 ```
