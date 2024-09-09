@@ -47,7 +47,7 @@ mutable struct IP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods
 end
 function IP(; A::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
             scale::Real = 100_000.0)
-    return IP{typeof(A), typeof(scale)}(A, typeof)
+    return IP{typeof(A), typeof(scale)}(A, scale)
 end
 
 # ### Return

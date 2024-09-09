@@ -116,29 +116,99 @@ Structure for defining a traditional portfolio.
 
       + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
   - `max_num_assets_kurt_scale`: multipies `Na` to find the number of eigenvalues when computing the approximate kurtosis model.
-  - `rebalance`: [`TR`](@ref) for defining the portfolio rebalancing penalty.
+  - `rebalance`: [`AbstractTR`](@ref) for defining the portfolio rebalancing penalty.
 
     ```math
     \\begin{align}
-    r &= \\sum\\limits_{i=1}^{Na} r_{i} \\lvert w_{i} - b_{i} \\rvert\\.
+    p_{r} &= \\sum\\limits_{i=1}^{N} r_{i} \\lvert w_{i} - b_{i} \\rvert\\,.
     \\end{align}
     ```
 
     Where:
-    - ``p_{r}`` is the rebalancing penalty.
-    - ``r_{i}`` is the rebalancing penalty for the ``i``-th asset.
-    - ``w_{i}`` is the weight of the ``i``-th asset.
-    - ``b_{i}`` is the benchmark weight of the ``i``-th asset.
-  - `turnover`:
-  - `tracking_err`:
-  - `bl_bench_weights`:
-  - `a_mtx_ineq`:
-  - `b_vec_ineq`:
-  - `risk_budget`:
-  - `f_risk_budget`:
-  - `network_method`:
-  - `a_vec_cent`:
-  - `b_cent`:
+
+      + ``p_{r}`` is the portfolio rebalancing penalty.
+      + ``N`` is the number of assets.
+      + ``r_{i}`` is the rebalancing penalty for the ``i``-th asset.
+      + ``w_{i}`` is the weight of the ``i``-th asset.
+      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
+  - `turnover`: [`AbstractTR`](@ref) for defining the asset turnover constraint.
+
+    ```math
+    \\begin{align}
+    \\lvert w_{i} - b_{i} \\rvert \\leq t_{i}\\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``t_{i}`` is the turnover constraint for the ``i``-th asset.
+      + ``w_{i}`` is the weight of the ``i``-th asset.
+      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
+      + ``N`` is the number of assets.
+  - `tracking_err`: [`TrackingErr`](@ref) for defining the tracking error constraint.
+
+    ```math
+    \\begin{align}
+    \\left\\lVert \\dfrac{\\mathbf{X} \\bm{w} - \\bm{b}}{T - 1} \\right\\rVert_{2} \\leq \\epsilon
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\lVert \\cdot \\rVert_{2}`` is the L2 norm.
+      + ``\\mathbf{X}`` is the ``T \\times N`` matrix of asset returns.
+      + ``T`` is the number of returns observations.
+      + ``N`` is the number of assets.
+      + ``\\bm{w}`` is the ``N \\times 1`` vector of asset weights.
+      + ``\\bm{b}`` is the ``T \\times 1`` vector of benchmark returns.
+      + ``\\epsilon`` is the tracking error.
+  - `bl_bench_weights`: benchmark weights for Black-Litterman models [`BlackLittermanClass`](@ref).
+  - `a_mtx_ineq`: `C×N` matrix of asset weight linear constraints.
+
+      + if `isempty`: the constraint is not set.
+  - `b_vec_ineq`: `C×1` vector of asset weight linear constraints.
+
+      + if `isempty`: the constraint is not set.
+  - The linear weight constraint is defined as.
+
+    ```math
+    \\begin{align}
+    \\mathbf{A} \\bm{w} \\geq \\bm{b}\\,.
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\mathbf{A}`` is the ``C×N`` matrix of asset weight linear constraints.
+
+      + ``\\bm{b}`` is the ``C×1`` vector of asset weight linear constraints.
+      + ``C`` is the number of constraints.
+      + ``N`` is the number of assets.
+  - `risk_budget`: `Na×1` vector of asset risk budgets.
+  - `f_risk_budget`: `Nf×1` vector of factor risk budgets.
+  - `network_method`: [`NetworkMethods`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref).
+
+      + if [`NoNtwk`](@ref): the constraint is not set.
+  - `a_vec_cent`: centrality vector for defining the centrality constraint.
+
+      + if `isempty`: the constraint is not set.
+  - `b_cent`: average centrality of the assets the portfolio.
+
+      + if `isinf`: the constraint is not set.
+  - The centrality constraint is defined as.
+
+    ```math
+    \\begin{align}
+    \\bm{C} \\cdot \\bm{w} = \\bar{c}
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\bm{w}`` is the ``N\\times 1`` vector of asset weights.
+      + ``\\bm{C}`` is the ``N \\times 1`` centrality vector of the asset adjacency matrix.
+      + ``\\cdot`` is the dot product.
+      + ``\\bar{c}`` is the desired average centrality measure of the portfolio.
   - `mu_l`:
   - `mu`:
   - `cov`:

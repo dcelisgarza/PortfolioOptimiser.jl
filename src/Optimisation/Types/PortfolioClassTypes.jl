@@ -1,5 +1,12 @@
 abstract type PortClass end
 
+"""
+```
+abstract type BlackLittermanClass <: PortClass end
+```
+"""
+abstract type BlackLittermanClass <: PortClass end
+
 struct Classic <: PortClass end
 
 @kwdef mutable struct FC <: PortClass
@@ -14,7 +21,7 @@ function FM(; type::Integer = 1)
     return FM{typeof(type)}(type)
 end
 
-mutable struct BL{T1 <: Integer} <: PortClass
+mutable struct BL{T1 <: Integer} <: BlackLittermanClass
     type::T1
 end
 function BL(; type::Integer = 1)
@@ -22,7 +29,7 @@ function BL(; type::Integer = 1)
     return BL{typeof(type)}(type)
 end
 
-mutable struct BLFM{T1 <: Integer} <: PortClass
+mutable struct BLFM{T1 <: Integer} <: BlackLittermanClass
     type::T1
 end
 function BLFM(; type::Integer = 1)
