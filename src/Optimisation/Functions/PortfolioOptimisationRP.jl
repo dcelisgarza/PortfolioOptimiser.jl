@@ -41,13 +41,13 @@ function _rp_class_constraints(class::FC, port)
     model = port.model
     N = size(port.returns, 2)
     if class.flag
-        b1, b2 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1:2]
+        b1, b2 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.regression_type)[1:2]
         N_f = size(b1, 2)
         @variable(model, w1[1:N_f])
         @variable(model, w2[1:(N - N_f)])
         @expression(model, w, b1 * w1 + b2 * w2)
     else
-        b1 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.loadings_opt)[1]
+        b1 = _factors_b1_b2_b3(port.loadings, port.f_returns, port.regression_type)[1]
         N_f = size(b1, 2)
         @variable(model, w1[1:N_f])
         @expression(model, w, b1 * w1)

@@ -154,7 +154,7 @@ function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorTyp
                                                                            cov_type = cov_type,
                                                                            mu_type = mu_type)
 
-    port.loadings_opt = factor_type.method
+    port.regression_type = factor_type.method
 
     return nothing
 end
@@ -233,7 +233,7 @@ function black_litterman_factor_statistics!(port::Portfolio;
             port.loadings = regression(factor_type.method,
                                        DataFrame(port.f_returns, port.f_assets),
                                        DataFrame(port.returns, port.assets))
-            port.loadings_opt = factor_type.method
+            port.regression_type = factor_type.method
         end
         B = port.loadings
     else

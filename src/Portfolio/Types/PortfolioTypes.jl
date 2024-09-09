@@ -21,7 +21,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     f_timestamps::tfdat
     f_returns::tretf
     loadings::l
-    loadings_opt::lo
+    regression_type::lo
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     rebalance::rb
@@ -98,7 +98,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     f_timestamps::tfdat
     f_returns::tretf
     loadings::l
-    loadings_opt::lo
+    regression_type::lo
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     rebalance::rb
@@ -166,7 +166,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    f_timestamps::AbstractVector = Vector{Date}(undef, 0),
                    f_assets::AbstractVector = Vector{String}(undef, 0),
                    loadings::DataFrame = DataFrame(),
-                   loadings_opt::Union{<:RegressionType, Nothing} = nothing,
+                   regression_type::Union{<:RegressionType, Nothing} = nothing,
                    max_num_assets_kurt::Integer = 0, max_num_assets_kurt_scale::Integer = 2,
                    rebalance::AbstractTR = NoTR(), turnover::AbstractTR = NoTR(),
                    tracking_err::TrackingErr = NoTracking(),
@@ -399,7 +399,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                               num_assets_l, num_assets_u,
                                                               num_assets_u_scale, f_assets,
                                                               f_timestamps, f_returns,
-                                                              loadings, loadings_opt,
+                                                              loadings, regression_type,
                                                               max_num_assets_kurt,
                                                               max_num_assets_kurt_scale,
                                                               rebalance, turnover,
@@ -584,7 +584,7 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.f_timestamps),
                                               deepcopy(obj.f_returns),
                                               deepcopy(obj.loadings),
-                                              deepcopy(obj.loadings_opt),
+                                              deepcopy(obj.regression_type),
                                               deepcopy(obj.max_num_assets_kurt),
                                               deepcopy(obj.max_num_assets_kurt_scale),
                                               deepcopy(obj.rebalance),

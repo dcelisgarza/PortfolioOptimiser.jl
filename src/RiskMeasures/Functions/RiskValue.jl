@@ -1164,7 +1164,7 @@ Where:
 # Inputs
 
   - `w`: `N×1` vector of weights.
-  - `V`: `N×N` matrix of sum of negative spectral slices of coskewness or semi coskewness.
+  - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness or semi coskewness.
 """
 function _Skew(w::AbstractVector, V::AbstractArray)
     return sqrt(dot(w, V, w))

@@ -25,8 +25,9 @@ function factor_risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = p
     solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, port.cov)
     risk = factor_risk_contribution(rm, port.optimal[type].weights; X = X,
                                     assets = port.assets, F = F, f_assets = port.f_assets,
-                                    B = port.loadings, loadings_opt = port.loadings_opt,
-                                    V = port.V, SV = port.SV, delta = delta)
+                                    B = port.loadings,
+                                    regression_type = port.regression_type, V = port.V,
+                                    SV = port.SV, delta = delta)
     unset_set_rm_properties(rm, solver_flag, sigma_flag)
     return risk
 end
