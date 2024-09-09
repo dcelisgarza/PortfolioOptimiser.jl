@@ -151,6 +151,8 @@ function CorKendall(; absolute::Bool = false)
     return CorKendall(absolute)
 end
 
+const AbsoluteCor = Union{CovFull, CovSemi, CorSpearman, CorKendall}
+
 """
 ```
 @kwdef mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
@@ -532,6 +534,8 @@ function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
                     logo::AbstractLoGo = NoLoGo(;))
     return PortCovCor(ce, posdef, denoise, logo)
 end
+
+const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,
        CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,

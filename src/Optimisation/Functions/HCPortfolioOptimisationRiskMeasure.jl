@@ -83,7 +83,6 @@ function naive_risk(port, cluster, rm)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = _naive_risk(rm, cret, cV)
     _unset_hc_rm_sigma(rm, sigma_old)
-
     return crisk
 end
 function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})

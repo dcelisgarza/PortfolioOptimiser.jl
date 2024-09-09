@@ -346,6 +346,26 @@ end
 function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
     return regression(method, x, y)
 end
+function _set_noposdef(::NoPosdef, ::Any)
+    return nothing
+end
+function _set_noposdef(::Any, cov_type)
+    old_posdef = cov_type.posdef
+    cov_type.posdef = NoPosdef()
+    return old_posdef
+end
+function _set_factor_posdef_cov_type(cov_type::PosdefFixCovCor)
+    return _set_noposdef(cov_type.posdef, cov_type)
+end
+function _set_factor_posdef_cov_type(::Any)
+    return nothing
+end
+function _reset_posdef_cov_type(cov_type::PosdefFixCovCor, sigma)
+    return posdef_fix!(cov_type.posdef, sigma)
+end
+function _reset_posdef_cov_type(args...)
+    return nothing
+end
 function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
                       cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                       mu_type::MeanEstimator = MuSimple())
@@ -357,10 +377,11 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     namesB = names(B)
     old_posdef = nothing
     x1 = if "const" ∈ namesB
-        if hasproperty(cov_type, :posdef) && !isa(cov_type.posdef, NoPosdef)
-            old_posdef = cov_type.posdef
-            cov_type.posdef = NoPosdef()
-        end
+        # if hasproperty(cov_type, :posdef) && !isa(cov_type.posdef, NoPosdef)
+        #     old_posdef = cov_type.posdef
+        #     cov_type.posdef = NoPosdef()
+        # end
+        old_posdef = _set_factor_posdef_cov_type(cov_type)
         [ones(nrow(y)) Matrix(x)]
     else
         Matrix(x)
@@ -391,9 +412,10 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
         B_mtx * f_cov * transpose(B_mtx)
     end
 
-    if hasproperty(cov_type, :posdef)
-        posdef_fix!(cov_type.posdef, sigma)
-    end
+    # if hasproperty(cov_type, :posdef)
+    #     posdef_fix!(cov_type.posdef, sigma)
+    # end
+    _reset_posdef_cov_type(cov_type, sigma)
 
     return mu, sigma, returns, B
 end

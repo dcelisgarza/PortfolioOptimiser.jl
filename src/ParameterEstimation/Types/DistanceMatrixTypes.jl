@@ -82,6 +82,7 @@ function DistanceSqMLP(; absolute::Bool = false,
                        args::Tuple = (), kwargs::NamedTuple = (;))
     return DistanceSqMLP(absolute, distance, args, kwargs)
 end
+const AbsoluteDist = Union{DistanceMLP, DistanceSqMLP}
 
 """
 ```

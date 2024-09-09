@@ -29,6 +29,12 @@ dist(de::DistanceMethod, X, Y)
 function dist(de::DistanceMethod, X, Y)
     return _dist(de, X, Y)
 end
+function _set_absolute_dist(cor_type::AbsoluteCor, dist_type::AbsoluteDist)
+    return dist_type.absolute = cor_type.ce.absolute
+end
+function _set_absolute_dist(args...)
+    return nothing
+end
 function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
     if isa(dist_type, DistanceCanonical)
         dist_type = if isa(cor_type.ce, CorMutualInfo)
@@ -39,11 +45,7 @@ function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimis
             DistanceMLP()
         end
     end
-
-    if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
-        dist_type.absolute = cor_type.ce.absolute
-    end
-
+    _set_absolute_dist(cor_type, dist_type)
     return dist_type
 end
 function _bin_width_func(::Knuth)

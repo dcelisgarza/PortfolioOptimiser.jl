@@ -8,10 +8,9 @@ struct NoNtwk <: NetworkMethods end
     A::T1 = Matrix{Float64}(undef, 0, 0)
     penalty::T2 = 0.05
 end
-@kwdef mutable struct IP{T1 <: AbstractMatrix{<:Real}, T2 <: Real, T3 <: Real} <:
-                      NetworkMethods
+@kwdef mutable struct IP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods
     A::T1 = Matrix{Float64}(undef, 0, 0)
-    scale::T3 = 100_000.0
+    scale::T2 = 100_000.0
 end
 
 # ### Return

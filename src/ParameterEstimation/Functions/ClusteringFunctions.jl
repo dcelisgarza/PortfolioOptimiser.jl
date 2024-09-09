@@ -177,9 +177,7 @@ function _hcluster(ca::HAC, X::AbstractMatrix,
                    dist_type::DistanceMethod = DistanceCanonical(),
                    hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
-    if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
-        dist_type.absolute = cor_type.ce.absolute
-    end
+    _set_absolute_dist(cor_type, dist_type)
 
     S = cor(cor_type, X)
     D = dist(dist_type, S, X)
@@ -194,9 +192,7 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
                    dist_type::DistanceMethod = DistanceCanonical(),
                    hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
-    if hasproperty(cor_type.ce, :absolute) && hasproperty(dist_type, :absolute)
-        dist_type.absolute = cor_type.ce.absolute
-    end
+    _set_absolute_dist(cor_type, dist_type)
 
     S = cor(cor_type, X)
     D = dist(dist_type, S, X)
