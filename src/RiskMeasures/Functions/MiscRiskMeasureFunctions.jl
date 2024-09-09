@@ -1,20 +1,42 @@
-function get_rm_string(rm::Union{AbstractVector, <:RiskMeasure})
-    rmstr = ""
+"""
+```
+get_rm_symbol(rm::Union{AbstractVector, <:AbstractRiskMeasure})
+```
+
+Get a symbol for the risk measure(s). If multiple measures are given, they are concatenated by underscores.
+
+# Inputs
+
+  - `rm`: risk measure or vector of risk measures.
+"""
+function get_rm_symbol(rm::Union{AbstractVector, <:AbstractRiskMeasure})
+    rmsym = ""
     if !isa(rm, AbstractVector)
-        rmstr *= String(rm)
+        rmsym *= String(rm)
     else
         rm = reduce(vcat, rm)
         for (i, r) ∈ enumerate(rm)
-            rmstr *= String(r)
+            rmsym *= String(r)
             if i != length(rm)
-                rmstr *= '_'
+                rmsym *= '_'
             end
         end
     end
-    return Symbol(rmstr)
+    return Symbol(rmsym)
 end
 
-function get_first_rm(rm::Union{AbstractVector, <:RiskMeasure})
+"""
+```
+get_first_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
+```
+
+Get the first risk measure, used in [`efficient_frontier`](@ref).
+
+# Inputs
+
+  - `rm`: risk measure or vector of risk measures.
+"""
+function get_first_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     return if !isa(rm, AbstractVector)
         rm
     else
@@ -44,7 +66,22 @@ end
 function _set_rm_sigma(args...)
     return false
 end
-function set_rm_properties(rm, solvers, sigma)
+"""
+```
+set_rm_properties(rm::AbstractRiskMeasure, solvers::AbstractDict,
+                  sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
+```
+
+Set properties for risk measures that use solvers or covariance matrices.
+
+# Inputs
+
+  - `rm`: risk measure.
+  - `solvers`: solvers.
+  - `sigma`: covariance matrix.
+"""
+function set_rm_properties(rm::AbstractRiskMeasure, solvers::AbstractDict,
+                           sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
     solver_flag = _set_rm_solvers(rm, solvers)
     sigma_flag = _set_rm_sigma(rm, sigma)
     return solver_flag, sigma_flag
@@ -65,10 +102,22 @@ end
 function _unset_rm_sigma(args...)
     return nothing
 end
-function unset_set_rm_properties(rm, solver_flag, sigma_flag)
+"""
+```
+unset_set_rm_properties(rm::AbstractRiskMeasure, solver_flag::Bool, sigma_flag::Bool)
+```
+
+Unset properties for risk measures that use solvers or covariance matrices.
+
+# Inputs
+
+  - `rm`: risk measure.
+  - `solvers`: solvers.
+  - `sigma`: covariance matrix.
+"""
+function unset_set_rm_properties(rm::AbstractRiskMeasure, solver_flag::Bool,
+                                 sigma_flag::Bool)
     _unset_rm_solvers(rm, solver_flag)
     _unset_rm_sigma(rm, sigma_flag)
     return nothing
 end
-
-export get_rm_string, get_first_rm, set_rm_properties, unset_set_rm_properties

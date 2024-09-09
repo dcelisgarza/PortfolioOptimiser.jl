@@ -18,10 +18,10 @@ function frontier_limits!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasu
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
 
-    rmstr = get_rm_string(rm)
-    port.limits[rmstr] = limits
+    rmsym = get_rm_symbol(rm)
+    port.limits[rmsym] = limits
 
-    return port.limits[rmstr]
+    return port.limits[rmsym]
 end
 
 """
@@ -115,13 +115,13 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         i += 1
         sharpe = true
     end
-    rmstr = get_rm_string(rm)
-    port.frontier[rmstr] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
+    rmsym = get_rm_symbol(rm)
+    port.frontier[rmsym] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
                                                  DataFrame(reshape(frontier, length(w1), :),
                                                            string.(range(1, i)))),
                                 :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
     unset_set_rm_properties(rmi, solver_flag, sigma_flag)
-    return port.frontier[rmstr]
+    return port.frontier[rmsym]
 end

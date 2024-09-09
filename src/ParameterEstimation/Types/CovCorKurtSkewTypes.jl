@@ -38,7 +38,10 @@ Full Pearson-type covariance and correlation estimator.
 
 # Parameters
 
-  - `absolute`: whether or not to compute an absolute correlation.
+  - `absolute`:
+
+      + if `true`: compute an absolute correlation, `abs.(cor(X))`.
+
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `w`: weights for computing the covariance, if `nothing` apply no weights.
 """
@@ -88,7 +91,9 @@ Semi Pearson-type covariance and correlation estimator.
 
 # Parameters
 
-  - `absolute`: whether or not to compute an absolute correlation, `abs.(cor(X))`.
+  - `absolute`:
+
+      + if `true`: compute an absolute correlation, `abs.(cor(X))`.
 
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `target`: minimum acceptable return target.
@@ -122,7 +127,9 @@ Spearman type correlation estimator.
 
 # Parameters
 
-  - `absolute`: whether or not to compute an absolute correlation, `abs.(corspearman(X))`.
+  - `absolute`:
+
+      + if `true`: compute an absolute correlation, `abs.(corspearman(X))`.
 """
 mutable struct CorSpearman <: CorRank
     absolute::Bool
@@ -142,7 +149,9 @@ Kendall type correlation estimator.
 
 # Parameters
 
-  - `absolute`: whether or not to compute an absolute correlation, `abs.(corkendall(X))`.
+  - `absolute`:
+
+      + if `flag`: compute an absolute correlation, `abs.(corkendall(X))`.
 """
 mutable struct CorKendall <: CorRank
     absolute::Bool

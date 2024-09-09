@@ -276,7 +276,15 @@ Where:
   - `x`: `T×1` returns vector.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `z`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
+"""
+function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    val = mean(exp.(-x / z))
+    val = z * log(val / alpha)
+    return val
+end
 
+"""
 ```
 ERM(x::AbstractVector, solvers:AbstractDict, α::Real = 0.05)
 ```
@@ -309,12 +317,6 @@ Where:
 
 If no valid solution is found then `NaN` will be returned.
 """
-function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
-    val = mean(exp.(-x / z))
-    val = z * log(val / alpha)
-    return val
-end
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     model = JuMP.Model()
@@ -1443,7 +1445,7 @@ end
 
 """
 ```
-calc_risk(::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`VaR`](@ref) via [`_VaR`](@ref). Inputs correspond to those of [`_VaR`](@ref).
@@ -1454,7 +1456,7 @@ end
 
 """
 ```
-calc_risk(::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CVaR`](@ref) via [`_CVaR`](@ref). Inputs correspond to those of [`_CVaR`](@ref).
@@ -1465,7 +1467,7 @@ end
 
 """
 ```
-calc_risk(::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EVaR`](@ref) via [`_EVaR`](@ref). Inputs correspond to those of [`_EVaR`](@ref).
@@ -1476,7 +1478,7 @@ end
 
 """
 ```
-calc_risk(::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref). Inputs correspond to those of [`_RLVaR`](@ref).
@@ -1487,7 +1489,7 @@ end
 
 """
 ```
-calc_risk(::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`DaR`](@ref) via [`_DaR`](@ref). Inputs correspond to those of [`_DaR`](@ref).
@@ -1520,7 +1522,7 @@ end
 
 """
 ```
-calc_risk(::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CDaR`](@ref) via [`_CDaR`](@ref). Inputs correspond to those of [`_CDaR`](@ref).
@@ -1542,7 +1544,7 @@ end
 
 """
 ```
-calc_risk(::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EDaR`](@ref) via [`_EDaR`](@ref). Inputs correspond to those of [`_EDaR`](@ref).
@@ -1553,7 +1555,7 @@ end
 
 """
 ```
-calc_risk(::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref). Inputs correspond to those of [`_RLDaR`](@ref).
@@ -1564,7 +1566,7 @@ end
 
 """
 ```
-calc_risk(::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`DaR_r`](@ref) via [`_DaR_r`](@ref). Inputs correspond to those of [`_DaR_r`](@ref).
@@ -1597,7 +1599,7 @@ end
 
 """
 ```
-calc_risk(::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(cdar::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CDaR_r`](@ref) via [`_CDaR_r`](@ref). Inputs correspond to those of [`_CDaR_r`](@ref).
@@ -1619,7 +1621,7 @@ end
 
 """
 ```
-calc_risk(::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EDaR_r`](@ref) via [`_EDaR_r`](@ref). Inputs correspond to those of [`_EDaR_r`](@ref).
@@ -1630,7 +1632,7 @@ end
 
 """
 ```
-calc_risk(::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref). Inputs correspond to those of [`_RLDaR_r`](@ref).
@@ -1641,7 +1643,7 @@ end
 
 """
 ```
-calc_risk(::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`Kurt`](@ref) via [`_Kurt`](@ref). Inputs correspond to those of [`_Kurt`](@ref).
@@ -1652,7 +1654,7 @@ end
 
 """
 ```
-calc_risk(::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SKurt`](@ref) via [`_SKurt`](@ref). Inputs correspond to those of [`_SKurt`](@ref).
@@ -1685,7 +1687,7 @@ end
 
 """
 ```
-calc_risk(::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CVaRRG`](@ref) via [`_CVaRRG`](@ref). Inputs correspond to those of [`_CVaRRG`](@ref).
@@ -1696,7 +1698,7 @@ end
 
 """
 ```
-calc_risk(::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`TG`](@ref) via [`_TG`](@ref). Inputs correspond to those of [`_TG`](@ref).
@@ -1707,7 +1709,7 @@ end
 
 """
 ```
-calc_risk(::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`TGRG`](@ref) via [`_TGRG`](@ref). Inputs correspond to those of [`_TGRG`](@ref).
@@ -1719,7 +1721,7 @@ end
 
 """
 ```
-calc_risk(::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`OWA`](@ref) via [`_OWA`](@ref). Inputs correspond to those of [`_OWA`](@ref).
@@ -1752,7 +1754,7 @@ end
 
 """
 ```
-calc_risk(::SSkew, w::AbstractVector; V::AbstractMatrix, kwargs...)
+calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SSkew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).

@@ -17,6 +17,7 @@ Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset w
   - `X`: `T×N` matrix of asset returns.
   - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
   - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
+  - `delta`: small displacement used for computing the [`Equal`](@ref) risk measure.
   - `scale`: if true divides the kurtosis and semi kurtosis by 2, used in [`risk_contribution`](@ref).
   - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
 
@@ -54,11 +55,11 @@ Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) and ass
   - `X`: `T×N` matrix of asset returns.
   - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
   - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
-  - `delta`: small displacement used for computing the marginal risk.
+  - `delta`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
   - `marginal`:
 
       + if `true`: compute the marginal risk contribution.
-      + if `false`: compute the risk by contribution by multiplying the marginal risk by the asset weight.
+      + else: compute the risk by contribution by multiplying the marginal risk by the asset weight.
   - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
 
 # Outputs
@@ -116,6 +117,7 @@ Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) and as
 # Inputs
 
   - `rm`: risk measure.
+
   - `w`: `Na×1` vector of asset weights.
   - `X`: `T×Na` matrix of asset returns.
   - `assets`: vector of asset names.
@@ -125,7 +127,7 @@ Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) and as
   - `regression_type`: regression type used for computing the loadings matrix.
   - `V`: `Na×Na` matrix of sum of negative spectral slices of the coskewness.
   - `SV`: `Na×Na` matrix of sum of negative spectral slices of the semi coskewness.
-  - `delta`: small displacement used for computing the marginal risk.
+  - `delta`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
   - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
 
 # Outputs
@@ -174,6 +176,7 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
   - `rm`: risk measure.
 
   - `w`: `N×1` vector of asset weights.
+  - `mu`: `N×1` vector of expected returns.
   - `X`: `T×N` matrix of asset returns.
   - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
   - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
@@ -182,7 +185,7 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
   - `kelly`:
 
       + if `true`: use the kelly return.
-      + if `false`: use the arithmetic return.
+      + else: use the arithmetic return.
 """
 function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),

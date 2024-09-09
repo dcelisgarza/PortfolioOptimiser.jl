@@ -27,12 +27,17 @@ D_{i,\\,j} =
 Where:
 
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix ``\\mathbf{C}``.
+
   - ``C_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` correlation matrix ``\\mathbf{D}``.
-  - absolute: flag for stating whether or not an absolute correlation is being used.
+  - absolute:
+
+      + if `true`: the correlation being used is absolute.
 
 # Parameters
 
-  - `absolute`: flag for stating whether or not an absolute correlation is being used.
+  - `absolute`:
+
+      + if `true`: the correlation being used is absolute.
 """
 mutable struct DistanceMLP <: DistanceMethod
     absolute::Bool
@@ -60,13 +65,19 @@ Defines the distance of distances matrix from a correlation matrix [HRP1](@cite)
 Where:
 
   - ``\\bm{D}_{i}``: is the ``i``-th column/row of the `N×N` distance matrix defined in [`DistanceMLP`](@ref).
+
   - ``f_{m}``: is the pairwise distance function for metric ``m``. We use the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function which computes the entire matrix at once, the output is a vector so it gets reshaped into an `N×N` matrix.
   - ``\\tilde{D}_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distances of distances matrix.
-  - absolute: is a flag whether the correlation is absolute.
+  - absolute:
+
+      + if `true`: the correlation being used is absolute.
 
 # Parameters
 
-  - `absolute`: flag for stating whether or not an absolute correlation is being used.
+  - `absolute`:
+
+      + if `true`: the correlation being used is absolute.
+
   - `distance`: distance metric from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
