@@ -31,11 +31,7 @@ function _optimise!(::HERC, port::HCPortfolio,
         lc = Int[]
         rc = Int[]
         for r ∈ rmo
-            solver_flag = false
-            if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                r.solvers = port.solvers
-                solver_flag = true
-            end
+            solver_flag = _set_rm_solvers(r, port.solvers)
             scale = r.settings.scale
             for cluster ∈ clusters
                 _risk = cluster_risk(port, cluster, r) * scale
@@ -47,9 +43,7 @@ function _optimise!(::HERC, port::HCPortfolio,
                     append!(rc, cluster)
                 end
             end
-            if solver_flag
-                r.solvers = nothing
-            end
+            _unset_rm_solvers(r, solver_flag)
         end
         # Allocate weight to clusters.
         alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
@@ -65,16 +59,10 @@ function _optimise!(::HERC, port::HCPortfolio,
         cidx = idx .== i
         clusters = findall(cidx)
         for r ∈ rmi
-            solver_flag = false
-            if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                r.solvers = port.solvers
-                solver_flag = true
-            end
+            solver_flag = _set_rm_solvers(r, port.solvers)
             scale = r.settings.scale
             risk[cidx] .+= naive_risk(port, clusters, r) * scale
-            if solver_flag
-                r.solvers = nothing
-            end
+            _unset_rm_solvers(r, solver_flag)
         end
         weights[cidx] .*= risk[cidx]
     end

@@ -49,49 +49,41 @@ function _naive_risk(rm::AbstractRiskMeasure, returns, cV)
     end
     return inv_risk / sum(inv_risk)
 end
-function cluster_risk(port, cluster, rm)
-    if hasproperty(rm, :sigma)
-        sigma_old = nothing
-        if isnothing(rm.sigma)
-            rm.sigma = view(port.cov, cluster, cluster)
-        else
-            sigma_old = rm.sigma
-            rm.sigma = view(sigma_old, cluster, cluster)
-        end
+function _set_hc_rm_sigma(rm::RMSigma, port, cluster)
+    sigma_old = rm.sigma
+    if isnothing(rm.sigma) || isempty(rm.sigma)
+        rm.sigma = view(port.cov, cluster, cluster)
+    else
+        rm.sigma = view(sigma_old, cluster, cluster)
     end
+    return sigma_old
+end
+function _set_hc_rm_sigma(args...)
+    return nothing
+end
+function _unset_hc_rm_sigma(rm::RMSigma, sigma_old)
+    rm.sigma = sigma_old
+    return nothing
+end
+function _unset_hc_rm_sigma(args...)
+    return nothing
+end
+function cluster_risk(port, cluster, rm)
+    sigma_old = _set_hc_rm_sigma(rm, port, cluster)
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     cw = _naive_risk(rm, cret, cV)
     crisk = calc_risk(rm, cw; X = cret, V = cV, SV = cV)
-    if hasproperty(rm, :sigma)
-        if isnothing(sigma_old)
-            rm.sigma = nothing
-        else
-            rm.sigma = sigma_old
-        end
-    end
+    _unset_hc_rm_sigma(rm, sigma_old)
     return crisk
 end
 function naive_risk(port, cluster, rm)
-    if hasproperty(rm, :sigma)
-        sigma_old = nothing
-        if isnothing(rm.sigma)
-            rm.sigma = view(port.cov, cluster, cluster)
-        else
-            sigma_old = rm.sigma
-            rm.sigma = view(sigma_old, cluster, cluster)
-        end
-    end
+    sigma_old = _set_hc_rm_sigma(rm, port, cluster)
     cret = view(port.returns, :, cluster)
     cV = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = _naive_risk(rm, cret, cV)
-    if hasproperty(rm, :sigma)
-        if isnothing(sigma_old)
-            rm.sigma = nothing
-        else
-            rm.sigma = sigma_old
-        end
-    end
+    _unset_hc_rm_sigma(rm, sigma_old)
+
     return crisk
 end
 function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})

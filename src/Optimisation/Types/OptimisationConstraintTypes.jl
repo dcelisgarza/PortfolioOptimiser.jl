@@ -11,7 +11,6 @@ end
 @kwdef mutable struct IP{T1 <: AbstractMatrix{<:Real}, T2 <: Real, T3 <: Real} <:
                       NetworkMethods
     A::T1 = Matrix{Float64}(undef, 0, 0)
-    penalty::T2 = 0.05
     scale::T3 = 100_000.0
 end
 

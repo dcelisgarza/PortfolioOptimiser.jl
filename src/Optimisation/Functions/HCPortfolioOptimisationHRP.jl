@@ -15,19 +15,13 @@ function _optimise!(::HRP, port::HCPortfolio,
             lrisk = zero(eltype(weights))
             rrisk = zero(eltype(weights))
             for r ∈ rm
-                solver_flag = false
-                if hasproperty(r, :solvers) && (isnothing(r.solvers) || isempty(r.solvers))
-                    r.solvers = port.solvers
-                    solver_flag = true
-                end
+                solver_flag = _set_rm_solvers(r, port.solvers)
                 scale = r.settings.scale
                 # Left risk.
                 lrisk += cluster_risk(port, lc, r) * scale
                 # Right risk.
                 rrisk += cluster_risk(port, rc, r) * scale
-                if solver_flag
-                    r.solvers = nothing
-                end
+                _unset_rm_solvers(r, solver_flag)
             end
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
