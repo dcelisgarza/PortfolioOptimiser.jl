@@ -377,10 +377,6 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     namesB = names(B)
     old_posdef = nothing
     x1 = if "const" ∈ namesB
-        # if hasproperty(cov_type, :posdef) && !isa(cov_type.posdef, NoPosdef)
-        #     old_posdef = cov_type.posdef
-        #     cov_type.posdef = NoPosdef()
-        # end
         old_posdef = _set_factor_posdef_cov_type(cov_type)
         [ones(nrow(y)) Matrix(x)]
     else
@@ -412,9 +408,6 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
         B_mtx * f_cov * transpose(B_mtx)
     end
 
-    # if hasproperty(cov_type, :posdef)
-    #     posdef_fix!(cov_type.posdef, sigma)
-    # end
     _reset_posdef_cov_type(cov_type, sigma)
 
     return mu, sigma, returns, B

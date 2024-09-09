@@ -10,10 +10,9 @@ end
 function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator)
     sigma = Matrix(cov(cov_type, X))
-    if hasproperty(mu_type, :sigma)
-        mu_type.sigma = sigma
-    end
+    old_sigma = set_mean_sigma(mu_type, sigma)
     mu = vec(mean(mu_type, X))
+    unset_mean_sigma(mu_type, old_sigma)
 
     return sigma, mu
 end

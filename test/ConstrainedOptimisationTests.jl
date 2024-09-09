@@ -1457,7 +1457,7 @@ end
           0.17575031817969053]
     @test isapprox(w2.weights, wt)
 
-    portfolio.network_method = IP(; A = B, penalty = 0.5)
+    portfolio.network_method = IP(; A = B)
     w3 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, 0.0, 0.0, -0.0, 0.25423835281660595, -0.10786045982487914, -0.0,
           0.3290798306064528, -0.0, -0.0, 2.220446049250313e-16, -0.0, 0.0, -0.0,
@@ -1475,7 +1475,7 @@ end
           -3.585326191328158e-11, 0.10303992417576462]
     @test isapprox(w4.weights, wt)
 
-    portfolio.network_method = IP(; A = C, penalty = 0.5)
+    portfolio.network_method = IP(; A = C)
     w5 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -9.824982518806696e-17, -2.881746754291979e-16, -6.328762489489334e-17,
           0.3345846888561428, -0.0, -0.0, 0.4054153111438571, -0.0, -0.0, 0.0, 0.0, 0.0,
@@ -1496,7 +1496,7 @@ end
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
-    portfolio.network_method = IP(; A = B, penalty = 0.5)
+    portfolio.network_method = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, -0.0, 3.428633578839961e-17, 0.1119976188327676, -0.0, -0.0, 0.0, 0.0,
           0.0, 0.3750880542218098, -0.0, -0.0, -0.0, -0.0, 0.1412763749809966, -0.0,
@@ -1514,7 +1514,7 @@ end
           3.5401881596356065e-11, 0.10117953610845386]
     @test isapprox(w8.weights, wt)
 
-    portfolio.network_method = IP(; A = C, penalty = 0.5)
+    portfolio.network_method = IP(; A = C)
     w9 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [0.0, -0.0, 0.0, -0.0, 0.0, -0.0, 4.8338121699908494e-17, 0.0, -0.0, -0.0,
           0.425177042550851, -0.0, -1.0139121127832994e-15, -0.0, 2.2724003756919815e-16,
@@ -1568,7 +1568,7 @@ end
           7.366923752795404e-17, 0.0, 0.025951685743898865, 0.13667031493939605]
     @test isapprox(w12.weights, wt)
 
-    portfolio.network_method = IP(; A = B, penalty = 0.5)
+    portfolio.network_method = IP(; A = B)
     w13 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, 0.0, -0.0, 0.6900000000000023, -0.0, -0.0, 0.0, -0.0, -0.0,
           0.19949253798767527, -0.0, -0.11949253798767445, -0.0, -0.0, 0.0, 0.0, -0.0, 0.0,
@@ -1586,7 +1586,7 @@ end
           -2.6450191488394353e-10, 0.08732450453854651]
     @test isapprox(w14.weights, wt)
 
-    portfolio.network_method = IP(; A = C, penalty = 0.5)
+    portfolio.network_method = IP(; A = C)
     w15 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, 0.0, -0.0, 0.6899999999999927, -0.0, -0.0, 0.0, -0.0, -0.0,
           0.1994925379876753, -0.0, -0.11949253798766485, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0,
@@ -1607,7 +1607,7 @@ end
     portfolio.a_vec_cent = []
     portfolio.b_cent = Inf
 
-    portfolio.network_method = IP(; A = B, penalty = 0.5)
+    portfolio.network_method = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, 0.0, -0.0, 0.6751155811095629, -0.0, -0.0, 0.0, -0.0, -0.0,
           0.208898224965609, -0.0, -0.11401380607517049, -0.0, -0.0, 0.0, 0.0, -0.0, -0.0,
@@ -1625,7 +1625,7 @@ end
           1.7210187767534034e-10, 0.12665923243815538]
     @test isapprox(w18.weights, wt)
 
-    portfolio.network_method = IP(; A = C, penalty = 0.5)
+    portfolio.network_method = IP(; A = C)
     w19 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [-0.0, -0.0, 0.0, -0.0, 0.5385298461146729, -0.0, 0.0, 0.0, -0.0, -0.0, 0.0,
           -0.18000000000000382, -0.0, 0.0, 3.8379398333663466e-15, 0.411470153885331, -0.0,
