@@ -96,7 +96,9 @@ l = 2.0
     @test portfolio.d_mu == fill(inv(9 * N), N)
 
     M = size(portfolio_copy.returns, 1)
-    portfolio = Portfolio(; prices = prices, f_prices = factors,
+    kurt = rand(N^2, N^2)
+    skurt = rand(N^2, N^2)
+    portfolio = Portfolio(; prices = prices, f_prices = factors, kurt = kurt, skurt = skurt,
                           rebalance = TR(; val = fill(inv(N), N)),
                           turnover = TR(; val = fill(inv(2 * N), N)),
                           risk_budget = collect(1.0:N),
@@ -108,6 +110,8 @@ l = 2.0
     @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
     @test portfolio.tracking_err.err == 11
     @test portfolio.tracking_err.w == fill(inv(100 * M), M)
+    @test portfolio.kurt == kurt
+    @test portfolio.skurt == skurt
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
 end

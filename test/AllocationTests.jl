@@ -73,8 +73,6 @@ l = 2.0
                    sum(w11.cost[w11.cost .> 0]) - sum(w11.cost[w11.cost .< 0]), rtol = 0.25)
 
     portfolio.alloc_solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                     :check_sol => (allow_local = true,
-                                                                    allow_almost = true),
                                                      :params => Dict("verbose" => false,
                                                                      "max_step_fraction" => 0.75)))
     w20 = allocate!(portfolio; method = LP(), investment = 1e6)

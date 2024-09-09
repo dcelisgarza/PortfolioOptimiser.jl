@@ -1777,27 +1777,4 @@ function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta
 end
 
-"""
-```
-calc_risk(rm::AbstractVector, w::AbstractVector; kwargs...)
-```
-
-Compute the sum of the scaled risks for each risk measure.
-
-# Inputs
-
-  - `rm`: vector of concrete subtypes of [`AbstractRiskMeasure`](@ref). It may also contain vectors of [`AbstractRiskMeasure`](@ref).
-  - `w`: `N×1` vector of weights.
-  - `kwargs...`: kwargs for the different methods of [`calc_risk`](@ref).
-"""
-function calc_risk(rm::AbstractVector, w::AbstractVector; kwargs...)
-    rm = reduce(vcat, rm)
-    risk = zero(eltype(w))
-    for r ∈ rm
-        scale = r.settings.scale
-        risk += calc_risk(r, w; kwargs...) * scale
-    end
-    return risk
-end
-
 export ERM, RRM, calc_risk
