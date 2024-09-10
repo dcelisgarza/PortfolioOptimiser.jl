@@ -139,7 +139,8 @@ function IP(; A::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
     if isa(k, AbstractVector) && !isempty(A) && !isempty(k)
         @smart_assert(size(A, 1) == length(k))
     end
-    return IP{typeof(A), typeof(k), typeof(scale)}(A, k, scale)
+    return IP{typeof(A), Union{<:Integer, <:AbstractVector{<:Integer}}, typeof(scale)}(A, k,
+                                                                                       scale)
 end
 function Base.setproperty!(obj::IP, sym::Symbol, val)
     if sym == :k

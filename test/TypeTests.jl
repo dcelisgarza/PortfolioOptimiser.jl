@@ -1,8 +1,8 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser, JuMP, Clustering
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -114,6 +114,7 @@ l = 2.0
     @test portfolio.skurt == skurt
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
+
     A = [0 1 0;
          1 0 0;
          0 0 0]
@@ -136,6 +137,12 @@ l = 2.0
                    0.0  0.0  1.0  1.0;
                    1.0  1.0  1.0  1.0]
     @test ip.k == [1, 2, 3]
+    ip.k = [3, 4, 5]
+    @test ip.k == [3, 4, 5]
+
+    ip = IP(; A = A)
+
+    ip.k = [6, 8, 9]
 end
 
 @testset "HC Portfolio" begin
