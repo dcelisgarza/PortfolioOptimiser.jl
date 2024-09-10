@@ -84,9 +84,9 @@ All covariance estimators can be used for correlation estimation.
 
 ### Bin width estimation functions
 
-  - Knuth, require `PyCall` and `astropy` to be installed, [`Knuth`](@ref).
-  - Freedman, require `PyCall` and `astropy` to be installed, [`Freedman`](@ref).
-  - Scott, require `PyCall` and `astropy` to be installed, [`Scott`](@ref).
+  - Knuth, requires `PyCall` and `astropy` to be installed, [`Knuth`](@ref).
+  - Freedman, requires `PyCall` and `astropy` to be installed, [`Freedman`](@ref).
+  - Scott, requires `PyCall` and `astropy` to be installed, [`Scott`](@ref).
   - Hacine-Gharbi and Ravier, [`HGR`](@ref).
 
 ### Cokurtosis estimators
