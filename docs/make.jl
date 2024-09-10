@@ -97,7 +97,7 @@ makedocs(;
                                                "Optimisation/OptimisationGetZ.md",
                                                "Optimisation/OptimisationFinalisation.md"],
                             "Plots Extension" => "PlotsExtension.md",
-                            "References" => "References.md"]],
+                            "References" => "References.md", "Index" => "Contents.md"]],
          plugins = [CitationBibliography(joinpath(@__DIR__, "src", "refs.bib");
                                          style = :numeric)])
 

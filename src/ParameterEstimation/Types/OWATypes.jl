@@ -14,6 +14,13 @@ Methods for computing the weights used to combine L-moments higher than 2 [OWAL]
 """
 abstract type OWAMethods end
 
+"""
+```
+@kwdef mutable struct CRRA{T1 <: Real} <: OWAMethods
+    g::T1 = 0.5
+end
+```
+"""
 mutable struct CRRA{T1 <: Real} <: OWAMethods
     g::T1
 end
@@ -22,6 +29,13 @@ function CRRA(; g::Real = 0.5)
     return CRRA{typeof(g)}(g)
 end
 
+"""
+```
+@kwdef mutable struct MaxEntropy{T1 <: Real} <: OWAMethods
+    max_phi::T1 = 0.5
+end
+```
+"""
 mutable struct MaxEntropy{T1 <: Real} <: OWAMethods
     max_phi::T1
 end
@@ -30,6 +44,13 @@ function MaxEntropy(; max_phi::Real = 0.5)
     return MaxEntropy{typeof(max_phi)}(max_phi)
 end
 
+"""
+```
+@kwdef mutable struct MinSumSq{T1 <: Real} <: OWAMethods
+    max_phi::T1 = 0.5
+end
+```
+"""
 mutable struct MinSumSq{T1 <: Real} <: OWAMethods
     max_phi::T1
 end
@@ -38,6 +59,13 @@ function MinSumSq(; max_phi::Real = 0.5)
     return MinSumSq{typeof(max_phi)}(max_phi)
 end
 
+"""
+```
+@kwdef mutable struct MinSqDist{T1 <: Real} <: OWAMethods
+    max_phi::T1 = 0.5
+end
+```
+"""
 mutable struct MinSqDist{T1 <: Real} <: OWAMethods
     max_phi::T1
 end

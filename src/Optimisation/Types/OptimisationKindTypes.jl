@@ -1,5 +1,22 @@
+"""
+```
 abstract type AbstractOptimType end
+```
+"""
+abstract type AbstractOptimType end
+
+"""
+```
 abstract type OptimType <: AbstractOptimType end
+```
+"""
+abstract type OptimType <: AbstractOptimType end
+
+"""
+```
+abstract type HCOptimType <: AbstractOptimType end
+```
+"""
 abstract type HCOptimType <: AbstractOptimType end
 
 """
@@ -9,20 +26,60 @@ struct Trad <: OptimType end
 """
 struct Trad <: OptimType end
 
+"""
+```
+struct RP <: OptimType end
+```
+"""
 struct RP <: OptimType end
 
+"""
+```
+abstract type RRPVersion end
+```
+"""
 abstract type RRPVersion end
 
+"""
+```
+struct BasicRRP <: RRPVersion end
+```
+"""
 struct BasicRRP <: RRPVersion end
 
+"""
+```
+struct RegRRP <: RRPVersion end
+```
+"""
 struct RegRRP <: RRPVersion end
 
+"""
+```
 @kwdef mutable struct RegPenRRP{T1 <: Real} <: RRPVersion
     penalty::T1 = 1.0
 end
+```
+"""
+mutable struct RegPenRRP{T1 <: Real} <: RRPVersion
+    penalty::T1
+end
+function RegPenRRP(; penalty::Real = 1.0)
+    return RegPenRRP(penalty)
+end
 
+"""
+```
 @kwdef mutable struct RRP <: OptimType
     version::RRPVersion = BasicRRP()
+end
+```
+"""
+mutable struct RRP <: OptimType
+    version::RRPVersion
+end
+function RRP(; version::RRPVersion = BasicRRP())
+    return RRP(version)
 end
 
 """
@@ -92,12 +149,28 @@ struct HERC <: HCOptimType end
 """
 struct HERC <: HCOptimType end
 
+"""
+```
 @kwdef mutable struct NCO <: HCOptimType
     opt_kwargs::NamedTuple = (;)
     opt_kwargs_o::NamedTuple = opt_kwargs
     port_kwargs::NamedTuple = (;)
     port_kwargs_o::NamedTuple = port_kwargs
     stat_kwargs_o::NamedTuple = (;)
+end
+```
+"""
+mutable struct NCO <: HCOptimType
+    opt_kwargs::NamedTuple
+    opt_kwargs_o::NamedTuple
+    port_kwargs::NamedTuple
+    port_kwargs_o::NamedTuple
+    stat_kwargs_o::NamedTuple
+end
+function NCO(; opt_kwargs::NamedTuple = (;), opt_kwargs_o::NamedTuple = opt_kwargs,
+             port_kwargs::NamedTuple = (;), port_kwargs_o::NamedTuple = port_kwargs,
+             stat_kwargs_o::NamedTuple = (;))
+    return NCO(opt_kwargs, opt_kwargs_o, port_kwargs, port_kwargs_o, stat_kwargs_o)
 end
 
 for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),

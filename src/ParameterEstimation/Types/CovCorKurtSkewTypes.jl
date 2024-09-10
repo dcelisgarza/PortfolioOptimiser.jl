@@ -264,6 +264,18 @@ abstract type CorGerberBasic <: CorGerber end
 abstract type CorSB <: CorGerber end
 abstract type CorGerberSB <: CorGerber end
 
+"""
+```
+mutable struct CorGerber0{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
@@ -281,6 +293,18 @@ function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
     return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
 
+"""
+```
+mutable struct CorGerber1{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
@@ -298,6 +322,18 @@ function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
     return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
 
+"""
+```
+mutable struct CorGerber2{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     normalise::Bool
     threshold::T1
@@ -321,6 +357,22 @@ function Base.setproperty!(obj::CorGerberBasic, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
+mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
     threshold::T1
@@ -353,6 +405,22 @@ function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     posdef)
 end
 
+"""
+```
+mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
     threshold::T1
@@ -385,6 +453,22 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     posdef)
 end
 
+"""
+```
+mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+```
+"""
 mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
     threshold::T1

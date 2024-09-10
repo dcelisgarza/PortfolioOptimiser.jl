@@ -205,6 +205,11 @@ function AKelly(; formulation::SDSquaredFormulation = SOCSD())
     return AKelly(formulation)
 end
 
+"""
+```
+struct EKelly <: RetType end
+```
+"""
 struct EKelly <: RetType end
 
 # ### Tracking
