@@ -33,14 +33,15 @@ Defines an approximate network constraint using semi-definite programming.
 \\bm{w}^{\\intercal} & 1
 \\end{bmatrix} &\\succeq 0\\\\
 \\mathbf{W} &= \\mathbf{W}^{\\intercal}\\\\
-\\mathbf{B}_{1,\\,l} \\odot \\mathbf{W} &= \\bm{0}\\,.
+\\mathbf{A} \\odot \\mathbf{W} &= \\bm{0}\\,.
 \\end{align}
 ```
 
 Where:
 
   - ``\\mathbf{W}`` is an auxiliary variable that approximates the outer product of asset weights ``\\bm{w} \\otimes \\bm{w}``.
-  - ``\\mathbf{B}_{1,\\,l}`` is the connection matrix. It tells us which assets are connected via a walk of length ``\\leq l``. The matrix can only take values of `1` or `0`. If entry ``(i,\\,j)`` is equal to `1`, assets ``i`` and ``j`` are connected such a walk. Thus the first constraint means we will invest in assets that are _not_ connected via a walk of length ``\\leq l``.
+  - ``\\mathbf{A}`` is the ``N\\times N`` adjacency matrix. It tells us which assets are connected. The matrix can only take values of `1` or `0`. If entry ``(i,\\,j)`` is equal to `1`, assets ``i`` and ``j`` are connected.
+  - ``\\odot`` is the Hadamard (element-wise) product.
 
 When the variance risk measure [`SD`](@ref) is being used, whether in the objective function or as one of the risk constraints. Its definition will change when this constraint is active. The new definition is this.
 
@@ -59,9 +60,22 @@ However, this will not work if the variance is _not_ being constrained, or if it
 
 ```math
 \\begin{align}
-
+\\underset{\\bm{w}}{\\mathrm{opt}} \\quad \\phi(\\bm{w}) \\pm \\lambda \\mathrm{Tr}\\left(\\mathbf{X}\\right)\\,.
 \\end{align}
 ```
+
+Where:
+
+  - ``\\mathrm{opt}`` is ``\\mathrm{min}`` when the objective is convex and ``\\mathrm{max}`` when it is concave.
+  - ``\\pm`` is ``+`` when the objective is convex and ``-`` when it is concave.
+  - ``\\lambda`` is a penalty factor.
+
+This approach works better than [`IP`](@ref) when ``\\mathbf{A}`` is close to the all ones matrix, even though it's an approximation.
+
+# Parameters
+
+  - `A`: `N×N` adjacency matrix.
+  - `penalty`: penalty factor when the variance [`SD`](@ref) risk measure isn't being used, either in a constraint or in the objective function.
 """
 mutable struct SDP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods
     A::T1
@@ -111,6 +125,8 @@ Since each row of ``\\left(\\mathbf{A} + \\mathbf{I}\\right)`` corresponds to a 
 
     Thus the constraint means we will invest in _at most_ ``\\bm{k}`` assets per corresponding unique path.
 
+This approach can be appied to any risk measure without work arounds like [`SDP`](@ref). However it is more computationally costly to optimise, and may fail when ``\\mathbf{A}`` is close to the all ones matrix.
+
 # Parameters
 
   - `A`: adjacency matrix, only stores `unique(A + I, dims = 1)`.
@@ -122,7 +138,7 @@ Since each row of ``\\left(\\mathbf{A} + \\mathbf{I}\\right)`` corresponds to a 
           * if `A` is not empty, checks that the length of `k` is equal to the size of `unique(A + I, dims = 1)`.
 
       + if is a scalar: maximum number of assets for all unique paths.
-  - `scale`: scaling variable when optimising the [`Sharpe`](@ref) objective function.
+  - `scale`: scaling variable for an auxiliary binary decision variable when optimising the [`Sharpe`](@ref) objective function.
 """
 mutable struct IP{T1 <: AbstractMatrix{<:Real},
                   T2 <: Union{<:Integer, <:AbstractVector{<:Integer}}, T3 <: Real} <:
