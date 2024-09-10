@@ -21,7 +21,7 @@ The dictionary contains a key value pair for each solver (plus optional solution
   - `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
   - `:params`: (optional) defines solver-specific parameters.
 
-Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary/tuple as in the following snippet.
+Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary as in the following snippet.
 
 ```julia
 using JuMP

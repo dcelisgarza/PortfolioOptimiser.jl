@@ -1161,7 +1161,7 @@ Compute the Quadratic Skewness/Semi Skewness.
 Where:
 
   - ``\\bm{w}`` is the vector of asset weights.
-  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of coskewness or semicoskewness as computed by [`coskew`](@ref).
+  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of coskewness or semicoskewness.
 
 # Inputs
 

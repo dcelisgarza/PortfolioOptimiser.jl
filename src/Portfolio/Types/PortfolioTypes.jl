@@ -9,27 +9,27 @@ abstract type AbstractPortfolio end
 
 """
 ```
-mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
+mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
                          mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
                          ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
                          tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
-                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim,
-                         tfront, tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
+                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
+                         tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
                AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
+    loadings::l
+    regression_type::lo
     short::s
     short_u::us
     long_u::ul
     num_assets_l::nal
     num_assets_u::nau
     num_assets_u_scale::naus
-    f_assets::tfa
-    f_timestamps::tfdat
-    f_returns::tretf
-    loadings::l
-    regression_type::lo
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     rebalance::rb
@@ -71,7 +71,6 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     k_mu::tkmu
     k_sigma::tks
     optimal::topt
-    z::tz
     limits::tlim
     frontier::tfront
     solvers::tsolv
@@ -86,7 +85,7 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
 end
 ```
 
-Structure for defining a traditional portfolio.
+Structure for defining a traditional portfolio. `Na` is the number of assets, and `Nf` is the number of factors. For details on how some of these parameters are computed see [`asset_statistics!`](@ref), [`wc_statistics!`](@ref), [`factor_statistics!`](@ref), [`black_litterman_statistics!`](@ref), [`black_litterman_factor_statistics!`](@ref).
 
 # Parameters
 
@@ -94,6 +93,11 @@ Structure for defining a traditional portfolio.
 
   - `timestamps`: `T×1` vector of asset returns timestamps.
   - `returns`: `T×Na` matrix of asset returns.
+  - `f_assets`: `Nf×1` vector of factor names.
+  - `f_timestamps`: `T×1` vector of factor returns timestamps.
+  - `f_returns`: `T×Nf` matrix of asset returns.
+  - `loadings`: loadings matrix for working with factor models.
+  - `regression_type`: [`RegressionType`](@ref) used for computing the loadings matrix.
   - `short`:
 
       + if `true`: shorting is enabled.
@@ -107,11 +111,6 @@ Structure for defining a traditional portfolio.
 
       + if `> 0`: applies the constraint.
   - `num_assets_u_scale`: scaling factor for the decision variable used for applying the `num_assets_u` constraint.
-  - `f_assets`: `Nf×1` vector of factor names.
-  - `f_timestamps`: `T×1` vector of factor returns timestamps.
-  - `f_returns`: `T×Nf` matrix of asset returns.
-  - `loadings`: loadings matrix for working with factor models.
-  - `regression_type`: [`RegressionType`](@ref) used for computing the loadings matrix.
   - `max_num_assets_kurt`: maximum number of assets to use the complete kurtosis model.
 
       + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
@@ -209,68 +208,103 @@ Structure for defining a traditional portfolio.
       + ``\\bm{C}`` is the ``N \\times 1`` centrality vector of the asset adjacency matrix.
       + ``\\cdot`` is the dot product.
       + ``\\bar{c}`` is the desired average centrality measure of the portfolio.
-  - `mu_l`:
-  - `mu`:
-  - `cov`:
-  - `kurt`:
-  - `skurt`:
-  - `L_2`:
-  - `S_2`:
-  - `skew`:
-  - `V`:
-  - `sskew`:
-  - `SV`:
-  - `f_mu`:
-  - `f_cov`:
-  - `fm_returns`:
-  - `fm_mu`:
-  - `fm_cov`:
-  - `bl_mu`:
-  - `bl_cov`:
-  - `blfm_mu`:
-  - `blfm_cov`:
-  - `cov_l`:
-  - `cov_u`:
-  - `cov_mu`:
-  - `cov_sigma`:
-  - `d_mu`:
-  - `k_mu`:
-  - `k_sigma`:
-  - `optimal`:
-  - `z`:
-  - `limits`:
-  - `frontier`:
-  - `solvers`:
-  - `fail`:
-  - `model`:
-  - `latest_prices`:
-  - `alloc_optimal`:
-  - `alloc_leftover`:
-  - `alloc_solvers`:
-  - `alloc_fail`:
-  - `alloc_model`:
+  - `mu_l`: lower bound for the expected return of the portfolio.
+
+      + if is `Inf`: the constraint is not applied.
+  - `mu`: `Na×1` vector of asset expected returns.
+  - `cov`: `Na×Na` asset covariance matrix.
+  - `kurt`: `Na^2×Na^2` cokurtosis matrix.
+  - `skurt`: `Na^2×Na^2` semi cokurtosis matrix.
+  - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix.
+  - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix.
+  - `skew`: `Na×Na^2` coskew matrix.
+  - `V`: `Na×Na` sum of the symmetric negative spectral slices of coskewness.
+  - `sskew`: `Na×Na^2` semi coskew matrix.
+  - `SV`: `Na×Na` sum of the symmetric negative spectral slices of semi coskewness.
+  - `f_mu`: `Nf×1` vector of factor expected returns.
+  - `f_cov`: `Nf×Nf` factor covariance matrix.
+  - `fm_returns`: `T×Na` factor model adjusted returns matrix.
+  - `fm_mu`: `Na×1` factor model adjusted asset expected returns.
+  - `fm_cov`: `Na×Na` factor model adjusted asset covariance matrix.
+  - `bl_mu`: `Na×1` Black Litterman model adjusted asset expected returns.
+  - `bl_cov`: `Na×Na` Black Litterman model adjusted asset covariance matrix.
+  - `blfm_mu`: `Na×1` Black Litterman factor model adjusted asset expected returns.
+  - `blfm_cov`: `Na×Na` Black Litterman factor model adjusted asset covariance matrix.
+  - `cov_l`: `Na×Na` lower bound for the worst case covariance matrix.
+  - `cov_u`: `Na×Na` upper bound for the worst case covariance matrix.
+  - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector set.
+  - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix set.
+  - `d_mu`: absolute deviation of the worst case upper and lower asset expected returns vectors.
+  - `k_mu`: distance parameter of the uncertainty in the asset expected returns vector for the worst case optimisation.
+  - `k_sigma`: distance parameter of the uncertainty in the asset covariance matrix for the worst case optimisation.
+  - `optimal`: collection capable of storing key value pairs for storing optimal portfolios.
+  - `limits`: collection capable of storing key value pairs for storing the minimal and maximal risk portfolios.
+  - `frontier`: collection capable of storing key value pairs for containing points in the efficient frontier.
+  - `solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers. They must have the following structure.
+
+    ```
+    solvers = Dict(
+                   # Key-value pair for the solver, solution acceptance 
+                   # criteria, and solver attributes.
+                   :Clarabel => Dict(
+                                     # Solver we wish to use.
+                                     :solver => Clarabel.Optimizer,
+                                     # (Optional) Solution acceptance criteria.
+                                     :check_sol => (allow_local = true, allow_almost = true),
+                                     # (Optional) Solver-specific attributes.
+                                     :params => Dict("verbose" => false)))
+    ```
+
+    The dictionary contains a key value pair for each solver (plus optional solution acceptance criteria and optional attributes) we want to use.
+
+      + `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
+      + `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
+      + `:params`: (optional) defines solver-specific parameters.
+
+    Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary as in the following snippet.
+
+    ```
+    using JuMP
+    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                     :check_sol => (allow_local = true, allow_almost = true),
+                                     :params => Dict("verbose" => false)),
+                   # Provide solver with pre-attached attributes and no arguments 
+                   # for the `JuMP.is_solved_and_feasible` function.
+                   :COSMO => Dict(:solver => JuMP.optimizer_with_attributes(COSMO.Optimizer,
+                                                                            "maxiter" => 5000)))
+    ```
+
+    [`optimise!`](@ref) will iterate over the solvers until it finds the first one to successfully solve the problem.
+  - `fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
+  - `model`: [`JuMP.Model()`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the optimisation model.
+  - `latest_prices`: `Na×1` vector of latest asset prices.
+  - `alloc_optimal`: collection capable of storing key value pairs for storing optimal discretely allocated portfolios.
+  - `alloc_leftover`: collection capable of storing key value pairs for containing points in the leftover investment after allocating.
+  - `alloc_solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers that support Mixed-Integer Programming, only used in the [`LP`](@ref) allocation.
+  - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
+  - `alloc_model`: [`JuMP.Model()`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
 """
-mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tretf, l, lo,
+mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
                          mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
                          ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
                          tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
-                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tz, tlim,
-                         tfront, tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
+                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
+                         tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
                AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
+    loadings::l
+    regression_type::lo
     short::s
     short_u::us
     long_u::ul
     num_assets_l::nal
     num_assets_u::nau
     num_assets_u_scale::naus
-    f_assets::tfa
-    f_timestamps::tfdat
-    f_returns::tretf
-    loadings::l
-    regression_type::lo
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     rebalance::rb
@@ -312,7 +346,6 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     k_mu::tkmu
     k_sigma::tks
     optimal::topt
-    z::tz
     limits::tlim
     frontier::tfront
     solvers::tsolv
@@ -325,13 +358,137 @@ mutable struct Portfolio{ast, dat, r, s, us, ul, nal, nau, naus, tfa, tfdat, tre
     alloc_fail::taf
     alloc_model::tamod
 end
+"""
+```
+Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
+            returns::DataFrame = DataFrame(),
+            ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            timestamps::AbstractVector = Vector{Date}(undef, 0),
+            assets::AbstractVector = Vector{String}(undef, 0),
+            f_prices::TimeArray = TimeArray(TimeType[], []),
+            f_returns::DataFrame = DataFrame(),
+            f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+            f_assets::AbstractVector = Vector{String}(undef, 0),
+            loadings::DataFrame = DataFrame(),
+            regression_type::Union{<:RegressionType, Nothing} = nothing,
+            short::Bool = false, short_u::Real = 0.2, long_u::Real = 1.0,
+            num_assets_l::Integer = 0, num_assets_u::Integer = 0,
+            num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
+            max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
+            turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
+            bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            network_method::NetworkMethods = NoNtwk(),
+            a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            b_cent::Real = Inf, mu_l::Real = Inf,
+            mu::AbstractVector = Vector{Float64}(undef, 0),
+            cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            SV::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            f_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            f_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            fm_returns::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            fm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            fm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            bl_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            bl_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            blfm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            blfm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_mu::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            k_mu::Real = Inf, k_sigma::Real = Inf, optimal::AbstractDict = Dict(),
+            limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
+            solvers::AbstractDict = Dict(), fail::AbstractDict = Dict(),
+            model::JuMP.Model = JuMP.Model(),
+            latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            alloc_optimal::AbstractDict = Dict(),
+            alloc_leftover::AbstractDict = Dict(),
+            alloc_solvers::AbstractDict = Dict(), alloc_fail::AbstractDict = Dict(),
+            alloc_model::JuMP.Model = JuMP.Model())
+```
+
+Constructor for [`Portfolio`](@ref). Performs data validation checks and computes the asset and factor returns, as well as get the timestamps and their names, from their price [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) or returns [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame).
+
+# Inputs
+
+  - `prices`: `(T+1)×Na` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of asset prices.
+
+      + If provided: will take precedence over `returns`, `ret`, `timestamps`, `assets` and `latest_prices` because they will be automatically computed from `prices`.
+
+  - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
+
+      + If provided: will take precedence over `ret`, `timestamps` and `assets` because they will be automatically computed from `returns`.
+  - `ret`: `T×Na` matrix of asset returns.
+  - `timestamps`: `T×1` vector of timestamps of asset returns.
+  - `assets`: `T×1` vector of asset names.
+  - `short_u`:
+  - `num_assets_u`:
+  - `f_prices`:
+  - `f_returns`:
+  - `f_ret`:
+  - `f_timestamps`:
+  - `f_assets`:
+  - `loadings`:
+  - `regression_type`:
+  - `max_num_assets_kurt`:
+  - `rebalance`:
+  - `tracking_err`:
+  - `bl_bench_weights`:
+  - `a_mtx_ineq`:
+  - `b_vec_ineq`:
+  - `risk_budget`:
+  - `f_risk_budget`:
+  - `network_method`:
+  - `a_vec_cent`:
+  - `b_cent`:
+  - `mu`:
+  - `cov`:
+  - `kurt`:
+  - `skurt`:
+  - `skew`:
+  - `V`:
+  - `sskew`:
+  - `SV`:
+  - `f_mu`:
+  - `f_cov`:
+  - `fm_returns`:
+  - `fm_mu`:
+  - `fm_cov`:
+  - `bl_mu`:
+  - `bl_cov`:
+  - `blfm_mu`:
+  - `blfm_cov`:
+  - `cov_l`:
+  - `cov_u`:
+  - `cov_mu`:
+  - `cov_sigma`:
+  - `d_mu`:
+  - `k_mu`:
+  - `limits`:
+  - `solvers`:
+  - `model`:
+  - `latest_prices`:
+  - `alloc_optimal`:
+  - `alloc_leftover`:
+  - `alloc_solvers`:
+  - `alloc_model`:
+"""
 function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    returns::DataFrame = DataFrame(),
                    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    timestamps::AbstractVector = Vector{Date}(undef, 0),
-                   assets::AbstractVector = Vector{String}(undef, 0), short::Bool = false,
-                   short_u::Real = 0.2, long_u::Real = 1.0, num_assets_l::Integer = 0,
-                   num_assets_u::Integer = 0, num_assets_u_scale::Real = 100_000.0,
+                   assets::AbstractVector = Vector{String}(undef, 0),
                    f_prices::TimeArray = TimeArray(TimeType[], []),
                    f_returns::DataFrame = DataFrame(),
                    f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -339,9 +496,11 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    f_assets::AbstractVector = Vector{String}(undef, 0),
                    loadings::DataFrame = DataFrame(),
                    regression_type::Union{<:RegressionType, Nothing} = nothing,
-                   max_num_assets_kurt::Integer = 0, max_num_assets_kurt_scale::Integer = 2,
-                   rebalance::AbstractTR = NoTR(), turnover::AbstractTR = NoTR(),
-                   tracking_err::TrackingErr = NoTracking(),
+                   short::Bool = false, short_u::Real = 0.2, long_u::Real = 1.0,
+                   num_assets_l::Integer = 0, num_assets_u::Integer = 0,
+                   num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
+                   max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
+                   turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
                    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -373,9 +532,9 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    k_mu::Real = Inf, k_sigma::Real = Inf, optimal::AbstractDict = Dict(),
-                   z::AbstractDict = Dict(), limits::AbstractDict = Dict(),
-                   frontier::AbstractDict = Dict(), solvers::AbstractDict = Dict(),
-                   fail::AbstractDict = Dict(), model::JuMP.Model = JuMP.Model(),
+                   limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
+                   solvers::AbstractDict = Dict(), fail::AbstractDict = Dict(),
+                   model::JuMP.Model = JuMP.Model(),
                    latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    alloc_optimal::AbstractDict = Dict(),
                    alloc_leftover::AbstractDict = Dict(),
@@ -548,11 +707,11 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
-    return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(short),
-                     typeof(short_u), typeof(long_u), typeof(num_assets_l),
-                     typeof(num_assets_u), typeof(num_assets_u_scale), typeof(f_assets),
+    return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(f_assets),
                      typeof(f_timestamps), typeof(f_returns), typeof(loadings),
-                     Union{<:RegressionType, Nothing}, typeof(max_num_assets_kurt),
+                     Union{<:RegressionType, Nothing}, typeof(short), typeof(short_u),
+                     typeof(long_u), typeof(num_assets_l), typeof(num_assets_u),
+                     typeof(num_assets_u_scale), typeof(max_num_assets_kurt),
                      typeof(max_num_assets_kurt_scale), AbstractTR, AbstractTR, TrackingErr,
                      typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
                      typeof(risk_budget), typeof(f_risk_budget), NetworkMethods,
@@ -563,35 +722,25 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
                      typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
                      typeof(d_mu), typeof(k_mu), typeof(k_sigma), typeof(optimal),
-                     typeof(z), typeof(limits), typeof(frontier), typeof(solvers),
-                     typeof(fail), typeof(model), typeof(latest_prices),
-                     typeof(alloc_optimal), typeof(alloc_leftover), typeof(alloc_solvers),
-                     typeof(alloc_fail), typeof(alloc_model)}(assets, timestamps, returns,
-                                                              short, short_u, long_u,
-                                                              num_assets_l, num_assets_u,
-                                                              num_assets_u_scale, f_assets,
-                                                              f_timestamps, f_returns,
-                                                              loadings, regression_type,
-                                                              max_num_assets_kurt,
-                                                              max_num_assets_kurt_scale,
-                                                              rebalance, turnover,
-                                                              tracking_err,
-                                                              bl_bench_weights, a_mtx_ineq,
-                                                              b_vec_ineq, risk_budget,
-                                                              f_risk_budget, network_method,
-                                                              a_vec_cent, b_cent, mu_l, mu,
-                                                              cov, kurt, skurt, L_2, S_2,
-                                                              skew, V, sskew, SV, f_mu,
-                                                              f_cov, fm_returns, fm_mu,
-                                                              fm_cov, bl_mu, bl_cov,
-                                                              blfm_mu, blfm_cov, cov_l,
-                                                              cov_u, cov_mu, cov_sigma,
-                                                              d_mu, k_mu, k_sigma, optimal,
-                                                              z, limits, frontier, solvers,
-                                                              fail, model, latest_prices,
-                                                              alloc_optimal, alloc_leftover,
-                                                              alloc_solvers, alloc_fail,
-                                                              alloc_model)
+                     typeof(limits), typeof(frontier), typeof(solvers), typeof(fail),
+                     typeof(model), typeof(latest_prices), typeof(alloc_optimal),
+                     typeof(alloc_leftover), typeof(alloc_solvers), typeof(alloc_fail),
+                     typeof(alloc_model)}(assets, timestamps, returns, f_assets,
+                                          f_timestamps, f_returns, loadings,
+                                          regression_type, short, short_u, long_u,
+                                          num_assets_l, num_assets_u, num_assets_u_scale,
+                                          max_num_assets_kurt, max_num_assets_kurt_scale,
+                                          rebalance, turnover, tracking_err,
+                                          bl_bench_weights, a_mtx_ineq, b_vec_ineq,
+                                          risk_budget, f_risk_budget, network_method,
+                                          a_vec_cent, b_cent, mu_l, mu, cov, kurt, skurt,
+                                          L_2, S_2, skew, V, sskew, SV, f_mu, f_cov,
+                                          fm_returns, fm_mu, fm_cov, bl_mu, bl_cov, blfm_mu,
+                                          blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu,
+                                          k_mu, k_sigma, optimal, limits, frontier, solvers,
+                                          fail, model, latest_prices, alloc_optimal,
+                                          alloc_leftover, alloc_solvers, alloc_fail,
+                                          alloc_model)
 end
 function Base.getproperty(obj::Portfolio, sym::Symbol)
     if sym == :budget
@@ -723,11 +872,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
 end
 function Base.deepcopy(obj::Portfolio)
     return Portfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
+                     typeof(obj.f_assets), typeof(obj.f_timestamps), typeof(obj.f_returns),
+                     typeof(obj.loadings), Union{<:RegressionType, Nothing},
                      typeof(obj.short), typeof(obj.short_u), typeof(obj.long_u),
                      typeof(obj.num_assets_l), typeof(obj.num_assets_u),
-                     typeof(obj.num_assets_u_scale), typeof(obj.f_assets),
-                     typeof(obj.f_timestamps), typeof(obj.f_returns), typeof(obj.loadings),
-                     Union{<:RegressionType, Nothing}, typeof(obj.max_num_assets_kurt),
+                     typeof(obj.num_assets_u_scale), typeof(obj.max_num_assets_kurt),
                      typeof(obj.max_num_assets_kurt_scale), AbstractTR, AbstractTR,
                      TrackingErr, typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
                      typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
@@ -740,23 +889,23 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
                      typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
                      typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
-                     typeof(obj.k_sigma), typeof(obj.optimal), typeof(obj.z),
-                     typeof(obj.limits), typeof(obj.frontier), typeof(obj.solvers),
-                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
+                     typeof(obj.k_sigma), typeof(obj.optimal), typeof(obj.limits),
+                     typeof(obj.frontier), typeof(obj.solvers), typeof(obj.fail),
+                     typeof(obj.model), typeof(obj.latest_prices),
                      typeof(obj.alloc_optimal), typeof(obj.alloc_leftover),
                      typeof(obj.alloc_solvers), typeof(obj.alloc_fail),
                      typeof(obj.alloc_model)}(deepcopy(obj.assets),
                                               deepcopy(obj.timestamps),
-                                              deepcopy(obj.returns), deepcopy(obj.short),
-                                              deepcopy(obj.short_u), deepcopy(obj.long_u),
-                                              deepcopy(obj.num_assets_l),
-                                              deepcopy(obj.num_assets_u),
-                                              deepcopy(obj.num_assets_u_scale),
-                                              deepcopy(obj.f_assets),
+                                              deepcopy(obj.returns), deepcopy(obj.f_assets),
                                               deepcopy(obj.f_timestamps),
                                               deepcopy(obj.f_returns),
                                               deepcopy(obj.loadings),
                                               deepcopy(obj.regression_type),
+                                              deepcopy(obj.short), deepcopy(obj.short_u),
+                                              deepcopy(obj.long_u),
+                                              deepcopy(obj.num_assets_l),
+                                              deepcopy(obj.num_assets_u),
+                                              deepcopy(obj.num_assets_u_scale),
                                               deepcopy(obj.max_num_assets_kurt),
                                               deepcopy(obj.max_num_assets_kurt_scale),
                                               deepcopy(obj.rebalance),
@@ -783,10 +932,10 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.cov_u), deepcopy(obj.cov_mu),
                                               deepcopy(obj.cov_sigma), deepcopy(obj.d_mu),
                                               deepcopy(obj.k_mu), deepcopy(obj.k_sigma),
-                                              deepcopy(obj.optimal), deepcopy(obj.z),
-                                              deepcopy(obj.limits), deepcopy(obj.frontier),
-                                              deepcopy(obj.solvers), deepcopy(obj.fail),
-                                              copy(obj.model), deepcopy(obj.latest_prices),
+                                              deepcopy(obj.optimal), deepcopy(obj.limits),
+                                              deepcopy(obj.frontier), deepcopy(obj.solvers),
+                                              deepcopy(obj.fail), copy(obj.model),
+                                              deepcopy(obj.latest_prices),
                                               deepcopy(obj.alloc_optimal),
                                               deepcopy(obj.alloc_leftover),
                                               deepcopy(obj.alloc_solvers),
