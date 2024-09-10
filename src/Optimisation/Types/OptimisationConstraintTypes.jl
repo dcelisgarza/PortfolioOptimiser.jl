@@ -94,27 +94,34 @@ w_{i} &\\geq b_{l} y_{i} \\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
 
 Where:
 
-  - ``\\mathbf{A} + \\mathbf{I}`` is the ``M \\times N`` adjacency matrix with unique rows. We can remove duplicate rows as they are reduntant.
+  - ``\\mathbf{A}`` is the ``N \\times N`` adjacency matrix.
 
   - ``\\mathbf{I}`` is the identity matrix.
+
+Since each row of ``\\left(\\mathbf{A} + \\mathbf{I}\\right)`` corresponds to a path, duplicate rows add no new information whilst increase the problem's size. Therefore, we only store unique rows.
+
   - ``\\bm{y}`` is an ``N \\times 1`` vector of binary ``\\{0,\\,1\\}`` decision variables, which decide whether or not the asset should be included in the portfolio.
+
   - ``\\bm{k}``:
 
-      + if is a vector: ``M\\times 1`` vector defining the maximum number of assets allowed per row of ``\\mathbf{A}``.
-      + if is a scalar: defines the maximum number of assets allowed for every row of ``\\mathbf{A}``.
+      + if is a vector: ``M\\times 1`` vector defining the maximum number of assets allowed per unique path, where ``M`` is the number of unique paths.
+      + if is a scalar: defines the maximum number of assets allowed for all unique paths.
   - ``w_{i}`` is the ``i``-th asset weight.
   - ``b_{u},\\,b_{l}`` are the upper and lower bounds of the sum of the long and sum of the short asset weights, respectively.
 
-    Thus the constraint means we will invest in _at most_ ``\\bm{k}`` assets per corresponding row of ``\\mathbf{A}``, where each row corresponds to a unique path connecting the assets.
+    Thus the constraint means we will invest in _at most_ ``\\bm{k}`` assets per corresponding unique path.
 
 # Parameters
 
-  - `A`: connectivity matrix.
+  - `A`: adjacency matrix, only stores `unique(A + I, dims = 1)`.
 
   - `k`:
 
-      + if is a vector: maximum number of assets per row of `A`.
-      + if is a scalar: maximum number of assets for all rows of `A`.
+      + if is a vector: maximum number of assets per unique path.
+
+          * if `A` is not empty, checks that the length of `k` is equal to the size of `unique(A + I, dims = 1)`.
+
+      + if is a scalar: maximum number of assets for all unique paths.
   - `scale`: scaling variable when optimising the [`Sharpe`](@ref) objective function.
 """
 mutable struct IP{T1 <: AbstractMatrix{<:Real},

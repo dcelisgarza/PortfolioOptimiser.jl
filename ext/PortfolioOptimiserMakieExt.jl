@@ -169,7 +169,7 @@
 #     ratios = (rets .- rf) ./ risks
 #     N = length(ratios)
 
-#     title = "$(get_rm_symb(rm))"
+#     title = "$(get_rm_symbol(rm))"
 #     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
 #         title *= " α = $(round(rm.alpha*100, digits=2))%"
 #     end
@@ -204,7 +204,7 @@
 #                                           kelly::RetType = NoKelly(), t_factor = 252,
 #                                           palette = :Spectral)
 #     if isnothing(key)
-#         key = get_rm_symb(rm)
+#         key = get_rm_symbol(rm)
 #     end
 #     return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
 #                                             rm = rm, kelly = kelly, t_factor = t_factor,
@@ -230,7 +230,7 @@
 #     risks = risks[idx]
 #     weights = weights[:, idx]
 
-#     title = "$(get_rm_symb(rm))"
+#     title = "$(get_rm_symbol(rm))"
 #     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
 #         title *= " α = $(round(rm.alpha*100, digits=2))%"
 #     end
@@ -269,7 +269,7 @@
 #                                                rm = SD(), t_factor = 252,
 #                                                palette = :Spectral)
 #     if isnothing(key)
-#         key = get_rm_symb(rm)
+#         key = get_rm_symbol(rm)
 #     end
 #     return PortfolioOptimiser.plot_frontier_area(port.frontier[key]; t_factor = t_factor,
 #                                                  palette = palette)

@@ -11,7 +11,7 @@ end
 end
 ```
 
-Sharpe ratio objective function.
+Maximum risk-adjusted return (Sharpe) ratio objective function.
 
 # Parameters
 
