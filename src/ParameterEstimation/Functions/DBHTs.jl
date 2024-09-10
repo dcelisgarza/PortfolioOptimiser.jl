@@ -1082,10 +1082,10 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
   - `S`: `N×N` non-negative similarity matrix, examples include:
 
       + ``\\mathbf{S} = \\mathbf{C} + \\lvert \\min \\mathbf{C} \\rvert``.
-      + ``\\mathbf{S} = \\lceil\\max \\left(\\mathbf{D}^{\\circ 2}\\right)\\rceil - \\mathbf{D}^{\\circ 2}``.
-      + ``\\mathbf{S} = \\exp \\circ (-\\mathbf{D})``.
+      + ``\\mathbf{S} = \\lceil\\max \\left(\\mathbf{D}^{\\odot 2}\\right)\\rceil - \\mathbf{D}^{\\odot 2}``.
+      + ``\\mathbf{S} = \\exp \\odot (-\\mathbf{D})``.
 
-    Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\circ`` the Hadamard (elementwise) operator.
+    Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\odot`` the Hadamard (elementwise) operator.
   - `branchorder`: parameter for ordering the final dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
   - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethod`](@ref).
 

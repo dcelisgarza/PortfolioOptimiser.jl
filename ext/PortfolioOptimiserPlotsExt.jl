@@ -176,7 +176,8 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                    marginal::Bool = false,
                                                    allocated::Bool = false,
                                                    kwargs_bar = (;), kwargs_line = (;))
-    solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, port.cov)
+    solver_flag, sigma_flag = PortfolioOptimiser.set_rm_properties(rm, port.solvers,
+                                                                   port.cov)
     fig = PortfolioOptimiser.plot_risk_contribution(port.assets,
                                                     if !allocated
                                                         port.optimal[type].weights
@@ -189,7 +190,7 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                     marginal = marginal,
                                                     kwargs_bar = kwargs_bar,
                                                     kwargs_line = kwargs_line)
-    unset_set_rm_properties(rm, solver_flag, sigma_flag)
+    PortfolioOptimiser.unset_set_rm_properties(rm, solver_flag, sigma_flag)
     return fig
 end
 
@@ -217,7 +218,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
 
     ratios = (rets .- rf) ./ risks
 
-    msg = "$(PortfolioOptimiser.get_rm_symb(rm))"
+    msg = "$(PortfolioOptimiser.get_rm_symbol(rm))"
     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
@@ -291,7 +292,7 @@ function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortf
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
     if isnothing(key)
-        key = PortfolioOptimiser.get_rm_symb(rm)
+        key = PortfolioOptimiser.get_rm_symbol(rm)
     end
     return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
                                             rm = rm, kelly = kelly, t_factor = t_factor,
@@ -319,7 +320,7 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
         weights = weights[1:(end - 1), :]
     end
 
-    msg = "$(PortfolioOptimiser.get_rm_symb(rm))"
+    msg = "$(PortfolioOptimiser.get_rm_symbol(rm))"
     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
@@ -379,7 +380,7 @@ function PortfolioOptimiser.plot_frontier_area(port::PortfolioOptimiser.Abstract
                                                theme = :Spectral, kwargs_a = (;),
                                                kwargs_l = (;), show_sharpe = true)
     if isnothing(key)
-        key = PortfolioOptimiser.get_rm_symb(rm)
+        key = PortfolioOptimiser.get_rm_symbol(rm)
     end
     return PortfolioOptimiser.plot_frontier_area(port.frontier[key]; rm = rm,
                                                  t_factor = t_factor, theme = theme,

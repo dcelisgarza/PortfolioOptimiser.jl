@@ -5,490 +5,6 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Rebalance Trad" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.7))))
-    asset_statistics!(portfolio)
-
-    w1 = optimise!(portfolio; obj = MinRisk())
-    r1 = calc_risk(portfolio)
-    ret1 = dot(portfolio.mu, w1.weights)
-    sr1 = sharpe_ratio(portfolio)
-
-    w2 = optimise!(portfolio; obj = Utility(; l = l))
-    r2 = calc_risk(portfolio)
-    ret2 = dot(portfolio.mu, w2.weights)
-    sr2 = sharpe_ratio(portfolio)
-
-    w3 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    r3 = calc_risk(portfolio)
-    ret3 = dot(portfolio.mu, w3.weights)
-    sr3 = sharpe_ratio(portfolio)
-
-    w4 = optimise!(portfolio; obj = MaxRet())
-    r4 = calc_risk(portfolio)
-    ret4 = dot(portfolio.mu, w4.weights)
-    sr4 = sharpe_ratio(portfolio)
-
-    @test r1 < r3 < r2 < r4
-    @test ret1 < ret3 < ret2 < ret4
-    @test sr1 < sr4 < sr2 < sr3
-
-    sr5 = sharpe_ratio(portfolio; kelly = true)
-    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio), sr4)
-    @test isapprox(1 / size(portfolio.returns, 1) *
-                   sum(log.(1 .+ portfolio.returns * w4.weights)) / calc_risk(portfolio),
-                   sr5)
-
-    portfolio.rebalance = TR(; val = 0, w = w3.weights)
-    w5 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(w1.weights, w5.weights)
-    portfolio.rebalance.w = w1.weights
-    w6 = optimise!(portfolio; obj = Utility(; l = l))
-    w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    w8 = optimise!(portfolio; obj = MaxRet())
-    @test isapprox(w2.weights, w6.weights)
-    @test isapprox(w3.weights, w7.weights)
-    @test isapprox(w4.weights, w8.weights)
-
-    portfolio.rebalance = TR(; val = 1e10, w = w3.weights)
-    w9 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(w9.weights, w3.weights)
-    portfolio.rebalance.w = w1.weights
-    w10 = optimise!(portfolio; obj = Utility(; l = l))
-    w11 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    w12 = optimise!(portfolio; obj = MaxRet())
-    @test isapprox(w10.weights, w1.weights)
-    @test isapprox(w11.weights, w1.weights)
-    @test isapprox(w12.weights, w1.weights)
-
-    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
-    w13 = optimise!(portfolio; obj = MinRisk())
-    @test !isapprox(w13.weights, w1.weights)
-    @test !isapprox(w13.weights, w3.weights)
-    portfolio.rebalance.w = w1.weights
-    w14 = optimise!(portfolio; obj = Utility(; l = l))
-    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    w16 = optimise!(portfolio; obj = MaxRet())
-    @test !isapprox(w14.weights, w1.weights)
-    @test !isapprox(w14.weights, w2.weights)
-    @test !isapprox(w15.weights, w1.weights)
-    @test !isapprox(w15.weights, w3.weights)
-    @test !isapprox(w16.weights, w1.weights)
-    @test !isapprox(w16.weights, w4.weights)
-
-    portfolio.rebalance = TR(;
-                             val = [0.0005174248858061537, 0.0001378289720696607,
-                                    1.182008035855453e-5, 0.0009118233964947257,
-                                    0.0008043804574686568, 0.0005568104999737413,
-                                    0.0001433167617425195, 0.0008152431443894213,
-                                    0.0006805053356229013, 8.922295760840915e-5,
-                                    0.0008525847915972609, 0.0009046977862414844,
-                                    0.0009820771255260512, 0.0005494961009926494,
-                                    3.971977944267568e-5, 0.0006942164994964002,
-                                    0.000742647266054625, 0.0004077250418932119,
-                                    0.00031612114608380824, 0.00028833648463458153],
-                             w = w3.weights)
-    w13 = optimise!(portfolio; obj = MinRisk())
-    @test !isapprox(w13.weights, w3.weights)
-    @test !isapprox(w13.weights, w1.weights)
-    portfolio.rebalance.w = w1.weights
-    w14 = optimise!(portfolio; obj = Utility(; l = l))
-    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    w16 = optimise!(portfolio; obj = MaxRet())
-    @test !isapprox(w14.weights, w1.weights)
-    @test !isapprox(w14.weights, w2.weights)
-    @test !isapprox(w15.weights, w1.weights)
-    @test !isapprox(w15.weights, w3.weights)
-    @test !isapprox(w16.weights, w1.weights)
-    @test !isapprox(w16.weights, w4.weights)
-
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
-end
-
-@testset "Rebalance WC" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.7))))
-    asset_statistics!(portfolio)
-    wc_statistics!(portfolio)
-
-    w1 = optimise!(portfolio; type = WC(), obj = MinRisk())
-    r1 = calc_risk(portfolio; type = :WC)
-    ret1 = dot(portfolio.mu, w1.weights)
-    sr1 = sharpe_ratio(portfolio; type = :WC)
-
-    w2 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
-    r2 = calc_risk(portfolio; type = :WC)
-    ret2 = dot(portfolio.mu, w2.weights)
-    sr2 = sharpe_ratio(portfolio; type = :WC)
-
-    w3 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
-    r3 = calc_risk(portfolio; type = :WC)
-    ret3 = dot(portfolio.mu, w3.weights)
-    sr3 = sharpe_ratio(portfolio; type = :WC)
-
-    w4 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    r4 = calc_risk(portfolio; type = :WC)
-    ret4 = dot(portfolio.mu, w4.weights)
-    sr4 = sharpe_ratio(portfolio; type = :WC)
-
-    @test r1 < r2 < r3 < r4
-    @test ret1 < ret2 < ret3 < ret4
-    @test sr1 < sr4 < sr3 < sr2
-
-    sr5 = sharpe_ratio(portfolio; type = :WC, kelly = true)
-    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio; type = :WC), sr4)
-    @test isapprox(1 / size(portfolio.returns, 1) *
-                   sum(log.(1 .+ portfolio.returns * w4.weights)) /
-                   calc_risk(portfolio; type = :WC), sr5)
-
-    portfolio.rebalance = TR(; val = 0, w = w3.weights)
-    w5 = optimise!(portfolio; type = WC(), obj = MinRisk())
-    @test isapprox(w1.weights, w5.weights)
-    portfolio.rebalance.w = w1.weights
-    w6 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
-    w7 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
-    w8 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    @test isapprox(w2.weights, w6.weights)
-    @test isapprox(w3.weights, w7.weights)
-    @test isapprox(w4.weights, w8.weights)
-
-    portfolio.rebalance = TR(; val = 1e10, w = w3.weights)
-    w9 = optimise!(portfolio; type = WC(), obj = MinRisk())
-    @test isapprox(w9.weights, w3.weights)
-    portfolio.rebalance.w = w1.weights
-    w10 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
-    w11 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
-    w12 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    @test isapprox(w10.weights, w1.weights, rtol = 1.0e-7)
-    @test isapprox(w11.weights, w1.weights, rtol = 5.0e-8)
-    @test isapprox(w12.weights, w1.weights, rtol = 5.0e-6)
-
-    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
-    w13 = optimise!(portfolio; type = WC(), obj = MinRisk())
-    @test !isapprox(w13.weights, w1.weights)
-    @test !isapprox(w13.weights, w3.weights)
-    portfolio.rebalance.w = w1.weights
-    w14 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
-    w15 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
-    w16 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    @test !isapprox(w14.weights, w1.weights)
-    @test !isapprox(w14.weights, w2.weights)
-    @test !isapprox(w15.weights, w1.weights)
-    @test !isapprox(w15.weights, w3.weights)
-    @test !isapprox(w16.weights, w1.weights)
-    @test !isapprox(w16.weights, w4.weights)
-
-    portfolio.rebalance = TR(;
-                             val = [0.0005174248858061537, 0.0001378289720696607,
-                                    1.182008035855453e-5, 0.0009118233964947257,
-                                    0.0008043804574686568, 0.0005568104999737413,
-                                    0.0001433167617425195, 0.0008152431443894213,
-                                    0.0006805053356229013, 8.922295760840915e-5,
-                                    0.0008525847915972609, 0.0009046977862414844,
-                                    0.0009820771255260512, 0.0005494961009926494,
-                                    3.971977944267568e-5, 0.0006942164994964002,
-                                    0.000742647266054625, 0.0004077250418932119,
-                                    0.00031612114608380824, 0.00028833648463458153],
-                             w = w3.weights)
-    w13 = optimise!(portfolio; type = WC(), obj = MinRisk())
-    @test !isapprox(w13.weights, w3.weights)
-    @test !isapprox(w13.weights, w1.weights)
-    portfolio.rebalance.w = w1.weights
-    w14 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
-    w15 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
-    w16 = optimise!(portfolio; type = WC(), obj = MaxRet())
-    @test !isapprox(w14.weights, w1.weights)
-    @test !isapprox(w14.weights, w2.weights)
-    @test !isapprox(w15.weights, w1.weights)
-    @test !isapprox(w15.weights, w3.weights)
-    @test !isapprox(w16.weights, w1.weights)
-    @test !isapprox(w16.weights, w4.weights)
-
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
-end
-
-@testset "Turnover" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    w1 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    to1 = 0.05
-    tow1 = copy(w1.weights)
-    portfolio.turnover = TR(; val = to1, w = tow1)
-    w2 = optimise!(portfolio; obj = MinRisk())
-    @test all(abs.(w2.weights - tow1) .<= to1)
-
-    portfolio.turnover = NoTR()
-    w3 = optimise!(portfolio; obj = MinRisk())
-    to2 = 0.031
-    tow2 = copy(w3.weights)
-    portfolio.turnover = TR(; val = to2, w = tow2)
-    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test all(abs.(w4.weights - tow2) .<= to2)
-
-    portfolio.turnover = NoTR()
-    w5 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    to3 = range(; start = 0.001, stop = 0.003, length = 20)
-    tow3 = copy(w5.weights)
-    portfolio.turnover = TR(; val = to3, w = tow3)
-    w6 = optimise!(portfolio; obj = MinRisk())
-    @test all(abs.(w6.weights - tow3) .<= to3)
-
-    portfolio.turnover = NoTR()
-    w7 = optimise!(portfolio; obj = MinRisk())
-    to4 = 0.031
-    tow4 = copy(w7.weights)
-    portfolio.turnover = TR(; val = to4, w = tow4)
-    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test all(abs.(w8.weights - tow4) .<= to2)
-
-    @test_throws AssertionError portfolio.turnover = TR(; val = 1:19)
-    @test_throws AssertionError portfolio.turnover = TR(; val = 1:21)
-    @test_throws AssertionError portfolio.turnover = TR(; w = 1:19)
-    @test_throws AssertionError portfolio.turnover = TR(; w = 1:21)
-end
-
-@testset "Tracking" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-    T = size(portfolio.returns, 1)
-
-    w1 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    te1 = 0.0005
-    tw1 = copy(w1.weights)
-    portfolio.tracking_err = TrackWeight(; err = te1, w = tw1)
-    w2 = optimise!(portfolio; obj = MinRisk())
-    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
-
-    w3 = optimise!(portfolio; obj = MinRisk())
-    te2 = 0.0003
-    tw2 = copy(w3.weights)
-    portfolio.tracking_err = TrackWeight(; err = te2, w = tw2)
-    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
-    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; err = te2, w = 1:19)
-    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; err = te2, w = 1:21)
-
-    portfolio.tracking_err = NoTracking()
-    w5 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    te3 = 0.007
-    tw3 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err = TrackRet(; err = te3, w = tw3)
-    w6 = optimise!(portfolio; obj = MinRisk())
-    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
-
-    portfolio.tracking_err = NoTracking()
-    w7 = optimise!(portfolio; obj = MinRisk())
-    te4 = 0.0024
-    tw4 = vec(mean(portfolio.returns; dims = 2))
-    portfolio.tracking_err = TrackRet(; err = te4, w = tw4)
-    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
-
-    @test_throws AssertionError portfolio.tracking_err = TrackRet(; err = te2,
-                                                                  w = 1:(T - 1))
-    @test_throws AssertionError portfolio.tracking_err = TrackRet(; err = te2,
-                                                                  w = 1:(T + 1))
-
-    portfolio.tracking_err = TrackRet(; err = te2, w = 1:T)
-end
-
-@testset "Min and max number of effective assets" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    w1 = optimise!(portfolio; obj = MinRisk())
-    portfolio.num_assets_l = 12
-    w2 = optimise!(portfolio; obj = MinRisk())
-    @test count(w2.weights .>= 2e-2) >= 12
-    @test count(w2.weights .>= 2e-2) > count(w1.weights .>= 2e-2)
-    @test !isapprox(w1.weights, w2.weights)
-
-    portfolio.num_assets_l = 0
-    w3 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    portfolio.num_assets_l = 8
-    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test count(w4.weights .>= 2e-2) >= 8
-    @test count(w4.weights .>= 2e-2) > count(w3.weights .>= 2e-2)
-    @test !isapprox(w3.weights, w4.weights)
-
-    portfolio.num_assets_l = 0
-    portfolio.short = true
-    portfolio.short_u = 0.2
-    portfolio.long_u = 0.8
-
-    w5 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w5.weights), portfolio.budget)
-    @test sum(w5.weights[w5.weights .< 0]) <= portfolio.short_u
-    @test sum(w5.weights[w5.weights .>= 0]) <= portfolio.long_u
-    portfolio.num_assets_l = 17
-    w6 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w6.weights), portfolio.budget)
-    @test sum(w6.weights[w6.weights .< 0]) <= portfolio.short_u
-    @test sum(w6.weights[w6.weights .>= 0]) <= portfolio.long_u
-    @test count(abs.(w6.weights) .>= 4e-3) >= 17
-    @test count(abs.(w6.weights) .>= 4e-3) > count(abs.(w5.weights) .>= 4e-3)
-    @test !isapprox(w5.weights, w6.weights)
-
-    portfolio.num_assets_l = 0
-    w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w7.weights), portfolio.budget)
-    portfolio.num_assets_l = 13
-    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w8.weights), portfolio.budget)
-    @test count(abs.(w8.weights) .>= 4e-3) >= 13
-    @test count(abs.(w8.weights) .>= 4e-3) > count(abs.(w7.weights) .>= 4e-3)
-    @test !isapprox(w7.weights, w8.weights)
-
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
-    asset_statistics!(portfolio)
-
-    w9 = optimise!(portfolio; obj = MinRisk())
-    portfolio.num_assets_u = 5
-    w10 = optimise!(portfolio; obj = MinRisk())
-    @test count(w10.weights .>= 2e-2) <= 5
-    @test count(w10.weights .>= 2e-2) < count(w9.weights .>= 2e-2)
-    @test !isapprox(w9.weights, w10.weights)
-
-    portfolio.num_assets_u = 0
-    w11 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    portfolio.num_assets_u = 3
-    w12 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test count(w12.weights .>= 2e-2) <= 3
-    @test count(w12.weights .>= 2e-2) < count(w11.weights .>= 2e-2)
-    @test !isapprox(w11.weights, w12.weights)
-
-    portfolio.num_assets_u = 0
-    portfolio.short = true
-    portfolio.short_u = 0.2
-    portfolio.long_u = 0.8
-
-    w13 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w13.weights), portfolio.budget)
-    @test sum(w13.weights[w13.weights .< 0]) <= portfolio.short_u
-    @test sum(w13.weights[w13.weights .>= 0]) <= portfolio.long_u
-    portfolio.num_assets_u = 7
-    w14 = optimise!(portfolio; obj = MinRisk())
-    @test isapprox(sum(w14.weights), portfolio.budget)
-    @test sum(w14.weights[w14.weights .< 0]) <= portfolio.short_u
-    @test sum(w14.weights[w14.weights .>= 0]) <= portfolio.long_u
-    @test count(abs.(w14.weights) .>= 2e-2) <= 7
-    @test count(abs.(w14.weights) .>= 2e-2) < count(abs.(w13.weights) .>= 2e-2)
-    @test !isapprox(w13.weights, w14.weights)
-
-    portfolio.num_assets_u = 0
-    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w15.weights), portfolio.budget)
-    @test sum(w15.weights[w15.weights .< 0]) <= portfolio.short_u
-    @test sum(w15.weights[w15.weights .>= 0]) <= portfolio.long_u
-    portfolio.num_assets_u = 4
-    w16 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test isapprox(sum(w16.weights), portfolio.budget)
-    @test sum(w16.weights[w16.weights .< 0]) <= portfolio.short_u
-    @test abs(sum(w16.weights[w16.weights .>= 0]) - portfolio.long_u) <= 20 * eps()
-    @test count(abs.(w16.weights) .>= 2e-2) >= 4
-    @test count(abs.(w16.weights) .>= 2e-2) < count(abs.(w15.weights) .>= 2e-2)
-    @test !isapprox(w15.weights, w16.weights)
-
-    @test_throws AssertionError portfolio.num_assets_l = -1
-    @test_throws AssertionError portfolio.num_assets_u = -1
-end
-
-@testset "Linear" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    asset_sets = DataFrame("Asset" => portfolio.assets,
-                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
-                                       3, 1],
-                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
-                                        4, 2, 1],
-                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
-                                       2, 1],
-                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
-                                        2, 2, 1],
-                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
-                                        3, 4, 1],
-                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
-                                        4, 2, 2])
-    constraints = DataFrame(:Enabled => [true, true, true, true, true],
-                            :Type => ["Each Asset in Subset", "Each Asset in Subset",
-                                      "Asset", "Subset", "Asset"],
-                            :Set => ["G2DBHT", "G2DBHT", "", "G2ward", ""],
-                            :Position => [2, 3, "AAPL", 2, "MA"],
-                            :Sign => [">=", "<=", ">=", "<=", ">="],
-                            :Weight => [0.03, 0.2, 0.032, "", ""],
-                            :Relative_Type => ["", "", "", "Asset", "Subset"],
-                            :Relative_Set => ["", "", "", "", "G2ward"],
-                            :Relative_Position => ["", "", "", "MA", 3],
-                            :Factor => ["", "", "", 2.2, 5])
-
-    A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_mtx_ineq = A
-    portfolio.b_vec_ineq = B
-
-    w1 = optimise!(portfolio; obj = MinRisk())
-    @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
-    @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
-    @test all(w1.weights[w1.tickers .== "AAPL"] .>= 0.032)
-    @test sum(w1.weights[asset_sets.G2ward .== 2]) <=
-          w1.weights[w1.tickers .== "MA"][1] * 2.2
-    @test w1.weights[w1.tickers .== "MA"][1] >= sum(w1.weights[asset_sets.G2ward .== 3]) * 5
-
-    w2 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
-    @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
-    @test all(w2.weights[w2.tickers .== "AAPL"] .>= 0.032)
-    @test sum(w2.weights[asset_sets.G2ward .== 2]) <=
-          w2.weights[w2.tickers .== "MA"][1] * 2.2
-    @test w2.weights[w2.tickers .== "MA"][1] >= sum(w2.weights[asset_sets.G2ward .== 3]) * 5
-
-    @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 19)
-    @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 21)
-end
-
 @testset "Network and Dendrogram SD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
@@ -1642,4 +1158,488 @@ end
           0.2566729326870001, 1.7852927573841912e-10, 7.917164427601336e-11,
           0.07840891046398553, 1.7076400157132798e-10]
     @test isapprox(w20.weights, wt, rtol = 5.0e-8)
+end
+
+@testset "Rebalance Trad" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.7))))
+    asset_statistics!(portfolio)
+
+    w1 = optimise!(portfolio; obj = MinRisk())
+    r1 = calc_risk(portfolio)
+    ret1 = dot(portfolio.mu, w1.weights)
+    sr1 = sharpe_ratio(portfolio)
+
+    w2 = optimise!(portfolio; obj = Utility(; l = l))
+    r2 = calc_risk(portfolio)
+    ret2 = dot(portfolio.mu, w2.weights)
+    sr2 = sharpe_ratio(portfolio)
+
+    w3 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    r3 = calc_risk(portfolio)
+    ret3 = dot(portfolio.mu, w3.weights)
+    sr3 = sharpe_ratio(portfolio)
+
+    w4 = optimise!(portfolio; obj = MaxRet())
+    r4 = calc_risk(portfolio)
+    ret4 = dot(portfolio.mu, w4.weights)
+    sr4 = sharpe_ratio(portfolio)
+
+    @test r1 < r3 < r2 < r4
+    @test ret1 < ret3 < ret2 < ret4
+    @test sr1 < sr4 < sr2 < sr3
+
+    sr5 = sharpe_ratio(portfolio; kelly = true)
+    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio), sr4)
+    @test isapprox(1 / size(portfolio.returns, 1) *
+                   sum(log.(1 .+ portfolio.returns * w4.weights)) / calc_risk(portfolio),
+                   sr5)
+
+    portfolio.rebalance = TR(; val = 0, w = w3.weights)
+    w5 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(w1.weights, w5.weights)
+    portfolio.rebalance.w = w1.weights
+    w6 = optimise!(portfolio; obj = Utility(; l = l))
+    w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    w8 = optimise!(portfolio; obj = MaxRet())
+    @test isapprox(w2.weights, w6.weights)
+    @test isapprox(w3.weights, w7.weights)
+    @test isapprox(w4.weights, w8.weights)
+
+    portfolio.rebalance = TR(; val = 1e10, w = w3.weights)
+    w9 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(w9.weights, w3.weights)
+    portfolio.rebalance.w = w1.weights
+    w10 = optimise!(portfolio; obj = Utility(; l = l))
+    w11 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    w12 = optimise!(portfolio; obj = MaxRet())
+    @test isapprox(w10.weights, w1.weights)
+    @test isapprox(w11.weights, w1.weights)
+    @test isapprox(w12.weights, w1.weights)
+
+    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
+    w13 = optimise!(portfolio; obj = MinRisk())
+    @test !isapprox(w13.weights, w1.weights)
+    @test !isapprox(w13.weights, w3.weights)
+    portfolio.rebalance.w = w1.weights
+    w14 = optimise!(portfolio; obj = Utility(; l = l))
+    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    w16 = optimise!(portfolio; obj = MaxRet())
+    @test !isapprox(w14.weights, w1.weights)
+    @test !isapprox(w14.weights, w2.weights)
+    @test !isapprox(w15.weights, w1.weights)
+    @test !isapprox(w15.weights, w3.weights)
+    @test !isapprox(w16.weights, w1.weights)
+    @test !isapprox(w16.weights, w4.weights)
+
+    portfolio.rebalance = TR(;
+                             val = [0.0005174248858061537, 0.0001378289720696607,
+                                    1.182008035855453e-5, 0.0009118233964947257,
+                                    0.0008043804574686568, 0.0005568104999737413,
+                                    0.0001433167617425195, 0.0008152431443894213,
+                                    0.0006805053356229013, 8.922295760840915e-5,
+                                    0.0008525847915972609, 0.0009046977862414844,
+                                    0.0009820771255260512, 0.0005494961009926494,
+                                    3.971977944267568e-5, 0.0006942164994964002,
+                                    0.000742647266054625, 0.0004077250418932119,
+                                    0.00031612114608380824, 0.00028833648463458153],
+                             w = w3.weights)
+    w13 = optimise!(portfolio; obj = MinRisk())
+    @test !isapprox(w13.weights, w3.weights)
+    @test !isapprox(w13.weights, w1.weights)
+    portfolio.rebalance.w = w1.weights
+    w14 = optimise!(portfolio; obj = Utility(; l = l))
+    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    w16 = optimise!(portfolio; obj = MaxRet())
+    @test !isapprox(w14.weights, w1.weights)
+    @test !isapprox(w14.weights, w2.weights)
+    @test !isapprox(w15.weights, w1.weights)
+    @test !isapprox(w15.weights, w3.weights)
+    @test !isapprox(w16.weights, w1.weights)
+    @test !isapprox(w16.weights, w4.weights)
+
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
+end
+
+@testset "Rebalance WC" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.7))))
+    asset_statistics!(portfolio)
+    wc_statistics!(portfolio)
+
+    w1 = optimise!(portfolio; type = WC(), obj = MinRisk())
+    r1 = calc_risk(portfolio; type = :WC)
+    ret1 = dot(portfolio.mu, w1.weights)
+    sr1 = sharpe_ratio(portfolio; type = :WC)
+
+    w2 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
+    r2 = calc_risk(portfolio; type = :WC)
+    ret2 = dot(portfolio.mu, w2.weights)
+    sr2 = sharpe_ratio(portfolio; type = :WC)
+
+    w3 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
+    r3 = calc_risk(portfolio; type = :WC)
+    ret3 = dot(portfolio.mu, w3.weights)
+    sr3 = sharpe_ratio(portfolio; type = :WC)
+
+    w4 = optimise!(portfolio; type = WC(), obj = MaxRet())
+    r4 = calc_risk(portfolio; type = :WC)
+    ret4 = dot(portfolio.mu, w4.weights)
+    sr4 = sharpe_ratio(portfolio; type = :WC)
+
+    @test r1 < r2 < r3 < r4
+    @test ret1 < ret2 < ret3 < ret4
+    @test sr1 < sr4 < sr3 < sr2
+
+    sr5 = sharpe_ratio(portfolio; type = :WC, kelly = true)
+    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio; type = :WC), sr4)
+    @test isapprox(1 / size(portfolio.returns, 1) *
+                   sum(log.(1 .+ portfolio.returns * w4.weights)) /
+                   calc_risk(portfolio; type = :WC), sr5)
+
+    portfolio.rebalance = TR(; val = 0, w = w3.weights)
+    w5 = optimise!(portfolio; type = WC(), obj = MinRisk())
+    @test isapprox(w1.weights, w5.weights)
+    portfolio.rebalance.w = w1.weights
+    w6 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
+    w7 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
+    w8 = optimise!(portfolio; type = WC(), obj = MaxRet())
+    @test isapprox(w2.weights, w6.weights)
+    @test isapprox(w3.weights, w7.weights)
+    @test isapprox(w4.weights, w8.weights)
+
+    portfolio.rebalance = TR(; val = 1e10, w = w3.weights)
+    w9 = optimise!(portfolio; type = WC(), obj = MinRisk())
+    @test isapprox(w9.weights, w3.weights)
+    portfolio.rebalance.w = w1.weights
+    w10 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
+    w11 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
+    w12 = optimise!(portfolio; type = WC(), obj = MaxRet())
+    @test isapprox(w10.weights, w1.weights, rtol = 1.0e-7)
+    @test isapprox(w11.weights, w1.weights, rtol = 5.0e-8)
+    @test isapprox(w12.weights, w1.weights, rtol = 5.0e-6)
+
+    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
+    w13 = optimise!(portfolio; type = WC(), obj = MinRisk())
+    @test !isapprox(w13.weights, w1.weights)
+    @test !isapprox(w13.weights, w3.weights)
+    portfolio.rebalance.w = w1.weights
+    w14 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
+    w15 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
+    w16 = optimise!(portfolio; type = WC(), obj = MaxRet())
+    @test !isapprox(w14.weights, w1.weights)
+    @test !isapprox(w14.weights, w2.weights)
+    @test !isapprox(w15.weights, w1.weights)
+    @test !isapprox(w15.weights, w3.weights)
+    @test !isapprox(w16.weights, w1.weights)
+    @test !isapprox(w16.weights, w4.weights)
+
+    portfolio.rebalance = TR(;
+                             val = [0.0005174248858061537, 0.0001378289720696607,
+                                    1.182008035855453e-5, 0.0009118233964947257,
+                                    0.0008043804574686568, 0.0005568104999737413,
+                                    0.0001433167617425195, 0.0008152431443894213,
+                                    0.0006805053356229013, 8.922295760840915e-5,
+                                    0.0008525847915972609, 0.0009046977862414844,
+                                    0.0009820771255260512, 0.0005494961009926494,
+                                    3.971977944267568e-5, 0.0006942164994964002,
+                                    0.000742647266054625, 0.0004077250418932119,
+                                    0.00031612114608380824, 0.00028833648463458153],
+                             w = w3.weights)
+    w13 = optimise!(portfolio; type = WC(), obj = MinRisk())
+    @test !isapprox(w13.weights, w3.weights)
+    @test !isapprox(w13.weights, w1.weights)
+    portfolio.rebalance.w = w1.weights
+    w14 = optimise!(portfolio; type = WC(), obj = Utility(; l = l))
+    w15 = optimise!(portfolio; type = WC(), obj = Sharpe(; rf = rf))
+    w16 = optimise!(portfolio; type = WC(), obj = MaxRet())
+    @test !isapprox(w14.weights, w1.weights)
+    @test !isapprox(w14.weights, w2.weights)
+    @test !isapprox(w15.weights, w1.weights)
+    @test !isapprox(w15.weights, w3.weights)
+    @test !isapprox(w16.weights, w1.weights)
+    @test !isapprox(w16.weights, w4.weights)
+
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
+    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
+end
+
+@testset "Turnover" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    w1 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    to1 = 0.05
+    tow1 = copy(w1.weights)
+    portfolio.turnover = TR(; val = to1, w = tow1)
+    w2 = optimise!(portfolio; obj = MinRisk())
+    @test all(abs.(w2.weights - tow1) .<= to1)
+
+    portfolio.turnover = NoTR()
+    w3 = optimise!(portfolio; obj = MinRisk())
+    to2 = 0.031
+    tow2 = copy(w3.weights)
+    portfolio.turnover = TR(; val = to2, w = tow2)
+    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test all(abs.(w4.weights - tow2) .<= to2)
+
+    portfolio.turnover = NoTR()
+    w5 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    to3 = range(; start = 0.001, stop = 0.003, length = 20)
+    tow3 = copy(w5.weights)
+    portfolio.turnover = TR(; val = to3, w = tow3)
+    w6 = optimise!(portfolio; obj = MinRisk())
+    @test all(abs.(w6.weights - tow3) .<= to3)
+
+    portfolio.turnover = NoTR()
+    w7 = optimise!(portfolio; obj = MinRisk())
+    to4 = 0.031
+    tow4 = copy(w7.weights)
+    portfolio.turnover = TR(; val = to4, w = tow4)
+    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test all(abs.(w8.weights - tow4) .<= to2)
+
+    @test_throws AssertionError portfolio.turnover = TR(; val = 1:19)
+    @test_throws AssertionError portfolio.turnover = TR(; val = 1:21)
+    @test_throws AssertionError portfolio.turnover = TR(; w = 1:19)
+    @test_throws AssertionError portfolio.turnover = TR(; w = 1:21)
+end
+
+@testset "Tracking" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    T = size(portfolio.returns, 1)
+
+    w1 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    te1 = 0.0005
+    tw1 = copy(w1.weights)
+    portfolio.tracking_err = TrackWeight(; err = te1, w = tw1)
+    w2 = optimise!(portfolio; obj = MinRisk())
+    @test norm(portfolio.returns * (w2.weights - tw1), 2) / sqrt(T - 1) <= te1
+
+    w3 = optimise!(portfolio; obj = MinRisk())
+    te2 = 0.0003
+    tw2 = copy(w3.weights)
+    portfolio.tracking_err = TrackWeight(; err = te2, w = tw2)
+    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test norm(portfolio.returns * (w4.weights - tw2), 2) / sqrt(T - 1) <= te2
+    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; err = te2, w = 1:19)
+    @test_throws AssertionError portfolio.tracking_err = TrackWeight(; err = te2, w = 1:21)
+
+    portfolio.tracking_err = NoTracking()
+    w5 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    te3 = 0.007
+    tw3 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = TrackRet(; err = te3, w = tw3)
+    w6 = optimise!(portfolio; obj = MinRisk())
+    @test norm(portfolio.returns * w6.weights - tw3, 2) / sqrt(T - 1) <= te3
+
+    portfolio.tracking_err = NoTracking()
+    w7 = optimise!(portfolio; obj = MinRisk())
+    te4 = 0.0024
+    tw4 = vec(mean(portfolio.returns; dims = 2))
+    portfolio.tracking_err = TrackRet(; err = te4, w = tw4)
+    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test norm(portfolio.returns * w8.weights - tw4, 2) / sqrt(T - 1) <= te4
+
+    @test_throws AssertionError portfolio.tracking_err = TrackRet(; err = te2,
+                                                                  w = 1:(T - 1))
+    @test_throws AssertionError portfolio.tracking_err = TrackRet(; err = te2,
+                                                                  w = 1:(T + 1))
+
+    portfolio.tracking_err = TrackRet(; err = te2, w = 1:T)
+end
+
+@testset "Min and max number of effective assets" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    w1 = optimise!(portfolio; obj = MinRisk())
+    portfolio.num_assets_l = 12
+    w2 = optimise!(portfolio; obj = MinRisk())
+    @test count(w2.weights .>= 2e-2) >= 12
+    @test count(w2.weights .>= 2e-2) > count(w1.weights .>= 2e-2)
+    @test !isapprox(w1.weights, w2.weights)
+
+    portfolio.num_assets_l = 0
+    w3 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    portfolio.num_assets_l = 8
+    w4 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test count(w4.weights .>= 2e-2) >= 8
+    @test count(w4.weights .>= 2e-2) > count(w3.weights .>= 2e-2)
+    @test !isapprox(w3.weights, w4.weights)
+
+    portfolio.num_assets_l = 0
+    portfolio.short = true
+    portfolio.short_u = 0.2
+    portfolio.long_u = 0.8
+
+    w5 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w5.weights), portfolio.budget)
+    @test sum(w5.weights[w5.weights .< 0]) <= portfolio.short_u
+    @test sum(w5.weights[w5.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_l = 17
+    w6 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w6.weights), portfolio.budget)
+    @test sum(w6.weights[w6.weights .< 0]) <= portfolio.short_u
+    @test sum(w6.weights[w6.weights .>= 0]) <= portfolio.long_u
+    @test count(abs.(w6.weights) .>= 4e-3) >= 17
+    @test count(abs.(w6.weights) .>= 4e-3) > count(abs.(w5.weights) .>= 4e-3)
+    @test !isapprox(w5.weights, w6.weights)
+
+    portfolio.num_assets_l = 0
+    w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test isapprox(sum(w7.weights), portfolio.budget)
+    portfolio.num_assets_l = 13
+    w8 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test isapprox(sum(w8.weights), portfolio.budget)
+    @test count(abs.(w8.weights) .>= 4e-3) >= 13
+    @test count(abs.(w8.weights) .>= 4e-3) > count(abs.(w7.weights) .>= 4e-3)
+    @test !isapprox(w7.weights, w8.weights)
+
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                             "verbose" => false,
+                                                                                             "oa_solver" => optimizer_with_attributes(GLPK.Optimizer,
+                                                                                                                                      MOI.Silent() => true),
+                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                         "verbose" => false,
+                                                                                                                                         "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
+
+    w9 = optimise!(portfolio; obj = MinRisk())
+    portfolio.num_assets_u = 5
+    w10 = optimise!(portfolio; obj = MinRisk())
+    @test count(w10.weights .>= 2e-2) <= 5
+    @test count(w10.weights .>= 2e-2) < count(w9.weights .>= 2e-2)
+    @test !isapprox(w9.weights, w10.weights)
+
+    portfolio.num_assets_u = 0
+    w11 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    portfolio.num_assets_u = 3
+    w12 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test count(w12.weights .>= 2e-2) <= 3
+    @test count(w12.weights .>= 2e-2) < count(w11.weights .>= 2e-2)
+    @test !isapprox(w11.weights, w12.weights)
+
+    portfolio.num_assets_u = 0
+    portfolio.short = true
+    portfolio.short_u = 0.2
+    portfolio.long_u = 0.8
+
+    w13 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w13.weights), portfolio.budget)
+    @test sum(w13.weights[w13.weights .< 0]) <= portfolio.short_u
+    @test sum(w13.weights[w13.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_u = 7
+    w14 = optimise!(portfolio; obj = MinRisk())
+    @test isapprox(sum(w14.weights), portfolio.budget)
+    @test sum(w14.weights[w14.weights .< 0]) <= portfolio.short_u
+    @test sum(w14.weights[w14.weights .>= 0]) <= portfolio.long_u
+    @test count(abs.(w14.weights) .>= 2e-2) <= 7
+    @test count(abs.(w14.weights) .>= 2e-2) < count(abs.(w13.weights) .>= 2e-2)
+    @test !isapprox(w13.weights, w14.weights)
+
+    portfolio.num_assets_u = 0
+    w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test isapprox(sum(w15.weights), portfolio.budget)
+    @test sum(w15.weights[w15.weights .< 0]) <= portfolio.short_u
+    @test sum(w15.weights[w15.weights .>= 0]) <= portfolio.long_u
+    portfolio.num_assets_u = 4
+    w16 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test isapprox(sum(w16.weights), portfolio.budget)
+    @test sum(w16.weights[w16.weights .< 0]) <= portfolio.short_u
+    @test abs(sum(w16.weights[w16.weights .>= 0]) - portfolio.long_u) <= 20 * eps()
+    @test count(abs.(w16.weights) .>= 2e-2) >= 4
+    @test count(abs.(w16.weights) .>= 2e-2) < count(abs.(w15.weights) .>= 2e-2)
+    @test !isapprox(w15.weights, w16.weights)
+
+    @test_throws AssertionError portfolio.num_assets_l = -1
+    @test_throws AssertionError portfolio.num_assets_u = -1
+end
+
+@testset "Linear" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2])
+    constraints = DataFrame(:Enabled => [true, true, true, true, true],
+                            :Type => ["Each Asset in Subset", "Each Asset in Subset",
+                                      "Asset", "Subset", "Asset"],
+                            :Set => ["G2DBHT", "G2DBHT", "", "G2ward", ""],
+                            :Position => [2, 3, "AAPL", 2, "MA"],
+                            :Sign => [">=", "<=", ">=", "<=", ">="],
+                            :Weight => [0.03, 0.2, 0.032, "", ""],
+                            :Relative_Type => ["", "", "", "Asset", "Subset"],
+                            :Relative_Set => ["", "", "", "", "G2ward"],
+                            :Relative_Position => ["", "", "", "MA", 3],
+                            :Factor => ["", "", "", 2.2, 5])
+
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_mtx_ineq = A
+    portfolio.b_vec_ineq = B
+
+    w1 = optimise!(portfolio; obj = MinRisk())
+    @test all(w1.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w1.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w1.weights[w1.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w1.weights[asset_sets.G2ward .== 2]) <=
+          w1.weights[w1.tickers .== "MA"][1] * 2.2
+    @test w1.weights[w1.tickers .== "MA"][1] >= sum(w1.weights[asset_sets.G2ward .== 3]) * 5
+
+    w2 = optimise!(portfolio; obj = Sharpe(; rf = rf))
+    @test all(w2.weights[asset_sets.G2DBHT .== 2] .>= 0.03)
+    @test all(w2.weights[asset_sets.G2DBHT .== 3] .<= 0.2)
+    @test all(w2.weights[w2.tickers .== "AAPL"] .>= 0.032)
+    @test sum(w2.weights[asset_sets.G2ward .== 2]) <=
+          w2.weights[w2.tickers .== "MA"][1] * 2.2
+    @test w2.weights[w2.tickers .== "MA"][1] >= sum(w2.weights[asset_sets.G2ward .== 3]) * 5
+
+    @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 19)
+    @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 21)
 end

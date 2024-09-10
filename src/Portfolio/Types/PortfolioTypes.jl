@@ -186,7 +186,7 @@ Structure for defining a traditional portfolio.
       + ``N`` is the number of assets.
   - `risk_budget`: `Na×1` vector of asset risk budgets.
   - `f_risk_budget`: `Nf×1` vector of factor risk budgets.
-  - `network_method`: [`NetworkMethods`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref).
+  - `network_method`: [`NetworkMethods`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref). See their docs for the constraint definition for each case.
 
       + if [`NoNtwk`](@ref): the constraint is not set.
   - `a_vec_cent`: centrality vector for defining the centrality constraint.
@@ -638,7 +638,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :network_method
         if !isa(val, NoNtwk) && !isempty(val.A)
-            @smart_assert(size(val.A) == (size(obj.returns, 2), size(obj.returns, 2)))
+            @smart_assert(size(val.A, 2) == size(obj.returns, 2))
         end
     elseif sym == :a_vec_cent
         if !isempty(val)

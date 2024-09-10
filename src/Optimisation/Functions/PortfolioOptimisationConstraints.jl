@@ -102,7 +102,7 @@ function network_constraints(network::IP, port, ::Sharpe, ::Any)
     model = port.model
 
     @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, unique(network.A + I; dims = 1) * tip_bin2 .<= 1)
+    @constraint(model, network.A * tip_bin2 .<= network.k)
     # Sharpe ratio
     @variable(model, tip_bin_sharpe2[1:N] .>= 0)
     k = model[:k]
@@ -122,7 +122,7 @@ function network_constraints(network::IP, port, ::Any, ::Any)
     model = port.model
 
     @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, unique(network.A + I; dims = 1) * tip_bin2 .<= 1)
+    @constraint(model, network.A * tip_bin2 .<= network.k)
     # Long and short
     w = model[:w]
     @constraint(model, w .<= port.long_u * tip_bin2)

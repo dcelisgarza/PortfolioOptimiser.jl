@@ -1,5 +1,37 @@
 using SafeTestsets
 
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
@@ -14,10 +46,6 @@ end
 
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
 end
 
 @safetestset "Type tests" begin
@@ -70,32 +98,4 @@ end
 
 @safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
-end
-
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
 end
