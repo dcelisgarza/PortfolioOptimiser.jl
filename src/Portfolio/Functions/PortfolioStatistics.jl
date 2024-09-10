@@ -66,7 +66,6 @@ function asset_statistics!(port::AbstractPortfolio;
             rho = cor(cor_type, returns)
             if set_cor
                 port.cor = rho
-                port.cor_type = cor_type
             end
         end
 
