@@ -42,7 +42,10 @@ solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
+Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", 
+"RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", 
+"RiskMeasures/Functions/RiskValue.jl", 
+"RiskMeasures/Functions/RiskStatistics.jl"]
 ```
 
 ## Private
@@ -51,5 +54,8 @@ Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscR
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", "RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", "RiskMeasures/Functions/RiskValue.jl", "RiskMeasures/Functions/RiskStatistics.jl"]
+Pages = ["RiskMeasures/Types/RiskMeasureTypes.jl", 
+"RiskMeasures/Functions/MiscRiskMeasureFunctions.jl", 
+"RiskMeasures/Functions/RiskValue.jl", 
+"RiskMeasures/Functions/RiskStatistics.jl"]
 ```
