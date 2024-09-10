@@ -14,7 +14,7 @@ asset_statistics!(port::AbstractPortfolio;
                   set_dist::Bool = true)
 ```
 
-Compute the asset statistics for a portfolio. See the estimators' docs for details. If a statistic requires another to be computed, the funciton will do so from the relevant estimator.
+Compute the asset statistics for a portfolio. See the argument types' docs for details. If a statistic requires another to be computed, the funciton will do so from the relevant estimator.
 
 The `set_*` variables are flags for deciding whether or not to set the statistic. If a statistic's flag is `false` the statistic will not be set. Furthermore, if the flag is `false` _and_ the statistic is not required by another one, it will not be computed.
 
@@ -111,7 +111,7 @@ wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
                         set_ellipse::Bool = true)
 ```
 
-Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optimisations. The `set_*` variables are used to compute and set the relevant statistics. See the estimators' docs for details.
+Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optimisations. The `set_*` variables are used to compute and set the relevant statistics. See the argument types' docs for details.
 
 # Inputs
 
@@ -173,7 +173,7 @@ factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
                    mu_type::MeanEstimator = MuSimple())
 ```
 
-Compute the factor statistics. See the estimators' docs for details.
+Compute the factor statistics. See the argument types' docs for details.
 
 # Inputs
 
@@ -212,7 +212,7 @@ black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVecto
                             bl_type::BLType = BLType())
 ```
 
-Compute the factor statistics. `N` is the number of assets, `Nv` is the number of asset views. See the estimators' docs for details.
+Compute the factor statistics. `N` is the number of assets, `Nv` is the number of asset views. See the argument types' docs for details.
 
 # Inputs
 
@@ -262,7 +262,7 @@ black_litterman_factor_statistics!(port::Portfolio;
                                    bl_type::BlackLittermanFactor = BBLType())
 ```
 
-Compute the Black Litterman factor model statistics. `Na` is the number of assets, `Nva` is the number of asset views, `Nf` is the number of factors, `Nvf` is the number of factors views. See the estimators' docs for details.
+Compute the Black Litterman factor model statistics. `Na` is the number of assets, `Nva` is the number of asset views, `Nf` is the number of factors, `Nvf` is the number of factors views. See the argument types' docs for details.
 
 # Inputs
 

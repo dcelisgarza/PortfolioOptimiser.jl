@@ -39,7 +39,7 @@ Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) for a p
 
   - `X`: `T×N` returns matrix.
   - `type`: optimisation type used to retrieve the weights vector from `port.optimal[type]`.
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `delta`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
   - `marginal`:
 
@@ -78,7 +78,7 @@ Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) for a 
   - `X`: `T×Na` matrix of asset returns.
   - `F`: `T×Nf` matrix of factor returns.
   - `type`: optimisation type used to retrieve the weights vector from `port.optimal[type]`.
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `delta`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
 
 # Outputs
@@ -117,7 +117,7 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) for 
   - `X`: `T×N` matrix of asset returns.
   - `mu`: `N×1` vector of expected returns.
   - `type`: optimisation type used to retrieve the weights vector from `port.optimal[type]`.
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `delta`: small displacement used for computing the [`Equal`](@ref) risk measure.
   - `rf`: risk free rate.
   - `kelly`:

@@ -95,7 +95,7 @@ function cluster_matrix(X::AbstractMatrix;
 
     return A_c
 end
-function _con_rel(A::AbstractMatrix, w::AbstractVector)
+function con_rel_assets(A::AbstractMatrix, w::AbstractVector)
     ovec = range(; start = 1, stop = 1, length = size(A, 1))
     aw = abs.(w * transpose(w))
     C_a = transpose(ovec) * (A .* aw) * ovec
@@ -108,7 +108,7 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector;
                           network_type::NetworkType = MST())
     A_c = connection_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                             network_type = network_type)
-    C_a = _con_rel(A_c, w)
+    C_a = con_rel_assets(A_c, w)
     return C_a
 end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
@@ -117,9 +117,9 @@ function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
-    R_a = _con_rel(A_c, w)
+    R_a = con_rel_assets(A_c, w)
     return R_a
 end
 
 export calc_centrality, connection_matrix, centrality_vector, cluster_matrix,
-       connected_assets, related_assets
+       con_rel_assets, connected_assets, related_assets

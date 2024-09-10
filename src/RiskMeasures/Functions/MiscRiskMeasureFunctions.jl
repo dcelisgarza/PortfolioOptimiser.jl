@@ -7,7 +7,7 @@ Get a symbol for the risk measure(s). If multiple measures are given, they are c
 
 # Inputs
 
-  - `rm`: risk measure or vector of risk measures.
+  - `rm`: risk measure or vector of risk measures [`AbstractRiskMeasure`](@ref).
 """
 function get_rm_symbol(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     rmsym = ""
@@ -34,7 +34,7 @@ Get the first risk measure, used in [`efficient_frontier!`](@ref).
 
 # Inputs
 
-  - `rm`: risk measure or vector of risk measures.
+  - `rm`: risk measure or vector of risk measures [`AbstractRiskMeasure`](@ref).
 """
 function get_first_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     return if !isa(rm, AbstractVector)
@@ -76,7 +76,7 @@ Set properties for risk measures that use solvers or covariance matrices.
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `solvers`: solvers.
   - `sigma`: covariance matrix.
 """
@@ -111,7 +111,7 @@ Unset properties for risk measures that use solvers or covariance matrices.
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `solvers`: solvers.
   - `sigma`: covariance matrix.
 """

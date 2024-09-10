@@ -6,7 +6,7 @@ connection_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                   network_type::NetworkType = MST())
 ```
 
-Compute the connection matrix [`connection_matrix`](@ref). See the estimators' docs for details.
+Compute the connection matrix [`connection_matrix`](@ref). See the argument types' docs for details.
 
 # Inputs
 
@@ -18,7 +18,7 @@ Compute the connection matrix [`connection_matrix`](@ref). See the estimators' d
 
 # Outputs
 
-  - `C`: `N×N` connection matrix.
+  - `C`: `N×N` connection-based adjacency matrix.
 """
 function connection_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -36,7 +36,7 @@ centrality_vector(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                   network_type::NetworkType = MST())
 ```
 
-Compute the centrality vector [`centrality_vector`](@ref). See the estimators' docs for details.
+Compute the centrality vector [`centrality_vector`](@ref). See the argument types' docs for details.
 
 # Inputs
 
@@ -58,6 +58,29 @@ function centrality_vector(port::AbstractPortfolio; X::AbstractMatrix = port.ret
                              network_type = network_type)
 end
 
+"""
+```
+cluster_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
+               cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+               dist_type::DistanceMethod = DistanceCanonical(),
+               hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+```
+
+Compute the centrality vector [`cluster_matrix`](@ref). See the argument types' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
+  - `X`: `T×N` returns matrix.
+  - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref).
+  - `hclust_alg`: method for hierarhically clustering assets [`HClustAlg`](@ref).
+  - `hclust_opt`: options for determining the number of clusters [`HCOpt`](@ref).
+
+# Outputs
+
+  - `C`: `N×N` cluster-based adjacency matrix.
+"""
 function cluster_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistanceMethod = DistanceCanonical(),
@@ -66,6 +89,28 @@ function cluster_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.return
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 end
 
+"""
+```
+connected_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
+                 cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                 dist_type::DistanceMethod = DistanceCanonical(),
+                 network_type::NetworkType = MST())
+```
+
+Compute the percentage of the portfolio comprised of connected assets [`connected_assets`](@ref) via a connection-based adjacency matrix. See the argument types' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
+  - `X`: `T×N` returns matrix.
+  - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref).
+  - `network_type`: method for computing the asset network [`NetworkType`](@ref).
+
+# Outputs
+
+  - `c`: percentage of the portfolio comprised of assets connected via a connection-based adjacency matrix.
+"""
 function connected_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                           type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -75,6 +120,30 @@ function connected_assets(port::AbstractPortfolio; X::AbstractMatrix = port.retu
                             dist_type = dist_type, network_type = network_type)
 end
 
+"""
+```
+related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
+               type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+               cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+               dist_type::DistanceMethod = DistanceCanonical(),
+               hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+```
+
+Compute the percentage of the portfolio comprised of related assets  [`related_assets`](@ref) via a cluster-based adjacency matrix. See the argument types' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
+  - `X`: `T×N` returns matrix.
+  - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref).
+  - `hclust_alg`: method for hierarhically clustering assets [`HClustAlg`](@ref).
+  - `hclust_opt`: options for determining the number of clusters [`HCOpt`](@ref).
+
+# Outputs
+
+  - `c`: percentage of the portfolio comprised of related assets via a connection-based adjacency matrix.
+"""
 function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                         type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),

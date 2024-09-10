@@ -11,7 +11,7 @@ Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset w
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
   - `w1`: `N×1` vector of asset weights for lower bound.
   - `w2`: `N×1` vector of asset weights for upper bound.
   - `X`: `T×N` matrix of asset returns.
@@ -49,7 +49,7 @@ Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) and ass
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
 
   - `w`: `N×1` vector of asset weights.
   - `X`: `T×N` matrix of asset returns.
@@ -116,7 +116,7 @@ Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) and as
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
 
   - `w`: `Na×1` vector of asset weights.
   - `X`: `T×Na` matrix of asset returns.
@@ -173,7 +173,7 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
 
 # Inputs
 
-  - `rm`: risk measure.
+  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
 
   - `w`: `N×1` vector of asset weights.
   - `mu`: `N×1` vector of expected returns.
