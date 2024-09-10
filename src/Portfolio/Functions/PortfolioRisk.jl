@@ -122,8 +122,8 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) for 
   - `rf`: risk free rate.
   - `kelly`:
 
-        + if `true`: use the kelly return.
-        + else: use the arithmetic return.
+      + if `true`: use the kelly return.
+      + else: use the arithmetic return.
 """
 function sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                       mu::AbstractVector = port.mu,

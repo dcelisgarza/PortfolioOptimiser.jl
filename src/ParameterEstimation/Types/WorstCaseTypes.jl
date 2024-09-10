@@ -35,6 +35,8 @@ abstract type WorstCaseKMethod end
 struct KNormalWC <: WorstCaseKMethod end
 struct KGeneralWC <: WorstCaseKMethod end
 
+"""
+```
 @kwdef mutable struct WCType
     cov_type::PortfolioOptimiserCovCor = PortCovCor(;)
     mu_type::MeanEstimator = MuSimple(;)
@@ -44,6 +46,26 @@ struct KGeneralWC <: WorstCaseKMethod end
     k_mu::Union{<:Real, WorstCaseKMethod} = KNormalWC(;)
     posdef::PosdefFix = PosdefNearest(;)
     diagonal::Bool = false
+end
+```
+"""
+mutable struct WCType
+    cov_type::PortfolioOptimiserCovCor
+    mu_type::MeanEstimator
+    box::WorstCaseMethod
+    ellipse::WorstCaseMethod
+    k_sigma::Union{<:Real, WorstCaseKMethod}
+    k_mu::Union{<:Real, WorstCaseKMethod}
+    posdef::PosdefFix
+    diagonal::Bool
+end
+function WCType(; cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
+                mu_type::MeanEstimator = MuSimple(;), box::WorstCaseMethod = NormalWC(;),
+                ellipse::WorstCaseMethod = NormalWC(;),
+                k_sigma::Union{<:Real, WorstCaseKMethod} = KNormalWC(;),
+                k_mu::Union{<:Real, WorstCaseKMethod} = KNormalWC(;),
+                posdef::PosdefFix = PosdefNearest(;), diagonal::Bool = false)
+    return WCType(cov_type, mu_type, box, ellipse, k_sigma, k_mu, posdef, diagonal)
 end
 
 export Box, Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,

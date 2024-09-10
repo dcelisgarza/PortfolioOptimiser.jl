@@ -501,25 +501,68 @@ end
 
 abstract type KurtEstimator end
 
+"""
+```
 @kwdef mutable struct KurtFull <: KurtEstimator
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
+```
+"""
+mutable struct KurtFull <: KurtEstimator
+    posdef::PosdefFix
+    denoise::Denoise
+    logo::AbstractLoGo
+end
+function KurtFull(; posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
+                  logo::AbstractLoGo = NoLoGo(;))
+    return KurtFull(posdef, denoise, logo)
+end
 
+"""
+```
 @kwdef mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
+```
+"""
+mutable struct KurtSemi <: KurtEstimator
+    target::Union{<:Real, AbstractVector{<:Real}}
+    posdef::PosdefFix
+    denoise::Denoise
+    logo::AbstractLoGo
+end
+function KurtSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
+                  posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
+                  logo::AbstractLoGo = NoLoGo(;))
+    return KurtSemi(target, posdef, denoise, logo)
+end
 
 abstract type SkewEstimator end
 
+"""
+```
+struct SkewFull <: SkewEstimator end
+```
+"""
 struct SkewFull <: SkewEstimator end
 
+"""
+```
 @kwdef mutable struct SkewSemi <: SkewEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
+end
+```
+"""
+mutable struct SkewSemi <: SkewEstimator
+    target::Union{<:Real, AbstractVector{<:Real}}
+end
+function SkewSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0)
+    return SkewSemi(target)
 end
 
 """

@@ -52,12 +52,29 @@ end
     target::DimensionReductionTarget = PCATarget(;)
 end
 
+"""
+```
 @kwdef mutable struct FactorType
     error::Bool = true
     B::Union{Nothing, DataFrame} = nothing
     method::RegressionType = FReg(;)
     ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
     var_w::Union{<:AbstractWeights, Nothing} = nothing
+end
+```
+"""
+mutable struct FactorType
+    error::Bool
+    B::Union{Nothing, DataFrame}
+    method::RegressionType
+    ve::StatsBase.CovarianceEstimator
+    var_w::Union{<:AbstractWeights, Nothing}
+end
+function FactorType(; error::Bool = true, B::Union{Nothing, DataFrame} = nothing,
+                    method::RegressionType = FReg(;),
+                    ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
+                    var_w::Union{<:AbstractWeights, Nothing} = nothing)
+    return FactorType(error, B, method, ve, var_w)
 end
 
 export AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget, PPCATarget, FReg, BReg, PCAReg,

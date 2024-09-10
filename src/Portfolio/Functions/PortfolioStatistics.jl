@@ -1,18 +1,45 @@
 """
 ```
 asset_statistics!(port::AbstractPortfolio;
-                           cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           set_cov::Bool = true, mu_type::MeanEstimator = MuSimple(),
-                           set_mu::Bool = true, kurt_type::KurtFull = KurtFull(),
-                           set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(),
-                           set_skurt::Bool = true, skew_type::SkewFull = SkewFull(),
-                           set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(),
-                           set_sskew::Bool = true,
-                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           set_cor::Bool = true,
-                           dist_type::DistanceMethod = DistanceCanonical(),
-                           set_dist::Bool = true)
+                  cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                  set_cov::Bool = true, mu_type::MeanEstimator = MuSimple(),
+                  set_mu::Bool = true, kurt_type::KurtFull = KurtFull(),
+                  set_kurt::Bool = true, skurt_type::KurtSemi = KurtSemi(),
+                  set_skurt::Bool = true, skew_type::SkewFull = SkewFull(),
+                  set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(),
+                  set_sskew::Bool = true,
+                  cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                  set_cor::Bool = true,
+                  dist_type::DistanceMethod = DistanceCanonical(),
+                  set_dist::Bool = true)
 ```
+
+Compute the asset statistics for a portfolio. See the estimators' docs for details. If a statistic requires another to be computed, the funciton will do so from the relevant estimator.
+
+The `set_*` variables are flags for deciding whether or not to set the statistic. If a statistic's flag is `false` the statistic will not be set. Furthermore, if the flag is `false` _and_ the statistic is not required by another one, it will not be computed.
+
+# Inputs
+
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
+  - `cov_type`: covariance estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `set_cov`: flag for setting `port.cov`
+  - `mu_type`: expected returns estimator [`MeanEstimator`](@ref).
+  - `set_mu`: flag for setting `port.mu`
+  - `kurt_type`: cokurtosis matrix estimator [`KurtFull`](@ref).
+  - `set_kurt`: flag for setting `port.kurt`.
+  - `skurt_type`: cokurtosis matrix estimator [`KurtSemi`](@ref).
+  - `set_skurt`: flag for setting `port.skurt`.
+  - `skew_type`: coskew estimator [`SkewFull`](@ref).
+  - `set_skew`: set `port.skew` and `port.V`.
+  - `sskew_type`: semi coskew estimator [`SkewSemi`](@ref).
+  - `set_sskew`: set `port.skew` and `port.SV`.
+
+## Only relevant for [`HCPortfolio`](@ref).
+
+  - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `set_cor`: flag for setting `port.cor`.
+  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref).
+  - `set_dist`: flag for setting `port.dist`.
 """
 function asset_statistics!(port::AbstractPortfolio;
                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -83,6 +110,15 @@ end
 wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
                         set_ellipse::Bool = true)
 ```
+
+Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optimisations. The `set_*` variables are used to compute and set the relevant statistics. See the estimators' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`Portfolio`](@ref).
+  - `wc`: worst-case mean-variance statistics estimator [`WCType`](@ref).
+  - `set_box`: compute and set the box uncertainty sets `port.cov_l`, `port.cov_u`, `port.d_mu`.
+  - `set_ellipse`: compute and set the elliptical uncertainty sets and parameters `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
 """
 function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
                         set_ellipse::Bool = true)
@@ -133,9 +169,18 @@ end
 """
 ```
 factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
-                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            mu_type::MeanEstimator = MuSimple())
+                   cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                   mu_type::MeanEstimator = MuSimple())
 ```
+
+Compute the factor statistics. See the estimators' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`Portfolio`](@ref).
+  - `factor_type`: factor statistics estimator [`FactorType`](@ref).
+  - `cov_type`: covariance estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `mu_type`: expected returns estimator [`MeanEstimator`](@ref).
 """
 function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -161,11 +206,23 @@ end
 """
 ```
 black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
-                                     w::AbstractVector = port.bl_bench_weights,
-                                     cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                                     mu_type::MeanEstimator = MuSimple(),
-                                     bl_type::BLType = BLType())
+                            w::AbstractVector = port.bl_bench_weights,
+                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            mu_type::MeanEstimator = MuSimple(),
+                            bl_type::BLType = BLType())
 ```
+
+Compute the factor statistics. `N` is the number of assets, `Nv` is the number of asset views. See the estimators' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`Portfolio`](@ref).
+  - `P`: `Nv×N` matrix of asset views.
+  - `Q`: `Nv×1` vector of asset views.
+  - `w`: `N×1` vector of benchmark weights for the Black-Litterman model.
+  - `cov_type`: covariance estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `mu_type`: expected returns estimator [`MeanEstimator`](@ref).
+  - `bl_type`: Black Litterman model estimator [`BLType`](@ref).
 """
 function black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
                                      w::AbstractVector = port.bl_bench_weights,
@@ -191,19 +248,40 @@ end
 """
 ```
 black_litterman_factor_statistics!(port::Portfolio;
-                                            w::AbstractVector = port.bl_bench_weights,
-                                            B::Union{DataFrame, Nothing} = port.loadings,
-                                            P::Union{AbstractMatrix, Nothing} = nothing,
-                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
-                                            Q::Union{AbstractVector, Nothing} = nothing,
-                                            Q_f::Union{AbstractVector, Nothing} = nothing,
-                                            factor_type::FactorType = FactorType(),
-                                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                                            mu_type::MeanEstimator = MuSimple(),
-                                            f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
-                                            f_mu_type::MeanEstimator = MuSimple(),
-                                            bl_type::BlackLittermanFactor = BBLType())
+                                   w::AbstractVector = port.bl_bench_weights,
+                                   B::Union{DataFrame, Nothing} = port.loadings,
+                                   P::Union{AbstractMatrix, Nothing} = nothing,
+                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                   Q::Union{AbstractVector, Nothing} = nothing,
+                                   Q_f::Union{AbstractVector, Nothing} = nothing,
+                                   factor_type::FactorType = FactorType(),
+                                   cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                   mu_type::MeanEstimator = MuSimple(),
+                                   f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                   f_mu_type::MeanEstimator = MuSimple(),
+                                   bl_type::BlackLittermanFactor = BBLType())
 ```
+
+Compute the Black Litterman factor model statistics. `Na` is the number of assets, `Nva` is the number of asset views, `Nf` is the number of factors, `Nvf` is the number of factors views. See the estimators' docs for details.
+
+# Inputs
+
+  - `port`: portfolio [`Portfolio`](@ref).
+
+  - `w`: `N×1` vector of benchmark weights for the Black-Litterman model.
+  - `B`: loadings matrix.
+
+      + if is empty: computes the loadings matrix using `factor_type`.
+  - `P`: `Nva×Na` matrix of asset views.
+  - `P_f`: `Nvf×Nf` matrix of factor views.
+  - `Q`: `Nva×1` vector of asset views.
+  - `Q_f`: `Nvf×1` vector of factor views.
+  - `factor_type`: factor statistics estimator [`FactorType`](@ref).
+  - `cov_type`: asset covariance estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `mu_type`: asset expected returns estimator [`MeanEstimator`](@ref).
+  - `f_cov_type`: factor covariance estimator [`PortfolioOptimiserCovCor`](@ref).
+  - `f_mu_type`: factor expected returns estimator [`MeanEstimator`](@ref).
+  - `bl_type`: Black Litterman factor model estimator [`BlackLittermanFactor`](@ref).
 """
 function black_litterman_factor_statistics!(port::Portfolio;
                                             w::AbstractVector = port.bl_bench_weights,
