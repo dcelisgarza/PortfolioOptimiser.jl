@@ -19,7 +19,7 @@ Defines the distance matrix from a correlation matrix [HRP1](@cite) in [`dist`](
 ```math
 D_{i,\\,j} = 
     \\begin{cases}
-        \\sqrt{\\dfrac{1}{2} \\left(\\mathbf{1} - C_{i,\\,j}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
+        \\sqrt{\\dfrac{1}{2} \\left(1 - C_{i,\\,j}\\right)} &\\quad \\mathrm{if~ absolute = false}\\\\
         \\sqrt{1 - \\lvert C_{i,\\,j} \\rvert} &\\quad \\mathrm{if~ absolute = true}\\nonumber\\,.
     \\end{cases}
 ```

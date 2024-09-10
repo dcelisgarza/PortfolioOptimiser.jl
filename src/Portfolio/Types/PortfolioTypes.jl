@@ -429,78 +429,22 @@ Constructor for [`Portfolio`](@ref). Performs data validation checks and automat
   - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
 
       + If provided: will take precedence over `ret`, `timestamps`, and `assets` because they will be automatically computed from `returns`.
-  - `ret`: set returns matrix directly.
-  - `timestamps`: set timestamps.
-  - `assets`: set assets.
+  - `ret`: set the `returns` matrix directly.
+  - `timestamps`: set `timestamps`.
+  - `assets`: set `assets`.
   - `f_prices`: `(T+1)×Nf` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of factor prices.
 
       + If provided: will take precedence over `f_returns`, `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `f_prices`.
   - `f_returns`: `T×Nf` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of factor returns.
 
       + If provided: will take precedence over `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `returns`.
-  - `f_ret`: set f_ret.
-  - `f_timestamps`: set f_timestamps.
-  - `f_assets`: set f_assets.
-  - `loadings`: set loadings.
-  - `regression_type`: set regression_type.
-  - `short`: set short.
-  - `short_u`: set short_u.
-  - `long_u`: set long_u.
-  - `num_assets_l`: set num_assets_l.
-  - `num_assets_u`: set num_assets_u.
-  - `num_assets_u_scale`: set num_assets_u_scale.
-  - `max_num_assets_kurt`: set max_num_assets_kurt.
-  - `max_num_assets_kurt_scale`: set max_num_assets_kurt_scale.
-  - `rebalance`: set rebalance.
-  - `turnover`: set turnover.
-  - `tracking_err`: set tracking_err.
-  - `bl_bench_weights`: set bl_bench_weights.
-  - `a_mtx_ineq`: set a_mtx_ineq.
-  - `b_vec_ineq`: set b_vec_ineq.
-  - `risk_budget`: set risk_budget.
-  - `f_risk_budget`: set f_risk_budget.
-  - `network_method`: set network_method.
-  - `a_vec_cent`: set a_vec_cent.
-  - `b_cent`: set b_cent.
-  - `mu_l`: set mu_l.
-  - `mu`: set mu.
-  - `cov`: set cov.
-  - `kurt`: set kurt.
-  - `skurt`: set skurt.
-  - `L_2`: set L_2.
-  - `S_2`: set S_2.
-  - `skew`: set skew.
-  - `V`: set V.
-  - `sskew`: set sskew.
-  - `SV`: set SV.
-  - `f_mu`: set f_mu.
-  - `f_cov`: set f_cov.
-  - `fm_returns`: set fm_returns.
-  - `fm_mu`: set fm_mu.
-  - `fm_cov`: set fm_cov.
-  - `bl_mu`: set bl_mu.
-  - `bl_cov`: set bl_cov.
-  - `blfm_mu`: set blfm_mu.
-  - `blfm_cov`: set blfm_cov.
-  - `cov_l`: set cov_l.
-  - `cov_u`: set cov_u.
-  - `cov_mu`: set cov_mu.
-  - `cov_sigma`: set cov_sigma.
-  - `d_mu`: set d_mu.
-  - `k_mu`: set k_mu.
-  - `k_sigma`: set k_sigma.
-  - `optimal`: set optimal.
-  - `limits`: set limits.
-  - `frontier`: set frontier.
-  - `solvers`: set solvers.
-  - `fail`: set fail.
-  - `model`: set model.
-  - `latest_prices`: set latest_prices.
-  - `alloc_optimal`: set alloc_optimal.
-  - `alloc_leftover`: set alloc_leftover.
-  - `alloc_solvers`: set alloc_solvers.
-  - `alloc_fail`: set alloc_fail.
-  - `alloc_model`: set alloc_model.
+  - `f_ret`: set the `f_returns` matrix directly.
+
+The rest of the inputs directly set their corresponding property.
+
+# Outputs
+
+  - `portfolio`: an instance of [`Portfolio`](@ref).
 """
 function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    returns::DataFrame = DataFrame(),
@@ -1149,35 +1093,13 @@ Constructor for [`HCPortfolio`](@ref). Performs data validation checks and autom
   - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
 
       + If provided: will take precedence over `ret`, `timestamps`, and `assets` because they will be automatically computed from `returns`.
-  - `ret`: set returns matrix directly.
-  - `assets`: sets assets.
-  - `timestamps`: sets timestamps.
-  - `returns`: sets returns.
-  - `mu`: sets mu.
-  - `cov`: sets cov.
-  - `kurt`: sets kurt.
-  - `skurt`: sets skurt.
-  - `L_2`: sets L_2.
-  - `S_2`: sets S_2.
-  - `skew`: sets skew.
-  - `V`: sets V.
-  - `sskew`: sets sskew.
-  - `SV`: sets SV.
-  - `w_min`: sets w_min.
-  - `w_max`: sets w_max.
-  - `cor`: sets cor.
-  - `dist`: sets dist.
-  - `clusters`: sets clusters.
-  - `k`: sets k.
-  - `optimal`: sets optimal.
-  - `solvers`: sets solvers.
-  - `fail`: sets fail.
-  - `latest_prices`: sets latest_prices.
-  - `alloc_optimal`: sets alloc_optimal.
-  - `alloc_leftover`: sets alloc_leftover.
-  - `alloc_solvers`: sets alloc_solvers.
-  - `alloc_fail`: sets alloc_fail.
-  - `alloc_model`: sets alloc_model.
+  - `ret`: set the `returns` matrix directly.
+
+The rest of the inputs directly set their corresponding property.
+
+# Outputs
+
+  - `portfolio`: an instance of [`HCPortfolio`](@ref).
 """
 function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      returns::DataFrame = DataFrame(),
