@@ -9,6 +9,8 @@ using AverageShiftedHistograms, Clustering, DataFrames, Dates, Distances, Distri
 include("./RiskMeasures/Types/RiskMeasureTypes.jl")
 ## Parameter estimation
 include("./ParameterEstimation/Types/ParameterEstimationTypes.jl")
+## Constraints
+include("./Constraints/Types/ConstraintTypes.jl")
 ## Optimisation
 include("./Optimisation/Types/OptimisationTypes.jl")
 ## Portfolio
@@ -19,10 +21,10 @@ include("./Portfolio/Types/PortfolioTypes.jl")
 include("./RiskMeasures/Functions/RiskMeasureFunctions.jl")
 ## Parameter estimation
 include("./ParameterEstimation/Functions/ParameterEstimationFunctions.jl")
+## Constraints
+include("./Constraints/Functions/ConstraintFunctions.jl")
 ## Portfolio
 include("./Portfolio/Functions/PortfolioFunctions.jl")
-## Constraints
-include("./Constraints/Constraints.jl")
 ## Optimisation
 include("./Optimisation/Functions/OptimisationFunctions.jl")
 

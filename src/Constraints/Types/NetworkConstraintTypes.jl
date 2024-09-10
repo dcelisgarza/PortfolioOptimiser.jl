@@ -41,6 +41,11 @@ end
     kwargs::NamedTuple = (;)
 end
 
+"""
+```
+abstract type NetworkType end
+```
+"""
 abstract type NetworkType end
 
 @kwdef mutable struct TMFG{T1 <: Integer} <: NetworkType

@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["Constraints/WeightConstraints.jl", "Constraints/ViewsConstraints.jl", "Constraints/NetworkConstraints.jl"]
+Pages = ["Constraints/Functions/WeightConstraintFunctions.jl", "Constraints/Functions/ViewsConstraintFunctions.jl", "Constraints/Types/NetworkConstraintTypes.jl", "Constraints/Functions/NetworkConstraintFunctions.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["Constraints/WeightConstraints.jl", "Constraints/ViewsConstraints.jl", 
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["Constraints/WeightConstraints.jl", "Constraints/ViewsConstraints.jl", "Constraints/NetworkConstraints.jl"]
+Pages = ["Constraints/Functions/WeightConstraintFunctions.jl", "Constraints/Functions/ViewsConstraintFunctions.jl", "Constraints/Types/NetworkConstraintTypes.jl", "Constraints/Functions/NetworkConstraintFunctions.jl"]
 ```
