@@ -114,6 +114,28 @@ l = 2.0
     @test portfolio.skurt == skurt
 
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
+    A = [0 1 0;
+         1 0 0;
+         0 0 0]
+    ip = IP(; A = A, k = [1, 3])
+    @test ip.A == [1 1 0;
+                   0 0 1]
+    @test ip.k == [1, 3]
+
+    ip.A = A
+    @test ip.A == [1 1 0;
+                   0 0 1]
+
+    ip = IP(; k = [1, 2, 3])
+    A = [0 1 0 1;
+         1 0 0 1;
+         0 0 0 1;
+         1 1 1 0]
+    ip.A = A
+    @test ip.A == [1.0  1.0  0.0  1.0;
+                   0.0  0.0  1.0  1.0;
+                   1.0  1.0  1.0  1.0]
+    @test ip.k == [1, 2, 3]
 end
 
 @testset "HC Portfolio" begin

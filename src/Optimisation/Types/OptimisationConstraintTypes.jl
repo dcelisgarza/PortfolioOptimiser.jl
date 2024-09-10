@@ -98,7 +98,7 @@ Where:
 
   - ``\\mathbf{I}`` is the identity matrix.
 
-Since each row of ``\\left(\\mathbf{A} + \\mathbf{I}\\right)`` corresponds to a path, duplicate rows add no new information whilst increase the problem's size. Therefore, we only store unique rows.
+Since each row of ``\\left(\\mathbf{A} + \\mathbf{I}\\right)`` corresponds to a path, duplicate rows add no new information whilst increasing the problem's size, therefore we only store unique rows.
 
   - ``\\bm{y}`` is an ``N \\times 1`` vector of binary ``\\{0,\\,1\\}`` decision variables, which decide whether or not the asset should be included in the portfolio.
 
@@ -153,6 +153,7 @@ function Base.setproperty!(obj::IP, sym::Symbol, val)
         if isa(obj.k, AbstractVector) && !isempty(val) && !isempty(obj.k)
             @smart_assert(size(val, 1) == length(obj.k))
         end
+        val = convert(typeof(getfield(obj, sym)), val)
     end
     return setfield!(obj, sym, val)
 end
