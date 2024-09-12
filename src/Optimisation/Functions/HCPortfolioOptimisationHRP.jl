@@ -21,7 +21,7 @@ function _optimise!(::HRP, port::HCPortfolio,
                 lrisk += cluster_risk(port, lc, r) * scale
                 # Right risk.
                 rrisk += cluster_risk(port, rc, r) * scale
-                _unset_rm_solvers(r, solver_flag)
+                _unset_rm_solvers!(r, solver_flag)
             end
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)

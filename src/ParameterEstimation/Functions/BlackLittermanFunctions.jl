@@ -90,7 +90,8 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
         B = B[:, 2:end]
     end
 
-    tau = 1 / size(X, 1)
+    T, N = size(X)
+    tau = inv(T)
 
     sigma = B * f_sigma * transpose(B)
 
@@ -109,14 +110,14 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
     inv_sigma = sigma \ I
     inv_sigma_f = f_sigma \ I
     inv_omega_f = omega_f \ I
-    sigma_hat = (inv_sigma_f + transpose(P_f) * inv_omega_f * P_f) \ I
-    Pi_hat = sigma_hat * (inv_sigma_f * f_mu + transpose(P_f) * inv_omega_f * Q_f)
-    inv_sigma_hat = sigma_hat \ I
-    iish_b_is_b = (inv_sigma_hat + transpose(B) * inv_sigma * B) \ I
-    is_b_iish_b_is_b = inv_sigma * B * iish_b_is_b
-
-    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * transpose(B) * inv_sigma) \ I
-
+    tpf_invof = transpose(P_f) * inv_omega_f
+    inv_sigma_hat = (inv_sigma_f + tpf_invof * P_f)
+    Pi_hat = (inv_sigma_hat \ I) * (inv_sigma_f * f_mu + tpf_invof * Q_f)
+    inv_sigma_b = inv_sigma * B
+    tb = transpose(B)
+    iish_b_is_b = (inv_sigma_hat + tb * inv_sigma_b) \ I
+    is_b_iish_b_is_b = inv_sigma_b * iish_b_is_b
+    sigma_bbl = (inv_sigma - is_b_iish_b_is_b * tb * inv_sigma) \ I
     Pi_bbl = sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat
 
     mu = Pi_bbl .+ bl.rf
@@ -126,6 +127,10 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
     end
 
     w = ((bl.delta * sigma_bbl) \ I) * mu
+
+    posdef_fix!(bl.posdef, sigma)
+    denoise!(bl.denoise, bl.posdef, sigma, T / N)
+    logo!(bl.logo, bl.posdef, sigma)
 
     return mu, sigma_bbl, w
 end

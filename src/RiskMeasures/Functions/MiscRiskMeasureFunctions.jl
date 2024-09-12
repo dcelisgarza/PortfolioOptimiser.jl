@@ -68,8 +68,8 @@ function _set_rm_sigma(args...)
 end
 """
 ```
-set_rm_properties(rm::AbstractRiskMeasure, solvers::AbstractDict,
-                  sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
+set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
+                   sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
 ```
 
 Set properties for risk measures that use solvers or covariance matrices.
@@ -80,31 +80,31 @@ Set properties for risk measures that use solvers or covariance matrices.
   - `solvers`: solvers.
   - `sigma`: covariance matrix.
 """
-function set_rm_properties(rm::AbstractRiskMeasure, solvers::AbstractDict,
-                           sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
+function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
+                            sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
     solver_flag = _set_rm_solvers(rm, solvers)
     sigma_flag = _set_rm_sigma(rm, sigma)
     return solver_flag, sigma_flag
 end
-function _unset_rm_solvers(rm::RMSolvers, flag)
+function _unset_rm_solvers!(rm::RMSolvers, flag)
     if flag
         rm.solvers = nothing
     end
 end
-function _unset_rm_solvers(args...)
+function _unset_rm_solvers!(args...)
     return nothing
 end
-function _unset_rm_sigma(rm::RMSigma, flag)
+function _unset_rm_sigma!(rm::RMSigma, flag)
     if flag
         rm.sigma = nothing
     end
 end
-function _unset_rm_sigma(args...)
+function _unset_rm_sigma!(args...)
     return nothing
 end
 """
 ```
-unset_set_rm_properties(rm::AbstractRiskMeasure, solver_flag::Bool, sigma_flag::Bool)
+unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool, sigma_flag::Bool)
 ```
 
 Unset properties for risk measures that use solvers or covariance matrices.
@@ -115,9 +115,9 @@ Unset properties for risk measures that use solvers or covariance matrices.
   - `solvers`: solvers.
   - `sigma`: covariance matrix.
 """
-function unset_set_rm_properties(rm::AbstractRiskMeasure, solver_flag::Bool,
-                                 sigma_flag::Bool)
-    _unset_rm_solvers(rm, solver_flag)
-    _unset_rm_sigma(rm, sigma_flag)
+function unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool,
+                                  sigma_flag::Bool)
+    _unset_rm_solvers!(rm, solver_flag)
+    _unset_rm_sigma!(rm, sigma_flag)
     return nothing
 end

@@ -15,6 +15,10 @@ Compute the Variance. Square of [`_SD`](@ref).
 
   - `w`: vector of asset weights.
   - `Σ`: covariance matrix of asset returns.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _Variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
@@ -38,6 +42,10 @@ Compute the Semi-Variance, this is the square of [`_SSD`](@ref).
   - `x`: `T×1` returns vector.
   - `r`: minimum return target.
   - `w`: `T×1` optional vector of weights for computing the expected return.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _SVariance(x::AbstractVector, target::Real = 0.0,
                     w::Union{AbstractWeights, Nothing} = nothing)
@@ -64,6 +72,10 @@ Compute the Standard Deviation. Square root of [`_Variance`](@ref).
 
   - `w`: vector of asset weights.
   - `Σ`: covariance matrix of asset returns.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _SD(w::AbstractVector, cov::AbstractMatrix)
     return sqrt(_Variance(w, cov))
@@ -86,6 +98,10 @@ Compute the Mean Absolute Deviation.
 
   - `x`: `T×1` returns vector.
   - `w`: `T×1` optional vector of weights for computing the expected return.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     mu = isnothing(w) ? mean(x) : mean(x, w)
@@ -110,6 +126,10 @@ Compute the Semi-Standard Deviation.
   - `x`: `T×1` returns vector.
   - `r`: minimum return target.
   - `w`: `T×1` optional vector of weights for computing the expected return.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _SSD(x::AbstractVector, target::Real = 0.0,
               w::Union{AbstractWeights, Nothing} = nothing)
@@ -136,6 +156,10 @@ Compute the First Lower Partial Moment (Omega ratio).
 
   - `x`: `T×1` returns vector.
   - `r`: minimum return target.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
@@ -160,6 +184,10 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 
   - `x`: `T×1` returns vector.
   - `r`: minimum return target.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
@@ -183,6 +211,10 @@ Compute the Worst Realisation or Worst Case Scenario.
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _WR(x::AbstractVector)
     return -minimum(x)
@@ -209,6 +241,10 @@ Compute the Value at Risk, used in [`_CVaR`](@ref).
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -241,6 +277,10 @@ Where:
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -276,6 +316,10 @@ Where:
   - `x`: `T×1` returns vector.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `z`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
@@ -316,6 +360,10 @@ Where:
   - `α`: significance level, `α ∈ (0, 1)`.
 
 If no valid solution is found then `NaN` will be returned.
+
+# Outputs
+
+  - `r`: risk.
 """
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @smart_assert(zero(alpha) < alpha < one(alpha))
@@ -364,6 +412,10 @@ Where:
   - `x`: `T×1` returns vector.
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
@@ -403,6 +455,10 @@ Where:
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
@@ -486,6 +542,10 @@ Where:
   - `x`: `T×1` returns vector.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -521,6 +581,10 @@ Where:
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _DaR(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -561,6 +625,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _MDD(x::AbstractVector)
     pushfirst!(x, 1)
@@ -600,6 +668,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _ADD(x::AbstractVector)
     T = length(x)
@@ -645,6 +717,10 @@ Where:
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _CDaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -690,6 +766,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _UCI(x::AbstractVector)
     T = length(x)
@@ -732,6 +812,10 @@ Where:
   - `x`: `T×1` returns vector.
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     pushfirst!(x, 1)
@@ -772,6 +856,10 @@ Where:
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -819,6 +907,10 @@ Where:
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -858,6 +950,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _MDD_r(x::AbstractVector)
     x .= pushfirst!(x, 0) .+ 1
@@ -897,6 +993,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _ADD_r(x::AbstractVector)
     T = length(x)
@@ -943,6 +1043,10 @@ Where:
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -987,6 +1091,10 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _UCI_r(x::AbstractVector)
     T = length(x)
@@ -1029,6 +1137,10 @@ Where:
   - `x`: `T×1` returns vector.
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     x .= pushfirst!(x, 0) .+ 1
@@ -1069,6 +1181,10 @@ Where:
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _RLDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                   kappa::Real = 0.3)
@@ -1105,6 +1221,10 @@ Compute the Square Root Kurtosis.
   - `x`: `T×1` returns vector.
   - `w`: `T×1` optional vector of weights for computing the expected return.
   - `scale`: if true divides by 2, used in [`risk_contribution`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function _Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
                scale::Bool = false)
@@ -1135,6 +1255,10 @@ Compute the Square Root Semi Kurtosis.
   - `r`: minimum return target.
   - `w`: `T×1` optional vector of weights for computing the expected return.
   - `scale`: if true divides by 2, used in [`risk_contribution`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function _SKurt(x::AbstractVector, target::Real = 0.0,
                 w::Union{AbstractWeights, Nothing} = nothing; scale::Bool = false)
@@ -1167,6 +1291,10 @@ Where:
 
   - `w`: `N×1` vector of weights.
   - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness or semi coskewness.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _Skew(w::AbstractVector, V::AbstractArray)
     return sqrt(dot(w, V, w))
@@ -1186,6 +1314,10 @@ Compute the Gini Mean Difference.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _GMD(x::AbstractVector)
     T = length(x)
@@ -1207,6 +1339,10 @@ Compute the Range.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _RG(x::AbstractVector)
     T = length(x)
@@ -1230,6 +1366,10 @@ Compute the _CVaR Range.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
     T = length(x)
@@ -1254,6 +1394,10 @@ Compute the Tail Gini.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
              a_sim::Int = 100)
@@ -1283,6 +1427,10 @@ Compute the Tail Gini Range.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
                a_sim::Real = 100, beta_i::Real = 0.0001, beta::Real = 0.05,
@@ -1308,6 +1456,10 @@ Compute the Ordered Weight Array risk measure.
 !!! warning
 
     In-place sorts the input vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
@@ -1343,6 +1495,10 @@ where:
 # Inputs
 
   - `x`: `T×1` returns vector.
+
+# Outputs
+
+  - `r`: risk.
 """
 function _dVar(x::AbstractVector)
     T = length(x)
@@ -1361,6 +1517,10 @@ calc_risk(sd::SD, w::AbstractVector; kwargs...)
 ```
 
 Compute the [`SD`](@ref) via [`_SD`](@ref). Inputs correspond to those of [`_SD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(sd::SD, w::AbstractVector; kwargs...)
     return _SD(w, sd.sigma)
@@ -1372,6 +1532,10 @@ calc_risk(sd::Variance, w::AbstractVector; kwargs...)
 ```
 
 Compute the [`Variance`](@ref) via [`_Variance`](@ref). Inputs correspond to those of [`_Variance`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(variance::Variance, w::AbstractVector; kwargs...)
     return _Variance(w, variance.sigma)
@@ -1383,6 +1547,10 @@ calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`MAD`](@ref) via [`_MAD`](@ref). Inputs correspond to those of [`_MAD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MAD(X * w, mad.w)
@@ -1394,6 +1562,10 @@ calc_risk(mad::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SSD`](@ref) via [`_SSD`](@ref). Inputs correspond to those of [`_SSD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SSD(X * w, ssd.target, ssd.w)
@@ -1405,6 +1577,10 @@ calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SVariance`](@ref) via [`_SVariance`](@ref). Inputs correspond to those of [`_SVariance`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SVariance(X * w, svariance.target, svariance.w)
@@ -1416,6 +1592,10 @@ calc_risk(svariance::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`FLPM`](@ref) via [`_FLPM`](@ref). Inputs correspond to those of [`_FLPM`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _FLPM(X * w, flpm.target)
@@ -1427,6 +1607,10 @@ calc_risk(svariance::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SLPM`](@ref) via [`_SLPM`](@ref). Inputs correspond to those of [`_SLPM`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SLPM(X * w, slpm.target)
@@ -1438,6 +1622,10 @@ calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`WR`](@ref) via [`_WR`](@ref). Inputs correspond to those of [`_WR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _WR(X * w)
@@ -1449,6 +1637,10 @@ calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`VaR`](@ref) via [`_VaR`](@ref). Inputs correspond to those of [`_VaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _VaR(X * w, var.alpha)
@@ -1460,6 +1652,10 @@ calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CVaR`](@ref) via [`_CVaR`](@ref). Inputs correspond to those of [`_CVaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CVaR(X * w, cvar.alpha)
@@ -1471,6 +1667,10 @@ calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EVaR`](@ref) via [`_EVaR`](@ref). Inputs correspond to those of [`_EVaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EVaR(X * w, evar.solvers, evar.alpha)
@@ -1482,6 +1682,10 @@ calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref). Inputs correspond to those of [`_RLVaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RLVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
@@ -1493,6 +1697,10 @@ calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`DaR`](@ref) via [`_DaR`](@ref). Inputs correspond to those of [`_DaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR(X * w, dar.alpha)
@@ -1504,6 +1712,10 @@ calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`MDD`](@ref) via [`_MDD`](@ref). Inputs correspond to those of [`_MDD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MDD(X * w)
@@ -1515,6 +1727,10 @@ calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`ADD`](@ref) via [`_ADD`](@ref). Inputs correspond to those of [`_ADD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _ADD(X * w)
@@ -1526,6 +1742,10 @@ calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CDaR`](@ref) via [`_CDaR`](@ref). Inputs correspond to those of [`_CDaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CDaR(X * w, cdar.alpha)
@@ -1537,6 +1757,10 @@ calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`UCI`](@ref) via [`_UCI`](@ref). Inputs correspond to those of [`_UCI`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _UCI(X * w)
@@ -1548,6 +1772,10 @@ calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EDaR`](@ref) via [`_EDaR`](@ref). Inputs correspond to those of [`_EDaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR(X * w, edar.solvers, edar.alpha)
@@ -1559,6 +1787,10 @@ calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref). Inputs correspond to those of [`_RLDaR`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RLDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
@@ -1570,6 +1802,10 @@ calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`DaR_r`](@ref) via [`_DaR_r`](@ref). Inputs correspond to those of [`_DaR_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR_r(X * w, dar.alpha)
@@ -1581,6 +1817,10 @@ calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`MDD_r`](@ref) via [`_MDD_r`](@ref). Inputs correspond to those of [`_MDD_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MDD_r(X * w)
@@ -1592,6 +1832,10 @@ calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`ADD_r`](@ref) via [`_ADD_r`](@ref). Inputs correspond to those of [`_ADD_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _ADD_r(X * w)
@@ -1603,6 +1847,10 @@ calc_risk(cdar::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CDaR_r`](@ref) via [`_CDaR_r`](@ref). Inputs correspond to those of [`_CDaR_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(cdar::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CDaR_r(X * w, cdar.alpha)
@@ -1614,6 +1862,10 @@ calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`UCI_r`](@ref) via [`_UCI_r`](@ref). Inputs correspond to those of [`_UCI_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _UCI_r(X * w)
@@ -1625,6 +1877,10 @@ calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`EDaR_r`](@ref) via [`_EDaR_r`](@ref). Inputs correspond to those of [`_EDaR_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR_r(X * w, edar.solvers, edar.alpha)
@@ -1636,6 +1892,10 @@ calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref). Inputs correspond to those of [`_RLDaR_r`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RLDaR_r(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
@@ -1647,6 +1907,10 @@ calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`Kurt`](@ref) via [`_Kurt`](@ref). Inputs correspond to those of [`_Kurt`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _Kurt(X * w, kt.w)
@@ -1658,6 +1922,10 @@ calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SKurt`](@ref) via [`_SKurt`](@ref). Inputs correspond to those of [`_SKurt`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SKurt(X * w, skt.target, skt.w)
@@ -1669,6 +1937,10 @@ calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`GMD`](@ref) via [`_GMD`](@ref). Inputs correspond to those of [`_GMD`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _GMD(X * w)
@@ -1680,6 +1952,10 @@ calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RG`](@ref) via [`_RG`](@ref). Inputs correspond to those of [`_RG`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RG(X * w)
@@ -1691,6 +1967,10 @@ calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`CVaRRG`](@ref) via [`_CVaRRG`](@ref). Inputs correspond to those of [`_CVaRRG`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CVaRRG(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
@@ -1702,6 +1982,10 @@ calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`TG`](@ref) via [`_TG`](@ref). Inputs correspond to those of [`_TG`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
@@ -1713,6 +1997,10 @@ calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`TGRG`](@ref) via [`_TGRG`](@ref). Inputs correspond to those of [`_TGRG`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _TGRG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
@@ -1725,6 +2013,10 @@ calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`OWA`](@ref) via [`_OWA`](@ref). Inputs correspond to those of [`_OWA`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
@@ -1736,6 +2028,10 @@ calc_risk(::dVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`dVar`](@ref) via [`_dVar`](@ref). Inputs correspond to those of [`_dVar`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::dVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _dVar(X * w)
@@ -1747,6 +2043,10 @@ calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`Skew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
     return _Skew(w, V)
@@ -1758,6 +2058,10 @@ calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SSkew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return _Skew(w, SV)
@@ -1774,6 +2078,10 @@ Compute the risk as the inverse of the length of `w`.
 
   - `w`: `N×1` vector of weights.
   - `delta`: is a displacement, used in [`risk_contribution`](@ref) and [`factor_risk_contribution`](@ref).
+
+# Outputs
+
+  - `r`: risk.
 """
 function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta

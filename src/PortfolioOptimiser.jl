@@ -23,10 +23,10 @@ include("./RiskMeasures/Functions/RiskMeasureFunctions.jl")
 include("./ParameterEstimation/Functions/ParameterEstimationFunctions.jl")
 ## Constraints
 include("./Constraints/Functions/ConstraintFunctions.jl")
-## Portfolio
-include("./Portfolio/Functions/PortfolioFunctions.jl")
 ## Optimisation
 include("./Optimisation/Functions/OptimisationFunctions.jl")
+## Portfolio
+include("./Portfolio/Functions/PortfolioFunctions.jl")
 
 # Extensions
 include("./Extensions/PortfolioOptimiserPlotsExtDefinitions.jl")

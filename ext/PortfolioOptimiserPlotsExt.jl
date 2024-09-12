@@ -176,8 +176,8 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                    marginal::Bool = false,
                                                    allocated::Bool = false,
                                                    kwargs_bar = (;), kwargs_line = (;))
-    solver_flag, sigma_flag = PortfolioOptimiser.set_rm_properties(rm, port.solvers,
-                                                                   port.cov)
+    solver_flag, sigma_flag = PortfolioOptimiser.set_rm_properties!(rm, port.solvers,
+                                                                    port.cov)
     fig = PortfolioOptimiser.plot_risk_contribution(port.assets,
                                                     if !allocated
                                                         port.optimal[type].weights
@@ -190,7 +190,7 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                     marginal = marginal,
                                                     kwargs_bar = kwargs_bar,
                                                     kwargs_line = kwargs_line)
-    PortfolioOptimiser.unset_set_rm_properties(rm, solver_flag, sigma_flag)
+    PortfolioOptimiser.unset_set_rm_properties!(rm, solver_flag, sigma_flag)
     return fig
 end
 

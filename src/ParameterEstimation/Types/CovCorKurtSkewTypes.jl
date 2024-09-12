@@ -563,7 +563,18 @@ function Base.setproperty!(obj::CorSB, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
 abstract type AbstractLoGo end
+```
+"""
+abstract type AbstractLoGo end
+
+"""
+```
+struct NoLoGo <: AbstractLoGo end
+```
+"""
 struct NoLoGo <: AbstractLoGo end
 
 """

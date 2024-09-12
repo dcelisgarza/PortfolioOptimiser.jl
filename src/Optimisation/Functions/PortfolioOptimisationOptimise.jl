@@ -60,7 +60,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     rmi = get_first_rm(rm)
     rmi.settings.ub = Inf
 
-    solver_flag, sigma_flag = set_rm_properties(rmi, port.solvers, sigma)
+    solver_flag, sigma_flag = set_rm_properties!(rmi, port.solvers, sigma)
     risk1, risk2 = risk_bounds(rmi, w1, w2; X = returns, V = port.V, SV = port.SV,
                                delta = 0)
 
@@ -122,6 +122,6 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                                 :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
-    unset_set_rm_properties(rmi, solver_flag, sigma_flag)
+    unset_set_rm_properties!(rmi, solver_flag, sigma_flag)
     return port.frontier[rmsym]
 end

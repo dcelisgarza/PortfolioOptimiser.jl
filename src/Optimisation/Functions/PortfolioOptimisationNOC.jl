@@ -5,22 +5,22 @@ function _noc_risks(rm::AbstractVector, port, returns, sigma, w1, w2, w3)
     risk3 = 0.0
     for r ∈ rm
         scale = r.settings.scale
-        solver_flag, sigma_flag = set_rm_properties(r, port.solvers, sigma)
+        solver_flag, sigma_flag = set_rm_properties!(r, port.solvers, sigma)
         risk1 += calc_risk(r, w1; X = returns, V = port.V, SV = port.SV) * scale
         risk2 += calc_risk(r, w2; X = returns, V = port.V, SV = port.SV) * scale
         risk3 += calc_risk(r, w3; X = returns, V = port.V, SV = port.SV) * scale
-        unset_set_rm_properties(r, solver_flag, sigma_flag)
+        unset_set_rm_properties!(r, solver_flag, sigma_flag)
     end
     return risk1, risk2, risk3
 end
 function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     rm = reduce(vcat, rm)
     scale = rm.settings.scale
-    solver_flag, sigma_flag = set_rm_properties(rm, port.solvers, sigma)
+    solver_flag, sigma_flag = set_rm_properties!(rm, port.solvers, sigma)
     risk1 = calc_risk(rm, w1; X = returns, V = port.V, SV = port.SV) * scale
     risk2 = calc_risk(rm, w2; X = returns, V = port.V, SV = port.SV) * scale
     risk3 = calc_risk(rm, w3; X = returns, V = port.V, SV = port.SV) * scale
-    unset_set_rm_properties(rm, solver_flag, sigma_flag)
+    unset_set_rm_properties!(rm, solver_flag, sigma_flag)
     return risk1, risk2, risk3
 end
 function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)

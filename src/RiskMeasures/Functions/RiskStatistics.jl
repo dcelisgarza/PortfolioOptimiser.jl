@@ -186,6 +186,10 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
 
       + if `true`: use the kelly return.
       + else: use the arithmetic return.
+
+# Outputs
+
+  - `sr`: risk adjusted return ratio.
 """
 function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
