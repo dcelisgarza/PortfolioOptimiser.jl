@@ -32,7 +32,7 @@ end
 abstract type DBHTSimilarity end
 ```
 
-Abstract type for subtyping methods for defining functions for computing similarity matrices used in DBHT clustering [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
+Abstract type for subtyping methods for defining functions for computing similarity matrices from used in DBHT clustering [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
 """
 abstract type DBHTSimilarity end
 
@@ -50,7 +50,7 @@ struct DBHTExp <: DBHTSimilarity end
 struct DBHTMaxDist <: DBHTSimilarity end
 ```
 
-Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise distance from the maximum value of the dissimilarity matrix [`dbht_similarity`](@ref).
+Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise squared distance from the maximum value of the dissimilarity matrix [`dbht_similarity`](@ref).
 """
 struct DBHTMaxDist <: DBHTSimilarity end
 
@@ -91,6 +91,12 @@ end
 ```
 
 Defines the parameters for computing [`DBHTs`](@ref) [DBHTs](@cite).
+
+# Parameters
+
+  - `distance`: method for computing the distance matrix from correlation ones [`DistanceMethod`](@ref).
+  - `similarity`: method for computing the similarity matrix from the correlation and/or distance ones [`DBHTSimilarity`](@ref), [`dbht_similarity`](@ref).
+  - `root_method`: method for choosing clique roots [`DBHTRootMethod`](@ref).
 """
 mutable struct DBHT <: HClustAlg
     distance::DistanceMethod
@@ -129,6 +135,10 @@ end
 ```
 
 Use the standardised silhouette score for computing the number of clusters in [`calc_k_clusters`](@ref).
+
+# Parameters
+
+  - `metric`: metric for computing the [`silhouettes`](https://juliastats.org/Clustering.jl/stable/validate.html#silhouettes_index).
 """
 mutable struct StdSilhouette <: NumClusterMethod
     metric::Union{Distances.SemiMetric, Nothing}
@@ -154,7 +164,9 @@ Defines the options for processing clustering results in an instance of [`Cluste
   - `branchorder`: parameter for ordering a dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
   - `k_method`: method subtyping [`NumClusterMethod`](@ref) for computing the number of clusters.
   - `k`: directly provide the number of clusters, if `0` use `k_method` for computing the number of clusters.
-  - `max_k`: maximum number of clusters, if `0` defaults to `⌈sqrt(N)⌉`, where `N` is the number of assets.
+  - `max_k`: maximum number of clusters.
+
+      + if `0`: defaults to `⌈sqrt(N)⌉`, where `N` is the number of assets.
 """
 mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol

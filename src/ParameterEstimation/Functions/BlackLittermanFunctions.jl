@@ -119,7 +119,6 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
     is_b_iish_b_is_b = inv_sigma_b * iish_b_is_b
     sigma_bbl = (inv_sigma - is_b_iish_b_is_b * tb * inv_sigma) \ I
     Pi_bbl = sigma_bbl * is_b_iish_b_is_b * inv_sigma_hat * Pi_hat
-
     mu = Pi_bbl .+ bl.rf
 
     if bl.constant

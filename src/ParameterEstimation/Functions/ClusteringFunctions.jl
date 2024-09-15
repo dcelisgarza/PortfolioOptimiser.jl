@@ -2,10 +2,42 @@
 ```
 dbht_similarity(::DBHTExp, S, D)
 ```
+
+Computes the [`DBHTExp`](@ref) similarity matrix.
+
+```math
+\\begin{align}
+S_{i,\\,j} = \\exp(-D_{i,\\,j})\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
+  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
 """
 function dbht_similarity(::DBHTExp, S, D)
     return exp.(-D)
 end
+"""
+```
+dbht_similarity(::DBHTMaxDist, S, D)
+```
+
+Computes the [`DBHTMaxDist`](@ref) similarity matrix.
+
+```math
+\\begin{align}
+S_{i,\\,j} = \\left\\lceil (\\max \\mathbf{D})^2 \\right\\rceil - D_{i,\\,j} ^ 2\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
+  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
+  - ``\\mathbf{D}`` is the distance matrix.
+"""
 function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
 end
