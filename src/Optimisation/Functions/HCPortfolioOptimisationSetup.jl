@@ -1,8 +1,10 @@
 function w_limits(type::NCO, datatype = Float64)
+    opt_kwargs = type.opt_kwargs
+    opt_kwargs_o = type.opt_kwargs_o
     port_kwargs = type.port_kwargs
     port_kwargs_o = type.port_kwargs_o
-    lo, hi = if isa(type, NCO) && (haskey(port_kwargs, :short) && port_kwargs.short ||
-                                   haskey(port_kwargs_o, :short) && port_kwargs_o.short)
+    lo, hi = if haskey(port_kwargs, :short) && port_kwargs.short ||
+                haskey(port_kwargs_o, :short) && port_kwargs_o.short
         la = nothing
         ha = nothing
         lb = nothing
@@ -43,6 +45,9 @@ function w_limits(type::NCO, datatype = Float64)
         end
 
         -max(la, lb), max(ha, hb)
+    elseif haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC}) ||
+           haskey(opt_kwargs_o, :class) && isa(opt_kwargs_o.class, Union{FM, FC})
+        -Inf, Inf
     else
         zero(datatype), one(datatype)
     end

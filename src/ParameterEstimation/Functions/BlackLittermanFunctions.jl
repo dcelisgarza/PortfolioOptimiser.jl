@@ -77,6 +77,24 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
 
     return mu, sigma, w
 end
+function black_litterman_statistics(X, mu, sigma; P::AbstractMatrix, Q::AbstractVector,
+                                    w::AbstractVector = Vector{Float64}(undef, 0),
+                                    cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                    mu_type::MeanEstimator = MuSimple(),
+                                    bl_type::BLType = BLType())
+    if isempty(w)
+        w = fill(1 / size(X, 2), size(X, 2))
+    end
+
+    if isnothing(bl_type.delta)
+        bl_type.delta = (dot(mu, w) - bl_type.rf) / dot(w, sigma, w)
+    end
+
+    bl_mu, bl_cov, bl_w = black_litterman(bl_type, X, P, Q, w; cov_type = cov_type,
+                                          mu_type = mu_type)
+
+    return w, bl_mu, bl_cov, bl_w
+end
 function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
                          B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -233,4 +251,42 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
     return mu_a[1:N], sigma_a[1:N, 1:N], w_a[1:N]
 end
 
-export black_litterman
+function black_litterman_factor_statistics(assets, X, mu, sigma, f_assets, F;
+                                           w::AbstractVector = Vector{Float64}(undef, 0),
+                                           B::Union{DataFrame, Nothing} = nothing,
+                                           P::Union{AbstractMatrix, Nothing} = nothing,
+                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                           Q::Union{AbstractVector, Nothing} = nothing,
+                                           Q_f::Union{AbstractVector, Nothing} = nothing,
+                                           factor_type::FactorType = FactorType(),
+                                           cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                           mu_type::MeanEstimator = MuSimple(),
+                                           f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                                           f_mu_type::MeanEstimator = MuSimple(),
+                                           bl_type::BlackLittermanFactor = BBLType())
+    if isempty(w)
+        w = fill(1 / size(X, 2), size(X, 2))
+    end
+
+    if isnothing(bl_type.delta)
+        bl_type.delta = (dot(mu, w) - bl_type.rf) / dot(w, sigma, w)
+    end
+
+    if isnothing(B) || isempty(B)
+        B = regression(factor_type.method, DataFrame(F, f_assets), DataFrame(X, assets))
+    end
+
+    namesB = names(B)
+    bl_type.constant = "const" ∈ namesB
+
+    blfm_mu, blfm_cov, blfm_w = black_litterman(bl_type, X; w = w, F = F,
+                                                B = Matrix(B[!,
+                                                             setdiff(namesB, ("tickers",))]),
+                                                P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+                                                cov_type = cov_type, mu_type = mu_type,
+                                                f_cov_type = f_cov_type,
+                                                f_mu_type = f_mu_type)
+    return w, B, blfm_mu, blfm_cov, blfm_w
+end
+
+export black_litterman, black_litterman_statistics, black_litterman_factor_statistics

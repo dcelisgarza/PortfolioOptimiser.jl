@@ -57,11 +57,11 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1)
     end
 
-    rmi = get_first_rm(rm)
-    rmi.settings.ub = Inf
+    rm_i = get_first_rm(rm)
+    rm_i.settings.ub = Inf
 
-    solver_flag, sigma_flag = set_rm_properties!(rmi, port.solvers, sigma)
-    risk1, risk2 = risk_bounds(rmi, w1, w2; X = returns, V = port.V, SV = port.SV,
+    solver_flag, sigma_flag = set_rm_properties!(rm_i, port.solvers, sigma)
+    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, V = port.V, SV = port.SV,
                                delta = 0)
 
     mus = range(ret1; stop = ret2, length = points)
@@ -81,15 +81,15 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                 w_ini = w.weights
             end
             if j != length(risks)
-                rmi.settings.ub = r
+                rm_i.settings.ub = r
             else
-                rmi.settings.ub = Inf
+                rm_i.settings.ub = Inf
             end
             w = optimise!(port; rm = rm, type = type, obj = MaxRet(), kelly = kelly,
                           class = class, w_ini = w_ini)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
-                rmi.settings.ub = Inf
+                rm_i.settings.ub = Inf
                 port.mu_l = m
                 w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
                               class = class, w_ini = w_ini)
@@ -99,17 +99,17 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         if isempty(w)
             continue
         end
-        rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
+        rk = calc_risk(rm_i, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
     end
-    rmi.settings.ub = Inf
+    rm_i.settings.ub = Inf
     w = optimise!(port; rm = rm, type = type, obj = Sharpe(; rf = rf), kelly = kelly,
                   class = class, w_ini = w_min_ini)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(rmi, w.weights; X = returns, V = port.V, SV = port.SV)
+        rk = calc_risk(rm_i, w.weights; X = returns, V = port.V, SV = port.SV)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
@@ -122,6 +122,6 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                                 :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
-    unset_set_rm_properties!(rmi, solver_flag, sigma_flag)
+    unset_set_rm_properties!(rm_i, solver_flag, sigma_flag)
     return port.frontier[rmsym]
 end

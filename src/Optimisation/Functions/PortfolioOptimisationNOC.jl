@@ -27,15 +27,18 @@ function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     w1 = if isempty(type.w_min)
-        optimise!(port; rm = rm, type = type.type, obj = MinRisk(), kelly = kelly,
-                  class = class, w_ini = type.w_min_ini).weights
+        _w_min = optimise!(port; rm = rm, type = type.type, obj = MinRisk(), kelly = kelly,
+                           class = class, w_ini = type.w_min_ini)
+        !isempty(_w_min) ? _w_min.weights : Vector{eltype(returns)}(undef, 0)
     else
         type.w_min
     end
 
     w2 = if isempty(type.w_max)
-        optimise!(port; rm = rm, type = type.type, obj = MaxRet(), kelly = kelly,
-                  class = class, w_ini = type.w_max_ini).weights
+        _w_max = optimise!(port; rm = rm, type = type.type, obj = MaxRet(), kelly = kelly,
+                           class = class, w_ini = type.w_max_ini)
+        !isempty(_w_max) ? _w_max.weights : Vector{eltype(returns)}(undef, 0)
+
     else
         type.w_max
     end

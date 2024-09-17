@@ -413,4 +413,26 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     return mu, sigma, returns, B
 end
 
-export prep_dim_red_reg, regression, loadings_matrix, risk_factors
+function factor_statistics(assets, returns, f_assets, f_returns;
+                           factor_type::FactorType = FactorType(),
+                           cov_type::PortfolioOptimiserCovCor = PortCovCor(),
+                           mu_type::MeanEstimator = MuSimple())
+    f_cov, f_mu = _sigma_mu(f_returns, cov_type, mu_type)
+
+    fm_mu, fm_cov, fm_returns, loadings = risk_factors(DataFrame(f_returns, f_assets),
+                                                       DataFrame(returns,
+                                                                 if isa(eltype(assets),
+                                                                        Union{String,
+                                                                              Symbol})
+                                                                     assets
+                                                                 else
+                                                                     Symbol.(assets)
+                                                                 end);
+                                                       factor_type = factor_type,
+                                                       cov_type = cov_type,
+                                                       mu_type = mu_type)
+
+    return f_cov, f_mu, fm_mu, fm_cov, fm_returns, loadings
+end
+
+export prep_dim_red_reg, regression, loadings_matrix, risk_factors, factor_statistics

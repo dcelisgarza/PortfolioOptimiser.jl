@@ -1,6 +1,6 @@
 function _optimise!(::HERC, port::HCPortfolio,
-                    rmi::Union{AbstractVector, <:AbstractRiskMeasure},
-                    rmo::Union{AbstractVector, <:AbstractRiskMeasure}, w_min, w_max)
+                    rm_i::Union{AbstractVector, <:AbstractRiskMeasure},
+                    rm_o::Union{AbstractVector, <:AbstractRiskMeasure}, w_min, w_max)
     nodes = to_tree(port.clusters)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
@@ -30,7 +30,7 @@ function _optimise!(::HERC, port::HCPortfolio,
 
         lc = Int[]
         rc = Int[]
-        for r ∈ rmo
+        for r ∈ rm_o
             solver_flag = _set_rm_solvers(r, port.solvers)
             scale = r.settings.scale
             for cluster ∈ clusters
@@ -58,7 +58,7 @@ function _optimise!(::HERC, port::HCPortfolio,
     for i ∈ 1:(port.k)
         cidx = idx .== i
         clusters = findall(cidx)
-        for r ∈ rmi
+        for r ∈ rm_i
             solver_flag = _set_rm_solvers(r, port.solvers)
             scale = r.settings.scale
             risk[cidx] .+= naive_risk(port, clusters, r) * scale

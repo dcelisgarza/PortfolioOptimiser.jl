@@ -185,19 +185,13 @@ Compute the factor statistics. See the argument types' docs for details.
 function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                             mu_type::MeanEstimator = MuSimple())
-    returns = port.returns
-    f_returns = port.f_returns
-
-    port.f_cov, port.f_mu = _sigma_mu(f_returns, cov_type, mu_type)
-
-    port.fm_mu, port.fm_cov, port.fm_returns, port.loadings = risk_factors(DataFrame(f_returns,
-                                                                                     port.f_assets),
-                                                                           DataFrame(returns,
-                                                                                     port.assets);
-                                                                           factor_type = factor_type,
-                                                                           cov_type = cov_type,
-                                                                           mu_type = mu_type)
-
+    port.f_cov, port.f_mu, port.fm_mu, port.fm_cov, port.fm_returns, port.loadings = factor_statistics(port.assets,
+                                                                                                       port.returns,
+                                                                                                       port.f_assets,
+                                                                                                       port.f_returns;
+                                                                                                       factor_type = factor_type,
+                                                                                                       cov_type = cov_type,
+                                                                                                       mu_type = mu_type)
     port.regression_type = factor_type.method
 
     return nothing
@@ -229,18 +223,15 @@ function black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::Abst
                                      cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                      mu_type::MeanEstimator = MuSimple(),
                                      bl_type::BLType = BLType())
-    if isempty(w)
-        w = fill(1 / size(port.returns, 2), size(port.returns, 2))
-    end
-    port.bl_bench_weights = w
-
-    if isnothing(bl_type.delta)
-        bl_type.delta = (dot(port.mu, w) - bl_type.rf) / dot(w, port.cov, w)
-    end
-
-    port.bl_mu, port.bl_cov, missing = black_litterman(bl_type, port.returns, P, Q, w;
-                                                       cov_type = cov_type,
-                                                       mu_type = mu_type)
+    port.bl_bench_weights, port.bl_mu, port.bl_cov = black_litterman_statistics(port.returns,
+                                                                                port.mu,
+                                                                                port.cov;
+                                                                                P = P,
+                                                                                Q = Q,
+                                                                                w = w,
+                                                                                cov_type = cov_type,
+                                                                                mu_type = mu_type,
+                                                                                bl_type = bl_type)[1:3]
 
     return nothing
 end
@@ -296,38 +287,24 @@ function black_litterman_factor_statistics!(port::Portfolio;
                                             f_cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                             f_mu_type::MeanEstimator = MuSimple(),
                                             bl_type::BlackLittermanFactor = BBLType())
-    if isempty(w)
-        w = fill(1 / size(port.returns, 2), size(port.returns, 2))
-    end
-    port.bl_bench_weights = w
-
-    if isnothing(bl_type.delta)
-        bl_type.delta = (dot(port.mu, w) - bl_type.rf) / dot(w, port.cov, w)
-    end
-
-    if isnothing(B) || isempty(B)
-        if isempty(port.loadings)
-            port.loadings = regression(factor_type.method,
-                                       DataFrame(port.f_returns, port.f_assets),
-                                       DataFrame(port.returns, port.assets))
-            port.regression_type = factor_type.method
-        end
-        B = port.loadings
-    else
-        port.loadings = B
-    end
-
-    namesB = names(B)
-    bl_type.constant = "const" ∈ namesB
-    B = Matrix(B[!, setdiff(namesB, ("tickers",))])
-
-    port.blfm_mu, port.blfm_cov, missing = black_litterman(bl_type, port.returns; w = w,
-                                                           F = port.f_returns, B = B, P = P,
-                                                           P_f = P_f, Q = Q, Q_f = Q_f,
-                                                           cov_type = cov_type,
-                                                           mu_type = mu_type,
-                                                           f_cov_type = f_cov_type,
-                                                           f_mu_type = f_mu_type)
+    port.bl_bench_weights, port.loadings, port.blfm_mu, port.blfm_cov = black_litterman_factor_statistics(port.assets,
+                                                                                                          port.returns,
+                                                                                                          port.mu,
+                                                                                                          port.cov,
+                                                                                                          port.f_assets,
+                                                                                                          port.f_returns;
+                                                                                                          w = w,
+                                                                                                          B = B,
+                                                                                                          P = P,
+                                                                                                          P_f = P_f,
+                                                                                                          Q = Q,
+                                                                                                          Q_f = Q_f,
+                                                                                                          factor_type = factor_type,
+                                                                                                          cov_type = cov_type,
+                                                                                                          mu_type = mu_type,
+                                                                                                          f_cov_type = f_cov_type,
+                                                                                                          f_mu_type = f_mu_type,
+                                                                                                          bl_type = bl_type)[1:4]
     return nothing
 end
 

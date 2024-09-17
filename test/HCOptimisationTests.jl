@@ -5,6 +5,56 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "NCO factors" begin
+    factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+
+    f_returns = Matrix(DataFrame(percentchange(factors))[!, 2:end])
+    f_assets = colnames(factors)
+    w1 = optimise!(portfolio;
+                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
+                              opt_kwargs = (; obj = MinRisk())))
+
+    w2 = optimise!(portfolio;
+                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
+                              opt_kwargs = (; class = FM(), obj = MinRisk())))
+    wt = [0.05109914899016135, 0.050215140451460485, 0.04135353593026219,
+          0.02681788291627889, 0.0322776857129373, 0.060200449755958466,
+          0.014445885728257432, 0.06587623061278468, 0.0390439498991421,
+          0.044348093011938955, 0.10223317402175182, 0.0337502443959161,
+          0.012280071607071886, 0.07520118305412048, 0.024178566447285516,
+          0.04723839078418083, 0.06545813938183885, 0.08828152320800649,
+          0.05832385767940247, 0.06737684641124382]
+    @test isapprox(w2.weights, wt)
+    @test !isapprox(w1.weights, w2.weights)
+
+    w3 = optimise!(portfolio;
+                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
+                              opt_kwargs = (; type = RP(), obj = MinRisk())))
+
+    portfolio.w_min = -Inf
+    portfolio.w_max = Inf
+    w4 = optimise!(portfolio;
+                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
+                              opt_kwargs = (; type = RP(), class = FC(; flag = false),
+                                            obj = MinRisk())))
+    wt = [-0.12407177364458641, 0.1427703921204258, 0.14870426246234558, -0.168918037096896,
+          -0.23131921539398562, -0.6300055700857549, -1.5987997644882643,
+          0.3961820460755596, 0.4191537108624059, -0.5503732948069809, -0.20068826394299075,
+          -1.492928011341361, -1.7421410840912706, 0.6998931643293858, 2.4350818491417794,
+          3.5134665164530956, 0.20569006836521228, -0.7976334388314399, 0.3627068910671518,
+          0.2132295528611723]
+    @test isapprox(w4.weights, wt)
+    @test !isapprox(w3.weights, w4.weights)
+end
+
 @testset "NCO" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -839,13 +889,13 @@ l = 2.0
     rm = Kurt()
     w76 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w77 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rmo = Kurt(),
+    w77 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rm_o = Kurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
     w78 = optimise!(portfolio; rm = [rm], cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w79 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rmo = Kurt(),
+    w79 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rm_o = Kurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = MaxRet())))
     w80 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
@@ -891,7 +941,7 @@ l = 2.0
     @test isapprox(w79.weights, w4t)
     @test isapprox(w80.weights, w5t, rtol = 0.0005)
 
-    w81 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rmo = Kurt(),
+    w81 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rm_o = Kurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = MinRisk())))
@@ -899,7 +949,7 @@ l = 2.0
                     hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Utility(; l = l))))
-    w83 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rmo = Kurt(),
+    w83 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rm_o = Kurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Sharpe(; rf = rf))))
@@ -955,13 +1005,13 @@ l = 2.0
     rm = SKurt()
     w86 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w87 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rmo = SKurt(),
+    w87 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rm_o = SKurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
     w88 = optimise!(portfolio; rm = [rm], cluster = false, hclust_alg = hclust_alg,
                     hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w89 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rmo = SKurt(),
+    w89 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rm_o = SKurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; opt_kwargs = (; obj = MaxRet())))
     w90 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
@@ -1007,7 +1057,7 @@ l = 2.0
     @test isapprox(w89.weights, w4t)
     @test isapprox(w90.weights, w5t, rtol = 0.0005)
 
-    w91 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rmo = SKurt(),
+    w91 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rm_o = SKurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = MinRisk())))
@@ -1015,7 +1065,7 @@ l = 2.0
                     hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Utility(; l = l))))
-    w93 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rmo = SKurt(),
+    w93 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rm_o = SKurt(),
                     cluster = false, hclust_alg = hclust_alg, hclust_opt = hclust_opt,
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Sharpe(; rf = rf))))
@@ -1491,7 +1541,7 @@ end
     hclust_opt = HCOpt()
 
     w1 = optimise!(portfolio; cluster = true, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
+                   hclust_opt = hclust_opt, rm = SD(), rm_o = CDaR(),
                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = EKelly()),
                               opt_kwargs_o = (; obj = Utility(; l = 10 * l),
                                               kelly = NoKelly())))
@@ -1505,7 +1555,7 @@ end
     @test isapprox(w1.weights, wt, rtol = 5.0e-5)
 
     w2 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
+                   hclust_opt = hclust_opt, rm = SD(), rm_o = CDaR(),
                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = NoKelly()),
                               opt_kwargs_o = (; obj = Utility(; l = 10 * l),
                                               kelly = EKelly())))
@@ -1519,7 +1569,7 @@ end
     @test isapprox(w2.weights, wt)
 
     w3 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
+                   hclust_opt = hclust_opt, rm = SD(), rm_o = CDaR(),
                    type = NCO(;
                               opt_kwargs = (; obj = Utility(; l = 10 * l),
                                             kelly = EKelly()),
@@ -1534,7 +1584,7 @@ end
     @test isapprox(w3.weights, wt)
 
     w4 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(),
+                   hclust_opt = hclust_opt, rm = SD(), rm_o = CDaR(),
                    type = NCO(;
                               opt_kwargs = (; obj = Utility(; l = 10 * l),
                                             kelly = NoKelly()),
@@ -1556,7 +1606,7 @@ end
 
     hclust_alg = DBHT()
     w5 = optimise!(portfolio; cluster = true, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rmo = SD(), rm = CDaR(), type = HERC())
+                   hclust_opt = hclust_opt, rm_o = SD(), rm = CDaR(), type = HERC())
     wt = [0.10871059727246735, 0.05431039601849186, 0.10533650868181384,
           0.027317993835046576, 0.07431929926304212, 0.00954218610227609,
           0.024606833580412473, 0.04020099981391352, 0.022469670005659467,
@@ -1567,7 +1617,7 @@ end
     @test isapprox(w5.weights, wt)
 
     w6 = optimise!(portfolio; cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, rm = SD(), rmo = CDaR(), type = HERC())
+                   hclust_opt = hclust_opt, rm = SD(), rm_o = CDaR(), type = HERC())
     wt = [0.08320752059200986, 0.08290256524137433, 0.07517557492907619,
           0.06023885608558014, 0.06626202578072789, 0.024707098983435642,
           0.029699159972552684, 0.0942847206692912, 0.019894956146041556,
