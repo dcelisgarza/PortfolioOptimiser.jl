@@ -421,9 +421,9 @@ function factor_statistics(assets, returns, f_assets, f_returns;
 
     fm_mu, fm_cov, fm_returns, loadings = risk_factors(DataFrame(f_returns, f_assets),
                                                        DataFrame(returns,
-                                                                 if isa(eltype(assets),
-                                                                        Union{String,
-                                                                              Symbol})
+                                                                 if any(eltype(assets) .<:
+                                                                        (AbstractString,
+                                                                         Symbol))
                                                                      assets
                                                                  else
                                                                      Symbol.(assets)
