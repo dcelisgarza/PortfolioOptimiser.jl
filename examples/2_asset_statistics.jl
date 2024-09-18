@@ -33,18 +33,7 @@ TimeSeries.rename!(prices, Symbol.(assets));
 
 # ## 2. Instantiating an instance of [`Portfolio`](@ref).
 
-portfolio = Portfolio(; prices = prices,
-                      ## Continuous optimiser.
-                      solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                       :check_sol => (allow_local = true,
-                                                                      allow_almost = true),
-                                                       :params => Dict("verbose" => false,
-                                                                       "max_step_fraction" => 0.7))),
-                      ## MIP optimiser for the discrete allocation.
-                      alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                          :check_sol => (allow_local = true,
-                                                                         allow_almost = true),
-                                                          :params => Dict("log_to_console" => false))));
+portfolio = Portfolio(; prices = prices);
 
 #=
 ## 3 Asset statistics

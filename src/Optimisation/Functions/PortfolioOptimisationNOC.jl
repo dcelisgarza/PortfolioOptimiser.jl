@@ -44,8 +44,9 @@ function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
     end
 
     w3 = if isempty(type.w_opt)
-        optimise!(port; rm = rm, type = type.type, obj = obj, kelly = kelly, class = class,
-                  w_ini = w_ini).weights
+        _w_opt = optimise!(port; rm = rm, type = type.type, obj = obj, kelly = kelly,
+                           class = class, w_ini = w_ini)
+        !isempty(_w_opt) ? _w_opt.weights : Vector{eltype(returns)}(undef, 0)
     else
         type.w_opt
     end

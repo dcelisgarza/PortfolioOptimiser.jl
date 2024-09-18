@@ -1,7 +1,7 @@
 #=
 # Example 0: Not financial advice
 
-This example goes over a sample workflow using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/).
+This example goes over a sample workflow using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). I use a similar strategy myself. This is just an example of the things that can be done with the library.
 
 ## 1. Downloading the data
 
@@ -23,20 +23,11 @@ fmt1 = (v, i, j) -> begin
         return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     end
 end;
-
 fmt2 = (v, i, j) -> begin
-    if j == 5
-        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
-    else
+    if j != 5
         return v
-    end
-end;
-
-fmt3 = (v, i, j) -> begin
-    if j ∈ (2, 6, 7)
-        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     else
-        return v
+        return isa(v, Number) ? "$(round(v*100, digits=3)) %" : v
     end
 end;
 
@@ -64,55 +55,66 @@ TimeSeries.rename!(prices, Symbol.(assets))
 ## 2. Filter worst stocks
 
 If we have hundreds or thousands of stocks, we should probably do some pruning of the worst stocks using a cheap method. For this we'll use the [`HERC`](@ref) optimisation type. We'll filter the stocks using a few different risk measures. The order matters here, as each risk measure will filter out the worst performing stocks for each iteration.
+
+First we need our filter functions.
 =#
 
-rms = [SD(), SSD(), CVaR(), CDaR(), Skew()]
-
-# This tells us the bottom percentile we need to eliminate at each iteration so we have at most `x %` of the original stocks after `n` steps.
+## This tells us the bottom percentile we need to eliminate at each iteration so we have at most `x %` of the original stocks after `n` steps.
 percentile_after_n(x, n) = 1 - exp(log(x) / n)
+
+function filter_best(assets, rms, best, cov_type, cor_type)
+    ## Copy the assets to a vector that will be shrunk at every iteration.
+    assets_best = copy(assets)
+    ## Compute the bottom percentile we need to remove after each iteration.
+    q = percentile_after_n(best, length(rms))
+    ## Loop over all risk measures.
+    for rm ∈ rms
+        hp = HCPortfolio(; prices = prices[Symbol.(assets_best)])
+        asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
+                          set_kurt = false, set_skurt = false, set_mu = false,
+                          set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
+        w = optimise!(hp; type = HERC(), rm = rm,
+                      hclust_opt = HCOpt(; k_method = StdSilhouette()))
+
+        if isempty(w)
+            continue
+        end
+
+        w = w.weights
+
+        ## Only take the stocks above the q'th quantile at each step.
+        qidx = w .>= quantile(w, q)
+        assets_best = assets_best[qidx]
+    end
+    return assets_best
+end
+
+# Now we can define the parameters for our filtering procedure.
+
+## Risk measures.
+rms = [SD(), SSD(), CVaR(), CDaR(), Skew()]
 
 ## Lets say we want to have 50% of all stocks at the end.
 best = 0.5
-## Copy the assets to a vector that will be shrunk at every iteration.
-assets_best = copy(assets)
-## Compute the bottom percentile we need to remove after each iteration.
-q = percentile_after_n(best, length(rms))
+
 ## Lets use denoised and detoned covariance and correlation types so we can get rid of market forces. We're using the normal covariance as it's not very expensive to compute and we've made it more robust by denoising and detoning.
 covcor_type = PortCovCor(; ce = CovFull(), denoise = DenoiseFixed(; detone = true))
-## Loop over all risk measures.
-for rm ∈ rms
-    hp = HCPortfolio(; prices = prices[Symbol.(assets_best)])
-    asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, set_kurt = false,
-                      set_skurt = false, set_mu = false,
-                      set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
-    w = optimise!(hp; type = HERC(), rm = rm,
-                  hclust_opt = HCOpt(; k_method = StdSilhouette()))
 
-    if isempty(w)
-        continue
-    end
-
-    w = w.weights
-
-    qidx = w .>= quantile(w, q)
-    assets_best = assets_best[qidx]
-end
+## Filter assets to only have the best ones.
+assets_best = filter_best(assets, rms, best, covcor_type, covcor_type)
 
 # We can see that we end up with the best 11 stocks.
 
 assets_best
 
-# We can then use fancier optimisations and statistics with the smaller stock universe.
+# We can now use fancier optimisations and statistics with the smaller stock universe.
 
-hp = HCPortfolio(;
-                 prices = prices[Symbol.(["AAPL", "BBY", "DELL", "DG", "DRS", "LULU", "MCI",
-                                          "MSFT", "NVDA", "PLNT", "SBUX", "SIRI", "STX"])],
+hp = HCPortfolio(; prices = prices[Symbol.(assets_best)],
                  ## Continuous optimiser.
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false,
-                                                                  "max_step_fraction" => 0.85))),
+                 solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                   :check_sol => (allow_local = true,
+                                                                  allow_almost = true),
+                                                   :params => Dict("verbose" => false))),
                  ## MIP optimiser for the discrete allocation.
                  alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                      :check_sol => (allow_local = true,
@@ -124,9 +126,112 @@ mu_type = MuBOP()
 asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
 
-# We'll use the nested clustering optimisation. We will also use the near optimal centering type of portfolio for the intra- and inter-cluster optimisations with the risk adjusted return 
-w = optimise!(hp;
+# We'll use the nested clustering optimisation. We will also use the maximum risk adjusted return ratio objective function. We will also allocate the portfolio according to our availabe cash and the latest prices.
+w = optimise!(hp; rm = RLDaR(), hclust_opt = HCOpt(; k_method = TwoDiff()),
               type = NCO(;
-                         opt_kwargs = (; type = NOC(),
-                                       obj = Sharpe(; rf = 3.5 / 100 / 254))), rm = RLDaR(),
-              hclust_opt = HCOpt(; k_method = TwoDiff()))
+                         ## Risk adjusted return ratio objective function.
+                         opt_kwargs = (; obj = Sharpe(; rf = 3.5 / 100 / 252))))
+
+## Say we have 3000 dollars at our disposal to allocate the portfolio
+wa = allocate!(hp, :NCO; investment = 3000)
+
+pretty_table(w; formatters = fmt1)
+pretty_table(wa; formatters = fmt2)
+
+# However, we can do one better, we can take the worst performing stocks as well and short them. Since we're starting from so few stocks we'll adjust the best percentage to only take the best 30% after all filters.
+
+function filter_worst(assets, rms, best, cov_type, cor_type)
+    assets_worst = copy(assets)
+    ## Compute the bottom percentile we need to remove after each iteration.
+    q = percentile_after_n(best, length(rms))
+    ## Loop over all risk measures.
+    for rm ∈ rms
+        hp = HCPortfolio(; prices = prices[Symbol.(assets_worst)])
+        asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
+                          set_kurt = false, set_skurt = false, set_mu = false,
+                          set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
+        w = optimise!(hp; type = HERC(), rm = rm,
+                      hclust_opt = HCOpt(; k_method = StdSilhouette()))
+
+        if isempty(w)
+            continue
+        end
+
+        w = w.weights
+
+        ## Only take the stocks below the (1-q)'th quantile at each step.
+        qidx = w .<= quantile(w, 1 - q)
+        assets_worst = assets_worst[qidx]
+    end
+    return assets_worst
+end
+
+# Now we can define the parameters for our filtering procedures.
+
+## Risk measures.
+rms = [SD(), SSD(), CVaR(), CDaR(), Skew()]
+
+## Lets say we want to have 50% of all stocks at the end, 30% of the best, and 20% of the worst.
+best = 0.3
+worst = 0.2
+
+## Lets use denoised and detoned covariance and correlation types so we can get rid of market forces. We're using the normal covariance as it's not very expensive to compute and we've made it more robust by denoising and detoning.
+covcor_type = PortCovCor(; ce = CovFull(), denoise = DenoiseFixed(; detone = true))
+
+## Filter assets to only have the best ones.
+assets_best = filter_best(assets, rms, best, covcor_type, covcor_type)
+
+## Filter assets to only have the worst ones.
+assets_worst = filter_worst(assets, rms, worst, covcor_type, covcor_type)
+
+## Lets join the best and worst tickers into a single vector.
+assets_best_worst = union(assets_best, assets_worst)
+
+# This time we'll make a market neutral portfolio using the NCO optimisation type.
+
+hp = HCPortfolio(; prices = prices[Symbol.(assets_best_worst)],
+                 ## Continuous optimiser.
+                 solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                   :check_sol => (allow_local = true,
+                                                                  allow_almost = true),
+                                                   :params => Dict("verbose" => false))),
+                 ## MIP optimiser for the discrete allocation.
+                 alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                                     :check_sol => (allow_local = true,
+                                                                    allow_almost = true),
+                                                     :params => Dict("log_to_console" => false))))
+
+covcor_type = PortCovCor(; ce = CorGerber1())
+mu_type = MuBOP()
+asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
+                  set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
+
+# For this we need to use the max ret objective and set the absolue of the sum of the short weights to 1, as well as the sum of the long weights to 1.
+
+## We need to set w_min and w_max weight constraints of the hierarchical clustering portfolio so the weights can be negative.
+hp.w_min = -1
+hp.w_max = 1
+
+## The short parameters for the portfolios optimised via NCO.
+short = true
+short_u = 1
+long_u = 1
+
+w = optimise!(hp; rm = RLDaR(), hclust_opt = HCOpt(; k_method = TwoDiff()),
+              type = NCO(;
+                         ## Allow shorting in the sub portfolios, as well as the synthetic portfolio optimised by NCO. 
+                         ## We also set the the values of `short_u` and `long_u` to be equal to 1.
+                         port_kwargs = (; short = short, short_u = short_u,
+                                        long_u = long_u),
+                         ## Max return objective.
+                         opt_kwargs = (; obj = MaxRet())
+                         ##
+                         )
+              ##
+              )
+
+wa = allocate!(hp, :NCO; investment = 3000, short = short, short_u = short_u,
+               long_u = long_u)
+
+pretty_table(w; formatters = fmt1)
+pretty_table(wa; formatters = fmt2)
