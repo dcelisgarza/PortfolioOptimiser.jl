@@ -37,15 +37,21 @@ function _set_absolute_dist(args...)
 end
 function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
     if isa(dist_type, DistanceCanonical)
-        dist_type = if isa(cor_type.ce, CorMutualInfo)
+        dist_type = if hasproperty(cor_type, :ce) && isa(cor_type.ce, CorMutualInfo) ||
+                       !hasproperty(cor_type, :ce) && isa(cor_type, CorMutualInfo)
             DistanceVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
-        elseif isa(cor_type.ce, CorLTD)
+        elseif hasproperty(cor_type, :ce) && isa(cor_type.ce, CorLTD) ||
+               !hasproperty(cor_type, :ce) && isa(cor_type, CorLTD)
             DistanceLog()
         else
             DistanceMLP()
         end
     end
-    _set_absolute_dist(cor_type.ce, dist_type)
+    if hasproperty(cor_type, :ce)
+        _set_absolute_dist(cor_type.ce, dist_type)
+    else
+        _set_absolute_dist(cor_type, dist_type)
+    end
     return dist_type
 end
 function _bin_width_func(::Knuth)

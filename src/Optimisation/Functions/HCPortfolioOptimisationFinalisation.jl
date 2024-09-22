@@ -11,7 +11,7 @@ function finalise_weights(type::NCO, port, weights, w_min, w_max, max_iter)
     opt_kwargs_o = type.opt_kwargs_o
     port_kwargs = type.port_kwargs
     port_kwargs_o = type.port_kwargs_o
-    port.optimal[stype] = if !isempty(port.fail) || any(.!isfinite.(weights))
+    port.optimal[stype] = if all(iszero.(weights)) || any(.!isfinite.(weights))
         port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
         DataFrame()
     elseif haskey(port_kwargs, :short) && port_kwargs.short ||

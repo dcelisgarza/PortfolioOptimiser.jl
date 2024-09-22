@@ -90,7 +90,7 @@ function asset_statistics!(port::AbstractPortfolio;
 
     if isa(port, HCPortfolio)
         if set_cor || set_dist
-            rho = cor(cor_type, returns)
+            rho = Matrix(cor(cor_type, returns))
             if set_cor
                 port.cor = rho
             end

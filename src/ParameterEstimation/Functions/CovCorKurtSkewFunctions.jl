@@ -1289,7 +1289,11 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    rho = Matrix(cor(ce.ce, X))
+    rho = try
+        Matrix(cor(ce.ce, X))
+    catch
+        cov2cor(Matrix(cov(ce.ce, X)))
+    end
     posdef_fix!(ce.posdef, rho)
     denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
     logo!(ce.logo, ce.posdef, rho)
