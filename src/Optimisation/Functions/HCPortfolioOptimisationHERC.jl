@@ -34,19 +34,24 @@ function _optimise!(::HERC, port::HCPortfolio,
             solver_flag = _set_rm_solvers(r, port.solvers)
             scale = r.settings.scale
             for cluster ∈ clusters
-                _risk = cluster_risk(port, cluster, r) * scale
                 if issubset(cluster, ln)
-                    lrisk += _risk
+                    lrisk += cluster_risk(port, cluster, r) * scale
                     append!(lc, cluster)
                 elseif issubset(cluster, rn)
-                    rrisk += _risk
+                    rrisk += cluster_risk(port, cluster, r) * scale
                     append!(rc, cluster)
                 end
             end
             _unset_rm_solvers!(r, solver_flag)
         end
+
+        risk = lrisk + rrisk
+        if iszero(risk)
+            continue
+        end
+
         # Allocate weight to clusters.
-        alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
+        alpha_1 = one(lrisk) - lrisk / risk
         # Weight constraints.
         alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
 

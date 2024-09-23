@@ -157,8 +157,7 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
         gaps[1:(end - 2)] .= W_list[1:(end - 2)] .+ W_list[3:end] .- 2 * W_list[2:(end - 1)]
     end
 
-    k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps)
-    return k
+    return all(isinf.(gaps)) ? length(gaps) : argmax(gaps)
 end
 function _calc_k_clusters(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
     return _two_diff_gap_stat(dist, clustering, max_k)
@@ -180,9 +179,7 @@ function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    k = all(.!isfinite.(W_list)) ? length(W_list) : k = argmax(W_list)
-
-    return k
+    return all(.!isfinite.(W_list)) ? length(W_list) : argmax(W_list)
 end
 function _calc_k_clusters(method::StdSilhouette, dist::AbstractMatrix, clustering,
                           max_k::Integer)
