@@ -120,16 +120,14 @@ function to_tree(a::Hclust)
 end
 function _two_diff_gap_stat(dist, clustering, max_k = 0)
     N = size(dist, 1)
-    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
-
     if iszero(max_k)
-        max_k = ceil(Int, sqrt(size(dist, 1)))
+        max_k = ceil(Int, sqrt(N))
     end
-
-    c1 = min(N, max_k)
+    c1 = min(ceil(Int, sqrt(N)), max_k)
+    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:c1]
     W_list = Vector{eltype(dist)}(undef, c1)
-
-    for i ∈ 1:c1
+    W_list[1] = -Inf
+    for i ∈ 2:c1
         lvl = cluster_lvls[i]
         c2 = maximum(unique(lvl))
         D_list = Vector{eltype(dist)}(undef, c2)
@@ -160,7 +158,6 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
     end
 
     k = all(isinf.(gaps)) ? length(gaps) : k = argmax(gaps)
-
     return k
 end
 function _calc_k_clusters(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
@@ -168,14 +165,13 @@ function _calc_k_clusters(::TwoDiff, dist::AbstractMatrix, clustering, max_k::In
 end
 function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
     N = size(dist, 1)
-    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:N]
-
     if iszero(max_k)
-        max_k = ceil(Int, sqrt(size(dist, 1)))
+        max_k = ceil(Int, sqrt(N))
     end
-
-    c1 = min(N, max_k)
+    c1 = min(ceil(Int, sqrt(N)), max_k)
+    cluster_lvls = [cutree(clustering; k = i) for i ∈ 1:c1]
     W_list = Vector{eltype(dist)}(undef, c1)
+
     W_list[1] = -Inf
     for i ∈ 2:c1
         lvl = cluster_lvls[i]
