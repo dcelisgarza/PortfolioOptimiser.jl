@@ -46,10 +46,6 @@ function _optimise!(::HERC, port::HCPortfolio,
         end
 
         risk = lrisk + rrisk
-        if iszero(risk)
-            continue
-        end
-
         # Allocate weight to clusters.
         alpha_1 = one(lrisk) - lrisk / risk
         # Weight constraints.

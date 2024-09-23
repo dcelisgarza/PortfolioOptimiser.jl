@@ -118,7 +118,108 @@ function to_tree(a::Hclust)
     end
     return nd, d
 end
-function _two_diff_gap_stat(dist, clustering, max_k = 0)
+function _validate_k_value(clustering, nodes, k)
+    idx = cutree(clustering; k = k)
+    clusters = Vector{Vector{Int}}(undef, length(minimum(idx):maximum(idx)))
+    for i ∈ eachindex(clusters)
+        clusters[i] = findall(idx .== i)
+    end
+
+    for i ∈ nodes[1:(k - 1)]
+        if is_leaf(i)
+            continue
+        end
+        count = 0
+        ln = pre_order(i.left)
+        rn = pre_order(i.right)
+
+        for cluster ∈ clusters
+            if issubset(cluster, ln) || issubset(cluster, rn)
+                count += 1
+            end
+        end
+
+        if count == 0
+            return false
+        end
+    end
+    return true
+end
+function _valid_k_clusters(arr::AbstractArray, clustering)
+    nodes = to_tree(clustering)[2]
+    heights = [i.height for i ∈ nodes]
+    nodes = nodes[sortperm(heights; rev = true)]
+
+    while true
+        k = all(.!isfinite.(arr)) ? length(arr) : argmax(arr)
+        if _validate_k_value(clustering, nodes, k)
+            return k
+        elseif all(isinf.(arr))
+            return 1
+        end
+        arr[k] = -Inf
+    end
+end
+function _calc_k_clusters(k::Integer, max_k::Integer, clustering)
+    N = length(clustering.order)
+    if iszero(max_k)
+        max_k = ceil(Int, sqrt(N))
+    end
+    max_k = min(ceil(Int, sqrt(N)), max_k)
+    if k > max_k
+        k = max_k
+    end
+
+    nodes = to_tree(clustering)[2]
+    heights = [i.height for i ∈ nodes]
+    nodes = nodes[sortperm(heights; rev = true)]
+    flag = _validate_k_value(clustering, nodes, k)
+
+    if !flag
+        # Above k
+        flagu = false
+        du = 0
+        ku = k
+        for i ∈ (k + 1):max_k
+            flagu = _validate_k_value(clustering, nodes, i)
+            if flagu
+                ku = i
+                break
+            end
+        end
+        if flagu
+            du = ku - k
+        end
+
+        # Below k
+        flagl = false
+        dl = 0
+        kl = k
+        for i ∈ (k - 1):-1:1
+            flagl = _validate_k_value(clustering, nodes, i)
+            if flagl
+                kl = i
+                break
+            end
+        end
+        if flagl
+            dl = k - kl
+        end
+
+        if du != 0 && dl == 0
+            k = ku
+        elseif du == 0 && dl != 0
+            k = kl
+        elseif du == dl
+            k = max_k - ku > kl - 1 ? ku : kl
+        else
+            k = min(du, dl) == du ? ku : kl
+        end
+    end
+
+    return k
+end
+function _calc_k_clusters(method::TwoDiff, max_k::Integer, dist::AbstractMatrix, clustering)
     N = size(dist, 1)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -157,12 +258,11 @@ function _two_diff_gap_stat(dist, clustering, max_k = 0)
         gaps[1:(end - 2)] .= W_list[1:(end - 2)] .+ W_list[3:end] .- 2 * W_list[2:(end - 1)]
     end
 
-    return all(isinf.(gaps)) ? length(gaps) : argmax(gaps)
+    return _valid_k_clusters(gaps, clustering)
 end
-function _calc_k_clusters(::TwoDiff, dist::AbstractMatrix, clustering, max_k::Integer)
-    return _two_diff_gap_stat(dist, clustering, max_k)
-end
-function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
+function _calc_k_clusters(method::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
+                          clustering)
+    metric = method.metric
     N = size(dist, 1)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -179,11 +279,7 @@ function _std_silhouette_score(dist, clustering, max_k = 0, metric = nothing)
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    return all(.!isfinite.(W_list)) ? length(W_list) : argmax(W_list)
-end
-function _calc_k_clusters(method::StdSilhouette, dist::AbstractMatrix, clustering,
-                          max_k::Integer)
-    return _std_silhouette_score(dist, clustering, max_k, method.metric)
+    return _valid_k_clusters(W_list, clustering)
 end
 """
 ```
@@ -191,10 +287,11 @@ calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
 ```
 """
 function calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
-    if !iszero(hclust_opt.k)
-        return hclust_opt.k
+    return if !iszero(hclust_opt.k)
+        _calc_k_clusters(hclust_opt.k, hclust_opt.max_k, clustering)
+    else
+        _calc_k_clusters(hclust_opt.k_method, hclust_opt.max_k, dist, clustering)
     end
-    return _calc_k_clusters(hclust_opt.k_method, dist, clustering, hclust_opt.max_k)
 end
 
 function _hcluster(ca::HAC, X::AbstractMatrix,
