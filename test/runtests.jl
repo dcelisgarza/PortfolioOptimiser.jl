@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
 end
@@ -94,8 +98,4 @@ end
 
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
 end
