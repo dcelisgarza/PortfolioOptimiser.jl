@@ -270,10 +270,10 @@ end
     asset_statistics!(portfolio)
     hclust_alg = DBHT()
     hclust_opt = HCOpt()
+    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
     rm = SD(; formulation = SimpleSD())
-    w1 = optimise!(portfolio; rm = rm, cluster = true, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt, type = NCO(; opt_kwargs = (; obj = MinRisk())))
+    w1 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     r1 = calc_risk(portfolio; type = :NCO, rm = rm)
     wt = [0.013937212184142983, 0.04359664137131615, 0.010054803841639296,
           0.018530098862770877, 0.005999582355222919, 0.06378065191340355,
@@ -284,8 +284,7 @@ end
           0.04038121666787219, 0.09693742227445049]
     @test isapprox(w1.weights, wt)
 
-    w2 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt,
+    w2 = optimise!(portfolio; rm = rm,
                    type = NCO(; opt_kwargs = (; type = NOC(), obj = MinRisk()),
                               opt_kwargs_o = (; type = NOC(), obj = MinRisk())))
     r2 = calc_risk(portfolio; type = :NCO, rm = rm)
@@ -298,8 +297,7 @@ end
           0.054660405663482355, 0.05340789089968085]
     @test isapprox(w2.weights, wt, rtol = 1.0e-4)
 
-    w3 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt,
+    w3 = optimise!(portfolio; rm = rm,
                    type = NCO(; opt_kwargs = (; type = NOC(), obj = MinRisk()),
                               opt_kwargs_o = (; type = Trad(), obj = MinRisk())))
     r3 = calc_risk(portfolio; type = :NCO, rm = rm)
@@ -312,8 +310,7 @@ end
           0.06276838287497882, 0.04963452842786952]
     @test isapprox(w3.weights, wt, rtol = 5.0e-5)
 
-    w4 = optimise!(portfolio; rm = rm, cluster = false, hclust_alg = hclust_alg,
-                   hclust_opt = hclust_opt,
+    w4 = optimise!(portfolio; rm = rm,
                    type = NCO(; opt_kwargs = (; type = Trad(), obj = MinRisk()),
                               opt_kwargs_o = (; type = NOC(), obj = MinRisk())))
     r4 = calc_risk(portfolio; type = :NCO, rm = rm)
