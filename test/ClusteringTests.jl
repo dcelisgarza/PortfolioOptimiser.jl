@@ -1,7 +1,7 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, PortfolioOptimiser
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-
+prices2 = TimeArray(CSV.File("./assets/stock_prices2.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -209,4 +209,40 @@ end
     @test isapprox(clustering.order, ordert)
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
+end
+
+@testset "Non-monotonic clustering" begin
+    portfolio = HCPortfolio(; prices = prices2)
+    asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CorGerberSB1()),
+                      cor_type = PortCovCor(; ce = CorGerberSB1()),
+                      dist_type = DistanceSqMLP(), set_kurt = false, set_skurt = false,
+                      set_skew = false, set_sskew = false)
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k_method = StdSilhouette()))
+    @test portfolio.k == 3
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k_method = TwoDiff()))
+    @test portfolio.k == 3
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k = 18, max_k = 1))
+    @test portfolio.k == 1
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k = 1))
+    @test portfolio.k == 1
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k = 7))
+    @test portfolio.k == 8
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k = 11))
+    @test portfolio.k == 10
+
+    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    hclust_opt = HCOpt(; k = 16))
+    @test portfolio.k == 15
 end

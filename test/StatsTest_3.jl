@@ -397,6 +397,13 @@
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
+    c1 = CorDistance()
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
+    @test isapprox(portfolio.cov, covt)
+    @test isapprox(portfolio.cor, cort)
+    @test isapprox(portfolio.dist, distt)
+
     c1 = PortCovCor(; ce = CorLTD())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = false, cor_type = c1)
