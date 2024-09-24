@@ -1,7 +1,7 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -1312,9 +1312,10 @@ end
                                                                              "max_iter" => 1))))
 
     asset_statistics!(portfolio)
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    cluster_assets!(portfolio)
 
     @test_throws ErrorException optimise!(portfolio; rm = RLVaR(), type = HRP())
+
     w1 = optimise!(portfolio; rm = RLVaR(), type = NCO())
     @test isempty(w1)
     @test haskey(portfolio.fail, :inter)
