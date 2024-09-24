@@ -98,8 +98,10 @@ rm = SD()
 hclust_alg = HAC(; linkage = :ward)
 # Method for determining the number of clusters is the two-difference gap statistic [`TwoDiff`](@ref).
 hclust_opt = HCOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
 # Optimise.
-w1 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+w1 = optimise!(portfolio; rm = rm)
 pretty_table(w1; formatters = fmt1)
 ````
 
@@ -118,8 +120,10 @@ Before moving on to DBHT clustering, we'll use a different linkage function. Gen
 hclust_alg = HAC(; linkage = :complete)
 # Method for determining the number of clusters is the Standard silhouette score [`StdSilhouette`](@ref).
 hclust_opt = HCOpt(; k_method = StdSilhouette())
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
 # Optimise.
-w2 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+w2 = optimise!(portfolio; rm = rm)
 pretty_table(w2; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -138,7 +142,8 @@ Again we will use default parameters first. We're not setting `cluster = flase` 
 # DBHT clustering, using the distance from the maximum value of the dissimilarity matrix [`DBHTMaxDist`](@ref).
 hclust_alg = DBHT(; similarity = DBHTMaxDist())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w3 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+w3 = optimise!(portfolio; rm = rm)
 pretty_table(w3; formatters = fmt1)
 ````
 
@@ -153,7 +158,9 @@ Now we'll see the effect changing the similarity matrix calculation to exponenti
 ````@example 4_hrp_portfolios
 hclust_alg = DBHT(; similarity = DBHTExp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w4 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w4 = optimise!(portfolio; rm = rm)
 pretty_table(w4; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -171,7 +178,9 @@ function PortfolioOptimiser.dbht_similarity(::DBHTClamp, S, D)
 end
 hclust_alg = DBHT(; similarity = DBHTClamp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w5 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w5 = optimise!(portfolio; rm = rm)
 pretty_table(w5; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -194,7 +203,9 @@ hclust_alg = DBHT(;
                   similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
                                                               expdeca_c = 1, argcoef = 0.4))
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w6 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w6 = optimise!(portfolio; rm = rm)
 pretty_table(w6; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -218,7 +229,9 @@ First we try Ward's linkage.
 ````@example 4_hrp_portfolios
 hclust_alg = HAC(; linkage = :ward)
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w7 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w7 = optimise!(portfolio; rm = rm)
 pretty_table(w7; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -228,7 +241,9 @@ Then complete, and we'll see categorise the number of clusters according to the 
 ````@example 4_hrp_portfolios
 hclust_alg = HAC(; linkage = :complete)
 hclust_opt = HCOpt(; k_method = StdSilhouette())
-w8 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w8 = optimise!(portfolio; rm = rm)
 pretty_table(w8; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -238,7 +253,9 @@ Now we'll use DBHT clustering with max distance similarity.
 ````@example 4_hrp_portfolios
 hclust_alg = DBHT(; similarity = DBHTMaxDist())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w9 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w9 = optimise!(portfolio; rm = rm)
 pretty_table(w9; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -248,7 +265,9 @@ Now we'll use the exponential decay similarity.
 ````@example 4_hrp_portfolios
 hclust_alg = DBHT(; similarity = DBHTExp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w10 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w10 = optimise!(portfolio; rm = rm)
 pretty_table(w10; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -258,7 +277,9 @@ Now we'll try the clamp method.
 ````@example 4_hrp_portfolios
 hclust_alg = DBHT(; similarity = DBHTClamp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w11 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w11 = optimise!(portfolio; rm = rm)
 pretty_table(w11; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
@@ -270,7 +291,9 @@ hclust_alg = DBHT(;
                   similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
                                                               expdeca_c = 1, argcoef = 0.4))
 hclust_opt = HCOpt(; k_method = TwoDiff())
-w12 = optimise!(portfolio; rm = rm, hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+
+w12 = optimise!(portfolio; rm = rm)
 pretty_table(w12; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````

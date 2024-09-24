@@ -81,8 +81,8 @@ function filter_best(assets, rms, best, cov_type, cor_type)
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
-        w = optimise!(hp; type = HERC(), rm = rm,
-                      hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        cluster_assets!(hp; hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        w = optimise!(hp; type = HERC(), rm = rm)
 
         if isempty(w)
             continue
@@ -139,12 +139,13 @@ covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
 asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
+cluster_assets!(hp; hclust_opt = HCOpt(; k_method = TwoDiff()))
 ````
 
 We'll use the nested clustering optimisation. We will also use the maximum risk adjusted return ratio objective function. We will also allocate the portfolio according to our availabe cash and the latest prices.
 
 ````@example 0_not_financial_advice
-w = optimise!(hp; rm = RLDaR(), hclust_opt = HCOpt(; k_method = TwoDiff()),
+w = optimise!(hp; rm = RLDaR(),
               type = NCO(;
                          # Risk adjusted return ratio objective function.
                          opt_kwargs = (; obj = Sharpe(; rf = 3.5 / 100 / 252))))
@@ -169,8 +170,8 @@ function filter_worst(assets, rms, best, cov_type, cor_type)
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
-        w = optimise!(hp; type = HERC(), rm = rm,
-                      hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        cluster_assets!(hp; hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        w = optimise!(hp; type = HERC(), rm = rm)
 
         if isempty(w)
             continue
@@ -228,6 +229,7 @@ covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
 asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
+cluster_assets!(hp; hclust_opt = hclust_opt = HCOpt(; k_method = TwoDiff()))
 ````
 
 For this we need to use the max ret objective and set the absolue of the sum of the short weights to 1, as well as the sum of the long weights to 1.
@@ -242,7 +244,7 @@ short = true
 short_u = 1
 long_u = 1
 
-w = optimise!(hp; rm = RLDaR(), hclust_opt = HCOpt(; k_method = TwoDiff()),
+w = optimise!(hp; rm = RLDaR(),
               type = NCO(;
                          # Allow shorting in the sub portfolios, as well as the synthetic portfolio optimised by NCO.
                          # We also set the the values of `short_u` and `long_u` to be equal to 1.
