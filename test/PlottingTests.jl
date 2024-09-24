@@ -40,7 +40,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     asset_statistics!(hcportfolio)
     cluster_assets!(hcportfolio; hclust_alg = HAC(),
                     hclust_opt = HCOpt(; k_method = StdSilhouette()))
-    w = optimise!(hcportfolio; cluster = false)
+    w = optimise!(hcportfolio)
 
     plt11 = plot_clusters(hcportfolio; cluster = false)
     @test plt11.n == 51
