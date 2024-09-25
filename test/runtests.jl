@@ -1,5 +1,29 @@
 using SafeTestsets
 
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vectors" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
@@ -26,10 +50,6 @@ end
 
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
 end
 
 @safetestset "Factor Stats tests" begin
@@ -78,24 +98,4 @@ end
 
 @safetestset "RRP Optimisation" begin
     include("RRPOptimisationTests.jl")
-end
-
-@safetestset "WC Optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vectors" begin
-    include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
 end
