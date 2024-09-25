@@ -1,6 +1,0 @@
-
-[deps.arch]
-channel = "bashtage"
-
-[deps.astropy]
-channel = "conda-forge"
