@@ -1,5 +1,5 @@
 function _bootstrap_func(::StationaryBS)
-    return pyimport("arch.bootstrap").StationaryBS
+    return pyimport("arch.bootstrap").StationaryBootstrap
 end
 function _bootstrap_func(::CircularBS)
     return pyimport("arch.bootstrap").CircularBlockBootstrap
