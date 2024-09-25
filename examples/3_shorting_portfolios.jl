@@ -81,11 +81,11 @@ First we will optimise the portfolio without shorting and plot the weights and t
 
 portfolio.short = false
 portfolio.optimal[:ns] = optimise!(portfolio; rm = rm, obj = obj)
-#nb display(plot_bar(portfolio, :ns))
-#md plot_bar(portfolio, :ns)
+#nb display(plot_bar(portfolio; type = :ns))
+#md plot_bar(portfolio; type = :ns)
 portfolio.frontier[:ns] = efficient_frontier!(portfolio; rm = rm, points = 30)
-#nb display(plot_frontier(portfolio, :ns))
-#md plot_frontier(portfolio, :ns)
+#nb display(plot_frontier(portfolio; type = :ns))
+#md plot_frontier(portfolio; type = :ns)
 
 #=
 We'll now allocate the portfolio according to our means. We'll use both allocation methods:
@@ -184,11 +184,11 @@ portfolio.budget == 0.8
 
 # Lets optimise the short-long portfolio.
 portfolio.optimal[:s] = optimise!(portfolio; rm = rm, obj = obj)
-#nb display(plot_bar(portfolio, :s))
-#md plot_bar(portfolio, :s)
+#nb display(plot_bar(portfolio; type = :s))
+#md plot_bar(portfolio; type = :s)
 portfolio.frontier[:s] = efficient_frontier!(portfolio; rm = rm, points = 30)
-#nb display(plot_frontier(portfolio, :s))
-#md plot_frontier(portfolio, :s)
+#nb display(plot_frontier(portfolio; type = :s))
+#md plot_frontier(portfolio; type = :s)
 
 #=
 Lets allocate the short-long portfolio.
@@ -270,11 +270,11 @@ portfolio.long_u = 1 + portfolio.short_u
 portfolio.budget == 1
 
 portfolio.optimal[:sr] = optimise!(portfolio; rm = rm, obj = obj)
-#nb display(plot_bar(portfolio, :sr))
-#md plot_bar(portfolio, :sr)
+#nb display(plot_bar(portfolio; type = :sr))
+#md plot_bar(portfolio; type = :sr)
 portfolio.frontier[:sr] = efficient_frontier!(portfolio; rm = rm, points = 30)
-#nb display(plot_frontier(portfolio, :sr))
-#md plot_frontier(portfolio, :sr)
+#nb display(plot_frontier(portfolio; type = :sr))
+#md plot_frontier(portfolio; type = :sr)
 
 #=
 Lets allocate the short-long portfolio.

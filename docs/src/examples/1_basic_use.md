@@ -233,37 +233,37 @@ pretty_table(hcat(portfolio.optimal[:Trad],
 Plot the portfolio returns.
 
 ````@example 1_basic_use
-plt = plot_returns(portfolio, :LP_Trad; allocated = true)
+plt = plot_returns(portfolio; type = :LP_Trad, allocated = true)
 ````
 
 Plot the portfolio returns per asset.
 
 ````@example 1_basic_use
-plt = plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true)
+plt = plot_returns(portfolio; type = :LP_Trad, allocated = true, per_asset = true)
 ````
 
 Plot portfolio composition.
 
 ````@example 1_basic_use
-plt = plot_bar(portfolio, :LP_Trad; allocated = true)
+plt = plot_bar(portfolio; type = :LP_Trad, allocated = true)
 ````
 
 Plot the returns histogram.
 
 ````@example 1_basic_use
-plt = plot_hist(portfolio, :LP_Trad; allocated = true)
+plt = plot_hist(portfolio; type = :LP_Trad, allocated = true)
 ````
 
 Plot the portfolio range of returns.
 
 ````@example 1_basic_use
-plt = plot_range(portfolio, :LP_Trad; allocated = true)
+plt = plot_range(portfolio; type = :LP_Trad, allocated = true)
 ````
 
 Plot portfolio drawdown.
 
 ````@example 1_basic_use
-plt = plot_drawdown(portfolio, :LP_Trad; allocated = true)
+plt = plot_drawdown(portfolio; type = :LP_Trad, allocated = true)
 ````
 
 ## 7. Efficient frontier

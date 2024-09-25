@@ -34,10 +34,10 @@ pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
 pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
 plot_frontier_area(portfolio)
 
-prp = plot_returns(portfolio, :Trad)
-pra = plot_returns(portfolio, :Trad; per_asset = true)
-pb = plot_bar(portfolio, :Trad)
-prc = plot_risk_contribution(portfolio, :Trad; rm = rm, percentage = true)
+prp = plot_returns(portfolio; type = :Trad)
+pra = plot_returns(portfolio; type = :Trad, per_asset = true)
+pb = plot_bar(portfolio; type = :Trad)
+prc = plot_risk_contribution(portfolio; type = :Trad, rm = rm, percentage = true)
 pf = plot_frontier(portfolio; kelly = EKelly(), rm = rm)
 
 # end

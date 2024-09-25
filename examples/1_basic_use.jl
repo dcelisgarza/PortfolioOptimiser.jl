@@ -198,28 +198,28 @@ pretty_table(hcat(portfolio.optimal[:Trad],
              formatters = fmt3)
 
 # Plot the portfolio returns.
-#nb display(plot_returns(portfolio, :LP_Trad; allocated = true))
-#md plt = plot_returns(portfolio, :LP_Trad; allocated = true)
+#nb display(plot_returns(portfolio; type = :LP_Trad, allocated = true))
+#md plt = plot_returns(portfolio; type = :LP_Trad, allocated = true)
 
 # Plot the portfolio returns per asset.
-#nb display(plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true))
-#md plt = plot_returns(portfolio, :LP_Trad; allocated = true, per_asset = true)
+#nb display(plot_returns(portfolio; type = :LP_Trad, allocated = true, per_asset = true))
+#md plt = plot_returns(portfolio; type = :LP_Trad, allocated = true, per_asset = true)
 
 # Plot portfolio composition.
-#nb display(plot_bar(portfolio, :LP_Trad; allocated = true))
-#md plt = plot_bar(portfolio, :LP_Trad; allocated = true)
+#nb display(plot_bar(portfolio; type = :LP_Trad, allocated = true))
+#md plt = plot_bar(portfolio; type = :LP_Trad, allocated = true)
 
 # Plot the returns histogram.
-#nb display(plot_hist(portfolio, :LP_Trad; allocated = true))
-#md plt = plot_hist(portfolio, :LP_Trad; allocated = true)
+#nb display(plot_hist(portfolio; type = :LP_Trad, allocated = true))
+#md plt = plot_hist(portfolio; type = :LP_Trad, allocated = true)
 
 # Plot the portfolio range of returns.
-#nb display(plot_range(portfolio, :LP_Trad; allocated = true))
-#md plt = plot_range(portfolio, :LP_Trad; allocated = true)
+#nb display(plot_range(portfolio; type = :LP_Trad, allocated = true))
+#md plt = plot_range(portfolio; type = :LP_Trad, allocated = true)
 
 # Plot portfolio drawdown.
-#nb display(plot_drawdown(portfolio, :LP_Trad; allocated = true))
-#md plt = plot_drawdown(portfolio, :LP_Trad; allocated = true)
+#nb display(plot_drawdown(portfolio; type = :LP_Trad, allocated = true))
+#md plt = plot_drawdown(portfolio; type = :LP_Trad, allocated = true)
 
 #=
 ## 7. Efficient frontier
