@@ -68,9 +68,10 @@ function _bin_width_func(::Union{HGR, <:Integer})
 end
 function calc_num_bins(::AstroBins, xj::AbstractVector, xi::AbstractVector, j::Integer,
                        i::Integer, bin_width_func, ::Any)
-    k1 = (maximum(xj) - minimum(xj)) / bin_width_func(xj)
-    return round(Int, if j != i
-                     k2 = (maximum(xi) - minimum(xi)) / bin_width_func(xi)
+    k1 = (maximum(xj) - minimum(xj)) / bin_width_func(Py(xj).to_numpy())
+    return round(Int,
+                 if j != i
+                     k2 = (maximum(xi) - minimum(xi)) / bin_width_func(Py(xi).to_numpy())
                      max(k1, k2)
                  else
                      k1
