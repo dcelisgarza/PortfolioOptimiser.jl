@@ -1,10 +1,8 @@
 name: Aqua
 on:
   push:
-    branches:
-      - main
-      - release-*
-      - dev
+    branches: [master, main, release-*, dev]
+    tags: [v*]
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -14,7 +12,7 @@ jobs:
       - uses: julia-actions/setup-julia@latest
         with:
           version: '1'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Aqua
         shell: julia --color=yes {0}
         run: |

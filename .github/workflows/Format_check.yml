@@ -1,10 +1,8 @@
 name: format-check
 on:
   push:
-    branches:
-      - main
-      - release-*
-      - dev
+    branches: [master, main, release-*, dev]
+    tags: [v*]
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -25,10 +23,11 @@ jobs:
           format("src", verbose=true)
           format("test", verbose=true)
           format("docs", verbose=true)
+          format("ext", verbose=true)
           out = String(read(Cmd(`git diff`)))
           if isempty(out)
               exit(0)
           end
-          @error "Some files have not been formatted !!!"
+          @error "Some files have not been formatted."
           write(stdout, out)
           exit(1)
