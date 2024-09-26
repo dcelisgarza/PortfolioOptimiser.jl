@@ -1,6 +1,3 @@
-
-[deps.arch-py]
-channel = "conda-forge"
-
-[deps.astropy]
-channel = "conda-forge"
+[deps]
+arch-py = ""
+astropy = ""
