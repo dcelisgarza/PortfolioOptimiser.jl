@@ -584,46 +584,13 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
 
         indx_s = length(indx1) > length(indx2) ? vcat(indx2, indx0) : vcat(indx1, indx0)
 
-        Sb[n] = isempty(indx_s) ? 0 : length(indx_s) - 3
+        Sb[n] = !isempty(indx_s) ? length(indx_s) - 3 : 0
 
         M[indx_s, n] .= 1
     end
 
     Pred = BuildHierarchy(M)
     Root = findall(Pred .== 0)
-
-    # if isa(method, UniqueDBHT)
-    #     if length(Root) > 1
-    #         push!(Pred, 0)
-    #         Pred[Root] .= length(Pred)
-    #     end
-
-    #     H = spzeros(Int, Nc + 1, Nc + 1)
-    #     for n ∈ eachindex(Pred)
-    #         if Pred[n] != 0
-    #             H[n, Pred[n]] = 1
-    #         end
-    #     end
-    #     H = H + transpose(H)
-    # else
-    #     if length(Root) > 1
-    #         Adj = AdjCliq(A, CliqList, Root)
-    #     end
-
-    #     H = spzeros(Int, Nc, Nc)
-    #     for n ∈ eachindex(Pred)
-    #         if Pred[n] != 0
-    #             H[n, Pred[n]] = 1
-    #         end
-    #     end
-
-    #     if !isempty(Pred)
-    #         H .+= transpose(H)
-    #         H .+= Adj
-    #     else
-    #         H = spzeros(Int, 0, 0)
-    #     end
-    # end
 
     H = CliqueRoot(method, Root, Pred, Nc, A, CliqList)
 
@@ -881,10 +848,10 @@ function LinkageFunction(d::AbstractMatrix{<:Real}, labelvec::AbstractVector{<:R
             dd = d[x1, x1]
             de = dd[dd .!= 0]
 
-            Link1 = if isempty(de)
-                hcat(lvec[r], lvec[c], 0)
-            else
+            Link1 = if !isempty(de)
                 hcat(lvec[r], lvec[c], vec(maximum(de; dims = 1)))
+            else
+                hcat(lvec[r], lvec[c], 0)
             end
 
             Links = vcat(Links, Link1)

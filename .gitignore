@@ -2,7 +2,7 @@
 *.jl.cov
 *.jl.mem
 /docs/build/
-/test/stest.jl
+/test/0_WorkingTests.jl
 /shadow_realm/
 /docs/shadow_realm/
 .CondaPkg
