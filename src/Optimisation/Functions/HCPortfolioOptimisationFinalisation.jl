@@ -1,8 +1,12 @@
 function finalise_weights(type::Any, port, weights, w_min, w_max, max_iter)
     stype = Symbol(type)
     weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-    weights ./= sum(weights)
-    port.optimal[stype] = DataFrame(; tickers = port.assets, weights = weights)
+    port.optimal[stype] = if any(.!isfinite.(weights))
+        DataFrame()
+    else
+        weights ./= sum(weights)
+        DataFrame(; tickers = port.assets, weights = weights)
+    end
     return port.optimal[stype]
 end
 function finalise_weights(type::NCO, port, weights, w_min, w_max, max_iter)
