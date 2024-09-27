@@ -455,7 +455,7 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
     if !haskey(kwargs_risks, :linewidth)
         kwargs_risks = (kwargs_risks..., linewidth = 2)
     end
-    for (i, (risk, label)) ∈ enumerate(zip(risks, risk_labels))
+    for (i, (risk, label)) ∈ enumerate(zip(risks, risk_labels)) #! Do not change this enumerate to pairs.
         hline!([risk]; label = label, color = colours[i + 1], kwargs_risks...)
     end
 
@@ -556,7 +556,7 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
     if !haskey(kwargs_risks, :linewidth)
         kwargs_risks = (kwargs_risks..., linewidth = 2)
     end
-    for (i, (risk, label)) ∈ enumerate(zip(risks, risk_labels))
+    for (i, (risk, label)) ∈ enumerate(zip(risks, risk_labels)) #! Do not change this enumerate to pairs.
         vline!([risk]; label = label, color = colours[i + 1], kwargs_risks...)
     end
 
@@ -712,7 +712,7 @@ function PortfolioOptimiser.plot_clusters(assets::AbstractVector, rho::AbstractM
 
     nodes = -clustering.merges
     if show_clusters
-        for (i, cluster) ∈ enumerate(clusters)
+        for (i, cluster) ∈ pairs(clusters)
             a = [findfirst(x -> x == c, sort_order) for c ∈ cluster]
             a = a[.!isnothing.(a)]
             xmin = minimum(a)
@@ -811,7 +811,7 @@ function PortfolioOptimiser.plot_dendrogram(assets::AbstractVector,
 
     nodes = -clustering.merges
     if show_clusters
-        for (i, cluster) ∈ enumerate(clusters)
+        for (i, cluster) ∈ pairs(clusters)
             a = [findfirst(x -> x == c, sort_order) for c ∈ cluster]
             a = a[.!isnothing.(a)]
             xmin = minimum(a)

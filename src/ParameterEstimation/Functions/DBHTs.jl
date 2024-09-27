@@ -1120,15 +1120,13 @@ function _jlogo!(jlogo, sigma, source, sign)
     for i ∈ axes(source, 1)
         v = source[i, :]
         idx = Iterators.product(v, v)
-        #! Do not change this enumerate.
-        for (j, k) ∈ enumerate(idx)
+        for (j, k) ∈ enumerate(idx) #! Do not change this enumerate to pairs.
             tmp[j] = sigma[k[1], k[2]]
         end
 
         tmp = inv(tmp)
 
-        #! Do not change this enumerate.
-        for (j, k) ∈ enumerate(idx)
+        for (j, k) ∈ enumerate(idx) #! Do not change this enumerate to pairs.
             jlogo[k[1], k[2]] += sign * tmp[j]
         end
     end
