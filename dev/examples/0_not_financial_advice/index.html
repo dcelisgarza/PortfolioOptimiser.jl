@@ -140,22 +140,38 @@ cluster_assets!(hp; hclust_opt = HCOpt(; k_method = TwoDiff()))</code></pre><p>W
 wa = allocate!(hp, :NCO; investment = 3000)
 
 pretty_table(w; formatters = fmt1)
-pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
-│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
-│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
-├─────────┼──────────┤
-│    AAPL │    0.0 % │
-│    DELL │    0.0 % │
-│      DG │  0.699 % │
-│    INTC │ 40.845 % │
-│    LULU │    0.0 % │
-│     MCI │    0.0 % │
-│    MSFT │    0.0 % │
-│    NVDA │    0.0 % │
-│    SBUX │    0.0 % │
-│    SIRI │ 58.456 % │
-│     STX │    0.0 % │
-└─────────┴──────────┘
+pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr33"><span class="sgr1">┌ Warning: </span></span>Model could not be optimised satisfactorily.
+<span class="sgr33"><span class="sgr1">│ </span></span>Solvers: Dict{Any, Any}(:Clarabel1_Trad =&gt; Dict{Symbol, Any}(:term_status =&gt; MathOptInterface.SLOW_PROGRESS, :objective_val =&gt; 1413.1603870668944, :params =&gt; Dict{String, Bool}(&quot;verbose&quot; =&gt; 0), :port =&gt; 10×2 DataFrame
+<span class="sgr33"><span class="sgr1">│ </span></span> Row │ tickers  weights
+<span class="sgr33"><span class="sgr1">│ </span></span>     │ String   Float64
+<span class="sgr33"><span class="sgr1">│ </span></span>─────┼──────────────────────
+<span class="sgr33"><span class="sgr1">│ </span></span>   1 │ AAPL     8.95733e-5
+<span class="sgr33"><span class="sgr1">│ </span></span>   2 │ DELL     9.91814e-5
+<span class="sgr33"><span class="sgr1">│ </span></span>   3 │ DG       0.1633
+<span class="sgr33"><span class="sgr1">│ </span></span>   4 │ INTC     0.376098
+<span class="sgr33"><span class="sgr1">│ </span></span>   5 │ LULU     7.0574e-5
+<span class="sgr33"><span class="sgr1">│ </span></span>   6 │ MSFT     0.000141717
+<span class="sgr33"><span class="sgr1">│ </span></span>   7 │ NVDA     4.6851e-5
+<span class="sgr33"><span class="sgr1">│ </span></span>   8 │ SBUX     0.000145759
+<span class="sgr33"><span class="sgr1">│ </span></span>   9 │ SIRI     0.459808
+<span class="sgr33"><span class="sgr1">│ </span></span>  10 │ STX      0.00019946, :finite_weights =&gt; true, :nonzero_weights =&gt; true)).
+<span class="sgr33"><span class="sgr1">└ </span></span><span class="sgr90">@ PortfolioOptimiser ~/work/PortfolioOptimiser.jl/PortfolioOptimiser.jl/src/Optimisation/Functions/PortfolioOptimisationFinalisation.jl:110</span>
+┌─────────┬─────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│
+├─────────┼─────────┤
+│    AAPL │   0.0 % │
+│    DELL │   0.0 % │
+│      DG │   0.0 % │
+│    INTC │   0.0 % │
+│    LULU │   0.0 % │
+│     MCI │ 100.0 % │
+│    MSFT │   0.0 % │
+│    NVDA │   0.0 % │
+│    SBUX │   0.0 % │
+│    SIRI │   0.0 % │
+│     STX │   0.0 % │
+└─────────┴─────────┘
 ┌─────────┬────────┬─────────┬─────────┬──────────┐
 │<span class="sgr1"> tickers </span>│<span class="sgr1"> shares </span>│<span class="sgr1">   price </span>│<span class="sgr1">    cost </span>│<span class="sgr1">  weights </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">  Int64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│
@@ -163,13 +179,13 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    AAPL │      0 │ 128.719 │     0.0 │    0.0 % │
 │    DELL │      0 │ 38.6021 │     0.0 │    0.0 % │
 │      DG │      0 │ 240.305 │     0.0 │    0.0 % │
-│    INTC │     48 │ 25.4859 │ 1223.32 │ 40.777 % │
+│    INTC │      0 │ 25.4859 │     0.0 │    0.0 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
-│     MCI │      1 │ 12.2062 │ 12.2062 │  0.407 % │
+│     MCI │    245 │ 12.2062 │ 2990.51 │ 99.684 % │
 │    MSFT │      0 │  236.42 │     0.0 │    0.0 % │
 │    NVDA │      0 │ 14.6044 │     0.0 │    0.0 % │
 │    SBUX │      0 │ 95.2773 │     0.0 │    0.0 % │
-│    SIRI │     31 │ 56.5651 │ 1753.52 │ 58.451 % │
+│    SIRI │      0 │ 56.8801 │     0.0 │    0.0 % │
 │     STX │      0 │ 49.4078 │     0.0 │    0.0 % │
 └─────────┴────────┴─────────┴─────────┴──────────┘</code></pre><p>However, we can do one better, we can take the worst performing stocks as well and short them. Since we&#39;re starting from so few stocks we&#39;ll adjust the best percentage to only take the best 30% after all filters.</p><pre><code class="language-julia hljs">function filter_worst(assets, rms, best, cov_type, cor_type)
     assets_worst = copy(assets)
@@ -213,12 +229,12 @@ assets_worst = filter_worst(assets, rms, worst, covcor_type, covcor_type)
 
 # Lets join the best and worst tickers into a single vector.
 assets_best_worst = union(assets_best, assets_worst)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">11-element Vector{String}:
+ &quot;AAPL&quot;
+ &quot;BB&quot;
  &quot;DG&quot;
- &quot;MARA&quot;
- &quot;MCI&quot;
+ &quot;DRS&quot;
  &quot;MSFT&quot;
- &quot;NVDA&quot;
- &quot;SBUX&quot;
+ &quot;NKLA&quot;
  &quot;TSLA&quot;
  &quot;NVAX&quot;
  &quot;PARA&quot;
@@ -269,31 +285,31 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │<span class="sgr1"> tickers </span>│<span class="sgr1">   weights </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼───────────┤
-│      DG │     0.0 % │
-│    MARA │ -99.977 % │
-│     MCI │    -0.0 % │
-│    MSFT │  -0.037 % │
-│    NVDA │  99.974 % │
-│    SBUX │ -99.938 % │
-│    TSLA │  -0.001 % │
-│    NVAX │    -0.0 % │
-│    PARA │   0.003 % │
-│    SAVE │   0.002 % │
-│    TLRY │  99.974 % │
+│    AAPL │  -0.005 % │
+│      BB │  -0.004 % │
+│      DG │ -99.933 % │
+│     DRS │   0.069 % │
+│    MSFT │  -0.034 % │
+│    NKLA │   0.002 % │
+│    TSLA │  99.904 % │
+│    NVAX │ -99.961 % │
+│    PARA │   0.006 % │
+│    SAVE │  -0.003 % │
+│    TLRY │   99.96 % │
 └─────────┴───────────┘
 ┌─────────┬────────┬──────────┬──────────┬───────────┐
 │<span class="sgr1"> tickers </span>│<span class="sgr1"> shares </span>│<span class="sgr1">    price </span>│<span class="sgr1">     cost </span>│<span class="sgr1">   weights </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">  Int64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼────────┼──────────┼──────────┼───────────┤
-│      DG │      0 │  240.305 │      0.0 │     0.0 % │
-│    MARA │   -431 │    -3.42 │ -1474.02 │ -49.134 % │
-│     MCI │      0 │ -12.2062 │     -0.0 │    -0.0 % │
+│    AAPL │      0 │ -128.719 │     -0.0 │    -0.0 % │
+│      BB │     -1 │    -3.26 │    -3.26 │  -0.109 % │
+│      DG │     -6 │ -240.305 │ -1441.83 │ -48.061 % │
+│     DRS │      1 │    12.78 │    12.78 │   0.426 % │
 │    MSFT │      0 │  -236.42 │     -0.0 │    -0.0 % │
-│    NVDA │    103 │  14.6044 │  1504.25 │  50.142 % │
-│    SBUX │    -16 │ -95.2773 │ -1524.44 │ -50.815 % │
-│    TSLA │      0 │  -123.18 │     -0.0 │    -0.0 % │
-│    NVAX │      0 │   -10.28 │     -0.0 │    -0.0 % │
+│    NKLA │      0 │     64.8 │      0.0 │     0.0 % │
+│    TSLA │     12 │   123.18 │  1478.16 │  49.272 % │
+│    NVAX │   -146 │   -10.28 │ -1500.88 │ -50.029 % │
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
-│    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
-│    TLRY │    556 │     2.69 │  1495.64 │  49.855 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 26 September 2024 18:36">Thursday 26 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+│    SAVE │     -1 │  -17.628 │  -17.628 │  -0.588 % │
+│    TLRY │    560 │     2.69 │   1506.4 │  50.213 % │
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 27 September 2024 12:46">Friday 27 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
