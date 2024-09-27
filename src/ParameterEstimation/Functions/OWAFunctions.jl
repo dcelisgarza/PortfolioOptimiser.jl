@@ -13,7 +13,7 @@ Computes the Gini Mean Difference (GMD) of a returns series [^OWA].
 """
 function owa_gmd(T::Integer)
     w = Vector{typeof(inv(T))}(undef, T)
-    for i ∈ 1:T
+    for i ∈ eachindex(w)
         w[i] = 2 * i - 1 - T
     end
     w = 2 / (T * (T - 1)) * w
@@ -286,7 +286,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 function _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
     e = 1
-    for i ∈ 1:(k - 1)
+    for i ∈ eachindex(phis)
         e *= g + i - 1
         phis[i] = e / factorial(i + 1)
     end
@@ -317,9 +317,9 @@ Calculates the OWA weights of the k'th linear moment (L-moment) of a returns ser
 # Outputs
 """
 function owa_l_moment(T::Integer, k::Integer = 2)
-    w = Vector{typeof(inv(T * k))}(undef, T)
     T, k = promote(T, k)
-    for i ∈ 1:T
+    w = Vector{typeof(inv(T * k))}(undef, T)
+    for i ∈ eachindex(w)
         a = zero(k)
         for j ∈ 0:(k - 1)
             a += (-1)^j *

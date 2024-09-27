@@ -42,6 +42,17 @@ struct DBHTExp <: DBHTSimilarity end
 ```
 
 Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise exponential decay of the dissimilarity matrix in [`dbht_similarity`](@ref).
+
+```math
+\\begin{align}
+S_{i,\\,j} = \\exp(-D_{i,\\,j})\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
+  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
 """
 struct DBHTExp <: DBHTSimilarity end
 
@@ -51,6 +62,21 @@ struct DBHTMaxDist <: DBHTSimilarity end
 ```
 
 Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise squared distance from the maximum value of the dissimilarity matrix [`dbht_similarity`](@ref).
+
+```math
+\\begin{align}
+S_{i,\\,j} = \\left\\lceil (\\max \\mathbf{D})^2 \\right\\rceil - D_{i,\\,j} ^ 2\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
+  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
+  - ``\\mathbf{D}`` is the distance matrix.
+
+```
+```
 """
 struct DBHTMaxDist <: DBHTSimilarity end
 

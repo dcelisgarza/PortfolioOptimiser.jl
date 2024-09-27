@@ -101,7 +101,7 @@ function find_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
         set_sskew = isa(rm, SSkew)
     else
         rm_flat = reduce(vcat, rm)
-        for (i, r) ∈ enumerate(rm_flat)
+        for (i, r) ∈ pairs(rm_flat)
             if isa(r, Kurt)
                 push!(kurt_idx, i)
             end

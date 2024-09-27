@@ -211,7 +211,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP
     count = length(rms)
     _sd_risk(network_method, model, sigma, count)
     sd_risk = model[:sd_risk]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
         if !isnothing(kelly_approx_idx) && use_portfolio_sigma
             if isempty(kelly_approx_idx)
@@ -251,7 +251,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     @variable(model, mad[1:T, 1:count] >= 0)
     @expression(model, mad_risk[1:count], zero(AffExpr))
     w = model[:w]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
@@ -292,7 +292,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     @variable(model, sdev[1:count])
     @expression(model, sdev_risk[1:count], zero(AffExpr))
     w = model[:w]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
@@ -348,7 +348,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     count = length(rms)
     @variable(model, flpm[1:T, 1:count] .>= 0)
     @expression(model, flpm_risk[1:count], zero(AffExpr))
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         add_to_expression!(flpm_risk[i], inv(T), sum(view(flpm, :, i)))
         _lpm_risk(type, obj, model, view(flpm, :, i), rm.target)
         _set_rm_risk_upper_bound(obj, type, model, flpm_risk[i], rm.settings.ub)
@@ -385,7 +385,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
     @variable(model, slpm[1:T, 1:count] .>= 0)
     @variable(model, tslpm[1:count])
     @expression(model, slpm_risk[1:count], zero(AffExpr))
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         add_to_expression!(slpm_risk[i], inv(sqrt(T - 1)), tslpm[i])
         @constraint(model, [tslpm[i]; view(slpm, :, i)] ∈ SecondOrderCone())
         _lpm_risk(type, obj, model, view(slpm, :, i), rm.target)
@@ -461,7 +461,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, 
     @variable(model, z_var[1:T, 1:count] .>= 0)
     @expression(model, cvar_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         add_to_expression!(cvar_risk[i], var[i])
         add_to_expression!(cvar_risk[i], iat, sum(view(z_var, :, i)))
@@ -513,7 +513,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
     @expression(model, cvar_risk_h[1:count], zero(AffExpr))
     @expression(model, rcvar_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         ibt = inv(rm.beta * T)
         add_to_expression!(cvar_risk_l[i], var_l[i])
@@ -565,7 +565,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, 
     @variable(model, u_evar[1:T, 1:count])
     @expression(model, evar_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (j, rm) ∈ enumerate(rms)
+    for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
         add_to_expression!(evar_risk[j], t_evar[j])
         add_to_expression!(evar_risk[j], -log(at), z_evar[j])
@@ -629,7 +629,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad,
     @variable(model, epsilon_rvar[1:T, 1:count])
     @expression(model, rvar_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (j, rm) ∈ enumerate(rms)
+    for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
         opk = one(rm.kappa) + rm.kappa
@@ -733,7 +733,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, 
     @variable(model, z_cdar[1:T, 1:count] .>= 0)
     @expression(model, cdar_risk[1:count], zero(AffExpr))
     dd = model[:dd]
-    for (i, rm) ∈ enumerate(rms)
+    for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         add_to_expression!(cdar_risk[i], dar[i])
         add_to_expression!(cdar_risk[i], iat, sum(view(z_cdar, :, i)))
@@ -772,7 +772,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
     @variable(model, u_edar[1:T, 1:count])
     @expression(model, edar_risk[1:count], zero(AffExpr))
     dd = model[:dd]
-    for (j, rm) ∈ enumerate(rms)
+    for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
         add_to_expression!(edar_risk[j], t_edar[j])
         add_to_expression!(edar_risk[j], -log(at), z_edar[j])
@@ -831,7 +831,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
     @variable(model, epsilon_rdar[1:T, 1:count])
     @expression(model, rdar_risk[1:count], zero(AffExpr))
     dd = model[:dd]
-    for (j, rm) ∈ enumerate(rms)
+    for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
         opk = one(rm.kappa) + rm.kappa
@@ -909,7 +909,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
         f = port.max_num_assets_kurt_scale
         Nf = f * N
         @variable(model, x_kurt[1:Nf, 1:count])
-        for (idx, rm) ∈ enumerate(rms)
+        for (idx, rm) ∈ pairs(rms)
             kt = if (isnothing(rm.kt) || isempty(rm.kt))
                 port.kurt
             else
@@ -935,7 +935,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
         L_2 = port.L_2
         S_2 = port.S_2
         @expression(model, zkurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
-        for (idx, rm) ∈ enumerate(rms)
+        for (idx, rm) ∈ pairs(rms)
             kt = if (isnothing(rm.kt) || isempty(rm.kt))
                 port.kurt
             else
@@ -1004,7 +1004,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
         f = port.max_num_assets_kurt_scale
         Nf = f * N
         @variable(model, x_skurt[1:Nf, 1:count])
-        for (idx, rm) ∈ enumerate(rms)
+        for (idx, rm) ∈ pairs(rms)
             kt = if (isnothing(rm.kt) || isempty(rm.kt))
                 port.skurt
             else
@@ -1031,7 +1031,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
         L_2 = port.L_2
         S_2 = port.S_2
         @expression(model, zskurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
-        for (idx, rm) ∈ enumerate(rms)
+        for (idx, rm) ∈ pairs(rms)
             kt = if (isnothing(rm.kt) || isempty(rm.kt))
                 port.skurt
             else
@@ -1180,7 +1180,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP
     count = length(rms)
     @expression(model, tg_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (idx, rm) ∈ enumerate(rms)
+    for (idx, rm) ∈ pairs(rms)
         alpha = rm.alpha
         a_sim = rm.a_sim
         alpha_i = rm.alpha_i
@@ -1345,7 +1345,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, 
     count = length(rms)
     @expression(model, rtg_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (idx, rm) ∈ enumerate(rms)
+    for (idx, rm) ∈ pairs(rms)
         alpha = rm.alpha
         a_sim = rm.a_sim
         alpha_i = rm.alpha_i
@@ -1520,7 +1520,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
     count = length(rms)
     @expression(model, owa_risk[1:count], zero(AffExpr))
     X = model[:X]
-    for (idx, rm) ∈ enumerate(rms)
+    for (idx, rm) ∈ pairs(rms)
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
             if !haskey(model, :owa_a)

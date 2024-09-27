@@ -4,17 +4,6 @@ dbht_similarity(::DBHTExp, S, D)
 ```
 
 Computes the [`DBHTExp`](@ref) similarity matrix.
-
-```math
-\\begin{align}
-S_{i,\\,j} = \\exp(-D_{i,\\,j})\\,.
-\\end{align}
-```
-
-Where:
-
-  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
-  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
 """
 function dbht_similarity(::DBHTExp, S, D)
     return exp.(-D)
@@ -25,18 +14,6 @@ dbht_similarity(::DBHTMaxDist, S, D)
 ```
 
 Computes the [`DBHTMaxDist`](@ref) similarity matrix.
-
-```math
-\\begin{align}
-S_{i,\\,j} = \\left\\lceil (\\max \\mathbf{D})^2 \\right\\rceil - D_{i,\\,j} ^ 2\\,.
-\\end{align}
-```
-
-Where:
-
-  - ``S_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the similarity matrix.
-  - ``D_{i,\\,j}`` is the ``(i,\\,j)``-th entry in the distance matrix.
-  - ``\\mathbf{D}`` is the distance matrix.
 """
 function dbht_similarity(::DBHTMaxDist, S, D)
     return ceil(maximum(D)^2) .- D .^ 2
@@ -97,9 +74,9 @@ to_tree(a::Hclust)
 ```
 """
 function to_tree(a::Hclust)
-    n = length(a.order)
-    d = Vector{ClusterNode}(undef, 2 * n - 1)
-    for i ∈ 1:n
+    N = length(a.order)
+    d = Vector{ClusterNode}(undef, 2 * N - 1)
+    for i ∈ eachindex(a.order)
         d[i] = ClusterNode(i)
     end
     merges = a.merges
@@ -110,11 +87,11 @@ function to_tree(a::Hclust)
         fi = merges[i, 1]
         fj = merges[i, 2]
 
-        fi = fi < 0 ? -fi : fi + n
-        fj = fj < 0 ? -fj : fj + n
+        fi = fi < 0 ? -fi : fi + N
+        fj = fj < 0 ? -fj : fj + N
 
-        nd = ClusterNode(i + n, d[fi], d[fj], height)
-        d[n + i] = nd
+        nd = ClusterNode(i + N, d[fi], d[fj], height)
+        d[N + i] = nd
     end
     return nd, d
 end

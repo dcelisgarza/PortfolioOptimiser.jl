@@ -122,7 +122,7 @@ function variation_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer
 
     bin_width_func = _bin_width_func(bins)
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         xj = X[:, j]
         for i ∈ 1:j
             xi = X[:, i]
@@ -154,7 +154,7 @@ function mutual_variation_info(X::AbstractMatrix,
 
     bin_width_func = _bin_width_func(bins)
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         xj = X[:, j]
         for i ∈ 1:j
             xi = X[:, i]

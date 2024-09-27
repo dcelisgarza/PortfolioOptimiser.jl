@@ -127,7 +127,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
 
     bin_width_func = _bin_width_func(bins)
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         xj = X[:, j]
         for i ∈ 1:j
             xi = X[:, i]
@@ -205,7 +205,7 @@ function cor_distance(ce::CorDistance, X::AbstractMatrix)
     N = size(X, 2)
 
     rho = Matrix{eltype(X)}(undef, N, N)
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         xj = X[:, j]
         for i ∈ 1:j
             rho[i, j] = cor_distance(ce, X[:, i], xj)
@@ -257,7 +257,7 @@ function cov_distance(ce::CorDistance, X::AbstractMatrix)
     N = size(X, 2)
 
     rho = Matrix{eltype(X)}(undef, N, N)
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         xj = X[:, j]
         for i ∈ 1:j
             rho[i, j] = cov_distance(ce, X[:, i], xj)
@@ -279,7 +279,7 @@ function lower_tail_dependence(X::AbstractMatrix, alpha::Real = 0.05)
     rho = Matrix{eltype(X)}(undef, N, N)
 
     if k > 0
-        for j ∈ eachindex(axes(X, 2))
+        for j ∈ axes(X, 2)
             xj = X[:, j]
             v = sort(xj)[k]
             maskj = xj .<= v
@@ -319,7 +319,7 @@ function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractV
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -357,7 +357,7 @@ function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
@@ -394,7 +394,7 @@ function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractV
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -435,7 +435,7 @@ function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
@@ -476,7 +476,7 @@ function _cor_gerber_norm(ce::CorGerber2, X::AbstractMatrix, mean_vec::AbstractV
     D = Matrix{Bool}(undef, T, N)
     threshold = ce.threshold
 
-    @inbounds for i ∈ eachindex(axes(X, 2))
+    for i ∈ axes(X, 2)
         xi = (X[:, i] .- mean_vec[i]) / std_vec[i]
         ti = threshold
         U[:, i] .= xi .>= ti
@@ -503,7 +503,7 @@ function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
     D = Matrix{Bool}(undef, T, N)
     threshold = ce.threshold
 
-    @inbounds for i ∈ 1:N
+    for i ∈ axes(X, 2)
         xi = X[:, i]
         ti = threshold * std_vec[i]
         U[:, i] .= xi .>= ti
@@ -555,7 +555,7 @@ function _cor_gerber_norm(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVecto
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -600,7 +600,7 @@ function _cor_gerber(ce::CorSB0, X::AbstractMatrix, mean_vec::AbstractVector,
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -643,7 +643,7 @@ function _cor_gerber_norm(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVecto
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -692,7 +692,7 @@ function _cor_gerber(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -738,7 +738,7 @@ function _cor_gerber_norm(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::Abstrac
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -789,7 +789,7 @@ function _cor_gerber(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVect
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -838,7 +838,7 @@ function _cor_gerber_norm(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::Abstrac
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -896,7 +896,7 @@ function _cor_gerber(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVect
     c3 = ce.c3
     n = ce.n
 
-    for j ∈ eachindex(axes(X, 2))
+    for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
         for i ∈ 1:j
@@ -1018,22 +1018,6 @@ function block_vec_pq(A, p, q)
     return A_vec
 end
 function duplication_matrix(n::Int)
-    # cols = Int(n * (n + 1) / 2)
-    # rows = n * n
-    # X = spzeros(rows, cols)
-    # for j ∈ 1:n
-    #     for i ∈ j:n
-    #         u = spzeros(1, cols)
-    #         col = Int((j - 1) * n + i - (j * (j - 1)) / 2)
-    #         u[col] = 1
-    #         T = spzeros(n, n)
-    #         T[i, j] = 1
-    #         T[j, i] = 1
-    #         X .+= vec(T) * u
-    #     end
-    # end
-    # return X
-
     m   = Int(n * (n + 1) / 2)
     nsq = n^2
     v   = zeros(Int, nsq)
@@ -1057,23 +1041,6 @@ function duplication_matrix(n::Int)
     return sparse(1:nsq, v, 1, nsq, m)
 end
 function elimination_matrix(n::Int)
-    # rows = Int(n * (n + 1) / 2)
-    # cols = n * n
-    # X = spzeros(rows, cols)
-    # for j ∈ 1:n
-    #     ej = spzeros(1, n)
-    #     ej[j] = 1
-    #     for i ∈ j:n
-    #         u = spzeros(rows)
-    #         row = Int((j - 1) * n + i - (j * (j - 1)) / 2)
-    #         u[row] = 1
-    #         ei = spzeros(1, n)
-    #         ei[i] = 1
-    #         X .+= kron(u, kron(ej, ei))
-    #     end
-    # end
-    # return X
-
     m   = Int(n * (n + 1) / 2)
     nsq = n^2
     v   = zeros(Int, m)
@@ -1092,11 +1059,6 @@ function elimination_matrix(n::Int)
     return sparse(1:m, v, 1, m, nsq)
 end
 function summation_matrix(n::Int)
-    # d = duplication_matrix(n)
-    # l = elimination_matrix(n)
-    # s = transpose(d) * d * l
-    # return s
-
     m   = Int(n * (n + 1) / 2)
     nsq = n^2
     v   = zeros(Int, nsq)

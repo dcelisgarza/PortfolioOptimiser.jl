@@ -3,7 +3,7 @@
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 ```
 
-Abstract type for subtyping portfolio optimiser covaraince and correlation estimators.
+Abstract type for subtyping portfolio covariance and correlation estimators.
 """
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 

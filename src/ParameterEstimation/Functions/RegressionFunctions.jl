@@ -47,7 +47,7 @@ function regression(method::PCAReg, x::DataFrame, y::DataFrame)
     loadings = zeros(rows, cols)
 
     X, x1, Vp = prep_dim_red_reg(method, x)
-    for i ∈ 1:rows
+    for i ∈ axes(loadings, 1)
         beta = _regression(method, X, x1, Vp, y[!, i])
         loadings[i, :] .= beta
     end
@@ -324,7 +324,7 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
 
     loadings = zeros(rows, cols)
 
-    for i ∈ 1:rows
+    for i ∈ axes(loadings, 1)
         included = _regression(method, method.criterion, x, y[!, i])
 
         x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)

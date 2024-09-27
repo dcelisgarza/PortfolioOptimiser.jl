@@ -109,7 +109,7 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
         M = size(cliques, 1)
         cliqueTree = spzeros(Int, M, M)
         ss = zeros(Int, M)
-        for i ∈ 1:M
+        for i ∈ axes(cliques, 1)
             ss .= 0
             for j ∈ 1:3
                 ss .+= vec(sum(cliques .== cliques[i, j]; dims = 2))
@@ -162,7 +162,7 @@ function distance_wei(L::AbstractMatrix{<:Real})
     D[diagind(D)] .= 0  # Distance matrix
     B = zeros(Int, N, N)     # Number of edges matrix
 
-    for u ∈ 1:N
+    for u ∈ axes(L, 1)
         S = fill(true, N)   # Distance permanence (true is temporary)
         L1 = copy(L)
         V = [u]
@@ -225,7 +225,7 @@ function clique3(A::AbstractMatrix{<:Real})
     lr = length(r)
     N3 = Vector{Int}(undef, lr)
     K3 = Vector{Vector{Int}}(undef, lr)
-    for n ∈ 1:lr
+    for n ∈ eachindex(r)
         i = r[n]
         j = c[n]
         a = A[i, :] .* A[j, :]
@@ -235,7 +235,7 @@ function clique3(A::AbstractMatrix{<:Real})
     end
 
     clique = zeros(Int, 1, 3)
-    for n ∈ 1:lr
+    for n ∈ eachindex(r)
         temp = K3[n]
         for m ∈ eachindex(temp)
             candidate = transpose(E[n, :])
@@ -384,7 +384,7 @@ function BuildHierarchy(M::AbstractMatrix{<:Real})
     N = size(M, 2)
     Pred = zeros(Int, N)
     dropzeros!(M)
-    for n ∈ 1:N
+    for n ∈ axes(M, 2)
         Children = findnz(M[:, n] .== 1)[1]
         ChildrenSum = vec(sum(M[Children, :]; dims = 1))
         Parents = findall(ChildrenSum .== length(Children))
@@ -489,7 +489,7 @@ function BubbleHierarchy(Pred::AbstractVector{<:Real}, Sb::AbstractVector{<:Real
     Nb = size(Mb, 2)
     H = spzeros(Int, Nb, Nb)
 
-    for n ∈ 1:Nb
+    for n ∈ axes(Mb, 2)
         Indx = Mb[:, n] .== 1
         JointSum = vec(sum(Mb[Indx, :]; dims = 1))
         Neigh = JointSum .>= 1
@@ -575,7 +575,7 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
     CliqList = copy(clique)
     Sb = zeros(Int, Nc)
 
-    for n ∈ 1:Nc
+    for n ∈ axes(clique, 1)
         cliq_vec = CliqList[n, :]
         T = FindDisjoint(A, cliq_vec)[1]
         indx0 = findall(T .== 0)
@@ -644,7 +644,7 @@ function DirectHb(Rpm::AbstractMatrix{<:Real}, Hb::AbstractMatrix{<:Real},
     Hc = spzeros(sMv, sMv)
 
     sCE = size(CliqEdge, 1)
-    for n ∈ 1:sCE
+    for n ∈ axes(CliqEdge, 1)
         Temp = copy(Hb)
         Temp[CliqEdge[n, 1], CliqEdge[n, 2]] = 0
         Temp[CliqEdge[n, 2], CliqEdge[n, 1]] = 0
@@ -999,7 +999,7 @@ function turn_into_Hclust_merges(Z::AbstractMatrix{<:Real})
     N = size(Z, 1) + 1
     Z = hcat(Z, zeros(eltype(Z), N - 1))
 
-    for i ∈ eachindex(view(Z, :, 1))
+    for i ∈ axes(Z, 1)
 
         # Cluster indices.
         a = Int(Z[i, 1])
@@ -1087,7 +1087,7 @@ function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
     Mv = spzeros(Int, sRpm, 0)
 
     nMb = size(Mb, 2)
-    for n ∈ 1:nMb
+    for n ∈ axes(Mb, 2)
         vc = spzeros(Int, sRpm)
         vc[sort!(unique(CliqList[Mb[:, n] .!= 0, :]))] .= 1
         Mv = hcat(Mv, vc)
@@ -1120,13 +1120,13 @@ function _jlogo!(jlogo, sigma, source, sign)
     for i ∈ axes(source, 1)
         v = source[i, :]
         idx = Iterators.product(v, v)
-        for (j, k) ∈ enumerate(idx)
+        for (j, k) ∈ pairs(idx)
             tmp[j] = sigma[k[1], k[2]]
         end
 
         tmp = inv(tmp)
 
-        for (j, k) ∈ enumerate(idx)
+        for (j, k) ∈ pairs(idx)
             jlogo[k[1], k[2]] += sign * tmp[j]
         end
     end

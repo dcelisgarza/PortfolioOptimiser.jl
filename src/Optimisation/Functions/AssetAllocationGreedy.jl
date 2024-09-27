@@ -34,7 +34,7 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
     weights ./= sum(weights)
 
     # First loop
-    for i ∈ 1:N
+    for i ∈ eachindex(weights)
         price = latest_prices[i]
         n_shares = roundmult(weights[i] * investment / price, rounding, RoundDown)
         cost = n_shares * price

@@ -15,7 +15,7 @@ function get_rm_symbol(rm::Union{AbstractVector, <:AbstractRiskMeasure})
         rmsym *= String(rm)
     else
         rm = reduce(vcat, rm)
-        for (i, r) ∈ enumerate(rm)
+        for (i, r) ∈ pairs(rm)
             rmsym *= String(r)
             if i != length(rm)
                 rmsym *= '_'
