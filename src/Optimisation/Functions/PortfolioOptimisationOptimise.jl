@@ -72,7 +72,8 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
     i = 0
-    for (j, (r, m)) ∈ pairs(zip(risks, mus))
+    #! Do not chnge this enumerate to pairs.
+    for (j, (r, m)) ∈ enumerate(zip(risks, mus))
         if i == 0
             w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
                           class = class, w_ini = w_min_ini)
