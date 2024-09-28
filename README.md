@@ -49,15 +49,15 @@ The JS, BS and BOP estimators also use a target for correcting their estimates.
   - Full, [`CovFull`](@ref).
   - Semi, [`CovSemi`](@ref).
   - Mutual information, [`CorMutualInfo`](@ref).
-  - Brownian distance, [`CorDistance`](@ref).
+  - Brownian distance, [`CovDistance`](@ref).
   - Lower tail dependence, [`CorLTD`](@ref).
   - Gerber type 0, [`CorGerber0`](@ref).
   - Gerber type 1, [`CorGerber1`](@ref).
   - Gerber type 2, [`CorGerber2`](@ref).
   - Smyth-Broby modification of Gerber type 0, [`CorSB0`](@ref).
   - Smyth-Broby modification of Gerber type 1, [`CorSB1`](@ref).
-  - Smyth-Broby-Gerber modification of Gerber type 0, [`CorGerberSB0`](@ref).
-  - Smyth-Broby-Gerber modification of Gerber type 1, [`CorGerberSB1`](@ref).
+  - Smyth-Broby modification with vote counting of Gerber type 0, [`CorGerberSB0`](@ref).
+  - Smyth-Broby modification with vote counting of Gerber type 1, [`CorGerberSB1`](@ref).
 
 ### Correlation estimators
 

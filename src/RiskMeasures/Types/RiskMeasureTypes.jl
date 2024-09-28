@@ -40,9 +40,14 @@ Risk measure settings for concrete subtypes of [`RiskMeasure`](@ref).
 
 ## When optimising a [`Portfolio`](@ref).
 
-  - `flag`: if `true` the risk will contribute to the `JuMP` model's risk expression.
+  - `flag`:
+
+      + if `true`: the risk will contribute to the `JuMP` model's risk expression.
+
   - `scale`: factor for scaling the risk when adding it to the `JuMP` model's risk expression.
-  - `ub`: if is finite, sets the upper bound for the risk.
+  - `ub`:
+
+      + if `isfinite(ub)`: sets the upper bound for the risk.
 
 ## When optimising a [`HCPortfolio`](@ref).
 
@@ -186,7 +191,7 @@ Defines the Mean Absolute Deviation [`_MAD`](@ref) risk measure.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_MAD`](@ref).
   - `mu`: optional `N×1` vector of expected asset returns.
 
-      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
 mutable struct MAD <: RiskMeasure
@@ -220,7 +225,7 @@ Defines the Semi Standard Deviation [`_SSD`](@ref) risk measure.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SSD`](@ref).
   - `mu`: optional `N×1` vector of expected asset returns.
 
-      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
@@ -597,7 +602,7 @@ Defines the Square Root Kurtosis [`_Kurt`](@ref) risk measure.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_Kurt`](@ref).
   - `kt`: optional `N^2×N^2` cokurtosis matrix.
 
-      + If `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
+      + if `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
 mutable struct Kurt <: RiskMeasure
@@ -631,7 +636,7 @@ Defines the Square Root Semi Kurtosis [`_SKurt`](@ref) risk measure.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SKurt`](@ref).
   - `kt`: optional `N^2×N^2` semi cokurtosis matrix.
 
-      + If `nothing`: use the semi cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
+      + if `nothing`: use the semi cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
 mutable struct SKurt{T1 <: Real} <: RiskMeasure
@@ -711,12 +716,11 @@ Defines the settings for Ordered Weight Array (OWA) risk measures.
 
 # Parameters
 
-  - `approx`: whether or not to use the approximate formulation based on power cone norms.
+  - `approx`:
 
-  - `p`:
+      + if `true`: use the approximate formulation based on power cone norms.
 
-      + if `approx == true`: vector of the order of p-norms to use in the approximation.
-      + else: does nothing.
+  - `p`: only used when `approx = true`. Vector of the order of p-norms to use in the approximation.
 """
 mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
     approx::Bool
@@ -1010,7 +1014,7 @@ Defines the Semi Variance [`_SVariance`](@ref) risk measure.
   - `w`: optional `T×1` vector of weights for computing the expected return in [`_SVariance`](@ref).
   - `mu`: optional `N×1` vector of expected asset returns.
 
-      + If `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
+      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
       + else: use this one.
 """
 mutable struct SVariance{T1 <: Real} <: HCRiskMeasure

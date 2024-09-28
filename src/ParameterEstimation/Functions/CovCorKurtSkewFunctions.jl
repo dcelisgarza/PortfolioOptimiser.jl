@@ -167,7 +167,7 @@ function StatsBase.cov(ce::CorMutualInfo, X::AbstractMatrix; dims::Int = 1)
     return Symmetric(mutual_info(X, ce.bins, ce.normalise) .*
                      (std_vec * transpose(std_vec)))
 end
-function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
+function cor_distance(ce::CovDistance, v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
     @smart_assert(N == length(v2) && N > 1)
 
@@ -201,7 +201,7 @@ function cor_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
 
     return sqrt(dcov2_xy) / sqrt(sqrt(dcov2_xx) * sqrt(dcov2_yy))
 end
-function cor_distance(ce::CorDistance, X::AbstractMatrix)
+function cor_distance(ce::CovDistance, X::AbstractMatrix)
     N = size(X, 2)
 
     rho = Matrix{eltype(X)}(undef, N, N)
@@ -214,14 +214,14 @@ function cor_distance(ce::CorDistance, X::AbstractMatrix)
 
     return Symmetric(rho, :U)
 end
-function StatsBase.cor(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.cor(ce::CovDistance, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
     end
-    return cor_distance(ce::CorDistance, X::AbstractMatrix)
+    return cor_distance(ce::CovDistance, X::AbstractMatrix)
 end
-function cov_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
+function cov_distance(ce::CovDistance, v1::AbstractVector, v2::AbstractVector)
     N = length(v1)
     @smart_assert(N == length(v2) && N > 1)
 
@@ -253,7 +253,7 @@ function cov_distance(ce::CorDistance, v1::AbstractVector, v2::AbstractVector)
 
     return sqrt(dcov2_xy)
 end
-function cov_distance(ce::CorDistance, X::AbstractMatrix)
+function cov_distance(ce::CovDistance, X::AbstractMatrix)
     N = size(X, 2)
 
     rho = Matrix{eltype(X)}(undef, N, N)
@@ -266,7 +266,7 @@ function cov_distance(ce::CorDistance, X::AbstractMatrix)
 
     return Symmetric(rho, :U)
 end
-function StatsBase.cov(ce::CorDistance, X::AbstractMatrix; dims::Int = 1)
+function StatsBase.cov(ce::CovDistance, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))
     if dims == 2
         X = transpose(X)
@@ -1128,9 +1128,19 @@ function dup_elim_sum_matrices(n::Int)
 
     return d, l, s
 end
+"""
+```
+logo!(::NoLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
+```
+"""
 function logo!(::NoLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
     return nothing
 end
+"""
+```
+logo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
+```
+"""
 function logo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
     if isnothing(D)
         s = diag(X)

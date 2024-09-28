@@ -1,7 +1,7 @@
 @testset "Correlation and Distance Estimation Unweighted" begin
     portfolio = HCPortfolio(; prices = prices)
 
-    c1 = PortCovCor(; ce = CorDistance())
+    c1 = PortCovCor(; ce = CovDistance())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     @test isapprox(cov2cor(portfolio.cov), portfolio.cor)
@@ -397,7 +397,7 @@
     @test isapprox(portfolio.cor, cort)
     @test isapprox(portfolio.dist, distt)
 
-    c1 = CorDistance()
+    c1 = CovDistance()
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)
     @test isapprox(portfolio.cov, covt)

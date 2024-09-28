@@ -190,10 +190,13 @@ Defines the options for processing clustering results in an instance of [`Cluste
   - `branchorder`: parameter for ordering a dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
 
   - `k_method`: method subtyping [`NumClusterMethod`](@ref) for computing the number of clusters.
-  - `k`: directly provide the number of clusters, if `0` use `k_method` for computing the number of clusters.
-  - `max_k`: maximum number of clusters.
+  - `k`:
 
-      + if `0`: defaults to `⌈sqrt(N)⌉`, where `N` is the number of assets.
+      + if `iszero(k)`: use `k_method` for computing the number of clusters.
+      + else: directly provide the number of clusters.
+  - `max_k`: maximum number of clusters, capped to `⌈sqrt(N)⌉`.
+
+      + if `0`: defaults to `⌈sqrt(N)⌉`.
 """
 mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol

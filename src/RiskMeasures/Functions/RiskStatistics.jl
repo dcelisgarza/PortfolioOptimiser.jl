@@ -18,7 +18,9 @@ Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset w
   - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
   - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
   - `delta`: small displacement used for computing the [`Equal`](@ref) risk measure.
-  - `scale`: if true divides the kurtosis and semi kurtosis by 2, used in [`risk_contribution`](@ref).
+  - `scale`:
+
+      + if `true:` divides the kurtosis and semi kurtosis by 2, used in [`risk_contribution`](@ref).
   - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
 
 # Outputs

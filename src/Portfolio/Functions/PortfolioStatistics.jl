@@ -116,9 +116,14 @@ Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optim
 # Inputs
 
   - `port`: portfolio [`Portfolio`](@ref).
+
   - `wc`: worst-case mean-variance statistics estimator [`WCType`](@ref).
-  - `set_box`: compute and set the box uncertainty sets `port.cov_l`, `port.cov_u`, `port.d_mu`.
-  - `set_ellipse`: compute and set the elliptical uncertainty sets and parameters `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
+  - `set_box`:
+
+      + if `true`: compute and set the box uncertainty sets, `port.cov_l`, `port.cov_u`, `port.d_mu`.
+  - `set_ellipse`:
+
+      + if `true`: compute and set the elliptical uncertainty sets and parameters, `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
 """
 function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
                         set_ellipse::Bool = true)
@@ -262,7 +267,7 @@ Compute the Black Litterman factor model statistics. `Na` is the number of asset
   - `w`: `N×1` vector of benchmark weights for the Black-Litterman model.
   - `B`: loadings matrix.
 
-      + if is empty: computes the loadings matrix using `factor_type`.
+      + if `isempty(B)`: computes the loadings matrix using `factor_type`.
   - `P`: `Nva×Na` matrix of asset views.
   - `P_f`: `Nvf×Nf` matrix of factor views.
   - `Q`: `Nva×1` vector of asset views.

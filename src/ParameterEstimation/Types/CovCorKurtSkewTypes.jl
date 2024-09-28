@@ -43,7 +43,7 @@ Full Pearson-type covariance and correlation estimator.
       + if `true`: compute an absolute correlation, `abs.(cor(X))`.
 
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `w`: weights for computing the covariance, if `nothing` apply no weights.
+  - `w`: optional `T×1` vector of weights for computing the covariance.
 """
 mutable struct CovFull <: CorPearson
     absolute::Bool
@@ -68,7 +68,9 @@ Simple variance estimator.
 
 # Parameters
 
-  - `corrected`: if true `correct` the bias by dividing by `N-1`, if `false` the bias is not corrected and the division is by `N`.
+  - `corrected`:
+
+      + if `true`: correct the bias dividing by `N-1` instead of `N`.
 """
 mutable struct SimpleVariance <: StatsBase.CovarianceEstimator
     corrected::Bool
@@ -98,9 +100,9 @@ Semi Pearson-type covariance and correlation estimator.
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `target`: minimum acceptable return target.
 
-      + `if isa(target, Real)`: apply the same target to all assets.
-      + `if isa(target, AbstractVector)`: apply individual target to each asset.
-  - `w`: weights for computing the covariance, if `nothing` apply no weights.
+      + if `isa(target, Real)`: apply the same target to all assets.
+      + if `isa(target, AbstractVector)`: apply individual target to each asset.
+  - `w`: optional `T×1` vector of weights for computing the covariance.
 """
 mutable struct CovSemi <: CorPearson
     absolute::Bool
@@ -151,7 +153,7 @@ Kendall type correlation estimator.
 
   - `absolute`:
 
-      + if `flag`: compute an absolute correlation, `abs.(corkendall(X))`.
+      + if `true`: compute an absolute correlation, `abs.(corkendall(X))`.
 """
 mutable struct CorKendall <: CorRank
     absolute::Bool
@@ -172,14 +174,22 @@ const AbsoluteCovCor = Union{CovFull, CovSemi, CorSpearman, CorKendall}
 end
 ```
 
-Define the mutual information correlation matrix.
+Mutual information correlation matrix estimator.
 
 # Parameters
 
-  - `bins`: defines the bin function, or bin width directly and if so `bins > 0`.
-  - `normalise`: whether or not to normalise the mutual information.
-  - `ve`: variance estimator.
-  - `w`: variance weights, if `nothing`
+  - `bins`:
+
+      + if `isa(bins, AbstractBins)`: defines the function for computing bin widths.
+      + if `isa(bins, Integer)` and `bins > 0`: directly provide the number of bins.
+
+  - `normalise`:
+
+      + if `true`: normalise the mutual information.
+  - Only used when computing covariance matrices:
+
+      + `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+      + `w`: optional `T×1` vector of weights for computing the variance.
 """
 mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
@@ -207,7 +217,7 @@ end
 
 """
 ```
-mutable struct CorDistance <: PortfolioOptimiserCovCor
+mutable struct CovDistance <: PortfolioOptimiserCovCor
     distance::Distances.UnionMetric
     dist_args::Tuple
     dist_kwargs::NamedTuple
@@ -216,8 +226,19 @@ mutable struct CorDistance <: PortfolioOptimiserCovCor
     mean_w3::Union{<:AbstractWeights, Nothing}
 end
 ```
+
+Distance covariance and correlation matrix estimator.
+
+# Parameters
+
+  - `distance`: distance metric from [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `dist_args`: args for the `Distances.pairwise` function of [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `dist_kwargs`: kwargs for the `Distances.pairwise` function of [Distances.jl](https://github.com/JuliaStats/Distances.jl).
+  - `mean_w1`: optional `T×1` vector of weights for computing the mean of the pairwise distance matrices along its rows (`dims = 1`).
+  - `mean_w2`: optional `T×1` vector of weights for computing the mean of the pairwise distance matrices along its columns (`dims = 2`).
+  - `mean_w3`: optional `T×1` vector of weights for computing the mean of the entirety of the pairwise distance matrices.
 """
-mutable struct CorDistance <: PortfolioOptimiserCovCor
+mutable struct CovDistance <: PortfolioOptimiserCovCor
     distance::Distances.UnionMetric
     dist_args::Tuple
     dist_kwargs::NamedTuple
@@ -225,12 +246,12 @@ mutable struct CorDistance <: PortfolioOptimiserCovCor
     mean_w2::Union{<:AbstractWeights, Nothing}
     mean_w3::Union{<:AbstractWeights, Nothing}
 end
-function CorDistance(; distance::Distances.UnionMetric = Distances.Euclidean(),
+function CovDistance(; distance::Distances.UnionMetric = Distances.Euclidean(),
                      dist_args::Tuple = (), dist_kwargs::NamedTuple = (;),
                      mean_w1::Union{<:AbstractWeights, Nothing} = nothing,
                      mean_w2::Union{<:AbstractWeights, Nothing} = nothing,
                      mean_w3::Union{<:AbstractWeights, Nothing} = nothing)
-    return CorDistance(distance, dist_args, dist_kwargs, mean_w1, mean_w2, mean_w3)
+    return CovDistance(distance, dist_args, dist_kwargs, mean_w1, mean_w2, mean_w3)
 end
 
 """
@@ -241,6 +262,17 @@ mutable struct CorLTD <: PortfolioOptimiserCovCor
     w::Union{<:AbstractWeights, Nothing}
 end
 ```
+
+Lower tail dependence correlation and covariance matrix estimator.
+
+# Parameters
+
+  - `alpha`: significance level of the lower tail dependence, `alpha ∈ (0, 1)`.
+
+  - Only used when computing covariance matrices:
+
+      + `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+      + `w`: optional `T×1` vector of weights for computing the variance.
 """
 mutable struct CorLTD <: PortfolioOptimiserCovCor
     alpha::Real
@@ -259,22 +291,69 @@ function Base.setproperty!(obj::CorLTD, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+"""
+```
 abstract type CorGerber <: PortfolioOptimiserCovCor end
+```
+
+Abstract type for subtyping Gerber type covariance and correlation estimators.
+"""
+abstract type CorGerber <: PortfolioOptimiserCovCor end
+
+"""
+```
 abstract type CorGerberBasic <: CorGerber end
+```
+
+Abstract type for subtyping the original Gerber type covariance and correlation estimators.
+"""
+abstract type CorGerberBasic <: CorGerber end
+
+"""
+```
 abstract type CorSB <: CorGerber end
+```
+
+Abstract type for subtyping the Smyth-Broby modifications of Gerber type covariance and correlation estimators.
+"""
+abstract type CorSB <: CorGerber end
+
+"""
+```
+abstract type CorSB <: CorGerber end
+```
+
+Abstract type for subtyping the Smyth-Broby modifications with vote counting of Gerber type covariance and correlation estimators.
+"""
 abstract type CorGerberSB <: CorGerber end
 
 """
 ```
-mutable struct CorGerber0{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Gerber type 0 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - Only used when `normalise == true`:
+
+      + `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -295,15 +374,31 @@ end
 
 """
 ```
-mutable struct CorGerber1{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Gerber type 1 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - Only used when `normalise == true`:
+
+      + `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -324,15 +419,31 @@ end
 
 """
 ```
-mutable struct CorGerber2{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Gerber type 1 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - Only used when `normalise == true`:
+
+      + `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -359,19 +470,37 @@ end
 
 """
 ```
-mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    c1::T2 = 0.5
+    c2::T3 = 0.5
+    c3::T4 = 4.0
+    n::T5 = 2.0
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Smyth-Broby modification of the Gerber type 0 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
+  - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
+  - `c3`: large co-movement threshold (4 in the paper).
+  - `n`: exponent of the regularisation term (``n = 2`` in the paper).
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -407,19 +536,37 @@ end
 
 """
 ```
-mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    c1::T2 = 0.5
+    c2::T3 = 0.5
+    c3::T4 = 4.0
+    n::T5 = 2.0
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Smyth-Broby modification of the Gerber type 1 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
+  - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
+  - `c3`: large co-movement threshold (4 in the paper).
+  - `n`: exponent of the regularisation term (``n = 2`` in the paper).
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -455,19 +602,37 @@ end
 
 """
 ```
-mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    c1::T2 = 0.5
+    c2::T3 = 0.5
+    c3::T4 = 4.0
+    n::T5 = 2.0
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Smyth-Broby modification with vote counting of the Gerber type 0 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
+  - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
+  - `c3`: large co-movement threshold (4 in the paper).
+  - `n`: exponent of the regularisation term (``n = 2`` in the paper).
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -505,19 +670,37 @@ end
 
 """
 ```
-mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
-    normalise::Bool
-    threshold::T1
-    c1::T2
-    c2::T3
-    c3::T4
-    n::T5
-    ve::StatsBase.CovarianceEstimator
-    std_w::Union{<:AbstractWeights, Nothing}
-    mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+@kwdef mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool = false
+    threshold::T1 = 0.5
+    c1::T2 = 0.5
+    c2::T3 = 0.5
+    c3::T4 = 4.0
+    n::T5 = 2.0
+    ve::StatsBase.CovarianceEstimator = SimpleVariance()
+    std_w::Union{<:AbstractWeights, Nothing} = nothing
+    mean_w::Union{<:AbstractWeights, Nothing} = nothing
+    posdef::PosdefFix = PosdefNearest()
 end
 ```
+
+Smyth-Broby modification with vote counting of the Gerber type 1 covariance and correlation matrices.
+
+# Parameters
+
+  - `normalise`:
+
+      + if `true`: Z-normalise the data before applying the Gerber criteria.
+
+  - `threshold`: Gerber significance threshold, `threshold ∈ (0, 1)`.
+  - `c1`: confusion zone threshold (``c_1`` in the paper), `c1 ∈ (0, 1]`.
+  - `c2`: indecision zone threshold (``c_2`` in the paper), `c2 ∈ (0, 1]`.
+  - `c3`: large co-movement threshold (4 in the paper).
+  - `n`: exponent of the regularisation term (``n = 2`` in the paper).
+  - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `std_w`: optional `T×1` vector of weights for computing the variance.
+  - `mean_w`: optional `T×1` vector of weights for computing the mean.
+  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
 """
 mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -567,6 +750,8 @@ end
 ```
 abstract type AbstractLoGo end
 ```
+
+Abstract type for subtyping LoGo covariance and correlation matrix estimators.
 """
 abstract type AbstractLoGo end
 
@@ -574,6 +759,8 @@ abstract type AbstractLoGo end
 ```
 struct NoLoGo <: AbstractLoGo end
 ```
+
+Leave the matrix as is.
 """
 struct NoLoGo <: AbstractLoGo end
 
@@ -584,6 +771,13 @@ struct NoLoGo <: AbstractLoGo end
     similarity::DBHTSimilarity = DBHTMaxDist()
 end
 ```
+
+Compute the LoGo covariance and correlation matrix estimator.
+
+# Parameters
+
+  - `distance`: method for computing the distance (disimilarity) matrix from the correlation matrix if the distance matrix is not provided to [`logo!`](@ref).
+  - `similarity`: method for computing the similarity matrix from the correlation and distance matrices. The distance matrix is used to compute sparsity pattern of the inverse of the LoGo covariance and correlation matrices.
 """
 mutable struct LoGo <: AbstractLoGo
     distance::DistanceMethod
@@ -685,6 +879,6 @@ end
 const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,
-       CorDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,
+       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,
        CorGerberSB0, CorGerberSB1, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull, SkewSemi,
        PortCovCor

@@ -2757,7 +2757,7 @@ end
 
 @testset "Transposes and edge cases" begin
     portfolio = Portfolio(; prices = prices)
-    ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CorDistance(), CorLTD(),
+    ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CovDistance(), CorLTD(),
            CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
            CorGerberSB1(), PortCovCor()]
     for ce ∈ ces

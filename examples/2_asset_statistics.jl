@@ -204,7 +204,7 @@ push!(ces, CovSemi(; ce = ce0_b, target = rf))
 push!(ces, CorMutualInfo())
 
 ## This computes the distance covariance.
-push!(ces, CorDistance())
+push!(ces, CovDistance())
 
 ## This uses how closely related the lower tail of the returns are between assets.
 ## It combines the idea behind the Value at Risk and rank correlation.
@@ -248,7 +248,7 @@ end
 #=
 Try changing `idx` 1 to 12, see how different the covariances look. What happens if you change some parameter in the covariance estimators? Are there methods that give you the most obvious ones? Try to see if you can spot patterns in the relationships between certain assets (ape together strong). 
 
-We're showing the correlation matrix since it makes it easier to see the differences. We've set the colour limits to go from 0 to 1 `clim = (0, 1)`, since all these assets appear to be postively correlated. Strictly speaking, only [`CorMutualInfo`](@ref), [`CorDistance`](@ref) and [`CorLTD`](@ref) are guaranteed to be only positive. More information on all the methods is found in the docs.
+We're showing the correlation matrix since it makes it easier to see the differences. We've set the colour limits to go from 0 to 1 `clim = (0, 1)`, since all these assets appear to be postively correlated. Strictly speaking, only [`CorMutualInfo`](@ref), [`CovDistance`](@ref) and [`CorLTD`](@ref) are guaranteed to be only positive. More information on all the methods is found in the docs.
 =#
 
 #nb for idx ∈ 1:12

@@ -1177,7 +1177,6 @@ Where:
 # Inputs
 
   - `x`: `T×1` returns vector.
-
   - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
   - `α`: significance level, `α ∈ (0, 1)`.
   - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
@@ -1219,8 +1218,11 @@ Compute the Square Root Kurtosis.
 # Inputs
 
   - `x`: `T×1` returns vector.
+
   - `w`: `T×1` optional vector of weights for computing the expected return.
-  - `scale`: if true divides by 2, used in [`risk_contribution`](@ref).
+  - `scale`:
+
+      + if `true`: divides by 2, used in [`risk_contribution`](@ref).
 
 # Outputs
 
@@ -1252,9 +1254,12 @@ Compute the Square Root Semi Kurtosis.
 # Inputs
 
   - `x`: `T×1` returns vector.
+
   - `r`: minimum return target.
   - `w`: `T×1` optional vector of weights for computing the expected return.
-  - `scale`: if true divides by 2, used in [`risk_contribution`](@ref).
+  - `scale`:
+
+      + if `true`: divides by 2, used in [`risk_contribution`](@ref).
 
 # Outputs
 
