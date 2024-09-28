@@ -31,5 +31,7 @@ function _optimise!(::HRP, port::HCPortfolio,
             weights[rc] *= one(alpha_1) - alpha_1
         end
     end
+    weights ./= sum(weights)
+
     return weights
 end

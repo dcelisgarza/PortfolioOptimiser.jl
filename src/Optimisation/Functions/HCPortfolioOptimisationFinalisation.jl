@@ -1,10 +1,12 @@
 function finalise_weights(type::Any, port, weights, w_min, w_max, max_iter)
     stype = Symbol(type)
     weights = opt_weight_bounds(w_min, w_max, weights, max_iter)
-    port.optimal[stype] = if any(.!isfinite.(weights))
+    port.optimal[stype] = if any(.!isfinite.(weights)) ||
+                             any(w_max .< weights) ||
+                             any(w_min .> weights)
+        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
         DataFrame()
     else
-        weights ./= sum(weights)
         DataFrame(; tickers = port.assets, weights = weights)
     end
     return port.optimal[stype]
@@ -15,7 +17,10 @@ function finalise_weights(type::NCO, port, weights, w_min, w_max, max_iter)
     opt_kwargs_o = type.opt_kwargs_o
     port_kwargs = type.port_kwargs
     port_kwargs_o = type.port_kwargs_o
-    port.optimal[stype] = if all(iszero.(weights)) || any(.!isfinite.(weights))
+    port.optimal[stype] = if any(.!isfinite.(weights)) ||
+                             all(iszero.(weights)) ||
+                             any(w_max .< weights) ||
+                             any(w_min .> weights)
         port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
         DataFrame()
     elseif haskey(port_kwargs, :short) && port_kwargs.short ||

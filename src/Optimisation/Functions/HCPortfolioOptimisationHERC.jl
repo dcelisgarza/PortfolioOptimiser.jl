@@ -66,6 +66,7 @@ function _optimise!(::HERC, port::HCPortfolio,
         end
         weights[cidx] .*= risk[cidx]
     end
+    weights ./= sum(weights)
 
     return weights
 end
