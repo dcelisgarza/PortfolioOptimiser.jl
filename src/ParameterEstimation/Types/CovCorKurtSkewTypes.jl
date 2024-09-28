@@ -98,7 +98,7 @@ Semi Pearson-type covariance and correlation estimator.
       + if `true`: compute an absolute correlation, `abs.(cor(X))`.
 
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `target`: minimum acceptable return target.
+  - `target`: minimum return threshold for classifying downside returns.
 
       + if `isa(target, Real)`: apply the same target to all assets.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
@@ -353,7 +353,7 @@ Gerber type 0 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -398,7 +398,7 @@ Gerber type 1 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -429,7 +429,7 @@ end
 end
 ```
 
-Gerber type 1 covariance and correlation matrices.
+Gerber type 2 covariance and correlation matrices.
 
 # Parameters
 
@@ -443,7 +443,7 @@ Gerber type 1 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Gerber type 2 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     normalise::Bool
@@ -500,7 +500,7 @@ Smyth-Broby modification of the Gerber type 0 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -566,7 +566,7 @@ Smyth-Broby modification of the Gerber type 1 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -632,7 +632,7 @@ Smyth-Broby modification with vote counting of the Gerber type 0 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -700,7 +700,7 @@ Smyth-Broby modification with vote counting of the Gerber type 1 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the correlation matrix in case it is not positive definite.
+  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
 mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     normalise::Bool
@@ -788,6 +788,13 @@ function LoGo(; distance::DistanceMethod = DistanceMLP(),
     return LoGo(distance, similarity)
 end
 
+"""
+```
+abstract type KurtEstimator end
+```
+
+Abstract type for subtyping cokurtosis estimators.
+"""
 abstract type KurtEstimator end
 
 """
@@ -798,6 +805,14 @@ abstract type KurtEstimator end
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
+
+Full cokurtosis estimator.
+
+# Parameters
+
+  - `posdef`: method for fixing non a positive definite cokurtosis matrix [`PosdefFix`](@ref).
+  - `denoise`: method for denoising the cokurtosis matrix [`Denoise`](@ref).
+  - `logo`: method for computing the LoGo cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtFull <: KurtEstimator
     posdef::PosdefFix
@@ -811,13 +826,26 @@ end
 
 """
 ```
-@kwdef mutable struct KurtSemi <: KurtEstimator
+@kwdef mutable struct KurtFull <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
+
+Semi cokurtosis estimator.
+
+# Parameters
+
+  - `target`: minimum return threshold for classifying downside returns.
+
+      + if `isa(target, Real)`: apply the same target to all assets.
+      + if `isa(target, AbstractVector)`: apply individual target to each asset.
+
+  - `posdef`: method for fixing non a positive definite semi cokurtosis matrix [`PosdefFix`](@ref).
+  - `denoise`: method for denoising the semi cokurtosis matrix [`Denoise`](@ref).
+  - `logo`: method for computing the LoGo semi cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}}

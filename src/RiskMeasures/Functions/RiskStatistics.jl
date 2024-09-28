@@ -12,6 +12,7 @@ Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset w
 # Inputs
 
   - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
+
   - `w1`: `N×1` vector of asset weights for lower bound.
   - `w2`: `N×1` vector of asset weights for upper bound.
   - `X`: `T×N` matrix of asset returns.
