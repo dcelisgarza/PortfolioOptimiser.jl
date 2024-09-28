@@ -3,14 +3,18 @@ function cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
         return alpha_1
     end
     lmaxw = weights[lc[1]]
-    a1 = sum(w_max[lc]) / lmaxw
-    a2 = max(sum(w_min[lc]) / lmaxw, alpha_1)
-    alpha_1 = min(a1, a2)
+    if !iszero(lmaxw)
+        a1 = sum(w_max[lc]) / lmaxw
+        a2 = max(sum(w_min[lc]) / lmaxw, alpha_1)
+        alpha_1 = min(a1, a2)
+    end
 
     rmaxw = weights[rc[1]]
-    a1 = sum(w_max[rc]) / rmaxw
-    a2 = max(sum(w_min[rc]) / rmaxw, 1 - alpha_1)
-    alpha_1 = one(a1) - min(a1, a2)
+    if !iszero(rmaxw)
+        a1 = sum(w_max[rc]) / rmaxw
+        a2 = max(sum(w_min[rc]) / rmaxw, 1 - alpha_1)
+        alpha_1 = one(a1) - min(a1, a2)
+    end
     return alpha_1
 end
 
