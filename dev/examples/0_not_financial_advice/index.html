@@ -45,7 +45,7 @@ TimeSeries.rename!(prices, Symbol.(assets))</code></pre><pre class="documenter-e
 │ 2019-01-08T14:30:00 │ 31.9041 │ 36.0361 │ 134.672 │ 7.41 │ 46.7586 │ 22.2523 ⋯
 │ 2019-01-09T14:30:00 │ 32.8882 │ 36.6481 │ 128.941 │ 7.47 │ 47.1089 │ 22.2855 ⋯
 │ 2019-01-10T14:30:00 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.3269 │ 21.4547 ⋯
-│ 2019-01-11T14:30:00 │  31.294 │ 36.4043 │  129.68 │ 7.57 │ 46.0336 │ 21.1128 ⋯
+│ 2019-01-11T14:30:00 │  31.294 │ 36.4042 │  129.68 │ 7.57 │ 46.0336 │ 21.1128 ⋯
 │          ⋮          │    ⋮    │    ⋮    │    ⋮    │  ⋮   │    ⋮    │    ⋮    ⋱
 │ 2022-12-21T14:30:00 │   13.03 │ 134.188 │    53.0 │ 3.75 │ 74.3655 │ 37.5464 ⋯
 │ 2022-12-22T14:30:00 │   12.56 │ 130.998 │    49.1 │ 3.43 │ 74.2087 │ 37.5656 ⋯
@@ -146,14 +146,14 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 ├─────────┼──────────┤
 │    AAPL │    0.0 % │
 │    DELL │    0.0 % │
-│      DG │  1.249 % │
-│    INTC │ 41.065 % │
+│      DG │  0.552 % │
+│    INTC │ 40.906 % │
 │    LULU │    0.0 % │
 │     MCI │    0.0 % │
 │    MSFT │    0.0 % │
 │    NVDA │    0.0 % │
 │    SBUX │    0.0 % │
-│    SIRI │ 57.686 % │
+│    SIRI │ 58.541 % │
 │     STX │    0.0 % │
 └─────────┴──────────┘
 ┌─────────┬────────┬─────────┬─────────┬──────────┐
@@ -165,11 +165,11 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │      DG │      0 │ 240.305 │     0.0 │    0.0 % │
 │    INTC │     48 │ 25.4859 │ 1223.32 │ 40.777 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
-│     MCI │      1 │ 12.2062 │ 12.2062 │  0.407 % │
+│     MCI │      0 │ 12.2062 │     0.0 │    0.0 % │
 │    MSFT │      0 │  236.42 │     0.0 │    0.0 % │
 │    NVDA │      0 │ 14.6044 │     0.0 │    0.0 % │
 │    SBUX │      0 │ 95.2773 │     0.0 │    0.0 % │
-│    SIRI │     31 │ 56.5583 │ 1753.31 │ 58.444 % │
+│    SIRI │     31 │ 57.0154 │ 1767.48 │ 58.916 % │
 │     STX │      0 │ 49.4078 │     0.0 │    0.0 % │
 └─────────┴────────┴─────────┴─────────┴──────────┘</code></pre><p>However, we can do one better, we can take the worst performing stocks as well and short them. Since we&#39;re starting from so few stocks we&#39;ll adjust the best percentage to only take the best 30% after all filters.</p><pre><code class="language-julia hljs">function filter_worst(assets, rms, best, cov_type, cor_type)
     assets_worst = copy(assets)
@@ -296,4 +296,4 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
 │    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
 │    TLRY │    556 │     2.69 │  1495.64 │  49.855 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Saturday 28 September 2024 14:02">Saturday 28 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Saturday 28 September 2024 16:38">Saturday 28 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
