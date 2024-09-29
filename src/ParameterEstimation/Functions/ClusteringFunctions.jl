@@ -275,7 +275,7 @@ function _hcluster(ca::HAC, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
     dist_type = get_default_dist(dist_type, cor_type)
-    _set_absolute_dist(cor_type, dist_type)
+    _set_absolute_dist!(cor_type, dist_type)
 
     S = cor(cor_type, X)
     D = dist(dist_type, S, X)
@@ -289,7 +289,7 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                    dist_type::DistMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
     dist_type = get_default_dist(dist_type, cor_type)
-    _set_absolute_dist(cor_type, dist_type)
+    _set_absolute_dist!(cor_type, dist_type)
 
     S = cor(cor_type, X)
     D = dist(dist_type, S, X)

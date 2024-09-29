@@ -64,6 +64,11 @@ end
 ```
 get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
 ```
+
+# Inputs
+
+  - if `isa(cor_type, PortCovCor)`: operates on the internal correlation estimator `cor_type.ce`.
+  - else: directly operates on the correlation estimator `cor_type`.
 """
 function get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
     dist_type = _get_default_dist(dist_type, cor_type)

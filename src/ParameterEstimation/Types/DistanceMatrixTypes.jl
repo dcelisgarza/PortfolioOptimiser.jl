@@ -146,10 +146,12 @@ struct DistCanonical <: DistMethod end
 
 Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
 
-  - `isa(cor_type, CorMutualInfo)`: `DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)`.
-  - `isa(cor_type.ce, CorMutualInfo)`: `DistVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)`.
-  - `isa(cor_type.ce, CorLTD) || isa(cor_type, CorLTD)`: `DistLog()`.
-  - else: `DistMLP()`.
+| Correlation estimator   | Canonical distance    |
+|:----------------------- | ---------------------:|
+| [`CorMutualInfo`](@ref) | [`DistVarInfo`](@ref) |
+| [`CorLTD`](@ref)        | [`DistLog`](@ref)     |
+| [`CovDistance`](@ref)   | [`DistCor`](@ref)     |
+| Any other estimator     | [`DistMLP`](@ref)     |
 """
 struct DistCanonical <: DistMethod end
 
