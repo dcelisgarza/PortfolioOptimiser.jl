@@ -102,7 +102,7 @@ end
 """
 ```
 cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-               dist_type::DistanceMethod = DistCanonical(),
+               dist_type::DistMethod = DistCanonical(),
                hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
 ```
 
@@ -111,7 +111,7 @@ Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@r
 # Inputs
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
-  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref).
+  - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref).
   - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
   - `hclust_alg`: hierarchical clustering algorithm [`HClustAlg`](@ref).
   - `hclust_opt`: options for determining the number of clusters [`HCOpt`](@ref).
@@ -125,7 +125,7 @@ Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@r
   - `D`: `N×N` asset distance matrix.
 """
 function cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistanceMethod = DistCanonical(),
+                        dist_type::DistMethod = DistCanonical(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     return cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                           hclust_alg = hclust_alg, hclust_opt = hclust_opt)

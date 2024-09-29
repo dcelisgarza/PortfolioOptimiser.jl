@@ -26,44 +26,48 @@ function _dist(::DistCor, X::AbstractMatrix, ::Any)
 end
 """
 ```
-dist(de::DistanceMethod, X, Y)
+dist(de::DistMethod, X, Y)
 ```
 """
-function dist(de::DistanceMethod, X, Y)
+function dist(de::DistMethod, X, Y)
     return _dist(de, X, Y)
 end
-function _set_absolute_dist(cor_type::AbsoluteCovCor, dist_type::AbsoluteDist)
-    return dist_type.absolute = cor_type.absolute
+function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::PortCovCor)
+    return _set_absolute_dist!(dist_type, cor_type.ce)
 end
-function _set_absolute_dist(args...)
+function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::AbsoluteCovCor)
+    dist_type.absolute = cor_type.absolute
     return nothing
 end
+function _set_absolute_dist!(args...)
+    return nothing
+end
+function _get_default_dist(dist_type::DistCanonical, cor_type::PortCovCor)
+    return _get_default_dist(dist_type, cor_type.ce)
+end
+function _get_default_dist(::DistCanonical, cor_type::CorMutualInfo)
+    return DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)
+end
+function _get_default_dist(::DistCanonical, cor_type::CorLTD)
+    return DistLog()
+end
+function _get_default_dist(::DistCanonical, cor_type::CovDistance)
+    return DistCor()
+end
+function _get_default_dist(::DistCanonical, cor_type::Any)
+    return DistMLP()
+end
+function _get_default_dist(dist_type::Any, ::Any)
+    return dist_type
+end
 """
 ```
-_get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
+get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
 ```
 """
-function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
-    if isa(dist_type, DistCanonical)
-        dist_type = if hasproperty(cor_type, :ce) && isa(cor_type.ce, CorMutualInfo)
-            DistVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
-        elseif !hasproperty(cor_type, :ce) && isa(cor_type, CorMutualInfo)
-            DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)
-        elseif hasproperty(cor_type, :ce) && isa(cor_type.ce, CorLTD) ||
-               !hasproperty(cor_type, :ce) && isa(cor_type, CorLTD)
-            DistLog()
-        elseif hasproperty(cor_type, :ce) && isa(cor_type.ce, CovDistance) ||
-               !hasproperty(cor_type, :ce) && isa(cor_type, CovDistance)
-            DistCor()
-        else
-            DistMLP()
-        end
-    end
-    if hasproperty(cor_type, :ce)
-        _set_absolute_dist(cor_type.ce, dist_type)
-    else
-        _set_absolute_dist(cor_type, dist_type)
-    end
+function get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
+    dist_type = _get_default_dist(dist_type, cor_type)
+    _set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end
 function _bin_width_func(::Knuth)

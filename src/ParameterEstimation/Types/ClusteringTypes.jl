@@ -110,7 +110,7 @@ struct EqualDBHT <: DBHTRootMethod end
 """
 ```
 mutable struct DBHT <: HClustAlg
-    distance::DistanceMethod
+    distance::DistMethod
     similarity::DBHTSimilarity
     root_method::DBHTRootMethod
 end
@@ -120,16 +120,16 @@ Defines the parameters for computing [`DBHTs`](@ref) [DBHTs](@cite).
 
 # Parameters
 
-  - `distance`: method for computing the distance matrix from correlation ones [`DistanceMethod`](@ref).
+  - `distance`: method for computing the distance matrix from correlation ones [`DistMethod`](@ref).
   - `similarity`: method for computing the similarity matrix from the correlation and/or distance ones [`DBHTSimilarity`](@ref), [`dbht_similarity`](@ref).
   - `root_method`: method for choosing clique roots [`DBHTRootMethod`](@ref).
 """
 mutable struct DBHT <: HClustAlg
-    distance::DistanceMethod
+    distance::DistMethod
     similarity::DBHTSimilarity
     root_method::DBHTRootMethod
 end
-function DBHT(; distance::DistanceMethod = DistMLP(),
+function DBHT(; distance::DistMethod = DistMLP(),
               similarity::DBHTSimilarity = DBHTMaxDist(),
               root_method::DBHTRootMethod = UniqueDBHT())
     return DBHT(distance, similarity, root_method)

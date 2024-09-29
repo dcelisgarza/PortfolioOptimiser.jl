@@ -42,15 +42,15 @@ function _calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
     return adjacency_matrix(SimpleGraph(G[tree]))
 end
 function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
-                         cor_type::PortfolioOptimiserCovCor, dist_type::DistanceMethod)
+                         cor_type::PortfolioOptimiserCovCor, dist_type::DistMethod)
     S = cor(cor_type, X)
-    dist_type = _get_default_dist(dist_type, cor_type)
+    dist_type = get_default_dist(dist_type, cor_type)
     D = dist(dist_type, S, X)
     return _calc_adjacency(nt, S, D)
 end
 function connection_matrix(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistanceMethod = DistCanonical(),
+                           dist_type::DistMethod = DistCanonical(),
                            network_type::NetworkType = MST())
     A = _calc_adjacency(network_type, X, cor_type, dist_type)
 
@@ -66,7 +66,7 @@ function connection_matrix(X::AbstractMatrix;
 end
 function centrality_vector(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistanceMethod = DistCanonical(),
+                           dist_type::DistMethod = DistCanonical(),
                            network_type::NetworkType = MST())
     Adj = connection_matrix(X; cor_type = cor_type, dist_type = dist_type,
                             network_type = network_type)
@@ -76,7 +76,7 @@ function centrality_vector(X::AbstractMatrix;
 end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistanceMethod = DistCanonical(),
+                        dist_type::DistMethod = DistCanonical(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
                               hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
@@ -104,7 +104,7 @@ function con_rel_assets(A::AbstractMatrix, w::AbstractVector)
 end
 function connected_assets(returns::AbstractMatrix, w::AbstractVector;
                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                          dist_type::DistanceMethod = DistCanonical(),
+                          dist_type::DistMethod = DistCanonical(),
                           network_type::NetworkType = MST())
     A_c = connection_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                             network_type = network_type)
@@ -113,7 +113,7 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector;
 end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistanceMethod = DistCanonical(),
+                        dist_type::DistMethod = DistCanonical(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)

@@ -10,7 +10,7 @@ asset_statistics!(port::AbstractPortfolio;
                   set_sskew::Bool = true,
                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                   set_cor::Bool = true,
-                  dist_type::DistanceMethod = DistCanonical(),
+                  dist_type::DistMethod = DistCanonical(),
                   set_dist::Bool = true)
 ```
 
@@ -38,7 +38,7 @@ The `set_*` variables are flags for deciding whether or not to set the statistic
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `set_cor`: flag for setting `port.cor`.
-  - `dist_type`: method for computing the distance matrix [`DistanceMethod`](@ref). [`asset_statistics!`](@ref) uses [`_get_default_dist`](@ref) to ensure the computed distance is consistent with `dist_type` and either `cor_type.ce` or `cor_type` whichever is applicable.
+  - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref). [`asset_statistics!`](@ref) uses [`get_default_dist`](@ref) to ensure the computed distance is consistent with `dist_type` and either `cor_type.ce` or `cor_type` whichever is applicable.
   - `set_dist`: flag for setting `port.dist`.
 """
 function asset_statistics!(port::AbstractPortfolio;
@@ -50,8 +50,7 @@ function asset_statistics!(port::AbstractPortfolio;
                            set_skew::Bool = true, sskew_type::SkewSemi = SkewSemi(),
                            set_sskew::Bool = true,
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           set_cor::Bool = true,
-                           dist_type::DistanceMethod = DistCanonical(),
+                           set_cor::Bool = true, dist_type::DistMethod = DistCanonical(),
                            set_dist::Bool = true)
     returns = port.returns
 
@@ -97,7 +96,7 @@ function asset_statistics!(port::AbstractPortfolio;
         end
 
         if set_dist
-            dist_type = _get_default_dist(dist_type, cor_type)
+            dist_type = get_default_dist(dist_type, cor_type)
             port.dist = dist(dist_type, rho, returns)
         end
     end

@@ -1,15 +1,15 @@
 """
 ```
-abstract type DistanceMethod end
+abstract type DistMethod end
 ```
 
 Abstract type for subtyping methods for computing distance matrices from correlation ones.
 """
-abstract type DistanceMethod end
+abstract type DistMethod end
 
 """
 ```
-@kwdef mutable struct DistMLP <: DistanceMethod
+@kwdef mutable struct DistMLP <: DistMethod
     absolute::Bool = false
 end
 ```
@@ -41,7 +41,7 @@ Where:
 
       + if `true`: the correlation being used is absolute.
 """
-mutable struct DistMLP <: DistanceMethod
+mutable struct DistMLP <: DistMethod
     absolute::Bool
 end
 function DistMLP(; absolute::Bool = false)
@@ -50,7 +50,7 @@ end
 
 """
 ```
-@kwdef mutable struct DistDistMLP <: DistanceMethod
+@kwdef mutable struct DistDistMLP <: DistMethod
     absolute::Bool = false
     distance::Distances.UnionMetric = Distances.Euclidean()
     args::Tuple = ()
@@ -86,7 +86,7 @@ Where:
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
-mutable struct DistDistMLP <: DistanceMethod
+mutable struct DistDistMLP <: DistMethod
     absolute::Bool
     distance::Distances.UnionMetric
     args::Tuple
@@ -101,7 +101,7 @@ const AbsoluteDist = Union{DistMLP, DistDistMLP}
 
 """
 ```
-struct DistLog <: DistanceMethod end
+struct DistLog <: DistMethod end
 ```
 
 Defines the log-distance matrix from the correlation matrix.
@@ -117,11 +117,11 @@ Where:
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` log-distance matrix.
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of an absolute correlation matrix.
 """
-struct DistLog <: DistanceMethod end
+struct DistLog <: DistMethod end
 
 """
 ```
-struct DistCor <: DistanceMethod end
+struct DistCor <: DistMethod end
 ```
 
 Defines the distance matrix from the correlation matrix.
@@ -137,21 +137,21 @@ Where:
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix.
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of a distance correlation matrix.
 """
-struct DistCor <: DistanceMethod end
+struct DistCor <: DistMethod end
 
 """
 ```
-struct DistCanonical <: DistanceMethod end
+struct DistCanonical <: DistMethod end
 ```
 
-Struct for computing the canonical distance for a given correlation estimator in [`_get_default_dist`](@ref).
+Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
 
   - `isa(cor_type, CorMutualInfo)`: `DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)`.
   - `isa(cor_type.ce, CorMutualInfo)`: `DistVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)`.
   - `isa(cor_type.ce, CorLTD) || isa(cor_type, CorLTD)`: `DistLog()`.
   - else: `DistMLP()`.
 """
-struct DistCanonical <: DistanceMethod end
+struct DistCanonical <: DistMethod end
 
 """
 ```
@@ -209,7 +209,7 @@ struct HGR <: AbstractBins end
 
 """
 ```
-@kwdef mutable struct DistVarInfo <: DistanceMethod
+@kwdef mutable struct DistVarInfo <: DistMethod
     bins::Union{<:Integer, <:AbstractBins} = HGR()
     normalise::Bool = true
 end
@@ -222,7 +222,7 @@ Defines the variation of information distance matrix.
   - `bins`: defines the bin function, or bin width directly and if so `bins > 0`.
   - `normalise`: whether or not to normalise the variation of information.
 """
-mutable struct DistVarInfo <: DistanceMethod
+mutable struct DistVarInfo <: DistMethod
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
 end
