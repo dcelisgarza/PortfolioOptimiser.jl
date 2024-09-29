@@ -128,7 +128,7 @@ Defines the distance matrix from the correlation matrix.
 
 ```math
 \\begin{align}
-D_{i,\\,j} &= \\left(1 - C_{i,\\,j}\\right)}\\,.
+D_{i,\\,j} &= \\left(1 - C_{i,\\,j}\\right)\\,.
 \\end{align}
 ```
 
