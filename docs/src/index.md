@@ -72,10 +72,10 @@ All covariance estimators can be used for correlation estimation.
 
 ### Disimilarity/distance matrix functions
 
-  - Marcos López de Prado, [`DistanceMLP`](@ref).
-  - Marcos López de Prado distance of distance, [`DistanceSqMLP`](@ref).
-  - Negative log, [`DistanceLog`](@ref).
-  - Variation of information, [`DistanceVarInfo`](@ref).
+  - Marcos López de Prado, [`DistMLP`](@ref).
+  - Marcos López de Prado distance of distance, [`DistDistMLP`](@ref).
+  - Negative log, [`DistLog`](@ref).
+  - Variation of information, [`DistVarInfo`](@ref).
 
 ### Triangulated maximally filtered graph similarity matrix functions
 

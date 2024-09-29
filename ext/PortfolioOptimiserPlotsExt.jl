@@ -758,7 +758,7 @@ end
 
 function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortfolio;
                                           cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                          dist_type::PortfolioOptimiser.DistanceMethod = DistanceCanonical(),
+                                          dist_type::PortfolioOptimiser.DistanceMethod = DistCanonical(),
                                           hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
                                           hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                           cluster::Bool = true, show_clusters::Bool = true,
@@ -839,7 +839,7 @@ end
 
 function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPortfolio;
                                             cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                            dist_type::PortfolioOptimiser.DistanceMethod = DistanceCanonical(),
+                                            dist_type::PortfolioOptimiser.DistanceMethod = DistCanonical(),
                                             hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
                                             hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                             cluster::Bool = true, theme = :Spectral,
@@ -907,7 +907,7 @@ function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfo
                                              :HRP
                                          end,
                                          cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                         dist_type::PortfolioOptimiser.DistanceMethod = DistanceCanonical(),
+                                         dist_type::PortfolioOptimiser.DistanceMethod = DistCanonical(),
                                          hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
                                          hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
                                          network_type::PortfolioOptimiser.NetworkType = MST(),

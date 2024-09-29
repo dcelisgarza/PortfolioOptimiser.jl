@@ -67,7 +67,7 @@ We will first use the most basic statistics. We'll later see how we can change t
 
 cov_type = PortCovCor()
 cor_type = PortCovCor()
-dist_type = DistanceCanonical()
+dist_type = DistCanonical()
 asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
                   dist_type = dist_type)
 
@@ -218,7 +218,7 @@ We will repeat the exact same steps as above, but without redefining the structu
 
 cov_type = PortCovCor(; denoise = DenoiseFixed(; detone = true))
 cor_type = PortCovCor(; denoise = DenoiseFixed(; detone = true))
-dist_type = DistanceCanonical()
+dist_type = DistCanonical()
 asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
                   dist_type = dist_type)
 

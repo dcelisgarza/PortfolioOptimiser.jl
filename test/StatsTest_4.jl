@@ -2614,8 +2614,8 @@ end
 end
 
 @testset "setproperty! tests" begin
-    ce = DistanceVarInfo()
-    @test_throws AssertionError DistanceVarInfo(; bins = 0)
+    ce = DistVarInfo()
+    @test_throws AssertionError DistVarInfo(; bins = 0)
     @test_throws AssertionError ce.bins = 0
     ce.bins = 7
     @test ce.bins == 7

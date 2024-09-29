@@ -129,7 +129,7 @@ mutable struct DBHT <: HClustAlg
     similarity::DBHTSimilarity
     root_method::DBHTRootMethod
 end
-function DBHT(; distance::DistanceMethod = DistanceMLP(),
+function DBHT(; distance::DistanceMethod = DistMLP(),
               similarity::DBHTSimilarity = DBHTMaxDist(),
               root_method::DBHTRootMethod = UniqueDBHT())
     return DBHT(distance, similarity, root_method)

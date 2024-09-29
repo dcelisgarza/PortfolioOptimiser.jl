@@ -767,7 +767,7 @@ struct NoLoGo <: AbstractLoGo end
 """
 ```
 @kwdef mutable struct LoGo <: AbstractLoGo
-    distance::DistanceMethod = DistanceMLP()
+    distance::DistanceMethod = DistMLP()
     similarity::DBHTSimilarity = DBHTMaxDist()
 end
 ```
@@ -783,7 +783,7 @@ mutable struct LoGo <: AbstractLoGo
     distance::DistanceMethod
     similarity::DBHTSimilarity
 end
-function LoGo(; distance::DistanceMethod = DistanceMLP(),
+function LoGo(; distance::DistanceMethod = DistMLP(),
               similarity::DBHTSimilarity = DBHTMaxDist())
     return LoGo(distance, similarity)
 end
@@ -826,7 +826,7 @@ end
 
 """
 ```
-@kwdef mutable struct KurtFull <: KurtEstimator
+@kwdef mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::PosdefFix = PosdefNearest(;)
     denoise::Denoise = NoDenoise(;)
@@ -859,12 +859,21 @@ function KurtSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
     return KurtSemi(target, posdef, denoise, logo)
 end
 
+"""
+```
+abstract type SkewEstimator end
+```
+
+Abstract type for subtyping coskew estimators.
+"""
 abstract type SkewEstimator end
 
 """
 ```
 struct SkewFull <: SkewEstimator end
 ```
+
+Full cokurtosis estimator.
 """
 struct SkewFull <: SkewEstimator end
 
@@ -874,6 +883,15 @@ struct SkewFull <: SkewEstimator end
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
 end
 ```
+
+Semi cokurtosis estimator.
+
+# Parameters
+
+  - `target`: minimum return threshold for classifying downside returns.
+
+      + if `isa(target, Real)`: apply the same target to all assets.
+      + if `isa(target, AbstractVector)`: apply individual target to each asset.
 """
 mutable struct SkewSemi <: SkewEstimator
     target::Union{<:Real, AbstractVector{<:Real}}
@@ -891,6 +909,15 @@ end
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
+
+PortfolioOptimiser covariance and correlation estimator.
+
+# Parameters
+
+  - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
+  - `posdef`: method for fixing the portfolio covariance or correlation matrix [`PosdefFix`](@ref).
+  - `denoise`: method for denoising the portfolio covariance or correlation matrix [`Denoise`](@ref).
+  - `logo`: method for computing the LoGo portfolio covariance or correlation matrix [`AbstractLoGo`](@ref).
 """
 mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator
@@ -904,6 +931,13 @@ function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
     return PortCovCor(ce, posdef, denoise, logo)
 end
 
+"""
+```
+const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
+```
+
+Covariance and correlation estimators that support positive definite fixes.
+"""
 const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,

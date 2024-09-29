@@ -1,4 +1,4 @@
-function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
+function _dist(de::DistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
                                       one(eltype(X)))
@@ -6,7 +6,7 @@ function _dist(de::DistanceMLP, X::AbstractMatrix, ::Any)
                                clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                            end))
 end
-function _dist(de::DistanceSqMLP, X::AbstractMatrix, ::Any)
+function _dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
     _X = sqrt.(if !de.absolute
                    clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
                else
@@ -15,11 +15,14 @@ function _dist(de::DistanceSqMLP, X::AbstractMatrix, ::Any)
 
     return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
 end
-function _dist(::DistanceLog, X::AbstractMatrix, ::Any)
+function _dist(::DistLog, X::AbstractMatrix, ::Any)
     return -log.(X)
 end
-function _dist(ce::DistanceVarInfo, ::Any, Y::AbstractMatrix)
-    return variation_info(Y, ce.bins, ce.normalise)
+function _dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
+    return variation_info(Y, de.bins, de.normalise)
+end
+function _dist(::DistCor, X::AbstractMatrix, ::Any)
+    return clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
 end
 """
 ```
@@ -35,16 +38,25 @@ end
 function _set_absolute_dist(args...)
     return nothing
 end
+"""
+```
+_get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
+```
+"""
 function _get_default_dist(dist_type::DistanceMethod, cor_type::PortfolioOptimiserCovCor)
-    if isa(dist_type, DistanceCanonical)
-        dist_type = if hasproperty(cor_type, :ce) && isa(cor_type.ce, CorMutualInfo) ||
-                       !hasproperty(cor_type, :ce) && isa(cor_type, CorMutualInfo)
-            DistanceVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
+    if isa(dist_type, DistCanonical)
+        dist_type = if hasproperty(cor_type, :ce) && isa(cor_type.ce, CorMutualInfo)
+            DistVarInfo(; bins = cor_type.ce.bins, normalise = cor_type.ce.normalise)
+        elseif !hasproperty(cor_type, :ce) && isa(cor_type, CorMutualInfo)
+            DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)
         elseif hasproperty(cor_type, :ce) && isa(cor_type.ce, CorLTD) ||
                !hasproperty(cor_type, :ce) && isa(cor_type, CorLTD)
-            DistanceLog()
+            DistLog()
+        elseif hasproperty(cor_type, :ce) && isa(cor_type.ce, CovDistance) ||
+               !hasproperty(cor_type, :ce) && isa(cor_type, CovDistance)
+            DistCor()
         else
-            DistanceMLP()
+            DistMLP()
         end
     end
     if hasproperty(cor_type, :ce)

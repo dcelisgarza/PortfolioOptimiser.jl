@@ -215,7 +215,7 @@ end
     portfolio = HCPortfolio(; prices = prices2)
     asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CorGerberSB1()),
                       cor_type = PortCovCor(; ce = CorGerberSB1()),
-                      dist_type = DistanceSqMLP(), set_kurt = false, set_skurt = false,
+                      dist_type = DistDistMLP(), set_kurt = false, set_skurt = false,
                       set_skew = false, set_sskew = false)
 
     cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),

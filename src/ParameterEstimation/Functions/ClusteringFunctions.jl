@@ -273,8 +273,7 @@ end
 
 function _hcluster(ca::HAC, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                   dist_type::DistanceMethod = DistanceCanonical(),
-                   hclust_opt::HCOpt = HCOpt())
+                   dist_type::DistanceMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     _set_absolute_dist(cor_type, dist_type)
 
@@ -288,8 +287,7 @@ function _hcluster(ca::HAC, X::AbstractMatrix,
 end
 function _hcluster(ca::DBHT, X::AbstractMatrix,
                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                   dist_type::DistanceMethod = DistanceCanonical(),
-                   hclust_opt::HCOpt = HCOpt())
+                   dist_type::DistanceMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
     dist_type = _get_default_dist(dist_type, cor_type)
     _set_absolute_dist(cor_type, dist_type)
 
@@ -304,7 +302,7 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
 end
 function cluster_assets(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistanceMethod = DistanceCanonical(),
+                        dist_type::DistanceMethod = DistCanonical(),
                         hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
     clustering, k, S, D = _hcluster(hclust_alg, X, cor_type, dist_type, hclust_opt)
 
