@@ -65,7 +65,7 @@ pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-o
 │    AAPL │ 4.484 % │
 │     AMC │  0.83 % │
 │      BB │ 2.675 % │
-│     BBY │ 4.114 % │
+│     BBY │ 4.113 % │
 │    DELL │  6.61 % │
 │      DG │ 11.12 % │
 │     DRS │ 3.301 % │
@@ -74,7 +74,7 @@ pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-o
 │    LULU │ 6.337 % │
 │    MARA │ 1.301 % │
 │     MCI │ 8.422 % │
-│    MSFT │  4.89 % │
+│    MSFT │ 4.891 % │
 │    NKLA │ 1.849 % │
 │    NVAX │ 1.478 % │
 │    NVDA │ 5.579 % │
@@ -82,11 +82,11 @@ pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-o
 │    PLNT │ 2.849 % │
 │    SAVE │ 1.897 % │
 │    SBUX │ 4.572 % │
-│    SIRI │ 5.715 % │
+│    SIRI │ 5.714 % │
 │     STX │ 3.819 % │
 │    TLRY │ 2.921 % │
 │    TSLA │ 3.072 % │
-└─────────┴─────────┘</code></pre><p><a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.HRP"><code>HRP</code></a> uses the clustering structure, but it splits the dendrogram naïvely down the middle. This means it can&#39;t take full advantage of the clustering structure, and may split closely related assets into separate clusters, which is not ideal. However, the next example will go over the <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.HERC"><code>HERC</code></a> optimisation type, which does consider the clustering structure.</p><p>Regardless, we&#39;ll plot the clusters to see the structure of the relationships between assets. We don&#39;t want to clusterise again so we&#39;ll set <code>cluster = false</code>, which is also a flag in <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.optimise!-Tuple{HCPortfolio}"><code>optimise!</code></a>, which saves on processing when the assets have been previously clusterised, the default is <code>cluster = true</code>.</p><pre><code class="language-julia hljs">plot_clusters(portfolio; cluster = false)</code></pre><img src="398e8e75.svg" alt="Example block output"/><p>Before moving on to DBHT clustering, we&#39;ll use a different linkage function. Generally speaking, Ward&#39;s clustering is the most robust when dealing with noisy data, which is why it&#39;s the default method. Lets see what complete clustering looks like. And now we&#39;ll use a different method for determining the clusters, <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.StdSilhouette"><code>StdSilhouette</code></a>.</p><pre><code class="language-julia hljs"># Hierarchical clustering with complete linkage.
+└─────────┴─────────┘</code></pre><p><a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.HRP"><code>HRP</code></a> uses the clustering structure, but it splits the dendrogram naïvely down the middle. This means it can&#39;t take full advantage of the clustering structure, and may split closely related assets into separate clusters, which is not ideal. However, the next example will go over the <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.HERC"><code>HERC</code></a> optimisation type, which does consider the clustering structure.</p><p>Regardless, we&#39;ll plot the clusters to see the structure of the relationships between assets. We don&#39;t want to clusterise again so we&#39;ll set <code>cluster = false</code>, which is also a flag in <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.optimise!-Tuple{HCPortfolio}"><code>optimise!</code></a>, which saves on processing when the assets have been previously clusterised, the default is <code>cluster = true</code>.</p><pre><code class="language-julia hljs">plot_clusters(portfolio; cluster = false)</code></pre><img src="fadf8e43.svg" alt="Example block output"/><p>Before moving on to DBHT clustering, we&#39;ll use a different linkage function. Generally speaking, Ward&#39;s clustering is the most robust when dealing with noisy data, which is why it&#39;s the default method. Lets see what complete clustering looks like. And now we&#39;ll use a different method for determining the clusters, <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.StdSilhouette"><code>StdSilhouette</code></a>.</p><pre><code class="language-julia hljs"># Hierarchical clustering with complete linkage.
 hclust_alg = HAC(; linkage = :complete)
 # Method for determining the number of clusters is the Standard silhouette score [`StdSilhouette`](@ref).
 hclust_opt = HCOpt(; k_method = StdSilhouette())
@@ -95,7 +95,7 @@ cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 # Optimise.
 w2 = optimise!(portfolio; rm = rm)
 pretty_table(w2; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="bd5c256f.svg" alt="Example block output"/><h2 id="3.2-DBHT-clustering"><a class="docs-heading-anchor" href="#3.2-DBHT-clustering">3.2 DBHT clustering</a><a id="3.2-DBHT-clustering-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-DBHT-clustering" title="Permalink"></a></h2><p>Direct Bubble Hierarchy Tree (DBHT) clustering, is a type of clustering based on graph-theoretic filtering. The same idea is used to compute the <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.LoGo"><code>LoGo</code></a> covariance, which we explored in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl">Example 2</a>.</p><p>DBHT clustering also uses a similarity matrix, the original <code>MATLAB</code> code proposes two methods. <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> implements them both using <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTMaxDist"><code>DBHTMaxDist</code></a> and <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTExp"><code>DBHTExp</code></a>. Though users can define their own creating a concrete subtype of <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTSimilarity"><code>PortfolioOptimiser.DBHTSimilarity</code></a> and implementing <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.dbht_similarity-Tuple{DBHTExp, Any, Any}"><code>dbht_similarity</code></a> for it. There are also two methods for defining roots of graphs, either of which can be used <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.UniqueDBHT"><code>UniqueDBHT</code></a> and <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.EqualDBHT"><code>EqualDBHT</code></a>.</p><p>For now we will use teh defaults.</p><p>Again we will use default parameters first. We&#39;re not setting <code>cluster = flase</code> in this optimisation since we want the assets to be clustered using this new algorithm.</p><pre><code class="language-julia hljs"># DBHT clustering, using the distance from the maximum value of the dissimilarity matrix [`DBHTMaxDist`](@ref).
+plot_clusters(portfolio; cluster = false)</code></pre><img src="9d80ff7b.svg" alt="Example block output"/><h2 id="3.2-DBHT-clustering"><a class="docs-heading-anchor" href="#3.2-DBHT-clustering">3.2 DBHT clustering</a><a id="3.2-DBHT-clustering-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-DBHT-clustering" title="Permalink"></a></h2><p>Direct Bubble Hierarchy Tree (DBHT) clustering, is a type of clustering based on graph-theoretic filtering. The same idea is used to compute the <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.LoGo"><code>LoGo</code></a> covariance, which we explored in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl">Example 2</a>.</p><p>DBHT clustering also uses a similarity matrix, the original <code>MATLAB</code> code proposes two methods. <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> implements them both using <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTMaxDist"><code>DBHTMaxDist</code></a> and <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTExp"><code>DBHTExp</code></a>. Though users can define their own creating a concrete subtype of <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTSimilarity"><code>PortfolioOptimiser.DBHTSimilarity</code></a> and implementing <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.dbht_similarity-Tuple{DBHTExp, Any, Any}"><code>dbht_similarity</code></a> for it. There are also two methods for defining roots of graphs, either of which can be used <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.UniqueDBHT"><code>UniqueDBHT</code></a> and <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.EqualDBHT"><code>EqualDBHT</code></a>.</p><p>For now we will use teh defaults.</p><p>Again we will use default parameters first. We&#39;re not setting <code>cluster = flase</code> in this optimisation since we want the assets to be clustered using this new algorithm.</p><pre><code class="language-julia hljs"># DBHT clustering, using the distance from the maximum value of the dissimilarity matrix [`DBHTMaxDist`](@ref).
 hclust_alg = DBHT(; similarity = DBHTMaxDist())
 hclust_opt = HCOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
@@ -129,13 +129,13 @@ pretty_table(w3; formatters = fmt1)</code></pre><pre class="documenter-example-o
 │     STX │  4.91 % │
 │    TLRY │ 1.481 % │
 │    TSLA │  2.89 % │
-└─────────┴─────────┘</code></pre><p>We will again plot the clusters. Note how different the clusters are.</p><pre><code class="language-julia hljs">plot_clusters(portfolio; cluster = false)</code></pre><img src="ff8b5efa.svg" alt="Example block output"/><p>Now we&#39;ll see the effect changing the similarity matrix calculation to exponential decay of the disimilarity score.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTExp())
+└─────────┴─────────┘</code></pre><p>We will again plot the clusters. Note how different the clusters are.</p><pre><code class="language-julia hljs">plot_clusters(portfolio; cluster = false)</code></pre><img src="07981f70.svg" alt="Example block output"/><p>Now we&#39;ll see the effect changing the similarity matrix calculation to exponential decay of the disimilarity score.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTExp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w4 = optimise!(portfolio; rm = rm)
 pretty_table(w4; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="4b6bd73a.svg" alt="Example block output"/><p>Now we&#39;ll define our own method for the similarity matrix. We&#39;ll use one of the potential definitions given in <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTs-Tuple{AbstractMatrix{&lt;:Real}, AbstractMatrix{&lt;:Real}}"><code>DBHTs</code></a>.</p><p>As a general rule, <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> doesn&#39;t export abstract types, so they have to be explicitly imported.</p><p>We&#39;ll define our similarity matrix using only the correlation, denoted here by <code>S</code>, the distance matrix is denoted by <code>D</code> <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.dbht_similarity-Tuple{DBHTExp, Any, Any}"><code>dbht_similarity</code></a>.</p><pre><code class="language-julia hljs">struct DBHTClamp &lt;: PortfolioOptimiser.DBHTSimilarity end
+plot_clusters(portfolio; cluster = false)</code></pre><img src="8c7c973a.svg" alt="Example block output"/><p>Now we&#39;ll define our own method for the similarity matrix. We&#39;ll use one of the potential definitions given in <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.DBHTs-Tuple{AbstractMatrix{&lt;:Real}, AbstractMatrix{&lt;:Real}}"><code>DBHTs</code></a>.</p><p>As a general rule, <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> doesn&#39;t export abstract types, so they have to be explicitly imported.</p><p>We&#39;ll define our similarity matrix using only the correlation, denoted here by <code>S</code>, the distance matrix is denoted by <code>D</code> <a href="../../ParameterEstimation/Clustering/#PortfolioOptimiser.dbht_similarity-Tuple{DBHTExp, Any, Any}"><code>dbht_similarity</code></a>.</p><pre><code class="language-julia hljs">struct DBHTClamp &lt;: PortfolioOptimiser.DBHTSimilarity end
 function PortfolioOptimiser.dbht_similarity(::DBHTClamp, S, D)
     return S .+ abs(minimum(S))
 end
@@ -145,7 +145,7 @@ cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w5 = optimise!(portfolio; rm = rm)
 pretty_table(w5; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="1c9b13fb.svg" alt="Example block output"/><p>We&#39;ll make another method that uses both the correlation and distance matrices to create the DBHT similarity matrix. We&#39;ll also make it tuneable.</p><pre><code class="language-julia hljs">@kwdef mutable struct DBHTTuneableLinComboMaxDistExp{T1 &lt;: Real, T2 &lt;: Real, T3 &lt;: Real} &lt;:
+plot_clusters(portfolio; cluster = false)</code></pre><img src="775fe56e.svg" alt="Example block output"/><p>We&#39;ll make another method that uses both the correlation and distance matrices to create the DBHT similarity matrix. We&#39;ll also make it tuneable.</p><pre><code class="language-julia hljs">@kwdef mutable struct DBHTTuneableLinComboMaxDistExp{T1 &lt;: Real, T2 &lt;: Real, T3 &lt;: Real} &lt;:
                       PortfolioOptimiser.DBHTSimilarity
     maxdist_c::T1 = 1.0
     expdeca_c::T2 = 1.0
@@ -164,7 +164,7 @@ cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w6 = optimise!(portfolio; rm = rm)
 pretty_table(w6; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="01804912.svg" alt="Example block output"/><h2 id="3.3-Using-detoned-matrices."><a class="docs-heading-anchor" href="#3.3-Using-detoned-matrices.">3.3 Using detoned matrices.</a><a id="3.3-Using-detoned-matrices.-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Using-detoned-matrices." title="Permalink"></a></h2><p>As mentioned in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl">Example 2</a>, detoned matrices can be of great value in hierarchical optimisations. We&#39;ll see their effect here.</p><p>We will repeat the exact same steps as above, but without redefining the structures.</p><pre><code class="language-julia hljs">cov_type = PortCovCor(; denoise = DenoiseFixed(; detone = true))
+plot_clusters(portfolio; cluster = false)</code></pre><img src="f6ccf0e8.svg" alt="Example block output"/><h2 id="3.3-Using-detoned-matrices."><a class="docs-heading-anchor" href="#3.3-Using-detoned-matrices.">3.3 Using detoned matrices.</a><a id="3.3-Using-detoned-matrices.-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Using-detoned-matrices." title="Permalink"></a></h2><p>As mentioned in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl">Example 2</a>, detoned matrices can be of great value in hierarchical optimisations. We&#39;ll see their effect here.</p><p>We will repeat the exact same steps as above, but without redefining the structures.</p><pre><code class="language-julia hljs">cov_type = PortCovCor(; denoise = DenoiseFixed(; detone = true))
 cor_type = PortCovCor(; denoise = DenoiseFixed(; detone = true))
 dist_type = DistCanonical()
 asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
@@ -174,31 +174,31 @@ cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w7 = optimise!(portfolio; rm = rm)
 pretty_table(w7; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="3b2e623a.svg" alt="Example block output"/><p>Then complete, and we&#39;ll see categorise the number of clusters according to the standard silhouette score.</p><pre><code class="language-julia hljs">hclust_alg = HAC(; linkage = :complete)
+plot_clusters(portfolio; cluster = false)</code></pre><img src="7c863074.svg" alt="Example block output"/><p>Then complete, and we&#39;ll see categorise the number of clusters according to the standard silhouette score.</p><pre><code class="language-julia hljs">hclust_alg = HAC(; linkage = :complete)
 hclust_opt = HCOpt(; k_method = StdSilhouette())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w8 = optimise!(portfolio; rm = rm)
 pretty_table(w8; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="8e5bc462.svg" alt="Example block output"/><p>Now we&#39;ll use DBHT clustering with max distance similarity.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTMaxDist())
+plot_clusters(portfolio; cluster = false)</code></pre><img src="34ae177d.svg" alt="Example block output"/><p>Now we&#39;ll use DBHT clustering with max distance similarity.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTMaxDist())
 hclust_opt = HCOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w9 = optimise!(portfolio; rm = rm)
 pretty_table(w9; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="3603873e.svg" alt="Example block output"/><p>Now we&#39;ll use the exponential decay similarity.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTExp())
+plot_clusters(portfolio; cluster = false)</code></pre><img src="26ec48e7.svg" alt="Example block output"/><p>Now we&#39;ll use the exponential decay similarity.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTExp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w10 = optimise!(portfolio; rm = rm)
 pretty_table(w10; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="e8e5120f.svg" alt="Example block output"/><p>Now we&#39;ll try the clamp method.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTClamp())
+plot_clusters(portfolio; cluster = false)</code></pre><img src="7885b57d.svg" alt="Example block output"/><p>Now we&#39;ll try the clamp method.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(; similarity = DBHTClamp())
 hclust_opt = HCOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w11 = optimise!(portfolio; rm = rm)
 pretty_table(w11; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="8b5c3fdc.svg" alt="Example block output"/><p>And finally the tuneable linear combination of max distance and exponential decay.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(;
+plot_clusters(portfolio; cluster = false)</code></pre><img src="51ea9cd2.svg" alt="Example block output"/><p>And finally the tuneable linear combination of max distance and exponential decay.</p><pre><code class="language-julia hljs">hclust_alg = DBHT(;
                   similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
                                                               expdeca_c = 1, argcoef = 0.4))
 hclust_opt = HCOpt(; k_method = TwoDiff())
@@ -206,7 +206,7 @@ cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
 w12 = optimise!(portfolio; rm = rm)
 pretty_table(w12; formatters = fmt1)
-plot_clusters(portfolio; cluster = false)</code></pre><img src="b0976f56.svg" alt="Example block output"/><p>As you can see, there are drastic differences in the correlation matrices. We&#39;ll display the weights of the sample  correlations and covariances (:weights) and their detoned counterparts (:weights_d) side by side.</p><pre><code class="language-julia hljs"># Ward&#39;s linkage
+plot_clusters(portfolio; cluster = false)</code></pre><img src="c382483b.svg" alt="Example block output"/><p>As you can see, there are drastic differences in the correlation matrices. We&#39;ll display the weights of the sample  correlations and covariances (:weights) and their detoned counterparts (:weights_d) side by side.</p><pre><code class="language-julia hljs"># Ward&#39;s linkage
 pretty_table(DataFrames.rename!(hcat(w1, w7.weights), :x1 =&gt; :weights_d); formatters = fmt1)
 # complete linkage
 pretty_table(DataFrames.rename!(hcat(w2, w8.weights), :x1 =&gt; :weights_d); formatters = fmt1)
@@ -225,10 +225,10 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼─────────┼───────────┤
 │     AAL │ 2.041 % │   1.499 % │
-│    AAPL │ 4.484 % │   9.037 % │
+│    AAPL │ 4.484 % │   9.036 % │
 │     AMC │  0.83 % │   0.469 % │
-│      BB │ 2.675 % │   1.491 % │
-│     BBY │ 4.114 % │   5.325 % │
+│      BB │ 2.675 % │    1.49 % │
+│     BBY │ 4.113 % │   5.325 % │
 │    DELL │  6.61 % │   5.832 % │
 │      DG │ 11.12 % │   5.373 % │
 │     DRS │ 3.301 % │   1.551 % │
@@ -237,15 +237,15 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │    LULU │ 6.337 % │   4.717 % │
 │    MARA │ 1.301 % │   0.665 % │
 │     MCI │ 8.422 % │   4.744 % │
-│    MSFT │  4.89 % │  10.363 % │
+│    MSFT │ 4.891 % │  10.362 % │
 │    NKLA │ 1.849 % │   0.945 % │
 │    NVAX │ 1.478 % │   0.739 % │
-│    NVDA │ 5.579 % │   4.226 % │
+│    NVDA │ 5.579 % │   4.225 % │
 │    PARA │ 5.229 % │   3.482 % │
 │    PLNT │ 2.849 % │   3.805 % │
 │    SAVE │ 1.897 % │   1.381 % │
 │    SBUX │ 4.572 % │  10.414 % │
-│    SIRI │ 5.715 % │  10.108 % │
+│    SIRI │ 5.714 % │  10.113 % │
 │     STX │ 3.819 % │   5.555 % │
 │    TLRY │ 2.921 % │   0.864 % │
 │    TSLA │ 3.072 % │    1.67 % │
@@ -259,24 +259,24 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │     AMC │ 0.836 % │   0.443 % │
 │      BB │ 4.481 % │   2.392 % │
 │     BBY │ 4.189 % │   6.964 % │
-│    DELL │ 6.508 % │    5.42 % │
-│      DG │ 8.067 % │   6.447 % │
-│     DRS │  3.26 % │   4.103 % │
+│    DELL │ 6.508 % │   5.419 % │
+│      DG │ 8.068 % │   6.447 % │
+│     DRS │  3.26 % │   4.102 % │
 │     GME │  1.05 % │   0.558 % │
-│    INTC │ 3.793 % │   5.469 % │
-│    LULU │ 4.269 % │   5.257 % │
+│    INTC │ 3.793 % │   5.468 % │
+│    LULU │ 4.269 % │   5.256 % │
 │    MARA │ 1.487 % │   1.352 % │
-│     MCI │ 8.576 % │   6.675 % │
-│    MSFT │  4.36 % │   7.698 % │
+│     MCI │ 8.575 % │   6.675 % │
+│    MSFT │  4.36 % │   7.697 % │
 │    NKLA │ 1.967 % │    2.02 % │
 │    NVAX │ 1.572 % │   0.931 % │
 │    NVDA │ 4.973 % │    4.46 % │
-│    PARA │ 5.324 % │   2.762 % │
+│    PARA │ 5.324 % │   2.763 % │
 │    PLNT │ 5.978 % │   4.623 % │
 │    SAVE │ 1.932 % │   1.886 % │
-│    SBUX │ 5.474 % │   6.862 % │
-│    SIRI │ 5.819 % │   5.751 % │
-│     STX │  3.76 % │   5.129 % │
+│    SBUX │ 5.474 % │   6.863 % │
+│    SIRI │ 5.819 % │   5.755 % │
+│     STX │  3.76 % │   5.128 % │
 │    TLRY │ 1.789 % │   1.151 % │
 │    TSLA │ 4.462 % │   2.736 % │
 └─────────┴─────────┴───────────┘
@@ -285,19 +285,19 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼─────────┼───────────┤
 │     AAL │ 2.269 % │   1.931 % │
-│    AAPL │ 5.569 % │   7.076 % │
+│    AAPL │ 5.569 % │   7.075 % │
 │     AMC │ 0.846 % │   0.818 % │
 │      BB │ 4.708 % │   2.061 % │
 │     BBY │ 3.622 % │   7.365 % │
-│    DELL │ 3.815 % │     4.4 % │
+│    DELL │ 3.815 % │   4.399 % │
 │      DG │ 6.236 % │   5.766 % │
 │     DRS │ 2.698 % │    2.83 % │
 │     GME │ 1.062 % │   1.222 % │
-│    INTC │ 4.336 % │   7.488 % │
+│    INTC │ 4.336 % │   7.487 % │
 │    LULU │ 4.648 % │   5.366 % │
 │    MARA │ 2.234 % │   1.739 % │
 │     MCI │  5.67 % │   4.484 % │
-│    MSFT │ 8.217 % │   7.967 % │
+│    MSFT │ 8.217 % │   7.966 % │
 │    NKLA │ 2.856 % │   1.881 % │
 │    NVAX │ 1.313 % │   0.963 % │
 │    NVDA │ 3.317 % │   6.551 % │
@@ -305,37 +305,37 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │    PLNT │ 5.237 % │   3.297 % │
 │    SAVE │ 2.383 % │   1.779 % │
 │    SBUX │ 8.553 % │   5.739 % │
-│    SIRI │ 8.436 % │    7.11 % │
-│     STX │  4.91 % │   4.915 % │
+│    SIRI │ 8.436 % │   7.115 % │
+│     STX │  4.91 % │   4.914 % │
 │    TLRY │ 1.481 % │   1.214 % │
-│    TSLA │  2.89 % │   2.347 % │
+│    TSLA │  2.89 % │   2.346 % │
 └─────────┴─────────┴───────────┘
 ┌─────────┬─────────┬───────────┐
 │<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│<span class="sgr1"> weights_d </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼─────────┼───────────┤
 │     AAL │ 2.262 % │   2.011 % │
-│    AAPL │ 4.326 % │    6.53 % │
+│    AAPL │ 4.326 % │   6.529 % │
 │     AMC │ 1.696 % │   0.494 % │
 │      BB │ 2.133 % │   2.126 % │
-│     BBY │  3.58 % │   4.977 % │
+│     BBY │  3.58 % │   4.978 % │
 │    DELL │ 3.844 % │   7.224 % │
 │      DG │ 7.692 % │   5.833 % │
 │     DRS │ 3.179 % │   2.901 % │
 │     GME │ 1.337 % │   0.622 % │
-│    INTC │ 6.783 % │   5.485 % │
-│    LULU │ 5.578 % │    4.91 % │
+│    INTC │ 6.783 % │   5.484 % │
+│    LULU │ 5.578 % │   4.909 % │
 │    MARA │ 2.343 % │   1.747 % │
 │     MCI │ 5.817 % │   4.988 % │
-│    MSFT │ 8.168 % │   7.752 % │
+│    MSFT │ 8.168 % │   7.751 % │
 │    NKLA │ 2.015 % │    1.27 % │
 │    NVAX │ 2.964 % │   1.539 % │
 │    NVDA │ 3.958 % │   4.926 % │
-│    PARA │ 3.121 % │   4.724 % │
+│    PARA │ 3.121 % │   4.725 % │
 │    PLNT │ 3.801 % │   4.542 % │
 │    SAVE │ 2.102 % │   1.853 % │
 │    SBUX │ 4.686 % │   6.196 % │
-│    SIRI │ 8.416 % │   6.985 % │
+│    SIRI │ 8.415 % │    6.99 % │
 │     STX │ 3.881 % │    5.59 % │
 │    TLRY │ 2.851 % │   2.039 % │
 │    TSLA │ 3.468 % │   2.738 % │
@@ -348,25 +348,25 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │    AAPL │ 4.492 % │   8.438 % │
 │     AMC │ 1.572 % │   1.338 % │
 │      BB │ 3.032 % │   1.812 % │
-│     BBY │ 3.717 % │   4.701 % │
-│    DELL │ 3.899 % │   7.009 % │
-│      DG │ 6.104 % │   5.963 % │
+│     BBY │ 3.717 % │   4.702 % │
+│    DELL │ 3.899 % │   7.008 % │
+│      DG │ 6.104 % │   5.962 % │
 │     DRS │ 3.275 % │   1.916 % │
 │     GME │ 1.239 % │   0.718 % │
 │    INTC │ 6.915 % │   8.055 % │
 │    LULU │ 3.955 % │   5.729 % │
 │    MARA │ 2.452 % │   0.872 % │
 │     MCI │ 5.993 % │   4.839 % │
-│    MSFT │ 8.676 % │   7.516 % │
+│    MSFT │ 8.676 % │   7.515 % │
 │    NKLA │ 1.868 % │   1.777 % │
 │    NVAX │ 1.359 % │   0.922 % │
 │    NVDA │ 3.433 % │   3.544 % │
-│    PARA │ 3.215 % │   4.462 % │
-│    PLNT │ 3.915 % │   4.407 % │
+│    PARA │ 3.215 % │   4.463 % │
+│    PLNT │ 3.916 % │   4.407 % │
 │    SAVE │ 2.166 % │   1.797 % │
-│    SBUX │ 4.754 % │   6.011 % │
-│    SIRI │ 8.895 % │   6.598 % │
-│     STX │ 5.517 % │   6.425 % │
+│    SBUX │ 4.753 % │   6.011 % │
+│    SIRI │ 8.895 % │   6.602 % │
+│     STX │ 5.517 % │   6.424 % │
 │    TLRY │ 2.937 % │   1.048 % │
 │    TSLA │ 4.289 % │   2.151 % │
 └─────────┴─────────┴───────────┘
@@ -378,25 +378,25 @@ pretty_table(DataFrames.rename!(hcat(w6, w12.weights), :x1 =&gt; :weights_d);
 │    AAPL │    7.2 % │  10.433 % │
 │     AMC │  1.101 % │   0.489 % │
 │      BB │  2.241 % │   1.556 % │
-│     BBY │  3.653 % │   5.733 % │
-│    DELL │  3.798 % │   6.854 % │
+│     BBY │  3.653 % │   5.734 % │
+│    DELL │  3.798 % │   6.853 % │
 │      DG │  5.763 % │   6.204 % │
 │     DRS │  5.387 % │   2.166 % │
-│     GME │  2.355 % │   0.693 % │
+│     GME │  2.355 % │   0.692 % │
 │    INTC │  6.422 % │   5.533 % │
-│    LULU │  3.735 % │   4.107 % │
+│    LULU │  3.735 % │   4.106 % │
 │    MARA │   1.09 % │   0.851 % │
 │     MCI │ 10.105 % │   4.732 % │
-│    MSFT │  4.753 % │   9.105 % │
+│    MSFT │  4.753 % │   9.104 % │
 │    NKLA │  2.316 % │   1.341 % │
-│    NVAX │  1.851 % │    1.43 % │
-│    NVDA │  2.727 % │   4.029 % │
+│    NVAX │  1.851 % │   1.429 % │
+│    NVDA │  2.727 % │   4.028 % │
 │    PARA │  5.447 % │   5.442 % │
 │    PLNT │  3.403 % │   4.309 % │
 │    SAVE │  2.513 % │   1.758 % │
 │    SBUX │  4.689 % │   5.878 % │
-│    SIRI │  5.947 % │   8.047 % │
+│    SIRI │  5.947 % │   8.051 % │
 │     STX │  6.743 % │   3.659 % │
 │    TLRY │  1.942 % │   1.644 % │
 │    TSLA │  2.135 % │   2.099 % │
-└─────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../3_shorting_portfolios/">« Example 3: Shorting and leveraged portfolios</a><a class="docs-footer-nextpage" href="../../Constraints/WeightConstraints/">Weight constraints »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 29 September 2024 13:26">Sunday 29 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../3_shorting_portfolios/">« Example 3: Shorting and leveraged portfolios</a><a class="docs-footer-nextpage" href="../../Constraints/WeightConstraints/">Weight constraints »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 29 September 2024 15:52">Sunday 29 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
