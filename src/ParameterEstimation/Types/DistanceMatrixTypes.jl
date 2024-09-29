@@ -129,7 +129,7 @@ Defines the distance matrix from the correlation matrix.
 ```math
 \\begin{align}
 D_{i,\\,j} &= \\left(1 - C_{i,\\,j}\\right)}\\,.
-\\end{algin}
+\\end{align}
 ```
 
 Where:
@@ -250,5 +250,5 @@ function Base.setproperty!(obj::DistVarInfo, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-export DistMLP, DistDistMLP, DistLog, DistCanonical, Knuth, Freedman, Scott, HGR,
+export DistMLP, DistDistMLP, DistLog, DistCor, DistCanonical, Knuth, Freedman, Scott, HGR,
        DistVarInfo
