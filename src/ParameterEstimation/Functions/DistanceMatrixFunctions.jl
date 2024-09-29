@@ -13,16 +13,16 @@ function _dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
                    clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                end)
 
-    return Distances.pairwise(de.distance, _X, de.args...; de.kwargs...)
+    return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
 end
 function _dist(::DistLog, X::AbstractMatrix, ::Any)
-    return -log.(X)
+    return Symmetric(-log.(X))
 end
 function _dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, de.bins, de.normalise)
 end
 function _dist(::DistCor, X::AbstractMatrix, ::Any)
-    return clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
+    return Symmetric(sqrt.(clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))))
 end
 """
 ```
