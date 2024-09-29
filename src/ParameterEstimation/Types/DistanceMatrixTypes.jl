@@ -70,7 +70,7 @@ Where:
 
   - ``\\bm{D}_{i}``: is the ``i``-th column/row of the `N×N` distance matrix defined in [`DistMLP`](@ref).
 
-  - ``f_{m}``: is the pairwise distance function for metric ``m``. We use the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function which computes the entire matrix at once, the output is a vector so it gets reshaped into an `N×N` matrix.
+  - ``f_{m}``: is the pairwise distance function for metric ``m``. We use the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function which computes the entire matrix at once.
   - ``\\tilde{D}_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distances of distances matrix.
   - absolute:
 
@@ -160,7 +160,7 @@ struct DistCanonical <: DistMethod end
 abstract type AbstractBins end
 ```
 
-Abstract type for defining bin width estimation functions when computing [`DistVarInfo`](@ref) and [`CorMutualInfo`](@ref) distance and correlation matrices respectively.
+Abstract type for defining the bin width estimation functions when computing [`DistVarInfo`](@ref) and [`CorMutualInfo`](@ref) distance and correlation matrices respectively.
 """
 abstract type AbstractBins end
 
@@ -221,8 +221,14 @@ Defines the variation of information distance matrix.
 
 # Parameters
 
-  - `bins`: defines the bin function, or bin width directly and if so `bins > 0`.
-  - `normalise`: whether or not to normalise the variation of information.
+  - `bins`:
+
+      + if `isa(bins, AbstractBins)`: defines the function for computing bin widths.
+      + if `isa(bins, Integer)` and `bins > 0`: directly provide the number of bins.
+
+  - `normalise`:
+
+      + if `true`: normalise the mutual information.
 """
 mutable struct DistVarInfo <: DistMethod
     bins::Union{<:Integer, <:AbstractBins}
