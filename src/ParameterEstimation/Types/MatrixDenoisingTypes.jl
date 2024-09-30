@@ -29,7 +29,7 @@ struct NoDenoise <: Denoise end
 end
 ```
 
-Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method sets the eigenvalues that are below the noise significance threshold to their average value.
+Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to their average, and reconstructs the correlation matrix using the modified values.
 
 # Parameters
 
@@ -80,7 +80,7 @@ end
 end
 ```
 
-Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method sets the eigenvalues that are below the noise significance threshold to zero.
+Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to zero, and reconstructs the correlation matrix using the modified values.
 
 # Parameters
 
@@ -138,17 +138,17 @@ Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; 
 
 ```math
 \\begin{align}
-\\mathbf{\\rho} &= \\mathbf{\\rho}_{u} + \\alpha \\mathbf{\\rho}_{l} + (1 - \\alpha) \\mathrm{Diag}(\\mathbf{\\rho})\\\\
-\\mathbf{\\rho}_{u} &= \\mathbf{E}_{u} \\mathbf{\\lambda}_{u} \\mathbf{E}_{u}^{\\intercal}\\\\
-\\mathbf{\\rho}_{l} &= \\mathbf{E}_{l} \\mathbf{\\lambda}_{l} \\mathbf{E}_{l}^{\\intercal}\\,.
+\\mathbf{C} &= \\mathbf{C}_{u} + \\alpha \\mathbf{C}_{l} + (1 - \\alpha) \\mathrm{Diag}(\\mathbf{C})\\\\
+\\mathbf{C}_{u} &= \\mathbf{E}_{u} \\mathbf{\\lambda}_{u} \\mathbf{E}_{u}^{\\intercal}\\\\
+\\mathbf{C}_{l} &= \\mathbf{E}_{l} \\mathbf{\\lambda}_{l} \\mathbf{E}_{l}^{\\intercal}\\,.
 \\end{align}
 ```
 
 Where:
 
-  - ``\\mathbf{\\rho}`` is the denoised correlation matrix.
-  - ``\\mathbf{\\rho}_{u}`` is the reconstructed correlation matrix out of the eigenvalues and their corresponding eigenvectors that are above the noise significance threshold.
-  - ``\\mathbf{\\rho}_{l}`` is the reconstructed correlation matrix out of the eigenvalues and their corresponding eigenvectors that are below the noise significance threshold.
+  - ``\\mathbf{C}`` is the denoised correlation matrix.
+  - ``\\mathbf{C}_{u}`` is the reconstructed correlation matrix out of the eigenvalues that are above the noise significance threshold, and their corresponding eigenvectors.
+  - ``\\mathbf{C}_{l}`` is the reconstructed correlation matrix out of the eigenvalues that are below the noise significance threshold, and their corresponding eigenvectors.
   - ``\\mathbf{E}_{u}`` are the eigenvectors corresponding to the eigenvalues that are above the noise significance threshold.
   - ``\\mathbf{\\lambda}_{u}`` is the diagonal matrix of eigenvalues that are above the noise significance threshold.
   - ``\\mathbf{E}_{l}`` are the eigenvectors corresponding to the eigenvalues that are below the noise significance threshold.

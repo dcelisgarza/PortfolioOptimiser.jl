@@ -2,14 +2,26 @@
 ```
 abstract type MeanEstimator end
 ```
+
+Abstract type for subtyping expected returns vectors estimators.
 """
 abstract type MeanEstimator end
+
+"""
+```
+abstract type MeanSigmaEstimator <: MeanEstimator end
+```
+
+Abstract type for subtyping expected returns vectors estimators that use covariance matrices for their corrections.
+"""
 abstract type MeanSigmaEstimator <: MeanEstimator end
 
 """
 ```
 abstract type MeanTarget end
 ```
+
+Abstract type for subtyping correction targets of expected returns estimators that use covariance matrices for their corrections.
 """
 abstract type MeanTarget end
 
@@ -17,6 +29,8 @@ abstract type MeanTarget end
 ```
 struct GM <: MeanTarget end
 ```
+
+Grand mean target.
 """
 struct GM <: MeanTarget end
 
@@ -24,6 +38,8 @@ struct GM <: MeanTarget end
 ```
 struct VW <: MeanTarget end
 ```
+
+Volatility-weighted grand mean.
 """
 struct VW <: MeanTarget end
 
@@ -31,6 +47,8 @@ struct VW <: MeanTarget end
 ```
 struct SE <: MeanTarget end
 ```
+
+Mean square error of sample mean.
 """
 struct SE <: MeanTarget end
 
@@ -40,6 +58,12 @@ struct SE <: MeanTarget end
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
 ```
+
+Simple expected returns vector estimator.
+
+# Parameters
+
+  - `w`: optional `T×1` vector of weights for computing the expected returns vector.
 """
 mutable struct MuSimple <: MeanEstimator
     w::Union{<:AbstractWeights, Nothing}
@@ -56,6 +80,17 @@ end
     sigma::Union{<:AbstractMatrix, Nothing} = nothing
 end
 ```
+
+James-Stein [JS1, JS2](@cite) expected returns vector estimator.
+
+# Parameters
+
+  - `target`: correction target for the estimator.
+
+  - `w`: optional `T×1` vector of weights for computing the simple expected returns vector.
+  - `sigma`: value of the covariance matrix used for correcting the simple expected returns vector.
+
+      + if computing with [`asset_statistics!`](@ref) and `isnothing(sigma)`: use the covariance matrix computed by .
 """
 mutable struct MuJS <: MeanSigmaEstimator
     target::MeanTarget
@@ -74,6 +109,17 @@ end
     sigma::Union{<:AbstractMatrix, Nothing} = nothing
 end
 ```
+
+Bayes-Stein [BS](@cite) expected returns vector estimator.
+
+# Parameters
+
+  - `target`: correction target for the estimator.
+
+  - `w`: optional `T×1` vector of weights for computing the simple expected returns vector.
+  - `sigma`: value of the covariance matrix used for correcting the simple expected returns vector.
+
+      + if computing with [`asset_statistics!`](@ref) and `isnothing(sigma)`: use the covariance matrix computed by .
 """
 mutable struct MuBS <: MeanSigmaEstimator
     target::MeanTarget
@@ -93,6 +139,17 @@ end
     sigma::Union{<:AbstractMatrix, Nothing} = nothing
 end
 ```
+
+Bodnar-Okhrin-Parolya [BOP](@cite) expected returns vector estimator.
+
+# Parameters
+
+  - `target`: correction target for the estimator.
+
+  - `w`: optional `T×1` vector of weights for computing the simple expected returns vector.
+  - `sigma`: value of the covariance matrix used for correcting the simple expected returns vector.
+
+      + if computing with [`asset_statistics!`](@ref) and `isnothing(sigma)`: use the covariance matrix computed by .
 """
 mutable struct MuBOP <: MeanSigmaEstimator
     target::MeanTarget
