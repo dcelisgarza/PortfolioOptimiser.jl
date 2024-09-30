@@ -47,7 +47,7 @@ When the variance risk measure [`SD`](@ref) is being used, whether in the object
 
 ```math
 \\begin{align}
-\\phi_{\\mathrm{var}}(\\bm{w}) = \\mathrm{Tr}\\left(\\mathbf{\\Sigma}\\mathbf{W}\\right)\\,.
+\\phi_{\\mathrm{var}}(\\bm{w}) &= \\mathrm{Tr}\\left(\\mathbf{\\Sigma}\\mathbf{W}\\right)\\,.
 \\end{align}
 ```
 
@@ -60,7 +60,7 @@ However, this will not work if the variance is _not_ being constrained, or if it
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} \\quad \\phi(\\bm{w}) \\pm \\lambda \\mathrm{Tr}\\left(\\mathbf{X}\\right)\\,.
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\quad \\phi(\\bm{w}) \\pm \\lambda \\mathrm{Tr}\\left(\\mathbf{X}\\right)\\,.
 \\end{align}
 ```
 

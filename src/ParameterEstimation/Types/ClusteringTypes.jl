@@ -45,7 +45,7 @@ Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise 
 
 ```math
 \\begin{align}
-S_{i,\\,j} = \\exp(-D_{i,\\,j})\\,.
+S_{i,\\,j} &= \\exp(-D_{i,\\,j})\\,.
 \\end{align}
 ```
 
@@ -65,7 +65,7 @@ Defines the similarity matrix for use in [`PMFG_T2s`](@ref) as the element-wise 
 
 ```math
 \\begin{align}
-S_{i,\\,j} = \\left\\lceil (\\max \\mathbf{D})^2 \\right\\rceil - D_{i,\\,j} ^ 2\\,.
+S_{i,\\,j} &= \\left\\lceil (\\max \\mathbf{D})^2 \\right\\rceil - D_{i,\\,j} ^ 2\\,.
 \\end{align}
 ```
 

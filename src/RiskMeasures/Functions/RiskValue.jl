@@ -7,7 +7,7 @@ Compute the Variance. Square of [`_SD`](@ref).
 
 ```math
 \\begin{align}
-\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
+\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) &= \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
 \\end{align}
 ```
 
@@ -33,7 +33,7 @@ Compute the Semi-Variance, this is the square of [`_SSD`](@ref).
 
 ```math
 \\begin{align}
-\\mathrm{SVariance}(\\bm{X}) = \\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\,.
+\\mathrm{SVariance}(\\bm{X}) &= \\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\,.
 \\end{align}
 ```
 
@@ -64,7 +64,7 @@ Compute the Standard Deviation. Square root of [`_Variance`](@ref).
 
 ```math
 \\begin{align}
-\\mathrm{SD}(\\bm{w},\\, \\mathbf{\\Sigma}) = \\left(\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right)^{1/2}\\,.
+\\mathrm{SD}(\\bm{w},\\, \\mathbf{\\Sigma}) &= \\left(\\bm{w}^\\intercal \\, \\mathbf{\\Sigma} \\, \\bm{w}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -90,7 +90,7 @@ Compute the Mean Absolute Deviation.
 
 ```math
 \\begin{align}
-\\mathrm{MAD}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert X_{t} - \\mathbb{E}(\\bm{X}) \\right\\rvert\\,.
+\\mathrm{MAD}(\\bm{X}) &= \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert X_{t} - \\mathbb{E}(\\bm{X}) \\right\\rvert\\,.
 \\end{align}
 ```
 
@@ -117,7 +117,7 @@ Compute the Semi-Standard Deviation.
 
 ```math
 \\begin{align}
-\\mathrm{SSD}(\\bm{X}) = \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SSD}(\\bm{X}) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -148,7 +148,7 @@ Compute the First Lower Partial Moment (Omega ratio).
 
 ```math
 \\begin{align}
-\\mathrm{FLPM}(\\bm{X},\\, r) = \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)\\,.
+\\mathrm{FLPM}(\\bm{X},\\, r) &= \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)\\,.
 \\end{align}
 ```
 
@@ -176,7 +176,7 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 
 ```math
 \\begin{align}
-\\mathrm{SLPM}(\\bm{X},\\, r) = \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -204,7 +204,7 @@ Compute the Worst Realisation or Worst Case Scenario.
 
 ```math
 \\begin{align}
-\\mathrm{WR}(\\bm{X}) = -\\min(\\bm{X})\\,.
+\\mathrm{WR}(\\bm{X}) &= -\\min(\\bm{X})\\,.
 \\end{align}
 ```
 
@@ -229,7 +229,7 @@ Compute the Value at Risk, used in [`_CVaR`](@ref).
 
 ```math
 \\begin{align}
-\\mathrm{VaR}(\\bm{X},\\, \\alpha) = -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ X_{t} \\in \\mathbb{R} : F_{\\bm{X}}(X_{t}) > \\alpha \\right\\}\\,.
+\\mathrm{VaR}(\\bm{X},\\, \\alpha) &= -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ X_{t} \\in \\mathbb{R} : F_{\\bm{X}}(X_{t}) > \\alpha \\right\\}\\,.
 \\end{align}
 ```
 
@@ -261,7 +261,7 @@ Compute the Conditional Value at Risk.
 
 ```math
 \\begin{align}
-\\mathrm{CVaR}(\\bm{X},\\, \\alpha) = \\mathrm{VaR}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left( -X_{t} - \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,.
+\\mathrm{CVaR}(\\bm{X},\\, \\alpha) &= \\mathrm{VaR}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left( -X_{t} - \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,.
 \\end{align}
 ```
 
@@ -399,7 +399,7 @@ Compute the Entropic Value at Risk.
 
 ```math
 \\begin{align}
-\\mathrm{EVaR}(\\bm{X},\\alpha) = \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,.
+\\mathrm{EVaR}(\\bm{X},\\alpha) &= \\underset{z > 0}{\\inf} \\left\\{\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)\\right\\}\\,.
 \\end{align}
 ```
 
@@ -529,7 +529,7 @@ Compute the Relativistic Value at Risk.
 
 ```math
 \\begin{align}
-\\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) &= \\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)\\,.
 \\end{align}
 ```
 
@@ -614,7 +614,7 @@ Compute the Maximum Drawdown (Calmar ratio) of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{MDD_{a}}(\\bm{X}) = \\max\\mathrm{DD_{a}}(\\bm{X})\\,.
+\\mathrm{MDD_{a}}(\\bm{X}) &= \\max\\mathrm{DD_{a}}(\\bm{X})\\,.
 \\end{align}
 ```
 
@@ -657,7 +657,7 @@ Compute the Average Drawdown of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{ADD_{a}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=1}^{T} \\mathrm{DD_{a}}(\\bm{X}, j)\\,.
+\\mathrm{ADD_{a}}(\\bm{X}) &= \\dfrac{1}{T} \\sum\\limits_{j=1}^{T} \\mathrm{DD_{a}}(\\bm{X}, j)\\,.
 \\end{align}
 ```
 
@@ -701,7 +701,7 @@ Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right)\\,.
+\\mathrm{CDaR_{a}}(\\bm{X},\\, \\alpha) &= \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j) - \\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha),\\, 0 \\right)\\,.
 \\end{align}
 ```
 
@@ -755,7 +755,7 @@ Compute the Ulcer Index of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{UCI_{a}}(\\bm{X}) = \\left(\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)^{2}\\right)^{1/2}\\,.
+\\mathrm{UCI_{a}}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{a}}(\\bm{X},\\, j)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -842,7 +842,7 @@ Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{RLDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLDaR_{a}}(\\bm{X},\\, \\alpha,\\, \\kappa) &= \\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 \\end{align}
 ```
 
@@ -939,7 +939,7 @@ Compute the Maximum Drawdown of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{MDD_{r}}(\\bm{X}) = \\max \\mathrm{DD_{r}}(\\bm{X})\\,.
+\\mathrm{MDD_{r}}(\\bm{X}) &= \\max \\mathrm{DD_{r}}(\\bm{X})\\,.
 \\end{align}
 ```
 
@@ -982,7 +982,7 @@ Compute the Average Drawdown of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{ADD_{r}}(\\bm{X}) = \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,.
+\\mathrm{ADD_{r}}(\\bm{X}) &= \\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)\\,.
 \\end{align}
 ```
 
@@ -1026,7 +1026,7 @@ Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) = \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right)\\,.
+\\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) &= \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{j=0}^{T} \\max\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j) - \\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha),\\, 0 \\right)\\,.
 \\end{align}
 ```
 
@@ -1080,7 +1080,7 @@ Compute the Ulcer Index of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{UCI_{r}}(\\bm{X}) = \\left(\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)^{2}\\right)^{1/2}\\,.
+\\mathrm{UCI_{r}}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{j=0}^{T} \\mathrm{DD_{r}}(\\bm{X},\\, j)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -1166,7 +1166,7 @@ Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) = \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
+\\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) &= \\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)\\,.
 \\end{align}
 ```
 
@@ -1211,7 +1211,7 @@ Compute the Square Root Kurtosis.
 
 ```math
 \\begin{align}
-\\mathrm{Kurt}(\\bm{X}) = \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( X_{t} - \\mathbb{E}(\\bm{X}) \\right)^{4} \\right)^{1/2}\\,.
+\\mathrm{Kurt}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\left( X_{t} - \\mathbb{E}(\\bm{X}) \\right)^{4} \\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -1247,7 +1247,7 @@ Compute the Square Root Semi Kurtosis.
 
 ```math
 \\begin{align}
-\\mathrm{SKurt}(\\bm{X}) = \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( X_{t} - \\mathbb{E}(\\bm{X}),\\, r \\right)^{4} \\right)^{1/2}\\,.
+\\mathrm{SKurt}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left( X_{t} - \\mathbb{E}(\\bm{X}),\\, r \\right)^{4} \\right)^{1/2}\\,.
 \\end{align}
 ```
 

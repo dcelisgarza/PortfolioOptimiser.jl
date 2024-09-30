@@ -100,7 +100,7 @@ end
 Defines the parameters for computing the Augmented Black-Litterman factor model [`black_litterman`](@ref). We define `Na` as the number of assets, `Nva` the number of asset views, `Nf` As the number of factors, and `Nvf` the number of factor views.
 
 ```math
-\\begin{align*}
+\\begin{align}
 \\bm{\\Pi}_{a} &= \\begin{cases}
                     \\delta\\begin{bmatrix}
                       \\mathbf{\\Sigma}\\\\
@@ -131,7 +131,7 @@ Defines the parameters for computing the Augmented Black-Litterman factor model 
 \\tau &= \\dfrac{1}{T}\\\\
 \\bm{\\mu}_{\\mathrm{ABL}} &= \\bm{\\Pi}_{\\mathrm{ABL}} + r\\\\
 \\mathbf{\\Sigma}_{\\mathrm{ABL}} &= \\mathbf{\\Sigma}_{a} + \\mathbf{M}_{a}
-\\end{align*}
+\\end{align}
 ```
 
 Where:
@@ -209,7 +209,7 @@ end
 Defines the parameters for computing the Bayesian Black-Litterman factor model [`black_litterman`](@ref). We define `Na` as the number of assets, `Nva` the number of asset views, `Nf` As the number of factors, and `Nvf` the number of factor views.
 
 ```math
-\\begin{align*}
+\\begin{align}
 \\mathbf{\\Sigma} &= \\mathbf{B} \\mathbf{\\Sigma}_{F} \\mathbf{B}^{\\intercal} + \\mathbf{\\Sigma}_{\\epsilon} \\\\
 \\mathbf{\\Sigma}_{\\epsilon} &= \\begin{cases}\\mathrm{Diagonal}\\left(\\mathrm{var}\\left(\\mathbf{X} - \\mathbf{F} \\mathbf{B}^{\\intercal},\\, \\mathrm{dims} = 1\\right)\\right) &\\quad \\mathrm{if~ error = true}\\\\
 \\mathbf{0} &\\quad \\mathrm{if~ error = false}
@@ -222,7 +222,7 @@ Defines the parameters for computing the Bayesian Black-Litterman factor model [
 \\mathbf{\\Sigma}_{\\mathrm{BF}} &= \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\left( \\overline{\\mathbf{\\Sigma}}_{F} + \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1} \\mathbf{B} \\right)^{-1}\\\\
 \\mathbf{\\Sigma}_{\\mathrm{BLB}} &= \\left(\\mathbf{\\Sigma}^{-1} - \\mathbf{\\Sigma}_{\\mathrm{BF}} \\mathbf{B}^{\\intercal} \\mathbf{\\Sigma}^{-1}\\right)^{-1}\\\\
 \\bm{\\mu}_{\\mathrm{BLB}} &= \\mathbf{\\Sigma}_{\\mathrm{BLB}} \\mathbf{\\Sigma}_{\\mathrm{BF}} \\overline{\\mathbf{\\Sigma}}_{F} \\overline{\\bm{\\Pi}}_{F} + r
-\\end{align*}
+\\end{align}
 ```
 
 Where:

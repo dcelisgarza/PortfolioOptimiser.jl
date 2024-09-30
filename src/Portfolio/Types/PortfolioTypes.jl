@@ -134,7 +134,7 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
     ```math
     \\begin{align}
-    \\lvert w_{i} - b_{i} \\rvert \\leq t_{i}\\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
+    \\lvert w_{i} - b_{i} &\\rvert \\leq t_{i}\\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
     \\end{align}
     ```
 
@@ -148,7 +148,7 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
     ```math
     \\begin{align}
-    \\left\\lVert \\dfrac{\\mathbf{X} \\bm{w} - \\bm{b}}{T - 1} \\right\\rVert_{2} \\leq \\epsilon
+    \\left\\lVert \\dfrac{\\mathbf{X} \\bm{w} - \\bm{b}}{T - 1} \\right\\rVert_{2} &\\leq \\epsilon
     \\end{align}
     ```
 
@@ -172,7 +172,7 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
     ```math
     \\begin{align}
-    \\mathbf{A} \\bm{w} \\geq \\bm{b}\\,.
+    \\mathbf{A} \\bm{w} &\\geq \\bm{b}\\,.
     \\end{align}
     ```
 
@@ -198,7 +198,7 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
     ```math
     \\begin{align}
-    \\bm{C} \\cdot \\bm{w} = \\bar{c}
+    \\bm{C} \\cdot \\bm{w} &= \\bar{c}
     \\end{align}
     ```
 
