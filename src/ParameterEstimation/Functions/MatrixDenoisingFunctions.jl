@@ -64,7 +64,7 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
     iscov = any(.!isone.(s))
     if iscov
         s .= sqrt.(s)
-        cov2cor!(X, s)
+        StatsBase.cov2cor!(X, s)
     end
 
     vals, vecs = eigen(X)
