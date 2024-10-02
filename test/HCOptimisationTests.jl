@@ -2,6 +2,8 @@ using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, C
       PortfolioOptimiser
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -125,7 +127,6 @@ l = 2.0
 end
 
 @testset "NCO factors" begin
-    factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                              :check_sol => (allow_local = true,

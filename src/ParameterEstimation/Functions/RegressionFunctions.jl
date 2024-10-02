@@ -30,7 +30,7 @@ function _regression(method::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
                    std(method.ve, X, method.std_w; dims = 2)
                end)
 
-    fit_result = lm(x1, y)
+    fit_result = GLM.lm(x1, y)
     beta_pc = coef(fit_result)[2:end]
 
     beta = Vp * beta_pc ./ sdev
@@ -54,6 +54,33 @@ function regression(method::PCAReg, x::DataFrame, y::DataFrame)
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
+function _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+    if isempty(included)
+        excluded = setdiff(namesx, included)
+        best_pval = Inf
+        new_feature = ""
+
+        for i ∈ excluded
+            factors = [included; i]
+            x1 = [ovec Matrix(x[!, factors])]
+            fit_result = GLM.lm(x1, y)
+            new_pvals = coeftable(fit_result).cols[4][2:end]
+
+            idx = findfirst(x -> x == i, factors)
+            test_pval = new_pvals[idx]
+            if best_pval > test_pval
+                best_pval = test_pval
+                new_feature = i
+            end
+        end
+
+        @warn("No asset with p-value lower than threshold. Best we can do is $new_feature, with p-value $best_pval.")
+
+        push!(included, new_feature)
+    end
+
+    return nothing
+end
 function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
@@ -71,7 +98,7 @@ function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         for i ∈ excluded
             factors = [included; i]
             x1 = [ovec Matrix(x[!, factors])]
-            fit_result = lm(x1, y)
+            fit_result = GLM.lm(x1, y)
             new_pvals = coeftable(fit_result).cols[4][2:end]
 
             idx = findfirst(x -> x == i, factors)
@@ -89,36 +116,13 @@ function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         end
     end
 
-    if isempty(included)
-        excluded = setdiff(namesx, included)
-        best_pval = Inf
-        new_feature = ""
-
-        for i ∈ excluded
-            factors = [included; i]
-            x1 = [ovec Matrix(x[!, factors])]
-            fit_result = lm(x1, y)
-            new_pvals = coeftable(fit_result).cols[4][2:end]
-
-            idx = findfirst(x -> x == i, factors)
-            test_pval = new_pvals[idx]
-            if best_pval > test_pval
-                best_pval = test_pval
-                new_feature = i
-                pvals = copy(new_pvals)
-            end
-        end
-
-        @warn("No asset with p-value lower than threshold. Best we can do is $new_feature, with p-value $best_pval.")
-
-        push!(included, new_feature)
-    end
+    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
 
     return included
 end
 function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
-    fit_result = lm([ovec Matrix(x)], y)
+    fit_result = GLM.lm([ovec Matrix(x)], y)
 
     included = names(x)
     namesx = names(x)
@@ -138,37 +142,14 @@ function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         end
 
         x1 = [ovec Matrix(x[!, factors])]
-        fit_result = lm(x1, y)
+        fit_result = GLM.lm(x1, y)
         pvals = coeftable(fit_result).cols[4][2:end]
 
         val, idx2 = findmax(pvals)
         push!(excluded, factors[idx2])
     end
 
-    if isempty(included)
-        excluded = setdiff(namesx, included)
-        best_pval = Inf
-        new_feature = ""
-        pvals = Float64[]
-
-        for i ∈ excluded
-            factors = [included; i]
-            x1 = [ovec Matrix(x[!, factors])]
-            fit_result = lm(x1, y)
-            new_pvals = coeftable(fit_result).cols[4][2:end]
-
-            idx = findfirst(x -> x == i, factors)
-            test_pval = new_pvals[idx]
-
-            if best_pval > test_pval
-                best_pval = test_pval
-                new_feature = i
-                pvals = copy(new_pvals)
-            end
-        end
-
-        push!(included, new_feature)
-    end
+    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
 
     return included
 end
@@ -202,8 +183,8 @@ end
 function _regression_threshold(::AdjRSq)
     return -Inf
 end
-function _get_forward_reg_incl_excl!(::MinValRegressionCriteria, value, excluded, included,
-                                     threshold)
+function _get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, excluded,
+                                     included, threshold)
     val, key = findmin(value)
     idx = findfirst(x -> x == key, excluded)
     if val < threshold
@@ -212,8 +193,8 @@ function _get_forward_reg_incl_excl!(::MinValRegressionCriteria, value, excluded
     end
     return threshold
 end
-function _get_forward_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded, included,
-                                     threshold)
+function _get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, excluded,
+                                     included, threshold)
     val, key = findmax(value)
     idx = findfirst(x -> x == key, excluded)
     if val > threshold
@@ -222,7 +203,8 @@ function _get_forward_reg_incl_excl!(::MaxValRegressionCriteria, value, excluded
     end
     return threshold
 end
-function _regression(::FReg, criterion::RegressionCriteria, x::DataFrame, y::AbstractVector)
+function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                     y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -240,7 +222,7 @@ function _regression(::FReg, criterion::RegressionCriteria, x::DataFrame, y::Abs
             push!(factors, i)
 
             x1 = [ovec Matrix(x[!, factors])]
-            fit_result = lm(x1, y)
+            fit_result = GLM.lm(x1, y)
 
             value[i] = criterion_func(fit_result)
         end
@@ -259,7 +241,8 @@ function _regression(::FReg, criterion::RegressionCriteria, x::DataFrame, y::Abs
 
     return included
 end
-function _get_backward_reg_incl!(::MinValRegressionCriteria, value, included, threshold)
+function _get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, included,
+                                 threshold)
     val, idx = findmin(value)
     if val < threshold
         i = findfirst(x -> x == idx, included)
@@ -268,7 +251,8 @@ function _get_backward_reg_incl!(::MinValRegressionCriteria, value, included, th
     end
     return threshold
 end
-function _get_backward_reg_incl!(::MaxValRegressionCriteria, value, included, threshold)
+function _get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, included,
+                                 threshold)
     val, idx = findmax(value)
     if val > threshold
         i = findfirst(x -> x == idx, included)
@@ -277,9 +261,10 @@ function _get_backward_reg_incl!(::MaxValRegressionCriteria, value, included, th
     end
     return threshold
 end
-function _regression(::BReg, criterion::RegressionCriteria, x::DataFrame, y::AbstractVector)
+function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                     y::AbstractVector)
     ovec = ones(length(y))
-    fit_result = lm([ovec Matrix(x)], y)
+    fit_result = GLM.lm([ovec Matrix(x)], y)
 
     included = names(x)
 
@@ -297,7 +282,7 @@ function _regression(::BReg, criterion::RegressionCriteria, x::DataFrame, y::Abs
             else
                 x1 = reshape(ovec, :, 1)
             end
-            fit_result = lm(x1, y)
+            fit_result = GLM.lm(x1, y)
             value[factor] = criterion_func(fit_result)
         end
 
@@ -329,7 +314,7 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
 
         x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 
-        fit_result = lm(x1, y[!, i])
+        fit_result = GLM.lm(x1, y[!, i])
 
         params = coef(fit_result)
 
@@ -343,6 +328,11 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
+"""
+```
+loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
+```
+"""
 function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
     return regression(method, x, y)
 end

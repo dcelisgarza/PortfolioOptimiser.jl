@@ -2,57 +2,115 @@
 ```
 abstract type RegressionType end
 ```
+
+Abstract type for subtyping regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
 """
 abstract type RegressionType end
+
+"""
+```
 abstract type StepwiseRegression <: RegressionType end
+```
+
+Abstract type for subtyping stepwise regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
+"""
+abstract type StepwiseRegression <: RegressionType end
+
+"""
+```
 abstract type DimensionReductionRegression <: RegressionType end
-abstract type RegressionCriteria end
-abstract type MinValRegressionCriteria <: RegressionCriteria end
-abstract type MaxValRegressionCriteria <: RegressionCriteria end
+```
+
+Abstract type for subtyping dimensionality reduction regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
+"""
+abstract type DimensionReductionRegression <: RegressionType end
 
 """
 ```
-struct AIC <: MinValRegressionCriteria end
+abstract type StepwiseRegressionCriteria end
 ```
+
+Abstract type for subtyping selection criteria for selecting significant factors when using [`StepwiseRegression`](@ref) methods.
 """
-struct AIC <: MinValRegressionCriteria end
+abstract type StepwiseRegressionCriteria end
 
 """
 ```
-struct AICC <: MinValRegressionCriteria end
+abstract type MinValStepwiseRegressionCriteria <: StepwiseRegressionCriteria end
 ```
+
+Abstract type for subtyping selection criteria where smaller values are more significant.
 """
-struct AICC <: MinValRegressionCriteria end
+abstract type MinValStepwiseRegressionCriteria <: StepwiseRegressionCriteria end
 
 """
 ```
-struct BIC <: MinValRegressionCriteria end
+abstract type MinValStepwiseRegressionCriteria <: StepwiseRegressionCriteria end
 ```
+
+Abstract type for subtyping selection criteria where larger values are more significant.
 """
-struct BIC <: MinValRegressionCriteria end
+abstract type MaxValStepwiseRegressionCriteria <: StepwiseRegressionCriteria end
 
 """
 ```
-struct RSq <: MaxValRegressionCriteria end
+struct AIC <: MinValStepwiseRegressionCriteria end
 ```
+
+[Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
 """
-struct RSq <: MaxValRegressionCriteria end
+struct AIC <: MinValStepwiseRegressionCriteria end
 
 """
 ```
-struct AdjRSq <: MaxValRegressionCriteria end
+struct AICC <: MinValStepwiseRegressionCriteria end
 ```
+
+[Corrected Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
 """
-struct AdjRSq <: MaxValRegressionCriteria end
+struct AICC <: MinValStepwiseRegressionCriteria end
 
 """
 ```
-@kwdef mutable struct PVal{T1 <: Real} <: RegressionCriteria
+struct BIC <: MinValStepwiseRegressionCriteria end
+```
+
+[Bayesian Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+"""
+struct BIC <: MinValStepwiseRegressionCriteria end
+
+"""
+```
+struct RSq <: MaxValStepwiseRegressionCriteria end
+```
+
+[R² of a linear model criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+"""
+struct RSq <: MaxValStepwiseRegressionCriteria end
+
+"""
+```
+struct AdjRSq <: MaxValStepwiseRegressionCriteria end
+```
+
+[Adjusted R² for a linear model criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+"""
+struct AdjRSq <: MaxValStepwiseRegressionCriteria end
+
+"""
+```
+@kwdef mutable struct PVal{T1 <: Real} <: StepwiseRegressionCriteria
     threshold::T1 = 0.05
 end
 ```
+
+Use the p-value as selection criterion.
+
+# Parameters
+
+  - `threshold`: threshold for classifying significant p-values. Only factors whose p-values are lower than `threshold` are considered significant.
 """
-mutable struct PVal{T1 <: Real} <: RegressionCriteria
+mutable struct PVal{T1 <: Real} <: StepwiseRegressionCriteria
     threshold::T1
 end
 function PVal(; threshold::Real = 0.05)
@@ -104,28 +162,44 @@ end
 """
 ```
 @kwdef mutable struct FReg <: StepwiseRegression
-    criterion::RegressionCriteria = PVal(;)
+    criterion::StepwiseRegressionCriteria = PVal(;)
 end
 ```
+
+Forward stepwise regression. Starts by assuming no factor is significant and uses `criterion` to add the best performing one each iteration.
+
+# Parameters
+
+  - `criterion`: criterion for feature selection.
+
+      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant factors can be empty, in such cases the best factor is added to the list.
 """
 mutable struct FReg <: StepwiseRegression
-    criterion::RegressionCriteria
+    criterion::StepwiseRegressionCriteria
 end
-function FReg(; criterion::RegressionCriteria = PVal(;))
+function FReg(; criterion::StepwiseRegressionCriteria = PVal(;))
     return FReg(criterion)
 end
 
 """
 ```
 @kwdef mutable struct BReg <: StepwiseRegression
-    criterion::RegressionCriteria = PVal(;)
+    criterion::StepwiseRegressionCriteria = PVal(;)
 end
 ```
+
+Backward stepwise regression. Starts by assuming all factors are significant and uses `criterion` to remove the worst performing one each iteration.
+
+# Parameters
+
+  - `criterion`: criterion for feature selection.
+
+      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant factors can be empty, in such cases the best factor is added to the list.
 """
 mutable struct BReg <: StepwiseRegression
-    criterion::RegressionCriteria
+    criterion::StepwiseRegressionCriteria
 end
-function BReg(; criterion::RegressionCriteria = PVal(;))
+function BReg(; criterion::StepwiseRegressionCriteria = PVal(;))
     return BReg(criterion)
 end
 

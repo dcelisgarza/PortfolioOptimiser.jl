@@ -3,7 +3,7 @@
 abstract type PosdefFix end
 ```
 
-Abstract type for subtyping methods for fixing non positive definite matrices.
+Abstract type for subtyping methods for fixing non positive definite matrices in [`posdef_fix!`](@ref).
 """
 abstract type PosdefFix end
 
@@ -12,7 +12,7 @@ abstract type PosdefFix end
 struct NoPosdef <: PosdefFix end
 ```
 
-Non positive definite matrices will not be fixed in in [`posdef_fix!`](@ref).
+Non positive definite matrices will not be fixed in [`posdef_fix!`](@ref).
 """
 struct NoPosdef <: PosdefFix end
 
