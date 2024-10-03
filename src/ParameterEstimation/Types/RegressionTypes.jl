@@ -30,7 +30,7 @@ abstract type DimensionReductionRegression <: RegressionType end
 abstract type StepwiseRegressionCriteria end
 ```
 
-Abstract type for subtyping selection criteria for selecting significant factors when using [`StepwiseRegression`](@ref) methods.
+Abstract type for subtyping selection criteria for selecting significant features when using [`StepwiseRegression`](@ref) methods.
 """
 abstract type StepwiseRegressionCriteria end
 
@@ -104,11 +104,11 @@ struct AdjRSq <: MaxValStepwiseRegressionCriteria end
 end
 ```
 
-Use the p-value as selection criterion.
+P-value as feature selection criterion.
 
 # Parameters
 
-  - `threshold`: threshold for classifying significant p-values. Only factors whose p-values are lower than `threshold` are considered significant.
+  - `threshold`: threshold for classifying significant p-values. Only features whose p-values are lower than `threshold` are considered significant.
 """
 mutable struct PVal{T1 <: Real} <: StepwiseRegressionCriteria
     threshold::T1
@@ -172,7 +172,7 @@ Forward stepwise regression. Starts by assuming no factor is significant and use
 
   - `criterion`: criterion for feature selection.
 
-      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant factors can be empty, in such cases the best factor is added to the list.
+      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant features can be empty, in such cases the best factor is added to the list.
 """
 mutable struct FReg <: StepwiseRegression
     criterion::StepwiseRegressionCriteria
@@ -188,13 +188,13 @@ end
 end
 ```
 
-Backward stepwise regression. Starts by assuming all factors are significant and uses `criterion` to remove the worst performing one each iteration.
+Backward stepwise regression. Starts by assuming all features are significant and uses `criterion` to remove the worst performing one each iteration.
 
 # Parameters
 
   - `criterion`: criterion for feature selection.
 
-      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant factors can be empty, in such cases the best factor is added to the list.
+      + `isa(criterion, PVal)`: when no asset meets the selecion criterion, the list of significant features can be empty, in such cases the best factor is added to the list.
 """
 mutable struct BReg <: StepwiseRegression
     criterion::StepwiseRegressionCriteria
