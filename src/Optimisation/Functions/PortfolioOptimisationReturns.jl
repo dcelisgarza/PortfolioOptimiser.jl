@@ -99,31 +99,27 @@ function set_returns(obj::Sharpe, kelly::AKelly, model, mu_l::Real; mu::Abstract
 end
 function set_returns(obj::Any, ::EKelly, model, mu_l::Real; mu::AbstractVector,
                      returns::AbstractMatrix, kwargs...)
-    if !isempty(mu)
-        T = size(returns, 1)
-        @variable(model, texact_kelly[1:T])
-        @expression(model, ret, sum(texact_kelly) / T)
-        w = model[:w]
-        @expression(model, kret, 1 .+ returns * w)
-        @constraint(model, [i = 1:T], [texact_kelly[i], 1, kret[i]] ∈ MOI.ExponentialCone())
-        _return_bounds(obj, model, mu_l)
-    end
+    T = size(returns, 1)
+    @variable(model, texact_kelly[1:T])
+    @expression(model, ret, sum(texact_kelly) / T)
+    w = model[:w]
+    @expression(model, kret, 1 .+ returns * w)
+    @constraint(model, [i = 1:T], [texact_kelly[i], 1, kret[i]] ∈ MOI.ExponentialCone())
+    _return_bounds(obj, model, mu_l)
     return nothing
 end
 function set_returns(obj::Sharpe, ::EKelly, model, mu_l::Real; mu::AbstractVector,
                      returns::AbstractMatrix, kwargs...)
-    if !isempty(mu)
-        T = size(returns, 1)
-        @variable(model, texact_kelly[1:T])
-        k = model[:k]
-        @expression(model, ret, sum(texact_kelly) / T - obj.rf * k)
-        w = model[:w]
-        @expression(model, kret, k .+ returns * w)
-        risk = model[:risk]
-        @constraint(model, [i = 1:T], [texact_kelly[i], k, kret[i]] ∈ MOI.ExponentialCone())
-        @constraint(model, risk <= 1)
-        _return_bounds(obj, model, mu_l)
-    end
+    T = size(returns, 1)
+    @variable(model, texact_kelly[1:T])
+    k = model[:k]
+    @expression(model, ret, sum(texact_kelly) / T - obj.rf * k)
+    w = model[:w]
+    @expression(model, kret, k .+ returns * w)
+    risk = model[:risk]
+    @constraint(model, [i = 1:T], [texact_kelly[i], k, kret[i]] ∈ MOI.ExponentialCone())
+    @constraint(model, risk <= 1)
+    _return_bounds(obj, model, mu_l)
     return nothing
 end
 function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)

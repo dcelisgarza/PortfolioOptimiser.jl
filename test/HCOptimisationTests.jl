@@ -7,6 +7,160 @@ factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Provide sigma and kt via rm" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
+                      set_skurt = false)
+    cluster_assets!(portfolio)
+
+    sigma = cov(PortCovCor(), portfolio.returns)
+    kt = cokurt(KurtFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    skt = cokurt(KurtSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+
+    type = HRP()
+    rm = SD(; sigma = sigma)
+    w1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.sigma, sigma)
+    rm = Kurt(; kt = kt)
+    w2 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, kt)
+    rm = SKurt(; kt = skt)
+    w3 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, skt)
+
+    type = HERC()
+    rm = SD(; sigma = sigma)
+    w4 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.sigma, sigma)
+    rm = Kurt(; kt = kt)
+    w5 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, kt)
+    rm = SKurt(; kt = skt)
+    w6 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, skt)
+
+    type = NCO()
+    rm = SD(; sigma = sigma)
+    w7 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.sigma, sigma)
+    rm = Kurt(; kt = kt)
+    w8 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, kt)
+    rm = SKurt(; kt = skt)
+    w9 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm.kt, skt)
+
+    asset_statistics!(portfolio; set_mu = false)
+
+    type = HRP()
+    w10 = optimise!(portfolio; rm = SD(), type = type)
+    w11 = optimise!(portfolio; rm = Kurt(), type = type)
+    w12 = optimise!(portfolio; rm = SKurt(), type = type)
+
+    type = HERC()
+    w13 = optimise!(portfolio; rm = SD(), type = type)
+    w14 = optimise!(portfolio; rm = Kurt(), type = type)
+    w15 = optimise!(portfolio; rm = SKurt(), type = type)
+
+    type = NCO()
+    w16 = optimise!(portfolio; rm = SD(), type = type)
+    w17 = optimise!(portfolio; rm = Kurt(), type = type)
+    w18 = optimise!(portfolio; rm = SKurt(), type = type)
+
+    @test isapprox(w1.weights, w10.weights)
+    @test isapprox(w2.weights, w11.weights)
+    @test isapprox(w3.weights, w12.weights)
+    @test isapprox(w4.weights, w13.weights)
+    @test isapprox(w5.weights, w14.weights)
+    @test isapprox(w6.weights, w15.weights)
+    @test isapprox(w7.weights, w16.weights)
+    @test isapprox(w8.weights, w17.weights)
+    @test isapprox(w9.weights, w18.weights)
+end
+
+@testset "Provide sigma and kt via vector rm" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
+                      set_skurt = false)
+    cluster_assets!(portfolio)
+
+    sigma = cov(PortCovCor(), portfolio.returns)
+    kt = cokurt(KurtFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    skt = cokurt(KurtSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+
+    type = HRP()
+    rm = [CVaR(), SD(; sigma = sigma)]
+    w1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].sigma, sigma)
+    rm = [CVaR(), Kurt(; kt = kt)]
+    w2 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, kt)
+    rm = [CVaR(), SKurt(; kt = skt)]
+    w3 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, skt)
+
+    type = HERC()
+    rm = [CVaR(), SD(; sigma = sigma)]
+    w4 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].sigma, sigma)
+    rm = [CVaR(), Kurt(; kt = kt)]
+    w5 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, kt)
+    rm = [CVaR(), SKurt(; kt = skt)]
+    w6 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, skt)
+
+    type = NCO()
+    rm = [CVaR(), SD(; sigma = sigma)]
+    w7 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].sigma, sigma)
+    rm = [CVaR(), Kurt(; kt = kt)]
+    w8 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, kt)
+    rm = [CVaR(), SKurt(; kt = skt)]
+    w9 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].kt, skt)
+
+    asset_statistics!(portfolio; set_mu = false)
+
+    type = HRP()
+    w10 = optimise!(portfolio; rm = [CVaR(), SD()], type = type)
+    w11 = optimise!(portfolio; rm = [CVaR(), Kurt()], type = type)
+    w12 = optimise!(portfolio; rm = [CVaR(), SKurt()], type = type)
+
+    type = HERC()
+    w13 = optimise!(portfolio; rm = [CVaR(), SD()], type = type)
+    w14 = optimise!(portfolio; rm = [CVaR(), Kurt()], type = type)
+    w15 = optimise!(portfolio; rm = [CVaR(), SKurt()], type = type)
+
+    type = NCO()
+    w16 = optimise!(portfolio; rm = [CVaR(), SD()], type = type)
+    w17 = optimise!(portfolio; rm = [CVaR(), Kurt()], type = type)
+    w18 = optimise!(portfolio; rm = [CVaR(), SKurt()], type = type)
+
+    @test isapprox(w1.weights, w10.weights)
+    @test isapprox(w2.weights, w11.weights)
+    @test isapprox(w3.weights, w12.weights)
+    @test isapprox(w4.weights, w13.weights)
+    @test isapprox(w5.weights, w14.weights)
+    @test isapprox(w6.weights, w15.weights)
+    @test isapprox(w7.weights, w16.weights)
+    @test isapprox(w8.weights, w17.weights)
+    @test isapprox(w9.weights, w18.weights)
+end
+
 @testset "Weight bounds" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
