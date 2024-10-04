@@ -66,6 +66,30 @@ function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, p
     end
     return V
 end
+function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
+    if !isa(rm, AbstractVector)
+        if isnothing(rm.kt) || isempty(rm.kt)
+            push!(old_kts, rm.kt)
+            rm.kt = _get_port_kt(val, port, idx)
+        else
+            kt_old = rm.kt
+            rm.kt = view(rm.kt, idx, idx)#_get_port_kt(val, port, idx)
+            push!(old_kts, kt_old)
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, kt_idx)
+            if isnothing(r.kt) || isempty(r.kt)
+                push!(old_kts, r.kt)
+                r.kt = _get_port_kt(val, port, idx)
+            else
+                kt_old = r.kt
+                r.kt = view(r.kt, idx, idx)#_get_port_kt(val, port, idx)
+                push!(old_kts, kt_old)
+            end
+        end
+    end
+end
 function gen_cluster_stats(port, rm, cidx, kurt_idx, skurt_idx, set_skew, set_sskew)
     cassets = port.assets[cidx]
     cret = view(port.returns, :, cidx)
@@ -109,32 +133,35 @@ end
 function _get_port_kt(::Val{false}, port, idx)
     return view(port.skurt, idx, idx)
 end
-function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
+function _set_kt_rm_nothing(rm, kt_idx, old_kts)
     if !isa(rm, AbstractVector)
-        if isnothing(rm.kt) || isempty(rm.kt)
+        if !(isnothing(rm.kt) || isempty(rm.kt))
             push!(old_kts, rm.kt)
-            rm.kt = _get_port_kt(val, port, idx)
-        else
-            kt_old = rm.kt
-            rm.kt = _get_port_kt(val, port, idx)
-            push!(old_kts, kt_old)
+            rm.kt = nothing
         end
     else
         rm_flat = reduce(vcat, rm)
         for r ∈ view(rm_flat, kt_idx)
-            if isnothing(r.kt) || isempty(r.kt)
+            if !(isnothing(r.kt) || isempty(r.kt))
                 push!(old_kts, r.kt)
-                r.kt = _get_port_kt(val, port, idx)
-            else
-                kt_old = r.kt
-                r.kt = _get_port_kt(val, port, idx)
-                push!(old_kts, kt_old)
+                r.kt = nothing
             end
         end
     end
 end
+function set_kurt_skurt_nothing(port, rm, kurt_idx, skurt_idx)
+    old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    if !isempty(kurt_idx)
+        _set_kt_rm_nothing(rm, kurt_idx, old_kurts)
+    end
+    if !isempty(skurt_idx)
+        _set_kt_rm_nothing(rm, skurt_idx, old_skurts)
+    end
+    return old_kurts, old_skurts
+end
 function _reset_kt_rm(rm, kt_idx, old_kts)
-    if !isempty(kt_idx)
+    if !isempty(kt_idx) && !isempty(old_kts)
         if !isa(rm, AbstractVector)
             rm.kt = old_kts[1]
         else
@@ -236,11 +263,13 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, factor_kwargs
     end
 
     kurt_idx, skurt_idx, set_skew, set_sskew = find_kurt_skew_rm(rm)
+    old_kurts, old_skurts = set_kurt_skurt_nothing(port, rm, kurt_idx, skurt_idx)
     cw, cfail = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov,
                               !isempty(kurt_idx), !isempty(skurt_idx), set_skew, set_sskew,
                               opt_kwargs, port_kwargs, factor_kwargs, stat_kwargs)
-    w = wi * cw
+    reset_kurt_and_skurt_rm(rm, kurt_idx, old_kurts, skurt_idx, old_skurts)
 
+    w = wi * cw
     if !isempty(cfail)
         port.fail[:inter] = cfail
     end
