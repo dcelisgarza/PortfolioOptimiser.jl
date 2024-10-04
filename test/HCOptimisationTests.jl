@@ -937,9 +937,10 @@ end
     w76 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     w77 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rm_o = Kurt(),
                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w78 = optimise!(portfolio; rm = [rm],
+    w78 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)],
                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w79 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rm_o = Kurt(),
+    w79 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)],
+                    rm_o = Kurt(; kt = portfolio.kurt),
                     type = NCO(; opt_kwargs = (; obj = MaxRet())))
     w80 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
     w1t = [2.5964437003610723e-8, 0.05105919106221655, 3.467171217276289e-8,
@@ -1041,9 +1042,10 @@ end
 
     rm = SKurt()
     w86 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w87 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rm_o = SKurt(),
+    w87 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt),
+                    rm_o = SKurt(; kt = portfolio.skurt),
                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w88 = optimise!(portfolio; rm = [rm],
+    w88 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)],
                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
     w89 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rm_o = SKurt(),
                     type = NCO(; opt_kwargs = (; obj = MaxRet())))
@@ -1095,7 +1097,8 @@ end
     w92 = optimise!(portfolio; rm = [rm],
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Utility(; l = l))))
-    w93 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rm_o = SKurt(),
+    w93 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)],
+                    rm_o = SKurt(; kt = portfolio.skurt),
                     type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
                                opt_kwargs = (; obj = Sharpe(; rf = rf))))
     w94 = optimise!(portfolio; rm = rm,
@@ -1388,8 +1391,8 @@ end
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
 
-    w1 = optimise!(portfolio; rm = SD(), type = NCO())
-    w2 = optimise!(portfolio; rm = [[SD(), SD()]], type = NCO())
+    w1 = optimise!(portfolio; rm = SD(; sigma = portfolio.cov), type = NCO())
+    w2 = optimise!(portfolio; rm = [[SD(; sigma = portfolio.cov), SD()]], type = NCO())
     w3 = optimise!(portfolio; rm = [SD(; settings = RMSettings(; scale = 2))], type = NCO())
     @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
     @test isapprox(w1.weights, w3.weights, rtol = 1.0e-5)
