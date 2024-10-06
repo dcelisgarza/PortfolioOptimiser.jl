@@ -284,7 +284,7 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
   - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
   - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
 """
-mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, sb, us, ul, nal, nau,
+mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, sb, us, ul, lb, nal, nau,
                          naus, mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc,
                          bvc, ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew,
                          tsv, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf,
@@ -303,6 +303,7 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, sb, us, ul, n
     short_budget::sb
     short_u::us
     long_u::ul
+    long_budget::lb
     num_assets_l::nal
     num_assets_u::nau
     num_assets_u_scale::naus
@@ -460,10 +461,11 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    loadings::DataFrame = DataFrame(),
                    regression_type::Union{<:RegressionType, Nothing} = nothing,
                    short::Bool = false, short_budget::Real = 0.2, short_u::Real = 0.2,
-                   long_u::Real = 1.0, num_assets_l::Integer = 0, num_assets_u::Integer = 0,
-                   num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
-                   max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
-                   turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
+                   long_u::Real = 1.0, long_budget::Real = 1.0, num_assets_l::Integer = 0,
+                   num_assets_u::Integer = 0, num_assets_u_scale::Real = 100_000.0,
+                   max_num_assets_kurt::Integer = 0, max_num_assets_kurt_scale::Integer = 2,
+                   rebalance::AbstractTR = NoTR(), turnover::AbstractTR = NoTR(),
+                   tracking_err::TrackingErr = NoTracking(),
                    bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -673,8 +675,8 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(f_assets),
                      typeof(f_timestamps), typeof(f_returns), typeof(loadings),
                      Union{<:RegressionType, Nothing}, typeof(short), typeof(short_budget),
-                     typeof(short_u), typeof(long_u), typeof(num_assets_l),
-                     typeof(num_assets_u), typeof(num_assets_u_scale),
+                     typeof(short_u), typeof(long_u), typeof(long_budget),
+                     typeof(num_assets_l), typeof(num_assets_u), typeof(num_assets_u_scale),
                      typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                      AbstractTR, AbstractTR, TrackingErr, typeof(bl_bench_weights),
                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
@@ -700,6 +702,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                                      short_budget,
                                                                                      short_u,
                                                                                      long_u,
+                                                                                     long_budget,
                                                                                      num_assets_l,
                                                                                      num_assets_u,
                                                                                      num_assets_u_scale,
@@ -764,10 +767,7 @@ function Base.getproperty(obj::Portfolio, sym::Symbol)
     end
 end
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
-    if sym == :short_u
-        @smart_assert(val >= zero(val))
-        val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :long_u
+    if sym ∈ (:short_u, :long_u, :short_budget, :long_budget)
         @smart_assert(val >= zero(val))
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :max_num_assets_kurt
@@ -889,23 +889,23 @@ function Base.deepcopy(obj::Portfolio)
                      typeof(obj.f_assets), typeof(obj.f_timestamps), typeof(obj.f_returns),
                      typeof(obj.loadings), Union{<:RegressionType, Nothing},
                      typeof(obj.short), typeof(obj.short_budget), typeof(obj.short_u),
-                     typeof(obj.long_u), typeof(obj.num_assets_l), typeof(obj.num_assets_u),
-                     typeof(obj.num_assets_u_scale), typeof(obj.max_num_assets_kurt),
-                     typeof(obj.max_num_assets_kurt_scale), AbstractTR, AbstractTR,
-                     TrackingErr, typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
-                     typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
-                     typeof(obj.f_risk_budget), NetworkMethods, typeof(obj.a_vec_cent),
-                     typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.mu), typeof(obj.cov),
-                     typeof(obj.kurt), typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
-                     typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                     typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
-                     typeof(obj.fm_mu), typeof(obj.fm_cov), typeof(obj.bl_mu),
-                     typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
-                     typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
-                     typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
-                     typeof(obj.k_sigma), typeof(obj.optimal), typeof(obj.limits),
-                     typeof(obj.frontier), typeof(obj.solvers), typeof(obj.fail),
-                     typeof(obj.model), typeof(obj.latest_prices),
+                     typeof(obj.long_u), typeof(obj.long_budget), typeof(obj.num_assets_l),
+                     typeof(obj.num_assets_u), typeof(obj.num_assets_u_scale),
+                     typeof(obj.max_num_assets_kurt), typeof(obj.max_num_assets_kurt_scale),
+                     AbstractTR, AbstractTR, TrackingErr, typeof(obj.bl_bench_weights),
+                     typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
+                     typeof(obj.risk_budget), typeof(obj.f_risk_budget), NetworkMethods,
+                     typeof(obj.a_vec_cent), typeof(obj.b_cent), typeof(obj.mu_l),
+                     typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
+                     typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew), typeof(obj.V),
+                     typeof(obj.sskew), typeof(obj.SV), typeof(obj.f_mu), typeof(obj.f_cov),
+                     typeof(obj.fm_returns), typeof(obj.fm_mu), typeof(obj.fm_cov),
+                     typeof(obj.bl_mu), typeof(obj.bl_cov), typeof(obj.blfm_mu),
+                     typeof(obj.blfm_cov), typeof(obj.cov_l), typeof(obj.cov_u),
+                     typeof(obj.cov_mu), typeof(obj.cov_sigma), typeof(obj.d_mu),
+                     typeof(obj.k_mu), typeof(obj.k_sigma), typeof(obj.optimal),
+                     typeof(obj.limits), typeof(obj.frontier), typeof(obj.solvers),
+                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
                      typeof(obj.alloc_optimal), typeof(obj.alloc_leftover),
                      typeof(obj.alloc_solvers), typeof(obj.alloc_fail),
                      typeof(obj.alloc_model)}(deepcopy(obj.assets),
@@ -918,6 +918,7 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.short),
                                               deepcopy(obj.short_budget),
                                               deepcopy(obj.short_u), deepcopy(obj.long_u),
+                                              deepcopy(obj.long_budget),
                                               deepcopy(obj.num_assets_l),
                                               deepcopy(obj.num_assets_u),
                                               deepcopy(obj.num_assets_u_scale),

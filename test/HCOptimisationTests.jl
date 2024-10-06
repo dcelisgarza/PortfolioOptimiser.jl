@@ -1,8 +1,8 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -1985,7 +1985,8 @@ end
 
     w2 = optimise!(portfolio;
                    type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true, short_u = 0.3, long_u = 0.6)))
+                              port_kwargs = (; short = true, short_budget = 0.3,
+                                             short_u = 0.3, long_u = 0.6)))
     wt = [-0.016918145881010444, 0.001712686850666274, 0.003151233891742689,
           0.000877434644273003, 0.02890364374221545, -0.031938949651537776,
           0.007380063055004761, 0.006474271417208838, -1.2243771111394412e-12,
@@ -2002,7 +2003,8 @@ end
 
     w3 = optimise!(portfolio;
                    type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs_o = (; short = true, short_u = 0.6, long_u = 0.4)))
+                              port_kwargs_o = (; short = true, short_budget = 0.6,
+                                               short_u = 0.6, long_u = 0.4)))
     wt = [1.0339757656912846e-25, 3.308722450212111e-24, 8.271806125530277e-25,
           1.6543612251060553e-24, 5.551115123125783e-17, -7.754818242684634e-26,
           4.163336342344337e-17, -2.7755575615628914e-17, -8.271806125530277e-25,
@@ -2018,7 +2020,8 @@ end
 
     w4 = optimise!(portfolio;
                    type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true, short_u = 0.3, long_u = 0.6),
+                              port_kwargs = (; short = true, short_budget = 0.3,
+                                             short_u = 0.3, long_u = 0.6),
                               port_kwargs_o = (; short = true)))
     wt = [-0.045115057672989595, 0.004567165136595039, 0.008403290748699927,
           0.0023398258212850554, 0.07707638671287502, -0.08517053748341849,
@@ -2035,7 +2038,8 @@ end
 
     w5 = optimise!(portfolio;
                    type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs_o = (; short = true, short_u = 0.6, long_u = 0.4),
+                              port_kwargs_o = (; short = true, short_budget = 0.6,
+                                               short_u = 0.6, long_u = 0.4),
                               port_kwargs = (; short = true)))
     wt = [-0.004706878592862724, 0.0006104348021668806, 0.0007148470817697388,
           0.00024025175095859297, 0.012111937526189324, 0.028034645035369427,
