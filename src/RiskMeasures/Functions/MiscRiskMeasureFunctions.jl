@@ -121,7 +121,3 @@ function unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool,
     _unset_rm_sigma!(rm, sigma_flag)
     return nothing
 end
-
-function number_effective_assets(w::AbstractVector)
-    return inv(dot(w, w))
-end
