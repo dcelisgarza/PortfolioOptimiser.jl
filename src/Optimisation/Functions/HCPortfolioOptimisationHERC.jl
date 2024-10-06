@@ -57,7 +57,7 @@ function _optimise!(::HERC, port::HCPortfolio,
         # Allocate weight to clusters.
         alpha_1 = one(lrisk) - lrisk / risk
         # Weight constraints.
-        alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
+        # alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
         weights[ln] *= alpha_1
         weights[rn] *= 1 - alpha_1
     end

@@ -23,6 +23,7 @@ function opt_weight_bounds(w_min, w_max, weights, max_iter = 100)
         return weights
     end
 
+    s1 = sum(weights)
     for _ ∈ 1:max_iter
         if !(any(w_max .< weights) || any(w_min .> weights))
             break
@@ -38,6 +39,7 @@ function opt_weight_bounds(w_min, w_max, weights, max_iter = 100)
         if delta != 0
             weights[idx] += delta * weights[idx] / sum(weights[idx])
         end
+        weights .*= s1 / sum(weights)
     end
     return weights
 end
