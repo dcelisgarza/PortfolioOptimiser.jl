@@ -3,16 +3,7 @@ function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model, p)
     @objective(model, Max, ret - p)
     return nothing
 end
-function _objective(::Trad, ::Sharpe, ::Any, model, p)
-    risk = model[:risk]
-    if !haskey(model, :alt_sr)
-        @objective(model, Min, risk + p)
-    else
-        @objective(model, Max, ret - p)
-    end
-    return nothing
-end
-function _objective(::Trad, ::MinRisk, ::Any, model, p)
+function _objective(::Trad, ::Union{Sharpe, MinRisk}, ::Any, model, p)
     risk = model[:risk]
     @objective(model, Min, risk + p)
     return nothing
@@ -43,9 +34,6 @@ function objective_function(port, obj, ::Trad, kelly)
     p = zero(eltype(port.returns))
     if haskey(port.model, :network_penalty)
         p += port.model[:network_penalty]
-    end
-    if haskey(port.model, :cluster_penalty)
-        p += port.model[:cluster_penalty]
     end
     if haskey(port.model, :sum_t_rebal)
         p += port.model[:sum_t_rebal]

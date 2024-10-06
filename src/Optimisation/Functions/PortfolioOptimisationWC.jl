@@ -81,7 +81,6 @@ function _optimise!(type::WC, port::Portfolio, rm::Union{AbstractVector, <:RiskM
     initial_w(port, w_ini)
     set_sr_k(obj, model)
     network_constraints(port.network_method, port, obj, type)
-    cluster_constraints(port.cluster_method, port, obj, type)
     wc_constraints(port, obj, type)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)

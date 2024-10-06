@@ -27,12 +27,7 @@ function set_returns(obj::Sharpe, ::NoKelly, model, mu_l::Real; mu::AbstractVect
         w = model[:w]
         @expression(model, ret, dot(mu, w))
         k = model[:k]
-        if !all(mu .< zero(eltype(mu)))
-            @constraint(model, ret - obj.rf * k == 1)
-        else
-            risk = model[:risk]
-            @constraint(model, alt_sr, risk <= 1)
-        end
+        @constraint(model, ret - obj.rf * k == 1)
         _return_bounds(obj, model, mu_l)
     end
     return nothing
@@ -58,12 +53,14 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
     end
     return nothing
 end
-function _set_returns(::SDP, obj::Sharpe, kelly::AKelly, model, mu_l::Real; kwargs...)
+function _set_returns(network_method::SDP, obj::Sharpe, kelly::AKelly, model, mu_l::Real;
+                      kwargs...)
     return set_returns(obj, EKelly(), model, mu_l; kwargs...)
 end
-function _set_returns(::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKelly, model, mu_l::Real;
-                      mu::AbstractVector, kelly_approx_idx::AbstractVector{<:Integer},
-                      sigma::AbstractMatrix, kwargs...)
+function _set_returns(network_method::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKelly, model,
+                      mu_l::Real; mu::AbstractVector,
+                      kelly_approx_idx::AbstractVector{<:Integer}, sigma::AbstractMatrix,
+                      kwargs...)
     if !isempty(mu)
         @variable(model, tapprox_kelly)
         risk = model[:risk]
@@ -75,7 +72,7 @@ function _set_returns(::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKelly, model, mu
            isempty(kelly_approx_idx) ||
            iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
-                _sd_risk(NoNtwk(), kelly.formulation, model, sigma)
+                _sd_risk(network_method, kelly.formulation, model, sigma)
             end
             dev = model[:dev]
             @constraint(model,
@@ -132,6 +129,6 @@ end
 function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
-                network_method = _get_ntwk_clust_method(port))
+                network_method = port.network_method)
     return nothing
 end
