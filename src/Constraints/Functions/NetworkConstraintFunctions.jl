@@ -74,6 +74,13 @@ function centrality_vector(X::AbstractMatrix;
 
     return calc_centrality(network_type.centrality, G)
 end
+function average_centrality(X::AbstractMatrix, w::AbstractVector;
+                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            dist_type::DistMethod = DistCanonical(),
+                            network_type::NetworkType = MST())
+    return dot(centrality_vector(X; cor_type = cor_type, dist_type = dist_type,
+                                 network_type = network_type), w)
+end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
@@ -122,4 +129,4 @@ function related_assets(returns::AbstractMatrix, w::AbstractVector;
 end
 
 export calc_centrality, connection_matrix, centrality_vector, cluster_matrix,
-       con_rel_assets, connected_assets, related_assets
+       con_rel_assets, connected_assets, related_assets, average_centrality

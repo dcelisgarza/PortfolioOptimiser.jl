@@ -153,3 +153,12 @@ function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.return
                           dist_type = dist_type, hclust_alg = hclust_alg,
                           hclust_opt = hclust_opt)
 end
+
+function average_centrality(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
+                            type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            dist_type::DistMethod = DistCanonical(),
+                            network_type::NetworkType = MST())
+    return average_centrality(X, port.optimal[type].weights; cor_type = cor_type,
+                              dist_type = dist_type, network_type = network_type)
+end
