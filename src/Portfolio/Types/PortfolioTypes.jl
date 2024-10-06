@@ -10,7 +10,7 @@ abstract type AbstractPortfolio end
 """
 ```
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
-                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
+                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, cm, amc, bvc,
                          ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
                          tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
                          tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
@@ -41,6 +41,7 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, 
     risk_budget::rbv
     f_risk_budget::frbv
     network_method::nm
+    cluster_method::cm
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -188,6 +189,9 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
   - `network_method`: [`NetworkMethods`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref). See their docs for the constraint definition for each case.
 
       + if [`NoNtwk`](@ref): the constraint is not set.
+  - `cluster_method`: [`NetworkMethods`](@ref) for defining the asset cluster constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref). See their docs for the constraint definition for each case.
+
+        + if [`NoNtwk`](@ref): the constraint is not set.
   - `a_vec_cent`: centrality vector for defining the centrality constraint.
 
       + if `isempty`: the constraint is not set.
@@ -284,13 +288,13 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
   - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
   - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
 """
-mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
-                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
-                         ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
-                         tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
-                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
-                         tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
-               AbstractPortfolio
+mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, sb, us, ul, nal, nau,
+                         naus, mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, cm,
+                         amc, bvc, ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
+                         tsskew, tsv, tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl,
+                         tmublf, tcovblf, tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks,
+                         topt, tlim, tfront, tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf,
+                         tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -300,6 +304,7 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, 
     loadings::l
     regression_type::lo
     short::s
+    short_budget::sb
     short_u::us
     long_u::ul
     num_assets_l::nal
@@ -316,6 +321,7 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, 
     risk_budget::rbv
     f_risk_budget::frbv
     network_method::nm
+    cluster_method::cm
     a_vec_cent::amc
     b_cent::bvc
     mu_l::ler
@@ -383,6 +389,7 @@ Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
             risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
             f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
             network_method::NetworkMethods = NoNtwk(),
+            cluster_method::NetworkMethods = NoNtwk(),
             a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
             b_cent::Real = Inf, mu_l::Real = Inf,
             mu::AbstractVector = Vector{Float64}(undef, 0),
@@ -458,8 +465,8 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    f_assets::AbstractVector = Vector{String}(undef, 0),
                    loadings::DataFrame = DataFrame(),
                    regression_type::Union{<:RegressionType, Nothing} = nothing,
-                   short::Bool = false, short_u::Real = 0.2, long_u::Real = 1.0,
-                   num_assets_l::Integer = 0, num_assets_u::Integer = 0,
+                   short::Bool = false, short_budget::Real = 0.2, short_u::Real = 0.2,
+                   long_u::Real = 1.0, num_assets_l::Integer = 0, num_assets_u::Integer = 0,
                    num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
                    max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
                    turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
@@ -469,6 +476,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    network_method::NetworkMethods = NoNtwk(),
+                   cluster_method::NetworkMethods = NoNtwk(),
                    a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    b_cent::Real = Inf, mu_l::Real = Inf,
                    mu::AbstractVector = Vector{Float64}(undef, 0),
@@ -573,6 +581,9 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isa(network_method, NoNtwk) && !isempty(network_method.A)
         @smart_assert(size(network_method.A) == (size(returns, 2), size(returns, 2)))
     end
+    if !isa(cluster_method, NoNtwk) && !isempty(cluster_method.A)
+        @smart_assert(size(cluster_method.A) == (size(returns, 2), size(returns, 2)))
+    end
     if !isempty(a_vec_cent)
         @smart_assert(size(a_vec_cent, 1) == size(returns, 2))
     end
@@ -671,38 +682,90 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
 
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(f_assets),
                      typeof(f_timestamps), typeof(f_returns), typeof(loadings),
-                     Union{<:RegressionType, Nothing}, typeof(short), typeof(short_u),
-                     typeof(long_u), typeof(num_assets_l), typeof(num_assets_u),
-                     typeof(num_assets_u_scale), typeof(max_num_assets_kurt),
-                     typeof(max_num_assets_kurt_scale), AbstractTR, AbstractTR, TrackingErr,
-                     typeof(bl_bench_weights), typeof(a_mtx_ineq), typeof(b_vec_ineq),
-                     typeof(risk_budget), typeof(f_risk_budget), NetworkMethods,
-                     typeof(a_vec_cent), typeof(b_cent), typeof(mu_l), typeof(mu),
-                     typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
-                     typeof(skew), typeof(V), typeof(sskew), typeof(SV), typeof(f_mu),
-                     typeof(f_cov), typeof(fm_returns), typeof(fm_mu), typeof(fm_cov),
-                     typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
-                     typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                     typeof(d_mu), typeof(k_mu), typeof(k_sigma), typeof(optimal),
-                     typeof(limits), typeof(frontier), typeof(solvers), typeof(fail),
-                     typeof(model), typeof(latest_prices), typeof(alloc_optimal),
-                     typeof(alloc_leftover), typeof(alloc_solvers), typeof(alloc_fail),
-                     typeof(alloc_model)}(assets, timestamps, returns, f_assets,
-                                          f_timestamps, f_returns, loadings,
-                                          regression_type, short, short_u, long_u,
-                                          num_assets_l, num_assets_u, num_assets_u_scale,
-                                          max_num_assets_kurt, max_num_assets_kurt_scale,
-                                          rebalance, turnover, tracking_err,
-                                          bl_bench_weights, a_mtx_ineq, b_vec_ineq,
-                                          risk_budget, f_risk_budget, network_method,
-                                          a_vec_cent, b_cent, mu_l, mu, cov, kurt, skurt,
-                                          L_2, S_2, skew, V, sskew, SV, f_mu, f_cov,
-                                          fm_returns, fm_mu, fm_cov, bl_mu, bl_cov, blfm_mu,
-                                          blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu,
-                                          k_mu, k_sigma, optimal, limits, frontier, solvers,
-                                          fail, model, latest_prices, alloc_optimal,
-                                          alloc_leftover, alloc_solvers, alloc_fail,
-                                          alloc_model)
+                     Union{<:RegressionType, Nothing}, typeof(short), typeof(short_budget),
+                     typeof(short_u), typeof(long_u), typeof(num_assets_l),
+                     typeof(num_assets_u), typeof(num_assets_u_scale),
+                     typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
+                     AbstractTR, AbstractTR, TrackingErr, typeof(bl_bench_weights),
+                     typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
+                     typeof(f_risk_budget), NetworkMethods, typeof(a_vec_cent),
+                     typeof(b_cent), typeof(mu_l), typeof(mu), typeof(cov), typeof(kurt),
+                     typeof(skurt), typeof(L_2), typeof(S_2), typeof(skew), typeof(V),
+                     typeof(sskew), typeof(SV), typeof(f_mu), typeof(f_cov),
+                     typeof(fm_returns), typeof(fm_mu), typeof(fm_cov), typeof(bl_mu),
+                     typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l),
+                     typeof(cov_u), typeof(cov_mu), typeof(cov_sigma), typeof(d_mu),
+                     typeof(k_mu), typeof(k_sigma), typeof(optimal), typeof(limits),
+                     typeof(frontier), typeof(solvers), typeof(fail), typeof(model),
+                     typeof(latest_prices), typeof(alloc_optimal), typeof(alloc_leftover),
+                     typeof(alloc_solvers), typeof(alloc_fail), typeof(alloc_model)}(assets,
+                                                                                     timestamps,
+                                                                                     returns,
+                                                                                     f_assets,
+                                                                                     f_timestamps,
+                                                                                     f_returns,
+                                                                                     loadings,
+                                                                                     regression_type,
+                                                                                     short,
+                                                                                     short_budget,
+                                                                                     short_u,
+                                                                                     long_u,
+                                                                                     num_assets_l,
+                                                                                     num_assets_u,
+                                                                                     num_assets_u_scale,
+                                                                                     max_num_assets_kurt,
+                                                                                     max_num_assets_kurt_scale,
+                                                                                     rebalance,
+                                                                                     turnover,
+                                                                                     tracking_err,
+                                                                                     bl_bench_weights,
+                                                                                     a_mtx_ineq,
+                                                                                     b_vec_ineq,
+                                                                                     risk_budget,
+                                                                                     f_risk_budget,
+                                                                                     network_method,
+                                                                                     cluster_method,
+                                                                                     a_vec_cent,
+                                                                                     b_cent,
+                                                                                     mu_l,
+                                                                                     mu,
+                                                                                     cov,
+                                                                                     kurt,
+                                                                                     skurt,
+                                                                                     L_2,
+                                                                                     S_2,
+                                                                                     skew,
+                                                                                     V,
+                                                                                     sskew,
+                                                                                     SV,
+                                                                                     f_mu,
+                                                                                     f_cov,
+                                                                                     fm_returns,
+                                                                                     fm_mu,
+                                                                                     fm_cov,
+                                                                                     bl_mu,
+                                                                                     bl_cov,
+                                                                                     blfm_mu,
+                                                                                     blfm_cov,
+                                                                                     cov_l,
+                                                                                     cov_u,
+                                                                                     cov_mu,
+                                                                                     cov_sigma,
+                                                                                     d_mu,
+                                                                                     k_mu,
+                                                                                     k_sigma,
+                                                                                     optimal,
+                                                                                     limits,
+                                                                                     frontier,
+                                                                                     solvers,
+                                                                                     fail,
+                                                                                     model,
+                                                                                     latest_prices,
+                                                                                     alloc_optimal,
+                                                                                     alloc_leftover,
+                                                                                     alloc_solvers,
+                                                                                     alloc_fail,
+                                                                                     alloc_model)
 end
 function Base.getproperty(obj::Portfolio, sym::Symbol)
     if sym == :budget
@@ -747,7 +810,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
             @smart_assert(size(val, 2) == size(obj.returns, 2))
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym == :network_method
+    elseif sym ∈ (:network_method, :cluster_method)
         if !isa(val, NoNtwk) && !isempty(val.A)
             @smart_assert(size(val.A, 2) == size(obj.returns, 2))
         end
@@ -836,24 +899,24 @@ function Base.deepcopy(obj::Portfolio)
     return Portfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
                      typeof(obj.f_assets), typeof(obj.f_timestamps), typeof(obj.f_returns),
                      typeof(obj.loadings), Union{<:RegressionType, Nothing},
-                     typeof(obj.short), typeof(obj.short_u), typeof(obj.long_u),
-                     typeof(obj.num_assets_l), typeof(obj.num_assets_u),
+                     typeof(obj.short), typeof(obj.short_budget), typeof(obj.short_u),
+                     typeof(obj.long_u), typeof(obj.num_assets_l), typeof(obj.num_assets_u),
                      typeof(obj.num_assets_u_scale), typeof(obj.max_num_assets_kurt),
                      typeof(obj.max_num_assets_kurt_scale), AbstractTR, AbstractTR,
                      TrackingErr, typeof(obj.bl_bench_weights), typeof(obj.a_mtx_ineq),
                      typeof(obj.b_vec_ineq), typeof(obj.risk_budget),
-                     typeof(obj.f_risk_budget), NetworkMethods, typeof(obj.a_vec_cent),
-                     typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.mu), typeof(obj.cov),
-                     typeof(obj.kurt), typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
-                     typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                     typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
-                     typeof(obj.fm_mu), typeof(obj.fm_cov), typeof(obj.bl_mu),
-                     typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
-                     typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
-                     typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
-                     typeof(obj.k_sigma), typeof(obj.optimal), typeof(obj.limits),
-                     typeof(obj.frontier), typeof(obj.solvers), typeof(obj.fail),
-                     typeof(obj.model), typeof(obj.latest_prices),
+                     typeof(obj.f_risk_budget), NetworkMethods, NetworkMethods,
+                     typeof(obj.a_vec_cent), typeof(obj.b_cent), typeof(obj.mu_l),
+                     typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
+                     typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew), typeof(obj.V),
+                     typeof(obj.sskew), typeof(obj.SV), typeof(obj.f_mu), typeof(obj.f_cov),
+                     typeof(obj.fm_returns), typeof(obj.fm_mu), typeof(obj.fm_cov),
+                     typeof(obj.bl_mu), typeof(obj.bl_cov), typeof(obj.blfm_mu),
+                     typeof(obj.blfm_cov), typeof(obj.cov_l), typeof(obj.cov_u),
+                     typeof(obj.cov_mu), typeof(obj.cov_sigma), typeof(obj.d_mu),
+                     typeof(obj.k_mu), typeof(obj.k_sigma), typeof(obj.optimal),
+                     typeof(obj.limits), typeof(obj.frontier), typeof(obj.solvers),
+                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
                      typeof(obj.alloc_optimal), typeof(obj.alloc_leftover),
                      typeof(obj.alloc_solvers), typeof(obj.alloc_fail),
                      typeof(obj.alloc_model)}(deepcopy(obj.assets),
@@ -863,8 +926,9 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.f_returns),
                                               deepcopy(obj.loadings),
                                               deepcopy(obj.regression_type),
-                                              deepcopy(obj.short), deepcopy(obj.short_u),
-                                              deepcopy(obj.long_u),
+                                              deepcopy(obj.short),
+                                              deepcopy(obj.short_budget),
+                                              deepcopy(obj.short_u), deepcopy(obj.long_u),
                                               deepcopy(obj.num_assets_l),
                                               deepcopy(obj.num_assets_u),
                                               deepcopy(obj.num_assets_u_scale),
@@ -879,6 +943,7 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.risk_budget),
                                               deepcopy(obj.f_risk_budget),
                                               deepcopy(obj.network_method),
+                                              deepcopy(obj.cluster_method),
                                               deepcopy(obj.a_vec_cent),
                                               deepcopy(obj.b_cent), deepcopy(obj.mu_l),
                                               deepcopy(obj.mu), deepcopy(obj.cov),

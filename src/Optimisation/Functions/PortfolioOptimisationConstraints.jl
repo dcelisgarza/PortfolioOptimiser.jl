@@ -14,9 +14,14 @@ function num_assets_constraints(port, ::Sharpe)
                     tnau_bin_sharpe .>= k .- port.num_assets_u_scale * (1 .- tnau_bin))
         # Long and short
         w = model[:w]
-        @constraint(model, w .<= port.long_u * tnau_bin_sharpe)
-        if port.short
-            @constraint(model, w .>= -port.short_u * tnau_bin_sharpe)
+        if !port.short
+            @constraint(model, w .<= port.long_u * tnau_bin_sharpe)
+        else
+            @constraint(model,
+                        w .<=
+                        min(port.long_u, port.budget + port.short_budget) * tnau_bin_sharpe)
+            @constraint(model,
+                        w .>= -min(port.short_u, port.short_budget) * tnau_bin_sharpe)
         end
     end
     if port.num_assets_l > 0
@@ -38,9 +43,12 @@ function num_assets_constraints(port, ::Any)
         @constraint(model, sum(tnau_bin) <= port.num_assets_u)
         # Long and short
         w = model[:w]
-        @constraint(model, w .<= port.long_u * tnau_bin)
-        if port.short
-            @constraint(model, w .>= -port.short_u * tnau_bin)
+        if !port.short
+            @constraint(model, w .<= port.long_u * tnau_bin)
+        else
+            @constraint(model,
+                        w .<= min(port.long_u, port.budget + port.short_budget) * tnau_bin)
+            @constraint(model, w .>= -min(port.short_u, port.short_budget) * tnau_bin)
         end
     end
     if port.num_assets_l > 0
@@ -66,8 +74,8 @@ function weight_constraints(port, ::Sharpe)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= port.long_u * k)
-        @constraint(model, sum(tw_ushort) <= port.short_u * k)
+        @constraint(model, sum(tw_ulong) <= (port.budget + port.short_u) * k)
+        @constraint(model, sum(tw_ushort) <= port.short_budget * k)
 
         @constraint(model, w .<= tw_ulong)
         @constraint(model, w .>= -tw_ushort)
@@ -86,8 +94,8 @@ function weight_constraints(port, ::Any)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= port.long_u)
-        @constraint(model, sum(tw_ushort) <= port.short_u)
+        @constraint(model, sum(tw_ulong) <= port.budget + port.short_u)
+        @constraint(model, sum(tw_ushort) <= port.short_budget)
 
         @constraint(model, w .<= tw_ulong)
         @constraint(model, w .>= -tw_ushort)
@@ -101,19 +109,23 @@ function network_constraints(network::IP, port, ::Sharpe, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
-    @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, network.A * tip_bin2 .<= network.k)
+    @variable(model, tip_bin[1:N], binary = true)
+    @constraint(model, network.A * tip_bin .<= network.k)
     # Sharpe ratio
-    @variable(model, tip_bin_sharpe2[1:N] .>= 0)
+    @variable(model, tip_bin_sharpe[1:N] .>= 0)
     k = model[:k]
-    @constraint(model, tip_bin_sharpe2 .<= k)
-    @constraint(model, tip_bin_sharpe2 .<= network.scale * tip_bin2)
-    @constraint(model, tip_bin_sharpe2 .>= k .- network.scale * (1 .- tip_bin2))
+    @constraint(model, tip_bin_sharpe .<= k)
+    @constraint(model, tip_bin_sharpe .<= network.scale * tip_bin)
+    @constraint(model, tip_bin_sharpe .>= k .- network.scale * (1 .- tip_bin))
     # Long and short
     w = model[:w]
-    @constraint(model, w .<= port.long_u * tip_bin_sharpe2)
-    if port.short
-        @constraint(model, w .>= -port.short_u * tip_bin_sharpe2)
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin_sharpe)
+    else
+        @constraint(model,
+                    w .<=
+                    min(port.long_u, port.budget + port.short_budget) * tip_bin_sharpe)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin_sharpe)
     end
     return nothing
 end
@@ -121,13 +133,16 @@ function network_constraints(network::IP, port, ::Any, ::Any)
     N = size(port.returns, 2)
     model = port.model
 
-    @variable(model, tip_bin2[1:N], binary = true)
-    @constraint(model, network.A * tip_bin2 .<= network.k)
+    @variable(model, tip_bin[1:N], binary = true)
+    @constraint(model, network.A * tip_bin .<= network.k)
     # Long and short
     w = model[:w]
-    @constraint(model, w .<= port.long_u * tip_bin2)
-    if port.short
-        @constraint(model, w .>= -port.short_u * tip_bin2)
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin)
+    else
+        @constraint(model,
+                    w .<= min(port.long_u, port.budget + port.short_budget) * tip_bin)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin)
     end
     return nothing
 end
@@ -146,6 +161,69 @@ function network_constraints(network::SDP, port, obj, ::WC)
     @constraint(port.model, network.A .* W .== 0)
     return nothing
 end
+############
+############
+function cluster_constraints(args...)
+    return nothing
+end
+function cluster_constraints(cluster::IP, port, ::Sharpe, ::Any)
+    N = size(port.returns, 2)
+    model = port.model
+
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, cluster.A * tip_bin2 .<= cluster.k)
+    # Sharpe ratio
+    @variable(model, tip_bin_sharpe2[1:N] .>= 0)
+    k = model[:k]
+    @constraint(model, tip_bin_sharpe2 .<= k)
+    @constraint(model, tip_bin_sharpe2 .<= cluster.scale * tip_bin2)
+    @constraint(model, tip_bin_sharpe2 .>= k .- cluster.scale * (1 .- tip_bin2))
+    # Long and short
+    w = model[:w]
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin_sharpe2)
+    else
+        @constraint(model,
+                    w .<=
+                    min(port.long_u, port.budget + port.short_budget) * tip_bin_sharpe2)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin_sharpe2)
+    end
+    return nothing
+end
+function cluster_constraints(cluster::IP, port, ::Any, ::Any)
+    N = size(port.returns, 2)
+    model = port.model
+
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, cluster.A * tip_bin2 .<= cluster.k)
+    # Long and short
+    w = model[:w]
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin2)
+    else
+        @constraint(model,
+                    w .<= min(port.long_u, port.budget + port.short_budget) * tip_bin2)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin2)
+    end
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::Trad)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, cluster.A .* W .== 0)
+    if !haskey(port.model, :sd_risk)
+        @expression(port.model, cluster_penalty, cluster.penalty * tr(W))
+    end
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::WC)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, cluster.A .* W .== 0)
+    return nothing
+end
+############
+############
 function _centrality_constraints(::Sharpe, model, A, B)
     w = model[:w]
     k = model[:k]
