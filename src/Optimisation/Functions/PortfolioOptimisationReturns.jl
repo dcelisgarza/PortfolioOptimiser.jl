@@ -27,7 +27,11 @@ function set_returns(obj::Sharpe, ::NoKelly, model, mu_l::Real; mu::AbstractVect
         w = model[:w]
         @expression(model, ret, dot(mu, w))
         k = model[:k]
-        @constraint(model, ret - obj.rf * k == 1)
+        if !all(mu .< zero(eltype(mu)))
+            @constraint(model, ret - obj.rf * k == 1)
+        else
+            @constraint(model, alt_sr, risk <= 1)
+        end
         _return_bounds(obj, model, mu_l)
     end
     return nothing

@@ -3,7 +3,16 @@ function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model, p)
     @objective(model, Max, ret - p)
     return nothing
 end
-function _objective(::Trad, ::Union{Sharpe, MinRisk}, ::Any, model, p)
+function _objective(::Trad, ::Sharpe, ::Any, model, p)
+    if !haskey(model, :alt_sr)
+        risk = model[:risk]
+        @objective(model, Min, risk + p)
+    else
+        ret = model[:ret]
+        @objective(model, Max, ret - p)
+    end
+end
+function _objective(::Trad, ::MinRisk, ::Any, model, p)
     risk = model[:risk]
     @objective(model, Min, risk + p)
     return nothing
