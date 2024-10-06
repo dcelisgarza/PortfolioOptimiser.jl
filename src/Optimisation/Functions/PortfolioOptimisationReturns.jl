@@ -25,11 +25,12 @@ function set_returns(obj::Sharpe, ::NoKelly, model, mu_l::Real; mu::AbstractVect
                      kwargs...)
     if !isempty(mu)
         w = model[:w]
-        @expression(model, ret, dot(mu, w))
         k = model[:k]
         if !all(mu .< zero(eltype(mu)))
+            @expression(model, ret, dot(mu, w))
             @constraint(model, ret - obj.rf * k == 1)
         else
+            risk = model[:risk]
             @constraint(model, alt_sr, risk <= 1)
         end
         _return_bounds(obj, model, mu_l)
