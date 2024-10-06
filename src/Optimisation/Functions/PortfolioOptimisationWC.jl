@@ -50,7 +50,7 @@ function _wc_risk_constraints(::Ellipse, port, obj)
     return nothing
 end
 function _wc_risk_constraints(type::NoWC, port, ::Any)
-    _sd_risk(port.network_method, type.formulation, port.model, port.cov)
+    _sd_risk(_get_ntwk_clust_method(WC(), port), type.formulation, port.model, port.cov)
     sd_risk = port.model[:sd_risk]
     @expression(port.model, risk, sd_risk)
     return nothing
@@ -72,15 +72,15 @@ function wc_constraints(port, obj, type)
     _wc_sharpe_constraints(obj, port)
     return nothing
 end
-function _optimise!(type::WC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
-                    obj::ObjectiveFunction, ::Any, ::Any, w_ini::AbstractVector,
-                    str_names::Bool)
+function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::Any, ::Any,
+                    w_ini::AbstractVector, str_names::Bool)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
     network_constraints(port.network_method, port, obj, type)
+    cluster_constraints(port.cluster_method, port, obj, type)
     wc_constraints(port, obj, type)
     linear_constraints(port, obj)
     centrality_constraints(port, obj)

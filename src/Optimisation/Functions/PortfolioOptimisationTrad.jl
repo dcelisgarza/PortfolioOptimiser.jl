@@ -14,6 +14,7 @@ function _optimise!(::Trad, port::Portfolio, rm::Union{AbstractVector, <:RiskMea
     weight_constraints(port, obj)
     num_assets_constraints(port, obj)
     network_constraints(port.network_method, port, obj, Trad())
+    cluster_constraints(port.cluster_method, port, obj, Trad())
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port.turnover, port, obj)
     rebalance_constraints(port.rebalance, port, obj)

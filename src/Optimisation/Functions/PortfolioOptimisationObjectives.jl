@@ -44,6 +44,9 @@ function objective_function(port, obj, ::Trad, kelly)
     if haskey(port.model, :network_penalty)
         p += port.model[:network_penalty]
     end
+    if haskey(port.model, :cluster_penalty)
+        p += port.model[:cluster_penalty]
+    end
     if haskey(port.model, :sum_t_rebal)
         p += port.model[:sum_t_rebal]
     end

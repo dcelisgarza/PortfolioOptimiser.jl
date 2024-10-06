@@ -173,10 +173,14 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model, sigma, idx::Integer)
     @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _get_ntwk_method(::Trad, port)
-    return port.network_method
+function _get_ntwk_clust_method(::Union{WC, Trad}, port)
+    return if isa(port.network_method, SDP) || isa(port.cluster_method, SDP)
+        SDP()
+    else
+        NoNtwk()
+    end
 end
-function _get_ntwk_method(args...)
+function _get_ntwk_clust_method(args...)
     return NoNtwk()
 end
 function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
@@ -193,7 +197,7 @@ function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
     end
     model = port.model
 
-    network_method = _get_ntwk_method(type, port)
+    network_method = _get_ntwk_clust_method(type, port)
     _sdp(network_method, port, obj)
     _sd_risk(network_method, rm.formulation, model, sigma)
     _set_sd_risk_upper_bound(network_method, obj, type, model, rm.settings.ub)
@@ -206,7 +210,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
 
-    network_method = _get_ntwk_method(type, port)
+    network_method = _get_ntwk_clust_method(type, port)
     _sdp(network_method, port, obj)
     count = length(rms)
     _sd_risk(network_method, model, sigma, count)

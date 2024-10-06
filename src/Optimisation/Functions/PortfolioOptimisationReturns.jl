@@ -134,6 +134,6 @@ end
 function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
-                network_method = port.network_method)
+                network_method = _get_ntwk_clust_method(Trad(), port))
     return nothing
 end

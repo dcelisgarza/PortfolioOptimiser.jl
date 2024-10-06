@@ -161,6 +161,69 @@ function network_constraints(network::SDP, port, obj, ::WC)
     @constraint(port.model, network.A .* W .== 0)
     return nothing
 end
+###########################
+###########################
+function cluster_constraints(args...)
+    return nothing
+end
+function cluster_constraints(cluster::IP, port, ::Sharpe, ::Any)
+    N = size(port.returns, 2)
+    model = port.model
+
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, cluster.A * tip_bin2 .<= cluster.k)
+    # Sharpe ratio
+    @variable(model, tip_bin_sharpe2[1:N] .>= 0)
+    k = model[:k]
+    @constraint(model, tip_bin_sharpe2 .<= k)
+    @constraint(model, tip_bin_sharpe2 .<= cluster.scale * tip_bin2)
+    @constraint(model, tip_bin_sharpe2 .>= k .- cluster.scale * (1 .- tip_bin2))
+    # Long and short
+    w = model[:w]
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin_sharpe2)
+    else
+        @constraint(model,
+                    w .<=
+                    min(port.long_u, port.budget + port.short_budget) * tip_bin_sharpe2)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin_sharpe2)
+    end
+    return nothing
+end
+function cluster_constraints(cluster::IP, port, ::Any, ::Any)
+    N = size(port.returns, 2)
+    model = port.model
+
+    @variable(model, tip_bin2[1:N], binary = true)
+    @constraint(model, cluster.A * tip_bin2 .<= cluster.k)
+    # Long and short
+    w = model[:w]
+    if !port.short
+        @constraint(model, w .<= port.long_u * tip_bin2)
+    else
+        @constraint(model,
+                    w .<= min(port.long_u, port.budget + port.short_budget) * tip_bin2)
+        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin2)
+    end
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::Trad)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, cluster.A .* W .== 0)
+    if !haskey(port.model, :sd_risk)
+        @expression(port.model, cluster_penalty, cluster.penalty * tr(W))
+    end
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::WC)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, cluster.A .* W .== 0)
+    return nothing
+end
+###########################
+###########################
 function _centrality_constraints(::Sharpe, model, A, B)
     w = model[:w]
     k = model[:k]
