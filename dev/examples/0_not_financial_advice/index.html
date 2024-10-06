@@ -44,8 +44,8 @@ TimeSeries.rename!(prices, Symbol.(assets))</code></pre><pre class="documenter-e
 │ 2019-01-07T14:30:00 │ 32.4257 │  35.362 │ 130.512 │ 7.43 │ 45.4226 │ 21.9911 ⋯
 │ 2019-01-08T14:30:00 │ 31.9041 │ 36.0361 │ 134.672 │ 7.41 │ 46.7586 │ 22.2523 ⋯
 │ 2019-01-09T14:30:00 │ 32.8882 │ 36.6481 │ 128.941 │ 7.47 │ 47.1089 │ 22.2855 ⋯
-│ 2019-01-10T14:30:00 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.3268 │ 21.4547 ⋯
-│ 2019-01-11T14:30:00 │  31.294 │ 36.4042 │  129.68 │ 7.57 │ 46.0336 │ 21.1128 ⋯
+│ 2019-01-10T14:30:00 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.3269 │ 21.4547 ⋯
+│ 2019-01-11T14:30:00 │  31.294 │ 36.4043 │  129.68 │ 7.57 │ 46.0336 │ 21.1128 ⋯
 │          ⋮          │    ⋮    │    ⋮    │    ⋮    │  ⋮   │    ⋮    │    ⋮    ⋱
 │ 2022-12-21T14:30:00 │   13.03 │ 134.188 │    53.0 │ 3.75 │ 74.3655 │ 37.5464 ⋯
 │ 2022-12-22T14:30:00 │   12.56 │ 130.998 │    49.1 │ 3.43 │ 74.2087 │ 37.5656 ⋯
@@ -140,52 +140,36 @@ cluster_assets!(hp; hclust_opt = HCOpt(; k_method = TwoDiff()))</code></pre><p>W
 wa = allocate!(hp, :NCO; investment = 3000)
 
 pretty_table(w; formatters = fmt1)
-pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr33"><span class="sgr1">┌ Warning: </span></span>Model could not be optimised satisfactorily.
-<span class="sgr33"><span class="sgr1">│ </span></span>Solvers: Dict{Any, Any}(:Clarabel1_Trad =&gt; Dict{Symbol, Any}(:term_status =&gt; MathOptInterface.SLOW_PROGRESS, :objective_val =&gt; 1148.6921717562252, :params =&gt; Dict{String, Bool}(&quot;verbose&quot; =&gt; 0), :port =&gt; 10×2 DataFrame
-<span class="sgr33"><span class="sgr1">│ </span></span> Row │ tickers  weights
-<span class="sgr33"><span class="sgr1">│ </span></span>     │ String   Float64
-<span class="sgr33"><span class="sgr1">│ </span></span>─────┼──────────────────────
-<span class="sgr33"><span class="sgr1">│ </span></span>   1 │ AAPL     5.20252e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   2 │ DELL     5.25169e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   3 │ DG       0.0546284
-<span class="sgr33"><span class="sgr1">│ </span></span>   4 │ INTC     0.383333
-<span class="sgr33"><span class="sgr1">│ </span></span>   5 │ LULU     3.82607e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   6 │ MSFT     8.23511e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   7 │ NVDA     2.54745e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   8 │ SBUX     7.67615e-5
-<span class="sgr33"><span class="sgr1">│ </span></span>   9 │ SIRI     0.561608
-<span class="sgr33"><span class="sgr1">│ </span></span>  10 │ STX      0.000103786, :finite_weights =&gt; true, :nonzero_weights =&gt; true)).
-<span class="sgr33"><span class="sgr1">└ </span></span><span class="sgr90">@ PortfolioOptimiser ~/work/PortfolioOptimiser.jl/PortfolioOptimiser.jl/src/Optimisation/Functions/PortfolioOptimisationFinalisation.jl:110</span>
-┌─────────┬─────────┐
-│<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│
-│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│
-├─────────┼─────────┤
-│    AAPL │   0.0 % │
-│    DELL │   0.0 % │
-│      DG │   0.0 % │
-│    INTC │   0.0 % │
-│    LULU │   0.0 % │
-│     MCI │ 100.0 % │
-│    MSFT │   0.0 % │
-│    NVDA │   0.0 % │
-│    SBUX │   0.0 % │
-│    SIRI │   0.0 % │
-│     STX │   0.0 % │
-└─────────┴─────────┘
+pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    0.0 % │
+│    DELL │    0.0 % │
+│      DG │  5.238 % │
+│    INTC │ 38.953 % │
+│    LULU │    0.0 % │
+│     MCI │    0.0 % │
+│    MSFT │    0.0 % │
+│    NVDA │    0.0 % │
+│    SBUX │    0.0 % │
+│    SIRI │ 55.808 % │
+│     STX │    0.0 % │
+└─────────┴──────────┘
 ┌─────────┬────────┬─────────┬─────────┬──────────┐
 │<span class="sgr1"> tickers </span>│<span class="sgr1"> shares </span>│<span class="sgr1">   price </span>│<span class="sgr1">    cost </span>│<span class="sgr1">  weights </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">  Int64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│
 ├─────────┼────────┼─────────┼─────────┼──────────┤
 │    AAPL │      0 │ 128.719 │     0.0 │    0.0 % │
 │    DELL │      0 │ 38.6021 │     0.0 │    0.0 % │
-│      DG │      0 │ 240.305 │     0.0 │    0.0 % │
-│    INTC │      0 │ 25.4859 │     0.0 │    0.0 % │
+│      DG │      1 │ 240.305 │ 240.305 │   8.01 % │
+│    INTC │     45 │ 25.4859 │ 1146.86 │ 38.229 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
-│     MCI │    245 │ 12.2062 │ 2990.51 │ 99.684 % │
+│     MCI │      0 │ 12.2062 │     0.0 │    0.0 % │
 │    MSFT │      0 │  236.42 │     0.0 │    0.0 % │
 │    NVDA │      0 │ 14.6044 │     0.0 │    0.0 % │
 │    SBUX │      0 │ 95.2773 │     0.0 │    0.0 % │
-│    SIRI │      0 │  57.406 │     0.0 │    0.0 % │
+│    SIRI │     28 │  57.406 │ 1607.37 │ 53.579 % │
 │     STX │      0 │ 49.4078 │     0.0 │    0.0 % │
 └─────────┴────────┴─────────┴─────────┴──────────┘</code></pre><p>However, we can do one better, we can take the worst performing stocks as well and short them. Since we&#39;re starting from so few stocks we&#39;ll adjust the best percentage to only take the best 30% after all filters.</p><pre><code class="language-julia hljs">function filter_worst(assets, rms, best, cov_type, cor_type)
     assets_worst = copy(assets)
@@ -312,4 +296,4 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
 │    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
 │    TLRY │    556 │     2.69 │  1495.64 │  49.855 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 6 October 2024 23:20">Sunday 6 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 6 October 2024 23:27">Sunday 6 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
