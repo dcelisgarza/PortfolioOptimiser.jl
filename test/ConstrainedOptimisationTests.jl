@@ -1,7 +1,7 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, GLPK,
       Pajarito, JuMP, Clarabel, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -308,7 +308,7 @@ l = 2.0
 end
 
 @testset "Network and Dendrogram SD short" begin
-    portfolio = Portfolio(; prices = prices,
+    portfolio = Portfolio(; prices = prices, short_budget = 10.0,
                           solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
                                                                        allow_almost = true),
                                                         :solver => optimizer_with_attributes(Pajarito.Optimizer,
@@ -323,6 +323,7 @@ end
                    WCType(; box = NormalWC(; seed = 123456789),
                           ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
+    portfolio.short_budget = 0.22
     portfolio.short_u = 0.22
     portfolio.long_u = 0.88
     ssl1 = portfolio.budget
@@ -468,6 +469,7 @@ end
                    WCType(; box = NormalWC(; seed = 123456789),
                           ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
+    portfolio.short_budget = 0.27
     portfolio.short_u = 0.27
     portfolio.long_u = 0.81
     ssl2 = portfolio.budget
@@ -948,6 +950,7 @@ end
     C = cluster_matrix(portfolio)
 
     portfolio.short = true
+    portfolio.short_budget = 0.13
     portfolio.short_u = 0.13
     portfolio.long_u = 1
 
@@ -1064,6 +1067,7 @@ end
     C = cluster_matrix(portfolio; hclust_alg = DBHT())
 
     portfolio.short = true
+    portfolio.short_budget = 0.18
     portfolio.short_u = 0.18
     portfolio.long_u = 0.95
 
