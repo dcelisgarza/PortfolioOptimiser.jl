@@ -49,7 +49,7 @@ TimeSeries.rename!(prices, Symbol.(assets))</code></pre><pre class="documenter-e
 │          ⋮          │    ⋮    │    ⋮    │    ⋮    │  ⋮   │    ⋮    │    ⋮    ⋱
 │ 2022-12-21T14:30:00 │   13.03 │ 134.188 │    53.0 │ 3.75 │ 74.3655 │ 37.5464 ⋯
 │ 2022-12-22T14:30:00 │   12.56 │ 130.998 │    49.1 │ 3.43 │ 74.2087 │ 37.5656 ⋯
-│ 2022-12-23T14:30:00 │   12.71 │ 130.631 │    44.0 │  3.4 │ 75.0296 │ 37.5464 ⋯
+│ 2022-12-23T14:30:00 │   12.71 │ 130.631 │    44.0 │  3.4 │ 75.0295 │ 37.5464 ⋯
 │ 2022-12-27T14:30:00 │   12.53 │ 128.818 │    40.3 │ 3.29 │ 75.4999 │ 37.8247 ⋯
 │ 2022-12-28T14:30:00 │   12.32 │ 124.866 │    38.4 │ 3.18 │ 73.9412 │ 37.2009 ⋯
 │ 2022-12-29T14:30:00 │    12.7 │ 128.402 │    41.4 │ 3.26 │ 74.9281 │ 38.2182 ⋯
@@ -146,14 +146,14 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 ├─────────┼──────────┤
 │    AAPL │    0.0 % │
 │    DELL │    0.0 % │
-│      DG │  5.409 % │
-│    INTC │ 38.882 % │
+│      DG │  4.771 % │
+│    INTC │ 39.148 % │
 │    LULU │    0.0 % │
 │     MCI │    0.0 % │
 │    MSFT │    0.0 % │
 │    NVDA │    0.0 % │
 │    SBUX │    0.0 % │
-│    SIRI │ 55.709 % │
+│    SIRI │ 56.081 % │
 │     STX │    0.0 % │
 └─────────┴──────────┘
 ┌─────────┬────────┬─────────┬─────────┬──────────┐
@@ -163,13 +163,13 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    AAPL │      0 │ 128.719 │     0.0 │    0.0 % │
 │    DELL │      0 │ 38.6021 │     0.0 │    0.0 % │
 │      DG │      1 │ 240.305 │ 240.305 │   8.01 % │
-│    INTC │     43 │ 25.4859 │ 1095.89 │  36.53 % │
+│    INTC │     42 │ 25.4859 │ 1070.41 │  35.68 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
 │     MCI │      0 │ 12.2062 │     0.0 │    0.0 % │
 │    MSFT │      0 │  236.42 │     0.0 │    0.0 % │
 │    NVDA │      0 │ 14.6044 │     0.0 │    0.0 % │
 │    SBUX │      0 │ 95.2773 │     0.0 │    0.0 % │
-│    SIRI │     29 │ 57.0998 │  1655.9 │ 55.197 % │
+│    SIRI │     29 │ 58.1417 │ 1686.11 │ 56.204 % │
 │     STX │      0 │ 49.4078 │     0.0 │    0.0 % │
 └─────────┴────────┴─────────┴─────────┴──────────┘</code></pre><p>However, we can do one better, we can take the worst performing stocks as well and short them. Since we&#39;re starting from so few stocks we&#39;ll adjust the best percentage to only take the best 30% after all filters.</p><pre><code class="language-julia hljs">function filter_worst(assets, rms, best, cov_type, cor_type)
     assets_worst = copy(assets)
@@ -269,17 +269,17 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │<span class="sgr1"> tickers </span>│<span class="sgr1">   weights </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">   Float64 </span>│
 ├─────────┼───────────┤
-│    AAPL │  99.976 % │
+│    AAPL │  99.993 % │
 │      DG │    -0.0 % │
 │     MCI │   0.001 % │
-│    MSFT │   0.002 % │
-│    SBUX │   0.008 % │
-│    SIRI │ -99.986 % │
-│    TSLA │ -99.984 % │
-│    NVAX │  -0.004 % │
-│    PARA │   0.007 % │
-│    SAVE │   0.003 % │
-│    TLRY │  99.977 % │
+│    MSFT │   0.001 % │
+│    SBUX │     0.0 % │
+│    SIRI │ -99.994 % │
+│    TSLA │ -99.973 % │
+│    NVAX │   0.003 % │
+│    PARA │   0.017 % │
+│    SAVE │   0.006 % │
+│    TLRY │  99.948 % │
 └─────────┴───────────┘
 ┌─────────┬────────┬──────────┬──────────┬───────────┐
 │<span class="sgr1"> tickers </span>│<span class="sgr1"> shares </span>│<span class="sgr1">    price </span>│<span class="sgr1">     cost </span>│<span class="sgr1">   weights </span>│
@@ -290,10 +290,10 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │     MCI │      0 │  12.2062 │      0.0 │     0.0 % │
 │    MSFT │      0 │   236.42 │      0.0 │     0.0 % │
 │    SBUX │      0 │  95.2773 │      0.0 │     0.0 % │
-│    SIRI │    -26 │ -57.0998 │  -1484.6 │ -49.487 % │
+│    SIRI │    -26 │ -58.1417 │ -1511.69 │  -50.39 % │
 │    TSLA │    -12 │  -123.18 │ -1478.16 │ -49.272 % │
-│    NVAX │     -1 │   -10.28 │   -10.28 │  -0.343 % │
+│    NVAX │      0 │    10.28 │      0.0 │     0.0 % │
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
 │    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
 │    TLRY │    541 │     2.69 │  1455.29 │   48.51 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 4 October 2024 16:45">Friday 4 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 6 October 2024 18:33">Sunday 6 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
