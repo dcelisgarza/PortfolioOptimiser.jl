@@ -26,7 +26,7 @@ function _optimise!(::HRP, port::HCPortfolio,
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
             # Weight constraints.
-            # alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
+            alpha_1 = cluster_weight_bounds(w_min, w_max, weights, lc, rc, alpha_1)
             weights[lc] *= alpha_1
             weights[rc] *= one(alpha_1) - alpha_1
         end
