@@ -146,14 +146,14 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 ├─────────┼──────────┤
 │    AAPL │    0.0 % │
 │    DELL │    0.0 % │
-│      DG │   1.25 % │
-│    INTC │ 41.065 % │
+│      DG │  5.821 % │
+│    INTC │ 39.139 % │
 │    LULU │    0.0 % │
 │     MCI │    0.0 % │
 │    MSFT │    0.0 % │
 │    NVDA │    0.0 % │
 │    SBUX │    0.0 % │
-│    SIRI │ 57.686 % │
+│    SIRI │  55.04 % │
 │     STX │    0.0 % │
 └─────────┴──────────┘
 ┌─────────┬────────┬─────────┬─────────┬──────────┐
@@ -162,14 +162,14 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 ├─────────┼────────┼─────────┼─────────┼──────────┤
 │    AAPL │      0 │ 128.719 │     0.0 │    0.0 % │
 │    DELL │      0 │ 38.6021 │     0.0 │    0.0 % │
-│      DG │      0 │ 240.305 │     0.0 │    0.0 % │
-│    INTC │     49 │ 25.4859 │ 1248.81 │ 41.627 % │
+│      DG │      1 │ 240.305 │ 240.305 │   8.01 % │
+│    INTC │     43 │ 25.4859 │ 1095.89 │  36.53 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
-│     MCI │      0 │ 12.2062 │     0.0 │    0.0 % │
+│     MCI │      1 │ 12.2062 │ 12.2062 │  0.407 % │
 │    MSFT │      0 │  236.42 │     0.0 │    0.0 % │
 │    NVDA │      0 │ 14.6044 │     0.0 │    0.0 % │
 │    SBUX │      0 │ 95.2773 │     0.0 │    0.0 % │
-│    SIRI │     31 │ 56.2939 │ 1745.11 │  58.17 % │
+│    SIRI │     29 │ 56.8078 │ 1647.42 │ 54.914 % │
 │     STX │      0 │ 49.4078 │     0.0 │    0.0 % │
 └─────────┴────────┴─────────┴─────────┴──────────┘</code></pre><p>However, we can do one better, we can take the worst performing stocks as well and short them. Since we&#39;re starting from so few stocks we&#39;ll adjust the best percentage to only take the best 30% after all filters.</p><pre><code class="language-julia hljs">function filter_worst(assets, rms, best, cov_type, cor_type)
     assets_worst = copy(assets)
@@ -296,4 +296,4 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
 │    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
 │    TLRY │    556 │     2.69 │  1495.64 │  49.855 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Monday 7 October 2024 12:28">Monday 7 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Monday 7 October 2024 20:31">Monday 7 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

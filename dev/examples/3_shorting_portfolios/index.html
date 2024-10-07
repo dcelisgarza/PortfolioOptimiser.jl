@@ -57,7 +57,7 @@ investment = 6750;</code></pre><h2 id="3.1-Long-only-portfolio"><a class="docs-h
 portfolio.optimal[:ns] = optimise!(portfolio; rm = rm, obj = obj)
 plot_bar(portfolio; type = :ns)
 portfolio.frontier[:ns] = efficient_frontier!(portfolio; rm = rm, points = 30)
-plot_frontier(portfolio; type = :ns)</code></pre><img src="1a1c98ad.svg" alt="Example block output"/><p>We&#39;ll now allocate the portfolio according to our means. We&#39;ll use both allocation methods:</p><ul><li>Linear Mixed-integer Programming (LP): (default) can only allocate discrete integer shares and requires an MIP solver.</li><li>Greedy algorithm, can round down to the nearest <code>integer + N*rounding</code>, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.</li></ul><pre><code class="language-julia hljs">portfolio.optimal[:nsal] = allocate!(portfolio, :ns; method = LP(), investment = investment)
+plot_frontier(portfolio; type = :ns)</code></pre><img src="97a16e1a.svg" alt="Example block output"/><p>We&#39;ll now allocate the portfolio according to our means. We&#39;ll use both allocation methods:</p><ul><li>Linear Mixed-integer Programming (LP): (default) can only allocate discrete integer shares and requires an MIP solver.</li><li>Greedy algorithm, can round down to the nearest <code>integer + N*rounding</code>, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.</li></ul><pre><code class="language-julia hljs">portfolio.optimal[:nsal] = allocate!(portfolio, :ns; method = LP(), investment = investment)
 portfolio.optimal[:nsag] = allocate!(portfolio, :ns; method = Greedy(; rounding = 0.3),
                                      investment = investment);</code></pre><p>Lets verify that the allocations used the money we have available. We&#39;ll also compare the would-be optimal portfolio.</p><p>Optimal portfolio</p><pre><code class="language-julia hljs">long_optimal_idx = portfolio.optimal[:ns].weights .&gt;= 0
 short_optimal_idx = .!long_optimal_idx
@@ -66,12 +66,12 @@ println(&quot;Sum of weights = $(sum(portfolio.optimal[:ns].weights[long_optimal
 Sum of weights = 1.0</code></pre><p>LP allocated portfolio</p><pre><code class="language-julia hljs">long_LP_idx = portfolio.optimal[:nsal].weights .&gt;= 0
 short_LP_idx = .!long_LP_idx
 println(&quot;Allocation investment = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:nsal].shares[long_LP_idx]))&quot;)
-println(&quot;Sum of weights = $(sum(portfolio.optimal[:nsal].weights[long_LP_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment = 6747.403688192368
-Sum of weights = 0.999615361213684</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:nsag].weights .&gt;= 0
+println(&quot;Sum of weights = $(sum(portfolio.optimal[:nsal].weights[long_LP_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment = 6747.318038702011
+Sum of weights = 0.9996026724002981</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:nsag].weights .&gt;= 0
 short_Greedy_idx = .!long_Greedy_idx
 println(&quot;Allocation investment = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:nsag].shares[long_Greedy_idx]))&quot;)
-println(&quot;Sum of weights = $(sum(portfolio.optimal[:nsag].weights[long_Greedy_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment = 6430.2685059785845
-Sum of weights = 0.9526323712560866</code></pre><p>As you can see, the greedy algorithm doesn&#39;t make optimal use of the available investment.</p><p>Lets now see what the long-only portfolio looks like, in both optimal and allocated form.</p><pre><code class="language-julia hljs">pretty_table(DataFrame(; tickers = portfolio.assets,
+println(&quot;Sum of weights = $(sum(portfolio.optimal[:nsag].weights[long_Greedy_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment = 6405.646435952186
+Sum of weights = 0.9489846571781018</code></pre><p>As you can see, the greedy algorithm doesn&#39;t make optimal use of the available investment.</p><p>Lets now see what the long-only portfolio looks like, in both optimal and allocated form.</p><pre><code class="language-julia hljs">pretty_table(DataFrame(; tickers = portfolio.assets,
                        # Optimal weights without shorting.
                        ns_w = portfolio.optimal[:ns].weights,
                        # Discretely allocated optimal weights without shorting.
@@ -89,38 +89,38 @@ Sum of weights = 0.9526323712560866</code></pre><p>As you can see, the greedy al
 │<span class="sgr1"> tickers </span>│<span class="sgr1">       ns_w </span>│<span class="sgr1">      nsal_w </span>│<span class="sgr1"> nsal_s </span>│<span class="sgr1">      nsag_w </span>│<span class="sgr1">  nsag_s </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">    Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90">  Int64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Float64 </span>│
 ├─────────┼────────────┼─────────────┼────────┼─────────────┼─────────┤
-│     AAL │ 1.44157e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    AAPL │ 6.31474e-5 │         0.0 │      0 │         0.0 │     0.0 │
-│     AMC │ 2.22809e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│      BB │ 1.34175e-5 │ 0.000482963 │      1 │ 0.000144889 │     0.3 │
-│     BBY │ 3.06551e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    DELL │ 1.70815e-6 │         0.0 │      0 │         0.0 │     0.0 │
-│      DG │   0.388725 │    0.391608 │     11 │    0.366688 │    10.3 │
-│     DRS │    0.02361 │     0.02272 │     12 │     0.02272 │    12.0 │
-│     GME │   1.727e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    INTC │ 1.31498e-6 │         0.0 │      0 │         0.0 │     0.0 │
-│    LULU │ 3.01522e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    MARA │ 5.91656e-8 │         0.0 │      0 │         0.0 │     0.0 │
-│     MCI │   0.305499 │    0.303798 │    168 │    0.303798 │   168.0 │
-│    MSFT │ 0.00499086 │         0.0 │      0 │         0.0 │     0.0 │
-│    NKLA │ 0.00836571 │      0.0096 │      1 │     0.00288 │     0.3 │
-│    NVAX │ 6.59996e-6 │         0.0 │      0 │         0.0 │     0.0 │
-│    NVDA │ 1.08963e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    PARA │ 3.09876e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    PLNT │ 1.70829e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    SAVE │ 8.13171e-8 │         0.0 │      0 │         0.0 │     0.0 │
-│    SBUX │  0.0821543 │    0.084691 │      6 │   0.0748103 │     5.3 │
-│    SIRI │   0.150334 │    0.150117 │     18 │    0.150117 │    18.0 │
-│     STX │  0.0362328 │   0.0365984 │      5 │   0.0314746 │     4.3 │
-│    TLRY │ 1.85502e-7 │         0.0 │      0 │         0.0 │     0.0 │
-│    TSLA │ 1.43016e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│     AAL │ 1.76253e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    AAPL │ 0.00010973 │         0.0 │      0 │         0.0 │     0.0 │
+│     AMC │  2.7604e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│      BB │ 2.05255e-5 │ 0.000482963 │      1 │ 0.000144889 │     0.3 │
+│     BBY │ 3.75137e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    DELL │  2.1363e-6 │         0.0 │      0 │         0.0 │     0.0 │
+│      DG │   0.389282 │    0.391608 │     11 │    0.366688 │    10.3 │
+│     DRS │  0.0237191 │   0.0246133 │     13 │     0.02272 │    12.0 │
+│     GME │ 2.12571e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    INTC │ 1.60943e-6 │         0.0 │      0 │  0.00113271 │     0.3 │
+│    LULU │ 3.67085e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    MARA │ 7.17615e-8 │         0.0 │      0 │         0.0 │     0.0 │
+│     MCI │   0.306467 │    0.307414 │    170 │    0.305606 │   169.0 │
+│    MSFT │ 0.00510629 │         0.0 │      0 │         0.0 │     0.0 │
+│    NKLA │ 0.00847991 │      0.0096 │      1 │     0.00288 │     0.3 │
+│    NVAX │ 5.80042e-6 │  0.00152296 │      1 │ 0.000456889 │     0.3 │
+│    NVDA │ 1.32054e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    PARA │ 3.82156e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    PLNT │ 2.09144e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    SAVE │ 9.90585e-8 │         0.0 │      0 │         0.0 │     0.0 │
+│    SBUX │  0.0829539 │    0.084691 │      6 │   0.0748104 │     5.3 │
+│    SIRI │   0.147004 │    0.143071 │     17 │    0.143071 │    17.0 │
+│     STX │  0.0368452 │   0.0365984 │      5 │   0.0314746 │     4.3 │
+│    TLRY │ 2.28093e-7 │         0.0 │      0 │         0.0 │     0.0 │
+│    TSLA │ 1.73549e-7 │         0.0 │      0 │         0.0 │     0.0 │
 └─────────┴────────────┴─────────────┴────────┴─────────────┴─────────┘</code></pre><h2 id="3.2-Shorting"><a class="docs-heading-anchor" href="#3.2-Shorting">3.2 Shorting</a><a id="3.2-Shorting-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-Shorting" title="Permalink"></a></h2><p>Enabling shorting is very simple. This will allow negative weights, which correspond to shorting portfolios. It is generally a good idea to start with little to no leverage.</p><pre><code class="language-julia hljs">portfolio.short = true;</code></pre><p>How short- or long-heavy we want to be is mediated by the <code>short_u</code> and <code>long_u</code> properties. They set the upper bound for the absolute value of the sum of the short and long weights respectively.</p><ul><li><code>short_u</code>: the absolute value of the sum of the short weights will be less than this.</li><li><code>long_u</code>: the sum of the long weights will be less than this.</li></ul><p>These values multiply the cash at our disposal when we allocate the portfolio. So when <a href="../../Optimisation/AssetAllocation/#PortfolioOptimiser.allocate!"><code>allocate!</code></a> is called, the long investment will be <code>investment * long_u</code>. And if shorting is enabled, the short investment (the amount shorted) will be <code>short_u * investment</code>.</p><p>Lets short the market whithout reinvesting the earnings, meaning we&#39;ll have a cash reserve in our balance that is equal to the short sale value. You can change this by increasing <code>long_u</code>, if you set it to <code>1 + short_u</code> it means the profits from short selling will be reinvested into the portfolio.</p><p>We will use the default values.</p><pre><code class="language-julia hljs"># The absolute value of the sum of the short weights is equal to `0.2`.
 portfolio.short_u = 0.2
 # Long weights add up to `1.0`.
 portfolio.long_u = 1;</code></pre><p>The portfolio <code>budget = long_u - short_u</code> gives us the leverage characteristics of the portfolio. This is a property that is automatically computed and cannot be cahnged. There are verious scenarios that <code>budget</code> describes.</p><ul><li><code>budget &lt; 0</code>: the short sale value of the portfolio is higher than the long-sale value.</li><li><code>budget == 0</code>: the short and long values of the portfolio are equal. The market neutral portfolio is found by maximising the return given these conditions.</li><li><code>0 &lt; budget &lt; 1</code>: the portfolio is under-leveraged, meaning there is a cash reserve that is not being used.</li><li><code>budget == 1</code>: the portfolio has no leverage. If shorting is enabled, this means the profits from shorting are being invested in long positions.</li><li><code>budget &lt; 1</code>: the portfolio is leveraged, meaning it&#39;s using more money than is available.</li></ul><p>Here the portfolio is under-leveraged.</p><pre><code class="language-julia hljs">portfolio.budget == 0.8</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>Lets optimise the short-long portfolio.</p><pre><code class="language-julia hljs">portfolio.optimal[:s] = optimise!(portfolio; rm = rm, obj = obj)
 plot_bar(portfolio; type = :s)
 portfolio.frontier[:s] = efficient_frontier!(portfolio; rm = rm, points = 30)
-plot_frontier(portfolio; type = :s)</code></pre><img src="5ce93834.svg" alt="Example block output"/><p>Lets allocate the short-long portfolio.</p><pre><code class="language-julia hljs"># Allocating the short-long portfolio.
+plot_frontier(portfolio; type = :s)</code></pre><img src="34dd53c1.svg" alt="Example block output"/><p>Lets allocate the short-long portfolio.</p><pre><code class="language-julia hljs"># Allocating the short-long portfolio.
 portfolio.optimal[:sal] = allocate!(portfolio, :s; investment = investment)
 portfolio.optimal[:sag] = allocate!(portfolio, :s; method = Greedy(; rounding = 0.3),
                                     investment = investment);</code></pre><p>Lets verify that the allocations used the money we have available.</p><p>Optimal portfolio</p><pre><code class="language-julia hljs">long_optimal_idx = portfolio.optimal[:s].weights .&gt;= 0
@@ -131,11 +131,11 @@ println(&quot;short = $(sum(investment * portfolio.optimal[:s].weights[short_opt
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:s].weights[long_optimal_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:s].weights[short_optimal_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Optimal investment
-long = 6749.539833207355
-short = -1349.539833207352
+long = 6749.919611270685
+short = -1349.919611270684
 Sum of weights
-long = 0.9999318271418303
-short = -0.19993182714182992</code></pre><p>LP allocated portfolio</p><pre><code class="language-julia hljs">long_LP_idx = portfolio.optimal[:sal].weights .&gt;= 0
+long = 0.9999880905586203
+short = -0.19998809055861985</code></pre><p>LP allocated portfolio</p><pre><code class="language-julia hljs">long_LP_idx = portfolio.optimal[:sal].weights .&gt;= 0
 short_LP_idx = .!long_LP_idx
 println(&quot;Allocation investment&quot;)
 println(&quot;long = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:sal].shares[long_LP_idx]))&quot;)
@@ -143,11 +143,11 @@ println(&quot;short = $(dot(portfolio.latest_prices[short_LP_idx], portfolio.opt
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:sal].weights[long_LP_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:sal].weights[short_LP_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment
-long = 6749.53715467453
-short = -1347.4847927093506
+long = 6748.113704919815
+short = -1347.4848003387451
 Sum of weights
-long = 0.9999314303221526
-short = -0.19962737669768157</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:sag].weights .&gt;= 0
+long = 0.9997205488770096
+short = -0.19962737782796228</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:sag].weights .&gt;= 0
 short_Greedy_idx = .!long_Greedy_idx
 println(&quot;Allocation investment&quot;)
 println(&quot;long = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:sag].shares[long_Greedy_idx]))&quot;)
@@ -155,11 +155,11 @@ println(&quot;short = $(dot(portfolio.latest_prices[short_Greedy_idx], portfolio
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:sag].weights[long_Greedy_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:sag].weights[short_Greedy_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment
-long = 6230.863779163361
-short = -1236.7211208343506
+long = 6197.9677793979645
+short = -1236.721126937866
 Sum of weights
-long = 0.9230909302464239
-short = -0.18321794382731119</code></pre><p>Here&#39;s what the short-long portfolio looks like. See how this differs from the long-only portfolio.</p><pre><code class="language-julia hljs">pretty_table(DataFrame(; tickers = portfolio.assets,
+long = 0.9182174487996985
+short = -0.18321794473153571</code></pre><p>Here&#39;s what the short-long portfolio looks like. See how this differs from the long-only portfolio.</p><pre><code class="language-julia hljs">pretty_table(DataFrame(; tickers = portfolio.assets,
                        # Optimal weights with shorting.
                        s_w = portfolio.optimal[:s].weights,
                        # Discretely allocated optimal weights with shorting.
@@ -177,31 +177,31 @@ short = -0.18321794382731119</code></pre><p>Here&#39;s what the short-long portf
 │<span class="sgr1"> tickers </span>│<span class="sgr1">          s_w </span>│<span class="sgr1">       sal_w </span>│<span class="sgr1"> sal_s </span>│<span class="sgr1">       sag_w </span>│<span class="sgr1">   sag_s </span>│
 │<span class="sgr90">  String </span>│<span class="sgr90">      Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Int64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Float64 </span>│
 ├─────────┼──────────────┼─────────────┼───────┼─────────────┼─────────┤
-│     AAL │   0.00904759 │  0.00753778 │     4 │  0.00753778 │     4.0 │
-│    AAPL │    0.0339449 │   0.0381391 │     2 │   0.0305113 │     1.6 │
-│     AMC │ -0.000881445 │        -0.0 │     0 │        -0.0 │    -0.0 │
-│      BB │   0.00966865 │  0.00869333 │    18 │   0.0091763 │    19.0 │
-│     BBY │  -0.00501907 │        -0.0 │     0 │        -0.0 │    -0.0 │
-│    DELL │    0.0169279 │   0.0171565 │     3 │   0.0114377 │     2.0 │
-│      DG │     0.282395 │    0.284806 │     8 │    0.249205 │     7.0 │
-│     DRS │     0.030491 │   0.0302933 │    16 │      0.0284 │    15.0 │
-│     GME │  -0.00337576 │ -0.00273481 │    -1 │ -0.00273481 │    -1.0 │
-│    INTC │    0.0203881 │   0.0188784 │     5 │   0.0188784 │     5.0 │
-│    LULU │  -7.88527e-5 │        -0.0 │     0 │        -0.0 │    -0.0 │
-│    MARA │  -0.00869436 │    -0.00912 │   -18 │ -0.00861333 │   -17.0 │
-│     MCI │     0.243399 │    0.242315 │   134 │    0.242315 │   134.0 │
-│    MSFT │    0.0647525 │   0.0700504 │     2 │   0.0560403 │     1.6 │
-│    NKLA │    0.0123236 │      0.0096 │     1 │      0.0096 │     1.0 │
-│    NVAX │    0.0047942 │  0.00304593 │     2 │  0.00456889 │     3.0 │
-│    NVDA │    -0.106051 │   -0.106017 │   -49 │   -0.103853 │   -48.0 │
-│    PARA │  -0.00449969 │ -0.00482466 │    -2 │ -0.00385973 │    -1.6 │
-│    PLNT │   -0.0165751 │  -0.0116741 │    -1 │  -0.0116741 │    -1.0 │
-│    SAVE │   -0.0473514 │  -0.0470079 │   -18 │  -0.0470079 │   -18.0 │
-│    SBUX │    0.0960347 │   0.0988061 │     7 │    0.084691 │     6.0 │
-│    SIRI │     0.126564 │    0.125098 │    15 │    0.125098 │    15.0 │
-│     STX │    0.0474035 │   0.0439181 │     6 │   0.0439181 │     6.0 │
-│    TLRY │   0.00179736 │  0.00159407 │     4 │  0.00171363 │     4.3 │
-│    TSLA │  -0.00740541 │  -0.0182489 │    -1 │ -0.00547467 │    -0.3 │
+│     AAL │   0.00920095 │  0.00942222 │     5 │  0.00810311 │     4.3 │
+│    AAPL │    0.0343705 │   0.0381391 │     2 │   0.0305113 │     1.6 │
+│     AMC │ -0.000919311 │        -0.0 │     0 │        -0.0 │    -0.0 │
+│      BB │   0.00969891 │   0.0101422 │    21 │   0.0091763 │    19.0 │
+│     BBY │   -0.0050109 │        -0.0 │     0 │        -0.0 │    -0.0 │
+│    DELL │    0.0171349 │   0.0171565 │     3 │   0.0131533 │     2.3 │
+│      DG │     0.282904 │    0.284806 │     8 │    0.249205 │     7.0 │
+│     DRS │    0.0305088 │   0.0302933 │    16 │      0.0284 │    15.0 │
+│     GME │    -0.003309 │ -0.00273481 │    -1 │ -0.00273481 │    -1.0 │
+│    INTC │    0.0205105 │   0.0188784 │     5 │   0.0188784 │     5.0 │
+│    LULU │  -5.99102e-5 │        -0.0 │     0 │        -0.0 │    -0.0 │
+│    MARA │  -0.00872892 │    -0.00912 │   -18 │ -0.00861333 │   -17.0 │
+│     MCI │      0.24412 │    0.244123 │   135 │    0.242315 │   134.0 │
+│    MSFT │    0.0648781 │   0.0700504 │     2 │   0.0560403 │     1.6 │
+│    NKLA │    0.0123778 │      0.0096 │     1 │      0.0096 │     1.0 │
+│    NVAX │   0.00476413 │  0.00456889 │     3 │  0.00456889 │     3.0 │
+│    NVDA │    -0.106325 │   -0.106017 │   -49 │   -0.103853 │   -48.0 │
+│    PARA │  -0.00435203 │ -0.00482466 │    -2 │ -0.00385973 │    -1.6 │
+│    PLNT │   -0.0163067 │  -0.0116741 │    -1 │  -0.0116741 │    -1.0 │
+│    SAVE │    -0.047431 │  -0.0470079 │   -18 │  -0.0470079 │   -18.0 │
+│    SBUX │     0.096382 │   0.0988061 │     7 │    0.084691 │     6.0 │
+│    SIRI │     0.123462 │    0.117823 │    14 │    0.117823 │    14.0 │
+│     STX │    0.0477298 │   0.0439181 │     6 │   0.0439181 │     6.0 │
+│    TLRY │   0.00194588 │  0.00199259 │     5 │  0.00183319 │     4.6 │
+│    TSLA │  -0.00754521 │  -0.0182489 │    -1 │ -0.00547467 │    -0.3 │
 └─────────┴──────────────┴─────────────┴───────┴─────────────┴─────────┘</code></pre><h2 id="3.3-Shorting-with-reinvestment"><a class="docs-heading-anchor" href="#3.3-Shorting-with-reinvestment">3.3 Shorting with reinvestment</a><a id="3.3-Shorting-with-reinvestment-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Shorting-with-reinvestment" title="Permalink"></a></h2><p>In this section we&#39;ll reinvest the money made from short selling, this can be acomplished by setting the value of <code>long_u = 1 + short_u</code>.</p><pre><code class="language-julia hljs">portfolio.short = true
 
 # The absolute value of the sum of the short weights is equal to `0.2`.
@@ -214,7 +214,7 @@ portfolio.budget == 1
 portfolio.optimal[:sr] = optimise!(portfolio; rm = rm, obj = obj)
 plot_bar(portfolio; type = :sr)
 portfolio.frontier[:sr] = efficient_frontier!(portfolio; rm = rm, points = 30)
-plot_frontier(portfolio; type = :sr)</code></pre><img src="63ff0855.svg" alt="Example block output"/><p>Lets allocate the short-long portfolio.</p><pre><code class="language-julia hljs"># Allocating the short-long portfolio.
+plot_frontier(portfolio; type = :sr)</code></pre><img src="3383c6b5.svg" alt="Example block output"/><p>Lets allocate the short-long portfolio.</p><pre><code class="language-julia hljs"># Allocating the short-long portfolio.
 portfolio.optimal[:sral] = allocate!(portfolio, :sr; investment = investment)
 portfolio.optimal[:srag] = allocate!(portfolio, :sr; method = Greedy(; rounding = 0.3),
                                      investment = investment);</code></pre><p>Lets verify that the allocations used the money we have available.</p><p>Optimal portfolio</p><pre><code class="language-julia hljs">long_optimal_idx = portfolio.optimal[:sr].weights .&gt;= 0
@@ -226,12 +226,12 @@ println(&quot;short = $(sum(investment * portfolio.optimal[:sr].weights[short_op
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:sr].weights[long_optimal_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:sr].weights[short_optimal_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Optimal investment
-long = 8099.981539217741
-long = 8099.981539217741 = investment + short_profit
-short = -1349.9815392177409
+long = 8099.980670425956
+long = 8099.980670425955 = investment + short_profit
+short = -1349.9806704259556
 Sum of weights
-long = 1.199997265069295
-short = -0.1999972650692949</code></pre><p>LP allocated portfolio</p><pre><code class="language-julia hljs">long_LP_idx = portfolio.optimal[:sral].weights .&gt;= 0
+long = 1.1999971363594009
+short = -0.19999713635940086</code></pre><p>LP allocated portfolio</p><pre><code class="language-julia hljs">long_LP_idx = portfolio.optimal[:sral].weights .&gt;= 0
 short_LP_idx = .!long_LP_idx
 println(&quot;Allocation investment&quot;)
 println(&quot;long = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:sral].shares[long_LP_idx]))&quot;)
@@ -240,12 +240,12 @@ println(&quot;short = $(dot(portfolio.latest_prices[short_LP_idx], portfolio.opt
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:sral].weights[long_LP_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:sral].weights[short_LP_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment
-long = 8098.251096010208
-long ≈ 8095.019439697266 ≈ investment + short_profit
-short = -1345.0194396972656
+long = 8093.21112704277
+long ≈ 8095.019443511963 ≈ investment + short_profit
+short = -1345.019443511963
 Sum of weights
-long = 1.1997409031126234
-short = -0.19926213921440972</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:srag].weights .&gt;= 0
+long = 1.1989942410433734
+short = -0.1992621397795501</code></pre><p>Greedy allocated portfolio</p><pre><code class="language-julia hljs">long_Greedy_idx = portfolio.optimal[:srag].weights .&gt;= 0
 short_Greedy_idx = .!long_Greedy_idx
 println(&quot;Allocation investment&quot;)
 println(&quot;long = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:srag].shares[long_Greedy_idx]))&quot;)
@@ -254,11 +254,11 @@ println(&quot;short = $(dot(portfolio.latest_prices[short_Greedy_idx], portfolio
 println(&quot;Sum of weights&quot;)
 println(&quot;long = $(sum(portfolio.optimal[:srag].weights[long_Greedy_idx]))&quot;)
 println(&quot;short = $(sum(portfolio.optimal[:srag].weights[short_Greedy_idx]))&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Allocation investment
-long = 7458.82219657898
+long = 7550.706880378723
 long ≈ 7987.211859130859 ≈ investment + short_profit
 short = -1237.2118591308595
 Sum of weights
-long = 1.1050106957894783
+long = 1.1186232415375887
 short = -0.18329064579716436</code></pre><p>Here&#39;s what the short-long portfolio looks like when we reinvest profits from shorting.</p><pre><code class="language-julia hljs">pretty_table(DataFrame(; tickers = portfolio.assets,
                        # Optimal weights with shorting.
                        s_w = portfolio.optimal[:sr].weights,
@@ -273,33 +273,33 @@ short = -0.18329064579716436</code></pre><p>Here&#39;s what the short-long portf
                        sag_w = portfolio.optimal[:srag].weights,
                        # Discretely allocated shares with shorting.
                        # Greedy algorithm.
-                       sag_s = portfolio.optimal[:srag].shares))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────────┬─────────────┬───────┬─────────────┬─────────┐
-│<span class="sgr1"> tickers </span>│<span class="sgr1">         s_w </span>│<span class="sgr1">       sal_w </span>│<span class="sgr1"> sal_s </span>│<span class="sgr1">       sag_w </span>│<span class="sgr1">   sag_s </span>│
-│<span class="sgr90">  String </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Int64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Float64 </span>│
-├─────────┼─────────────┼─────────────┼───────┼─────────────┼─────────┤
-│     AAL │  0.00225602 │  0.00188444 │     1 │  0.00113067 │     0.6 │
-│    AAPL │   0.0370455 │   0.0381391 │     2 │   0.0305113 │     1.6 │
-│     AMC │ -0.00061578 │        -0.0 │     0 │ -0.00180889 │    -0.3 │
-│      BB │  0.00918872 │   0.0091763 │    19 │  0.00869333 │    18.0 │
-│     BBY │ -2.48852e-7 │        -0.0 │     0 │        -0.0 │    -0.0 │
-│    DELL │    0.016444 │   0.0171565 │     3 │   0.0114377 │     2.0 │
-│      DG │    0.356204 │    0.356008 │    10 │    0.320407 │     9.0 │
-│     DRS │   0.0356082 │   0.0359733 │    19 │     0.03408 │    18.0 │
-│     GME │ -0.00355026 │ -0.00546963 │    -2 │ -0.00355526 │    -1.3 │
-│    INTC │   0.0204464 │   0.0226541 │     6 │   0.0188784 │     5.0 │
-│    LULU │ -2.07432e-7 │        -0.0 │     0 │        -0.0 │    -0.0 │
-│    MARA │  -0.0103592 │    -0.01064 │   -21 │  -0.0101333 │   -20.0 │
-│     MCI │    0.303375 │    0.303798 │   168 │    0.301989 │   167.0 │
-│    MSFT │   0.0704057 │   0.0700504 │     2 │   0.0560403 │     1.6 │
-│    NKLA │   0.0149132 │      0.0096 │     1 │     0.01248 │     1.3 │
-│    NVAX │  0.00500426 │  0.00456889 │     3 │  0.00456889 │     3.0 │
-│    NVDA │   -0.116275 │   -0.116835 │   -54 │   -0.114671 │   -53.0 │
-│    PARA │ -1.83611e-7 │ -0.00241233 │    -1 │        -0.0 │    -0.0 │
-│    PLNT │   -0.012035 │  -0.0116741 │    -1 │ -0.00350222 │    -0.3 │
-│    SAVE │  -0.0511945 │   -0.052231 │   -20 │  -0.0496195 │   -19.0 │
-│    SBUX │    0.114013 │    0.112921 │     8 │    0.103041 │     7.3 │
-│    SIRI │    0.156158 │    0.158457 │    19 │    0.150117 │    18.0 │
-│     STX │   0.0582164 │   0.0585574 │     8 │   0.0512377 │     7.0 │
-│    TLRY │ 0.000718098 │ 0.000797037 │     2 │ 0.000398519 │     1.0 │
-│    TSLA │ -0.00596723 │        -0.0 │     0 │        -0.0 │    -0.0 │
-└─────────┴─────────────┴─────────────┴───────┴─────────────┴─────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../2_asset_statistics/">« Example 2: Asset statistics</a><a class="docs-footer-nextpage" href="../4_hrp_portfolios/">Example 4: Hierarchical risk parity »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Monday 7 October 2024 12:28">Monday 7 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+                       sag_s = portfolio.optimal[:srag].shares))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────────┬─────────────┬───────┬─────────────┬─────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">          s_w </span>│<span class="sgr1">       sal_w </span>│<span class="sgr1"> sal_s </span>│<span class="sgr1">       sag_w </span>│<span class="sgr1">   sag_s </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">      Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Int64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90"> Float64 </span>│
+├─────────┼──────────────┼─────────────┼───────┼─────────────┼─────────┤
+│     AAL │   0.00237797 │  0.00188444 │     1 │  0.00244978 │     1.3 │
+│    AAPL │    0.0375964 │   0.0381391 │     2 │   0.0305113 │     1.6 │
+│     AMC │ -0.000592097 │        -0.0 │     0 │ -0.00180889 │    -0.3 │
+│      BB │   0.00915735 │   0.0091763 │    19 │  0.00869333 │    18.0 │
+│     BBY │  -2.42377e-7 │        -0.0 │     0 │        -0.0 │    -0.0 │
+│    DELL │    0.0167148 │   0.0171565 │     3 │   0.0131533 │     2.3 │
+│      DG │     0.356866 │    0.356008 │    10 │    0.320407 │     9.0 │
+│     DRS │    0.0356402 │   0.0359733 │    19 │     0.03408 │    18.0 │
+│     GME │   -0.0034836 │ -0.00546963 │    -2 │ -0.00355526 │    -1.3 │
+│    INTC │    0.0205927 │   0.0188784 │     5 │   0.0188784 │     5.0 │
+│    LULU │  -2.11595e-7 │        -0.0 │     0 │        -0.0 │    -0.0 │
+│    MARA │   -0.0103771 │    -0.01064 │   -21 │  -0.0101333 │   -20.0 │
+│     MCI │     0.304292 │    0.303798 │   168 │    0.303798 │   168.0 │
+│    MSFT │    0.0704908 │   0.0700504 │     2 │   0.0560403 │     1.6 │
+│    NKLA │    0.0149908 │      0.0192 │     2 │      0.0096 │     1.0 │
+│    NVAX │   0.00495861 │  0.00456889 │     3 │  0.00456889 │     3.0 │
+│    NVDA │    -0.116588 │   -0.116835 │   -54 │   -0.114671 │   -53.0 │
+│    PARA │  -1.93783e-7 │ -0.00241233 │    -1 │        -0.0 │    -0.0 │
+│    PLNT │   -0.0116543 │  -0.0116741 │    -1 │ -0.00350222 │    -0.3 │
+│    SAVE │   -0.0512153 │   -0.052231 │   -20 │  -0.0496195 │   -19.0 │
+│    SBUX │     0.114483 │    0.112921 │     8 │    0.112921 │     8.0 │
+│    SIRI │     0.152358 │    0.151487 │    18 │    0.151487 │    18.0 │
+│     STX │    0.0586223 │   0.0585574 │     8 │   0.0512377 │     7.0 │
+│    TLRY │  0.000856747 │  0.00119556 │     3 │ 0.000797037 │     2.0 │
+│    TSLA │  -0.00608639 │        -0.0 │     0 │        -0.0 │    -0.0 │
+└─────────┴──────────────┴─────────────┴───────┴─────────────┴─────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../2_asset_statistics/">« Example 2: Asset statistics</a><a class="docs-footer-nextpage" href="../4_hrp_portfolios/">Example 4: Hierarchical risk parity »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Monday 7 October 2024 20:31">Monday 7 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
