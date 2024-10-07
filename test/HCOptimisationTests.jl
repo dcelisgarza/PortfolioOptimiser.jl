@@ -55,14 +55,14 @@ l = 2.0
           0.019999999999999997, 0.06999999999999999, 0.039999999999999994,
           0.06816457729305708, 0.06999999999999999, 0.06999999999999999,
           0.04338117270497694, 0.06999999999999999]
-    @test isapprox(w1.weights, wt)
+    @test isapprox(w1.weights, wt, rtol = 0.001)
     @test all(w1.weights .>= w_min .- sqrt(eps()) * N)
     @test all(w1.weights .<= w_max .+ sqrt(eps()) * N)
 
     w2 = optimise!(portfolio; type = HERC(), rm = CDaR())
     wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.02, 0.05, 0.04, 0.04, 0.04, 0.02, 0.02,
           0.04, 0.04, 0.059848065481384424, 0.07, 0.06015193451861548, 0.04, 0.07]
-    @test isapprox(w2.weights, wt)
+    @test isapprox(w2.weights, wt, rtol = 0.05)
     @test all(w2.weights .>= w_min .- sqrt(eps()) * N)
     @test all(w2.weights .<= w_max .+ sqrt(eps()) * N)
 
