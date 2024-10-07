@@ -199,7 +199,14 @@ l = 2.0
 end
 
 @testset "Centrality Vector" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    w1 = optimise!(portfolio)
 
     network_type = MST(; steps = 1,
                        centrality = DegreeCentrality(; kwargs = (; normalize = false)))
@@ -207,6 +214,8 @@ end
     At = [4.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 2.0,
           5.0, 1.0, 7.0, 1.0]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; type = :Trad, network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; tree = PrimTree(), steps = 1,
                        centrality = BetweennessCentrality(; kwargs = (; normalize = false)))
@@ -214,6 +223,8 @@ end
     At = [51.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 34.0, 0.0, 18.0, 0.0, 0.0, 50.0, 0.0,
           18.0, 99.0, 0.0, 134.0, 0.0]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; tree = BoruvkaTree(), steps = 1,
                        centrality = ClosenessCentrality(; kwargs = (; normalize = false)))
@@ -224,6 +235,8 @@ end
           0.3958333333333333, 0.2878787878787879, 0.2878787878787879, 0.475,
           0.35185185185185186, 0.5277777777777778, 0.3275862068965517]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; steps = 1, centrality = EigenvectorCentrality())
     A = centrality_vector(portfolio; network_type = network_type)
@@ -234,6 +247,8 @@ end
           0.09234398398129721, 0.09050189630850049, 0.43104392128470476,
           0.20364178087764714, 0.597121732252696, 0.14700277518915464]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; tree = PrimTree(), steps = 1, centrality = KatzCentrality())
     A = centrality_vector(portfolio; network_type = network_type)
@@ -244,6 +259,8 @@ end
           0.11531985733474617, 0.12501479740510807, 0.41804029425131056,
           0.19781833699414997, 0.5487107828678239, 0.15861719040919595]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; tree = BoruvkaTree(), steps = 1, centrality = Pagerank())
     A = centrality_vector(portfolio; network_type = network_type)
@@ -255,6 +272,8 @@ end
           0.05580476895981066, 0.1209505137523858, 0.02750644274753411, 0.1647625903535832,
           0.028062029537254236]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; steps = 1, centrality = RadialityCentrality())
     A = centrality_vector(portfolio; network_type = network_type)
@@ -264,11 +283,15 @@ end
           0.4298245614035087, 0.7456140350877193, 0.587719298245614, 0.587719298245614,
           0.8157894736842106, 0.6929824561403509, 0.8508771929824562, 0.6578947368421052]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = MST(; tree = PrimTree(), steps = 1, centrality = StressCentrality())
     A = centrality_vector(portfolio; network_type = network_type)
     At = [102, 0, 0, 0, 0, 0, 0, 0, 68, 0, 36, 0, 0, 100, 0, 36, 198, 0, 268, 0]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 
     network_type = TMFG(; steps = 1,
                         centrality = DegreeCentrality(; kwargs = (; normalize = false)))
@@ -276,6 +299,8 @@ end
     At = [7.0, 4.0, 4.0, 3.0, 4.0, 6.0, 3.0, 3.0, 10.0, 5.0, 3.0, 3.0, 3.0, 7.0, 3.0, 4.0,
           12.0, 4.0, 14.0, 6.0]
     @test isapprox(A, At)
+    @test isapprox(average_centrality(portfolio; network_type = network_type),
+                   dot(A, w1.weights))
 end
 
 @testset "Connected and related assets" begin
@@ -289,7 +314,7 @@ end
     w = optimise!(portfolio)
 
     network_type = MST(; steps = 1)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio; network_type = network_type)
     @test isapprox(C, 0.15341826288065405)
 
     network_type = MST(; steps = 2)

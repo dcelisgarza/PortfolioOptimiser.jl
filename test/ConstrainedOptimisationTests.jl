@@ -1492,6 +1492,7 @@ end
     @test count(w2.weights .>= 2e-2) >= 12
     @test count(w2.weights .>= 2e-2) > count(w1.weights .>= 2e-2)
     @test !isapprox(w1.weights, w2.weights)
+    @test isapprox(portfolio.num_assets_l, floor(Int, number_effective_assets(portfolio)))
 
     portfolio.num_assets_l = 0
     w3 = optimise!(portfolio; obj = Sharpe(; rf = rf))
@@ -1500,6 +1501,7 @@ end
     @test count(w4.weights .>= 2e-2) >= 8
     @test count(w4.weights .>= 2e-2) > count(w3.weights .>= 2e-2)
     @test !isapprox(w3.weights, w4.weights)
+    @test isapprox(portfolio.num_assets_l, floor(Int, number_effective_assets(portfolio)))
 
     portfolio.num_assets_l = 0
     portfolio.short = true
@@ -1510,6 +1512,7 @@ end
     @test isapprox(sum(w5.weights), portfolio.budget)
     @test sum(w5.weights[w5.weights .< 0]) <= portfolio.short_u
     @test sum(w5.weights[w5.weights .>= 0]) <= portfolio.long_u
+
     portfolio.num_assets_l = 17
     w6 = optimise!(portfolio; obj = MinRisk())
     @test isapprox(sum(w6.weights), portfolio.budget)
@@ -1518,6 +1521,7 @@ end
     @test count(abs.(w6.weights) .>= 4e-3) >= 17
     @test count(abs.(w6.weights) .>= 4e-3) > count(abs.(w5.weights) .>= 4e-3)
     @test !isapprox(w5.weights, w6.weights)
+    @test isapprox(portfolio.num_assets_l, floor(Int, number_effective_assets(portfolio)))
 
     portfolio.num_assets_l = 0
     w7 = optimise!(portfolio; obj = Sharpe(; rf = rf))
@@ -1528,6 +1532,7 @@ end
     @test count(abs.(w8.weights) .>= 4e-3) >= 13
     @test count(abs.(w8.weights) .>= 4e-3) > count(abs.(w7.weights) .>= 4e-3)
     @test !isapprox(w7.weights, w8.weights)
+    @test isapprox(portfolio.num_assets_l, floor(Int, number_effective_assets(portfolio)))
 
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,

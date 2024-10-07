@@ -161,8 +161,6 @@ function network_constraints(network::SDP, port, obj, ::WC)
     @constraint(port.model, network.A .* W .== 0)
     return nothing
 end
-###########################
-###########################
 function cluster_constraints(args...)
     return nothing
 end
@@ -222,8 +220,6 @@ function cluster_constraints(cluster::SDP, port, obj, ::WC)
     @constraint(port.model, cluster.A .* W .== 0)
     return nothing
 end
-###########################
-###########################
 function _centrality_constraints(::Sharpe, model, A, B)
     w = model[:w]
     k = model[:k]

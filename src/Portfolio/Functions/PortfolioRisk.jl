@@ -144,6 +144,14 @@ function sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
     unset_set_rm_properties!(rm, solver_flag, sigma_flag)
     return risk
 end
-function number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,)
+
+"""
+```
+number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
+```
+
+Compute the number of effective assets.
+"""
+function number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
     return number_effective_assets(port.optimal[type].weights)
 end
