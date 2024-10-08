@@ -39,14 +39,15 @@ function set_returns(obj::Sharpe, ::NoKelly, model, mu_l::Real; mu::AbstractVect
 end
 function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
                      kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing} = nothing,
-                     network_method::NetworkMethods, sigma::AbstractMatrix, kwargs...)
+                     adjacency_constraint::AdjacencyConstraint, sigma::AbstractMatrix,
+                     kwargs...)
     if !isempty(mu)
         w = model[:w]
         if isnothing(kelly_approx_idx) ||
            isempty(kelly_approx_idx) ||
            iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
-                _sd_risk(network_method, kelly.formulation, model, sigma)
+                _sd_risk(adjacency_constraint, kelly.formulation, model, sigma)
             end
             sd_risk = model[:sd_risk]
             @expression(model, ret, dot(mu, w) - 0.5 * sd_risk)
@@ -58,12 +59,12 @@ function set_returns(obj::Any, kelly::AKelly, model, mu_l::Real; mu::AbstractVec
     end
     return nothing
 end
-function _set_returns(network_method::SDP, obj::Sharpe, kelly::AKelly, model, mu_l::Real;
-                      kwargs...)
+function _set_returns(adjacency_constraint::SDP, obj::Sharpe, kelly::AKelly, model,
+                      mu_l::Real; kwargs...)
     return set_returns(obj, EKelly(), model, mu_l; kwargs...)
 end
-function _set_returns(network_method::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKelly, model,
-                      mu_l::Real; mu::AbstractVector,
+function _set_returns(adjacency_constraint::Union{NoAdj, IP}, obj::Sharpe, kelly::AKelly,
+                      model, mu_l::Real; mu::AbstractVector,
                       kelly_approx_idx::AbstractVector{<:Integer}, sigma::AbstractMatrix,
                       kwargs...)
     if !isempty(mu)
@@ -77,7 +78,7 @@ function _set_returns(network_method::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKe
            isempty(kelly_approx_idx) ||
            iszero(kelly_approx_idx[1])
             if !haskey(model, :sd_risk)
-                _sd_risk(network_method, kelly.formulation, model, sigma)
+                _sd_risk(adjacency_constraint, kelly.formulation, model, sigma)
             end
             dev = model[:dev]
             @constraint(model,
@@ -97,8 +98,9 @@ function _set_returns(network_method::Union{NoNtwk, IP}, obj::Sharpe, kelly::AKe
 end
 function set_returns(obj::Sharpe, kelly::AKelly, model, mu_l::Real; mu::AbstractVector,
                      kelly_approx_idx::AbstractVector{<:Integer},
-                     network_method::NetworkMethods, sigma::AbstractMatrix, kwargs...)
-    _set_returns(network_method, obj, kelly, model, mu_l; mu = mu,
+                     adjacency_constraint::AdjacencyConstraint, sigma::AbstractMatrix,
+                     kwargs...)
+    _set_returns(adjacency_constraint, obj, kelly, model, mu_l; mu = mu,
                  kelly_approx_idx = kelly_approx_idx, sigma = sigma, kwargs...)
     return nothing
 end
@@ -134,6 +136,6 @@ end
 function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
-                network_method = _get_ntwk_clust_method(Trad(), port))
+                adjacency_constraint = _get_ntwk_clust_method(Trad(), port))
     return nothing
 end

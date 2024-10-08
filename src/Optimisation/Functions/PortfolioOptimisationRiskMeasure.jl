@@ -114,7 +114,7 @@ function _sd_risk(::SDP, ::Any, model, sigma, idx::Integer)
     add_to_expression!(sd_risk[idx], tr(sigma * W))
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix)
+function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix)
     G = sqrt(sigma)
     @variable(model, dev)
     @expression(model, sd_risk, dev^2)
@@ -122,13 +122,13 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::Abstra
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, model::JuMP.Model, sigma::AbstractMatrix,
+function _sd_risk(::Union{NoAdj, IP}, model::JuMP.Model, sigma::AbstractMatrix,
                   count::Integer)
     @variable(model, dev[1:count])
     @expression(model, sd_risk[1:count], zero(QuadExpr))
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix,
+function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix,
                   idx::Integer)
     G = sqrt(sigma)
     sd_risk = model[:sd_risk]
@@ -138,7 +138,7 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SOCSD, model::JuMP.Model, sigma::Abstra
     @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model, sigma)
+function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model, sigma)
     G = sqrt(sigma)
     @variable(model, dev)
     w = model[:w]
@@ -146,7 +146,7 @@ function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model, sigma)
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model::JuMP.Model, sigma::AbstractMatrix,
+function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model::JuMP.Model, sigma::AbstractMatrix,
                   idx::Integer)
     G = sqrt(sigma)
     sd_risk = model[:sd_risk]
@@ -156,7 +156,7 @@ function _sd_risk(::Union{NoNtwk, IP}, ::QuadSD, model::JuMP.Model, sigma::Abstr
     @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model::JuMP.Model, sigma::AbstractMatrix)
+function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model::JuMP.Model, sigma::AbstractMatrix)
     G = sqrt(sigma)
     @variable(model, dev)
     @expression(model, sd_risk, dev)
@@ -164,7 +164,7 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model::JuMP.Model, sigma::Abs
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model, sigma, idx::Integer)
+function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model, sigma, idx::Integer)
     G = sqrt(sigma)
     sd_risk = model[:sd_risk]
     dev = model[:dev]
@@ -174,14 +174,14 @@ function _sd_risk(::Union{NoNtwk, IP}, ::SimpleSD, model, sigma, idx::Integer)
     return nothing
 end
 function _get_ntwk_clust_method(::Union{WC, Trad}, port)
-    return if isa(port.network_method, SDP) || isa(port.cluster_method, SDP)
+    return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
         SDP()
     else
-        NoNtwk()
+        NoAdj()
     end
 end
 function _get_ntwk_clust_method(args...)
-    return NoNtwk()
+    return NoAdj()
 end
 function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
                 sigma::AbstractMatrix{<:Real},
@@ -197,10 +197,10 @@ function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
     end
     model = port.model
 
-    network_method = _get_ntwk_clust_method(type, port)
-    _sdp(network_method, port, obj)
-    _sd_risk(network_method, rm.formulation, model, sigma)
-    _set_sd_risk_upper_bound(network_method, obj, type, model, rm.settings.ub)
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    _sdp(adjacency_constraint, port, obj)
+    _sd_risk(adjacency_constraint, rm.formulation, model, sigma)
+    _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub)
     sd_risk = model[:sd_risk]
     _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -210,10 +210,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
 
-    network_method = _get_ntwk_clust_method(type, port)
-    _sdp(network_method, port, obj)
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    _sdp(adjacency_constraint, port, obj)
     count = length(rms)
-    _sd_risk(network_method, model, sigma, count)
+    _sd_risk(adjacency_constraint, model, sigma, count)
     sd_risk = model[:sd_risk]
     for (i, rm) ∈ pairs(rms)
         use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
@@ -225,8 +225,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP
         if !use_portfolio_sigma
             sigma = rm.sigma
         end
-        _sd_risk(network_method, rm.formulation, model, sigma, i)
-        _set_sd_risk_upper_bound(network_method, obj, type, model, rm.settings.ub, i)
+        _sd_risk(adjacency_constraint, rm.formulation, model, sigma, i)
+        _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub, i)
         _set_risk_expression(model, sd_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing

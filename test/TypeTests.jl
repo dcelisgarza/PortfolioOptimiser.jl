@@ -57,10 +57,10 @@ l = 2.0
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
                           tracking_err = TrackWeight(; err = 7, w = fill(inv(3 * N), N)),
                           bl_bench_weights = fill(inv(4 * N), N),
-                          network_method = SDP(; A = A), a_vec_cent = fill(inv(5 * N), N),
-                          a_mtx_ineq = a_mtx_ineq, risk_budget = 1:N,
-                          f_risk_budget = 1:div(N, 2), skew = skew, sskew = sskew,
-                          f_mu = fill(inv(M), M), f_cov = f_cov,
+                          network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
+                          a_vec_cent = fill(inv(5 * N), N), a_mtx_ineq = a_mtx_ineq,
+                          risk_budget = 1:N, f_risk_budget = 1:div(N, 2), skew = skew,
+                          sskew = sskew, f_mu = fill(inv(M), M), f_cov = f_cov,
                           fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
                           bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
                           blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
@@ -74,7 +74,7 @@ l = 2.0
     @test portfolio.tracking_err.err == 7
     @test portfolio.tracking_err.w == fill(inv(3 * N), N)
     @test portfolio.bl_bench_weights == fill(inv(4 * N), N)
-    @test portfolio.network_method.A == A
+    @test portfolio.network_adj.A == A
     @test portfolio.a_vec_cent == fill(inv(5 * N), N)
     @test portfolio.a_mtx_ineq == a_mtx_ineq
     @test portfolio.risk_budget == collect(1:N) / sum(1:N)

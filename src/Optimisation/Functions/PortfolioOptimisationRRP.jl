@@ -51,7 +51,7 @@ function rrp_constraints(type::RRP, port, sigma)
     elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
-    _sd_risk(NoNtwk(), SOCSD(), model, sigma)
+    _sd_risk(NoAdj(), SOCSD(), model, sigma)
     _set_sd_risk_upper_bound(nothing, nothing, type, model, Inf)
     _rrp_constraints(type, port, sigma)
     return nothing

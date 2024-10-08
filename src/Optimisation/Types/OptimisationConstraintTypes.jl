@@ -4,21 +4,21 @@
 
 """
 ```
-abstract type NetworkMethods end
+abstract type AdjacencyConstraint end
 ```
 """
-abstract type NetworkMethods end
+abstract type AdjacencyConstraint end
 
 """
 ```
-struct NoNtwk <: NetworkMethods end
+struct NoAdj <: AdjacencyConstraint end
 ```
 """
-struct NoNtwk <: NetworkMethods end
+struct NoAdj <: AdjacencyConstraint end
 
 """
 ```
-@kwdef mutable struct SDP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods
+@kwdef mutable struct SDP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: AdjacencyConstraint
     A::T1 = Matrix{Float64}(undef, 0, 0)
     penalty::T2 = 0.05
 end
@@ -77,7 +77,7 @@ This approach works better than [`IP`](@ref) when ``\\mathbf{A}`` is close to th
   - `A`: `N×N` adjacency matrix.
   - `penalty`: penalty factor when the variance [`SD`](@ref) risk measure isn't being used, either in a constraint or in the objective function.
 """
-mutable struct SDP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: NetworkMethods
+mutable struct SDP{T1 <: AbstractMatrix{<:Real}, T2 <: Real} <: AdjacencyConstraint
     A::T1
     penalty::T2
 end
@@ -89,7 +89,7 @@ end
 """
 ```
 @kwdef struct IP{T1 <: AbstractMatrix{<:Real},
-                 T2 <: Union{<:Integer, <:AbstractVector{<:Integer}}, T3 <: Real} <: NetworkMethods
+                 T2 <: Union{<:Integer, <:AbstractVector{<:Integer}}, T3 <: Real} <: AdjacencyConstraint
     A::T1 = Matrix{Float64}(undef, 0, 0)
     k::T2 = 1
     scale::T3 = 100_000.0
@@ -142,7 +142,7 @@ This approach can be appied to any risk measure without work arounds like [`SDP`
 """
 mutable struct IP{T1 <: AbstractMatrix{<:Real},
                   T2 <: Union{<:Integer, <:AbstractVector{<:Integer}}, T3 <: Real} <:
-               NetworkMethods
+               AdjacencyConstraint
     A::T1
     k::T2
     scale::T3
@@ -296,4 +296,4 @@ function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
     return TR{typeof(val), typeof(w)}(val, w)
 end
 
-export NoNtwk, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR
+export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR
