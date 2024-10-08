@@ -4,6 +4,10 @@ using SafeTestsets
     include("ConstrainedOptimisationTests.jl")
 end
 
+@safetestset "WC Optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
 @safetestset "HC Optimistaion" begin
     include("HCOptimisationTests.jl")
 end
@@ -22,10 +26,6 @@ end
 
 @safetestset "RRP Optimisation" begin
     include("RRPOptimisationTests.jl")
-end
-
-@safetestset "WC Optimisation" begin
-    include("WCOptimisationTests.jl")
 end
 
 @safetestset "Trad optimisation rm vectors" begin
