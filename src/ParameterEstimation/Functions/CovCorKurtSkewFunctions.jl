@@ -1058,44 +1058,12 @@ function elimination_matrix(n::Int)
 
     return sparse(1:m, v, 1, m, nsq)
 end
-# function summation_matrix(n::Int)
-#     m   = Int(n * (n + 1) / 2)
-#     nsq = n^2
-#     v   = zeros(Int, nsq)
-#     v2  = zeros(Int, m)
-#     r1  = 1
-#     r2  = 1
-#     a   = 1
-#     b2  = 0
-#     for i ∈ 1:n
-#         b1 = i
-#         for j ∈ 0:(i - 2)
-#             v[r1] = b1
-#             b1    += n - j - 1
-#             r1    += 1
-#         end
-
-#         for j ∈ 0:(n - i)
-#             v[r1] = a + j
-#             v2[r2] = a + j + b2
-#             r1 += 1
-#             r2 += 1
-#         end
-#         a += n - i + 1
-#         b2 += i
-#     end
-
-#     d = sparse(1:nsq, v, 1, nsq, m)
-#     l = sparse(1:m, v2, 1, m, nsq)
-#     s = transpose(d) * d * l
-#     return s
-# end
 function summation_matrix(n::Int)
     m = Int(n * (n + 1) / 2)
     nsq = n^2
     r = 0
     a = 1
-    v = zeros(Int, nsq)
+    v1 = zeros(Int, nsq)
     v2 = zeros(Int, nsq)
     rows2 = zeros(Int, nsq)
     cm = 0
@@ -1103,7 +1071,7 @@ function summation_matrix(n::Int)
     for i ∈ 1:n
         r += i - 1
         for j ∈ 0:(n - i)
-            v[r + j + 1] = a + j + cm
+            v1[r + j + 1] = a + j + cm
         end
         for j ∈ 1:(n - i)
             v2[r + j + 1] = a + j + cm
@@ -1113,18 +1081,18 @@ function summation_matrix(n::Int)
         a += n - i + 1
         cm += i
     end
-    v = v[.!iszero.(v)]
+    v1 = v1[.!iszero.(v1)]
     v2 = v2[.!iszero.(v2)]
     rows2 = rows2[.!iszero.(rows2)]
 
-    a = sparse(1:m, v, 1, m, nsq)
+    a = sparse(1:m, v1, 1, m, nsq)
     b = sparse(rows2, v2, 1, m, nsq)
     return a + b
 end
 function dup_elim_sum_matrices(n::Int)
     m   = Int(n * (n + 1) / 2)
     nsq = n^2
-    v   = zeros(Int, nsq)
+    v1  = zeros(Int, nsq)
     v2  = zeros(Int, m)
     r1  = 1
     r2  = 1
@@ -1133,13 +1101,13 @@ function dup_elim_sum_matrices(n::Int)
     for i ∈ 1:n
         b1 = i
         for j ∈ 0:(i - 2)
-            v[r1] = b1
-            b1    += n - j - 1
-            r1    += 1
+            v1[r1] = b1
+            b1 += n - j - 1
+            r1 += 1
         end
 
         for j ∈ 0:(n - i)
-            v[r1] = a + j
+            v1[r1] = a + j
             v2[r2] = a + j + b2
             r1 += 1
             r2 += 1
@@ -1148,7 +1116,7 @@ function dup_elim_sum_matrices(n::Int)
         b2 += i
     end
 
-    d = sparse(1:nsq, v, 1, nsq, m)
+    d = sparse(1:nsq, v1, 1, nsq, m)
     l = sparse(1:m, v2, 1, m, nsq)
     s = transpose(d) * d * l
 
