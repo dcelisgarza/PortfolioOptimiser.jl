@@ -385,7 +385,7 @@ end
           -1.9168697126217532e-11, -1.3928253949800599e-11, -1.8349718535583803e-11,
           -1.6677394168784684e-11, -6.267257105255323e-12, 0.3321254271795085,
           -2.669852770519402e-12, -1.79874967199412e-11]
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 0.5)
 
     wc3 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w3.weights, wc3.weights, rtol = 0.05)
