@@ -2,7 +2,7 @@
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "00060227cfeee6720d3d6466618e342dbcc975b8"
+project_hash = "d7d9c7ab3c04281e45943d89b9945e38a348489a"
 
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
@@ -572,23 +572,6 @@ deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", 
 git-tree-sha1 = "273bd1cd30768a2fddfa3fd63bbc746ed7249e5f"
 uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 version = "1.9.0"
-
-[[deps.GLPK]]
-deps = ["GLPK_jll", "MathOptInterface"]
-git-tree-sha1 = "1d706bd23e5d2d407bfd369499ee6f96afb0c3ad"
-uuid = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
-version = "1.2.1"
-
-[[deps.GLPK_jll]]
-deps = ["Artifacts", "GMP_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "fe68622f32828aa92275895fdb324a85894a5b1b"
-uuid = "e8aa6df9-e6ca-548a-97ff-1f85fc5b8b98"
-version = "5.0.1+0"
-
-[[deps.GMP_jll]]
-deps = ["Artifacts", "Libdl"]
-uuid = "781609d7-10c4-51f6-84f2-b8444358ff6d"
-version = "6.3.0+0"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
