@@ -576,10 +576,18 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
         @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
     if !isa(network_adj, NoAdj) && !isempty(network_adj.A)
-        @smart_assert(size(network_adj.A, 2) == size(returns, 2))
+        if isa(network_adj, IP)
+            @smart_assert(size(network_adj.A, 2) == size(returns, 2))
+        else
+            @smart_assert(size(network_adj.A) == (size(returns, 2), size(returns, 2)))
+        end
     end
     if !isa(cluster_adj, NoAdj) && !isempty(cluster_adj.A)
-        @smart_assert(size(cluster_adj.A, 2) == size(returns, 2))
+        if isa(cluster_adj, IP)
+            @smart_assert(size(cluster_adj.A, 2) == size(returns, 2))
+        else
+            @smart_assert(size(cluster_adj.A) == (size(returns, 2), size(returns, 2)))
+        end
     end
     if !isempty(a_vec_cent)
         @smart_assert(size(a_vec_cent, 1) == size(returns, 2))
@@ -755,7 +763,11 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:network_adj, :cluster_adj)
         if !isa(val, NoAdj) && !isempty(val.A)
-            @smart_assert(size(val.A, 2) == size(obj.returns, 2))
+            if isa(val, IP)
+                @smart_assert(size(val.A, 2) == size(obj.returns, 2))
+            else
+                @smart_assert(size(val.A) == (size(obj.returns, 2), size(obj.returns, 2)))
+            end
         end
     elseif sym == :a_vec_cent
         if !isempty(val)
