@@ -1,7 +1,35 @@
 using SafeTestsets
 
-@safetestset "Constraints" begin
-    include("ConstrainedOptimisationTests.jl")
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
 end
 
 @safetestset "WC Optimisation" begin
@@ -68,34 +96,6 @@ end
     include("ClusteringTests.jl")
 end
 
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
-end
-
-@safetestset "Factor Stats tests" begin
-    include("FactorStatsTest.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
 end
