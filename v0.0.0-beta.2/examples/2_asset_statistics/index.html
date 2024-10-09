@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 2: Asset statistics · PortfolioOptimiser.jl</title><meta name="title" content="Example 2: Asset statistics · PortfolioOptimiser.jl"/><meta property="og:title" content="Example 2: Asset statistics · PortfolioOptimiser.jl"/><meta property="twitter:title" content="Example 2: Asset statistics · PortfolioOptimiser.jl"/><meta name="description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="twitter:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_asset_statistics/"/><meta property="twitter:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_asset_statistics/"/><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_asset_statistics/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PortfolioOptimiser.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../0_not_financial_advice/">Example 0: Not financial advice</a></li><li><a class="tocitem" href="../1_basic_use/">Example 1: Basic use</a></li><li class="is-active"><a class="tocitem" href>Example 2: Asset statistics</a><ul class="internal"><li><a class="tocitem" href="#1.-Downloading-the-data"><span>1. Downloading the data</span></a></li><li><a class="tocitem" href="#2.-Instantiating-an-instance-of-[Portfolio](@ref)."><span>2. Instantiating an instance of <code>Portfolio</code>.</span></a></li><li><a class="tocitem" href="#3-Asset-statistics"><span>3 Asset statistics</span></a></li><li><a class="tocitem" href="#Other-statistics"><span>Other statistics</span></a></li></ul></li><li><a class="tocitem" href="../3_shorting_portfolios/">Example 3: Shorting and leveraged portfolios</a></li><li><a class="tocitem" href="../4_hrp_portfolios/">Example 4: Hierarchical risk parity</a></li></ul></li><li><span class="tocitem">API</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Constraints</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Constraints/WeightConstraints/">Weight constraints</a></li><li><a class="tocitem" href="../../Constraints/ViewsConstraints/">Views constraints</a></li><li><a class="tocitem" href="../../Constraints/NetworkConstraints/">Network constraints</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Parameter Estimation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../ParameterEstimation/PosdefFix/">Fixing non-positive definite matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/MatrixDenoising/">Matrix denoising</a></li><li><a class="tocitem" href="../../ParameterEstimation/DistanceMatrices/">Distance matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/Clustering/">Clustering</a></li><li><a class="tocitem" href="../../ParameterEstimation/CovCorKurtSkew/">Covariance, correlation, cokurtosis and coskewness</a></li><li><a class="tocitem" href="../../ParameterEstimation/MeanEstimators/">Expected returns</a></li><li><a class="tocitem" href="../../ParameterEstimation/WorstCase/">Worst case mean variance sets</a></li><li><a class="tocitem" href="../../ParameterEstimation/Regression/">Regression</a></li><li><a class="tocitem" href="../../ParameterEstimation/BlackLitterman/">Black Litterman models</a></li><li><a class="tocitem" href="../../ParameterEstimation/OWA/">Ordered Weight Arrays</a></li><li><a class="tocitem" href="../../ParameterEstimation/ParameterEstimationMisc/">Miscelaneous</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">(HC)Portfolio</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Portfolio/PortfolioTypes/">Types</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioStatistics/">Statistics</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioRisk/">Risk</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioClustering/">Clustering</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioNetwork/">Network</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Risk Measures</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures/">Risk measaures</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasureStatistics/">Statistics</a></li><li><a class="tocitem" href="../../RiskMeasures/MiscRiskMeasureFunctions/">Miscelaneous</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Optimisation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Optimisation/OptimisationKinds/">Optimisation kinds</a></li><li><a class="tocitem" href="../../Optimisation/ObjectiveFunctions/">Objective functions</a></li><li><a class="tocitem" href="../../Optimisation/PortfolioClasses/">Portfolio classes</a></li><li><a class="tocitem" href="../../Optimisation/AssetAllocation/">Asset allocation</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationConstraints/">Constraints</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationSetup/">Setup functions</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationRiskMeasures/">Risk measures</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationGetZ/">Entropic and relativistic moments</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationFinalisation/">Finalisation functions</a></li></ul></li><li><a class="tocitem" href="../../PlotsExtension/">Plots Extension</a></li><li><a class="tocitem" href="../../References/">References</a></li><li><a class="tocitem" href="../../Contents/">Index</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 2: Asset statistics</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 2: Asset statistics</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><p>The source files for all examples can be found in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/">/examples</a>.</p><h1 id="Example-2:-Asset-statistics"><a class="docs-heading-anchor" href="#Example-2:-Asset-statistics">Example 2: Asset statistics</a><a id="Example-2:-Asset-statistics-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2:-Asset-statistics" title="Permalink"></a></h1><p>This example follows from <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb">Example 1</a>. If something in the preamble is confusing, it is explained there.</p><p>This example focuses on the computation of asset statistics. This is one of the most important functions in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a>. It can be used for computing any and all statistics needed to optimise <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> and <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.HCPortfolio"><code>HCPortfolio</code></a>. It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> or <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.HCPortfolio"><code>HCPortfolio</code></a> instance. Every case will perform validation checks.</p><h2 id="1.-Downloading-the-data"><a class="docs-heading-anchor" href="#1.-Downloading-the-data">1. Downloading the data</a><a id="1.-Downloading-the-data-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Downloading-the-data" title="Permalink"></a></h2><pre><code class="language-julia hljs"># using Pkg
+# Pkg.add.([&quot;StatsPlots&quot;, &quot;GraphRecipes&quot;, &quot;YFinance&quot;, &quot;Clarabel&quot;, &quot;HiGHS&quot;, &quot;CovarianceEstimation&quot;, &quot;SparseArrays&quot;])
+using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YFinance,
+      PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
+      SparseArrays
+
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x[&quot;timestamp&quot;], m, Symbol.(coln), x[&quot;ticker&quot;])
+end
+assets = [&quot;AAL&quot;, &quot;AAPL&quot;, &quot;AMC&quot;, &quot;BB&quot;, &quot;BBY&quot;, &quot;DELL&quot;, &quot;DG&quot;, &quot;DRS&quot;, &quot;GME&quot;, &quot;INTC&quot;, &quot;LULU&quot;,
+          &quot;MARA&quot;, &quot;MCI&quot;, &quot;MSFT&quot;, &quot;NKLA&quot;, &quot;NVAX&quot;, &quot;NVDA&quot;, &quot;PARA&quot;, &quot;PLNT&quot;, &quot;SAVE&quot;, &quot;SBUX&quot;,
+          &quot;SIRI&quot;, &quot;STX&quot;, &quot;TLRY&quot;, &quot;TSLA&quot;]
+Date_0 = &quot;2019-01-01&quot;
+Date_1 = &quot;2023-01-01&quot;
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
+prices = hcat(prices...)
+cidx = colnames(prices)[occursin.(r&quot;adj&quot;, string.(colnames(prices)))]
+prices = prices[cidx]
+TimeSeries.rename!(prices, Symbol.(assets));</code></pre><h2 id="2.-Instantiating-an-instance-of-[Portfolio](@ref)."><a class="docs-heading-anchor" href="#2.-Instantiating-an-instance-of-[Portfolio](@ref).">2. Instantiating an instance of <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</a><a id="2.-Instantiating-an-instance-of-[Portfolio](@ref).-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Instantiating-an-instance-of-[Portfolio](@ref)." title="Permalink"></a></h2><pre><code class="language-julia hljs">portfolio = Portfolio(; prices = prices);</code></pre><h2 id="3-Asset-statistics"><a class="docs-heading-anchor" href="#3-Asset-statistics">3 Asset statistics</a><a id="3-Asset-statistics-1"></a><a class="docs-heading-anchor-permalink" href="#3-Asset-statistics" title="Permalink"></a></h2><p>When you first create a <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> in this way, it does not contain any statistics other than the returns. So we must compute them.</p><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> uses the <a href="https://github.com/JuliaStats/StatsAPI.jl"><code>StatsAPI.jl</code></a> interfaces through <a href="https://juliastats.org/StatsBase.jl/stable/"><code>StatsBase.jl</code></a>. Meaning it is composable with other packages which use the common framework, and it also makes it easy for users to define their custom methods by using Julia&#39;s typesystem.</p><p>We&#39;ll only focus on the expected returns and covariance matrix. The default parameters are the arithmetic mean and sample covariance.</p><pre><code class="language-julia hljs">asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
+                  set_sskew = false);
+
+# Save these for later use.
+mu1 = copy(portfolio.mu);
+cov1 = copy(portfolio.cov);</code></pre><p>We can prove this by computing the arithmetic mean and sample covariance of the returns.</p><pre><code class="language-julia hljs">println(isapprox(mu1, vec(mean(portfolio.returns; dims = 1)))) # true
+println(isapprox(cov1, cov(portfolio.returns; dims = 1))) # true</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true
+true</code></pre><p>These statistics are not very robust, so they&#39;re not very reliable. We can make them a bit better by using weights. First we need to explain the estimators.</p><h3 id="3.1-Mean-estimators"><a class="docs-heading-anchor" href="#3.1-Mean-estimators">3.1 Mean estimators</a><a id="3.1-Mean-estimators-1"></a><a class="docs-heading-anchor-permalink" href="#3.1-Mean-estimators" title="Permalink"></a></h3><p>Lets start with the easier one, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanEstimator"><code>PortfolioOptimiser.MeanEstimator</code></a>. There are four of these, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MuSimple"><code>MuSimple</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MuJS"><code>MuJS</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MuBS"><code>MuBS</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MuBOP"><code>MuBOP</code></a>. As you can see, they are all subtypes of <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanEstimator"><code>PortfolioOptimiser.MeanEstimator</code></a>, we will use this later on to define our own method. Lets first focus on the first estimator, which is also the default.</p><p>We&#39;ve already seen its default behaviour, we know from above it&#39;s the same as the arithmetic mean. But it can take a vector of <a href="https://juliastats.org/StatsBase.jl/stable/weights/"><code>AbstractWeights</code></a>.</p><p>First lets get the number of timestamps <code>T</code>, and number of assets <code>N</code>. We&#39;ll use <code>T</code> for defining our weights.</p><pre><code class="language-julia hljs">T, N = size(portfolio.returns)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(1007, 25)</code></pre><p>There are a variety of weights, but the only ones that make sense with no prior knowledge are exponential weights. Now lets use this to compute the asset expected returns vector, we do this by passing the argument <code>mu_type = mu_type_1</code> to the function, we&#39;ve also set the <code>set_cov = false</code> so it doesn&#39;t recompute the covariance.</p><pre><code class="language-julia hljs"># Play around with the value of lambda (1/T, in the example) to see the effect
+# it has on the weights and computed expected returns vector.
+w = eweights(1:T, 1 / T; scale = true)
+mu_type_1 = MuSimple(; w = w)
+asset_statistics!(portfolio; mu_type = mu_type_1, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu2 = copy(portfolio.mu)
+
+println(isapprox(mu1, mu2)) # false</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">false</code></pre><p>The other three estimators included in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> require a target and a covariance matrix, since they use these to correct the estimate of the arithmetic mean. The available targets are <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.GM"><code>GM</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.VW"><code>VW</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.SE"><code>SE</code></a>, they all default to <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.GM"><code>GM</code></a>. They can also take an <a href="https://juliastats.org/StatsBase.jl/stable/weights/"><code>AbstractWeights</code></a>, which they will use to compute the arithmetic mean that is then corrected with the target and covariane matrix. We&#39;ll try a few combinations.</p><p>The covariance matrix is not needed, if it is empty, it will be computed by <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a> from the parameters given to it via <code>cov_type</code> even if <code>set_cov = false</code>, it just won&#39;t replace the old covariance matrix with the one that&#39;s been computed for the mean estimator, once the calculation is done, the <code>sigma</code> field of the estimator will be set to empty once more. If a covariance matrix is provided, then <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a> will use this rather than computing one for it.</p><p>Feel free to mix and match, and to play around with various combinations.</p><pre><code class="language-julia hljs">mu_type_2 = MuJS(; target = GM())
+asset_statistics!(portfolio; mu_type = mu_type_2, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu3 = copy(portfolio.mu)
+
+mu_type_3 = MuBS(; target = VW(), w = w)
+asset_statistics!(portfolio; mu_type = mu_type_3, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu4 = copy(portfolio.mu)
+
+# Using a custom covariance with random noise.
+# It&#39;s not guaranteed to be positive definite.
+noise = randn(N, N) / N^2
+noise = transpose(noise) * noise
+mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
+asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu5 = copy(portfolio.mu);</code></pre><p>All targets subtype <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanTarget"><code>PortfolioOptimiser.MeanTarget</code></a>. It is possible for users to define a one by creating a concrete subtype of <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanTarget"><code>PortfolioOptimiser.MeanTarget</code></a> and defining a new <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.target_mean-Tuple{GM, AbstractVector, AbstractMatrix, Any, Integer, Integer}"><code>target_mean</code></a> for the custom target.</p><pre><code class="nohighlight hljs">struct CustomMeanTarget &lt;: MeanTarget
+    ...
+end
+function target_mean(ct::CustomMeanTarget, mu::AbstractVector,
+                     sigma::AbstractMatrix, inv_sigma,
+                     T::Integer, N::Integer)
+    ...
+end</code></pre><p>However, this limits the target to using the same data as the current ones. It&#39;s easier to define a new concrete subtype of <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanEstimator"><code>PortfolioOptimiser.MeanEstimator</code></a>. We will do this in the following section.</p><h3 id="3.2-Defining-a-custom-mean-method"><a class="docs-heading-anchor" href="#3.2-Defining-a-custom-mean-method">3.2 Defining a custom mean method</a><a id="3.2-Defining-a-custom-mean-method-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-Defining-a-custom-mean-method" title="Permalink"></a></h3><p>In order to define a new method all you need to do is create a new subtype of <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanEstimator"><code>PortfolioOptimiser.MeanEstimator</code></a> (it&#39;s not exported so it must be qualified) and define a new <a href="https://juliastats.org/StatsBase.jl/stable/scalarstats/#Weighted-sum-and-mean"><code>StatsBase.mean</code></a> function.</p><p>This is all we need, we can now define a custom mean that is the same as the <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MuSimple"><code>MuSimple</code></a>, but scales the vector. You can scale the vector uniformly, by providing a scalar, or scale each item individually by providing an <code>AbstractVector</code>.</p><pre><code class="language-julia hljs">mutable struct MyScaledMean{T1, T2} &lt;: PortfolioOptimiser.MeanEstimator
+    scale::T1
+    w::T2
+end
+function MyScaledMean(; scale::Union{&lt;:AbstractVector{&lt;:Real}, Real} = 1, w = nothing)
+    return MyScaledMean{typeof(scale), typeof(w)}(scale, w)
+end
+
+# We have to turn this into a vec so we can scale by a vector.
+function StatsBase.mean(me::MyScaledMean, X::AbstractArray; dims::Int = 1)
+    return me.scale .*
+           vec((isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims)))
+end
+
+scale = 5
+mu_type_5 = MyScaledMean(; scale = scale)
+asset_statistics!(portfolio; mu_type = mu_type_5, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu6 = copy(portfolio.mu)
+# Should be a vector of 5&#39;s.
+println(mu6 ./ mu1)
+
+scale = 1:N
+mu_type_6 = MyScaledMean(; scale = scale)
+asset_statistics!(portfolio; mu_type = mu_type_6, set_cov = false, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+mu7 = copy(portfolio.mu)
+# Should be a vector going from 1 to N.
+println(mu7 ./ mu1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
+[1.0, 2.0, 3.0000000000000004, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.000000000000004, 23.0, 24.000000000000004, 25.0]</code></pre><h3 id="3.3-Covariance-estimators"><a class="docs-heading-anchor" href="#3.3-Covariance-estimators">3.3 Covariance estimators</a><a id="3.3-Covariance-estimators-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-Covariance-estimators" title="Permalink"></a></h3><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl"><code>PortfolioOptimiser</code></a> comes with quite a few covariance estimators. However, it is best to wrap them all with <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.PortCovCor"><code>PortCovCor</code></a>. This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.</p><p><a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl">Portfoliooptimiser</a>&#39;s mean and covariance estimators are based on the idea of subtyping <a href="https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator"><code>StatsBase.CovarianceEstimator</code></a> to specialise their respective functions.</p><p>We will also not illustrate how to define custom methods as it follows the same principles as for the mean estimators, but instead by creating a concrete subtype (a struct) of <a href="https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator"><code>StatsBase.CovarianceEstimator</code></a> and implementing <a href="https://juliastats.org/StatsBase.jl/stable/cov/#Statistics.cov-Tuple{CovarianceEstimator,%20AbstractMatrix}"><code>StatsBase.cov</code></a> for the custom type.</p><p>All estimators are different, some can nest other estimators, and those estimators may or may not support weights or even certain types of weights. There are so many different permutations that we will not go over an exhaustive list. For details on external methods please refer back to the documentation in their respective packages. For details on <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/"><code>PortfolioOptimiser</code></a>&#39;s estimators please refer to the docs.</p><p>As far as my recommendation/preference, I like the <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.CorGerberSB1"><code>CorGerberSB1</code></a> as it&#39;s fairly tuneable and produces less noisy matrices, but it is among the more expensive ones to compute.</p><pre><code class="language-julia hljs"># `corrected = true` does not support weights
+ce0_a = StatsBase.SimpleCovariance(; corrected = false)
+
+# Method from [CovarianceEstimation.jl](https://github.com/mateuszbaran/CovarianceEstimation.jl),
+# does not support weights.
+ce0_b = CovarianceEstimation.AnalyticalNonlinearShrinkage()
+
+# Exponential weights, try something else if you wish.
+w = eweights(1:T, 1 / sqrt(T); scale = true)
+
+# Risk free rate, we will use as the minimum acceptable return for the semi covariance.
+rf = 3.5 / 100 / 252</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.0001388888888888889</code></pre><p>Lets put our estimators in a vector to make programming easier.</p><pre><code class="language-julia hljs">ces = CovarianceEstimator[]
+# Full covariance.
+push!(ces, CovFull(; ce = ce0_a, w = w))
+
+# Semi covariance, only focuses on variations that take
+# the returns below the target value.
+push!(ces, CovSemi(; ce = ce0_b, target = rf))
+
+# This bins the data and uses the information overlap between variables.
+push!(ces, CorMutualInfo())
+
+# This computes the distance covariance.
+push!(ces, CovDistance())
+
+# This uses how closely related the lower tail of the returns are between assets.
+# It combines the idea behind the Value at Risk and rank correlation.
+push!(ces, CorLTD())
+
+# The Gerber family of robust covariance estimators that count
+# co-movements and filters large and small movements by classifying
+# them into zones. They are a rank-based (counting) approach.
+push!(ces, CorGerber0())
+push!(ces, CorGerber1())
+push!(ces, CorGerber2())
+
+# Smyth-Broby family of covariance estimators that modifies the
+# Gerber statistics by scoring the quality of the classification
+# of co-movements (instead of adding 1 they add a score).
+push!(ces, CorSB0())
+push!(ces, CorSB1())
+
+# Smyth-Broby-Gerber family of covariance estimators that modifies
+# the Gerber statistics by counting co-movements, scoring them,
+# and then it multiplies the scores by the counts.
+push!(ces, CorGerberSB0())
+push!(ces, CorGerberSB1());</code></pre><p>We then instantiate some <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.PortCovCor"><code>PortCovCor</code></a> estimators and push them to a vector for convenience.</p><pre><code class="language-julia hljs">pces = PortCovCor[]
+for ce ∈ ces
+    push!(pces, PortCovCor(; ce = ce))
+end</code></pre><p>We can now call <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a> with all these different estimators.</p><pre><code class="language-julia hljs">covs = Matrix[]
+for pce ∈ pces
+    asset_statistics!(portfolio; cov_type = pce, set_mu = false, set_kurt = false,
+                      set_skurt = false, set_skew = false, set_sskew = false)
+    push!(covs, copy(portfolio.cov))
+end</code></pre><p>Try changing <code>idx</code> 1 to 12, see how different the covariances look. What happens if you change some parameter in the covariance estimators? Are there methods that give you the most obvious ones? Try to see if you can spot patterns in the relationships between certain assets (ape together strong).</p><p>We&#39;re showing the correlation matrix since it makes it easier to see the differences. We&#39;ve set the colour limits to go from 0 to 1 <code>clim = (0, 1)</code>, since all these assets appear to be postively correlated. Strictly speaking, only <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.CorMutualInfo"><code>CorMutualInfo</code></a>, <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.CovDistance"><code>CovDistance</code></a> and <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.CorLTD"><code>CorLTD</code></a> are guaranteed to be only positive. More information on all the methods is found in the docs.</p><pre><code class="language-julia hljs">for idx ∈ 1:12
+   plot(cov2cor(covs[idx]); st = :heatmap, clim = (0, 1),
+                yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+                xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+                ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+                aspect_ratio = :equal)
+end</code></pre><h3 id="3.4-Covariance-denoising"><a class="docs-heading-anchor" href="#3.4-Covariance-denoising">3.4 Covariance denoising</a><a id="3.4-Covariance-denoising-1"></a><a class="docs-heading-anchor-permalink" href="#3.4-Covariance-denoising" title="Permalink"></a></h3><p>Though the Gerber and its modified methods work well out of the box, other methods can benefit from extra processing. We&#39;ll use the default <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.CovFull"><code>CovFull</code></a> for this. First we will denoise it, for which we have three methods, <a href="../../ParameterEstimation/MatrixDenoising/#PortfolioOptimiser.DenoiseFixed"><code>DenoiseFixed</code></a>, <a href="../../ParameterEstimation/MatrixDenoising/#PortfolioOptimiser.DenoiseSpectral"><code>DenoiseSpectral</code></a>, <a href="../../ParameterEstimation/MatrixDenoising/#PortfolioOptimiser.DenoiseShrink"><code>DenoiseShrink</code></a>, which use fixed, spectral and shrink denoising methods described in [<a href="../../References/#MLAM">1</a>, Chapter 2]. Each denoise method contains various tuning parameters. We will only explore the effects of <code>detone</code> and <code>mkt_comp</code> and leave the rest as defaults.</p><pre><code class="language-julia hljs">ces_denoise = PortCovCor[]
+push!(ces_denoise, PortCovCor(;))
+push!(ces_denoise, PortCovCor(; denoise = DenoiseFixed()))
+push!(ces_denoise, PortCovCor(; denoise = DenoiseSpectral()))
+push!(ces_denoise, PortCovCor(; denoise = DenoiseShrink()))
+covs_denoise = Matrix[]
+for ce ∈ ces_denoise
+    asset_statistics!(portfolio; cov_type = ce, set_mu = false, set_kurt = false,
+                      set_skurt = false, set_skew = false, set_sskew = false)
+    push!(covs_denoise, copy(portfolio.cov))
+end</code></pre><p>Try changing <code>idx</code> from 1 to 4 to see how the matrix changes.</p><pre><code class="language-julia hljs">for idx ∈ 1:4
+   plot(cov2cor(covs_denoise[idx]); st = :heatmap, clim = (0, 1),
+                yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+                xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+                ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+                aspect_ratio = :equal)
+end</code></pre><p>The market prices are not independent of each other, they are subject to market forces that affect all products. Hence why most assets have positive covariances with other assets. These market forces can wash out the true relationships between assets. To do this, we can <code>detone</code> the denoised matrix by removing the largest M eigenvalues. Typically, only the one largest is removed but we give the option for removing more. This operation however, can make the matrix singular. Which means it can&#39;t be used for mean variance optimisation, but can be more useful for clustering than a standard covariance. However, <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.PortCovCor"><code>PortCovCor</code></a> also contains an option for fixing non-positive definite correlation matrices, which may be able to make the detoned matrix non-singular. We will pass the argument <code>posdef = NoPosdef()</code> to ensure the matrices aren&#39;t fixed.</p><p>Although detoned matrices may be singular, and therefore unsuitable for traditional optimisation, they can be very useful in hierarchical optimisations since they remove market forces and thus only the true relationships between assets remain.</p><pre><code class="language-julia hljs">ces_detone = PortCovCor[]
+push!(ces_detone, PortCovCor(;))
+
+# `mkt_comp` defaults to 1 when `detone == true`, the value of `mkt_comp`
+# defines how many of the largest eigenvalues are removed from the denoised matrix.
+push!(ces_detone,
+      PortCovCor(; posdef = NoPosdef(),
+                 denoise = DenoiseFixed(; detone = true, mkt_comp = 1)))
+push!(ces_detone,
+      PortCovCor(; posdef = NoPosdef(),
+                 denoise = DenoiseSpectral(; detone = true, mkt_comp = 1)))
+push!(ces_detone,
+      PortCovCor(; posdef = NoPosdef(),
+                 denoise = DenoiseShrink(; detone = true, mkt_comp = 1)))
+covs_detone = Matrix[]
+for ce ∈ ces_detone
+    asset_statistics!(portfolio; cov_type = ce, set_mu = false, set_kurt = false,
+                      set_skurt = false, set_skew = false, set_sskew = false)
+    push!(covs_detone, copy(portfolio.cov))
+end</code></pre><p>Try changing <code>idx</code> from 1 to 4 to see how the matrix changes. Try commenting out <code>posdef = NoPosdef()</code> from the cell above and see how it changes the output of this cell.</p><pre><code class="language-julia hljs">for idx ∈ 1:4
+   plot(cov2cor(covs_detone[idx]); st = :heatmap, clim = (0, 1),
+                yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+                xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+                ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+                aspect_ratio = :equal)
+   println(&quot;idx = $idx, isposdef = $(isposdef(covs_detone[idx]))&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">idx = 1, isposdef = true
+idx = 2, isposdef = false
+idx = 3, isposdef = false
+idx = 4, isposdef = true</code></pre><p>Denoising and detoning can be applied to any <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.PortfolioOptimiserCovCor"><code>PortfolioOptimiser.PortfolioOptimiserCovCor</code></a> method, but others already have contingencies for capturing true signals. Denoising has to be applied with care, otherwise you risk washing out true effects. Denoising and detoning can be quite powerful for clustering assets, since it can remove market noise as well as systemic market effects.</p><h3 id="3.5-LoGo-covariance"><a class="docs-heading-anchor" href="#3.5-LoGo-covariance">3.5 LoGo covariance</a><a id="3.5-LoGo-covariance-1"></a><a class="docs-heading-anchor-permalink" href="#3.5-LoGo-covariance" title="Permalink"></a></h3><p>The LoGo covariance uses graph theory to sparsify the inverse covariance matrix according to graph cliques and separators. This ensures only the strongest components of the realtionships are reflected in the covariance matrix. Although the inverse covariance is sparsified, the actual covariance is not, therefore it still encodes relationships between all assets.</p><p>The structure <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.LoGo"><code>LoGo</code></a> contains a distance and a similarity parameter, details can be found in its documentation. We will use the defaults, feel free to change them or create your by subtyping the relevant abstract types and defining the relevant methods.</p><pre><code class="language-julia hljs">ces_logo = PortCovCor[]
+push!(ces_logo, PortCovCor(;))
+push!(ces_logo, PortCovCor(; logo = LoGo(;)))
+
+covs_logo = Matrix[]
+for ce ∈ ces_logo
+    asset_statistics!(portfolio; cov_type = ce, set_mu = false, set_kurt = false,
+                      set_skurt = false, set_skew = false, set_sskew = false)
+    push!(covs_logo, copy(portfolio.cov))
+end</code></pre><p>Try changing <code>idx</code> from 1 to 2 to see how the matrix changes.</p><pre><code class="language-julia hljs">for idx ∈ 1:2
+   plot(cov2cor(covs_logo[idx]); st = :heatmap, clim = (0, 1),
+                yticks = (1:N, portfolio.assets), xticks = (1:N, portfolio.assets),
+                xrotation = 90, colorbar = true, xlim = (0.5, N + 0.5),
+                ylim = (0.5, N + 0.5), color = cgrad(:Spectral), yflip = true,
+                aspect_ratio = :equal)
+end</code></pre><p>The LoGo covariance algorithm computes the sparsified inverse covariance, which is inverted to recover the LoGo covariance. The inversion is numerical, so if we invert the covariance, we will get some very small, non-zero values. We remove them to show the sparsified inverse covariance.</p><pre><code class="language-julia hljs">J = covs_logo[2] \ I
+J[abs.(J) .&lt;= 1e-10] .= zero(eltype(J))
+sparse(J)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">25×25 SparseArrays.SparseMatrixCSC{Float64, Int64} with 163 stored entries:
+⎡⠑⣤⠒⠐⡔⠒⢱⡔⡊⠋⠊⡄⠂⎤
+⎢⢘⠀⠕⢅⠐⠀⠸⠀⠅⡁⡀⢀⠀⎥
+⎢⢰⠉⠐⠀⠑⢄⢰⠑⠂⠀⠄⠃⡄⎥
+⎢⢑⠶⠒⠂⢔⠒⠑⢄⡂⠋⠒⠂⠂⎥
+⎢⡮⠈⠅⠡⠈⠀⡬⠈⢑⣴⣴⠡⠀⎥
+⎢⠊⠤⠀⢈⠤⠁⠸⠀⠔⡛⡛⢌⠀⎥
+⎣⠈⠀⠀⠀⠀⠉⠈⠀⠀⠀⠀⠀⠁⎦</code></pre><h2 id="Other-statistics"><a class="docs-heading-anchor" href="#Other-statistics">Other statistics</a><a id="Other-statistics-1"></a><a class="docs-heading-anchor-permalink" href="#Other-statistics" title="Permalink"></a></h2><p>There are other asset statistics that can be computed with <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a>. However, they do not use anything that has not been covered in this tutorial. For further details refer to the docs of <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a>.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../1_basic_use/">« Example 1: Basic use</a><a class="docs-footer-nextpage" href="../3_shorting_portfolios/">Example 3: Shorting and leveraged portfolios »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 9 October 2024 23:08">Wednesday 9 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
