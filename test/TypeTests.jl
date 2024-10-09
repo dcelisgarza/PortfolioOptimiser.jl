@@ -52,6 +52,10 @@ l = 2.0
     cov_u = rand(N, N)
     cov_mu = rand(N, N)
     cov_sigma = rand(N^2, N^2)
+    portfolio = Portfolio(; prices = prices, network_adj = SDP(; A = A),
+                          cluster_adj = SDP(; A = A))
+    portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
+                          cluster_adj = IP(; A = A))
     portfolio = Portfolio(; prices = prices, f_prices = factors,
                           rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
