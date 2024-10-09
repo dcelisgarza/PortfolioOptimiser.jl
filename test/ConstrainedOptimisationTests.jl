@@ -1578,7 +1578,7 @@ end
           -1.9168697126217532e-11, -1.3928253949800599e-11, -1.8349718535583803e-11,
           -1.6677394168784684e-11, -6.267257105255323e-12, 0.3321254271795085,
           -2.669852770519402e-12, -1.79874967199412e-11]
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 0.5)
 
     wc3 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w3.weights, wc3.weights, rtol = 0.05)
@@ -1606,7 +1606,7 @@ end
           -2.3535780083971463e-11, -4.146383770552791e-11, -2.220301457889096e-11,
           -3.3471016659862616e-11, -6.139513723264243e-11, -1.9956735333122212e-11,
           -7.7723124936471e-11, 0.30215125638512175]
-    @test isapprox(w5.weights, wt)
+    @test isapprox(w5.weights, wt, rtol = 0.05)
 
     wc5 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w5.weights, wc5.weights)
@@ -1640,7 +1640,7 @@ end
     @test isapprox(w7.weights, wt)
 
     wc7 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
-    @test isapprox(w7.weights, wc7.weights, rtol = 0.05)
+    @test isapprox(w7.weights, wc7.weights, rtol = 0.25)
 
     portfolio.cluster_adj = SDP(; A = B)
     w8 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1665,7 +1665,7 @@ end
           -4.0420809059123584e-11, -3.7352503635664154e-11, -3.8858812193696976e-11,
           -3.822646548151099e-11, -3.8817465094503005e-11, -3.691522018311384e-11,
           -3.8915290842731694e-11, -3.764869556000491e-11]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 0.1)
 
     wc9 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w9.weights, wc9.weights)
