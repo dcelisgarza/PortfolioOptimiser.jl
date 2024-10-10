@@ -82,10 +82,10 @@ function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskM
     set_string_names_on_creation(model, str_names)
     rp_constraints(port, class)
     initial_w(port, w_ini)
-    risk_constraints(port, nothing, RP(), rm, mu, sigma, returns)
+    risk_constraints(port, nothing, type, rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, type)
     risk = model[:risk]
     @objective(model, Min, risk)
-    return convex_optimisation(port, nothing, RP(), class)
+    return convex_optimisation(port, nothing, type, class)
 end

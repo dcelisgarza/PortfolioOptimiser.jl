@@ -173,7 +173,7 @@ function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model, sigma, idx::Integer)
     @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _get_ntwk_clust_method(::Union{WC, Trad}, port)
+function _get_ntwk_clust_method(::Trad, port)
     return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
         SDP()
     else
