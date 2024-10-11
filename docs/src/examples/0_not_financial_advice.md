@@ -8,7 +8,7 @@ EditURL = "../../../examples/0_not_financial_advice.jl"
 
 This example goes over a sample workflow using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). I use a similar strategy myself. This is just an example of the things that can be done with the library.
 
-## 1. Downloading the data
+## 0.1 Downloading the data
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) does not ship with supporting packages that are not integral to its internal functionality. This means users are responsible for installing packages to load and download data, [`JuMP`](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)-compatible solvers, pretty printing, and the plotting functionality is an extension which requires [`GraphRecipes`](https://github.com/JuliaPlots/GraphRecipes.jl) and [`StatsPlots`](https://github.com/JuliaPlots/StatsPlots.jl).
 
@@ -60,7 +60,7 @@ prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets))
 ````
 
-## 2. Filter worst stocks
+## 0.2 Filter worst stocks
 
 If we have hundreds or thousands of stocks, we should probably do some pruning of the worst stocks using a cheap method. For this we'll use the [`HERC`](@ref) optimisation type. We'll filter the stocks using a few different risk measures. The order matters here, as each risk measure will filter out the worst performing stocks for each iteration.
 

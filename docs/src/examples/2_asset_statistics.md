@@ -10,7 +10,7 @@ This example follows from [Example 1](https://github.com/dcelisgarza/PortfolioOp
 
 This example focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`HCPortfolio`](@ref) instance. Every case will perform validation checks.
 
-## 1. Downloading the data
+## 2.1 Downloading the data
 
 ````@example 2_asset_statistics
 # using Pkg
@@ -38,7 +38,7 @@ TimeSeries.rename!(prices, Symbol.(assets));
 nothing #hide
 ````
 
-## 2. Instantiating an instance of [`Portfolio`](@ref).
+## 2.2 Instantiating an instance of [`Portfolio`](@ref).
 
 ````@example 2_asset_statistics
 portfolio = Portfolio(; prices = prices);
@@ -72,7 +72,7 @@ println(isapprox(cov1, cov(portfolio.returns; dims = 1))) # true
 
 These statistics are not very robust, so they're not very reliable. We can make them a bit better by using weights. First we need to explain the estimators.
 
-### 3.1 Mean estimators
+### 2.3.1 Mean estimators
 
 Lets start with the easier one, [`PortfolioOptimiser.MeanEstimator`](@ref). There are four of these, [`MuSimple`](@ref), [`MuJS`](@ref), [`MuBS`](@ref), [`MuBOP`](@ref). As you can see, they are all subtypes of [`PortfolioOptimiser.MeanEstimator`](@ref), we will use this later on to define our own method. Lets first focus on the first estimator, which is also the default.
 
@@ -141,7 +141,7 @@ end
 
 However, this limits the target to using the same data as the current ones. It's easier to define a new concrete subtype of [`PortfolioOptimiser.MeanEstimator`](@ref). We will do this in the following section.
 
-### 3.2 Defining a custom mean method
+### 2.3.2 Defining a custom mean method
 
 In order to define a new method all you need to do is create a new subtype of [`PortfolioOptimiser.MeanEstimator`](@ref) (it's not exported so it must be qualified) and define a new [`StatsBase.mean`](https://juliastats.org/StatsBase.jl/stable/scalarstats/#Weighted-sum-and-mean) function.
 
@@ -179,7 +179,7 @@ mu7 = copy(portfolio.mu)
 println(mu7 ./ mu1)
 ````
 
-### 3.3 Covariance estimators
+### 2.3.3 Covariance estimators
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with quite a few covariance estimators. However, it is best to wrap them all with [`PortCovCor`](@ref). This is because it contains methods for denoising, fixing non-positive definite matrices, and using a graph-based algorithm for computing the covariance based on its relational structure.
 
@@ -281,7 +281,7 @@ for idx ∈ 1:12
 end
 ````
 
-### 3.4 Covariance denoising
+### 2.3.4 Covariance denoising
 
 Though the Gerber and its modified methods work well out of the box, other methods can benefit from extra processing. We'll use the default [`CovFull`](@ref) for this. First we will denoise it, for which we have three methods, [`DenoiseFixed`](@ref), [`DenoiseSpectral`](@ref), [`DenoiseShrink`](@ref), which use fixed, spectral and shrink denoising methods described in [MLAM; Chapter 2](@cite). Each denoise method contains various tuning parameters. We will only explore the effects of `detone` and `mkt_comp` and leave the rest as defaults.
 
@@ -351,7 +351,7 @@ end
 
 Denoising and detoning can be applied to any [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref) method, but others already have contingencies for capturing true signals. Denoising has to be applied with care, otherwise you risk washing out true effects. Denoising and detoning can be quite powerful for clustering assets, since it can remove market noise as well as systemic market effects.
 
-### 3.5 LoGo covariance
+### 2.3.5 LoGo covariance
 
 The LoGo covariance uses graph theory to sparsify the inverse covariance matrix according to graph cliques and separators. This ensures only the strongest components of the realtionships are reflected in the covariance matrix. Although the inverse covariance is sparsified, the actual covariance is not, therefore it still encodes relationships between all assets.
 

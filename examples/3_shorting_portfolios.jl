@@ -5,7 +5,7 @@ This example follows from previous ones. If something in the preamble is confusi
 
 This example focuses on using the shorting constraints available to [`Trad`](@ref) and [`WC`](@ref) optimisations of [`Portfolio`](@ref).
 
-## 1. Downloading the data
+## 3.1 Downloading the data
 =#
 
 ## using Pkg
@@ -43,7 +43,7 @@ cidx = colnames(prices)[occursin.(r"adj", string.(colnames(prices)))]
 prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets));
 
-# ## 2. Instantiating an instance of [`Portfolio`](@ref).
+# ## 3.2 Instantiating an instance of [`Portfolio`](@ref).
 
 portfolio = Portfolio(; prices = prices,
                       ## Continuous optimiser.
@@ -74,7 +74,7 @@ rm = SD()
 investment = 6750;
 
 #=
-## 3.1 Long-only portfolio
+## 3.3.1 Long-only portfolio
 
 First we will optimise the portfolio without shorting and plot the weights and the efficient frontier.
 =#
@@ -143,7 +143,7 @@ pretty_table(DataFrame(; tickers = portfolio.assets,
                        nsag_s = portfolio.optimal[:nsag].shares))
 
 #=
-## 3.2 Shorting
+## 3.3.2 Shorting
 
 Enabling shorting is very simple. This will allow negative weights, which correspond to shorting portfolios. It is generally a good idea to start with little to no leverage.
 =#
@@ -255,7 +255,7 @@ pretty_table(DataFrame(; tickers = portfolio.assets,
                        sag_s = portfolio.optimal[:sag].shares))
 
 #=
-## 3.3 Shorting with reinvestment
+## 3.3.3 Shorting with reinvestment
 
 In this section we'll reinvest the money made from short selling, this can be acomplished by setting the value of `long_u = 1 + short_u`.
 =#

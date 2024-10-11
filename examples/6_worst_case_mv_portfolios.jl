@@ -5,14 +5,14 @@ This example follows from previous ones. If something in the preamble is confusi
 
 This example focuses on the [`WC`](@ref) optimisation type of [`Portfolio`](@ref).
 
-## 1. Downloading the data
+## 6.1 Downloading the data
 =#
 
 ## using Pkg
 ## Pkg.add.(["StatsPlots", "GraphRecipes", "YFinance", "Clarabel", "HiGHS", "CovarianceEstimation", "SparseArrays"])
 using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YFinance,
       PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
-      PrettyTables
+      PrettyTables, Random
 
 fmt1 = (v, i, j) -> begin
     if j == 1
@@ -44,7 +44,7 @@ prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets));
 
 #=
-## 2. Instantiating an instance of [`Portfolio`](@ref).
+## 6.2 Instantiating an instance of [`Portfolio`](@ref).
 
 We'll compute basic statistics for this.
 =#
@@ -64,17 +64,19 @@ portfolio = Portfolio(; prices = prices,
 asset_statistics!(portfolio)
 
 #=
-## 3. Worst case statistics
+## 6.3 Worst case statistics
 
 In order to perform a worst case mean variance optimisation we need to compute uncertainty sets for the expected returns vector and covariance matrix. We can do this via [`wc_statistics!`](@ref).
 
 For the purposes of this tutorial we'll use the defaults. We will explore the other options one can sue for computing the uncertainty sets in a subsequent tutorial.
 =#
 
+## Set random seed for reproducible results.
+Random.seed!(123)
 wc_statistics!(portfolio)
 
 #=
-## 4. Optimising the portfolio
+## 6.4 Optimising the portfolio
 
 Having computed our worst case statistics, we can optimise the portfolio. The [`WC`](@ref) struct defines which set types to use in the worst case mean variance optimisation. [`WC`](@ref) defaults to using [`Box`](@ref) constraints for both the expected returns vector and covariance matrix.
 

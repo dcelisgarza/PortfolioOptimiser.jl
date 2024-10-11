@@ -3,7 +3,7 @@
 
 This example should serve as a minimum working example for using [`PortfolioOptimiser.jl`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/).
 
-## 1. Downloading the data
+## 1.1 Downloading the data
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) does not ship with supporting packages that are not integral to its internal functionality. This means users are responsible for installing packages to load and download data, [`JuMP`](https://jump.dev/JuMP.jl/stable/installation/#Supported-solvers)-compatible solvers, pretty printing, and the plotting functionality is an extension which requires [`GraphRecipes`](https://github.com/JuliaPlots/GraphRecipes.jl) and [`StatsPlots`](https://github.com/JuliaPlots/StatsPlots.jl).
 
@@ -61,7 +61,7 @@ prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets))
 
 #=
-## 2. Instantiating an instance of [`Portfolio`](@ref).
+## 1.2 Instantiating an instance of [`Portfolio`](@ref).
 
 Now that we have our data we can instantiate a portfolio. We also need to give it an optimiser for the continuous optimisation and an MIP optimiser for the discrete allocation of funds, we'll use [`Clarabel.jl`](https://github.com/oxfordcontrol/Clarabel.jl) and [`HiGHS.jl`](https://github.com/jump-dev/HiGHS.jl).
 =#
@@ -81,7 +81,7 @@ portfolio = Portfolio(; prices = prices,
 # The constructor automatically computes the returns, sets the assets, and timestamps if you give it the price data. Users can also provide these directly, the timestamps aren't needed anywhere but plotting so they are not required. This structure contains a lot of data. But we will only show the basics for now.
 
 #=
-## 3. Computing statistics
+## 1.3 Computing statistics
 
 There are myriad of statistics and methods for computing said statistics. Users can define their own methods with Julia's multiple dispatch and [`StatsAPI.jl`](https://github.com/JuliaStats/StatsAPI.jl) interface.
 
@@ -115,7 +115,7 @@ asset_statistics!(portfolio; mu_type = mu_type, cov_type = cov_type, set_kurt = 
                   set_skurt = false, set_skew = false, set_sskew = false);
 
 #=
-## 4. Optimising the portfolio
+## 1.4 Optimising the portfolio
 
 We will only look at a vanilla optimisation in this tutorial. 
 
@@ -141,7 +141,7 @@ pretty_table(w1; formatters = fmt1)
 #=
 We now have the portfolio for these assets and this period of time that minimises the variance. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) also lets you constrain the optimisation such that you have a minimum required return. However this will be explored in a later tutorial. 
 
-## 5. Asset allocation
+## 1.5 Asset allocation
 
 For now we want to know how many assets we need to buy, this only gives us the mathematically optimal weights. We have a function for this. Given that we used the price data directly, [`Portfolio`](@ref) will take the last entry in the prices and use that as the current price for each asset. You can of course change this, or directly provide them as a vector to the [`allocate!`](@ref) function, though the order of the prices must be the same as the original asset order.
 
@@ -158,9 +158,11 @@ method = LP()
 w2 = allocate!(portfolio; investment = investment)
 pretty_table(w2; formatters = fmt2)
 
-# ## 6. Plotting the portfolio
+#=
+## 1.6 Plotting the portfolio
 
-# This section is the one most bound to change as the plotting functions are still somewhat preliminary. There are a variety of plots but we'll only show the most basic ones. By default, the plots will take the mathematically optimal portfolio. Lets see what it looks like.
+This section is the one most bound to change as the plotting functions are still somewhat preliminary. There are a variety of plots but we'll only show the most basic ones. By default, the plots will take the mathematically optimal portfolio. Lets see what it looks like.
+=#
 
 # Plot the portfolio returns.
 #nb display(plot_returns(portfolio))
@@ -222,7 +224,7 @@ pretty_table(hcat(portfolio.optimal[:Trad],
 #md plt = plot_drawdown(portfolio; type = :LP_Trad, allocated = true)
 
 #=
-## 7. Efficient frontier
+## 1.7 Efficient frontier
 
 We have seen how you can optimise a single portfolio, but in reality there are an infinite number of optimal portfolios which exist along what is called the efficient frontier. We can compute and view this frontier, as well as viewing its composition very easily using [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl).
 

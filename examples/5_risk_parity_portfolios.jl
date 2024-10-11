@@ -5,7 +5,7 @@ This example follows from previous ones. If something in the preamble is confusi
 
 This example focuses on the [`RP`](@ref) optimisation type of [`Portfolio`](@ref).
 
-## 1. Downloading the data
+## 5.1 Downloading the data
 =#
 
 ## using Pkg
@@ -44,7 +44,7 @@ prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets));
 
 #=
-## 2. Instantiating an instance of [`Portfolio`](@ref).
+## 5.2 Instantiating an instance of [`Portfolio`](@ref).
 
 We'll compute basic statistics for this.
 =#
@@ -64,7 +64,7 @@ portfolio = Portfolio(; prices = prices,
 asset_statistics!(portfolio)
 
 #=
-## 3. Optimising the portfolio
+## 5.3 Optimising the portfolio
 
 The [`RP`](@ref) uses a risk budget vector for defining the risk contribution of each asset. The vector defaults to equal risk contribution for all assets.
 

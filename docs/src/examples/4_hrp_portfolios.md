@@ -10,7 +10,7 @@ This example follows from previous ones. If something in the preamble is confusi
 
 This example focuses on the [`HRP`](@ref) optimisation type of [`HCPortfolio`](@ref).
 
-## 1. Downloading the data
+## 4.1 Downloading the data
 
 ````@example 4_hrp_portfolios
 # using Pkg
@@ -50,7 +50,7 @@ TimeSeries.rename!(prices, Symbol.(assets));
 nothing #hide
 ````
 
-## 2. Instantiating an instance of [`HCPortfolio`](@ref).
+## 4.2 Instantiating an instance of [`HCPortfolio`](@ref).
 
 Since we're going to be performing [`HRP`](@ref) optimisations, we only need `solvers` for entropic and relativistic risk measures. Others don't make use of a solver, they can be computed from the asset statistics.
 
@@ -79,9 +79,9 @@ asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
                   dist_type = dist_type)
 ````
 
-# 3 Basic HRP portfolio
+# 4.3 Basic HRP portfolio
 
-## 3.1 Hierarchical clustering
+## 4.3.1 Hierarchical clustering
 
 All [`HCPortfolio`]s use the assets' correlation structure to optimise the portfolios based on their correlation structure. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with two clustering methods.
 
@@ -128,7 +128,7 @@ pretty_table(w2; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
 
-## 3.2 DBHT clustering
+## 4.3.2 DBHT clustering
 
 Direct Bubble Hierarchy Tree (DBHT) clustering, is a type of clustering based on graph-theoretic filtering. The same idea is used to compute the [`LoGo`](@ref) covariance, which we explored in [Example 2](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl).
 
@@ -210,7 +210,7 @@ pretty_table(w6; formatters = fmt1)
 plot_clusters(portfolio; cluster = false)
 ````
 
-## 3.3 Using detoned matrices.
+## 4.3.3 Using detoned matrices.
 
 As mentioned in [Example 2](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_asset_statistics.jl), detoned matrices can be of great value in hierarchical optimisations. We'll see their effect here.
 
