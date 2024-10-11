@@ -22,7 +22,7 @@ function _factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix,
     b3 = pinv(transpose(b2))
     return b1, b2, b3, B
 end
-function _rp_class_constraints(::Any, port)
+function _rp_class_constraints(::Any, port, w_ini)
     model = port.model
     if isempty(port.risk_budget)
         port.risk_budget = ()
@@ -30,14 +30,15 @@ function _rp_class_constraints(::Any, port)
         port.risk_budget ./= sum(port.risk_budget)
     end
     N = length(port.risk_budget)
-    @variable(model, w[1:N])
+    initial_w(port, w_ini)
+    w = port.model[:w]
     @variable(model, log_w[1:N])
     @constraint(model, dot(port.risk_budget, log_w) >= 1)
     @constraint(model, [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone())
     @constraint(model, w .>= 0)
     return nothing
 end
-function _rp_class_constraints(class::FC, port)
+function _rp_class_constraints(class::FC, port, w_ini)
     model = port.model
     N = size(port.returns, 2)
     if class.flag
@@ -53,6 +54,8 @@ function _rp_class_constraints(class::FC, port)
         @expression(model, w, b1 * w1)
     end
 
+    set_w_ini(w1, w_ini)
+
     if isempty(port.f_risk_budget) || length(port.f_risk_budget) != N_f
         port.f_risk_budget = fill(inv(N_f), N_f)
     elseif !isapprox(sum(port.f_risk_budget), one(eltype(port.returns)))
@@ -64,15 +67,16 @@ function _rp_class_constraints(class::FC, port)
     @constraint(model, [i = 1:N_f], [log_w[i], 1, w1[i]] ∈ MOI.ExponentialCone())
     return nothing
 end
-function rp_constraints(port, class)
+function rp_constraints(port, class, w_ini)
     model = port.model
-    _rp_class_constraints(class, port)
+    _rp_class_constraints(class, port, w_ini)
     @variable(model, k)
     w = model[:w]
     k = model[:k]
     @constraint(model, sum(w) == k)
     return nothing
 end
+
 function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     ::Any, ::Any, class::Union{Classic, FM, FC}, w_ini::AbstractVector,
                     str_names::Bool)
@@ -80,8 +84,7 @@ function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskM
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
-    rp_constraints(port, class)
-    initial_w(port, w_ini)
+    rp_constraints(port, class, w_ini)
     risk_constraints(port, nothing, type, rm, mu, sigma, returns)
     set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
     linear_constraints(port, type)

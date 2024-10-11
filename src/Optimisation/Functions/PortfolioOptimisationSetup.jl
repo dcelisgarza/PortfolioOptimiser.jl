@@ -1,11 +1,13 @@
-function initial_w(port, w_ini)
-    if !haskey(port.model, :w)
-        @variable(port.model, w[1:size(port.returns, 2)])
-    end
+function set_w_ini(w, w_ini)
     if !isempty(w_ini)
         @smart_assert(length(w_ini) == length(w))
         set_start_value.(w, w_ini)
     end
+    return nothing
+end
+function initial_w(port, w_ini)
+    @variable(port.model, w[1:size(port.returns, 2)])
+    set_w_ini(w, w_ini)
     return nothing
 end
 function mu_sigma_returns_class(port, ::Union{Classic, FC})
