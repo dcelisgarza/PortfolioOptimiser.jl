@@ -78,8 +78,7 @@ function rp_constraints(port, class, w_ini)
 end
 
 function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
-                    ::Any, ::Any, class::Union{Classic, FM, FC}, w_ini::AbstractVector,
-                    str_names::Bool)
+                    ::Any, ::Any, class::PortClass, w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
     model = port.model

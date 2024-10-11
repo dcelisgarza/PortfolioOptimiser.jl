@@ -1,5 +1,5 @@
 #=
-# Example 5: Worst case Mean-Variance
+# Example 6: Worst case Mean-Variance
 
 This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 

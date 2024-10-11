@@ -56,10 +56,9 @@ function rrp_constraints(type::RRP, port, sigma)
     _rrp_constraints(type, port, sigma)
     return nothing
 end
-function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any,
-                    class::Union{Classic, FM}, w_ini::AbstractVector, str_names::Bool)
-    mu, sigma, returns = mu_sigma_returns_class(port, class)
-
+function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any, class::PortClass,
+                    w_ini::AbstractVector, str_names::Bool)
+    mu, sigma = mu_sigma_returns_class(port, class)[1:2]
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
