@@ -1330,7 +1330,7 @@ version = "1.4.3"
 deps = ["AverageShiftedHistograms", "Clustering", "DataFrames", "Dates", "Distances", "Distributions", "GLM", "Graphs", "JuMP", "LinearAlgebra", "MultivariateStats", "NearestCorrelationMatrix", "Optim", "PythonCall", "Random", "SimpleWeightedGraphs", "SmartAsserts", "SparseArrays", "Statistics", "StatsBase", "TimeSeries"]
 path = ".."
 uuid = "748726ae-2fc6-4ae6-b81c-5fed3516a822"
-version = "0.0.0"
+version = "0.1.0"
 weakdeps = ["GraphRecipes", "StatsPlots"]
 
     [deps.PortfolioOptimiser.extensions]
