@@ -83,11 +83,6 @@ We'll first use the default statistics for computing the optimised worst case me
 ````@example 7_worst_case_statistics
 # Set random seed for reproducible results.
 Random.seed!(123)
-````
-
-Lets compute the default worst case statistics.
-
-````@example 7_worst_case_statistics
 wc_statistics!(portfolio)
 ````
 
