@@ -70,36 +70,36 @@ type.mu = Ellipse()
 w4 = optimise!(portfolio; type = type, rm = rm, obj = obj)
 
 pretty_table(DataFrame(; tickers = w1.tickers, box_box = w1.weights, ellip_box = w2.weights,
-                       box_ellip = w3.weights, ellip_ellip = w4.weights); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┬───────────┬───────────┬─────────────┐
-│<span class="sgr1"> tickers </span>│<span class="sgr1">  box_box </span>│<span class="sgr1"> ellip_box </span>│<span class="sgr1"> box_ellip </span>│<span class="sgr1"> ellip_ellip </span>│
-│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│
-├─────────┼──────────┼───────────┼───────────┼─────────────┤
-│     AAL │  0.017 % │   1.543 % │   0.053 % │      0.92 % │
-│    AAPL │ 93.783 % │   4.137 % │  89.981 % │     4.451 % │
-│     AMC │  0.014 % │    0.64 % │    0.04 % │     0.369 % │
-│      BB │  0.018 % │   1.901 % │   0.057 % │     1.915 % │
-│     BBY │  0.041 % │   2.849 % │   0.193 % │     1.492 % │
-│    DELL │  0.043 % │   3.492 % │    0.21 % │     3.341 % │
-│      DG │  0.274 % │  21.299 % │   1.087 % │    19.445 % │
-│     DRS │  0.164 % │   3.747 % │   0.758 % │     4.685 % │
-│     GME │  0.125 % │   0.968 % │   0.632 % │     0.508 % │
-│    INTC │  0.023 % │   3.423 % │   0.083 % │     2.867 % │
-│    LULU │  0.075 % │   2.765 % │   0.395 % │     1.493 % │
-│    MARA │  0.038 % │   0.464 % │   0.161 % │     0.461 % │
-│     MCI │  0.038 % │  18.301 % │   0.182 % │    18.469 % │
-│    MSFT │  0.145 % │   4.769 % │   0.708 % │     5.343 % │
-│    NKLA │  0.014 % │   1.968 % │    0.04 % │     2.265 % │
-│    NVAX │  0.017 % │   1.527 % │   0.051 % │     1.256 % │
-│    NVDA │   0.33 % │   1.005 % │    1.15 % │     1.648 % │
-│    PARA │  0.018 % │   2.189 % │   0.058 % │     1.227 % │
-│    PLNT │  0.033 % │     1.8 % │   0.136 % │     0.432 % │
-│    SAVE │  0.016 % │   0.963 % │    0.05 % │      1.19 % │
-│    SBUX │  0.049 % │   5.726 % │   0.255 % │     8.214 % │
-│    SIRI │  0.033 % │   7.906 % │   0.151 % │     11.96 % │
-│     STX │  0.041 % │   4.277 % │   0.194 % │     5.225 % │
-│    TLRY │   0.01 % │   1.027 % │   0.025 % │     0.744 % │
-│    TSLA │  4.643 % │   1.317 % │   3.349 % │     0.079 % │
-└─────────┴──────────┴───────────┴───────────┴─────────────┘</code></pre><p>As you can see, the type of constraint used can have a large impact on the results of the optimisation. This is accentuated by the fact that we maximised the risk-adjusted return ratio. We&#39;ll now minimise the risk, on which the uncertainty set for the expected returns vector has a smaller impact.</p><pre><code class="language-julia hljs">type = WC()
+                       box_ellip = w3.weights, ellip_ellip = w4.weights); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────┬───────────┬───────────┬─────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> box_box </span>│<span class="sgr1"> ellip_box </span>│<span class="sgr1"> box_ellip </span>│<span class="sgr1"> ellip_ellip </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│
+├─────────┼─────────┼───────────┼───────────┼─────────────┤
+│     AAL │ 0.017 % │    1.58 % │   0.053 % │      0.94 % │
+│    AAPL │ 93.77 % │   4.133 % │  89.986 % │     4.519 % │
+│     AMC │ 0.014 % │   0.648 % │    0.04 % │     0.392 % │
+│      BB │ 0.018 % │   1.924 % │   0.057 % │     1.944 % │
+│     BBY │ 0.041 % │   2.873 % │   0.193 % │     1.557 % │
+│    DELL │ 0.043 % │   3.507 % │    0.21 % │     3.402 % │
+│      DG │ 0.274 % │  21.176 % │   1.088 % │    19.059 % │
+│     DRS │ 0.163 % │   3.749 % │   0.758 % │     4.746 % │
+│     GME │ 0.125 % │   0.979 % │   0.632 % │     0.537 % │
+│    INTC │ 0.023 % │   3.435 % │   0.083 % │     2.927 % │
+│    LULU │ 0.075 % │    2.79 % │   0.395 % │     1.554 % │
+│    MARA │ 0.038 % │   0.491 % │   0.161 % │      0.45 % │
+│     MCI │ 0.038 % │  18.156 % │   0.182 % │    18.212 % │
+│    MSFT │ 0.145 % │   4.746 % │   0.708 % │     5.402 % │
+│    NKLA │ 0.014 % │   1.984 % │    0.04 % │     2.304 % │
+│    NVAX │ 0.017 % │   1.549 % │   0.051 % │     1.282 % │
+│    NVDA │  0.33 % │   1.065 % │    1.15 % │     1.592 % │
+│    PARA │ 0.018 % │   2.224 % │   0.058 % │     1.278 % │
+│    PLNT │ 0.033 % │   1.847 % │   0.136 % │     0.481 % │
+│    SAVE │ 0.016 % │   1.016 % │    0.05 % │     1.154 % │
+│    SBUX │ 0.049 % │   5.689 % │   0.255 % │     8.267 % │
+│    SIRI │ 0.032 % │   7.753 % │   0.146 % │    11.841 % │
+│     STX │ 0.041 % │   4.268 % │   0.194 % │     5.289 % │
+│    TLRY │  0.01 % │   1.057 % │   0.025 % │     0.769 % │
+│    TSLA │ 4.658 % │    1.36 % │    3.35 % │     0.101 % │
+└─────────┴─────────┴───────────┴───────────┴─────────────┘</code></pre><p>As you can see, the type of constraint used can have a large impact on the results of the optimisation. This is accentuated by the fact that we maximised the risk-adjusted return ratio. We&#39;ll now minimise the risk, on which the uncertainty set for the expected returns vector has a smaller impact.</p><pre><code class="language-julia hljs">type = WC()
 # We&#39;ll maximise the risk-adjusted return ratio.
 obj = MinRisk()
 
@@ -125,28 +125,28 @@ pretty_table(DataFrame(; tickers = w5.tickers, box_box = w5.weights, ellip_box =
 │<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│
 ├─────────┼──────────┼───────────┼───────────┼─────────────┤
 │     AAL │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
-│    AAPL │  0.001 % │     0.0 % │   0.001 % │       0.0 % │
+│    AAPL │  0.003 % │     0.0 % │     0.0 % │     0.001 % │
 │     AMC │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │      BB │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │     BBY │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    DELL │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
-│      DG │ 39.882 % │  39.888 % │  38.875 % │    38.875 % │
-│     DRS │  0.911 % │   0.911 % │    2.36 % │      2.36 % │
+│      DG │  39.78 % │  39.787 % │  38.918 % │     38.92 % │
+│     DRS │   0.98 % │    0.98 % │   2.369 % │     2.369 % │
 │     GME │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    INTC │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    LULU │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    MARA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
-│     MCI │ 30.493 % │  30.491 % │  30.547 % │    30.547 % │
-│    MSFT │  1.233 % │   1.229 % │   0.501 % │     0.502 % │
-│    NKLA │    0.0 % │     0.0 % │   0.838 % │     0.838 % │
+│     MCI │ 30.704 % │  30.701 % │  30.634 % │    30.634 % │
+│    MSFT │  1.212 % │   1.208 % │   0.511 % │     0.511 % │
+│    NKLA │    0.0 % │     0.0 % │   0.844 % │     0.844 % │
 │    NVAX │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    NVDA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    PARA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    PLNT │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    SAVE │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
-│    SBUX │  8.541 % │   8.541 % │   8.221 % │     8.222 % │
-│    SIRI │ 16.487 % │  16.487 % │  15.028 % │    15.028 % │
-│     STX │  2.451 % │   2.454 % │   3.628 % │     3.629 % │
+│    SBUX │  8.529 % │   8.529 % │   8.282 % │     8.281 % │
+│    SIRI │ 16.332 % │  16.332 % │  14.761 % │    14.761 % │
+│     STX │  2.459 % │   2.463 % │    3.68 % │     3.678 % │
 │    TLRY │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 │    TSLA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
 └─────────┴──────────┴───────────┴───────────┴─────────────┘</code></pre><p>It&#39;s also posible to disable the worst set constraint for the expected returns vector and covariance matrix independently. We&#39;ll disable them both and see that we recover the traditional mean variance optimisation.</p><pre><code class="language-julia hljs">type = WC(; mu = NoWC(), cov = NoWC())
@@ -166,28 +166,28 @@ pretty_table(DataFrame(; tickers = w9.tickers, nowc_risk = w9.weights,
 │<span class="sgr90">  String </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90">     Float64 </span>│
 ├─────────┼───────────┼───────────┼─────────────┼─────────────┤
 │     AAL │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
-│    AAPL │   0.006 % │   0.006 % │    16.268 % │     16.26 % │
+│    AAPL │   0.012 % │   0.012 % │    16.268 % │     16.26 % │
 │     AMC │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
-│      BB │   0.001 % │   0.001 % │       0.0 % │       0.0 % │
+│      BB │   0.002 % │   0.002 % │       0.0 % │       0.0 % │
 │     BBY │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
 │    DELL │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
-│      DG │  38.873 % │  38.873 % │    40.261 % │    40.251 % │
-│     DRS │    2.36 % │    2.36 % │    17.996 % │    17.998 % │
+│      DG │  38.918 % │  38.918 % │    40.261 % │    40.251 % │
+│     DRS │   2.369 % │   2.369 % │    17.995 % │    17.998 % │
 │     GME │     0.0 % │     0.0 % │     9.794 % │     9.796 % │
 │    INTC │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
 │    LULU │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
-│    MARA │     0.0 % │     0.0 % │     4.751 % │     4.752 % │
-│     MCI │  30.546 % │  30.546 % │       0.0 % │       0.0 % │
-│    MSFT │   0.496 % │   0.496 % │       0.0 % │       0.0 % │
-│    NKLA │   0.838 % │   0.838 % │       0.0 % │       0.0 % │
-│    NVAX │   0.001 % │   0.001 % │     0.433 % │     0.444 % │
+│    MARA │     0.0 % │     0.0 % │      4.75 % │     4.752 % │
+│     MCI │  30.634 % │  30.634 % │       0.0 % │       0.0 % │
+│    MSFT │   0.502 % │   0.502 % │       0.0 % │       0.0 % │
+│    NKLA │   0.844 % │   0.844 % │       0.0 % │       0.0 % │
+│    NVAX │   0.001 % │   0.001 % │     0.434 % │     0.444 % │
 │    NVDA │     0.0 % │     0.0 % │     0.001 % │       0.0 % │
 │    PARA │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
 │    PLNT │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
 │    SAVE │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
-│    SBUX │   8.222 % │   8.222 % │       0.0 % │       0.0 % │
-│    SIRI │  15.027 % │  15.027 % │       0.0 % │       0.0 % │
-│     STX │   3.629 % │   3.629 % │       0.0 % │       0.0 % │
+│    SBUX │   8.281 % │   8.281 % │       0.0 % │       0.0 % │
+│    SIRI │  14.759 % │  14.759 % │       0.0 % │       0.0 % │
+│     STX │   3.678 % │   3.678 % │       0.0 % │       0.0 % │
 │    TLRY │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
 │    TSLA │     0.0 % │     0.0 % │    10.496 % │    10.499 % │
-└─────────┴───────────┴───────────┴─────────────┴─────────────┘</code></pre><p>We don&#39;t recover the weights of the sharpe ratio exactly because one of the risk-adjusted return constraints is slightly relaxed with respect to the traditional optimisation.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../5_risk_parity_portfolios/">« Example 5: Risk parity</a><a class="docs-footer-nextpage" href="../7_worst_case_statistics/">Example 7: Worst case statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Saturday 12 October 2024 18:28">Saturday 12 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴───────────┴───────────┴─────────────┴─────────────┘</code></pre><p>We don&#39;t recover the weights of the sharpe ratio exactly because one of the risk-adjusted return constraints is slightly relaxed with respect to the traditional optimisation.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../5_risk_parity_portfolios/">« Example 5: Risk parity</a><a class="docs-footer-nextpage" href="../7_worst_case_statistics/">Example 7: Worst case statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Tuesday 15 October 2024 00:28">Tuesday 15 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
