@@ -34,18 +34,27 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 PortfolioOptimiserPlotsExt = ["GraphRecipes", "StatsPlots"]
 
 [compat]
+AverageShiftedHistograms = "0.8.9"
+Clustering = "0.15.7"
+DataFrames = "1.7.0"
+Dates = "1.11.0"
+Distances = "0.10.11"
+Distributions = "0.25.112"
+GLM = "1.9.0"
+GraphRecipes = "0.5.13"
+Graphs = "1.12.0"
+JuMP = "1.23.2"
+LinearAlgebra = "1.11.0"
+MultivariateStats = "0.10.3"
+NearestCorrelationMatrix = "1.0.1"
+Optim = "1.9.4"
+PythonCall = "0.9.23"
+Random = "1.11.0"
+SimpleWeightedGraphs = "1.4.0"
+SmartAsserts = "0.2.1"
+SparseArrays = "1.11.0"
+Statistics = "1.11.1"
+StatsBase = "0.34.3"
+StatsPlots = "0.15.7"
+TimeSeries = "0.24.2"
 julia = "1"
-
-[extras]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-Clarabel = "61c947e1-3e6d-4ee4-985a-eec8c727bd6e"
-CovarianceEstimation = "587fd27a-f159-11e8-2dae-1979310e6154"
-HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-Pajarito = "2f354839-79df-5901-9f0a-cdb2aac6fe30"
-SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["CSV", "Clarabel", "CovarianceEstimation", "HiGHS", "Logging", "Pajarito",
-        "SafeTestsets", "Test", "GraphRecipes", "StatsPlots"]
