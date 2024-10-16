@@ -53,12 +53,12 @@ pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-o
 ├─────────┼─────────┤
 │     AAL │ 2.962 % │
 │    AAPL │ 4.687 % │
-│     AMC │ 1.398 % │
-│      BB │ 2.787 % │
+│     AMC │ 1.397 % │
+│      BB │ 2.786 % │
 │     BBY │  4.25 % │
-│    DELL │ 4.449 % │
+│    DELL │ 4.448 % │
 │      DG │ 10.13 % │
-│     DRS │ 4.112 % │
+│     DRS │ 4.111 % │
 │     GME │ 1.698 % │
 │    INTC │ 4.521 % │
 │    LULU │ 4.199 % │
@@ -67,12 +67,12 @@ pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-o
 │    MSFT │ 5.025 % │
 │    NKLA │ 2.642 % │
 │    NVAX │   2.5 % │
-│    NVDA │ 3.035 % │
+│    NVDA │ 3.034 % │
 │    PARA │ 3.479 % │
 │    PLNT │ 3.441 % │
 │    SAVE │ 2.835 % │
-│    SBUX │ 5.266 % │
-│    SIRI │ 5.799 % │
+│    SBUX │ 5.265 % │
+│    SIRI │ 5.803 % │
 │     STX │ 4.504 % │
 │    TLRY │ 2.192 % │
 │    TSLA │ 2.896 % │
@@ -89,12 +89,12 @@ pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters =
 ├─────────┼─────────┼─────────┼──────────────┤
 │     AAL │ 2.962 % │   4.0 % │        4.0 % │
 │    AAPL │ 4.687 % │   4.0 % │        4.0 % │
-│     AMC │ 1.398 % │   4.0 % │        4.0 % │
-│      BB │ 2.787 % │   4.0 % │        4.0 % │
+│     AMC │ 1.397 % │   4.0 % │        4.0 % │
+│      BB │ 2.786 % │   4.0 % │        4.0 % │
 │     BBY │  4.25 % │   4.0 % │        4.0 % │
-│    DELL │ 4.449 % │   4.0 % │        4.0 % │
+│    DELL │ 4.448 % │   4.0 % │        4.0 % │
 │      DG │ 10.13 % │   4.0 % │        4.0 % │
-│     DRS │ 4.112 % │   4.0 % │        4.0 % │
+│     DRS │ 4.111 % │   4.0 % │        4.0 % │
 │     GME │ 1.698 % │   4.0 % │        4.0 % │
 │    INTC │ 4.521 % │   4.0 % │        4.0 % │
 │    LULU │ 4.199 % │   4.0 % │        4.0 % │
@@ -103,17 +103,17 @@ pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters =
 │    MSFT │ 5.025 % │   4.0 % │        4.0 % │
 │    NKLA │ 2.642 % │   4.0 % │        4.0 % │
 │    NVAX │   2.5 % │   4.0 % │        4.0 % │
-│    NVDA │ 3.035 % │   4.0 % │        4.0 % │
+│    NVDA │ 3.034 % │   4.0 % │        4.0 % │
 │    PARA │ 3.479 % │   4.0 % │        4.0 % │
 │    PLNT │ 3.441 % │   4.0 % │        4.0 % │
 │    SAVE │ 2.835 % │   4.0 % │        4.0 % │
-│    SBUX │ 5.266 % │   4.0 % │        4.0 % │
-│    SIRI │ 5.799 % │   4.0 % │        4.0 % │
+│    SBUX │ 5.265 % │   4.0 % │        4.0 % │
+│    SIRI │ 5.803 % │   4.0 % │        4.0 % │
 │     STX │ 4.504 % │   4.0 % │        4.0 % │
 │    TLRY │ 2.192 % │   4.0 % │        4.0 % │
 │    TSLA │ 2.896 % │   4.0 % │        4.0 % │
 └─────────┴─────────┴─────────┴──────────────┘</code></pre><p>As you can see, the weights of each asset in the portfolio are such that the asset contributes 4% of the risk of the portfolio. This is because we used the default value for the risk budget, which defaults to equal risk contribution per asset, which is equal to <code>1/N</code>, where <code>N</code> is the number of assets.</p><p>We can also plot the risk contribution in asbolute and relative terms.</p><pre><code class="language-julia hljs">plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
-plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="d3f02c96.svg" alt="Example block output"/><p>Lets change the risk budget to something a little bit more interesting. The risk budget can be provided from to the <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> constructor, or after instatiation. Either way, the risk budget will be normalised to add up to 1. If using the latter method, the element type of the vector provided must match that of <code>risk_budget</code> because the normalisation is done in-place to avoid unecessary allocations.</p><pre><code class="language-julia hljs">x = range(; start = 0, stop = 2pi, length = length(w1.weights))
+plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="858ffdb7.svg" alt="Example block output"/><p>Lets change the risk budget to something a little bit more interesting. The risk budget can be provided from to the <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> constructor, or after instatiation. Either way, the risk budget will be normalised to add up to 1. If using the latter method, the element type of the vector provided must match that of <code>risk_budget</code> because the normalisation is done in-place to avoid unecessary allocations.</p><pre><code class="language-julia hljs">x = range(; start = 0, stop = 2pi, length = length(w1.weights))
 portfolio.risk_budget = sin.(x) .^ 2;</code></pre><p>Lets optimise using this risk budget to see what happens.</p><pre><code class="language-julia hljs">w1 = optimise!(portfolio; type = type, rm = rm)
 rb = portfolio.risk_budget
 # Compute the risk contribution, for the [`SD`](@ref) risk measure.
@@ -126,10 +126,10 @@ pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters =
 ├─────────┼──────────┼─────────┼──────────────┤
 │     AAL │    0.0 % │   0.0 % │        0.0 % │
 │    AAPL │  0.685 % │ 0.558 % │      0.558 % │
-│     AMC │  0.784 % │ 2.083 % │      2.083 % │
+│     AMC │  0.783 % │ 2.083 % │      2.083 % │
 │      BB │    3.0 % │ 4.167 % │      4.167 % │
 │     BBY │   6.35 % │  6.25 % │       6.25 % │
-│    DELL │  8.319 % │ 7.775 % │      7.775 % │
+│    DELL │  8.318 % │ 7.775 % │      7.775 % │
 │      DG │ 18.621 % │ 8.333 % │      8.333 % │
 │     DRS │  7.266 % │ 7.775 % │      7.775 % │
 │     GME │  2.599 % │  6.25 % │       6.25 % │
@@ -142,15 +142,15 @@ pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters =
 │    NVAX │    2.7 % │ 4.167 % │      4.167 % │
 │    NVDA │  4.869 % │  6.25 % │       6.25 % │
 │    PARA │  6.397 % │ 7.775 % │      7.775 % │
-│    PLNT │  6.817 % │ 8.333 % │      8.333 % │
+│    PLNT │  6.816 % │ 8.333 % │      8.333 % │
 │    SAVE │  5.345 % │ 7.775 % │      7.775 % │
-│    SBUX │  7.996 % │  6.25 % │       6.25 % │
-│    SIRI │  5.982 % │ 4.167 % │      4.167 % │
+│    SBUX │  7.995 % │  6.25 % │       6.25 % │
+│    SIRI │  5.985 % │ 4.167 % │      4.167 % │
 │     STX │  2.402 % │ 2.083 % │      2.083 % │
 │    TLRY │  0.342 % │ 0.558 % │      0.558 % │
 │    TSLA │    0.0 % │   0.0 % │        0.0 % │
 └─────────┴──────────┴─────────┴──────────────┘</code></pre><p>Lets plot the results.</p><pre><code class="language-julia hljs">plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
-plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="51ad7a43.svg" alt="Example block output"/><p>We&#39;ve used the <a href="../../RiskMeasures/RiskMeasures/#PortfolioOptimiser.SD"><code>SD</code></a> risk function for computing the risk parity portfolio, as well as for computing and plotting the risk contribution, but there&#39;s nothing stopping us from computing the risk contribution and/or plotting the risk contribution for risk measures other than the one that was optimised.</p><pre><code class="language-julia hljs"># Compute the risk contribution, for the [`CDaR`](@ref) risk measure.
+plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="8800617f.svg" alt="Example block output"/><p>We&#39;ve used the <a href="../../RiskMeasures/RiskMeasures/#PortfolioOptimiser.SD"><code>SD</code></a> risk function for computing the risk parity portfolio, as well as for computing and plotting the risk contribution, but there&#39;s nothing stopping us from computing the risk contribution and/or plotting the risk contribution for risk measures other than the one that was optimised.</p><pre><code class="language-julia hljs"># Compute the risk contribution, for the [`CDaR`](@ref) risk measure.
 rc = risk_contribution(portfolio; type = :RP, rm = CDaR())
 # Normalise risk contribution so it adds up to 1 a.k.a. 100%.
 rc ./= sum(rc)
@@ -158,4 +158,4 @@ pretty_table(hcat(w1, DataFrame(; budget_SD = rb, contribution_CDaR = rc));
              formatters = fmt1)
 
 plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = false)
-plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = true)</code></pre><img src="c9a4c9c2.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../4_hrp_portfolios/">« Example 4: Hierarchical risk parity</a><a class="docs-footer-nextpage" href="../6_worst_case_mv_portfolios/">Example 6: Worst case Mean-Variance »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 16 October 2024 12:12">Wednesday 16 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = true)</code></pre><img src="b6685104.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../4_hrp_portfolios/">« Example 4: Hierarchical risk parity</a><a class="docs-footer-nextpage" href="../6_worst_case_mv_portfolios/">Example 6: Worst case Mean-Variance »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 16 October 2024 12:14">Wednesday 16 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
