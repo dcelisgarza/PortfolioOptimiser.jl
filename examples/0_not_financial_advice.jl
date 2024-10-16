@@ -134,7 +134,7 @@ w = optimise!(hp; rm = RLDaR(),
                          opt_kwargs = (; obj = Sharpe(; rf = 3.5 / 100 / 252))))
 
 ## Say we have 3000 dollars at our disposal to allocate the portfolio
-wa = allocate!(hp, :NCO; investment = 3000)
+wa = allocate!(hp; type = :NCO, investment = 3000)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)
@@ -232,7 +232,7 @@ w = optimise!(hp; rm = RLDaR(),
               ##
               )
 
-wa = allocate!(hp, :NCO; investment = 3000, short = short, short_u = short_u,
+wa = allocate!(hp; type = :NCO, investment = 3000, short = short, short_u = short_u,
                long_u = long_u)
 
 pretty_table(w; formatters = fmt1)

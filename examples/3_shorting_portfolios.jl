@@ -94,8 +94,10 @@ We'll now allocate the portfolio according to our means. We'll use both allocati
 - Greedy algorithm, can round down to the nearest `integer + N*rounding`, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.
 =#
 
-portfolio.optimal[:nsal] = allocate!(portfolio, :ns; method = LP(), investment = investment)
-portfolio.optimal[:nsag] = allocate!(portfolio, :ns; method = Greedy(; rounding = 0.3),
+portfolio.optimal[:nsal] = allocate!(portfolio; type = :ns, method = LP(),
+                                     investment = investment)
+portfolio.optimal[:nsag] = allocate!(portfolio; type = :ns,
+                                     method = Greedy(; rounding = 0.3),
                                      investment = investment);
 
 #=
@@ -195,8 +197,8 @@ Lets allocate the short-long portfolio.
 =#
 
 ## Allocating the short-long portfolio.
-portfolio.optimal[:sal] = allocate!(portfolio, :s; investment = investment)
-portfolio.optimal[:sag] = allocate!(portfolio, :s; method = Greedy(; rounding = 0.3),
+portfolio.optimal[:sal] = allocate!(portfolio; type = :s, investment = investment)
+portfolio.optimal[:sag] = allocate!(portfolio; type = :s, method = Greedy(; rounding = 0.3),
                                     investment = investment);
 
 #=
@@ -281,8 +283,9 @@ Lets allocate the short-long portfolio.
 =#
 
 ## Allocating the short-long portfolio.
-portfolio.optimal[:sral] = allocate!(portfolio, :sr; investment = investment)
-portfolio.optimal[:srag] = allocate!(portfolio, :sr; method = Greedy(; rounding = 0.3),
+portfolio.optimal[:sral] = allocate!(portfolio; type = :sr, investment = investment)
+portfolio.optimal[:srag] = allocate!(portfolio; type = :sr,
+                                     method = Greedy(; rounding = 0.3),
                                      investment = investment);
 
 #=
