@@ -1,29 +1,5 @@
 using SafeTestsets
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
-end
-
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
@@ -98,4 +74,28 @@ end
 
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
 end

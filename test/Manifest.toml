@@ -2,7 +2,7 @@
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "f45394ed5ec3dddf5be32a88429bb34320c0a37e"
+project_hash = "b02aee1dd3ea402e7953575951016a3b9fbcacd3"
 
 [[deps.AMD]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse_jll"]
@@ -629,9 +629,9 @@ version = "8.3.1+0"
 
 [[deps.HiGHS]]
 deps = ["HiGHS_jll", "MathOptInterface", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "3a7f13068f77fa54edd9589f762c600a22679bf7"
+git-tree-sha1 = "555967d9fbcc5adec5362d6fc953dd11eb910250"
 uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-version = "1.9.3"
+version = "1.10.0"
 
 [[deps.HiGHS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -995,9 +995,9 @@ version = "0.10.3"
 
 [[deps.MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "7768a4e5f2b372777a90c1758809333081a096a8"
+git-tree-sha1 = "90077f1e79de8c9c7c8a90644494411111f4e07b"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
-version = "1.5.1"
+version = "1.5.2"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -1029,9 +1029,9 @@ version = "0.4.20"
 
 [[deps.NetworkLayout]]
 deps = ["GeometryBasics", "LinearAlgebra", "Random", "Requires", "StaticArrays"]
-git-tree-sha1 = "91bb2fedff8e43793650e7a677ccda6e6e6e166b"
+git-tree-sha1 = "0c51e19351dc1eecc61bc23caaf2262e7ba71973"
 uuid = "46757867-2c16-5918-afeb-47bfcb05e46a"
-version = "0.4.6"
+version = "0.4.7"
 weakdeps = ["Graphs"]
 
     [deps.NetworkLayout.extensions]

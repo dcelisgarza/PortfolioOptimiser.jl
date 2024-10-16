@@ -699,9 +699,9 @@ version = "8.3.1+0"
 
 [[deps.HiGHS]]
 deps = ["HiGHS_jll", "MathOptInterface", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "3a7f13068f77fa54edd9589f762c600a22679bf7"
+git-tree-sha1 = "555967d9fbcc5adec5362d6fc953dd11eb910250"
 uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-version = "1.9.3"
+version = "1.10.0"
 
 [[deps.HiGHS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -985,9 +985,9 @@ version = "1.11.0"
 
 [[deps.Literate]]
 deps = ["Base64", "IOCapture", "JSON", "REPL"]
-git-tree-sha1 = "b9b38448af801760a608b7a7f895f7dcf166f4a5"
+git-tree-sha1 = "4319d0117713e6c91a26a52485d9b89cdbc364c5"
 uuid = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
-version = "2.19.1"
+version = "2.20.0"
 
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
@@ -1094,9 +1094,9 @@ version = "0.10.3"
 
 [[deps.MutableArithmetics]]
 deps = ["LinearAlgebra", "SparseArrays", "Test"]
-git-tree-sha1 = "7768a4e5f2b372777a90c1758809333081a096a8"
+git-tree-sha1 = "90077f1e79de8c9c7c8a90644494411111f4e07b"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
-version = "1.5.1"
+version = "1.5.2"
 
 [[deps.NLSolversBase]]
 deps = ["DiffResults", "Distributed", "FiniteDiff", "ForwardDiff"]
@@ -1128,9 +1128,9 @@ version = "0.4.20"
 
 [[deps.NetworkLayout]]
 deps = ["GeometryBasics", "LinearAlgebra", "Random", "Requires", "StaticArrays"]
-git-tree-sha1 = "91bb2fedff8e43793650e7a677ccda6e6e6e166b"
+git-tree-sha1 = "0c51e19351dc1eecc61bc23caaf2262e7ba71973"
 uuid = "46757867-2c16-5918-afeb-47bfcb05e46a"
-version = "0.4.6"
+version = "0.4.7"
 weakdeps = ["Graphs"]
 
     [deps.NetworkLayout.extensions]
