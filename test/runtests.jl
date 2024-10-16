@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
@@ -98,4 +94,8 @@ end
 
 @safetestset "Network constraint tests" begin
     include("NetworkConstraintTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
