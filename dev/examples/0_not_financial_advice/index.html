@@ -44,7 +44,7 @@ TimeSeries.rename!(prices, Symbol.(assets))</code></pre><pre class="documenter-e
 │ 2019-01-07T14:30:00 │ 32.4257 │  35.362 │ 130.512 │ 7.43 │ 45.4226 │ 21.9911 ⋯
 │ 2019-01-08T14:30:00 │ 31.9041 │ 36.0361 │ 134.672 │ 7.41 │ 46.7586 │ 22.2523 ⋯
 │ 2019-01-09T14:30:00 │ 32.8882 │ 36.6481 │ 128.941 │ 7.47 │ 47.1089 │ 22.2855 ⋯
-│ 2019-01-10T14:30:00 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.3269 │ 21.4547 ⋯
+│ 2019-01-10T14:30:00 │ 31.5302 │ 36.7652 │ 126.907 │ 7.52 │ 46.3268 │ 21.4547 ⋯
 │ 2019-01-11T14:30:00 │  31.294 │ 36.4043 │  129.68 │ 7.57 │ 46.0336 │ 21.1128 ⋯
 │          ⋮          │    ⋮    │    ⋮    │    ⋮    │  ⋮   │    ⋮    │    ⋮    ⋱
 │ 2022-12-21T14:30:00 │   13.03 │ 134.188 │    53.0 │ 3.75 │ 74.3655 │ 37.5464 ⋯
@@ -53,7 +53,7 @@ TimeSeries.rename!(prices, Symbol.(assets))</code></pre><pre class="documenter-e
 │ 2022-12-27T14:30:00 │   12.53 │ 128.818 │    40.3 │ 3.29 │ 75.4999 │ 37.8247 ⋯
 │ 2022-12-28T14:30:00 │   12.32 │ 124.866 │    38.4 │ 3.18 │ 73.9412 │ 37.2009 ⋯
 │ 2022-12-29T14:30:00 │    12.7 │ 128.402 │    41.4 │ 3.26 │ 74.9281 │ 38.2182 ⋯
-│ 2022-12-30T14:30:00 │   12.72 │ 128.719 │    40.7 │ 3.26 │ 73.9781 │ 38.6021 ⋯
+│ 2022-12-30T14:30:00 │   12.72 │ 128.719 │    40.7 │ 3.26 │ 73.9781 │ 38.6022 ⋯
 └─────────────────────┴─────────┴─────────┴─────────┴──────┴─────────┴──────────
 <span class="sgr36">                                                 19 columns and 993 rows omitted</span></code></pre><h2 id="0.2-Filter-worst-stocks"><a class="docs-heading-anchor" href="#0.2-Filter-worst-stocks">0.2 Filter worst stocks</a><a id="0.2-Filter-worst-stocks-1"></a><a class="docs-heading-anchor-permalink" href="#0.2-Filter-worst-stocks" title="Permalink"></a></h2><p>If we have hundreds or thousands of stocks, we should probably do some pruning of the worst stocks using a cheap method. For this we&#39;ll use the <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.HERC"><code>HERC</code></a> optimisation type. We&#39;ll filter the stocks using a few different risk measures. The order matters here, as each risk measure will filter out the worst performing stocks for each iteration.</p><p>First we need our filter functions.</p><pre><code class="language-julia hljs"># This tells us the bottom percentile we need to eliminate at each iteration so we have at most `x %` of the original stocks after `n` steps.
 percentile_after_n(x, n) = 1 - exp(log(x) / n)
@@ -137,7 +137,7 @@ cluster_assets!(hp; hclust_opt = HCOpt(; k_method = TwoDiff()))</code></pre><p>W
                          opt_kwargs = (; obj = Sharpe(; rf = 3.5 / 100 / 252))))
 
 # Say we have 3000 dollars at our disposal to allocate the portfolio
-wa = allocate!(hp, :NCO; investment = 3000)
+wa = allocate!(hp; type = :NCO, investment = 3000)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
@@ -161,7 +161,7 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │<span class="sgr90">  String </span>│<span class="sgr90">  Int64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│
 ├─────────┼────────┼─────────┼─────────┼──────────┤
 │    AAPL │      0 │ 128.719 │     0.0 │    0.0 % │
-│    DELL │      0 │ 38.6021 │     0.0 │    0.0 % │
+│    DELL │      0 │ 38.6022 │     0.0 │    0.0 % │
 │      DG │      1 │ 238.623 │ 238.623 │  7.954 % │
 │    INTC │     43 │ 25.4859 │ 1095.89 │  36.53 % │
 │    LULU │      0 │  320.38 │     0.0 │    0.0 % │
@@ -261,7 +261,7 @@ w = optimise!(hp; rm = RLDaR(),
               #
               )
 
-wa = allocate!(hp, :NCO; investment = 3000, short = short, short_u = short_u,
+wa = allocate!(hp; type = :NCO, investment = 3000, short = short, short_u = short_u,
                long_u = long_u)
 
 pretty_table(w; formatters = fmt1)
@@ -296,4 +296,4 @@ pretty_table(wa; formatters = fmt2)</code></pre><pre class="documenter-example-o
 │    PARA │      0 │  16.2832 │      0.0 │     0.0 % │
 │    SAVE │      0 │   17.628 │      0.0 │     0.0 % │
 │    TLRY │    556 │     2.69 │  1495.64 │  49.855 % │
-└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 16 October 2024 12:14">Wednesday 16 October 2024</span>. Using Julia version 1.11.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+└─────────┴────────┴──────────┴──────────┴───────────┘</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../1_basic_use/">Example 1: Basic use »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Wednesday 16 October 2024 17:49">Wednesday 16 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
