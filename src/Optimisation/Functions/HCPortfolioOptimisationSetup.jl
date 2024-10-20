@@ -11,8 +11,19 @@ function w_limits(type::NCO, datatype = Float64)
         hb = nothing
 
         if haskey(port_kwargs, :short) && port_kwargs.short
-            if haskey(port_kwargs, :short_u)
-                la = port_kwargs.short_u
+            _la1 = if haskey(port_kwargs, :short_u)
+                port_kwargs.short_u
+            else
+                Inf
+            end
+            _la2 = if haskey(port_kwargs, :short_budget)
+                _la2 = port_kwargs.short_budget
+            else
+                Inf
+            end
+            _la3 = min(_la1, _la2)
+            if !isinf(_la3)
+                la = _la3
             end
             if haskey(port_kwargs, :long_u)
                 ha = port_kwargs.long_u
@@ -20,8 +31,19 @@ function w_limits(type::NCO, datatype = Float64)
         end
 
         if haskey(port_kwargs_o, :short) && port_kwargs_o.short
-            if haskey(port_kwargs_o, :short_u)
-                lb = port_kwargs_o.short_u
+            _lb1 = if haskey(port_kwargs_o, :short_u)
+                port_kwargs_o.short_u
+            else
+                Inf
+            end
+            _lb2 = if haskey(port_kwargs_o, :short_budget)
+                port_kwargs_o.short_budget
+            else
+                Inf
+            end
+            _lb3 = min(_lb1, _lb2)
+            if !isinf(_lb3)
+                lb = _lb3
             end
             if haskey(port_kwargs_o, :long_u)
                 hb = port_kwargs_o.long_u

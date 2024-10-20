@@ -211,38 +211,6 @@ end
 
 """
 ```
-struct DistCanonical <: DistMethod end
-```
-
-Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
-
-| Correlation estimator   | Canonical distance    |
-|:----------------------- | ---------------------:|
-| [`CorMutualInfo`](@ref) | [`DistVarInfo`](@ref) |
-| [`CorLTD`](@ref)        | [`DistLog`](@ref)     |
-| [`CovDistance`](@ref)   | [`DistCor`](@ref)     |
-| Any other estimator     | [`DistMLP`](@ref)     |
-"""
-struct DistCanonical <: DistMethod end
-
-"""
-```
-struct DistDistCanonical <: DistMethod end
-```
-
-Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
-
-| Correlation estimator   | Canonical distance        |
-|:----------------------- | -------------------------:|
-| [`CorMutualInfo`](@ref) | [`DistDistVarInfo`](@ref) |
-| [`CorLTD`](@ref)        | [`DistDistLog`](@ref)     |
-| [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
-| Any other estimator     | [`DistDistMLP`](@ref)     |
-"""
-struct DistDistCanonical <: DistMethod end
-
-"""
-```
 abstract type AbstractBins end
 ```
 
@@ -369,5 +337,37 @@ function DistDistVarInfo(; de::DistVarInfo = DistVarInfo(),
     return DistDistVarInfo(de, distance, args, kwargs)
 end
 
-export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, DistCanonical,
-       DistDistCanonical, Knuth, Freedman, Scott, HGR, DistVarInfo, DistDistVarInfo
+"""
+```
+struct DistCanonical <: DistMethod end
+```
+
+Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
+
+| Correlation estimator   | Canonical distance    |
+|:----------------------- | ---------------------:|
+| [`CorMutualInfo`](@ref) | [`DistVarInfo`](@ref) |
+| [`CorLTD`](@ref)        | [`DistLog`](@ref)     |
+| [`CovDistance`](@ref)   | [`DistCor`](@ref)     |
+| Any other estimator     | [`DistMLP`](@ref)     |
+"""
+struct DistCanonical <: DistMethod end
+
+"""
+```
+struct DistDistCanonical <: DistMethod end
+```
+
+Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
+
+| Correlation estimator   | Canonical distance        |
+|:----------------------- | -------------------------:|
+| [`CorMutualInfo`](@ref) | [`DistDistVarInfo`](@ref) |
+| [`CorLTD`](@ref)        | [`DistDistLog`](@ref)     |
+| [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
+| Any other estimator     | [`DistDistMLP`](@ref)     |
+"""
+struct DistDistCanonical <: DistMethod end
+
+export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, Knuth, Freedman, Scott,
+       HGR, DistVarInfo, DistDistVarInfo, DistCanonical, DistDistCanonical
