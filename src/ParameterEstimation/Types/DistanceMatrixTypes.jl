@@ -121,6 +121,48 @@ struct DistLog <: DistMethod end
 
 """
 ```
+@kwdef mutable struct DistDistLog <: DistMethod
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+```
+
+Defines the distance of distances matrix from the correlation matrix.
+
+```math
+\\begin{align}
+D_{i,\\,j} &= -\\log\\left(C_{i,\\,j}\\right)\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` log-distance matrix.
+  - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of an absolute correlation matrix.
+
+# Parameters
+
+  - `absolute`:
+
+      + if `true`: the correlation being used is absolute.
+
+  - `distance`: distance metric from [`Distances.jl`](https://github.com/JuliaStats/Distances.jl).
+  - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
+  - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
+"""
+mutable struct DistDistLog <: DistMethod
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistDistLog(; distance::Distances.UnionMetric = Distances.Euclidean(),
+                     args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistDistLog(distance, args, kwargs)
+end
+
+"""
+```
 struct DistCor <: DistMethod end
 ```
 
@@ -141,6 +183,34 @@ struct DistCor <: DistMethod end
 
 """
 ```
+struct DistdistCor <: DistMethod end
+```
+
+Defines the distance of distances matrix from the correlation matrix.
+
+```math
+\\begin{align}
+D_{i,\\,j} &= \\sqrt{1 - C_{i,\\,j}}\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix.
+  - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of a distance correlation matrix.
+"""
+struct DistDistCor <: DistMethod
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistDistCor(; distance::Distances.UnionMetric = Distances.Euclidean(),
+                     args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistDistCor(distance, args, kwargs)
+end
+
+"""
+```
 struct DistCanonical <: DistMethod end
 ```
 
@@ -154,6 +224,22 @@ Struct for computing the canonical distance for a given correlation estimator in
 | Any other estimator     | [`DistMLP`](@ref)     |
 """
 struct DistCanonical <: DistMethod end
+
+"""
+```
+struct DistDistCanonical <: DistMethod end
+```
+
+Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
+
+| Correlation estimator   | Canonical distance        |
+|:----------------------- | -------------------------:|
+| [`CorMutualInfo`](@ref) | [`DistDistVarInfo`](@ref) |
+| [`CorLTD`](@ref)        | [`DistDistLog`](@ref)     |
+| [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
+| Any other estimator     | [`DistDistMLP`](@ref)     |
+"""
+struct DistDistCanonical <: DistMethod end
 
 """
 ```
@@ -250,5 +336,38 @@ function Base.setproperty!(obj::DistVarInfo, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
-export DistMLP, DistDistMLP, DistLog, DistCor, DistCanonical, Knuth, Freedman, Scott, HGR,
-       DistVarInfo
+"""
+```
+@kwdef mutable struct DistDistVarInfo <: DistMethod
+    bins::Union{<:Integer, <:AbstractBins} = HGR()
+    normalise::Bool = true
+end
+```
+
+Defines the variation of information distance of distances matrix.
+
+# Parameters
+
+  - `bins`:
+
+      + if `isa(bins, AbstractBins)`: defines the function for computing bin widths.
+      + if `isa(bins, Integer)` and `bins > 0`: directly provide the number of bins.
+
+  - `normalise`:
+
+      + if `true`: normalise the mutual information.
+"""
+mutable struct DistDistVarInfo <: DistMethod
+    de::DistVarInfo
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistDistVarInfo(; de::DistVarInfo = DistVarInfo(),
+                         distance::Distances.UnionMetric = Distances.Euclidean(),
+                         args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistDistVarInfo(de, distance, args, kwargs)
+end
+
+export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, DistCanonical,
+       DistDistCanonical, Knuth, Freedman, Scott, HGR, DistVarInfo, DistDistVarInfo

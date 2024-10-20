@@ -18,11 +18,23 @@ end
 function _dist(::DistLog, X::AbstractMatrix, ::Any)
     return Symmetric(-log.(X))
 end
+function _dist(de::DistDistLog, X::AbstractMatrix, ::Any)
+    D = _dist(DistLog(), X, nothing)
+    return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
+end
 function _dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, de.bins, de.normalise)
 end
+function _dist(de::DistDistVarInfo, ::Any, Y::AbstractMatrix)
+    D = _dist(de.de, nothing, Y)
+    return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
+end
 function _dist(::DistCor, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))))
+end
+function _dist(de::DistDistCor, X::AbstractMatrix, ::Any)
+    D = _dist(DistCor(), X, nothing)
+    return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
 """
 ```
