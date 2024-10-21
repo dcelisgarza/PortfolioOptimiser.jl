@@ -69,6 +69,23 @@ end
 function _get_default_dist(::DistCanonical, cor_type::Any)
     return DistMLP()
 end
+function _get_default_dist(dist_type::DistDistCanonical, cor_type::PortCovCor)
+    return _get_default_dist(dist_type, cor_type.ce)
+end
+function _get_default_dist(::DistDistCanonical, cor_type::CorMutualInfo)
+    return DistDistVarInfo(;
+                           de = DistVarInfo(; bins = cor_type.bins,
+                                            normalise = cor_type.normalise))
+end
+function _get_default_dist(::DistDistCanonical, cor_type::CorLTD)
+    return DistDistLog()
+end
+function _get_default_dist(::DistDistCanonical, cor_type::CovDistance)
+    return DistDistCor()
+end
+function _get_default_dist(::DistDistCanonical, cor_type::Any)
+    return DistDistMLP()
+end
 function _get_default_dist(dist_type::Any, ::Any)
     return dist_type
 end
