@@ -82,8 +82,7 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
 
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
-function _greedy_allocation!(port, port_type, latest_prices, investment, short, long_u,
-                             short_u, rounding)
+function _greedy_allocation!(port, port_type, latest_prices, investment, short, rounding)
     key = Symbol("Greedy_" * string(port_type))
 
     weights = port.optimal[port_type].weights
@@ -91,9 +90,7 @@ function _greedy_allocation!(port, port_type, latest_prices, investment, short, 
 
     long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
                                                                                 investment,
-                                                                                short,
-                                                                                long_u,
-                                                                                short_u)
+                                                                                short)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _greedy_sub_allocation!(tickers[long_idx],
                                                                                                                               weights[long_idx],
@@ -119,13 +116,7 @@ function _greedy_allocation!(port, port_type, latest_prices, investment, short, 
 
     return port.alloc_optimal[key]
 end
-function _allocate!(::LP, port, type, latest_prices, investment, short, long_u, short_u,
-                    string_names)
-    return _lp_allocation!(port, type, latest_prices, investment, short, long_u, short_u,
-                           string_names)
-end
-function _allocate!(method::Greedy, port, type, latest_prices, investment, short, long_u,
-                    short_u, ::Any)
-    return _greedy_allocation!(port, type, latest_prices, investment, short, long_u,
-                               short_u, method.rounding)
+function _allocate!(method::Greedy, port, type, latest_prices, investment, short, ::Any)
+    return _greedy_allocation!(port, type, latest_prices, investment, short,
+                               method.rounding)
 end

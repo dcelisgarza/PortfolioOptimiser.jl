@@ -1,10 +1,12 @@
-function _setup_alloc_optim(weights, investment, short, long_u, short_u)
+function _setup_alloc_optim(weights, investment, short)
     long_idx = weights .>= zero(eltype(weights))
-    long_investment = investment * long_u
+    long_budget = sum(weights[long_idx])
+    long_investment = investment * long_budget
 
     if short
         short_idx = .!long_idx
-        short_investment = investment * short_u
+        short_budget = -sum(weights[short_idx])
+        short_investment = investment * short_budget
     else
         short_idx = Vector{eltype(weights)}(undef, 0)
         short_investment = zero(eltype(weights))

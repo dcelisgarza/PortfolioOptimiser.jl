@@ -17,11 +17,8 @@ function num_assets_constraints(port, ::Sharpe)
         if !port.short
             @constraint(model, w .<= port.long_u * tnau_bin_sharpe)
         else
-            @constraint(model,
-                        w .<=
-                        min(port.long_u, port.budget + port.short_budget) * tnau_bin_sharpe)
-            @constraint(model,
-                        w .>= -min(port.short_u, port.short_budget) * tnau_bin_sharpe)
+            @constraint(model, w .<= port.long_u * tnau_bin_sharpe)
+            @constraint(model, w .>= -port.short_u * tnau_bin_sharpe)
         end
     end
     if port.num_assets_l > 0
@@ -46,9 +43,8 @@ function num_assets_constraints(port, ::Any)
         if !port.short
             @constraint(model, w .<= port.long_u * tnau_bin)
         else
-            @constraint(model,
-                        w .<= min(port.long_u, port.budget + port.short_budget) * tnau_bin)
-            @constraint(model, w .>= -min(port.short_u, port.short_budget) * tnau_bin)
+            @constraint(model, w .<= port.long_u * tnau_bin)
+            @constraint(model, w .>= -port.short_u * tnau_bin)
         end
     end
     if port.num_assets_l > 0
@@ -74,7 +70,7 @@ function weight_constraints(port, ::Sharpe)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= (port.budget + port.short_u) * k)
+        @constraint(model, sum(tw_ulong) <= (port.budget + port.short_budget) * k)
         @constraint(model, sum(tw_ushort) <= port.short_budget * k)
 
         @constraint(model, w .<= tw_ulong)
@@ -94,7 +90,7 @@ function weight_constraints(port, ::Any)
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
 
-        @constraint(model, sum(tw_ulong) <= port.budget + port.short_u)
+        @constraint(model, sum(tw_ulong) <= port.budget + port.short_budget)
         @constraint(model, sum(tw_ushort) <= port.short_budget)
 
         @constraint(model, w .<= tw_ulong)
@@ -122,10 +118,8 @@ function network_constraints(network::IP, port, ::Sharpe, ::Any)
     if !port.short
         @constraint(model, w .<= port.long_u * tip_bin_sharpe)
     else
-        @constraint(model,
-                    w .<=
-                    min(port.long_u, port.budget + port.short_budget) * tip_bin_sharpe)
-        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin_sharpe)
+        @constraint(model, w .<= port.long_u * tip_bin_sharpe)
+        @constraint(model, w .>= -port.short_u * tip_bin_sharpe)
     end
     return nothing
 end
@@ -140,9 +134,8 @@ function network_constraints(network::IP, port, ::Any, ::Any)
     if !port.short
         @constraint(model, w .<= port.long_u * tip_bin)
     else
-        @constraint(model,
-                    w .<= min(port.long_u, port.budget + port.short_budget) * tip_bin)
-        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin)
+        @constraint(model, w .<= port.long_u * tip_bin)
+        @constraint(model, w .>= -port.short_u * tip_bin)
     end
     return nothing
 end
@@ -181,10 +174,8 @@ function cluster_constraints(cluster::IP, port, ::Sharpe, ::Any)
     if !port.short
         @constraint(model, w .<= port.long_u * tip_bin_sharpe2)
     else
-        @constraint(model,
-                    w .<=
-                    min(port.long_u, port.budget + port.short_budget) * tip_bin_sharpe2)
-        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin_sharpe2)
+        @constraint(model, w .<= port.long_u * tip_bin_sharpe2)
+        @constraint(model, w .>= -port.short_u * tip_bin_sharpe2)
     end
     return nothing
 end
@@ -199,9 +190,8 @@ function cluster_constraints(cluster::IP, port, ::Any, ::Any)
     if !port.short
         @constraint(model, w .<= port.long_u * tip_bin2)
     else
-        @constraint(model,
-                    w .<= min(port.long_u, port.budget + port.short_budget) * tip_bin2)
-        @constraint(model, w .>= -min(port.short_u, port.short_budget) * tip_bin2)
+        @constraint(model, w .<= port.long_u * tip_bin2)
+        @constraint(model, w .>= -port.short_u * tip_bin2)
     end
     return nothing
 end

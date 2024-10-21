@@ -8,7 +8,8 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Portfolio" begin
-    portfolio = Portfolio(; prices = prices,
+    portfolio = Portfolio(; prices = prices, short = true, budget = 3, short_budget = 0.5,
+                          long_u = 1, short_u = 0.3,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
                                                                           allow_almost = true),

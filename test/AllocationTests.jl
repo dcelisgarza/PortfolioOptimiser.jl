@@ -39,7 +39,8 @@ l = 2.0
     w15 = allocate!(portfolio; method = Greedy(), investment = 1e2)
     w16 = allocate!(portfolio; method = LP(), investment = 1e8)
     w17 = allocate!(portfolio; method = Greedy(), investment = 1e8)
-    portfolio.long_u = 1 + portfolio.short_u
+    portfolio.budget = 1 + portfolio.short_budget
+    w9_2 = optimise!(portfolio)
     w18 = allocate!(portfolio; method = LP(), investment = 1e6)
     w19 = allocate!(portfolio; method = Greedy(), investment = 1e6)
 
@@ -59,18 +60,21 @@ l = 2.0
     @test isapprox(w9.weights, w15.weights, rtol = 0.7)
     @test isapprox(w9.weights, w16.weights, rtol = 0.25)
     @test isapprox(w9.weights, w17.weights, rtol = 0.25)
-    @test isapprox(portfolio.budget * 1e6, sum(w10.cost[w10.weights .>= 0]), rtol = 1e-5)
-    @test isapprox(portfolio.budget * 1e6, sum(w11.cost[w11.weights .>= 0]), rtol = 1e-5)
-    @test isapprox(portfolio.budget * 1e4, sum(w12.cost[w12.weights .>= 0]), rtol = 1e-3)
-    @test isapprox(portfolio.budget * 1e4, sum(w13.cost[w13.weights .>= 0]), rtol = 1e-2)
-    @test isapprox(portfolio.budget * 1e2, sum(w14.cost[w14.weights .>= 0]), rtol = 1e-1)
-    @test isapprox(portfolio.budget * 1e2, sum(w15.cost[w15.weights .>= 0]), rtol = 1e-2)
-    @test isapprox(portfolio.budget * 1e8, sum(w16.cost[w16.weights .>= 0]), rtol = 5e-7)
-    @test isapprox(portfolio.budget * 1e8, sum(w17.cost[w17.weights .>= 0]), rtol = 5e-7)
-    @test isapprox(sum(w18.cost[w18.cost .> 0]),
-                   sum(w10.cost[w10.cost .> 0]) - sum(w10.cost[w10.cost .< 0]), rtol = 3e-4)
-    @test isapprox(sum(w19.cost[w19.cost .> 0]),
-                   sum(w11.cost[w11.cost .> 0]) - sum(w11.cost[w11.cost .< 0]), rtol = 0.25)
+    @test isapprox(sum(w18.cost), 1e6 * sum(w9_2.weights), rtol = 5.0e-5)
+    @test isapprox(sum(w18.cost[w18.cost .>= 0]),
+                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 5e-6)
+    @test isapprox(sum(w18.cost[w18.cost .< 0]), 1e6 * sum(w9_2.weights[w9_2.weights .< 0]),
+                   rtol = 0.0005)
+    @test isapprox(sum(w18.cost), 1e6 * portfolio.budget, rtol = 5.0e-5)
+    @test sum(w18.cost[w18.cost .< 0]) >= -1e6 * portfolio.short_budget
+
+    @test isapprox(sum(w19.cost), 1e6 * sum(w9_2.weights), rtol = 5.0e-5)
+    @test isapprox(sum(w19.cost[w19.cost .>= 0]),
+                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 5e-6)
+    @test isapprox(sum(w19.cost[w19.cost .< 0]), 1e6 * sum(w9_2.weights[w9_2.weights .< 0]),
+                   rtol = 0.0005)
+    @test isapprox(sum(w19.cost), 1e6 * portfolio.budget, rtol = 5.0e-5)
+    @test sum(w19.cost[w19.cost .< 0]) >= -1e6 * portfolio.short_budget
 
     portfolio.alloc_solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                      :params => Dict("verbose" => false,
