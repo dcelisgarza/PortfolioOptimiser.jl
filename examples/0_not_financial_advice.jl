@@ -208,7 +208,7 @@ asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = 
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
 cluster_assets!(hp; hclust_opt = hclust_opt = HCOpt(; k_method = TwoDiff()))
 
-# For this we need to use the max ret objective and set the absolue of the sum of the short weights to 1, as well as the sum of the long weights to 1.
+# For this we need to use the max ret objective and set the appropriate bounds on the asset weights.
 
 ## We need to set w_min and w_max weight constraints of the hierarchical clustering portfolio so the weights can be negative.
 hp.w_min = -1
@@ -216,15 +216,26 @@ hp.w_max = 1
 
 ## The short parameters for the portfolios optimised via NCO.
 short = true
+
+## Upper bound for the sum of the short weights.
+short_budget = 1
+
+## Sum of all the portfolio weights.
+budget = 0
+
+## Upper bound for the value of each short weight.
 short_u = 1
+
+## Upper bound for the value of each long weight.
 long_u = 1
 
 w = optimise!(hp; rm = RLDaR(),
               type = NCO(;
                          ## Allow shorting in the sub portfolios, as well as the synthetic portfolio optimised by NCO. 
                          ## We also set the the values of `short_u` and `long_u` to be equal to 1.
-                         port_kwargs = (; short = short, short_u = short_u,
-                                        long_u = long_u),
+                         port_kwargs = (; short = short, budget = budget,
+                                        short_budget = short_budget, long_u = long_u,
+                                        short_u = short_u),
                          ## Max return objective.
                          opt_kwargs = (; obj = MaxRet())
                          ##
@@ -232,8 +243,7 @@ w = optimise!(hp; rm = RLDaR(),
               ##
               )
 
-wa = allocate!(hp; type = :NCO, investment = 3000, short = short, short_u = short_u,
-               long_u = long_u)
+wa = allocate!(hp; type = :NCO, investment = 3000, short = true)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)
