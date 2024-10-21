@@ -2183,8 +2183,8 @@ end
     C = cluster_matrix(portfolio)
 
     portfolio.short = true
-    portfolio.short_budget = 0.13
     portfolio.short_u = 0.13
+    portfolio.short_budget = 0.13
     portfolio.long_u = 1
     portfolio.budget = portfolio.long_u - portfolio.short_u
 
@@ -2301,8 +2301,8 @@ end
     C = cluster_matrix(portfolio; hclust_alg = DBHT())
 
     portfolio.short = true
-    portfolio.short_budget = 0.18
     portfolio.short_u = 0.18
+    portfolio.short_budget = 0.18
     portfolio.long_u = 0.95
     portfolio.budget = portfolio.long_u - portfolio.short_u
 
@@ -3637,8 +3637,8 @@ end
     C = cluster_matrix(portfolio)
 
     portfolio.short = true
-    portfolio.short_budget = 0.13
     portfolio.short_u = 0.13
+    portfolio.short_budget = 0.13
     portfolio.long_u = 1
     portfolio.budget = portfolio.long_u - portfolio.short_u
 
@@ -3782,8 +3782,8 @@ end
     C = cluster_matrix(portfolio; hclust_alg = hclust_alg)
 
     portfolio.short = true
-    portfolio.short_budget = 0.18
     portfolio.short_u = 0.18
+    portfolio.short_budget = 0.18
     portfolio.long_u = 0.95
     portfolio.budget = portfolio.long_u - portfolio.short_u
 
