@@ -60,31 +60,32 @@ end
 function _get_default_dist(::DistCanonical, cor_type::CorMutualInfo)
     return DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)
 end
-function _get_default_dist(::DistCanonical, cor_type::CorLTD)
+function _get_default_dist(::DistCanonical, ::CorLTD)
     return DistLog()
 end
-function _get_default_dist(::DistCanonical, cor_type::CovDistance)
+function _get_default_dist(::DistCanonical, ::CovDistance)
     return DistCor()
 end
-function _get_default_dist(::DistCanonical, cor_type::Any)
+function _get_default_dist(::DistCanonical, ::Any)
     return DistMLP()
 end
 function _get_default_dist(dist_type::DistDistCanonical, cor_type::PortCovCor)
     return _get_default_dist(dist_type, cor_type.ce)
 end
-function _get_default_dist(::DistDistCanonical, cor_type::CorMutualInfo)
+function _get_default_dist(dist::DistDistCanonical, cor_type::CorMutualInfo)
     return DistDistVarInfo(;
                            de = DistVarInfo(; bins = cor_type.bins,
-                                            normalise = cor_type.normalise))
+                                            normalise = cor_type.normalise),
+                           distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(::DistDistCanonical, cor_type::CorLTD)
-    return DistDistLog()
+function _get_default_dist(dist::DistDistCanonical, ::CorLTD)
+    return DistDistLog(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(::DistDistCanonical, cor_type::CovDistance)
-    return DistDistCor()
+function _get_default_dist(dist::DistDistCanonical, ::CovDistance)
+    return DistDistCor(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(::DistDistCanonical, cor_type::Any)
-    return DistDistMLP()
+function _get_default_dist(dist::DistDistCanonical, ::Any)
+    return DistDistMLP(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
 function _get_default_dist(dist_type::Any, ::Any)
     return dist_type

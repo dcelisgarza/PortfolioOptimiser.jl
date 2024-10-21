@@ -367,7 +367,15 @@ Struct for computing the canonical distance for a given correlation estimator in
 | [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
 | Any other estimator     | [`DistDistMLP`](@ref)     |
 """
-struct DistDistCanonical <: DistMethod end
+mutable struct DistDistCanonical <: DistMethod
+    distance::Distances.UnionMetric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function DistDistCanonical(; distance::Distances.UnionMetric = Distances.Euclidean(),
+                           args::Tuple = (), kwargs::NamedTuple = (;))
+    return DistDistCanonical(distance, args, kwargs)
+end
 
 export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, Knuth, Freedman, Scott,
        HGR, DistVarInfo, DistDistVarInfo, DistCanonical, DistDistCanonical
