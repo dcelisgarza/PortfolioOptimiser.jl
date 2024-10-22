@@ -217,7 +217,7 @@ hp.w_max = 1
 ## The short parameters for the portfolios optimised via NCO.
 short = true
 
-## Upper bound for the sum of the short weights.
+## Absolute value of the sum of the short weights.
 short_budget = 1
 
 ## Sum of all the portfolio weights.
@@ -243,7 +243,8 @@ w = optimise!(hp; rm = RLDaR(),
               ##
               )
 
-wa = allocate!(hp; type = :NCO, investment = 3000, short = true)
+wa = allocate!(hp; type = :NCO, investment = 3000, short = true, budget = 0,
+               short_budget = 1)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)

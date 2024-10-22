@@ -271,7 +271,7 @@ portfolio.short = true
 ## The absolute value of the sum of the short weights is equal to `0.2`.
 portfolio.short_budget = 0.2
 ## Reinvest the earnings from short selling.
-portfolio.budget = 1 + portfolio.short_budget
+portfolio.budget = 1
 
 portfolio.optimal[:sr] = optimise!(portfolio; rm = rm, obj = obj)
 #nb display(plot_bar(portfolio; type = :sr))
@@ -300,7 +300,7 @@ long_optimal_idx = portfolio.optimal[:sr].weights .>= 0
 short_optimal_idx = .!long_optimal_idx
 println("Optimal investment")
 println("long = $(sum(investment * portfolio.optimal[:sr].weights[long_optimal_idx]))")
-println("long = $(investment + abs(sum(investment * portfolio.optimal[:sr].weights[short_optimal_idx]))) = investment + short_profit")
+println("long = $(investment + abs(sum(investment * portfolio.optimal[:sr].weights[short_optimal_idx]))) = $(investment) + $(abs(sum(investment * portfolio.optimal[:sr].weights[short_optimal_idx]))) = investment + short_profit")
 println("short = $(sum(investment * portfolio.optimal[:sr].weights[short_optimal_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:sr].weights[long_optimal_idx]))")
@@ -311,7 +311,7 @@ long_LP_idx = portfolio.optimal[:sral].weights .>= 0
 short_LP_idx = .!long_LP_idx
 println("Allocation investment")
 println("long = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:sral].shares[long_LP_idx]))")
-println("long ≈ $(investment + abs(dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sral].shares[short_LP_idx]))) ≈ investment + short_profit")
+println("long ≈ $(investment + abs(dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sral].shares[short_LP_idx]))) ≈ $(investment) + $(abs(dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sral].shares[short_LP_idx]))) ≈ investment + short_profit")
 println("short = $(dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sral].shares[short_LP_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:sral].weights[long_LP_idx]))")
@@ -322,7 +322,7 @@ long_Greedy_idx = portfolio.optimal[:srag].weights .>= 0
 short_Greedy_idx = .!long_Greedy_idx
 println("Allocation investment")
 println("long = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:srag].shares[long_Greedy_idx]))")
-println("long ≈ $(investment + abs(dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:srag].shares[short_Greedy_idx]))) ≈ investment + short_profit")
+println("long ≈ $(investment + abs(dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:srag].shares[short_Greedy_idx]))) ≈ $(investment) + $(abs(dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:srag].shares[short_Greedy_idx]))) ≈ investment + short_profit")
 println("short = $(dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:srag].shares[short_Greedy_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:srag].weights[long_Greedy_idx]))")
