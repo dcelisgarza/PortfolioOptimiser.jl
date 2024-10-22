@@ -1,5 +1,17 @@
 using SafeTestsets
 
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
 @safetestset "Constraints" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -86,16 +98,4 @@ end
 
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
 end

@@ -39,7 +39,7 @@ l = 2.0
     w15 = allocate!(portfolio; method = Greedy(), investment = 1e2)
     w16 = allocate!(portfolio; method = LP(), investment = 1e8)
     w17 = allocate!(portfolio; method = Greedy(), investment = 1e8)
-    portfolio.budget = 1 + portfolio.short_budget
+    portfolio.budget = 1
     w9_2 = optimise!(portfolio)
     w18 = allocate!(portfolio; method = LP(), investment = 1e6)
     w19 = allocate!(portfolio; method = Greedy(), investment = 1e6)

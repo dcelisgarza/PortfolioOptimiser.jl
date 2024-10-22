@@ -2,8 +2,9 @@ function _setup_alloc_optim(weights, investment, short, budget, short_budget)
     long_idx = weights .>= zero(eltype(weights))
 
     if short
-        long_budget = budget + short_budget
+        long_budget = min(budget + short_budget, sum(weights[long_idx]))
         short_idx = .!long_idx
+        short_budget = min(short_budget, -sum(weights[short_idx]))
         short_investment = investment * short_budget
     else
         long_budget = budget

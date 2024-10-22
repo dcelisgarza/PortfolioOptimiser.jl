@@ -243,8 +243,8 @@ w = optimise!(hp; rm = RLDaR(),
               ##
               )
 
-wa = allocate!(hp; type = :NCO, investment = 3000, short = true, budget = 0,
-               short_budget = 1)
+wa = allocate!(hp; type = :NCO, investment = 3000, short = short, budget = budget,
+               short_budget = short_budget)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)
