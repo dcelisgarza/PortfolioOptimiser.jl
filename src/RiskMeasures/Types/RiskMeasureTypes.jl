@@ -1,59 +1,58 @@
 """
-```
-abstract type AbstractRiskMeasure end
-```
+    abstract type AbstractRiskMeasure end
 
-Abstract type for subtyping risk measures.
+Root abstract type for all risk measures in the type hierarchy. Serves as the base type for implementing various risk measurement approaches.
 """
 abstract type AbstractRiskMeasure end
 
 """
-```
-abstract type RiskMeasure <: AbstractRiskMeasure end
-```
+    abstract type RiskMeasure <: AbstractRiskMeasure end
 
-Abstract type for subtyping risk measures that can be used to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref).
+Abstract type for risk measures that are compatible with both `Portfolio` and `HCPortfolio` optimization. Concrete subtypes can be used in either context.
 """
 abstract type RiskMeasure <: AbstractRiskMeasure end
 
 """
-```
-abstract type HCRiskMeasure <: AbstractRiskMeasure end
-```
+    abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-Abstract type for subtyping risk meaasures that can only be used to optimise [`HCPortfolio`](@ref).
+Abstract type for specialized risk measures that can only be used with `HCPortfolio` optimization. These risk measures are not compatible with standard `Portfolio` optimization.
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
 """
+    mutable struct RMSettings{T1 <: Real, T2 <: Real}
+
+Configuration settings for risk measures that subtype `RiskMeasure`.
+
+# Fields
+
+  - `flag::Bool`: Controls risk contribution to the optimization model
+  - `scale::T1`: Scaling factor for the risk measure
+  - `ub::T2`: Upper bound constraint for the risk measure
+
+# Behavior
+
+## For Portfolio optimization:
+
+  - `flag`: When true, includes risk in the JuMP model's risk expression
+  - `scale`: Scaling factor applied when adding the risk to the optimisation objective
+  - `ub`: When finite, sets the upper bound constraint on the risk measure
+
+## For HCPortfolio optimization:
+
+  - `flag`: No effect
+  - `scale`: Scaling factor applied when adding the risk to the optimisation objective
+  - `ub`: No effect
+
+# Examples
+
+```julia
+# Default settings
+settings = RMSettings()
+
+# Custom settings
+settings = RMSettings(; flag = true, scale = 2.0, ub = 0.5)
 ```
-mutable struct RMSettings{T1 <: Real, T2 <: Real}
-    flag::Bool = true
-    scale::T1 = 1.0
-    ub::T2 = Inf
-end
-```
-
-Risk measure settings for concrete subtypes of [`RiskMeasure`](@ref).
-
-# Parameters
-
-## When optimising a [`Portfolio`](@ref).
-
-  - `flag`:
-
-      + if `true`: the risk will contribute to the `JuMP` model's risk expression.
-
-  - `scale`: factor for scaling the risk when adding it to the `JuMP` model's risk expression.
-  - `ub`:
-
-      + if `isfinite(ub)`: sets the upper bound for the risk.
-
-## When optimising a [`HCPortfolio`](@ref).
-
-  - `flag`: does nothing.
-  - `scale`: factor for scaling the risk when adding it to the risk being minimised.
-  - `ub`: does nothing.
 """
 mutable struct RMSettings{T1 <: Real, T2 <: Real}
     flag::Bool
@@ -65,17 +64,27 @@ function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
 end
 
 """
+    mutable struct HCRMSettings{T1 <: Real}
+
+Settings configuration for hierarchical clustering (HC) risk measures.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the scale parameter, must be a subtype of `Real`
+
+# Fields
+
+  - `scale::T1`: Scaling factor applied when adding the risk to the minimization objective
+
+# Examples
+
+```julia
+# Default settings
+settings = HCRMSettings()
+
+# Custom scale
+settings = HCRMSettings(; scale = 2.5)
 ```
-@kwdef mutable struct HCRMSettings{T1 <: Real}
-    scale::T1 = 1.0
-end
-```
-
-Risk measure settings for concrete subtypes of [`HCRiskMeasure`](@ref).
-
-# Parameters
-
-  - `scale`: factor for scaling the risk when adding it to the risk being minimised.
 """
 mutable struct HCRMSettings{T1 <: Real}
     scale::T1
@@ -85,77 +94,117 @@ function HCRMSettings(; scale::Real = 1.0)
 end
 
 """
-```
-abstract type SDFormulation end
-```
+    abstract type SDFormulation end
 
-Abstract type for Mean-Variance optimisation formulations.
+Abstract type hierarchy for Mean-Variance optimization formulations. Serves as the root type for different standard deviation calculation approaches in portfolio optimization.
 """
 abstract type SDFormulation end
 
 """
-```
-abstract type SDSquaredFormulation <: SDFormulation end
-```
+    abstract type SDSquaredFormulation <: SDFormulation end
 
-Mean variance formulation will produce a [`JuMP.QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for the `JuMP` model's `sd_risk`.
+Abstract type for Mean-Variance formulations that produce quadratic expressions for the JuMP model's standard deviation risk.
 
-The reason we have these is because there are multiple ways of defining the mean-variance optimisation and because [`NOC`](@ref) optimisations are only compatible with strictly convex risk functions, so they can only be performed with [`SimpleSD`](@ref).
+# Implementation Notes
+
+  - Produces a `JuMP.QuadExpr` for the model's `sd_risk`
+  - [`NOC`](@ref) (Near Optimal Centering) optimizations require strictly convex risk functions and are only compatible with `SimpleSD`
 """
 abstract type SDSquaredFormulation <: SDFormulation end
 
 """
-```
-struct QuadSD <: SDSquaredFormulation end
-```
+    struct QuadSD <: SDSquaredFormulation end
 
-The risk expression will be the explicit quadratic form of the variance, `dot(w, sigma, w)`. Where `w` is the `N×1` vector of asset weights and `sigma` the covariance matrix.
+Explicit quadratic formulation for variance calculation in portfolio optimization.
+
+# Risk Expression
+
+The risk is computed as `dot(w, sigma, w)` where:
+
+  - `w`: N×1 vector of portfolio weights
+  - `sigma`: N×N covariance matrix
+
+# Use Cases
+
+Suitable when direct quadratic form optimization is desired/needed or when specific solver requirements necessitate explicit quadratic expressions.
 """
 struct QuadSD <: SDSquaredFormulation end
 
 """
-```
-struct SOCSD <: SDSquaredFormulation end
-```
+    struct SOCSD <: SDSquaredFormulation end
 
-The model will use a [`MOI.SecondOrderCone`](https://jump.dev/JuMP.jl/stable/api/JuMP/#SecondOrderCone) to define the standard deviation `dev` and make the risk expression `sd_risk = dev^2`.
+Second-Order Cone (SOC) formulation for standard deviation calculation in portfolio optimization.
+
+# Implementation Details
+
+  - Uses `MOI.SecondOrderCone` constraints
+  - Defines a standard deviation variable `dev`
+  - Sets risk expression as `sd_risk = dev^2`
+
+# Advantages
+
+  - Can be more numerically stable than explicit quadratic formulation
+  - Often more efficient for larger portfolios
 """
 struct SOCSD <: SDSquaredFormulation end
 
 """
-```
-struct SOCSD <: SDSquaredFormulation end
-```
+    struct SimpleSD <: SDFormulation end
 
-The model will use a [`MOI.SecondOrderCone`](https://jump.dev/JuMP.jl/stable/api/JuMP/#SecondOrderCone) to define the standard deviation `dev` and make the risk expression `sd_risk = dev`.
+Linear standard deviation formulation using Second-Order Cone constraints.
+
+# Implementation Details
+
+  - Uses `MOI.SecondOrderCone` constraints
+  - Defines standard deviation variable `dev`
+  - Sets risk expression as `sd_risk = dev`
+
+# Key Features
+
+  - Compatible with [`NOC`](@ref) optimizations due to them requiring strictly convex risk functions
+  - Provides direct standard deviation optimization rather than variance
 """
 struct SimpleSD <: SDFormulation end
 
 """
+    mutable struct SD <: RiskMeasure
+
+Standard Deviation risk measure implementation for portfolio optimization.
+
+# Fields
+
+  - `settings::RMSettings`: Risk measure configuration settings
+
+  - `formulation::SDFormulation`: Strategy for standard deviation/variance calculation
+  - `sigma::Union{AbstractMatrix, Nothing}`: Optional covariance matrix
+
+      + If `nothing`: Uses the covariance matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
+      + Otherwise: Uses the provided matrix
+
+# Validation
+
+  - When setting `sigma`, the matrix must be square (N×N)
+  - Includes runtime dimension checks for covariance matrix
+
+# Examples
+
+```julia
+# Basic usage with default settings
+sd_risk = SD()
+
+# Custom configuration with specific covariance matrix
+my_sigma = [1.0 0.2; 0.2 1.0]
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
+             sigma = my_sigma)
+
+# Using portfolio's built-in covariance
+sd_risk = SD(; formulation = QuadSD(), sigma = nothing)
 ```
-@kwdef mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    formulation::SDFormulation = SOCSD()
-    sigma::Union{<:AbstractMatrix, Nothing} = nothing
-end
-```
-
-Defines the Standard Deviation [`_SD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `formulation`: formulation of the standard deviation/variance [`SDFormulation`](@ref).
-  - `sigma`: optional `N×N` covariance matrix.
-
-      + if `nothing`: use the covariance matrix stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use this one.
 """
-mutable struct SD{T1 <: Union{AbstractMatrix, Nothing}} <: RiskMeasure
+mutable struct SD <: RiskMeasure
     settings::RMSettings
     formulation::SDFormulation
-    sigma::T1
+    sigma::Union{AbstractMatrix, Nothing}
 end
 function SD(; settings::RMSettings = RMSettings(), formulation = SOCSD(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
@@ -174,25 +223,31 @@ function Base.setproperty!(obj::SD, sym::Symbol, val)
 end
 
 """
+    mutable struct MAD <: RiskMeasure
+
+Mean Absolute Deviation risk measure implementation.
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
+  - `mu::Union{<:AbstractVector, Nothing}`: Optional N×1 vector of expected asset returns
+
+# Notes
+
+  - If `mu` is `nothing`, the implementation uses expected returns from the Portfolio instance.
+
+# Examples
+
+```julia
+# Basic usage with default settings
+mad = MAD()
+
+# Custom configuration
+weights = ones(10) ./ 10  # Equal weights
+returns = rand(10)        # Sample returns
+mad = MAD(; settings = RMSettings(; scale = 2.0), w = weights, mu = returns)
 ```
-@kwdef mutable struct MAD <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
-end
-```
-
-Defines the Mean Absolute Deviation [`_MAD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `w`: optional `T×1` vector of weights for computing the expected return in [`_MAD`](@ref).
-  - `mu`: optional `N×1` vector of expected asset returns.
-
-      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
-      + else: use this one.
 """
 mutable struct MAD <: RiskMeasure
     settings::RMSettings
@@ -206,27 +261,36 @@ function MAD(; settings::RMSettings = RMSettings(),
 end
 
 """
+    mutable struct SSD{T1 <: Real} <: RiskMeasure
+
+Semi Standard Deviation risk measure implementation.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the target threshold
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `target::T1`: Minimum return threshold for downside classification
+  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
+  - `mu::Union{<:AbstractVector, Nothing}`: Optional N×1 vector of expected asset returns
+
+# Notes
+
+  - Measures deviation only for returns below the target threshold
+  - Uses Portfolio's expected returns if `mu` is `nothing`
+
+# Examples
+
+```julia
+# Basic usage with default settings (target = 0.0)
+ssd = SSD()
+
+# Custom configuration with specific target
+ssd = SSD(; settings = RMSettings(; scale = 1.5), target = 0.02,  # 2% minimum return threshold
+          w = weights, mu = returns)
 ```
-@kwdef mutable struct SSD{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
-end
-```
-
-Defines the Semi Standard Deviation [`_SSD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `target`: minimum return threshold for classifying downside returns.
-  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SSD`](@ref).
-  - `mu`: optional `N×1` vector of expected asset returns.
-
-      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
-      + else: use this one.
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -241,19 +305,33 @@ function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
 end
 
 """
+    mutable struct FLPM{T1 <: Real} <: RiskMeasure
+
+First Lower Partial Moment (Omega ratio) risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the target threshold
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `target::T1`: Minimum return threshold for downside classification
+
+# Notes
+
+  - Used in Omega ratio calculations
+  - Measures expected shortfall below target return
+
+# Examples
+
+```julia
+# Default configuration (target = 0.0)
+flpm = FLPM()
+
+# Custom target return
+flpm = FLPM(; target = 0.01)  # 1% minimum return threshold
 ```
-@kwdef mutable struct FLPM{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-end
-```
-
-Defines the First Lower Partial Moment (Omega ratio) [`_FLPM`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `target`: minimum return threshold for classifying downside returns.
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -264,19 +342,33 @@ function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
 end
 
 """
+    mutable struct SLPM{T1 <: Real} <: RiskMeasure
+
+Second Lower Partial Moment (Sortino ratio) risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the target threshold
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `target::T1`: Minimum return threshold for downside classification
+
+# Notes
+
+  - Used in Sortino ratio calculations
+  - Measures variance of returns below target threshold
+
+# Examples
+
+```julia
+# Default configuration (target = 0.0)
+slpm = SLPM()
+
+# Custom settings
+slpm = SLPM(; settings = RMSettings(; scale = 2.0), target = 0.005)
 ```
-@kwdef mutable struct SLPM{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-end
-```
-
-Defines the Second Lower Partial Moment (Sortino ratio) [`_SLPM`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `target`: minimum return threshold for classifying downside returns.
 """
 mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -287,17 +379,28 @@ function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
 end
 
 """
+    struct WR <: RiskMeasure
+
+Worst Realization risk measure.
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+
+# Notes
+
+  - Considers the worst historical return as the risk measure
+  - Useful for extremely conservative risk assessment
+
+# Examples
+
+```julia
+# Basic usage
+wr = WR()
+
+# Custom settings
+wr = WR(; settings = RMSettings(; scale = 1.5))
 ```
-@kwdef mutable struct WR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Defines the Worst Realisation [`_WR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct WR <: RiskMeasure
     settings::RMSettings
@@ -307,19 +410,33 @@ function WR(; settings::RMSettings = RMSettings())
 end
 
 """
+    mutable struct CVaR{T1 <: Real} <: RiskMeasure
+
+Conditional Value at Risk (Expected Shortfall) risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `alpha::T1`: Significance level, must be in (0,1)
+
+# Notes
+
+  - Measures expected loss in the worst α% of cases
+  - Input validation ensures 0 < α < 1
+
+# Examples
+
+```julia
+# Default configuration (α = 0.05)
+cvar = CVaR()
+
+# Custom significance level
+cvar = CVaR(; settings = RMSettings(; scale = 1.0), alpha = 0.01)
 ```
-@kwdef mutable struct CVaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Conditional Value at Risk [`_CVaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -337,25 +454,36 @@ function Base.setproperty!(obj::CVaR, sym::Symbol, val)
 end
 
 """
+    mutable struct EVaR{T1 <: Real} <: RiskMeasure
+
+Entropic Value at Risk risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings
+  - `alpha::T1`: Significance level, must be in (0,1)
+  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for exponential cone problems
+
+# Notes
+
+  - Requires solver capability for exponential cone problems
+  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Input validation ensures 0 < α < 1
+
+# Examples
+
+```julia
+# Default configuration
+evar = EVaR()
+
+# Custom configuration with specific solver
+evar = EVaR(; alpha = 0.025,  # 2.5% significance level
+            solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct EVaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Entropic Value at Risk [`_EVaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct EVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -375,26 +503,39 @@ function Base.setproperty!(obj::EVaR, sym::Symbol, val)
 end
 
 """
+    mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+
+Relativistic Value at Risk risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+  - `T2`: Numeric type for the relativistic deformation parameter
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings
+  - `alpha::T1`: Significance level, must be in (0,1)
+  - `kappa::T2`: Relativistic deformation parameter, must be in (0,1)
+  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for 3D power cone problems
+
+# Notes
+
+  - Requires solver capability for 3D power cone problems
+  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Input validation ensures both α and κ are in (0,1)
+
+# Examples
+
+```julia
+# Default configuration
+rlvar = RLVaR()
+
+# Custom configuration
+rlvar = RLVaR(; alpha = 0.05,   # 5% significance level
+              kappa = 0.3,    # Deformation parameter
+              solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct RLVaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Relativistic Value at Risk [`_RLVaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -416,17 +557,27 @@ function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
 end
 
 """
+    struct MDD <: RiskMeasure
+
+Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+
+# Notes
+
+  - Measures the largest peak-to-trough decline in uncompounded returns
+
+# Examples
+
+```julia
+# Basic usage
+mdd = MDD()
+
+# Custom settings
+mdd = MDD(; settings = RMSettings(; scale = 2.0))
 ```
-@kwdef mutable struct MDD{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Defines the Maximum Drawdown (Calmar ratio) of uncompounded returns [`_MDD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct MDD <: RiskMeasure
     settings::RMSettings
@@ -436,17 +587,28 @@ function MDD(; settings::RMSettings = RMSettings())
 end
 
 """
+    struct ADD <: RiskMeasure
+
+Average Drawdown risk measure for uncompounded returns.
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+
+# Notes
+
+  - Measures the average of all peak-to-trough declines
+  - Provides a more balanced view than Maximum Drawdown
+
+# Examples
+
+```julia
+# Basic usage
+add = ADD()
+
+# Custom settings
+add = ADD(; settings = RMSettings(; scale = 1.5))
 ```
-@kwdef mutable struct ADD{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Defines the Average Drawdown of uncompounded returns [`_ADD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct ADD <: RiskMeasure
     settings::RMSettings
@@ -456,19 +618,33 @@ function ADD(; settings::RMSettings = RMSettings())
 end
 
 """
+    mutable struct CDaR{T1 <: Real} <: RiskMeasure
+
+Conditional Drawdown at Risk risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `alpha::T1`: Significance level, must be in (0,1)
+
+# Notes
+
+  - Measures expected loss in the worst α% of cases
+  - Input validation ensures 0 < α < 1
+
+# Examples
+
+```julia
+# Default configuration (α = 0.05)
+cdar = CDaR()
+
+# Custom significance level
+cdar = CDaR(; settings = RMSettings(; scale = 1.0), alpha = 0.01) # 1% significance level
 ```
-@kwdef mutable struct CDaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Conditional Drawdown at Risk of uncompounded returns at Risk [`_CDaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -506,25 +682,36 @@ function UCI(; settings::RMSettings = RMSettings())
 end
 
 """
+    mutable struct EDaR{T1 <: Real} <: RiskMeasure
+
+Entropic Drawdown at Risk risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings
+  - `alpha::T1`: Significance level, must be in (0,1)
+  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for exponential cone problems
+
+# Notes
+
+  - Requires solver capability for exponential cone problems
+  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Input validation ensures 0 < α < 1
+
+# Examples
+
+```julia
+# Default configuration
+edar = EDaR()
+
+# Custom configuration with specific solver
+edar = EDaR(; alpha = 0.025,  # 2.5% significance level
+            solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct EDaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Entropic Drawdown at Risk of uncompounded cumulative returns [`_EDaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct EDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -544,26 +731,39 @@ function Base.setproperty!(obj::EDaR, sym::Symbol, val)
 end
 
 """
+    mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+
+Relativistic Drawdown at Risk risk measure.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the significance level
+  - `T2`: Numeric type for the relativistic deformation parameter
+
+# Fields
+
+  - `settings::RMSettings`: Configuration settings
+  - `alpha::T1`: Significance level, must be in (0,1)
+  - `kappa::T2`: Relativistic deformation parameter, must be in (0,1)
+  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for 3D power cone problems
+
+# Notes
+
+  - Requires solver capability for 3D power cone problems
+  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Input validation ensures both α and κ are in (0,1)
+
+# Examples
+
+```julia
+# Default configuration
+rldar = RLDaR()
+
+# Custom configuration
+rldar = RLDaR(; alpha = 0.05,   # 5% significance level
+              kappa = 0.3,    # 30% Deformation parameter
+              solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct RLDaR{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Relativistic Drawdown at Risk of uncompounded cumulative returns [`_RLDaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -585,25 +785,38 @@ function Base.setproperty!(obj::RLDaR, sym::Symbol, val)
 end
 
 """
+    mutable struct Kurt <: RiskMeasure
+
+Square root kurtosis risk measure implementation for portfolio optimization.
+
+# Fields
+
+  - `settings::RMSettings`: Risk measure configuration settings
+
+  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
+  - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
+
+      + If `nothing`: Uses the cokurtosis matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
+      + Otherwise: Uses the provided matrix
+
+# Validation
+
+  - When setting `kt`, the matrix must be square (N^2×N^2)
+  - Includes runtime dimension checks for cokurtosis matrix
+
+# Examples
+
+```julia
+# Basic usage with default settings
+kurt = Kurt()
+
+# Custom configuration with specific cokurtosis matrix
+my_kt = [1.0 0.2; 0.2 1.0]
+kurt = Kurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
+
+# Using portfolio's built-in cokurtosis matrix
+kurt = Kurt(; kt = nothing)
 ```
-@kwdef mutable struct Kurt{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
-end
-```
-
-Defines the Square Root Kurtosis [`_Kurt`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `w`: optional `T×1` vector of weights for computing the expected return in [`_Kurt`](@ref).
-  - `kt`: optional `N^2×N^2` cokurtosis matrix.
-
-      + if `nothing`: use the cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
-      + else: use this one.
 """
 mutable struct Kurt <: RiskMeasure
     settings::RMSettings
@@ -613,31 +826,54 @@ end
 function Kurt(; settings::RMSettings = RMSettings(),
               w::Union{<:AbstractWeights, Nothing} = nothing,
               kt::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(kt)
+        @smart_assert(size(kt, 1) == size(kt, 2))
+    end
     return Kurt(settings, w, kt)
 end
 
 """
+    mutable struct SKurt{T1 <: Real} <: RiskMeasure
+
+Square root semikurtosis risk measure implementation for portfolio optimization.
+
+# Type Parameters
+
+  - `T1`: Numeric type for the target threshold
+
+# Fields
+
+  - `settings::RMSettings`: Risk measure configuration settings
+
+  - `target::T1`: Minimum return threshold for downside classification
+  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
+  - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
+
+      + If `nothing`: Uses the cokurtosis matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
+      + Otherwise: Uses the provided matrix
+
+# Notes
+
+  - Measures deviation only for returns below the target threshold
+
+# Validation
+
+  - When setting `kt`, the matrix must be square (N^2×N^2)
+  - Includes runtime dimension checks for cokurtosis matrix
+
+# Examples
+
+```julia
+# Basic usage with default settings
+skurt = SKurt()
+
+# Custom configuration with specific cokurtosis matrix
+my_kt = [1.0 0.2; 0.2 1.0]
+skurt = SKurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
+
+# Using portfolio's built-in cokurtosis matrix
+skurt = SKurt(; kt = nothing, target = 0.015) # 1.5% minimum return threshold
 ```
-@kwdef mutable struct SKurt{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    target::T1 = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
-end
-```
-
-Defines the Square Root Semi Kurtosis [`_SKurt`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `target`: minimum return threshold for classifying downside returns.
-  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SKurt`](@ref).
-  - `kt`: optional `N^2×N^2` semi cokurtosis matrix.
-
-      + if `nothing`: use the semi cokurtosis matrix stored in the instance of [`Portfolio`](@ref).
-      + else: use this one.
 """
 mutable struct SKurt{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -648,6 +884,9 @@ end
 function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
                w::Union{<:AbstractWeights, Nothing} = nothing,
                kt::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(kt)
+        @smart_assert(size(kt, 1) == size(kt, 2))
+    end
     return SKurt{typeof(target)}(settings, target, w, kt)
 end
 
