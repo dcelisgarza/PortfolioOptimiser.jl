@@ -52,7 +52,7 @@ end
 ```
 @kwdef mutable struct DistDistMLP <: DistMethod
     absolute::Bool = false
-    distance::Distances.UnionMetric = Distances.Euclidean()
+    distance::Distances.Metric = Distances.Euclidean()
     args::Tuple = ()
     kwargs::NamedTuple = (;)
 end
@@ -88,13 +88,13 @@ Where:
 """
 mutable struct DistDistMLP <: DistMethod
     absolute::Bool
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
 function DistDistMLP(; absolute::Bool = false,
-                     distance::Distances.UnionMetric = Distances.Euclidean(),
-                     args::Tuple = (), kwargs::NamedTuple = (;))
+                     distance::Distances.Metric = Distances.Euclidean(), args::Tuple = (),
+                     kwargs::NamedTuple = (;))
     return DistDistMLP(absolute, distance, args, kwargs)
 end
 const AbsoluteDist = Union{DistMLP, DistDistMLP}
@@ -122,7 +122,7 @@ struct DistLog <: DistMethod end
 """
 ```
 @kwdef mutable struct DistDistLog <: DistMethod
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
@@ -152,12 +152,12 @@ Where:
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
 mutable struct DistDistLog <: DistMethod
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
-function DistDistLog(; distance::Distances.UnionMetric = Distances.Euclidean(),
-                     args::Tuple = (), kwargs::NamedTuple = (;))
+function DistDistLog(; distance::Distances.Metric = Distances.Euclidean(), args::Tuple = (),
+                     kwargs::NamedTuple = (;))
     return DistDistLog(distance, args, kwargs)
 end
 
@@ -200,12 +200,12 @@ Where:
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of a distance correlation matrix.
 """
 struct DistDistCor <: DistMethod
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
-function DistDistCor(; distance::Distances.UnionMetric = Distances.Euclidean(),
-                     args::Tuple = (), kwargs::NamedTuple = (;))
+function DistDistCor(; distance::Distances.Metric = Distances.Euclidean(), args::Tuple = (),
+                     kwargs::NamedTuple = (;))
     return DistDistCor(distance, args, kwargs)
 end
 
@@ -327,12 +327,12 @@ Defines the variation of information distance of distances matrix.
 """
 mutable struct DistDistVarInfo <: DistMethod
     de::DistVarInfo
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
 function DistDistVarInfo(; de::DistVarInfo = DistVarInfo(),
-                         distance::Distances.UnionMetric = Distances.Euclidean(),
+                         distance::Distances.Metric = Distances.Euclidean(),
                          args::Tuple = (), kwargs::NamedTuple = (;))
     return DistDistVarInfo(de, distance, args, kwargs)
 end
@@ -368,11 +368,11 @@ Struct for computing the canonical distance for a given correlation estimator in
 | Any other estimator     | [`DistDistMLP`](@ref)     |
 """
 mutable struct DistDistCanonical <: DistMethod
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
-function DistDistCanonical(; distance::Distances.UnionMetric = Distances.Euclidean(),
+function DistDistCanonical(; distance::Distances.Metric = Distances.Euclidean(),
                            args::Tuple = (), kwargs::NamedTuple = (;))
     return DistDistCanonical(distance, args, kwargs)
 end
