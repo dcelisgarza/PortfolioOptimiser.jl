@@ -218,7 +218,7 @@ end
 """
 ```
 mutable struct CovDistance <: PortfolioOptimiserCovCor
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     dist_args::Tuple
     dist_kwargs::NamedTuple
     mean_w1::Union{<:AbstractWeights, Nothing}
@@ -239,14 +239,14 @@ Distance covariance and correlation matrix estimator.
   - `mean_w3`: optional `T×1` vector of weights for computing the mean of the entirety of the pairwise distance matrices.
 """
 mutable struct CovDistance <: PortfolioOptimiserCovCor
-    distance::Distances.UnionMetric
+    distance::Distances.Metric
     dist_args::Tuple
     dist_kwargs::NamedTuple
     mean_w1::Union{<:AbstractWeights, Nothing}
     mean_w2::Union{<:AbstractWeights, Nothing}
     mean_w3::Union{<:AbstractWeights, Nothing}
 end
-function CovDistance(; distance::Distances.UnionMetric = Distances.Euclidean(),
+function CovDistance(; distance::Distances.Metric = Distances.Euclidean(),
                      dist_args::Tuple = (), dist_kwargs::NamedTuple = (;),
                      mean_w1::Union{<:AbstractWeights, Nothing} = nothing,
                      mean_w2::Union{<:AbstractWeights, Nothing} = nothing,
