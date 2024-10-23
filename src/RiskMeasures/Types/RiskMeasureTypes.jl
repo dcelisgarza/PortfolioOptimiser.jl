@@ -211,7 +211,7 @@ function SD(; settings::RMSettings = RMSettings(), formulation = SOCSD(),
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return SD{Union{<:AbstractMatrix, Nothing}}(settings, formulation, sigma)
+    return SD(settings, formulation, sigma)
 end
 function Base.setproperty!(obj::SD, sym::Symbol, val)
     if sym == :sigma
