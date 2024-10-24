@@ -183,6 +183,11 @@ end
 function _get_ntwk_clust_method(args...)
     return NoAdj()
 end
+"""
+    set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
+                sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+"""
 function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)

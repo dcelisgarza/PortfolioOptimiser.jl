@@ -30,4 +30,35 @@ include("./Portfolio/Functions/PortfolioFunctions.jl")
 
 # Extensions
 include("./Extensions/PortfolioOptimiserPlotsExtDefinitions.jl")
+
 end
+
+# """
+# # Description
+
+# See also:.
+
+# # Type Hierarchy
+
+# # Mathematical Description
+
+# # Fields
+
+# # Validation
+
+# # Behaviour
+
+# # Implementation Requirements
+
+# # Notes
+
+# ## Advantages over Alternate Approaches
+
+# ## Disadvantages over Alternate Approaches
+
+# # Examples
+
+# ```@example
+# # Example
+# ```
+# """

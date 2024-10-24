@@ -63,7 +63,7 @@ makedocs(;
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[],
-                                  size_threshold_ignore = ["ParameterEstimation.md"]),
+                                  size_threshold_ignore = ["RiskMeasures/RiskMeasures.md"]),
          pages = ["Home" => "index.md", "Examples" => examples_nav,
                   "API" => ["Constraints" => ["Constraints/WeightConstraints.md",
                                               "Constraints/ViewsConstraints.md",

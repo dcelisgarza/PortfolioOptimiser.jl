@@ -1,57 +1,160 @@
 """
     abstract type AbstractRiskMeasure end
 
-Root abstract type for all risk measures in the type hierarchy. Serves as the base type for implementing various risk measurement approaches.
+# Description
+
+Serves as the foundational type for all risk measurement approaches in the library.
+
+See also: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref).
+
+# Type Hierarchy
+
+  - Direct subtypes: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref).
 """
 abstract type AbstractRiskMeasure end
 
 """
     abstract type RiskMeasure <: AbstractRiskMeasure end
 
-Abstract type for risk measures that are compatible with both `Portfolio` and `HCPortfolio` optimization. Concrete subtypes can be used in either context.
+# Description
+
+Defines the interface for risk measures that can be used in both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) optimisation contexts.
+
+See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`OptimType`](@ref), [`ObjectiveFunction`](@ref).
+
+# Type Hierarchy
+
+# Implementation Requirements
+
+To ensure concrete subtypes will handle both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) contexts appropriately, they must implement:
+
+  - Risk calculation method [`calc_risk`](@ref).
+  - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent.
+  - Include a `settings::RMSettings` field for configuration when optimising a [`Portfolio`](@ref).
+  - If the risk calculation involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, it must include a `solvers::Union{Nothing, <:AbstractDict}` field.
+
+# Examples
+
+```@example
+using PortfolioOptimsier
+
+# Creating a concrete risk measure that subtypes RiskMeasure
+struct CustomRisk <: RiskMeasure
+    settings::RMSettings
+    # implementation details
+end
+
+# Creating risk calculation method
+function PortfolioOptimiser.calc_risk(risk::CustomRisk, w::AbstractVector; kwargs...)
+    # implementation details
+end
+
+# Creating a scalar JuMP model implementation
+function PortfolioOptimiser.set_rm(port::Portfolio, rm::CustomRisk, type::OptimType,
+                                   obj::ObjectiveFunction; kwargs...)
+    # implementation details
+end
+
+# Creating a vector JuMP model implementation
+function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:CustomRisk},
+                                   type::OptimType, obj::ObjectiveFunction; kwargs...)
+    # implementation details
+end
+```
 """
 abstract type RiskMeasure <: AbstractRiskMeasure end
 
 """
     abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-Abstract type for specialized risk measures that can only be used with `HCPortfolio` optimization. These risk measures are not compatible with standard `Portfolio` optimization.
+# Description
+
+Defines the interface for risk measures specifically designed for use with [`HCPortfolio`](@ref) optimisation.
+
+See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
+
+# Implementation Requirements
+
+Concrete subtypes must implement:
+
+  - Risk calculation method [`calc_risk`](@ref).
+  - If the risk calculation involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, it must include a `solvers::Union{Nothing, <:AbstractDict}` field.
+
+# Behaviour
+
+  - Not compatible with standard [`Portfolio`](@ref) optimisation.
+
+# Examples
+
+```@example
+using PortfolioOptimiser
+
+# Creating a concrete risk measure that subtypes RiskMeasure
+struct CustomHCRisk <: HCRiskMeasure
+    settings::HCRMSettings
+    # implementation details
+end
+
+# Creating risk calculation method
+function PortfolioOptimiser.calc_risk(risk::CustomHCRisk, w::AbstractVector; kwargs...)
+    # implementation details
+end
+```
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
-Configuration settings for risk measures that subtype `RiskMeasure`.
+# Description
+
+Configuration settings for standard portfolio optimisation risk measures.
+
+See also: [`AbstractRiskMeasure`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
 
 # Fields
 
-  - `flag::Bool`: Controls risk contribution to the optimization model
-  - `scale::T1`: Scaling factor for the risk measure
-  - `ub::T2`: Upper bound constraint for the risk measure
+  - `flag::Bool = true`: Controls risk inclusion to the risk expression in the optimisation objective.
+  - `scale::T1 = 1.0`: Risk measure scaling factor.
+  - `ub::T2 = Inf`: Upper bound risk constraint.
 
-# Behavior
+# Behaviour
 
-## For Portfolio optimization:
+## [`Portfolio`](@ref) Optimisation
 
-  - `flag`: When true, includes risk in the JuMP model's risk expression
-  - `scale`: Scaling factor applied when adding the risk to the optimisation objective
-  - `ub`: When finite, sets the upper bound constraint on the risk measure
+With ``R(\\bm{w})`` being a risk measure.
 
-## For HCPortfolio optimization:
+  - When `flag == true`: Adds ``\\text{scale} \\cdot R(\\bm{w})`` to the risk expression in the optimisation objective.
+  - `scale`: Multiplier for this risk term in the risk expression.
+  - When `ub < Inf` (exclusive to [`Portfolio`](@ref) optimisation): Adds constraint ``R(\\bm{w}) \\leq \\text{ub}``.
 
-  - `flag`: No effect
-  - `scale`: Scaling factor applied when adding the risk to the optimisation objective
-  - `ub`: No effect
+## [`HCPortfolio`](@ref) Optimisation
+
+  - `flag`: No effect.
+  - `scale`: Multiplier for this risk term in the risk expression.
+  - `ub`: No effect.
+
+# Notes
+
+  - `scale`: typically used when combining different risk measures in a single optimisation
+
+# Validation
+
+  - `scale`: must be positive.
+  - `ub`: must be positive when finite.
 
 # Examples
 
-```julia
+```@example
 # Default settings
 settings = RMSettings()
 
-# Custom settings
-settings = RMSettings(; flag = true, scale = 2.0, ub = 0.5)
+# Risk-averse configuration, whatever risk measure this is applied 
+# to will contribute 8 * risk to the risk expression
+settings = RMSettings(; scale = 8.0)
+
+# Risk not added to the objective but constrainted.
+settings = RMSettings(; flag = false, ub = 0.25)
 ```
 """
 mutable struct RMSettings{T1 <: Real, T2 <: Real}
@@ -60,29 +163,49 @@ mutable struct RMSettings{T1 <: Real, T2 <: Real}
     ub::T2
 end
 function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
+    @smart_assert(scale > zero(scale))
+    if isfinite(ub)
+        @smart_assert(ub > zero(ub))
+    end
     return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
 end
 
 """
     mutable struct HCRMSettings{T1 <: Real}
 
+# Description
+
 Settings configuration for hierarchical clustering (HC) risk measures.
 
-# Type Parameters
-
-  - `T1`: Numeric type for the scale parameter, must be a subtype of `Real`
+See also: [`AbstractRiskMeasure`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
 
 # Fields
 
-  - `scale::T1`: Scaling factor applied when adding the risk to the minimization objective
+  - `scale::T1 = 1.0`: Multiplier for this risk term in the risk expression.
+
+# Behaviour
+
+## [`HCPortfolio`](@ref) Optimisation
+
+With ``R(\\bm{w})`` being a risk measure.
+
+  - `scale`: Multiplier for this risk term in the risk expression.
+
+# Implementation Details
+
+  - Does not include flag or bounds as hierarchical optimisations cannot constrain the risk, only the weights of the assets.
+
+# Validation
+
+  - `scale`: must be positive.
 
 # Examples
 
-```julia
+```@example
 # Default settings
 settings = HCRMSettings()
 
-# Custom scale
+# Contribute more risk to the risk expression
 settings = HCRMSettings(; scale = 2.5)
 ```
 """
@@ -90,101 +213,267 @@ mutable struct HCRMSettings{T1 <: Real}
     scale::T1
 end
 function HCRMSettings(; scale::Real = 1.0)
+    @smart_assert(scale > zero(scale))
     return HCRMSettings{typeof(scale)}(scale)
 end
 
 """
     abstract type SDFormulation end
 
-Abstract type hierarchy for Mean-Variance optimization formulations. Serves as the root type for different standard deviation calculation approaches in portfolio optimization.
+# Description
+
+Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in portfolio optimisation, each offering different computational and numerical properties.
+
+See also: [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+
+# Type Hierarchy
+
+Direct subtypes:
+
+  - [`SDSquaredFormulation`](@ref): For quadratic expressions of the variance.
+  - [`SimpleSD`](@ref): For direct standard deviation optimisation.
+
+# Behaviour
+
+## [`Portfolio`](@ref) Optimisation
+
+  - Concrete subtypes define how standard deviation/variance is represented in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+  - Choice of formulation can significantly impact solver performance and numerical stability.
+  - Each formulation may have different solver compatibility requirements.
+
+## [`HCPortfolio`](@ref) Optimisation
+
+  - No effect.
 """
 abstract type SDFormulation end
 
 """
     abstract type SDSquaredFormulation <: SDFormulation end
 
-Abstract type for Mean-Variance formulations that produce quadratic expressions for the JuMP model's standard deviation risk.
+# Description
 
-# Implementation Notes
+Abstract type for Mean-Variance formulations using quadratic variance expressions.
 
-  - Produces a `JuMP.QuadExpr` for the model's `sd_risk`
-  - [`NOC`](@ref) (Near Optimal Centering) optimizations require strictly convex risk functions and are only compatible with `SimpleSD`
+See also: [`SDFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+
+# Type Hierarchy
+
+Direct subtypes:
+
+  - [`QuadSD`](@ref): Explicit quadratic formulation of the portfolio variance.
+  - [`SOCSD`](@ref): Second-Order Cone (SOC) formulation of the portfolio variance.
+
+# Mathematical Description
+
+These formulations work with the variance form of risk:
+
+```math
+\\begin{align}
+\\sigma^2 &= \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+  - ``\\sigma^2`` is the portfolio variance.
+
+# Behaviour
+
+  - Produces [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for `sd_risk` in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - May have different numerical stability properties compared to direct SD formulations.
+  - Risk is expressed in terms of the variance (squared standard deviation).
 """
 abstract type SDSquaredFormulation <: SDFormulation end
 
 """
     struct QuadSD <: SDSquaredFormulation end
 
-Explicit quadratic formulation for variance calculation in portfolio optimization.
+# Description
 
-# Risk Expression
+Explicit quadratic formulation for variance-based portfolio optimisation.
 
-The risk is computed as `dot(w, sigma, w)` where:
+See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
-  - `w`: N×1 vector of portfolio weights
-  - `sigma`: N×N covariance matrix
+# Mathematical Description
 
-# Use Cases
+Implements the classical quadratic form of portfolio variance:
 
-Suitable when direct quadratic form optimization is desired/needed or when specific solver requirements necessitate explicit quadratic expressions.
+```math
+\\begin{align}
+\\sigma^2 &= \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+  - ``\\sigma^2`` is the portfolio variance.
+
+# Behaviour
+
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dot(w, sigma, w)`.
+  - No additional variables or constraints introduced.
+  - Requires a solver capable of handling quadratic objectives.
+  - Performance may degrade for large portfolios.
+
+# Examples
+
+```julia
+# Using portfolio's built-in covariance
+sd_risk = SD(; formulation = QuadSD())
+
+# Custom configuration with specific covariance matrix
+my_sigma = [1.0 0.2; 0.2 1.0]
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = QuadSD(),
+             sigma = my_sigma)
+```
 """
 struct QuadSD <: SDSquaredFormulation end
 
 """
     struct SOCSD <: SDSquaredFormulation end
 
-Second-Order Cone (SOC) formulation for standard deviation calculation in portfolio optimization.
+# Description
 
-# Implementation Details
+Second-Order Cone (SOC) formulation for variance-based portfolio optimisation.
 
-  - Uses `MOI.SecondOrderCone` constraints
-  - Defines a standard deviation variable `dev`
-  - Sets risk expression as `sd_risk = dev^2`
+See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
-# Advantages
+# Mathematical Description
 
-  - Can be more numerically stable than explicit quadratic formulation
-  - Often more efficient for larger portfolios
+Reformulates the quadratic variance expression using second-order cone constraints:
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\min} &\\qquad \\sigma^2\\\\
+\\textrm{s.t.} &\\qquad \\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\rVert_{2} \\leq \\sigma\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+  - ``\\sigma^2`` is the portfolio variance.
+
+# Behaviour
+
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Defines a standard deviation variable `dev`.
+  - Produces a  [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dev^2`.
+  - Often more numerically stable than direct quadratic formulation.
+  - Better scaling properties for large portfolios.
+  - Compatible with specialized conic solvers.
+  - Requires solver with Second-Order Cone constraint capability.
+  - May introduce more variables but often leads to better solution times.
+  - Particularly effective for large-scale problems.
+
+# Examples
+
+```julia
+# Custom configuration with specific covariance matrix
+# Using portfolio's built-in covariance
+sd_risk = SD(; formulation = SOCSD())
+
+my_sigma = [1.0 0.2; 0.2 1.0]
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
+             sigma = my_sigma)
+```
+
+See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref).
 """
 struct SOCSD <: SDSquaredFormulation end
 
 """
     struct SimpleSD <: SDFormulation end
 
+# Description
+
 Linear standard deviation formulation using Second-Order Cone constraints.
+
+# Mathematical Description
+
+Reformulates the affine standard deviation expression using second-order cone constraints:
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\min} &\\qquad \\sigma\\\\
+\\textrm{s.t.} &\\qquad \\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\rVert_{2} \\leq \\sigma\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+  - ``\\sigma`` is the portfolio standard deviation.
 
 # Implementation Details
 
-  - Uses `MOI.SecondOrderCone` constraints
-  - Defines standard deviation variable `dev`
-  - Sets risk expression as `sd_risk = dev`
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Defines a standard deviation variable `dev`.
+  - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
 
-# Key Features
+# Advantages
 
-  - Compatible with [`NOC`](@ref) optimizations due to them requiring strictly convex risk functions
-  - Provides direct standard deviation optimization rather than variance
+  - Strictly convex risk function (compatible with [`NOC`](@ref) optimisations).
+  - Direct optimisation of standard deviation rather than variance.
+  - Often better numerical properties than squared formulations.
+  - Compatible with specialized conic solvers.
+  - May provide more intuitive results as risk is in same units as returns.
+
+# Examples
+
+```julia
+# Using portfolio's built-in covariance
+sd_risk = SD(; formulation = SimpleSD())
+
+# Custom configuration with specific covariance matrix
+my_sigma = [1.0 0.2; 0.2 1.0]
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SimpleSD(),
+             sigma = my_sigma)
+```
+
+See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`NOC`](@ref).
 """
 struct SimpleSD <: SDFormulation end
 
 """
     mutable struct SD <: RiskMeasure
 
-Standard Deviation risk measure implementation for portfolio optimization.
+# Description
+
+## [`Portfolio`](@ref)
+
+Implements portfolio standard deviation/variance risk using configurable `formulation` strategies.
+
+## [`HCPortfolio`](@ref)
+
+Implements portfolio standard deviation risk.
 
 # Fields
 
-  - `settings::RMSettings`: Risk measure configuration settings
+  - `settings::RMSettings = RMSettings()`: Risk measure configuration settings.
+  - `formulation::SDFormulation = SOCSD()`: Strategy for standard deviation/variance calculation. Only affects [`Portfolio`](@ref) optimisations.
+  - `sigma::Union{AbstractMatrix, Nothing} = nothing`: Optional covariance matrix.
 
-  - `formulation::SDFormulation`: Strategy for standard deviation/variance calculation
-  - `sigma::Union{AbstractMatrix, Nothing}`: Optional covariance matrix
+# Behaviour
 
-      + If `nothing`: Uses the covariance matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
-      + Otherwise: Uses the provided matrix
+## Covariance Matrix Usage
 
-# Validation
+  - If `isnothing(sigma)`: Uses covariance from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `sigma` provided: Uses custom covariance matrix.
+  - When setting `sigma` at construction or runtime, the matrix must be square (N×N).
 
-  - When setting `sigma`, the matrix must be square (N×N)
-  - Includes runtime dimension checks for covariance matrix
+## Formulation Impact on [`Portfolio`](@ref) Optimisation
+
+  - `QuadSD`: Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
+  - `SOCSD`: Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
+  - `SimpleSD`: Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
 
 # Examples
 
@@ -229,23 +518,29 @@ Mean Absolute Deviation risk measure implementation.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
-  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
-  - `mu::Union{<:AbstractVector, Nothing}`: Optional N×1 vector of expected asset returns
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: Optional T×1 vector of weights for expected return calculation.
+  - `mu::Union{<:AbstractVector, Nothing} = nothing`: Optional N×1 vector of expected asset returns.
 
-# Notes
+# Behaviour
 
-  - If `mu` is `nothing`, the implementation uses expected returns from the Portfolio instance.
+## [`Portfolio`](@ref) Optimisation
+
+  - If `isnothing(mu)`: the implementation uses expected returns vector from the [`Portfolio`](@ref) instance.
+
+## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk`](@ref).
+
+  - If `isnothing(w)`: the implementation does not use a weight vector when computing the mean portfolio return.
 
 # Examples
 
-```julia
+```@example
 # Basic usage with default settings
 mad = MAD()
 
 # Custom configuration
-weights = ones(10) ./ 10  # Equal weights
-returns = rand(10)        # Sample returns
+weights = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
+mu = rand(10)                   # Expected returns
 mad = MAD(; settings = RMSettings(; scale = 2.0), w = weights, mu = returns)
 ```
 """
@@ -426,7 +721,10 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
 # Notes
 
   - Measures expected loss in the worst α% of cases
-  - Input validation ensures 0 < α < 1
+
+# Validation
+
+  - Ensures 0 < α < 1
 
 # Examples
 
@@ -472,7 +770,10 @@ Entropic Value at Risk risk measure.
 
   - Requires solver capability for exponential cone problems
   - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
-  - Input validation ensures 0 < α < 1
+
+# Validation
+
+  - Ensures 0 < α < 1
 
 # Examples
 
@@ -523,7 +824,10 @@ Relativistic Value at Risk risk measure.
 
   - Requires solver capability for 3D power cone problems
   - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
-  - Input validation ensures both α and κ are in (0,1)
+
+# Validation
+
+  - Ensures both α and κ are in (0,1)
 
 # Examples
 
@@ -634,7 +938,10 @@ Conditional Drawdown at Risk risk measure.
 # Notes
 
   - Measures expected loss in the worst α% of cases
-  - Input validation ensures 0 < α < 1
+
+# Validation
+
+  - Ensures 0 < α < 1
 
 # Examples
 
@@ -662,17 +969,25 @@ function Base.setproperty!(obj::CDaR, sym::Symbol, val)
 end
 
 """
-```
-@kwdef mutable struct UCI{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
+    mutable struct UCI <: RiskMeasure
 
-Defines the Ulcer Index [`_UCI`](@ref) risk measure.
+Ulcer Index risk measure.
 
-# Parameters
+# Fields
 
-  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - `settings::RMSettings`: Configuration settings for the risk measure
+
+# Notes
+
+  - Penalizes larger drawdowns more than smaller ones
+
+# Examples
+
+uci = UCI()
+
+# Custom settings
+
+uci = UCI(; settings = RMSettings(; scale = 1.5))
 """
 struct UCI <: RiskMeasure
     settings::RMSettings
@@ -700,7 +1015,10 @@ Entropic Drawdown at Risk risk measure.
 
   - Requires solver capability for exponential cone problems
   - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
-  - Input validation ensures 0 < α < 1
+
+# Validation
+
+  - Ensures 0 < α < 1
 
 # Examples
 
@@ -751,7 +1069,10 @@ Relativistic Drawdown at Risk risk measure.
 
   - Requires solver capability for 3D power cone problems
   - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
-  - Input validation ensures both α and κ are in (0,1)
+
+# Validation
+
+  - Ensures both α and κ are in (0,1)
 
 # Examples
 
@@ -787,7 +1108,7 @@ end
 """
     mutable struct Kurt <: RiskMeasure
 
-Square root kurtosis risk measure implementation for portfolio optimization.
+Square root kurtosis risk measure implementation for portfolio optimisation.
 
 # Fields
 
@@ -835,7 +1156,7 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasure
 
-Square root semikurtosis risk measure implementation for portfolio optimization.
+Square root semikurtosis risk measure implementation for portfolio optimisation.
 
 # Type Parameters
 
