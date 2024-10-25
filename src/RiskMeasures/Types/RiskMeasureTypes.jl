@@ -514,6 +514,8 @@ end
 """
     mutable struct MAD <: RiskMeasure
 
+# Description
+
 Mean Absolute Deviation risk measure implementation.
 
 # Fields
@@ -539,9 +541,9 @@ Mean Absolute Deviation risk measure implementation.
 mad = MAD()
 
 # Custom configuration
-weights = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
-mu = rand(10)                   # Expected returns
-mad = MAD(; settings = RMSettings(; scale = 2.0), w = weights, mu = returns)
+w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
+mu = rand(10)             # Expected returns
+mad = MAD(; settings = RMSettings(; scale = 2.0), w = w, mu = mu)
 ```
 """
 mutable struct MAD <: RiskMeasure
@@ -558,33 +560,36 @@ end
 """
     mutable struct SSD{T1 <: Real} <: RiskMeasure
 
+# Description
+
 Semi Standard Deviation risk measure implementation.
-
-# Type Parameters
-
-  - `T1`: Numeric type for the target threshold
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
-  - `target::T1`: Minimum return threshold for downside classification
-  - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
-  - `mu::Union{<:AbstractVector, Nothing}`: Optional N×1 vector of expected asset returns
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
+  - `target::T1 = 0.0`: Minimum return threshold for downside classification
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: Optional T×1 vector of weights for expected return calculation
+  - `mu::Union{<:AbstractVector, Nothing} = nothing`: Optional N×1 vector of expected asset returns
 
-# Notes
+# Behaviour
 
-  - Measures deviation only for returns below the target threshold
-  - Uses Portfolio's expected returns if `mu` is `nothing`
+## [`Portfolio`](@ref) Optimisation
+
+  - If `isnothing(mu)`: the implementation uses expected returns vector from the [`Portfolio`](@ref) instance.
+
+## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk`](@ref).
+
+  - If `isnothing(w)`: the implementation does not use a weight vector when computing the mean portfolio return.
 
 # Examples
 
-```julia
-# Basic usage with default settings (target = 0.0)
+```@example
+# Basic usage with default settings
 ssd = SSD()
 
 # Custom configuration with specific target
 ssd = SSD(; settings = RMSettings(; scale = 1.5), target = 0.02,  # 2% minimum return threshold
-          w = weights, mu = returns)
+          w = eweights(1:100, 0.03; scale = true), mu = rand(10))
 ```
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
