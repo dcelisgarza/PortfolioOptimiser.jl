@@ -280,8 +280,8 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP}, obj;
         mu = rm.mu
     end
     abs_dev = returns .- transpose(mu)
-
-    @variable(model, ssd[1:T] >= 0)
+    target = rm.target
+    @variable(model, ssd[1:T] .>= target)
     @variable(model, sdev)
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
     w = model[:w]
@@ -297,7 +297,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     model = port.model
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, ssd[1:T, 1:count] >= 0)
+    @variable(model, ssd[1:T, 1:count])
     @variable(model, sdev[1:count])
     @expression(model, sdev_risk[1:count], zero(AffExpr))
     w = model[:w]
@@ -306,6 +306,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
             mu = rm.mu
         end
         abs_dev = returns .- transpose(mu)
+        target = rm.target
+        @constraint(model, view(ssd, :, i) .>= target)
         add_to_expression!(sdev_risk[i], inv(sqrt(T - 1)), sdev[i])
         @constraint(model, abs_dev * w .>= -view(ssd, :, i))
         @constraint(model, [sdev[i]; view(ssd, :, i)] ∈ SecondOrderCone())
