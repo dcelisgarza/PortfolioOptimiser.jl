@@ -42,15 +42,20 @@ function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
         X = transpose(X)
     end
     target = ce.target
-    X = if isa(target, Real)
-        min.(X .- target, zero(eltype(X)))
-    else
-        min.(X .- transpose(target), zero(eltype(X)))
+    mu = ce.mu
+    if isnothing(mu)
+        mu = vec(if isnothing(ce.mu_w)
+                     mean(X; dims = 1)
+                 else
+                     mean(X, ce.mu_w; dims = 1)
+                 end)
     end
-    return Symmetric(if isnothing(ce.w)
+    X = min.(X .- transpose(mu), target)
+
+    return Symmetric(if isnothing(ce.cov_w)
                          cov(ce.ce, X; mean = zero(eltype(X)))
                      else
-                         cov(ce.ce, X, ce.w; mean = zero(eltype(X)))
+                         cov(ce.ce, X, ce.cov_w; mean = zero(eltype(X)))
                      end)
 end
 function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
@@ -59,23 +64,27 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
         X = transpose(X)
     end
     target = ce.target
-    X = if isa(target, Real)
-        min.(X .- target, zero(eltype(X)))
-    else
-        min.(X .- transpose(target), zero(eltype(X)))
+    mu = ce.mu
+    if isnothing(mu)
+        mu = vec(if isnothing(ce.mu_w)
+                     mean(X; dims = 1)
+                 else
+                     mean(X, ce.mu_w; dims = 1)
+                 end)
     end
+    X = min.(X .- transpose(mu), target)
 
     rho = Symmetric(try
-                        if isnothing(ce.w)
+                        if isnothing(ce.cov_w)
                             cor(ce.ce, X; mean = zero(eltype(X)))
                         else
-                            cor(ce.ce, X, ce.w; mean = zero(eltype(X)))
+                            cor(ce.ce, X, ce.cov_w; mean = zero(eltype(X)))
                         end
                     catch
-                        StatsBase.cov2cor(Matrix(if isnothing(ce.w)
+                        StatsBase.cov2cor(Matrix(if isnothing(ce.cov_w)
                                                      cov(ce.ce, X; mean = zero(eltype(X)))
                                                  else
-                                                     cov(ce.ce, X, ce.w;
+                                                     cov(ce.ce, X, ce.cov_w;
                                                          mean = zero(eltype(X)))
                                                  end))
                     end)

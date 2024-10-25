@@ -135,8 +135,8 @@ function _SSD(x::AbstractVector, target::Real = 0.0,
               w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
     mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = mu .- x
-    return sqrt(sum(val[val .>= target] .^ 2) / (T - 1))
+    val = x .- mu
+    return sqrt(sum(val[val .<= target] .^ 2) / (T - 1))
 end
 
 """

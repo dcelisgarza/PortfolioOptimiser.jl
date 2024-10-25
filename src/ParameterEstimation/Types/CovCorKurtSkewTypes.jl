@@ -104,18 +104,21 @@ Semi Pearson-type covariance and correlation estimator.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
   - `w`: optional `T×1` vector of weights for computing the covariance.
 """
-mutable struct CovSemi <: CorPearson
+mutable struct CovSemi{T1} <: CorPearson
     absolute::Bool
     ce::StatsBase.CovarianceEstimator
-    target::Union{<:Real, AbstractVector{<:Real}}
-    w::Union{<:AbstractWeights, Nothing}
+    target::T1
+    mu::Union{<:AbstractVector, Nothing}
+    cov_w::Union{<:AbstractWeights, Nothing}
+    mu_w::Union{<:AbstractWeights, Nothing}
 end
 function CovSemi(; absolute::Bool = false,
                  ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                 corrected = true),
-                 target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                 w::Union{<:AbstractWeights, Nothing} = nothing)
-    return CovSemi(absolute, ce, target, w)
+                 target::Real = 0.0, mu::Union{<:AbstractVector, Nothing} = nothing,
+                 cov_w::Union{<:AbstractWeights, Nothing} = nothing,
+                 mu_w::Union{<:AbstractWeights, Nothing} = nothing)
+    return CovSemi{typeof(target)}(absolute, ce, target, mu, cov_w, mu_w)
 end
 
 """

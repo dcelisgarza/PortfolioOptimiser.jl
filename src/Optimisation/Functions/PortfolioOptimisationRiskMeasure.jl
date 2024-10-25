@@ -281,12 +281,12 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP}, obj;
     end
     abs_dev = returns .- transpose(mu)
     target = rm.target
-    @variable(model, ssd[1:T] .>= target)
+    @variable(model, ssd[1:T] .>= 0)
     @variable(model, sdev)
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
     w = model[:w]
     @constraint(model, abs_dev * w .>= -ssd)
-    @constraint(model, [sdev; ssd] ∈ SecondOrderCone())
+    @constraint(model, [sdev; ssd .+ target] ∈ SecondOrderCone())
     _set_rm_risk_upper_bound(obj, type, model, sdev_risk, rm.settings.ub)
     _set_risk_expression(model, sdev_risk, rm.settings.scale, rm.settings.flag)
 
@@ -307,10 +307,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
         end
         abs_dev = returns .- transpose(mu)
         target = rm.target
-        @constraint(model, view(ssd, :, i) .>= target)
+        @constraint(model, view(ssd, :, i) .>= 0)
         add_to_expression!(sdev_risk[i], inv(sqrt(T - 1)), sdev[i])
         @constraint(model, abs_dev * w .>= -view(ssd, :, i))
-        @constraint(model, [sdev[i]; view(ssd, :, i)] ∈ SecondOrderCone())
+        @constraint(model, [sdev[i]; view(ssd, :, i) .+ target] ∈ SecondOrderCone())
         _set_rm_risk_upper_bound(obj, type, model, sdev_risk[i], rm.settings.ub)
         _set_risk_expression(model, sdev_risk[i], rm.settings.scale, rm.settings.flag)
     end
