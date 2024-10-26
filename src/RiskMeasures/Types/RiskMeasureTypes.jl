@@ -30,7 +30,7 @@ To ensure concrete subtypes will handle both [`Portfolio`](@ref) and [`HCPortfol
 
   - Risk calculation method [`calc_risk`](@ref).
   - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent.
-  - Include a `settings::RMSettings` field for configuration when optimising a [`Portfolio`](@ref).
+  - Include a `settings::RMSettings = RMSettings()` field for configuration when optimising a [`Portfolio`](@ref).
   - If the risk calculation involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, it must include a `solvers::Union{Nothing, <:AbstractDict}` field.
 
 # Examples
@@ -222,7 +222,7 @@ end
 
 # Description
 
-Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in portfolio optimisation, each offering different computational and numerical properties.
+Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in [`Portfolio`](@ref) optimisation, each offering different computational and numerical properties.
 
 See also: [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
@@ -252,7 +252,7 @@ abstract type SDFormulation end
 
 # Description
 
-Abstract type for Mean-Variance formulations using quadratic variance expressions.
+Abstract type for Mean-Variance formulations using quadratic variance expressions for [`Portfolio`](@ref) optimisations.
 
 See also: [`SDFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
@@ -281,7 +281,7 @@ Where:
 
 # Behaviour
 
-  - Produces [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for `sd_risk` in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for `sd_risk` in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - May have different numerical stability properties compared to direct SD formulations.
   - Risk is expressed in terms of the variance (squared standard deviation).
@@ -293,7 +293,7 @@ abstract type SDSquaredFormulation <: SDFormulation end
 
 # Description
 
-Explicit quadratic formulation for variance-based portfolio optimisation.
+Explicit quadratic formulation for variance-based [`Portfolio`](@ref) optimisation.
 
 See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
@@ -303,7 +303,8 @@ Implements the classical quadratic form of portfolio variance:
 
 ```math
 \\begin{align}
-\\sigma^2 &= \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\,.
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\\\
+\\textrm{s.t.} &\\qquad \\sigma^2 = \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\,.
 \\end{align}
 ```
 
@@ -316,13 +317,14 @@ Where:
 # Behaviour
 
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dot(w, sigma, w)`.
+  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - No additional variables or constraints introduced.
   - Requires a solver capable of handling quadratic objectives.
   - Performance may degrade for large portfolios.
 
 # Examples
 
-```julia
+```@example
 # Using portfolio's built-in covariance
 sd_risk = SD(; formulation = QuadSD())
 
@@ -339,7 +341,7 @@ struct QuadSD <: SDSquaredFormulation end
 
 # Description
 
-Second-Order Cone (SOC) formulation for variance-based portfolio optimisation.
+Second-Order Cone (SOC) formulation for variance-based [`Portfolio`](@ref) optimisation.
 
 See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
@@ -349,8 +351,8 @@ Reformulates the quadratic variance expression using second-order cone constrain
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\min} &\\qquad \\sigma^2\\\\
-\\textrm{s.t.} &\\qquad \\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\rVert_{2} \\leq \\sigma\\,.
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\\\
+\\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
 \\end{align}
 ```
 
@@ -364,17 +366,17 @@ Where:
 
   - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
   - Defines a standard deviation variable `dev`.
-  - Produces a  [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dev^2`.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dev^2`.
+  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - Often more numerically stable than direct quadratic formulation.
   - Better scaling properties for large portfolios.
   - Compatible with specialized conic solvers.
-  - Requires solver with Second-Order Cone constraint capability.
   - May introduce more variables but often leads to better solution times.
   - Particularly effective for large-scale problems.
 
 # Examples
 
-```julia
+```@example
 # Custom configuration with specific covariance matrix
 # Using portfolio's built-in covariance
 sd_risk = SD(; formulation = SOCSD())
@@ -393,7 +395,9 @@ struct SOCSD <: SDSquaredFormulation end
 
 # Description
 
-Linear standard deviation formulation using Second-Order Cone constraints.
+Linear standard deviation formulation using Second-Order Cone constraints for [`Portfolio`](@ref) optimisations.
+
+See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SD`](@ref).
 
 # Mathematical Description
 
@@ -401,8 +405,8 @@ Reformulates the affine standard deviation expression using second-order cone co
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\min} &\\qquad \\sigma\\\\
-\\textrm{s.t.} &\\qquad \\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\rVert_{2} \\leq \\sigma\\,.
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma\\\\
+\\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
 \\end{align}
 ```
 
@@ -412,15 +416,12 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma`` is the portfolio standard deviation.
 
-# Implementation Details
+# Behaviour
 
   - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
   - Defines a standard deviation variable `dev`.
   - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
-
-# Advantages
-
-  - Strictly convex risk function (compatible with [`NOC`](@ref) optimisations).
+  - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
   - Direct optimisation of standard deviation rather than variance.
   - Often better numerical properties than squared formulations.
   - Compatible with specialized conic solvers.
@@ -428,7 +429,7 @@ Where:
 
 # Examples
 
-```julia
+```@example
 # Using portfolio's built-in covariance
 sd_risk = SD(; formulation = SimpleSD())
 
@@ -437,8 +438,6 @@ my_sigma = [1.0 0.2; 0.2 1.0]
 sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SimpleSD(),
              sigma = my_sigma)
 ```
-
-See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`NOC`](@ref).
 """
 struct SimpleSD <: SDFormulation end
 
@@ -447,13 +446,15 @@ struct SimpleSD <: SDFormulation end
 
 # Description
 
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref).
+
 ## [`Portfolio`](@ref)
 
-Implements portfolio standard deviation/variance risk using configurable `formulation` strategies.
+Implements portfolio Standard Deviation/Variance risk using configurable `formulation` strategies.
 
 ## [`HCPortfolio`](@ref)
 
-Implements portfolio standard deviation risk.
+Implements portfolio Standard Deviation risk.
 
 # Fields
 
@@ -467,17 +468,17 @@ Implements portfolio standard deviation risk.
 
   - If `isnothing(sigma)`: Uses covariance from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
   - If `sigma` provided: Uses custom covariance matrix.
-  - When setting `sigma` at construction or runtime, the matrix must be square (N×N).
+  - When setting `sigma` at construction or runtime, the matrix must be square (`N×N`).
 
 ## Formulation Impact on [`Portfolio`](@ref) Optimisation
 
-  - `QuadSD`: Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
-  - `SOCSD`: Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
-  - `SimpleSD`: Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
+  - [`QuadSD`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`SOCSD`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`SimpleSD`](@ref): Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr). Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
 
 # Examples
 
-```julia
+```@example
 # Basic usage with default settings
 sd_risk = SD()
 
@@ -488,6 +489,9 @@ sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
 
 # Using portfolio's built-in covariance
 sd_risk = SD(; formulation = QuadSD(), sigma = nothing)
+
+# For an NOC optimisation
+sd_risk = SD(; formulation = SimpleSD())
 ```
 """
 mutable struct SD <: RiskMeasure
@@ -518,6 +522,8 @@ end
 
 Mean Absolute Deviation risk measure implementation.
 
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref).
+
 # Fields
 
   - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure.
@@ -528,11 +534,11 @@ Mean Absolute Deviation risk measure implementation.
 
 ## [`Portfolio`](@ref) Optimisation
 
-  - If `isnothing(mu)`: the implementation uses expected returns vector from the [`Portfolio`](@ref) instance.
+  - If `isnothing(mu)`: use the expected returns vector from the [`Portfolio`](@ref) instance.
 
 ## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk`](@ref).
 
-  - If `isnothing(w)`: the implementation does not use a weight vector when computing the mean portfolio return.
+  - If `isnothing(w)`: computes the unweighted mean portfolio return.
 
 # Examples
 
@@ -564,22 +570,24 @@ end
 
 Semi Standard Deviation risk measure implementation.
 
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref).
+
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
-  - `target::T1 = 0.0`: Minimum return threshold for downside classification
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: Optional T×1 vector of weights for expected return calculation
-  - `mu::Union{<:AbstractVector, Nothing} = nothing`: Optional N×1 vector of expected asset returns
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure.
+  - `target::T1 = 0.0`: Minimum return threshold for downside classification.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: Optional T×1 vector of weights for expected return calculation.
+  - `mu::Union{<:AbstractVector, Nothing} = nothing`: Optional N×1 vector of expected asset returns.
 
 # Behaviour
 
 ## [`Portfolio`](@ref) Optimisation
 
-  - If `isnothing(mu)`: the implementation uses expected returns vector from the [`Portfolio`](@ref) instance.
+  - If `isnothing(mu)`: use the expected returns vector from the [`Portfolio`](@ref) instance.
 
 ## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk`](@ref).
 
-  - If `isnothing(w)`: the implementation does not use a weight vector when computing the mean portfolio return.
+  - If `isnothing(w)`: computes the unweighted mean portfolio return.
 
 # Examples
 
@@ -588,8 +596,9 @@ Semi Standard Deviation risk measure implementation.
 ssd = SSD()
 
 # Custom configuration with specific target
-ssd = SSD(; settings = RMSettings(; scale = 1.5), target = 0.02,  # 2% minimum return threshold
-          w = eweights(1:100, 0.03; scale = true), mu = rand(10))
+w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
+mu = rand(10)             # Expected returns
+ssd = SSD(; settings = RMSettings(; scale = 2.0), w = w, mu = mu)
 ```
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
@@ -609,14 +618,10 @@ end
 
 First Lower Partial Moment (Omega ratio) risk measure.
 
-# Type Parameters
-
-  - `T1`: Numeric type for the target threshold
-
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
-  - `target::T1`: Minimum return threshold for downside classification
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
+  - `target::T1 = 0.0`: Minimum return threshold for downside classification
 
 # Notes
 
@@ -625,8 +630,8 @@ First Lower Partial Moment (Omega ratio) risk measure.
 
 # Examples
 
-```julia
-# Default configuration (target = 0.0)
+```@example
+# Default configuration
 flpm = FLPM()
 
 # Custom target return
@@ -652,8 +657,8 @@ Second Lower Partial Moment (Sortino ratio) risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
-  - `target::T1`: Minimum return threshold for downside classification
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
+  - `target::T1 = 0.0`: Minimum return threshold for downside classification
 
 # Notes
 
@@ -662,7 +667,7 @@ Second Lower Partial Moment (Sortino ratio) risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration (target = 0.0)
 slpm = SLPM()
 
@@ -685,7 +690,7 @@ Worst Realization risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
 
 # Notes
 
@@ -694,7 +699,7 @@ Worst Realization risk measure.
 
 # Examples
 
-```julia
+```@example
 # Basic usage
 wr = WR()
 
@@ -720,7 +725,7 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
   - `alpha::T1`: Significance level, must be in (0,1)
 
 # Notes
@@ -733,7 +738,7 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration (α = 0.05)
 cvar = CVaR()
 
@@ -767,7 +772,7 @@ Entropic Value at Risk risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings
+  - `settings::RMSettings = RMSettings()`: Configuration settings
   - `alpha::T1`: Significance level, must be in (0,1)
   - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for exponential cone problems
 
@@ -782,7 +787,7 @@ Entropic Value at Risk risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration
 evar = EVaR()
 
@@ -820,7 +825,7 @@ Relativistic Value at Risk risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings
+  - `settings::RMSettings = RMSettings()`: Configuration settings
   - `alpha::T1`: Significance level, must be in (0,1)
   - `kappa::T2`: Relativistic deformation parameter, must be in (0,1)
   - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for 3D power cone problems
@@ -836,7 +841,7 @@ Relativistic Value at Risk risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration
 rlvar = RLVaR()
 
@@ -872,7 +877,7 @@ Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
 
 # Notes
 
@@ -880,7 +885,7 @@ Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
 
 # Examples
 
-```julia
+```@example
 # Basic usage
 mdd = MDD()
 
@@ -902,7 +907,7 @@ Average Drawdown risk measure for uncompounded returns.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
 
 # Notes
 
@@ -911,7 +916,7 @@ Average Drawdown risk measure for uncompounded returns.
 
 # Examples
 
-```julia
+```@example
 # Basic usage
 add = ADD()
 
@@ -937,7 +942,7 @@ Conditional Drawdown at Risk risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
   - `alpha::T1`: Significance level, must be in (0,1)
 
 # Notes
@@ -950,7 +955,7 @@ Conditional Drawdown at Risk risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration (α = 0.05)
 cdar = CDaR()
 
@@ -980,7 +985,7 @@ Ulcer Index risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
 
 # Notes
 
@@ -1012,7 +1017,7 @@ Entropic Drawdown at Risk risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings
+  - `settings::RMSettings = RMSettings()`: Configuration settings
   - `alpha::T1`: Significance level, must be in (0,1)
   - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for exponential cone problems
 
@@ -1027,7 +1032,7 @@ Entropic Drawdown at Risk risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration
 edar = EDaR()
 
@@ -1065,7 +1070,7 @@ Relativistic Drawdown at Risk risk measure.
 
 # Fields
 
-  - `settings::RMSettings`: Configuration settings
+  - `settings::RMSettings = RMSettings()`: Configuration settings
   - `alpha::T1`: Significance level, must be in (0,1)
   - `kappa::T2`: Relativistic deformation parameter, must be in (0,1)
   - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for 3D power cone problems
@@ -1081,7 +1086,7 @@ Relativistic Drawdown at Risk risk measure.
 
 # Examples
 
-```julia
+```@example
 # Default configuration
 rldar = RLDaR()
 
@@ -1117,7 +1122,7 @@ Square root kurtosis risk measure implementation for portfolio optimisation.
 
 # Fields
 
-  - `settings::RMSettings`: Risk measure configuration settings
+  - `settings::RMSettings = RMSettings()`: Risk measure configuration settings
 
   - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
   - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
@@ -1132,7 +1137,7 @@ Square root kurtosis risk measure implementation for portfolio optimisation.
 
 # Examples
 
-```julia
+```@example
 # Basic usage with default settings
 kurt = Kurt()
 
@@ -1169,9 +1174,9 @@ Square root semikurtosis risk measure implementation for portfolio optimisation.
 
 # Fields
 
-  - `settings::RMSettings`: Risk measure configuration settings
+  - `settings::RMSettings = RMSettings()`: Risk measure configuration settings
 
-  - `target::T1`: Minimum return threshold for downside classification
+  - `target::T1 = 0.0`: Minimum return threshold for downside classification
   - `w::Union{<:AbstractWeights, Nothing}`: Optional T×1 vector of weights for expected return calculation
   - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
 
@@ -1189,7 +1194,7 @@ Square root semikurtosis risk measure implementation for portfolio optimisation.
 
 # Examples
 
-```julia
+```@example
 # Basic usage with default settings
 skurt = SKurt()
 
