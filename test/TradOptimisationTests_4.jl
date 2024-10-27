@@ -2404,3 +2404,21 @@ end
     w40 = optimise!(portfolio; rm = rm, obj = obj)
     @test dot(portfolio.mu, w40.weights) >= ret8
 end
+
+@testset "All negative expected returns, NoKelly" begin
+    prices = TimeArray(CSV.File("./assets/stock_prices3.csv"); timestamp = :date)
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
+                      set_sskew = false)
+    w1 = optimise!(portfolio; obj = Sharpe(; rf = 3.5 / 100 / 252))
+    wt = [0.00311521181774291, 0.015041130948158468, 0.014275036280673663,
+          0.03378501078187111, 0.0033133981428761583, 0.023387653909272554,
+          0.8193621567911251, 0.053968628117395404, 0.03375177321088466]
+    @test isapprox(w1.weights, wt)
+end

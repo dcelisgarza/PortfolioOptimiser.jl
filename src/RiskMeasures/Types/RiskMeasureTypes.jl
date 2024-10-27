@@ -642,7 +642,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfol
 flpm = FLPM()
 
 # Custom target return
-flpm = FLPM(; target = 0.01)  # 1% minimum return threshold
+flpm = FLPM(; target = 0.01)  # 1 % minimum return threshold
 ```
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
@@ -746,7 +746,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration (α = 0.05)
+# Default configuration
 cvar = CVaR()
 
 # Custom significance level
@@ -784,12 +784,12 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems.
 
 # Behaviour
 
   - Requires solver capability for exponential cone problems.
-  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`.
+  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
 
 ## Validation
 
@@ -802,7 +802,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 evar = EVaR()
 
 # Custom configuration with specific solver
-evar = EVaR(; alpha = 0.025,  # 2.5% significance level
+evar = EVaR(; alpha = 0.025,  # 2.5 % significance level
             solvers = Dict("solver" => my_solver))
 ```
 """
@@ -842,12 +842,12 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: significance level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for 3D power cone problems.
 
 # Behaviour
 
   - Requires solver capability for 3D power cone problems.
-  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`.
+  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
 
 ## Validation
 
@@ -861,8 +861,8 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 rlvar = RLVaR()
 
 # Custom configuration
-rlvar = RLVaR(; alpha = 0.05,   # 5% significance level
-              kappa = 0.3,    # Deformation parameter
+rlvar = RLVaR(; alpha = 0.07,   # 7 % significance level
+              kappa = 0.2,      # Deformation parameter
               solvers = Dict("solver" => my_solver))
 ```
 """

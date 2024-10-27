@@ -26,8 +26,8 @@ function set_returns(obj::Sharpe, ::NoKelly, model, mu_l::Real; mu::AbstractVect
     if !isempty(mu)
         w = model[:w]
         k = model[:k]
+        @expression(model, ret, dot(mu, w))
         if !all(mu .< zero(eltype(mu)))
-            @expression(model, ret, dot(mu, w))
             @constraint(model, ret - obj.rf * k == 1)
         else
             risk = model[:risk]
