@@ -1683,7 +1683,7 @@ end
 
 """
 ```
-calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref). Inputs correspond to those of [`_RLVaR`](@ref).
@@ -1692,8 +1692,8 @@ Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref). Inputs correspond to those of 
 
   - `r`: risk.
 """
-function calc_risk(rvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLVaR(X * w, rvar.solvers, rvar.alpha, rvar.kappa)
+function calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _RLVaR(X * w, rlvar.solvers, rlvar.alpha, rlvar.kappa)
 end
 
 """
@@ -1788,7 +1788,7 @@ end
 
 """
 ```
-calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref). Inputs correspond to those of [`_RLDaR`](@ref).
@@ -1797,8 +1797,8 @@ Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref). Inputs correspond to those of 
 
   - `r`: risk.
 """
-function calc_risk(rdar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLDaR(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+function calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _RLDaR(X * w, rldar.solvers, rldar.alpha, rldar.kappa)
 end
 
 """
@@ -1893,7 +1893,7 @@ end
 
 """
 ```
-calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(rldar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref). Inputs correspond to those of [`_RLDaR_r`](@ref).
@@ -1902,8 +1902,8 @@ Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref). Inputs correspond to those
 
   - `r`: risk.
 """
-function calc_risk(rdar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLDaR_r(X * w, rdar.solvers, rdar.alpha, rdar.kappa)
+function calc_risk(rldar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _RLDaR_r(X * w, rldar.solvers, rldar.alpha, rldar.kappa)
 end
 
 """
