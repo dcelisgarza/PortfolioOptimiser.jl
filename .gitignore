@@ -5,4 +5,5 @@
 /test/0_WorkingTests.jl
 /shadow_realm/
 /docs/shadow_realm/
+/docs/src/examples/*.md
 .CondaPkg
