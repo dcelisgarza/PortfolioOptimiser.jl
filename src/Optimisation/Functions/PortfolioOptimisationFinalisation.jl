@@ -103,7 +103,9 @@ function convex_optimisation(port, obj, type, class)
     end
 
     return if success
-        isempty(solvers_tried) ? port.fail = Dict() : port.fail = solvers_tried
+        if !isempty(solvers_tried)
+            port.fail = solvers_tried
+        end
         weights = _cleanup_weights(port, obj, type, class)
         port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
     else

@@ -3,6 +3,7 @@ function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = S
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
                    str_names::Bool = false)
+    empty!(port.fail)
     return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
 end
 

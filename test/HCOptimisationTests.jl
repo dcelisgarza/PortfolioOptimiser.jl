@@ -1775,6 +1775,13 @@ end
         num_assets += size(Matrix(val[:Clarabel_Trad][:port]), 1)
     end
     @test num_assets == 20
+
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
+                      set_sskew = false)
+    cluster_assets!(portfolio)
+    portfolio.cov[3, :] .= portfolio.cov[:, 3] .= NaN
+    @test isempty(optimise!(portfolio))
+    @test !isempty(portfolio.fail)
 end
 
 @testset "HRP and HERC risk scale" begin
