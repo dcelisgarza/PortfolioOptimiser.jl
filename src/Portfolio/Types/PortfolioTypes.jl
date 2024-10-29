@@ -736,7 +736,6 @@ end
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     if sym == :short_u
         if obj.short
-            println(val)
             @smart_assert(obj.short_budget >=
                           val >=
                           zero(promote_type(typeof(obj.short_budget), typeof(val))))
