@@ -450,7 +450,7 @@ The rest of the inputs directly set their corresponding property.
   - `portfolio`: an instance of [`Portfolio`](@ref).
 """
 function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
-                   returns::DataFrame = DataFrame(),
+                   ret_type::Symbol = :simple, returns::DataFrame = DataFrame(),
                    ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    timestamps::AbstractVector = Vector{Date}(undef, 0),
                    assets::AbstractVector = Vector{String}(undef, 0),
@@ -508,7 +508,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    alloc_solvers::AbstractDict = Dict(), alloc_fail::AbstractDict = Dict(),
                    alloc_model::JuMP.Model = JuMP.Model())
     if !isempty(prices)
-        returns = dropmissing!(DataFrame(percentchange(prices)))
+        returns = dropmissing!(DataFrame(percentchange(prices, ret_type)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
     end
 
@@ -1204,7 +1204,7 @@ The rest of the inputs directly set their corresponding property.
   - `portfolio`: an instance of [`HCPortfolio`](@ref).
 """
 function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
-                     returns::DataFrame = DataFrame(),
+                     ret_type::Symbol = :simple, returns::DataFrame = DataFrame(),
                      ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
                      assets::AbstractVector = Vector{String}(undef, 0),
@@ -1233,7 +1233,7 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      alloc_fail::AbstractDict = Dict(),
                      alloc_model::JuMP.Model = JuMP.Model())
     if !isempty(prices)
-        returns = dropmissing!(DataFrame(percentchange(prices)))
+        returns = dropmissing!(DataFrame(percentchange(prices, ret_type)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
     end
     if !isempty(returns)
