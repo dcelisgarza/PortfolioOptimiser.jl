@@ -51,8 +51,8 @@ function _SVariance(x::AbstractVector, target::Real = 0.0,
                     w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
     mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = mu .- x
-    return sum(val[val .>= target] .^ 2) / (T - 1)
+    val = x .- mu
+    return sum(val[val .<= target] .^ 2) / (T - 1)
 end
 
 """
