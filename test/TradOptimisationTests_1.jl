@@ -23,6 +23,20 @@
     @test !isempty(portfolio.fail)
     @test haskey(portfolio.fail, :Clarabel_Trad)
     @test length(keys(portfolio.fail[:Clarabel_Trad])) == 6
+
+    portfolio.solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                :check_sol => (allow_local = true,
+                                                               allow_almost = true),
+                                                :params => Dict("verbose" => false,
+                                                                "max_iter" => 1)),
+                             :Clarabel2 => Dict(:solver => Clarabel.Optimizer,
+                                                :check_sol => (allow_local = true,
+                                                               allow_almost = true),
+                                                :params => Dict("verbose" => false)))
+    optimise!(portfolio; rm = SD())
+    @test !isempty(portfolio.fail)
+    @test haskey(portfolio.fail, :Clarabel1_Trad)
+    @test length(keys(portfolio.fail[:Clarabel1_Trad])) == 6
 end
 
 @testset "SD" begin

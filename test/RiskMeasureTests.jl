@@ -202,4 +202,19 @@ end
     @test rm.beta_i == 0.05
     rm.b_sim = 5
     @test rm.b_sim == 5
+
+    settings = RMSettings(; scale = 0.1, ub = 0.5)
+    @test settings.scale == 0.1
+    @test settings.ub == 0.5
+    settings.scale = 0.6
+    settings.ub = 10.0
+    @test settings.scale == 0.6
+    @test settings.ub == 10.0
+    settings.ub = Inf
+    @test isinf(settings.ub)
+
+    hcsettings = HCRMSettings(; scale = 0.1)
+    @test hcsettings.scale == 0.1
+    hcsettings.scale = 3.0
+    @test hcsettings.scale == 3.0
 end

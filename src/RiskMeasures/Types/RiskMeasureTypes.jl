@@ -169,6 +169,16 @@ function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
     end
     return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
 end
+function Base.setproperty!(obj::RMSettings, sym::Symbol, val)
+    if sym == :scale
+        @smart_assert(val > zero(val))
+    elseif sym == :ub
+        if isfinite(val)
+            @smart_assert(val > zero(val))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
 
 """
     mutable struct HCRMSettings{T1 <: Real}
@@ -214,6 +224,12 @@ end
 function HCRMSettings(; scale::Real = 1.0)
     @smart_assert(scale > zero(scale))
     return HCRMSettings{typeof(scale)}(scale)
+end
+function Base.setproperty!(obj::HCRMSettings, sym::Symbol, val)
+    if sym == :scale
+        @smart_assert(val > zero(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 """

@@ -736,18 +736,10 @@ end
 function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
     if sym == :short_u
         if obj.short
+            println(val)
             @smart_assert(obj.short_budget >=
                           val >=
                           zero(promote_type(typeof(obj.short_budget), typeof(val))))
-
-            @smart_assert(obj.budget + obj.short_budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.short_budget),
-                                            typeof(obj.long_u))))
-        else
-            @smart_assert(obj.budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.long_u))))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :short_budget
@@ -760,18 +752,10 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                           obj.long_u >=
                           zero(promote_type(typeof(obj.budget), typeof(val),
                                             typeof(obj.long_u))))
-        else
-            @smart_assert(obj.budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.long_u))))
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :long_u
         if obj.short
-            @smart_assert(obj.short_budget >=
-                          obj.short_u >=
-                          zero(promote_type(typeof(obj.short_budget), typeof(obj.short_u))))
-
             @smart_assert(obj.budget + obj.short_budget >=
                           val >=
                           zero(promote_type(typeof(obj.budget), typeof(obj.short_budget),
@@ -784,10 +768,6 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :budget
         if obj.short
-            @smart_assert(obj.short_budget >=
-                          obj.short_u >=
-                          zero(promote_type(typeof(obj.short_budget), typeof(obj.short_u))))
-
             @smart_assert(val + obj.short_budget >=
                           obj.long_u >=
                           zero(promote_type(typeof(val), typeof(obj.short_budget),
