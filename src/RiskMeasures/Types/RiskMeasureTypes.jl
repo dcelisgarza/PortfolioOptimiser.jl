@@ -36,8 +36,6 @@ To ensure concrete subtypes will handle both [`Portfolio`](@ref) and [`HCPortfol
 # Examples
 
 ```@example
-using PortfolioOptimsier
-
 # Creating a concrete risk measure that subtypes RiskMeasure
 struct CustomRisk <: RiskMeasure
     settings::RMSettings
@@ -87,8 +85,6 @@ Concrete subtypes must implement:
 # Examples
 
 ```@example
-using PortfolioOptimiser
-
 # Creating a concrete risk measure that subtypes RiskMeasure
 struct CustomHCRisk <: HCRiskMeasure
     settings::HCRMSettings
@@ -146,14 +142,14 @@ With `R(w)` being a risk measure.
 # Examples
 
 ```@example
-# Default settings
+# Default configuration
 settings = RMSettings()
 
 # Risk-averse configuration, whatever risk measure this is applied 
 # to will contribute 8 * risk to the risk expression
 settings = RMSettings(; scale = 8.0)
 
-# Risk not added to the objective but constrainted.
+# Risk not added to the objective but constrainted
 settings = RMSettings(; flag = false, ub = 0.25)
 ```
 """
@@ -211,7 +207,7 @@ With `R(w)` being a risk measure.
 # Examples
 
 ```@example
-# Default settings
+# Default configuration
 settings = HCRMSettings()
 
 # Contribute more risk to the risk expression
@@ -463,7 +459,7 @@ struct SimpleSD <: SDFormulation end
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`PortClass`](@ref).
 
 ## [`Portfolio`](@ref)
 
@@ -483,7 +479,11 @@ Implements portfolio Standard Deviation risk.
 
 ## Covariance Matrix Usage
 
-  - If `isnothing(sigma)`: uses covariance from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `isnothing(sigma)`:
+
+      + For [`Portfolio`](@ref): uses the covariance matrix `cov`, `fm_cov`, `bl_cov` or `blfm_cov`, depending on the `class::`[`PortClass`](@ref) parameter of [`optimise!`](@ref).
+      + For [`HCPortfolio`](@ref): uses the covariance matrix `cov`.
+
   - If `sigma` provided: uses custom covariance matrix.
 
 ### Validation
@@ -499,7 +499,7 @@ Implements portfolio Standard Deviation risk.
 # Examples
 
 ```@example
-# Basic usage with default settings
+# Default configuration
 sd_risk = SD()
 
 # Custom configuration with specific covariance matrix
@@ -565,7 +565,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio
 # Examples
 
 ```@example
-# Basic usage with default settings
+# Default configuration
 mad = MAD()
 
 # Custom configuration
@@ -592,6 +592,8 @@ end
 
 Semi Standard Deviation risk measure implementation.
 
+  - Measures the standard deviation equal to or below the `target` return threshold.
+
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
 
 # Fields
@@ -614,7 +616,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Basic usage with default settings
+# Default configuration
 ssd = SSD()
 
 # Custom configuration with specific target
@@ -642,7 +644,7 @@ end
 
 First Lower Partial Moment (Omega ratio) risk measure.
 
-  - Measures downside dispersion.
+  - Measures the dispersion equal to or below the `target` return threshold.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
 
@@ -676,7 +678,7 @@ end
 
 Second Lower Partial Moment (Sortino ratio) risk measure.
 
-  - Measures downside dispersion.
+  - Measures the dispersion equal to or below the `target` return threshold.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
 
@@ -688,7 +690,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfol
 # Examples
 
 ```@example
-# Default configuration (target = 0.0)
+# Default configuration
 slpm = SLPM()
 
 # Custom settings
@@ -708,10 +710,10 @@ end
 
 # Description
 
-Worst Realization risk measure.
+Worst Realization/Return risk measure.
 
   - Useful for extremely conservative risk assessment.
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref).
 
@@ -722,7 +724,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Basic usage
+# Default configuration
 wr = WR()
 
 # Custom settings
@@ -744,7 +746,7 @@ end
 Conditional Value at Risk (Expected Shortfall) risk measure.
 
   - Measures expected loss in the worst `alpha %` of cases.
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
@@ -792,7 +794,7 @@ end
 Entropic Value at Risk risk measure.
 
   - It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
@@ -847,7 +849,7 @@ end
 Relativistic Value at Risk risk measure.
 
   - It is a generalisation of the [`EVaR`](@ref).
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
   - ``\\lim_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
 
@@ -906,16 +908,19 @@ end
 
 Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
 
-  - Measures the largest peak-to-trough decline in uncompounded returns
+  - Measures the largest peak-to-trough decline in uncompounded returns.
+  - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
 # Examples
 
 ```@example
-# Basic usage
+# Default configuration
 mdd = MDD()
 
 # Custom settings
@@ -934,19 +939,19 @@ end
 
 Average Drawdown risk measure for uncompounded returns.
 
+  - Measures the average of all peak-to-trough declines in uncompounded returns.
+  - Provides a more balanced view than the maximum drawdown [`MDD`](@ref).
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`MDD`](@ref).
+
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
-
-# Notes
-
-  - Measures the average of all peak-to-trough declines
-  - Provides a more balanced view than Maximum Drawdown
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
 # Examples
 
 ```@example
-# Basic usage
+# Default configuration
 add = ADD()
 
 # Custom settings
@@ -965,31 +970,30 @@ end
 
 Conditional Drawdown at Risk risk measure.
 
-# Type Parameters
+  - Measures expected peak-to-trough loss in the worst `alpha %` of cases.
+  - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-  - `T1`: Numeric type for the significance level
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
-  - `alpha::T1`: Significance level, must be in (0,1)
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
 
-# Notes
+# Behaviour
 
-  - Measures expected loss in the worst α% of cases
+## Validation
 
-# Validation
-
-  - Ensures 0 < α < 1
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
 
 # Examples
 
 ```@example
-# Default configuration (α = 0.05)
+# Default configuration
 cdar = CDaR()
 
 # Custom significance level
-cdar = CDaR(; settings = RMSettings(; scale = 1.0), alpha = 0.01) # 1% significance level
+cdar = CDaR(; settings = RMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
 """
 mutable struct CDaR{T1 <: Real} <: RiskMeasure
@@ -1012,21 +1016,23 @@ end
 
 Ulcer Index risk measure.
 
+  - Penalizes larger drawdowns more than smaller ones.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings for the risk measure
-
-# Notes
-
-  - Penalizes larger drawdowns more than smaller ones
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
 # Examples
 
+```@example
+# Default configuration
 uci = UCI()
 
 # Custom settings
-
 uci = UCI(; settings = RMSettings(; scale = 1.5))
+```
 """
 struct UCI <: RiskMeasure
     settings::RMSettings
@@ -1040,24 +1046,25 @@ end
 
 Entropic Drawdown at Risk risk measure.
 
-# Type Parameters
+  - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
+  - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-  - `T1`: Numeric type for the significance level
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings
-  - `alpha::T1`: Significance level, must be in (0,1)
-  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for exponential cone problems
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems.
 
-# Notes
+# Behaviour
 
-  - Requires solver capability for exponential cone problems
-  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Requires solver capability for exponential cone problems.
+  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
 
-# Validation
+## Validation
 
-  - Ensures 0 < α < 1
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
 
 # Examples
 
@@ -1066,7 +1073,7 @@ Entropic Drawdown at Risk risk measure.
 edar = EDaR()
 
 # Custom configuration with specific solver
-edar = EDaR(; alpha = 0.025,  # 2.5% significance level
+edar = EDaR(; alpha = 0.025,  # 2.5 % significance level
             solvers = Dict("solver" => my_solver))
 ```
 """
@@ -1090,28 +1097,33 @@ end
 """
     mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
 
+# Description
+
 Relativistic Drawdown at Risk risk measure.
 
-# Type Parameters
+  - It is a generalisation of the [`EDaR`](@ref).
+  - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
+  - ``\\lim_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR}(\\bm{X},\\, \\alpha)``
+  - ``\\lim_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD}(\\bm{X})``
 
-  - `T1`: Numeric type for the significance level
-  - `T2`: Numeric type for the relativistic deformation parameter
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Configuration settings
-  - `alpha::T1`: Significance level, must be in (0,1)
-  - `kappa::T2`: Relativistic deformation parameter, must be in (0,1)
-  - `solvers::Union{<:AbstractDict, Nothing}`: Optional JuMP-compatible solvers for 3D power cone problems
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+  - `kappa::T1 = 0.3`: significance level, `kappa ∈ (0, 1)`.
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for 3D power cone problems.
 
-# Notes
+# Behaviour
 
-  - Requires solver capability for 3D power cone problems
-  - Uses [`Portfolio`](@ref)/[`HCPortfolio`](@ref) solvers if `solvers` is `nothing`
+  - Requires solver capability for 3D power cone problems.
+  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
 
-# Validation
+## Validation
 
-  - Ensures both α and κ are in (0,1)
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+  - When setting `kappa` at construction or runtime, `kappa ∈ (0, 1)`.
 
 # Examples
 
@@ -1120,8 +1132,8 @@ Relativistic Drawdown at Risk risk measure.
 rldar = RLDaR()
 
 # Custom configuration
-rldar = RLDaR(; alpha = 0.05,   # 5% significance level
-              kappa = 0.3,    # 30% Deformation parameter
+rldar = RLDaR(; alpha = 0.05, # 5 % significance level
+              kappa = 0.3,    # 30 % Deformation parameter
               solvers = Dict("solver" => my_solver))
 ```
 """
@@ -1147,27 +1159,31 @@ end
 """
     mutable struct Kurt <: RiskMeasure
 
-Square root kurtosis risk measure implementation for portfolio optimisation.
+# Description
+
+Square Root Kurtosis risk measure implementation for portfolio optimisation.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`SKurt`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Risk measure configuration settings
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
+  - `kt::Union{AbstractMatrix, Nothing} = nothing`: optional cokurtosis matrix.
 
-  - `w::Union{<:AbstractWeights, Nothing}`: Optional `T×1` vector of weights for expected return calculation
-  - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
+# Behaviour
 
-      + If `nothing`: Uses the cokurtosis matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
-      + Otherwise: Uses the provided matrix
+  - If `isnothing(kt)`: uses the semi cokurtosis matrix `skurt` from the [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `kt` provided: uses custom semi cokurtosis matrix.
 
-# Validation
+## Validation
 
-  - When setting `kt`, the matrix must be square (`N^2×N^2`)
-  - Includes runtime dimension checks for cokurtosis matrix
+  - When setting `kt` at construction or runtime, the matrix must be square (`N²×N²`).
 
 # Examples
 
 ```@example
-# Basic usage with default settings
+# Default configuration
 kurt = Kurt()
 
 # Custom configuration with specific cokurtosis matrix
@@ -1195,36 +1211,34 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasure
 
-Square root semikurtosis risk measure implementation for portfolio optimisation.
+# Description
 
-# Type Parameters
+Square Root Semi Kurtosis risk measure implementation for portfolio optimisation.
 
-  - `T1`: Numeric type for the target threshold
+  - Measures the kurtosis equal to or below the `target` return threshold.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`Kurt`](@ref).
 
 # Fields
 
-  - `settings::RMSettings = RMSettings()`: Risk measure configuration settings
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `target::T1 = 0.0`: minimum return threshold for downside classification.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
+  - `kt::Union{AbstractMatrix, Nothing} = nothing`: optional cokurtosis matrix.
 
-  - `target::T1 = 0.0`: Minimum return threshold for downside classification
-  - `w::Union{<:AbstractWeights, Nothing}`: Optional `T×1` vector of weights for expected return calculation
-  - `kt::Union{AbstractMatrix, Nothing}`: Optional cokurtosis matrix
+# Behaviour
 
-      + If `nothing`: Uses the cokurtosis matrix from [`Portfolio`](@ref)/[`HCPortfolio`](@ref)
-      + Otherwise: Uses the provided matrix
+  - If `isnothing(kt)`: uses the cokurtosis from matrix `skurt` from the [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `kt` provided: uses custom cokurtosis matrix.
 
-# Notes
+## Validation
 
-  - Measures deviation only for returns below the target threshold
-
-# Validation
-
-  - When setting `kt`, the matrix must be square (`N^2×N^2`)
-  - Includes runtime dimension checks for cokurtosis matrix
+  - When setting `kt` at construction or runtime, the matrix must be square (`N²×N²`).
 
 # Examples
 
 ```@example
-# Basic usage with default settings
+# Default configuration
 skurt = SKurt()
 
 # Custom configuration with specific cokurtosis matrix
@@ -1251,17 +1265,29 @@ function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
 end
 
 """
+    mutable struct RG{T1 <: Real} <: RiskMeasure
+
+# Description
+
+Defines the Range risk measure.
+
+  - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default configuration
+rg = RG()
+
+# Custom settings
+rg = RG(; settings = RMSettings(; ub = 0.5))
 ```
-@kwdef mutable struct RG{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Defines the Range [`_RG`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct RG <: RiskMeasure
     settings::RMSettings
@@ -1271,19 +1297,40 @@ function RG(; settings::RMSettings = RMSettings())
 end
 
 """
+    mutable struct CVaRRG{T1 <: Real, T2 <: Real} <: RiskMeasure
+
+# Description
+
+Defines the Conditional Value at Risk Range risk measure.
+
+  - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`CVaR`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `alpha::T2 = 0.05`: significance level of gains, `beta ∈ (0, 1)`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+  - When setting `beta` at construction or runtime, `beta ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default configuration
+cdar = CVaRRG()
+
+# Custom significance level
+cdar = CVaRRG(; settings = RMSettings(; scale = 1.0), #
+              alpha = 0.01, # 1 % significance level losses 
+              beta = 0.03)  # 3 % significance level gains
 ```
-@kwdef mutable struct CVaRRG{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Defines the Conditional Value at Risk Range [`_CVaRRG`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
 """
 mutable struct CVaRRG{T1, T2} <: RiskMeasure
     settings::RMSettings
@@ -1304,22 +1351,35 @@ function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
 end
 
 """
-```
-@kwdef mutable struct OWASettings{T1<:AbstractVector{<:Real}}
-    approx::Bool = true
-    p::T1 = Float64[2, 3, 4, 10, 50]
-end
-```
+    mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
+
+# Description
 
 Defines the settings for Ordered Weight Array (OWA) risk measures.
 
-# Parameters
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
 
-  - `approx`:
+# Fields
 
-      + if `true`: use the approximate formulation based on power cone norms.
+  - `approx::Bool = true`: use the p-norm based approximation of the OWA risk measure optimisation.
+  - `p::T1 = Float64[2, 3, 4, 10, 50]`: vector of the p-norm orders to be used in the approximation.
 
-  - `p`: only used when `approx = true`. Vector of the order of p-norms to use in the approximation.
+# Behaviour
+
+  - `p` is only used when `approx == true`.
+
+# Examples
+
+```@example
+# Default configuration
+owa = OWASettings()
+
+# Use full risk measure formulation
+owa = OWASettings(; approx = false)
+
+# Use more p-norms
+owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128])
+```
 """
 mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
     approx::Bool
@@ -1331,19 +1391,32 @@ function OWASettings(; approx::Bool = true,
 end
 
 """
+    struct GMD <: RiskMeasure
+
+# Description
+
+Defines the Gini Mean Difference risk measure.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+
+# Examples
+
+```@example
+# Default configuration
+gmd = GMD()
+
+# Use full risk measure formulation
+gmd = GMD(; owa = OWASettings(; approx = false))
+
+# Use more p-norms and custom settings
+gmd = GMD(; settings = RMSettings(; scale = 1.7),
+          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
 ```
-@kwdef struct GMD <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    owa::OWASettings = OWASettings()
-end
-```
-
-Defines the Gini Mean Difference [`_GMD`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
 """
 struct GMD <: RiskMeasure
     settings::RMSettings
@@ -1354,25 +1427,43 @@ function GMD(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
 end
 
 """
+    mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasure
+
+# Description
+
+Defines the Tail Gini Difference risk measure.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `alpha_i::T1 = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha::T2 = 0.05`: end value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `a_sim::T3 = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha_i` at construction or runtime, `0 < alpha_i < alpha < 1`.
+  - When setting `alpha` at construction or runtime, `0 < alpha_i < alpha < 1`.
+  - When setting `a_sim` at construction or runtime, `a_sim > 0`.
+
+# Examples
+
+```@example
+# Default configuration
+tg = TG()
+
+# Use full risk measure formulation with custom parameters
+tg = TG(; alpha = 0.07, owa = OWASettings(; approx = false))
+
+# Use more p-norms and constrain risk without adding it to the problem's risk expression
+tg = TG(; settings = RMSettings(; flag = false, ub = 0.1),
+        owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
 ```
-@kwdef mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasure
-    settings::RMSettings
-    owa::OWASettings
-    alpha_i::T1 = 0.0001
-    alpha::T2 = 0.05
-    a_sim::T3 = 100
-end
-```
-
-Defines the Tail Gini Difference [`_TG`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 """
 mutable struct TG{T1, T2, T3} <: RiskMeasure
     settings::RMSettings
@@ -1400,31 +1491,51 @@ function Base.setproperty!(obj::TG, sym::Symbol, val)
 end
 
 """
+    mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasure
+
+# Description
+
+Defines the Tail Gini Difference Range risk measure.
+
+  - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`TG`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `alpha_i::T1 = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha::T2 = 0.05`: end value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `a_sim::T3 = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+  - `beta_i::T4 = 0.0001`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
+  - `beta::T5 = 0.05`: end value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
+  - `b_sim::T6 = 100`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha_i` at construction or runtime, `0 < alpha_i < alpha < 1`.
+  - When setting `alpha` at construction or runtime, `0 < alpha_i < alpha < 1`.
+  - When setting `a_sim` at construction or runtime, `a_sim > 0`.
+  - When setting `beta_i` at construction or runtime, `0 < beta_i < beta < 1`.
+  - When setting `beta` at construction or runtime, `0 < beta_i < beta < 1`.
+  - When setting `b_sim` at construction or runtime, `b_sim > 0`.
+
+# Examples
+
+```@example
+# Default configuration
+rtg = RTG()
+
+# Use full risk measure formulation with custom parameters
+rtg = RTG(; alpha = 0.07, b_sim = 200, owa = OWASettings(; approx = false))
+
+# Use more p-norms and constrain risk without adding it to the problem's risk expression
+rtg = RTG(; settings = RMSettings(; flag = false, ub = 0.1),
+          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
 ```
-mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasure
-    settings::RMSettings
-    owa::OWASettings
-    alpha_i::T1 = 0.0001
-    alpha::T2 = 0.05
-    a_sim::T3 = 100
-    beta_i::T4 = 0.0001
-    beta::T5 = 0.05
-    b_sim::T6 = 100
-end
-```
-
-Defines the Tail Gini Difference Range [`_TGRG`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-  - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
-  - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
-  - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 """
 mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     settings::RMSettings
@@ -1472,17 +1583,34 @@ end
 end
 ```
 
-Defines the generic Ordered Weight Array [`_OWA`](@ref) risk measure.
+# Description
 
-# Parameters
+Defines the generic Ordered Weight Array risk measure.
 
-  - `settings`: risk measure settings [`RMSettings`](@ref).
+  - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-  - `owa`: OWA risk measure settings [`OWASettings`](@ref).
-  - `w`: optional `T×1` vector of ordered weights.
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
-      + if `nothing`: use [`owa_gmd`](@ref) to compute the weights.
-      + else: use this value.
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: `T×1` ordered weight vector of arbitrary L-moments generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
+
+# Examples
+
+```@example
+# Default configuration
+w = owa_l_moment_crm(10)
+owa = OWA(; w = w)
+
+# Use full risk measure formulation with custom parameters
+owa = OWA(; w = w, owa = OWASettings(; approx = false))
+
+# Use more p-norms and constrain risk without adding it to the problem's risk expression
+owa = OWA(; w = w, settings = RMSettings(; flag = false, ub = 0.1),
+          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
+```
 """
 mutable struct OWA <: RiskMeasure
     settings::RMSettings
@@ -1940,6 +2068,7 @@ end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
 const RMSigma = Union{SD, Variance}
+const RMOWA = Union{GMD, TG, TGRG, OWA}
 
 export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, QuadSD, SOCSD, SimpleSD, SD,
        MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,

@@ -44,49 +44,49 @@ end
     w5 = owa_l_moment_crm(200; k = 2, method = CRRA(; g = 0.75))
     w6 = owa_l_moment_crm(200; k = 4, method = CRRA(; g = 0.75))
 
-    w7 = owa_l_moment_crm(200; k = 2, method = MaxEntropy(; max_phi = 0.25),
-                          solvers = solvers)
-    w8 = owa_l_moment_crm(200; k = 4, method = MaxEntropy(; max_phi = 0.25),
-                          solvers = solvers)
-    w9 = owa_l_moment_crm(200; k = 2, method = MaxEntropy(; max_phi = 0.5),
-                          solvers = solvers)
-    w10 = owa_l_moment_crm(200; k = 4, method = MaxEntropy(; max_phi = 0.5),
-                           solvers = solvers)
-    w11 = owa_l_moment_crm(200; k = 2, method = MaxEntropy(; max_phi = 0.75),
-                           solvers = solvers)
-    w12 = owa_l_moment_crm(200; k = 4, method = MaxEntropy(; max_phi = 0.75),
-                           solvers = solvers)
+    w7 = owa_l_moment_crm(200; k = 2,
+                          method = MaxEntropy(; max_phi = 0.25, solvers = solvers))
+    w8 = owa_l_moment_crm(200; k = 4,
+                          method = MaxEntropy(; max_phi = 0.25, solvers = solvers))
+    w9 = owa_l_moment_crm(200; k = 2,
+                          method = MaxEntropy(; max_phi = 0.5, solvers = solvers))
+    w10 = owa_l_moment_crm(200; k = 4,
+                           method = MaxEntropy(; max_phi = 0.5, solvers = solvers))
+    w11 = owa_l_moment_crm(200; k = 2,
+                           method = MaxEntropy(; max_phi = 0.75, solvers = solvers))
+    w12 = owa_l_moment_crm(200; k = 4,
+                           method = MaxEntropy(; max_phi = 0.75, solvers = solvers))
 
-    w13 = owa_l_moment_crm(200; k = 2, method = MinSumSq(; max_phi = 0.25),
-                           solvers = solvers)
-    w14 = owa_l_moment_crm(200; k = 4, method = MinSumSq(; max_phi = 0.25),
-                           solvers = solvers)
-    w15 = owa_l_moment_crm(200; k = 2, method = MinSumSq(; max_phi = 0.5),
-                           solvers = solvers)
-    w16 = owa_l_moment_crm(200; k = 4, method = MinSumSq(; max_phi = 0.5),
-                           solvers = solvers)
-    w17 = owa_l_moment_crm(200; k = 2, method = MinSumSq(; max_phi = 0.75),
-                           solvers = solvers)
-    w18 = owa_l_moment_crm(200; k = 4, method = MinSumSq(; max_phi = 0.75),
-                           solvers = solvers)
+    w13 = owa_l_moment_crm(200; k = 2,
+                           method = MinSumSq(; max_phi = 0.25, solvers = solvers))
+    w14 = owa_l_moment_crm(200; k = 4,
+                           method = MinSumSq(; max_phi = 0.25, solvers = solvers))
+    w15 = owa_l_moment_crm(200; k = 2,
+                           method = MinSumSq(; max_phi = 0.5, solvers = solvers))
+    w16 = owa_l_moment_crm(200; k = 4,
+                           method = MinSumSq(; max_phi = 0.5, solvers = solvers))
+    w17 = owa_l_moment_crm(200; k = 2,
+                           method = MinSumSq(; max_phi = 0.75, solvers = solvers))
+    w18 = owa_l_moment_crm(200; k = 4,
+                           method = MinSumSq(; max_phi = 0.75, solvers = solvers))
 
-    w19 = owa_l_moment_crm(200; k = 2, method = MinSqDist(; max_phi = 0.25),
-                           solvers = solvers)
-    w20 = owa_l_moment_crm(200; k = 4, method = MinSqDist(; max_phi = 0.25),
-                           solvers = solvers)
-    w21 = owa_l_moment_crm(200; k = 2, method = MinSqDist(; max_phi = 0.5),
-                           solvers = solvers)
-    w22 = owa_l_moment_crm(200; k = 4, method = MinSqDist(; max_phi = 0.5),
-                           solvers = solvers)
-    w23 = owa_l_moment_crm(200; k = 2, method = MinSqDist(; max_phi = 0.75),
-                           solvers = solvers)
-    w24 = owa_l_moment_crm(200; k = 4, method = MinSqDist(; max_phi = 0.75),
-                           solvers = solvers)
+    w19 = owa_l_moment_crm(200; k = 2,
+                           method = MinSqDist(; max_phi = 0.25, solvers = solvers))
+    w20 = owa_l_moment_crm(200; k = 4,
+                           method = MinSqDist(; max_phi = 0.25, solvers = solvers))
+    w21 = owa_l_moment_crm(200; k = 2,
+                           method = MinSqDist(; max_phi = 0.5, solvers = solvers))
+    w22 = owa_l_moment_crm(200; k = 4,
+                           method = MinSqDist(; max_phi = 0.5, solvers = solvers))
+    w23 = owa_l_moment_crm(200; k = 2,
+                           method = MinSqDist(; max_phi = 0.75, solvers = solvers))
+    w24 = owa_l_moment_crm(200; k = 4,
+                           method = MinSqDist(; max_phi = 0.75, solvers = solvers))
 
     solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                   :params => Dict("log_to_console" => false)))
-    w25 = owa_l_moment_crm(200; k = 4, method = MinSumSq(; max_phi = 0.75),
-                           solvers = solvers)
+    w25 = owa_l_moment_crm(200; k = 4,
+                           method = MinSumSq(; max_phi = 0.75, solvers = solvers))
 
     w1t = [-0.005, -0.004949748743718593, -0.004899497487437186, -0.004849246231155779,
            -0.004798994974874372, -0.004748743718592965, -0.004698492462311558,

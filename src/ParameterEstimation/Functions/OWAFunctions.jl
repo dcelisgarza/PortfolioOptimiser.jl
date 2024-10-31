@@ -334,7 +334,7 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     return w
 end
 
-function _owa_l_moment_crm(method::CRRA, ::Any, k, weights, ::Any)
+function _owa_l_moment_crm(method::CRRA, ::Any, k, weights)
     return _crra_method(weights, k, method.g)
 end
 function _owa_model_setup(method, T, weights)
@@ -362,7 +362,7 @@ function _owa_model_solve(model, weights, solvers, k)
         w = _crra_method(weights, k, 0.5)
     end
 end
-function _owa_l_moment_crm(method::MaxEntropy, T, k, weights, solvers)
+function _owa_l_moment_crm(method::MaxEntropy, T, k, weights)
     model = _owa_model_setup(method, T, weights)
     @variable(model, t)
     @variable(model, x[1:T])
@@ -371,24 +371,24 @@ function _owa_l_moment_crm(method::MaxEntropy, T, k, weights, solvers)
     theta = model[:theta]
     @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
     @objective(model, Max, -t)
-    return _owa_model_solve(model, weights, solvers, k)
+    return _owa_model_solve(model, weights, method.solvers, k)
 end
-function _owa_l_moment_crm(method::MinSumSq, T, k, weights, solvers)
+function _owa_l_moment_crm(method::MinSumSq, T, k, weights)
     model = _owa_model_setup(method, T, weights)
     @variable(model, t)
     theta = model[:theta]
     @constraint(model, [t; theta] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, solvers, k)
+    return _owa_model_solve(model, weights, method.solvers, k)
 end
-function _owa_l_moment_crm(method::MinSqDist, T, k, weights, solvers)
+function _owa_l_moment_crm(method::MinSqDist, T, k, weights)
     model = _owa_model_setup(method, T, weights)
     @variable(model, t)
     theta = model[:theta]
     @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
     @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, solvers, k)
+    return _owa_model_solve(model, weights, method.solvers, k)
 end
 """
 ```julia
@@ -413,8 +413,7 @@ Compute the OWA weights for the convex risk measure considering higher order L-m
 
 # Outputs
 """
-function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = MinSqDist(),
-                          solvers = Dict())
+function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = CRRA())
     @smart_assert(k >= 2)
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
@@ -422,7 +421,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = MinSq
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end
-    return _owa_l_moment_crm(method, T, k, weights, solvers)
+    return _owa_l_moment_crm(method, T, k, weights)
 end
 
 export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,

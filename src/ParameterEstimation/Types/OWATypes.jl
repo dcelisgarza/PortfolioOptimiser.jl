@@ -30,8 +30,9 @@ end
 
 """
 ```
-@kwdef mutable struct MaxEntropy{T1 <: Real} <: OWAMethods
+@kwdef mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
     max_phi::T1 = 0.5
+    solvers::T2 = Dict()
 end
 ```
 
@@ -41,12 +42,13 @@ Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneC
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MaxEntropy{T1 <: Real} <: OWAMethods
+mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
     max_phi::T1
+    solvers::T2
 end
-function MaxEntropy(; max_phi::Real = 0.5)
+function MaxEntropy(; max_phi::Real = 0.5, solvers::AbstractDict = Dict())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MaxEntropy{typeof(max_phi)}(max_phi)
+    return MaxEntropy{typeof(max_phi), typeof(solvers)}(max_phi, solvers)
 end
 
 """
@@ -62,12 +64,13 @@ Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSumSq{T1 <: Real} <: OWAMethods
+mutable struct MinSumSq{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
     max_phi::T1
+    solvers::T2
 end
-function MinSumSq(; max_phi::Real = 0.5)
+function MinSumSq(; max_phi::Real = 0.5, solvers::AbstractDict = Dict())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MinSumSq{typeof(max_phi)}(max_phi)
+    return MinSumSq{typeof(max_phi), typeof(solvers)}(max_phi, solvers)
 end
 
 """
@@ -83,12 +86,13 @@ Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSqDist{T1 <: Real} <: OWAMethods
+mutable struct MinSqDist{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
     max_phi::T1
+    solvers::T2
 end
-function MinSqDist(; max_phi::Real = 0.5)
+function MinSqDist(; max_phi::Real = 0.5, solvers::AbstractDict = Dict())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
-    return MinSqDist{typeof(max_phi)}(max_phi)
+    return MinSqDist{typeof(max_phi), typeof(solvers)}(max_phi, solvers)
 end
 
 export CRRA, MaxEntropy, MinSumSq, MinSqDist

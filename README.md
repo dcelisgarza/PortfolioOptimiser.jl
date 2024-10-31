@@ -34,9 +34,9 @@ These only apply to covariance, correlation, and cokurtosis estimators. Dissimil
 ### Expected mean returns estimators
 
   - Simple mean, [`MuSimple`](@ref).
-  - James-Stein (JS), [`JS`](@ref).
-  - Bayes-Stein (BS), [`BS`](@ref).
-  - Bodnar-Okhrin-Parolya (BOP), [`BOP`](@ref).
+  - James-Stein (JS), [`MuJS`](@ref).
+  - Bayes-Stein (BS), [`MuBS`](@ref).
+  - Bodnar-Okhrin-Parolya (BOP), [`MuBOP`](@ref).
 
 The JS, BS and BOP estimators also use a target for correcting their estimates.
 
@@ -117,7 +117,7 @@ All covariance estimators can be used for correlation estimation.
   - Degree, [`DegreeCentrality`](@ref).
   - Eigenvector, [`EigenvectorCentrality`](@ref).
   - Katz, [`KatzCentrality`](@ref).
-  - Pagerank, [`PagerankCentrality`](@ref).
+  - Pagerank, [`Pagerank`](@ref).
   - Radiality, [`RadialityCentrality`](@ref).
   - Stress, [`StressCentrality`](@ref).
 
@@ -152,8 +152,8 @@ All covariance estimators can be used for correlation estimation.
 
 #### Stepwise methods
 
-  - Forward regression, [`FReg`](@reg).
-  - Backward regression, [`BReg`](@reg).
+  - Forward regression, [`FReg`](@ref).
+  - Backward regression, [`BReg`](@ref).
 
 #### Regression criteria
 
