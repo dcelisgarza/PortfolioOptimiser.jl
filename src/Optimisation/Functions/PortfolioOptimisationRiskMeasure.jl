@@ -1605,16 +1605,21 @@ function set_rm(port::Portfolio, rm::dVar, type::Union{Trad, RP}, obj;
         w = model[:w]
         @expression(model, X, returns * w)
     end
-
+    iT2 = inv(T^2)
     ovec = range(1; stop = 1, length = T)
     @variable(model, Dt[1:T, 1:T], Symmetric)
-    X = model[:X]
     @expression(model, Dx, X * transpose(ovec) - ovec * transpose(X))
+    @expression(model, dvar_risk, iT2 * (dot(Dt, Dt) + iT2 * sum(Dt)^2))
     @constraint(model, [i = 1:T, j = i:T], [Dt[i, j]; Dx[i, j]] in MOI.NormOneCone(2))
-    dt = vec(Dt)
-    iT2 = inv(T^2)
-    @expression(model, sum_Dt, sum(Dt))
-    @expression(model, dvar_risk, iT2 * (dot(dt, dt) + iT2 * sum_Dt^2))
+    ## There are various alternative formulations. They may or may not have a big effect on the solution time.
+    # @constraint(model, [i = 1:T, j = i:T], Dt[i, j] .>= Dx[i, j])
+    # @constraint(model, [i = 1:T, j = i:T], Dt[i, j] .>= -Dx[i, j])
+    ##
+    # @constraint(model, Dt .>= Dx)
+    # @constraint(model, Dt .>= -Dx)
+    ##
+    # @constraint(model, [i = 1:T, j = 1:T], [Dt[i, j]; Dx[i, j]] in MOI.NormOneCone(2))
+    ##
     _set_rm_risk_upper_bound(obj, type, model, dvar_risk, rm.settings.ub)
     _set_risk_expression(model, dvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing

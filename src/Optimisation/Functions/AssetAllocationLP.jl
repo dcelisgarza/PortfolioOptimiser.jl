@@ -16,7 +16,12 @@ function _optimise_allocation(port, label, tickers, latest_prices)
     key = nothing
     for (key, val) ∈ solvers
         if haskey(val, :solver)
-            set_optimizer(model, val[:solver])
+            set_optimizer(model, val[:solver];
+                          add_bridges = if !haskey(val, :add_bridges)
+                              true
+                          else
+                              val[:add_bridges]
+                          end)
         end
 
         if haskey(val, :params)

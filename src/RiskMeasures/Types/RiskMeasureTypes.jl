@@ -142,7 +142,7 @@ With `R(w)` being a risk measure.
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 settings = RMSettings()
 
 # Risk-averse configuration, whatever risk measure this is applied 
@@ -207,7 +207,7 @@ With `R(w)` being a risk measure.
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 settings = HCRMSettings()
 
 # Contribute more risk to the risk expression
@@ -459,7 +459,7 @@ struct SimpleSD <: SDFormulation end
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`PortClass`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk`](@ref), [`_SD`](@ref).
 
 ## [`Portfolio`](@ref)
 
@@ -499,7 +499,7 @@ Implements portfolio Standard Deviation risk.
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 sd_risk = SD()
 
 # Custom configuration with specific covariance matrix
@@ -544,7 +544,7 @@ Mean Absolute Deviation risk measure implementation.
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_MAD`](@ref).
 
 # Fields
 
@@ -565,7 +565,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 mad = MAD()
 
 # Custom configuration
@@ -594,7 +594,7 @@ Semi Standard Deviation risk measure implementation.
 
   - Measures the standard deviation equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_SSD`](@ref).
 
 # Fields
 
@@ -616,7 +616,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 ssd = SSD()
 
 # Custom configuration with specific target
@@ -646,7 +646,7 @@ First Lower Partial Moment (Omega ratio) risk measure.
 
   - Measures the dispersion equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_FLPM`](@ref).
 
 # Fields
 
@@ -656,7 +656,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfol
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 flpm = FLPM()
 
 # Custom target return
@@ -680,7 +680,7 @@ Second Lower Partial Moment (Sortino ratio) risk measure.
 
   - Measures the dispersion equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_SLPM`](@ref).
 
 # Fields
 
@@ -690,7 +690,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfol
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 slpm = SLPM()
 
 # Custom settings
@@ -715,7 +715,7 @@ Worst Realization/Return risk measure.
   - Useful for extremely conservative risk assessment.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_WR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref).
 
 # Fields
 
@@ -724,7 +724,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 wr = WR()
 
 # Custom settings
@@ -748,7 +748,7 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
   - Measures expected loss in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CVaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -764,7 +764,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 cvar = CVaR()
 
 # Custom significance level
@@ -796,7 +796,7 @@ Entropic Value at Risk risk measure.
   - It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -816,7 +816,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 evar = EVaR()
 
 # Custom configuration with specific solver
@@ -853,7 +853,7 @@ Relativistic Value at Risk risk measure.
   - ``\\lim_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -875,7 +875,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 rlvar = RLVaR()
 
 # Custom configuration
@@ -911,7 +911,7 @@ Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
   - Measures the largest peak-to-trough decline in uncompounded returns.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_MDD`](@ref).
 
 # Fields
 
@@ -920,7 +920,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 mdd = MDD()
 
 # Custom settings
@@ -942,7 +942,7 @@ Average Drawdown risk measure for uncompounded returns.
   - Measures the average of all peak-to-trough declines in uncompounded returns.
   - Provides a more balanced view than the maximum drawdown [`MDD`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`MDD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_ADD`](@ref), [`MDD`](@ref).
 
 # Fields
 
@@ -951,7 +951,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 add = ADD()
 
 # Custom settings
@@ -973,7 +973,7 @@ Conditional Drawdown at Risk risk measure.
   - Measures expected peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CDaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -989,7 +989,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 cdar = CDaR()
 
 # Custom significance level
@@ -1018,7 +1018,7 @@ Ulcer Index risk measure.
 
   - Penalizes larger drawdowns more than smaller ones.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_UCI`](@ref).
 
 # Fields
 
@@ -1027,7 +1027,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 uci = UCI()
 
 # Custom settings
@@ -1049,7 +1049,7 @@ Entropic Drawdown at Risk risk measure.
   - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -1069,7 +1069,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 edar = EDaR()
 
 # Custom configuration with specific solver
@@ -1106,7 +1106,7 @@ Relativistic Drawdown at Risk risk measure.
   - ``\\lim_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
 
 # Fields
 
@@ -1128,7 +1128,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 rldar = RLDaR()
 
 # Custom configuration
@@ -1163,7 +1163,7 @@ end
 
 Square Root Kurtosis risk measure implementation for portfolio optimisation.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`SKurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_Kurt`](@ref), [`SKurt`](@ref).
 
 # Fields
 
@@ -1183,7 +1183,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 kurt = Kurt()
 
 # Custom configuration with specific cokurtosis matrix
@@ -1217,7 +1217,7 @@ Square Root Semi Kurtosis risk measure implementation for portfolio optimisation
 
   - Measures the kurtosis equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`Kurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_SKurt`](@ref), [`Kurt`](@ref).
 
 # Fields
 
@@ -1238,7 +1238,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 skurt = SKurt()
 
 # Custom configuration with specific cokurtosis matrix
@@ -1273,7 +1273,7 @@ Defines the Range risk measure.
 
   - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RG`](@ref).
 
 # Fields
 
@@ -1282,7 +1282,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 rg = RG()
 
 # Custom settings
@@ -1305,7 +1305,7 @@ Defines the Conditional Value at Risk Range risk measure.
 
   - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`CVaR`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_TGRG`](@ref), [`CVaR`](@ref), [`RG`](@ref).
 
 # Fields
 
@@ -1323,7 +1323,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 cdar = CVaRRG()
 
 # Custom significance level
@@ -1357,7 +1357,7 @@ end
 
 Defines the settings for Ordered Weight Array (OWA) risk measures.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Fields
 
@@ -1371,7 +1371,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 owa = OWASettings()
 
 # Use full risk measure formulation
@@ -1397,7 +1397,7 @@ end
 
 Defines the Gini Mean Difference risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_GMD`](@ref).
 
 # Fields
 
@@ -1407,7 +1407,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 gmd = GMD()
 
 # Use full risk measure formulation
@@ -1433,7 +1433,7 @@ end
 
 Defines the Tail Gini Difference risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_TG`](@ref).
 
 # Fields
 
@@ -1454,7 +1454,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 tg = TG()
 
 # Use full risk measure formulation with custom parameters
@@ -1499,7 +1499,7 @@ Defines the Tail Gini Difference Range risk measure.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`TG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_TGRG`](@ref), [`TG`](@ref).
 
 # Fields
 
@@ -1526,7 +1526,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 rtg = RTG()
 
 # Use full risk measure formulation with custom parameters
@@ -1575,13 +1575,7 @@ function Base.setproperty!(obj::TGRG, sym::Symbol, val)
 end
 
 """
-```
-@kwdef struct OWA <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    owa::OWASettings = OWASettings()
-    w::Union{<:AbstractVector, Nothing} = nothing
-end
-```
+    mutable struct OWA <: RiskMeasure
 
 # Description
 
@@ -1589,7 +1583,7 @@ Defines the generic Ordered Weight Array risk measure.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_OWA`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
 # Fields
 
@@ -1600,7 +1594,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Examples
 
 ```@example
-# Default configuration
+# Default settings
 w = owa_l_moment_crm(10)
 owa = OWA(; w = w)
 
@@ -1623,17 +1617,29 @@ function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
 end
 
 """
+    struct dVar <: RiskMeasure
+
+# Description
+
+Define the Brownian Distance Variance risk measure.
+
+  - Measures linear and non-linear relationships between variables.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_dVar`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+dvar = dVar()
+
+# Custom settings
+dvar = dVar(; settings = RMSettings(; ub = 0.5))
 ```
-@kwdef struct dVar <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Define the Brownian Distance Variance [`_dVar`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct dVar <: RiskMeasure
     settings::RMSettings
@@ -1643,17 +1649,27 @@ function dVar(; settings::RMSettings = RMSettings())
 end
 
 """
+    struct Skew <: RiskMeasure
+
+# Description
+
+Define the Quadratic Skewness risk measure.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_Skew`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+skew = Skew()
+
+# Custom settings
+skew = Skew(; settings = RMSettings(; ub = 0.5))
 ```
-@kwdef struct Skew <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Define the Quadratic Skewness [`_Skew`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct Skew <: RiskMeasure
     settings::RMSettings
@@ -1663,17 +1679,25 @@ function Skew(; settings::RMSettings = RMSettings())
 end
 
 """
+    struct SSkew <: RiskMeasure
+
+Define the Quadratic Semi Skewness risk measure.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_Skew`](@ref).
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+sskew = SSkew()
+
+# Custom settings
+sskew = SSkew(; settings = RMSettings(; ub = 0.5))
 ```
-@kwdef struct SSkew <: RiskMeasure
-    settings::RMSettings = RMSettings()
-end
-```
-
-Define the Quadratic SSkewness [`_Skew`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
 """
 struct SSkew <: RiskMeasure
     settings::RMSettings
@@ -1683,23 +1707,37 @@ function SSkew(; settings::RMSettings = RMSettings())
 end
 
 """
+    mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
+
+# Description
+
+Defines the Variance risk measure.
+
+See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_Variance`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: hierarchical risk measure configuration settings.
+  - `sigma::Union{AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
+
+# Behaviour
+
+  - If `isnothing(sigma)`: uses the covariance matrix `cov`.
+  - If `sigma` provided: uses custom covariance matrix.
+
+## Validation
+
+  - When setting `sigma` at construction or runtime, the matrix must be square (`N×N`).
+
+# Examples
+
+```@example
+# Default settings
+variance = Variance()
+
+# Custom settings
+variance = Variance(; settings = HCRMSettings(; scale = 3))
 ```
-@kwdef mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    sigma::Union{<:AbstractMatrix, Nothing} = nothing
-end
-```
-
-Defines the Variance [`_Variance`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `sigma`: optional `N×N` covariance matrix.
-
-      + if `nothing`: use the covariance matrix stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use this one.
 """
 mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
     settings::HCRMSettings
