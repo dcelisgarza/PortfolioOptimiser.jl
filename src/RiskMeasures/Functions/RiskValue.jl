@@ -400,7 +400,7 @@ See also: [`VaR`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`_CVaR`]
 !!! warning
 
       - In-place sorts the input vector.
-      - `α` is not validated because this is an internal function. It should have been validated in [`VaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`VaR`](@ref).
 
 # Outputs
 
@@ -454,7 +454,7 @@ See also: [`CVaR`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref), [`_VaR`
 !!! warning
 
       - In-place sorts the input vector.
-      - `α` is not validated because this is an internal function. It should have been validated in [`CVaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`CVaR`](@ref).
 
 # Outputs
 
@@ -570,7 +570,7 @@ See also: [`EVaR`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`EVaR`](@ref), [`EDaR`](@ref), or [`EDaR_r`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`EVaR`](@ref), [`EDaR`](@ref), or [`EDaR_r`](@ref).
 
 # Outputs
 
@@ -644,7 +644,7 @@ See also: [`ERM`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR`
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`EVaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`EVaR`](@ref).
 
 # Outputs
 
@@ -710,7 +710,7 @@ See also: [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`_RL
 
 !!! warning
 
-      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLVaR`](@ref), [`RLDaR`](@ref), or [`RLDaR_r`](@ref).
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated by [`RLVaR`](@ref), [`RLDaR`](@ref), or [`RLDaR_r`](@ref).
 
 # Outputs
 
@@ -818,7 +818,7 @@ See also: [`RRM`](@ref), [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)
 
 !!! warning
 
-      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLVaR`](@ref).
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated by [`RLVaR`](@ref).
 
 # Outputs
 
@@ -874,7 +874,7 @@ See also: [`DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`DaR_r`]
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`DaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`DaR`](@ref).
 
 # Outputs
 
@@ -1052,7 +1052,7 @@ See also: [`CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_DaR`
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`CDaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`CDaR`](@ref).
 
 # Outputs
 
@@ -1183,7 +1183,7 @@ See also: [`ERM`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`EDaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`EDaR`](@ref).
 
 # Outputs
 
@@ -1251,7 +1251,7 @@ See also: [`RRM`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDa
 
 !!! warning
 
-      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLDaR`](@ref).
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated by [`RLDaR`](@ref).
 
 # Outputs
 
@@ -1320,7 +1320,7 @@ See also: [`DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`DaR_r`]
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`DaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`DaR`](@ref).
 
 # Outputs
 
@@ -1497,7 +1497,7 @@ See also: [`CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_DaR`
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`CDaR_r`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`CDaR_r`](@ref).
 
 # Outputs
 
@@ -1627,7 +1627,7 @@ See also: [`ERM`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`
 
 !!! warning
 
-      - `α` is not validated because this is an internal function. It should have been validated in [`EDaR_r`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated by [`EDaR_r`](@ref).
 
 # Outputs
 
@@ -1694,7 +1694,7 @@ See also: [`RRM`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDa
 
 !!! warning
 
-      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLDaR`](@ref).
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated by [`RLDaR`](@ref).
 
 # Outputs
 
@@ -1840,10 +1840,10 @@ returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 # Calculate the square root kurtosis
 skurt1 = _SKurt(returns)
 
-# Calculate the square root kurtosis using weights
+# Calculate the square root semi kurtosis using weights
 skurt2 = _SKurt(returns, eweights(1:length(returns), 0.3))
 
-# Calculate the square root kurtosis using weights,
+# Calculate the square root semi kurtosis using weights,
 # for use in risk_contribution
 skurt3 = _SKurt(returns, eweights(1:length(returns), 0.1); scale = true)
 ```
@@ -1910,23 +1910,37 @@ function _Skew(w::AbstractVector, V::AbstractMatrix)
 end
 
 """
-```
-_GMD(x::AbstractVector)
-```
+    _GMD(x::AbstractVector)
+
+# Description
 
 Compute the Gini Mean Difference.
 
+See also: [`GMD`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `gmd::Real`: Gini Mean Difference.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the gini mean difference
+gmd = _GMD(returns)
+```
 """
 function _GMD(x::AbstractVector)
     T = length(x)
@@ -1935,23 +1949,37 @@ function _GMD(x::AbstractVector)
 end
 
 """
-```
-_RG(x::AbstractVector)
-```
+    _RG(x::AbstractVector)
+
+# Description
 
 Compute the Range.
 
+See also: [`RG`](@ref), [`calc_risk(::RG, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `rg::Real`: Range.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the gini mean difference
+rg = _RG(returns)
+```
 """
 function _RG(x::AbstractVector)
     T = length(x)
@@ -1960,68 +1988,158 @@ function _RG(x::AbstractVector)
 end
 
 """
-```
-_CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
-```
+    _CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = 0.05)
 
-Compute the _CVaR Range.
+# Description
+
+Compute the Conditional Value at Risk Range.
+
+See also: [`CVaRRG`](@ref), [`calc_risk(::CVaRRG, ::AbstractVector)`](@ref).
 
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `alpha`: significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `beta`: significance level of CVaR gains, `beta ∈ (0, 1)`.
+## Positional
+
+  - `x::AbstractVector`: `T×1` returns vector.
+
+## Named
+
+  - `alpha::Real = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `beta::Real = 0.05`: significance level of gains, `beta ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
+      - `alpha` and `beta` are not validated because this is an internal function. They should have been validated by [`CVaRRG`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `cvarrg::Real`: Conditional Value at Risk Range.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the conditional value at risk range with default parameters
+cvarrg1 = _CVaRRG(returns)
+
+# Calculate with 7 % significance parameter of losses and
+# 12 % significance parameter of gains.
+cvarrg2 = _CVaRRG(returns; alpha = 0.07, beta = 0.12)
+```
 """
-function _CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = alpha)
+function _CVaRRG(x::AbstractVector; alpha::Real = 0.05, beta::Real = 0.05)
     T = length(x)
     w = owa_rcvar(T; alpha = alpha, beta = beta)
     return dot(w, sort!(x))
 end
 
 """
-```
-_TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Int = 100)
-```
+    _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
+
+# Description
 
 Compute the Tail Gini.
 
+See also: [`TG`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+## Positional
+
+  - `x::AbstractVector`: `T×1` returns vector.
+
+## Named
+
+  - `alpha_i::Real = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha::Real = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `a_sim::Integer = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
+      - `alpha_i`, `alpha`, and `a_sim` are not validated because this is an internal function. They should have been validated by [`TG`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `tg::Real`: Tail Gini.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the tail gini with default parameters
+tg1 = _TG(returns)
+
+# Calculate with custom parameters
+tg2 = _TG(returns; alpha_i = 0.3, alpha = 0.07, a_sim = 131)
+```
 """
 function _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-             a_sim::Int = 100)
+             a_sim::Integer = 100)
     T = length(x)
     w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
     return dot(w, sort!(x))
 end
 
 """
-```
-_TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Real = 100,
-     beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
-```
+    _TGRG(x::AbstractVector; 
+          alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
+          beta_i::Real = 0.0001, beta::Real = 0.05, b_sim::Integer = 100)
+
+# Description
 
 Compute the Tail Gini Range.
+
+See also: [`TG`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `x::AbstractVector`: `T×1` returns vector.
+
+## Named
+
+  - `alpha_i::Real = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
+  - `alpha::Real = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `a_sim::Integer = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
+  - `beta_i::Real = 0.0001`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
+  - `beta::Real = 0.05`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
+  - `b_sim = 100`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
+
+# Behaviour
+
+!!! warning
+
+      - In-place sorts the input vector.
+      - `alpha_i`, `alpha`, `a_sim`, `beta_i`, `beta`, and `b_sim` are not validated because this is an internal function. They should have been validated by [`TG`](@ref).
+
+# Outputs
+
+  - `tgrg::Real`: Tail Gini Range.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the tail gini range with default parameters
+tgrg1 = _TGRG(returns)
+
+# Calculate with custom parameters
+tgrg2 = _TGRG(returns; alpha_i = 0.3, alpha = 0.07, a_sim = 131, beta_i = 0.1, beta = 0.03,
+              a_sim = 97)
+```
 
 # Inputs
 
@@ -2029,9 +2147,6 @@ Compute the Tail Gini Range.
   - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
   - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-  - `beta_i`: start value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
-  - `beta`: end value of the significance level of CVaR gains, `beta ∈ (0, 1)`.
-  - `b_sim`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 
 !!! warning
 
@@ -2042,8 +2157,8 @@ Compute the Tail Gini Range.
   - `r`: risk.
 """
 function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-               a_sim::Real = 100, beta_i::Real = 0.0001, beta::Real = 0.05,
-               b_sim::Integer = b_sim)
+               a_sim::Integer = 100, beta_i::Real = 0.0001, beta::Real = 0.05,
+               b_sim::Integer = 100)
     T = length(x)
     w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                 beta = beta, b_sim = b_sim)
