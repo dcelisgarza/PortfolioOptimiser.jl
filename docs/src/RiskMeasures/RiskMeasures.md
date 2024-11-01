@@ -97,7 +97,7 @@ CVaRRG
 TGRG
 GMD
 Skew
-dVar
+BDVariance
 ```
 
 #### Downside dispersion risk measures

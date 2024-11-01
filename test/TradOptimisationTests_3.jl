@@ -2120,7 +2120,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "dVar" begin
+@testset "BDVariance" begin
     portfolio = Portfolio(; prices = prices[(end - 50):end],
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
@@ -2128,7 +2128,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    rm = dVar()
+    rm = BDVariance()
 
     obj = MinRisk()
     w1 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)

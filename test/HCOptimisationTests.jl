@@ -1700,7 +1700,7 @@ end
     asset_statistics!(portfolio)
     hclust_alg = HAC()
     cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
-    rm = dVar()
+    rm = BDVariance()
     w106 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     w107 = optimise!(portfolio; rm = rm,
                      type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
@@ -2268,7 +2268,7 @@ end
 
     hclust_alg = HAC()
     cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
-    w20 = optimise!(portfolio; rm = dVar())
+    w20 = optimise!(portfolio; rm = BDVariance())
     wt = [0.034616203287809656, 0.05339682894540566, 0.0277781553250953,
           0.04211296639608739, 0.05429852976387857, 0.07556907274344477,
           0.012918417022839884, 0.0639503232740957, 0.025141332254925024,
@@ -2600,7 +2600,7 @@ end
     hclust_alg = HAC()
     cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
 
-    w20 = optimise!(portfolio; rm = dVar(), type = type)
+    w20 = optimise!(portfolio; rm = BDVariance(), type = type)
     wt = [0.11814156791628717, 0.1127352219498846, 0.0948040083033778, 0.05910201284574831,
           0.0762034280232549, 0.021900080015085997, 0.005240769029403859,
           0.02492257943111223, 0.013821146124791104, 0.015571892677105771,

@@ -1691,7 +1691,7 @@ function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
 end
 
 """
-    struct dVar <: RiskMeasure
+    struct BDVariance <: RiskMeasure
 
 # Description
 
@@ -1699,7 +1699,7 @@ Define the Brownian Distance Variance risk measure.
 
   - Measures linear and non-linear relationships between variables.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::dVar, ::AbstractVector)`](@ref), [`_dVar`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref), [`_BDVariance`](@ref).
 
 # Fields
 
@@ -1709,17 +1709,17 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 
 ```@example
 # Default settings
-dvar = dVar()
+dvar = BDVariance()
 
 # Custom settings
-dvar = dVar(; settings = RMSettings(; ub = 0.5))
+dvar = BDVariance(; settings = RMSettings(; ub = 0.5))
 ```
 """
-struct dVar <: RiskMeasure
+struct BDVariance <: RiskMeasure
     settings::RMSettings
 end
-function dVar(; settings::RMSettings = RMSettings())
-    return dVar(settings)
+function BDVariance(; settings::RMSettings = RMSettings())
+    return BDVariance(settings)
 end
 
 """
@@ -2325,11 +2325,12 @@ end
 for (op, name) ∈
     zip((SD, Variance, MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR,
          MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
-         RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, dVar, Skew, SSkew, Equal),
+         RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, Skew, SSkew,
+         Equal),
         ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
          "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
          "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
-         "RG", "CVaRRG", "TG", "TGRG", "OWA", "dVar", "Skew", "SSkew", "Equal"))
+         "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)
@@ -2356,5 +2357,6 @@ const RMOWA = Union{GMD, TG, TGRG, OWA}
 
 export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, QuadSD, SOCSD, SimpleSD, SD,
        MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
-       SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, dVar, Skew, SSkew, Variance,
-       SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal
+       SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
+       Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
+       Equal

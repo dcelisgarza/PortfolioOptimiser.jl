@@ -27,7 +27,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
     rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RLVaR(), MDD(), ADD(),
            CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), CVaRRG(), TG(),
-           TGRG(), OWA(), dVar(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
+           TGRG(), OWA(), BDVariance(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
            DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)

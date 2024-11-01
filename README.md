@@ -246,7 +246,7 @@ This type of optimisation is the traditional efficient frontier optimisation.
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
-      + Brownian distance variance (dVar), [`dVar`](@ref).
+      + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
     
@@ -324,7 +324,7 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
-      + Brownian distance variance (dVar), [`dVar`](@ref).
+      + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
     
@@ -417,7 +417,7 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
-      + Brownian distance variance (dVar), [`dVar`](@ref).
+      + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
     
@@ -483,7 +483,7 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
       + Quadratic negative skewness, [`Skew`](@ref).
-      + Brownian distance variance (dVar), [`dVar`](@ref).
+      + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
     

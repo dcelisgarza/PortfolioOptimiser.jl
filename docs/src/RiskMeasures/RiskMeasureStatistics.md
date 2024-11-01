@@ -79,8 +79,8 @@ calc_risk(::TGRG, ::AbstractVector)
 PortfolioOptimiser._TGRG
 calc_risk(::OWA, ::AbstractVector)
 PortfolioOptimiser._OWA
-calc_risk(::dVar, ::AbstractVector)
-PortfolioOptimiser._dVar
+calc_risk(::BDVariance, ::AbstractVector)
+PortfolioOptimiser._BDVariance
 calc_risk(::Skew, ::AbstractVector)
 calc_risk(::SSkew, ::AbstractVector)
 PortfolioOptimiser._Skew

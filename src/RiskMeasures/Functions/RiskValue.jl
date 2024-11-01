@@ -2121,7 +2121,7 @@ See also: [`TG`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 !!! warning
 
       - In-place sorts the input vector.
-      - `alpha_i`, `alpha`, `a_sim`, `beta_i`, `beta`, and `b_sim` are not validated because this is an internal function. They should have been validated by [`TG`](@ref).
+      - `alpha_i`, `alpha`, `a_sim`, `beta_i`, `beta`, and `b_sim` are not validated because this is an internal function. They should have been validated by [`TGRG`](@ref).
 
 # Outputs
 
@@ -2140,21 +2140,6 @@ tgrg1 = _TGRG(returns)
 tgrg2 = _TGRG(returns; alpha_i = 0.3, alpha = 0.07, a_sim = 131, beta_i = 0.1, beta = 0.03,
               a_sim = 97)
 ```
-
-# Inputs
-
-  - `x`: `T×1` returns vector.
-  - `alpha_i`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
-  - `alpha`: end value of the significance level of CVaR losses, `alpha ∈ (0, 1)`.
-  - `a_sim`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
-
-!!! warning
-
-    In-place sorts the input vector.
-
-# Outputs
-
-  - `r`: risk.
 """
 function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
                a_sim::Integer = 100, beta_i::Real = 0.0001, beta::Real = 0.05,
@@ -2166,16 +2151,20 @@ function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
 end
 
 """
-```
-_OWA(x::AbstractVector, w::AbstractVector)
-```
+    _OWA(x::AbstractVector, w::AbstractVector)
+
+# Description
 
 Compute the Ordered Weight Array risk measure.
 
+See also: [`OWA`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `w`: `T×1` precomputed vector of OWA weights. Can be computed with [`owa_gmd`](@ref), [`owa_rg`](@ref), [`owa_rcvar`](@ref), [`owa_tg`](@ref), [`owa_rtg`](@ref), [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `w::AbstractVector`: `T×1` precomputed vector of OWA weights. Can be computed with [`owa_gmd`](@ref), [`owa_rg`](@ref), [`owa_rcvar`](@ref), [`owa_tg`](@ref), [`owa_rtg`](@ref), [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
+
+# Behaviour
 
 !!! warning
 
@@ -2183,22 +2172,34 @@ Compute the Ordered Weight Array risk measure.
 
 # Outputs
 
-  - `r`: risk.
+  - `owa::Real`: Ordered Weight Array risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+w = owa_l_moment_crm(length(returns))
+
+# Calculate the tail gini range with default parameters
+owa = _OWA(returns, w)
+```
 """
 function _OWA(x::AbstractVector, w::AbstractVector)
     return dot(w, sort!(x))
 end
 
 """
-```
-_dVar(x::AbstractVector)
-```
+    _BDVariance(x::AbstractVector)
+
+# Description
 
 Compute the Brownian distance variance.
 
 ```math
 \\begin{align}
-\\mathrm{dVar}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{X}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T}\\sum\\limits_{j=1}^{T} A_{i,\\,j}^2\\\\
+\\mathrm{BDVariance}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{X}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T}\\sum\\limits_{j=1}^{T} A_{i,\\,j}^2\\\\
 \\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) &= \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} \\sum\\limits_{j=1}^{T} A_{i,\\,j} B_{i,\\,j}\\\\
 A_{i,\\,j} &= a_{i,\\,j} - \\bar{a}_{i\\,.} - \\bar{a}_{.\\,j} + \\bar{a}_{.\\,.}\\\\
 B_{i,\\,j} &= b_{i,\\,j} - \\bar{b}_{i\\,.} - \\bar{b}_{.\\,j} + \\bar{b}_{.\\,.}\\\\
@@ -2216,23 +2217,32 @@ where:
   - ``\\bar{a}_{\\cdot,\\,\\cdot}`` and ``\\bar{b}_{\\cdot,\\,\\cdot}`` are the grand means of their respective matrices.
   - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are doubly centered distances.
 
+See also: [`BDVariance`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `dvar::Real`: Brownian Distance Variance.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the gini mean difference
+bdvar = _BDVariance(returns)
+```
 """
-function _dVar(x::AbstractVector)
+function _BDVariance(x::AbstractVector)
     T = length(x)
-    invT = one(T) / T
-    invT2 = invT^2
+    iT2 = inv(T^2)
     ovec = range(1; stop = 1, length = T)
     D = abs.(x * transpose(ovec) - ovec * transpose(x))
-    d = vec(D)
-    sd = sum(D)
-    return invT2 * (dot(d, d) + invT2 * sd^2)
+    return iT2 * (dot(D, D) + iT2 * sum(D)^2)
 end
 
 """
@@ -2748,17 +2758,17 @@ end
 
 """
 ```
-calc_risk(::dVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
-Compute the [`dVar`](@ref) via [`_dVar`](@ref). Inputs correspond to those of [`_dVar`](@ref).
+Compute the [`BDVariance`](@ref) via [`_BDVariance`](@ref). Inputs correspond to those of [`_BDVariance`](@ref).
 
 # Outputs
 
   - `r`: risk.
 """
-function calc_risk(::dVar, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _dVar(X * w)
+function calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _BDVariance(X * w)
 end
 
 """

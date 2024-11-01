@@ -1013,7 +1013,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = dVar()
+    rm = BDVariance()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
