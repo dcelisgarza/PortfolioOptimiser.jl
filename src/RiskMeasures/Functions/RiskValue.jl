@@ -3,7 +3,7 @@
 
 # Description
 
-Compute the portfolio Variance. This is the square of [`_SD`](@ref).
+Compute the Variance. This is the square of [`_SD`](@ref).
 
 ```math
 \\begin{align}
@@ -11,7 +11,7 @@ Compute the portfolio Variance. This is the square of [`_SD`](@ref).
 \\end{align}
 ```
 
-See also: [`Variance`](@ref), [`calc_risk(::Variance, w::AbstractVector)`](@ref), [`_SD`](@ref), [`SD`](@ref).
+See also: [`Variance`](@ref), [`calc_risk(::Variance, ::AbstractVector)`](@ref), [`_SD`](@ref), [`SD`](@ref).
 
 # Inputs
 
@@ -20,7 +20,7 @@ See also: [`Variance`](@ref), [`calc_risk(::Variance, w::AbstractVector)`](@ref)
 
 # Outputs
 
-  - `variance::Real`: portfolio variance.
+  - `variance::Real`: variance.
 
 # Examples
 
@@ -49,7 +49,7 @@ end
 
 # Description
 
-Compute the portfolio Semi Variance. This is the square of [`_SSD`](@ref).
+Compute the Semi Variance. This is the square of [`_SSD`](@ref).
 
 ```math
 \\begin{align}
@@ -57,7 +57,7 @@ Compute the portfolio Semi Variance. This is the square of [`_SSD`](@ref).
 \\end{align}
 ```
 
-See also: [`SVariance`](@ref), [`calc_risk(::SVariance, w::AbstractVector)`](@ref), [`_SSD`](@ref), [`SSD`](@ref).
+See also: [`SVariance`](@ref), [`calc_risk(::SVariance, ::AbstractVector)`](@ref), [`_SSD`](@ref), [`SSD`](@ref).
 
 # Inputs
 
@@ -67,7 +67,7 @@ See also: [`SVariance`](@ref), [`calc_risk(::SVariance, w::AbstractVector)`](@re
 
 # Outputs
 
-  - `svariance::Real`: portfolio semi variance.
+  - `svariance::Real`: semi variance.
 
 # Behaviour
 
@@ -80,7 +80,7 @@ See also: [`SVariance`](@ref), [`calc_risk(::SVariance, w::AbstractVector)`](@re
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the semi variance with default parameters
 sv1 = _SVariance(returns)
 
 # Calculate with custom target return
@@ -104,7 +104,7 @@ end
 
 # Description
 
-Compute the portfolio Standard Deviation. This is the square root of [`_Variance`](@ref).
+Compute the Standard Deviation. This is the square root of [`_Variance`](@ref).
 
 ```math
 \\begin{align}
@@ -112,7 +112,7 @@ Compute the portfolio Standard Deviation. This is the square root of [`_Variance
 \\end{align}
 ```
 
-See also: [`SD`](@ref), [`calc_risk(::SD, w::AbstractVector)`](@ref), [`_Variance`](@ref), [`Variance`](@ref).
+See also: [`SD`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_Variance`](@ref), [`Variance`](@ref).
 
 # Inputs
 
@@ -121,7 +121,7 @@ See also: [`SD`](@ref), [`calc_risk(::SD, w::AbstractVector)`](@ref), [`_Varianc
 
 # Outputs
 
-  - `sd::Real`: portfolio standard deviation.
+  - `sd::Real`: standard deviation.
 
 # Examples
 
@@ -150,7 +150,7 @@ end
 
 # Description
 
-Compute the portfolio Mean Absolute Deviation.
+Compute the Mean Absolute Deviation.
 
 ```math
 \\begin{align}
@@ -158,7 +158,7 @@ Compute the portfolio Mean Absolute Deviation.
 \\end{align}
 ```
 
-See also: [`MAD`](@ref), [`calc_risk(::MAD, w::AbstractVector)`](@ref).
+See also: [`MAD`](@ref), [`calc_risk(::MAD, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -167,7 +167,7 @@ See also: [`MAD`](@ref), [`calc_risk(::MAD, w::AbstractVector)`](@ref).
 
 # Outputs
 
-  - `mad::Real`: portfolio mean absolute deviation.
+  - `mad::Real`: mean absolute deviation.
 
 # Behaviour
 
@@ -180,7 +180,7 @@ See also: [`MAD`](@ref), [`calc_risk(::MAD, w::AbstractVector)`](@ref).
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic mean absolute deviation with default parameters
+# Calculate the mean absolute deviation with default parameters
 mad1 = _MAD(returns)
 
 # Calculate with weights
@@ -198,7 +198,7 @@ end
 
 # Description
 
-Compute the portfolio Semi Standard Deviation. This is the square root of [`_SVariance`](@ref).
+Compute the Semi Standard Deviation. This is the square root of [`_SVariance`](@ref).
 
 ```math
 \\begin{align}
@@ -206,7 +206,7 @@ Compute the portfolio Semi Standard Deviation. This is the square root of [`_SVa
 \\end{align}
 ```
 
-See also: [`SSD`](@ref), [`calc_risk(::SSD, w::AbstractVector)`](@ref), [`_SVariance`](@ref), [`SVariance`](@ref).
+See also: [`SSD`](@ref), [`calc_risk(::SSD, ::AbstractVector)`](@ref), [`_SVariance`](@ref), [`SVariance`](@ref).
 
 # Inputs
 
@@ -216,7 +216,7 @@ See also: [`SSD`](@ref), [`calc_risk(::SSD, w::AbstractVector)`](@ref), [`_SVari
 
 # Outputs
 
-  - `ssd::Real`: portfolio semi standard deviation.
+  - `ssd::Real`: semi standard deviation.
 
 # Behaviour
 
@@ -229,7 +229,7 @@ See also: [`SSD`](@ref), [`calc_risk(::SSD, w::AbstractVector)`](@ref), [`_SVari
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi standard deviation with default parameters
+# Calculate the semi standard deviation with default parameters
 ssd1 = _SSD(returns)
 
 # Calculate with custom target return
@@ -253,15 +253,15 @@ end
 
 # Description
 
-Compute the portfolio First Lower Partial Moment (Omega ratio).
+Compute the First Lower Partial Moment (Omega ratio).
 
 ```math
 \\begin{align}
-\\mathrm{FLPM}(\\bm{X},\\, r) &= \\dfrac{1}{T}  \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)\\,.
+\\mathrm{FLPM}(\\bm{X},\\, r) &= -\\dfrac{1}{T} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t},\\, r\\right)\\,.
 \\end{align}
 ```
 
-See also: [`FLPM`](@ref), [`calc_risk(::FLPM, w::AbstractVector)`](@ref).
+See also: [`FLPM`](@ref), [`calc_risk(::FLPM, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -270,7 +270,7 @@ See also: [`FLPM`](@ref), [`calc_risk(::FLPM, w::AbstractVector)`](@ref).
 
 # Outputs
 
-  - `flpm::Real`: portfolio first lower partial moment.
+  - `flpm::Real`: first lower partial moment.
 
 # Examples
 
@@ -278,7 +278,7 @@ See also: [`FLPM`](@ref), [`calc_risk(::FLPM, w::AbstractVector)`](@ref).
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic first lower partial moment with default parameters
+# Calculate the first lower partial moment with default parameters
 flpm1 = _FLPM(returns)
 
 # Calculate with custom target return
@@ -287,8 +287,7 @@ flpm2 = _FLPM(returns, 0.01)
 """
 function _FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = target .- x
-    return sum(val[val .>= zero(target)]) / T
+    return -sum(x[x .<= target]) / T
 end
 
 """
@@ -296,15 +295,15 @@ end
 
 # Description
 
-Compute the portfolio Second Lower Partial Moment (Sortino Ratio).
+Compute the Second Lower Partial Moment (Sortino Ratio).
 
 ```math
 \\begin{align}
-\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t},\\, r\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
-See also: [`SLPM`](@ref), [`calc_risk(::SLPM, w::AbstractVector)`](@ref).
+See also: [`SLPM`](@ref), [`calc_risk(::SLPM, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -313,7 +312,7 @@ See also: [`SLPM`](@ref), [`calc_risk(::SLPM, w::AbstractVector)`](@ref).
 
 # Outputs
 
-  - `slpm::Real`: portfolio second lower partial moment.
+  - `slpm::Real`: second lower partial moment.
 
 # Examples
 
@@ -321,7 +320,7 @@ See also: [`SLPM`](@ref), [`calc_risk(::SLPM, w::AbstractVector)`](@ref).
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic second lower partial moment with default parameters
+# Calculate the second lower partial moment with default parameters
 slpm1 = _SLPM(returns)
 
 # Calculate with custom target return
@@ -330,8 +329,7 @@ slpm2 = _SLPM(returns, 0.01)
 """
 function _SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    val = target .- x
-    return sqrt(sum(val[val .>= 0] .^ 2) / (T - 1))
+    return sqrt(sum(x[x .<= target] .^ 2) / (T - 1))
 end
 
 """
@@ -339,7 +337,7 @@ end
 
 # Description
 
-Compute the portfolio Worst Realisation or Worst Case Scenario.
+Compute the Worst Realisation or Worst Case Scenario.
 
 ```math
 \\begin{align}
@@ -347,7 +345,7 @@ Compute the portfolio Worst Realisation or Worst Case Scenario.
 \\end{align}
 ```
 
-See also: [`WR`](@ref), [`calc_risk(::WR, w::AbstractVector)`](@ref).
+See also: [`WR`](@ref), [`calc_risk(::WR, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -355,7 +353,7 @@ See also: [`WR`](@ref), [`calc_risk(::WR, w::AbstractVector)`](@ref).
 
 # Outputs
 
-  - `wr::Real`: portfolio worst realisation.
+  - `wr::Real`: worst realisation.
 
 # Examples
 
@@ -363,7 +361,7 @@ See also: [`WR`](@ref), [`calc_risk(::WR, w::AbstractVector)`](@ref).
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the worst realisation with default parameters
 wr1 = _WR(returns)
 
 # Calculate with custom target return
@@ -379,15 +377,15 @@ end
 
 # Description
 
-Compute the portfolio Value at Risk.
+Compute the Value at Risk.
 
 ```math
 \\begin{align}
-\\mathrm{VaR}(\\bm{X},\\, \\alpha) &= -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ X_{t} \\in \\mathbb{R} : F_{\\bm{X}}(X_{t}) > \\alpha \\right\\}\\,.
+\\mathrm{VaR}(\\bm{X},\\, \\alpha) &= -\\underset{t \\in (0,\\, T)}{\\inf} \\left\\{ X_{t} \\in \\mathbb{R} \\, | \\, F_{\\bm{X}}(X_{t}) > \\alpha \\right\\}\\,.
 \\end{align}
 ```
 
-See also: [`VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref), [`_CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref).
+See also: [`VaR`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`_CVaR`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -399,11 +397,11 @@ See also: [`VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref), [`_CVaR`
 !!! warning
 
       - In-place sorts the input vector.
-      - `α` is not validated since this is an internal function. It should have been validated in [`VaR`](@ref) or [`CVaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated in [`VaR`](@ref).
 
 # Outputs
 
-  - `var::Real`: portfolio Value at Risk.
+  - `var::Real`: Value at Risk.
 
 # Examples
 
@@ -411,7 +409,7 @@ See also: [`VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref), [`_CVaR`
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the value at risk with default parameters
 var1 = _VaR(returns)
 
 # Calculate with 7 % significance parameter
@@ -429,11 +427,11 @@ end
 
 # Description
 
-Compute the portfolio Conditional Value at Risk.
+Compute the Conditional Value at Risk.
 
 ```math
 \\begin{align}
-\\mathrm{CVaR}(\\bm{X},\\, \\alpha) &= \\mathrm{VaR}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left( -X_{t} - \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,.
+\\mathrm{CVaR}(\\bm{X},\\, \\alpha) &= \\mathrm{VaR}(\\bm{X},\\, \\alpha) + \\dfrac{1}{\\alpha T} \\sum\\limits_{t=1}^{T} \\max\\left(-X_{t} - \\mathrm{VaR}(\\bm{X},\\, \\alpha),\\, 0\\right)\\,.
 \\end{align}
 ```
 
@@ -441,7 +439,7 @@ Where:
 
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the Value at Risk as defined in [`_VaR`](@ref).
 
-See also: [`CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref), [`_VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref).
+See also: [`CVaR`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref), [`_VaR`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref).
 
 # Inputs
 
@@ -453,11 +451,11 @@ See also: [`CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref), [`_VaR
 !!! warning
 
       - In-place sorts the input vector.
-      - `α` is not validated since this is an internal function. It should have been validated in [`CVaR`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated in [`CVaR`](@ref).
 
 # Outputs
 
-  - `cvar::Real`: portfolio Value at Risk.
+  - `cvar::Real`: Conditional Value at Risk.
 
 # Examples
 
@@ -465,7 +463,7 @@ See also: [`CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref), [`_VaR
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the conditional value at risk with default parameters
 cvar1 = _CVaR(returns)
 
 # Calculate with 7 % significance parameter
@@ -488,7 +486,7 @@ end
 
 # Description
 
-Compute the portfolio Entropic Risk Measure.
+Compute the Entropic Risk Measure.
 
 ```math
 \\begin{align}
@@ -509,7 +507,7 @@ Where:
 
 # Outputs
 
-  - `er::Real`: portfolio entropic risk.
+  - `er::Real`: entropic risk.
 
 # Examples
 
@@ -517,7 +515,7 @@ Where:
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the entropic risk measure with default parameters
 er1 = ERM(returns, 2.3, 0.03)
 
 # Calculate with a 2.3 entropic moment and 3 % significance parameter
@@ -555,25 +553,25 @@ Where:
   - ``\\mathcal{K}_{\\mathrm{exp}}`` is the exponential cone.
   - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
 
-See also: [`EVaR`](@ref), [`calc_risk(::EVaR, w::AbstractVector)`](@ref), [`_EVaR`](@ref), [`EDaR`](@ref), [`calc_risk(::EDaR, w::AbstractVector)`](@ref), [`_EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, w::AbstractVector)`](@ref), [`_EDaR_r`](@ref).
+See also: [`EVaR`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR`](@ref), [`EDaR`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`_EDaR_r`](@ref).
 
 # Inputs
 
   - `x::AbstractVector`: `T×1` returns vector.
-  - `solvers::AbstractDict`: optional JuMP-compatible solvers for exponential cone problems.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
   - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
 
 # Behaviour
 
-  - If no valid solution is found then `NaN` will be returned.
+  - If no valid solution is found returns `NaN`.
 
 !!! warning
 
-      - `α` is not validated since this is an internal function. It should have been validated in [`EVaR`](@ref), [`EDaR`](@ref), or [`EDaR_r`](@ref).
+      - `α` is not validated because this is an internal function. It should have been validated in [`EVaR`](@ref), [`EDaR`](@ref), or [`EDaR_r`](@ref).
 
 # Outputs
 
-  - `er::Real`: portfolio entropic risk.
+  - `er::Real`: entropic risk.
 
 # Examples
 
@@ -581,7 +579,7 @@ See also: [`EVaR`](@ref), [`calc_risk(::EVaR, w::AbstractVector)`](@ref), [`_EVa
 # Sample returns vector
 returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 
-# Calculate basic semi variance with default parameters
+# Calculate the entropic risk measure with default parameters
 er1 = ERM(returns, Dict("solver" => my_solver))
 
 # Calculate with a 3 % significance parameter
@@ -613,9 +611,9 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 end
 
 """
-```
-_EVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
-```
+    _EVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+
+# Description
 
 Compute the Entropic Value at Risk.
 
@@ -629,30 +627,53 @@ Where:
 
   - ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
 
+See also: [`ERM`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` is not validated because this is an internal function. It should have been validated in [`EVaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `evar::Real`: Entropic Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the entropic value at risk with default parameters
+evar1 = _EVaR(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter
+evar2 = _EVaR(returns, Dict("solver" => my_solver), 0.03)
+```
 """
 function _EVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     return ERM(x, solvers, alpha)
 end
 
 """
-```
-RRM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
-```
+    RRM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
+
+# Description
 
 Compute the Relativistic Risk Measure. Used in [`_RLVaR`](@ref), [`_RLDaR`](@ref) and [`_RLDaR_r`](@ref).
 
 ```math
 \\begin{align}
-\\mathrm{RRM}^{\\kappa}_{\\alpha}(X) &= \\left\\{
+\\mathrm{RRM}(X,\\,\\alpha,\\,\\kappa) &= \\left\\{
     \\begin{align}
         &\\underset{z,\\, t,\\, \\psi,\\, \\theta,\\,  \\varepsilon,\\, \\omega}{\\text{inf}} && t + z \\ln_{\\kappa} \\left(\\dfrac{1}{\\alpha T}\\right) + \\sum\\limits_{i=1}^T \\left(\\psi_{i} + \\theta_{i}  \\right) \\nonumber\\\\
         &\\mathrm{s.t.} && -X  - t + \\varepsilon + \\omega \\leq 0 \\nonumber\\\\
@@ -667,20 +688,43 @@ Compute the Relativistic Risk Measure. Used in [`_RLVaR`](@ref), [`_RLDaR`](@ref
 
 Where:
 
-  - ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the power cone 3D.
+  - ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the 3D power cone.
   - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
   - ``\\kappa \\in (0,\\,1)`` is the relativistic deformation parameter.
 
+See also: [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`_RLVaR`](@ref), [`RLDaR`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`_RLDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
-  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for 3D power cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+  - `κ::Real = 0.3`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLVaR`](@ref), [`RLDaR`](@ref), or [`RLDaR_r`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `rlr::Real`: relativistic risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the relativistic risk with default parameters
+rlr1 = RRM(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter and 80 % deformation parameter
+rlr2 = RRM(returns, Dict("solver" => my_solver), 0.03, 0.8)
+```
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
@@ -740,9 +784,9 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-```
-_RLVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
-```
+    _RLVaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
+
+# Description
 
 Compute the Relativistic Value at Risk.
 
@@ -756,15 +800,39 @@ Where:
 
   - ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
 
+See also: [`RRM`](@ref), [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
-  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for 3D power cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+  - `κ::Real = 0.3`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLVaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `rlvar::Real`: Relativistic Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the relativistic value at risk with default parameters
+rlvar1 = _RLVaR(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter and 80 % deformation parameter
+rlvar2 = _RLVaR(returns, Dict("solver" => my_solver), 0.03, 0.8)
+```
 """
 function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -772,17 +840,17 @@ function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-```
-_DaR(x::AbstractArray, α::Real = 0.05)
-```
+    _DaR(x::AbstractArray, α::Real = 0.05)
+
+# Description
 
 Compute the Drawdown at Risk of uncompounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
+\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{a}}(\\bm{X},\\, j) \\in \\mathbb{R} \\, | \\, F_{\\mathrm{DD}}\\left(\\mathrm{DD_{a}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{a}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\sum\\limits_{i=0}^{t} X_{i} \\right) - \\sum\\limits_{i=0}^{j} X_{i}\\\\
-\\mathrm{DD_{a}}(\\bm{X}) &= \\mathrm{DD_{a}}(\\bm{X},\\, j) \\quad \\forall j = 1,\\,\\ldots,\\,T\\,.
+\\mathrm{DD_{a}}(\\bm{X}) &= \\left\\{j \\in (0,\\,T) \\, | \\, \\mathrm{DD_{a}}(\\bm{X},\\, j)\\right\\}\\,.
 \\end{align}
 ```
 
@@ -792,18 +860,35 @@ Where:
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j``.
   - ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns.
 
+See also: [`DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`DaR_r`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`_CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_CDaR_r`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - `α` is not validated because this is an internal function. It should have been validated in [`DaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `dar::Real`: Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the drawdown of uncompounded cumulative returns with default parameters
+dar1 = _DaR(returns)
+
+# Calculate with 7 % significance parameter
+dar2 = _DaR(returns, 0.07)
+```
 """
 function _DaR(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -825,9 +910,9 @@ function _DaR(x::AbstractArray, alpha::Real = 0.05)
 end
 
 """
-```
-_MDD(x::AbstractVector)
-```
+    _MDD(x::AbstractVector)
+
+# Description
 
 Compute the Maximum Drawdown (Calmar ratio) of uncompounded cumulative returns.
 
@@ -841,13 +926,25 @@ Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X})`` is the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
+See also: [`MDD`](@ref), [`calc_risk(::MDD, ::AbstractVector)`](@ref), [`MDD_r`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `mdd::Real`: Maximum Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate maximum drawdown of uncompounded cumulative returns
+mdd = _MDD(returns)
+```
 """
 function _MDD(x::AbstractVector)
     pushfirst!(x, 1)
@@ -868,9 +965,9 @@ function _MDD(x::AbstractVector)
 end
 
 """
-```
-_ADD(x::AbstractVector)
-```
+    _ADD(x::AbstractVector)
+
+# Description
 
 Compute the Average Drawdown of uncompounded cumulative returns.
 
@@ -884,13 +981,25 @@ Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X}, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`_DaR`](@ref).
 
+See also: [`ADD`](@ref), [`calc_risk(::ADD, ::AbstractVector)`](@ref), [`ADD_r`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `add::Real`: Average Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate average drawdown of uncompounded cumulative returns
+add = _ADD(returns)
+```
 """
 function _ADD(x::AbstractVector)
     T = length(x)
@@ -912,9 +1021,9 @@ function _ADD(x::AbstractVector)
 end
 
 """
-```
-_CDaR(x::AbstractVector, α::Real = 0.05)
-```
+    _CDaR(x::AbstractVector, α::Real = 0.05)
+
+# Description
 
 Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 
@@ -926,20 +1035,39 @@ Compute the Conditional Drawdown at Risk of uncompounded cumulative returns.
 
 Where:
 
-  - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`_DaR`](@ref), and ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+  - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`_DaR`](@ref).
+  - ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` is the Drawdown at Risk of uncompounded cumulative returns as defined in [`_DaR`](@ref).
+
+See also: [`CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`CDaR_r`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`_DaR_r`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref).
 
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - `α` is not validated because this is an internal function. It should have been validated in [`CDaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `cdar::Real`: Conditional Drawdown at Risk of uncompounded cumulative returns..
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the conditional drawdown at risk of 
+# uncompounded cumulative returns with default parameters
+cdar1 = _CDaR(returns)
+
+# Calculate with 7 % significance parameter
+cdar2 = _CDaR(returns, 0.07)
+```
 """
 function _CDaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -966,9 +1094,9 @@ function _CDaR(x::AbstractVector, alpha::Real = 0.05)
 end
 
 """
-```
-_UCI(x::AbstractVector)
-```
+    _UCI(x::AbstractVector)
+
+# Description
 
 Compute the Ulcer Index of uncompounded cumulative returns.
 
@@ -982,13 +1110,25 @@ Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`_DaR`](@ref).
 
+See also: [`UCI`](@ref), [`calc_risk(::UCI, ::AbstractVector)`](@ref), [`UCI_r`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `uci::Real`: Ulcer Index of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate ulcer index of uncompounded cumulative returns
+uci = _UCI(returns)
+```
 """
 function _UCI(x::AbstractVector)
     T = length(x)
@@ -1010,9 +1150,9 @@ function _UCI(x::AbstractVector)
 end
 
 """
-```
-_EDaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
-```
+    _EDaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+
+# Description
 
 Compute the Entropic Drawdown at Risk of uncompounded cumulative returns.
 
@@ -1026,15 +1166,39 @@ Where:
 
   - ``\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{X}),\\, z, \\,\\alpha)`` is the Entropic Risk Measure as defined in [`ERM`](@ref), using the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
+See also: [`ERM`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`_EDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` is not validated because this is an internal function. It should have been validated in [`EDaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `edar::Real`: Entropic Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the entropic drawdown at risk of 
+# uncompounded cumulative returns with default parameters
+edar1 = _EDaR(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter
+edar2 = _EDaR(returns, Dict("solver" => my_solver), 0.03)
+```
 """
 function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     pushfirst!(x, 1)
@@ -1053,9 +1217,9 @@ function _EDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 end
 
 """
-```
-_RLDaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
-```
+    _RLDaR(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
+
+# Description
 
 Compute the Relativistic Drawdown at Risk of uncompounded cumulative returns.
 
@@ -1069,16 +1233,40 @@ Where:
 
   - ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref), using the Drawdown of uncompounded cumulative returns as defined in [`_DaR`](@ref).
 
+See also: [`RRM`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`_RLDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
-  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+  - `κ::Real = 0.3`: significance level, `κ ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLDaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `rldar::Real`: Relativistic Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the entropic drawdown at risk of 
+# uncompounded cumulative returns with default parameters
+rldar1 = _RLDaR(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter and 75 % deformation parameter
+rldar2 = _RLDaR(returns, Dict("solver" => my_solver), 0.03, 0.75)
+```
 """
 function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                 kappa::Real = 0.3)
@@ -1098,17 +1286,17 @@ function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-```
 _DaR_r(x::AbstractArray, α::Real = 0.05)
-```
+
+# Description
 
 Compute the Drawdown at Risk of compounded cumulative returns.
 
 ```math
 \\begin{align}
-\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{X},\\, j) \\in \\mathbb{R} : F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
+\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) &= \\underset{j \\in (0,\\, T)}{\\max} \\left\\{ \\mathrm{DD_{r}}(\\bm{X},\\, j) \\in \\mathbb{R} \\, | \\, F_{\\mathrm{DD}}\\left(\\mathrm{DD_{r}}(\\bm{X},\\, j)\\right) < 1 - \\alpha \\right\\}\\\\
 \\mathrm{DD_{r}}(\\bm{X},\\, j) &= \\underset{t \\in (0,\\, j)}{\\max}\\left( \\prod\\limits_{i=0}^{t} \\left(1+X_{i}\\right) \\right) - \\prod\\limits_{i=0}^{j} \\left(1+X_{i}\\right)\\\\
-\\mathrm{DD_{r}}(\\bm{X}) &= \\mathrm{DD_{r}}(\\bm{X},\\, j) \\quad \\forall j = 1,\\,\\ldots,\\,T\\,.
+\\mathrm{DD_{r}}(\\bm{X}) &= \\left\\{j \\in (0,\\,T) \\, | \\, \\mathrm{DD_{r}}(\\bm{X},\\, j)\\right\\}\\,.
 \\end{align}
 ```
 
@@ -1118,18 +1306,35 @@ Where:
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j``.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns.
 
+See also: [`DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`DaR_r`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`_CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_CDaR_r`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - `α` is not validated because this is an internal function. It should have been validated in [`DaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `dar_r::Real`: Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the drawdown of compounded cumulative returns with default parameters
+dar_r1 = _DaR_r(returns)
+
+# Calculate with 7 % significance parameter
+dar_r2 = _DaR_r(returns, 0.07)
+```
 """
 function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
     T = length(x)
@@ -1150,9 +1355,9 @@ function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
 end
 
 """
-```
-_MDD_r(x::AbstractVector)
-```
+    _MDD_r(x::AbstractVector)
+
+# Description
 
 Compute the Maximum Drawdown of compounded cumulative returns.
 
@@ -1166,13 +1371,25 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X})`` is the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
+See also: [`MDD`](@ref), [`calc_risk(::MDD, ::AbstractVector)`](@ref), [`MDD_r`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `mdd_r::Real`: Maximum Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate maximum drawdown of compounded cumulative returns
+mdd_r = _MDD_r(returns)
+```
 """
 function _MDD_r(x::AbstractVector)
     x .= pushfirst!(x, 0) .+ 1
@@ -1193,9 +1410,9 @@ function _MDD_r(x::AbstractVector)
 end
 
 """
-```
-_ADD_r(x::AbstractVector)
-```
+    _ADD_r(x::AbstractVector)
+
+# Description
 
 Compute the Average Drawdown of compounded cumulative returns.
 
@@ -1209,13 +1426,25 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`_DaR_r`](@ref).
 
+See also: [`ADD`](@ref), [`calc_risk(::ADD, ::AbstractVector)`](@ref), [`ADD_r`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `add_r::Real`: Average Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate average drawdown of compounded cumulative returns
+add = _ADD_r(returns)
+```
 """
 function _ADD_r(x::AbstractVector)
     T = length(x)
@@ -1237,9 +1466,9 @@ function _ADD_r(x::AbstractVector)
 end
 
 """
-```
-_CDaR_r(x::AbstractVector, α::Real = 0.05)
-```
+    _CDaR_r(x::AbstractVector, α::Real = 0.05)
+
+# Description
 
 Compute the Conditional Drawdown at Risk of compounded cumulative returns.
 
@@ -1254,18 +1483,36 @@ Where:
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`_DaR_r`](@ref).
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
+See also: [`CDaR`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_DaR`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`CDaR_r`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`_DaR_r`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - `α` is not validated because this is an internal function. It should have been validated in [`CDaR_r`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `cdar_r::Real`: Conditional Drawdown at Risk of compounded cumulative returns..
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the conditional drawdown at risk of 
+# compounded cumulative returns with default parameters
+cdar_r1 = _CDaR_r(returns)
+
+# Calculate with 7 % significance parameter
+cdar_r2 = _CDaR_r(returns, 0.07)
+```
 """
 function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
@@ -1291,9 +1538,9 @@ function _CDaR_r(x::AbstractVector, alpha::Real = 0.05)
 end
 
 """
-```
-_UCI_r(x::AbstractVector)
-```
+    _UCI_r(x::AbstractVector)
+
+# Description
 
 Compute the Ulcer Index of compounded cumulative returns.
 
@@ -1307,13 +1554,25 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`_DaR_r`](@ref).
 
+See also: [`UCI`](@ref), [`calc_risk(::UCI, ::AbstractVector)`](@ref), [`UCI_r`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `uci_r::Real`: Ulcer Index of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate ulcer index of compounded cumulative returns
+uci_r = _UCI_r(returns)
+```
 """
 function _UCI_r(x::AbstractVector)
     T = length(x)
@@ -1335,9 +1594,9 @@ function _UCI_r(x::AbstractVector)
 end
 
 """
-```
-_EDaR_r(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
-```
+    _EDaR_r(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+
+# Description
 
 Compute the Entropic Drawdown at Risk of compounded cumulative returns.
 
@@ -1351,15 +1610,39 @@ Where:
 
   - ``\\mathrm{ERM}(\\mathrm{DD_{r}}(\\bm{X}),\\, z, \\,\\alpha)`` is the Entropic Risk Measure as defined in [`ERM`](@ref), using the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
+See also: [`ERM`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`_EDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` is not validated because this is an internal function. It should have been validated in [`EDaR_r`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `edar_r::Real`: Entropic Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the entropic drawdown at risk of 
+# compounded cumulative returns with default parameters
+edar_r1 = _EDaR_r(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter
+edar_r2 = _EDaR_r(returns, Dict("solver" => my_solver), 0.03)
+```
 """
 function _EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     x .= pushfirst!(x, 0) .+ 1
@@ -1377,9 +1660,9 @@ function _EDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
 end
 
 """
-```
-_RLDaR_r(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
-```
+    _RLDaR_r(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
+
+# Description
 
 Compute the Relativistic Drawdown at Risk of compounded cumulative returns.
 
@@ -1393,16 +1676,40 @@ Where:
 
   - ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref), using the Drawdown of compounded cumulative returns as defined in [`_DaR_r`](@ref).
 
+See also: [`RRM`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`_RLDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
-  - `κ`: relativistic deformation parameter, `κ ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+  - `κ::Real = 0.3`: significance level, `κ ∈ (0, 1)`.
+
+# Behaviour
+
+  - If no valid solution is found returns `NaN`.
+
+!!! warning
+
+      - `α` and `κ` are not validated because this is an internal function. They should have been validated in [`RLDaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `rldar_r::Real`: Relativistic Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the entropic drawdown at risk of 
+# compounded cumulative returns with default parameters
+rldar_r1 = _RLDaR_r(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter and 75 % deformation parameter
+rldar_r2 = _RLDaR_r(returns, Dict("solver" => my_solver), 0.03, 0.75)
+```
 """
 function _RLDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
                   kappa::Real = 0.3)
@@ -1421,10 +1728,9 @@ function _RLDaR_r(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-```
-_Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
-               scale::Bool = false)
-```
+    _Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing; scale::Bool = false)
+
+# Description
 
 Compute the Square Root Kurtosis.
 
@@ -1434,18 +1740,46 @@ Compute the Square Root Kurtosis.
 \\end{align}
 ```
 
+See also: [`Kurt`](@ref), [`calc_risk(::Kurt, ::AbstractWeights)`](@ref), [`risk_contribution`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+## Positional
 
-  - `w`: `T×1` optional vector of weights for computing the expected return.
-  - `scale`:
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `w::Union{AbstractWeights, Nothing} = nothing`: `T×1` optional vector of weights for computing the expected return.
 
-      + if `true`: divides by 2, used in [`risk_contribution`](@ref).
+## Named
+
+  - `scale::Bool = false`: flag for scaling risk in [`risk_contribution`](@ref).
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+  - If `scale` is `false`: no effect.
+  - If `scale` is `true`: divide by 2, used in [`risk_contribution`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `kurt::Real`: square root kurtosis.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the square root kurtosis
+kurt1 = _Kurt(returns)
+
+# Calculate the square root kurtosis using weights
+kurt2 = _Kurt(returns, eweights(1:length(returns), 0.3))
+
+# Calculate the square root kurtosis using weights,
+# for use in risk_contribution
+kurt3 = _Kurt(returns, eweights(1:length(returns), 0.1); scale = true)
+```
 """
 function _Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
                scale::Bool = false)
@@ -1457,10 +1791,9 @@ function _Kurt(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing;
 end
 
 """
-```
-_SKurt(x::AbstractVector, r::Real = 0.0,
-        w::Union{AbstractWeights, Nothing} = nothing; scale::Bool = false)
-```
+    _SKurt(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing; scale::Bool = false)
+
+# Description
 
 Compute the Square Root Semi Kurtosis.
 
@@ -1470,26 +1803,54 @@ Compute the Square Root Semi Kurtosis.
 \\end{align}
 ```
 
+See also: [`Kurt`](@ref), [`calc_risk(::Kurt, ::AbstractWeights)`](@ref), [`risk_contribution`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+## Positional
 
-  - `r`: minimum return target.
-  - `w`: `T×1` optional vector of weights for computing the expected return.
-  - `scale`:
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `r::Real = 0.0`: minimum return threshold for downside classification.
+  - `w::Union{AbstractWeights, Nothing} = nothing`: `T×1` optional vector of weights for computing the expected return.
 
-      + if `true`: divides by 2, used in [`risk_contribution`](@ref).
+## Named
+
+  - `scale::Bool = false`: flag for scaling risk in [`risk_contribution`](@ref).
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+  - If `scale` is `false`: no effect.
+  - If `scale` is `true`: divide by 2, used in [`risk_contribution`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `skurt::Real`: square root semi kurtosis.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate the square root kurtosis
+skurt1 = _SKurt(returns)
+
+# Calculate the square root kurtosis using weights
+skurt2 = _SKurt(returns, eweights(1:length(returns), 0.3))
+
+# Calculate the square root kurtosis using weights,
+# for use in risk_contribution
+skurt3 = _SKurt(returns, eweights(1:length(returns), 0.1); scale = true)
+```
 """
 function _SKurt(x::AbstractVector, target::Real = 0.0,
                 w::Union{AbstractWeights, Nothing} = nothing; scale::Bool = false)
     T = length(x)
     mu = isnothing(w) ? mean(x) : mean(x, w)
     val = x .- mu
-    skurt = sqrt(sum(val[val .< target] .^ 4) / T)
+    skurt = sqrt(sum(val[val .<= target] .^ 4) / T)
     return !scale ? skurt : skurt / 2
 end
 

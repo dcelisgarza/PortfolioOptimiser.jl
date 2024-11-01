@@ -214,11 +214,6 @@ With `R(w)` being a risk measure.
   - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
   - `ub`: no effect.
 
-## Validation
-
-  - `scale`: must be positive.
-  - `ub`: must be positive when finite.
-
 # Notes
 
   - `scale`: typically used when combining different risk measures in a single optimisation.
@@ -243,21 +238,7 @@ mutable struct RMSettings{T1 <: Real, T2 <: Real}
     ub::T2
 end
 function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
-    @smart_assert(scale > zero(scale))
-    if isfinite(ub)
-        @smart_assert(ub > zero(ub))
-    end
     return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
-end
-function Base.setproperty!(obj::RMSettings, sym::Symbol, val)
-    if sym == :scale
-        @smart_assert(val > zero(val))
-    elseif sym == :ub
-        if isfinite(val)
-            @smart_assert(val > zero(val))
-        end
-    end
-    return setfield!(obj, sym, val)
 end
 
 """
@@ -280,10 +261,6 @@ With `R(w)` being a risk measure.
   - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
   - Does not include flag or bounds as hierarchical optimisations cannot constrain the risk, only the weights of the assets.
 
-## Validation
-
-  - `scale`: must be positive.
-
 # Notes
 
   - `scale`: typically used when combining different risk measures in a single optimisation.
@@ -302,14 +279,7 @@ mutable struct HCRMSettings{T1 <: Real}
     scale::T1
 end
 function HCRMSettings(; scale::Real = 1.0)
-    @smart_assert(scale > zero(scale))
     return HCRMSettings{typeof(scale)}(scale)
-end
-function Base.setproperty!(obj::HCRMSettings, sym::Symbol, val)
-    if sym == :scale
-        @smart_assert(val > zero(val))
-    end
-    return setfield!(obj, sym, val)
 end
 
 """
