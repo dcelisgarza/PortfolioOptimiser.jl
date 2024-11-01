@@ -257,7 +257,7 @@ Compute the First Lower Partial Moment (Omega ratio).
 
 ```math
 \\begin{align}
-\\mathrm{FLPM}(\\bm{X},\\, r) &= -\\dfrac{1}{T} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t},\\, r\\right)\\,.
+\\mathrm{FLPM}(\\bm{X},\\, r) &= \\dfrac{1}{T} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)\\,.
 \\end{align}
 ```
 
@@ -287,7 +287,8 @@ flpm2 = _FLPM(returns, 0.01)
 """
 function _FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    return -sum(x[x .<= target]) / T
+    val = x .- target
+    return -sum(val[val .<= zero(target)]) / T
 end
 
 """
@@ -299,7 +300,7 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 
 ```math
 \\begin{align}
-\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t},\\, r\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -329,7 +330,9 @@ slpm2 = _SLPM(returns, 0.01)
 """
 function _SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
-    return sqrt(sum(x[x .<= target] .^ 2) / (T - 1))
+    val = x .- target
+    val = val[val .<= zero(target)]
+    return sqrt(dot(val, val) / (T - 1))
 end
 
 """
@@ -840,7 +843,7 @@ function _RLVaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-    _DaR(x::AbstractArray, α::Real = 0.05)
+    _DaR(x::AbstractVector, α::Real = 0.05)
 
 # Description
 
@@ -890,7 +893,7 @@ dar1 = _DaR(returns)
 dar2 = _DaR(returns, 0.07)
 ```
 """
-function _DaR(x::AbstractArray, alpha::Real = 0.05)
+function _DaR(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
@@ -1286,7 +1289,7 @@ function _RLDaR(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
 end
 
 """
-_DaR_r(x::AbstractArray, α::Real = 0.05)
+_DaR_r(x::AbstractVector, α::Real = 0.05)
 
 # Description
 
@@ -1336,7 +1339,7 @@ dar_r1 = _DaR_r(returns)
 dar_r2 = _DaR_r(returns, 0.07)
 ```
 """
-function _DaR_r(x::AbstractArray, alpha::Real = 0.05)
+function _DaR_r(x::AbstractVector, alpha::Real = 0.05)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
@@ -1803,7 +1806,7 @@ Compute the Square Root Semi Kurtosis.
 \\end{align}
 ```
 
-See also: [`Kurt`](@ref), [`calc_risk(::Kurt, ::AbstractWeights)`](@ref), [`risk_contribution`](@ref).
+See also: [`SKurt`](@ref), [`calc_risk(::SKurt, ::AbstractWeights)`](@ref), [`risk_contribution`](@ref).
 
 # Inputs
 
@@ -1855,9 +1858,9 @@ function _SKurt(x::AbstractVector, target::Real = 0.0,
 end
 
 """
-```
-_Skew(w::AbstractVector, V::AbstractArray)
-```
+    _Skew(w::AbstractVector, V::AbstractMatrix)
+
+# Description
 
 Compute the Quadratic Skewness/Semi Skewness.
 
@@ -1872,16 +1875,37 @@ Where:
   - ``\\bm{w}`` is the vector of asset weights.
   - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of coskewness or semicoskewness.
 
+See also: [`Skew`](@ref), [`calc_risk(::Skew, ::AbstractWeights)`](@ref), [`SSkew`](@ref), [`calc_risk(::SSkew, ::AbstractWeights)`](@ref).
+
 # Inputs
 
-  - `w`: `N×1` vector of weights.
-  - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness or semi coskewness.
+  - `w::AbstractVector`: `N×1` vector of weights.
+  - `V::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the coskewness or semi coskewness.
 
 # Outputs
 
-  - `r`: risk.
+  - `skew::Real`: quadradic skew or quadratic semi skew.
+
+# Examples
+
+```@example
+# Number of assets
+N = 3
+
+# Create sample sum of negative spectral 
+# slices of the coskewness
+V = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Create weight vector
+w = [0.3, 0.4, 0.3]
+
+# Calculate portfolio skew
+skew = _Skew(w, V)
+```
 """
-function _Skew(w::AbstractVector, V::AbstractArray)
+function _Skew(w::AbstractVector, V::AbstractMatrix)
     return sqrt(dot(w, V, w))
 end
 
