@@ -41,31 +41,42 @@ include("./Extensions/PortfolioOptimiserPlotsExtDefinitions.jl")
 end
 
 # """
+#     function_name(arg1::Type1, arg2::Type2; kwarg1::Type3 = default1, kwarg2::Type4 = default2)
+
 # # Description
+# Brief description of what the function does and its key features.
+#   - Key feature or characteristic 1
+#   - Key feature or characteristic 2
+#   - Mathematical relationships if applicable: ``\\mathrm{equation}``
+#   - Additional important notes
 
-# See also:.
+# See also: [`RelatedFunction1`](@ref), [`RelatedFunction2`](@ref)
 
-# # Type Hierarchy
+# # Arguments
+#   - `arg1::Type1`: description of first positional argument
+#   - `arg2::Type2`: description of second positional argument
 
-# # Mathematical Description
+# # Keywords
+#   - `kwarg1::Type3 = default1`: description of first keyword argument
+#   - `kwarg2::Type4 = default2`: description of second keyword argument
 
-# # Fields
-
-# # Validation
+# # Returns
+#   - `ReturnType`: description of what is returned
 
 # # Behaviour
+#   - Important behavior note 1
+#   - Important behavior note 2
 
-# # Implementation Requirements
-
-# # Notes
-
-# ## Advantages over Alternate Approaches
-
-# ## Disadvantages over Alternate Approaches
+# ## Validation
+#   - Validation check 1 (e.g., `arg1 > 0`)
+#   - Validation check 2 (e.g., `kwarg1 ∈ (0, 1)`)
 
 # # Examples
+# ```julia
+# # Basic usage
+# result = function_name(arg1, arg2)
 
-# ```@example
-# # Example
+# # Using keyword arguments
+# result = function_name(arg1, arg2; kwarg1 = custom1, kwarg2 = custom2)
 # ```
 # """

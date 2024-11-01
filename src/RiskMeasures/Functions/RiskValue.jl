@@ -1,9 +1,9 @@
 """
-```
-_Variance(w::AbstractVector, Σ::AbstractMatrix)
-```
+    _Variance(w::AbstractVector, Σ::AbstractMatrix)
 
-Compute the Variance. Square of [`_SD`](@ref).
+# Description
+
+Compute the portfolio Variance. This is the square of [`_SD`](@ref).
 
 ```math
 \\begin{align}
@@ -11,25 +11,45 @@ Compute the Variance. Square of [`_SD`](@ref).
 \\end{align}
 ```
 
+See also: [`Variance`](@ref), [`calc_risk(::Variance, w::AbstractVector)`](@ref), [`_SD`](@ref), [`SD`](@ref).
+
 # Inputs
 
-  - `w`: vector of asset weights.
-  - `Σ`: covariance matrix of asset returns.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+  - `Σ::AbstractMatrix`: `N×N` covariance matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `variance::Real`: portfolio variance.
+
+# Examples
+
+```@example
+# Number of assets
+N = 3
+
+# Create sample covariance matrix
+Σ = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Create weight vector
+w = [0.3, 0.4, 0.3]
+
+# Calculate portfolio variance
+variance = _Variance(w, Σ)
+```
 """
 function _Variance(w::AbstractVector, cov::AbstractMatrix)
     return dot(w, cov, w)
 end
 
 """
-```
-_SVariance(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
-```
+    _SVariance(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
 
-Compute the Semi-Variance, this is the square of [`_SSD`](@ref).
+# Description
+
+Compute the portfolio Semi Variance. This is the square of [`_SSD`](@ref).
 
 ```math
 \\begin{align}
@@ -37,15 +57,39 @@ Compute the Semi-Variance, this is the square of [`_SSD`](@ref).
 \\end{align}
 ```
 
+See also: [`SVariance`](@ref), [`calc_risk(::SVariance, w::AbstractVector)`](@ref), [`_SSD`](@ref), [`SSD`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `r`: minimum return target.
-  - `w`: `T×1` optional vector of weights for computing the expected return.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `r::Real = 0.0`: minimum return target.
+  - `w::Union{AbstractWeights, Nothing} = nothing`: `T×1` optional vector of weights for computing the expected return.
 
 # Outputs
 
-  - `r`: risk.
+  - `svariance::Real`: portfolio semi variance.
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+sv1 = _SVariance(returns)
+
+# Calculate with custom target return
+sv2 = _SVariance(returns, 0.01)
+
+# Calculate with weights
+weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+sv3 = _SVariance(returns, 0.01, weights)
+```
 """
 function _SVariance(x::AbstractVector, target::Real = 0.0,
                     w::Union{AbstractWeights, Nothing} = nothing)
@@ -56,11 +100,11 @@ function _SVariance(x::AbstractVector, target::Real = 0.0,
 end
 
 """
-```
-_SD(w::AbstractVector, Σ::AbstractMatrix)
-```
+    _SD(w::AbstractVector, Σ::AbstractMatrix)
 
-Compute the Standard Deviation. Square root of [`_Variance`](@ref).
+# Description
+
+Compute the portfolio Standard Deviation. This is the square root of [`_Variance`](@ref).
 
 ```math
 \\begin{align}
@@ -68,25 +112,45 @@ Compute the Standard Deviation. Square root of [`_Variance`](@ref).
 \\end{align}
 ```
 
+See also: [`SD`](@ref), [`calc_risk(::SD, w::AbstractVector)`](@ref), [`_Variance`](@ref), [`Variance`](@ref).
+
 # Inputs
 
-  - `w`: vector of asset weights.
-  - `Σ`: covariance matrix of asset returns.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+  - `Σ::AbstractMatrix`: `N×N` covariance matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `sd::Real`: portfolio standard deviation.
+
+# Examples
+
+```@example
+# Number of assets
+N = 3
+
+# Create sample covariance matrix
+Σ = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Create weight vector
+w = [0.3, 0.4, 0.3]
+
+# Calculate portfolio standard deviation
+sd = _SD(w, Σ)
+```
 """
 function _SD(w::AbstractVector, cov::AbstractMatrix)
     return sqrt(_Variance(w, cov))
 end
 
 """
-```
-_MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
-```
+    _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
 
-Compute the Mean Absolute Deviation.
+# Description
+
+Compute the portfolio Mean Absolute Deviation.
 
 ```math
 \\begin{align}
@@ -94,14 +158,35 @@ Compute the Mean Absolute Deviation.
 \\end{align}
 ```
 
+See also: [`MAD`](@ref), [`calc_risk(::MAD, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `w`: `T×1` optional vector of weights for computing the expected return.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `w::Union{AbstractWeights, Nothing} = nothing`: `T×1` optional vector of weights for computing the expected return.
 
 # Outputs
 
-  - `r`: risk.
+  - `mad::Real`: portfolio mean absolute deviation.
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic mean absolute deviation with default parameters
+mad1 = _MAD(returns)
+
+# Calculate with weights
+weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+mad2 = _MAD(returns, weights)
+```
 """
 function _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     mu = isnothing(w) ? mean(x) : mean(x, w)
@@ -109,11 +194,11 @@ function _MAD(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
 end
 
 """
-```
-_SSD(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
-```
+    _SSD(x::AbstractVector, r::Real = 0.0, w::Union{AbstractWeights, Nothing} = nothing)
 
-Compute the Semi-Standard Deviation.
+# Description
+
+Compute the portfolio Semi Standard Deviation. This is the square root of [`_SVariance`](@ref).
 
 ```math
 \\begin{align}
@@ -121,15 +206,39 @@ Compute the Semi-Standard Deviation.
 \\end{align}
 ```
 
+See also: [`SSD`](@ref), [`calc_risk(::SSD, w::AbstractVector)`](@ref), [`_SVariance`](@ref), [`SVariance`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `r`: minimum return target.
-  - `w`: `T×1` optional vector of weights for computing the expected return.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `r::Real = 0.0`: minimum return target.
+  - `w::Union{AbstractWeights, Nothing} = nothing`: `T×1` optional vector of weights for computing the expected return.
 
 # Outputs
 
-  - `r`: risk.
+  - `ssd::Real`: portfolio semi standard deviation.
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi standard deviation with default parameters
+ssd1 = _SSD(returns)
+
+# Calculate with custom target return
+ssd2 = _SSD(returns, 0.01)
+
+# Calculate with weights
+weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+ssd3 = _SSD(returns, 0.01, weights)
+```
 """
 function _SSD(x::AbstractVector, target::Real = 0.0,
               w::Union{AbstractWeights, Nothing} = nothing)
@@ -140,11 +249,11 @@ function _SSD(x::AbstractVector, target::Real = 0.0,
 end
 
 """
-```
-_FLPM(x::AbstractVector, r::Real = 0.0)
-```
+    _FLPM(x::AbstractVector, r::Real = 0.0)
 
-Compute the First Lower Partial Moment (Omega ratio).
+# Description
+
+Compute the portfolio First Lower Partial Moment (Omega ratio).
 
 ```math
 \\begin{align}
@@ -152,14 +261,29 @@ Compute the First Lower Partial Moment (Omega ratio).
 \\end{align}
 ```
 
+See also: [`FLPM`](@ref), [`calc_risk(::FLPM, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `r`: minimum return target.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `r::Real = 0.0`: minimum return target.
 
 # Outputs
 
-  - `r`: risk.
+  - `flpm::Real`: portfolio first lower partial moment.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic first lower partial moment with default parameters
+flpm1 = _FLPM(returns)
+
+# Calculate with custom target return
+flpm2 = _FLPM(returns, 0.01)
+```
 """
 function _FLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
@@ -168,11 +292,11 @@ function _FLPM(x::AbstractVector, target::Real = 0.0)
 end
 
 """
-```
-_SLPM(x::AbstractVector, r::Real = 0.0)
-```
+    _SLPM(x::AbstractVector, r::Real = 0.0)
 
-Compute the Second Lower Partial Moment (Sortino Ratio).
+# Description
+
+Compute the portfolio Second Lower Partial Moment (Sortino Ratio).
 
 ```math
 \\begin{align}
@@ -180,14 +304,29 @@ Compute the Second Lower Partial Moment (Sortino Ratio).
 \\end{align}
 ```
 
+See also: [`SLPM`](@ref), [`calc_risk(::SLPM, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `r`: minimum return target.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `r::Real = 0.0`: minimum return target.
 
 # Outputs
 
-  - `r`: risk.
+  - `slpm::Real`: portfolio second lower partial moment.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic second lower partial moment with default parameters
+slpm1 = _SLPM(returns)
+
+# Calculate with custom target return
+slpm2 = _SLPM(returns, 0.01)
+```
 """
 function _SLPM(x::AbstractVector, target::Real = 0.0)
     T = length(x)
@@ -196,11 +335,11 @@ function _SLPM(x::AbstractVector, target::Real = 0.0)
 end
 
 """
-```
-_WR(x::AbstractVector)
-```
+    _WR(x::AbstractVector)
 
-Compute the Worst Realisation or Worst Case Scenario.
+# Description
+
+Compute the portfolio Worst Realisation or Worst Case Scenario.
 
 ```math
 \\begin{align}
@@ -208,24 +347,39 @@ Compute the Worst Realisation or Worst Case Scenario.
 \\end{align}
 ```
 
+See also: [`WR`](@ref), [`calc_risk(::WR, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
+  - `x::AbstractVector`: `T×1` returns vector.
 
 # Outputs
 
-  - `r`: risk.
+  - `wr::Real`: portfolio worst realisation.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+wr1 = _WR(returns)
+
+# Calculate with custom target return
+wr2 = _WR(returns, 0.01)
+```
 """
 function _WR(x::AbstractVector)
     return -minimum(x)
 end
 
 """
-```
-_VaR(x::AbstractVector, α::Real = 0.05)
-```
+    _VaR(x::AbstractVector, α::Real = 0.05)
 
-Compute the Value at Risk, used in [`_CVaR`](@ref).
+# Description
+
+Compute the portfolio Value at Risk.
 
 ```math
 \\begin{align}
@@ -233,18 +387,36 @@ Compute the Value at Risk, used in [`_CVaR`](@ref).
 \\end{align}
 ```
 
+See also: [`VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref), [`_CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
+      - `α` is not validated since this is an internal function. It should have been validated in [`VaR`](@ref) or [`CVaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `var::Real`: portfolio Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+var1 = _VaR(returns)
+
+# Calculate with 7 % significance parameter
+var2 = _VaR(returns, 0.07)
+```
 """
 function _VaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -253,11 +425,11 @@ function _VaR(x::AbstractVector, alpha::Real = 0.05)
 end
 
 """
-```
-_CVaR(x::AbstractVector, α::Real = 0.05)
-```
+    _CVaR(x::AbstractVector, α::Real = 0.05)
 
-Compute the Conditional Value at Risk.
+# Description
+
+Compute the portfolio Conditional Value at Risk.
 
 ```math
 \\begin{align}
@@ -269,18 +441,36 @@ Where:
 
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the Value at Risk as defined in [`_VaR`](@ref).
 
+See also: [`CVaR`](@ref), [`calc_risk(::CVaR, w::AbstractVector)`](@ref), [`_VaR`](@ref), [`calc_risk(::VaR, w::AbstractVector)`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
+
+# Behaviour
 
 !!! warning
 
-    In-place sorts the input vector.
+      - In-place sorts the input vector.
+      - `α` is not validated since this is an internal function. It should have been validated in [`CVaR`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `cvar::Real`: portfolio Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+cvar1 = _CVaR(returns)
+
+# Calculate with 7 % significance parameter
+cvar2 = _CVaR(returns, 0.07)
+```
 """
 function _CVaR(x::AbstractVector, alpha::Real = 0.05)
     sort!(x)
@@ -294,11 +484,11 @@ function _CVaR(x::AbstractVector, alpha::Real = 0.05)
 end
 
 """
-```
-ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
-```
+    ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
 
-Compute the Entropic Risk Measure.
+# Description
+
+Compute the portfolio Entropic Risk Measure.
 
 ```math
 \\begin{align}
@@ -313,27 +503,39 @@ Where:
 
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `α`: significance level, `α ∈ (0, 1)`.
-  - `z`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `z::Real = 1.0`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
 
 # Outputs
 
-  - `r`: risk.
+  - `er::Real`: portfolio entropic risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+er1 = ERM(returns, 2.3, 0.03)
+
+# Calculate with a 2.3 entropic moment and 3 % significance parameter
+er2 = ERM(returns, 2.3, 0.03)
+```
 """
 function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 
 """
-```
-ERM(x::AbstractVector, solvers:AbstractDict, α::Real = 0.05)
-```
+    ERM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
 
-Compute the Entropic Risk Measure. Used in [`_EVaR`](@ref), [`_EDaR`](@ref) and [`_EDaR_r`](@ref).
+# Description
+
+Compute the Entropic Risk Measure.
 
 ```math
 \\begin{align}
@@ -353,20 +555,40 @@ Where:
   - ``\\mathcal{K}_{\\mathrm{exp}}`` is the exponential cone.
   - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
 
+See also: [`EVaR`](@ref), [`calc_risk(::EVaR, w::AbstractVector)`](@ref), [`_EVaR`](@ref), [`EDaR`](@ref), [`calc_risk(::EDaR, w::AbstractVector)`](@ref), [`_EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, w::AbstractVector)`](@ref), [`_EDaR_r`](@ref).
+
 # Inputs
 
-  - `x`: `T×1` returns vector.
-  - `solvers`: abstract dict containing the a JuMP-compatible solver capable of solving exponential conic problems.
-  - `α`: significance level, `α ∈ (0, 1)`.
+  - `x::AbstractVector`: `T×1` returns vector.
+  - `solvers::AbstractDict`: optional JuMP-compatible solvers for exponential cone problems.
+  - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
 
-If no valid solution is found then `NaN` will be returned.
+# Behaviour
+
+  - If no valid solution is found then `NaN` will be returned.
+
+!!! warning
+
+      - `α` is not validated since this is an internal function. It should have been validated in [`EVaR`](@ref), [`EDaR`](@ref), or [`EDaR_r`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `er::Real`: portfolio entropic risk.
+
+# Examples
+
+```@example
+# Sample returns vector
+returns = [0.05, -0.03, 0.02, -0.01, 0.04]
+
+# Calculate basic semi variance with default parameters
+er1 = ERM(returns, Dict("solver" => my_solver))
+
+# Calculate with a 3 % significance parameter
+er2 = ERM(returns, Dict("solver" => my_solver), 0.03)
+```
 """
 function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
     T = length(x)
@@ -462,9 +684,6 @@ Where:
 """
 function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
              kappa::Real = 0.3)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
-    @smart_assert(zero(kappa) < kappa < one(kappa))
-
     T = length(x)
 
     at = alpha * T
@@ -1593,7 +1812,7 @@ end
 
 """
 ```
-calc_risk(svariance::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`FLPM`](@ref) via [`_FLPM`](@ref). Inputs correspond to those of [`_FLPM`](@ref).
@@ -1608,7 +1827,7 @@ end
 
 """
 ```
-calc_risk(svariance::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
+calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 ```
 
 Compute the [`SLPM`](@ref) via [`_SLPM`](@ref). Inputs correspond to those of [`_SLPM`](@ref).
