@@ -2195,12 +2195,12 @@ end
 
 # Description
 
-Compute the Brownian distance variance.
+Compute the Brownian Distance variance.
 
 ```math
 \\begin{align}
-\\mathrm{BDVariance}(\\bm{X}) &= \\mathrm{dCov}(\\bm{X},\\, \\bm{X}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T}\\sum\\limits_{j=1}^{T} A_{i,\\,j}^2\\\\
-\\mathrm{dCov}(\\bm{X},\\, \\bm{Y}) &= \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} \\sum\\limits_{j=1}^{T} A_{i,\\,j} B_{i,\\,j}\\\\
+\\mathrm{BDVariance}(\\bm{X}) &= \\mathrm{BDCov}(\\bm{X},\\, \\bm{X}) =  \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T}\\sum\\limits_{j=1}^{T} A_{i,\\,j}^2\\\\
+\\mathrm{BDCov}(\\bm{X},\\, \\bm{Y}) &= \\dfrac{1}{T^{2}} \\sum\\limits_{i=1}^{T} \\sum\\limits_{j=1}^{T} A_{i,\\,j} B_{i,\\,j}\\\\
 A_{i,\\,j} &= a_{i,\\,j} - \\bar{a}_{i\\,.} - \\bar{a}_{.\\,j} + \\bar{a}_{.\\,.}\\\\
 B_{i,\\,j} &= b_{i,\\,j} - \\bar{b}_{i\\,.} - \\bar{b}_{.\\,j} + \\bar{b}_{.\\,.}\\\\
 a_{i,\\,j} &= \\lVert X_{i} - X_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\, \\ldots ,\\, T\\\\
@@ -2246,30 +2246,98 @@ function _BDVariance(x::AbstractVector)
 end
 
 """
-```
-calc_risk(sd::SD, w::AbstractVector; kwargs...)
-```
+    calc_risk(sd::SD, w::AbstractVector; kwargs...)
 
-Compute the [`SD`](@ref) via [`_SD`](@ref). Inputs correspond to those of [`_SD`](@ref).
+# Description
+
+Compute the [`SD`](@ref) via [`_SD`](@ref).
+
+See also: [`SD`](@ref), [`_SD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `sd::SD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `kwargs`: used for other methods.
 
 # Outputs
 
-  - `r`: risk.
+  - `risk::Real`: standard deviation.
+
+# Examples
+
+```@example
+# Number of assets
+N = 3
+
+# Create sample covariance matrix
+Σ = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Create weight vector
+w = [0.3, 0.4, 0.3]
+
+# Create instance of risk measure.
+sd = SD(; sigma = Σ)
+
+# Calculate portfolio standard deviation
+risk = calc_risk(sd, w)
+```
 """
 function calc_risk(sd::SD, w::AbstractVector; kwargs...)
     return _SD(w, sd.sigma)
 end
 
 """
-```
-calc_risk(sd::Variance, w::AbstractVector; kwargs...)
-```
+    calc_risk(variance::Variance, w::AbstractVector; kwargs...)
 
-Compute the [`Variance`](@ref) via [`_Variance`](@ref). Inputs correspond to those of [`_Variance`](@ref).
+# Descrip
+
+Compute the [`Variance`](@ref) via [`_Variance`](@ref).
+
+See also: [`Variance`](@ref) via [`_Variance`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `variance::Variance`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `kwargs`: used for other methods.
 
 # Outputs
 
-  - `r`: risk.
+  - `risk::Real`: variance.
+
+# Examples
+
+```@example
+# Number of assets
+N = 3
+
+# Create sample covariance matrix
+Σ = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Create weight vector
+w = [0.3, 0.4, 0.3]
+
+# Create instance of risk measure.
+variance = Variance(; sigma = Σ)
+
+# Calculate portfolio standard deviation
+risk = calc_risk(variance, w)
+```
 """
 function calc_risk(variance::Variance, w::AbstractVector; kwargs...)
     return _Variance(w, variance.sigma)
