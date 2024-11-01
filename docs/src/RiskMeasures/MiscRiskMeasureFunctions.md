@@ -1,4 +1,4 @@
-# Miscelaneous
+# Miscelaneous Functions
 
 ## Public
 

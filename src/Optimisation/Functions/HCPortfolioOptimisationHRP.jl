@@ -15,7 +15,7 @@ function _optimise!(::HRP, port::HCPortfolio,
             lrisk = zero(eltype(weights))
             rrisk = zero(eltype(weights))
             for r ∈ rm
-                solver_flag = _set_rm_solvers(r, port.solvers)
+                solver_flag = _set_rm_solvers!(r, port.solvers)
                 scale = r.settings.scale
                 # Left risk.
                 lrisk += cluster_risk(port, lc, r) * scale

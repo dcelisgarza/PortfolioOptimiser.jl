@@ -39,7 +39,7 @@ function _optimise!(::HERC, port::HCPortfolio,
         lc = Int[]
         rc = Int[]
         for r ∈ rm_o
-            solver_flag = _set_rm_solvers(r, port.solvers)
+            solver_flag = _set_rm_solvers!(r, port.solvers)
             scale = r.settings.scale
             for cluster ∈ clusters
                 if issubset(cluster, ln)
@@ -66,7 +66,7 @@ function _optimise!(::HERC, port::HCPortfolio,
         cidx = idx .== i
         clusters = findall(cidx)
         for r ∈ rm_i
-            solver_flag = _set_rm_solvers(r, port.solvers)
+            solver_flag = _set_rm_solvers!(r, port.solvers)
             scale = r.settings.scale
             risk[cidx] .+= naive_risk(port, clusters, r) * scale
             _unset_rm_solvers!(r, solver_flag)

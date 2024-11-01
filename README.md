@@ -524,6 +524,10 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
 
   - L-moment ordered weight array, [`OWA`](@ref).
 
+#### Equal Risk Contribution
+
+  - Equal risk contribution, [`Equal`](@ref).
+
 ### Nested clustered optimisation, [`NCO`](@ref)
 
 Nested clustered optimisation combines the ideas of hierarchical equal risk parity optimisations and portfolio optimisations. They use the hierarchical clustering relationships between assets and splitting the dendrogram into `k` clusters. It then treats each cluster as its own isntance of [`Portfolio`](@ref) which is optimised in the usual way. The weights of each cluster are saved in a matrix, these are the intra-cluster weights. Then each cluster as a whole is treated as a synthetic asset, it statistics are internally computed from the fields in the [`NCO`](@ref) type. An instance of [`Portfolio`](@ref) is created from these synthetic assets and then optimised, these are the inter-cluster weights. The inter-cluster and intra-cluster weights are multiplied to give the asset weights.

@@ -44,7 +44,12 @@ function get_first_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     end
 end
 
-function _set_rm_solvers(rm::RMSolvers, solvers)
+"""
+```
+_set_rm_solvers!(rm::RMSolvers, solvers)
+```
+"""
+function _set_rm_solvers!(rm::RMSolvers, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -52,7 +57,7 @@ function _set_rm_solvers(rm::RMSolvers, solvers)
     end
     return flag
 end
-function _set_rm_solvers(args...)
+function _set_rm_solvers!(args...)
     return false
 end
 function _set_rm_sigma(rm::RMSigma, sigma)
@@ -82,10 +87,15 @@ Set properties for risk measures that use solvers or covariance matrices.
 """
 function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
                             sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
-    solver_flag = _set_rm_solvers(rm, solvers)
+    solver_flag = _set_rm_solvers!(rm, solvers)
     sigma_flag = _set_rm_sigma(rm, sigma)
     return solver_flag, sigma_flag
 end
+"""
+```
+_unset_rm_solvers!(rm::RMSolvers, flag)
+```
+"""
 function _unset_rm_solvers!(rm::RMSolvers, flag)
     if flag
         rm.solvers = nothing

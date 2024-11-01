@@ -2092,4 +2092,4 @@ function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta
 end
 
-export ERM, RRM, calc_risk
+export calc_risk

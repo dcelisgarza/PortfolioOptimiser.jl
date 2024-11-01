@@ -29,34 +29,84 @@ See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@re
 To ensure concrete subtypes will handle both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) contexts appropriately, they must implement:
 
   - Risk calculation method [`calc_risk`](@ref).
-  - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent.
-  - Include a `settings::RMSettings = RMSettings()` field for configuration when optimising a [`Portfolio`](@ref).
-  - If the risk calculation involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, it must include a `solvers::Union{Nothing, <:AbstractDict}` field.
+
+  - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent [`set_rm`](@ref).
+  - Include a `settings::RMSettings = RMSettings()` field for configuration purposes.
+  - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
+
+      + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
+      + Implement [`_set_rm_solvers!`](@ref) and [`_unset_rm_solvers!`](@ref).
 
 # Examples
 
-```@example
+## No solvers
+
+```@example no_solver
 # Creating a concrete risk measure that subtypes RiskMeasure
-struct CustomRisk <: RiskMeasure
+struct MyRisk <: RiskMeasure
     settings::RMSettings
     # implementation details
 end
 
 # Creating risk calculation method
-function PortfolioOptimiser.calc_risk(risk::CustomRisk, w::AbstractVector; kwargs...)
+function PortfolioOptimiser.calc_risk(risk::MyRisk, w::AbstractVector; kwargs...)
     # implementation details
 end
 
 # Creating a scalar JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rm::CustomRisk, type::OptimType,
+function PortfolioOptimiser.set_rm(port::Portfolio, rm::MyRisk, type::OptimType,
                                    obj::ObjectiveFunction; kwargs...)
     # implementation details
 end
 
 # Creating a vector JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:CustomRisk},
+function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:MyRisk},
                                    type::OptimType, obj::ObjectiveFunction; kwargs...)
     # implementation details
+end
+```
+
+## Solvers
+
+```@example solver
+# Creating a concrete risk measure that subtypes RiskMeasure
+# and uses solvers
+struct MySolverRisk <: RiskMeasure
+    settings::RMSettings
+    solvers::Union{Nothing, <:AbstractDict}
+    # implementation details
+end
+
+# Creating risk calculation method
+function PortfolioOptimiser.calc_risk(risk::MySolverRisk, w::AbstractVector; kwargs...)
+    # implementation details
+end
+
+# Creating a scalar JuMP model implementation
+function PortfolioOptimiser.set_rm(port::Portfolio, rm::MySolverRisk, type::OptimType,
+                                   obj::ObjectiveFunction; kwargs...)
+    # implementation details
+end
+
+# Creating a vector JuMP model implementation
+function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:MySolverRisk},
+                                   type::OptimType, obj::ObjectiveFunction; kwargs...)
+    # implementation details
+end
+
+function PortfolioOptimiser._set_rm_solvers!(rm::MySolverRisk, solvers)
+    flag = false
+    if isnothing(rm.solvers) || isempty(rm.solvers)
+        rm.solvers = solvers
+        flag = true
+    end
+    return flag
+end
+
+function PortfolioOptimiser._unset_rm_solvers!(rm::MySolverRisk, flag)
+    if flag
+        rm.solvers = nothing
+    end
 end
 ```
 """
@@ -76,24 +126,58 @@ See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@
 Concrete subtypes must implement:
 
   - Risk calculation method [`calc_risk`](@ref).
-  - If the risk calculation involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, it must include a `solvers::Union{Nothing, <:AbstractDict}` field.
 
-# Behaviour
+  - Include a `settings::HCRMSettings = HCRMSettings()` field for configuration purposes.
+  - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
 
-  - Not compatible with standard [`Portfolio`](@ref) optimisation.
+      + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
+      + Implement [`_set_rm_solvers!`](@ref) and [`_unset_rm_solvers!`](@ref).
 
 # Examples
 
-```@example
-# Creating a concrete risk measure that subtypes RiskMeasure
-struct CustomHCRisk <: HCRiskMeasure
+## No solvers
+
+```@example no_solvers
+# Creating a concrete risk measure that subtypes HCRiskMeasure
+struct MyHCRisk <: HCRiskMeasure
     settings::HCRMSettings
     # implementation details
 end
 
 # Creating risk calculation method
-function PortfolioOptimiser.calc_risk(risk::CustomHCRisk, w::AbstractVector; kwargs...)
+function PortfolioOptimiser.calc_risk(risk::MyHCRisk, w::AbstractVector; kwargs...)
     # implementation details
+end
+```
+
+## Solvers
+
+```@example solvers
+# Creating a concrete risk measure that subtypes HCRiskMeasure
+# and uses solvers
+struct MySolverHCRisk <: HCRiskMeasure
+    settings::HCRMSettings
+    solvers::Union{Nothing, <:AbstractDict}
+    # implementation details
+end
+
+function PortfolioOptimiser.calc_risk(risk::MySolverHCRisk, w::AbstractVector; kwargs...)
+    # implementation details
+end
+
+function PortfolioOptimiser._set_rm_solvers!(rm::MySolverHCRisk, solvers)
+    flag = false
+    if isnothing(rm.solvers) || isempty(rm.solvers)
+        rm.solvers = solvers
+        flag = true
+    end
+    return flag
+end
+
+function PortfolioOptimiser._unset_rm_solvers!(rm::MySolverHCRisk, flag)
+    if flag
+        rm.solvers = nothing
+    end
 end
 ```
 """
@@ -116,15 +200,15 @@ See also: [`AbstractRiskMeasure`](@ref), [`RiskMeasure`](@ref), [`HCRiskMeasure`
 
 # Behaviour
 
-## [`Portfolio`](@ref) Optimisation
+## [`optimise!(::Portfolio)`](@ref)
 
 With `R(w)` being a risk measure.
 
   - When `flag == true`: adds `scale * R(w)` to the risk expression in the optimisation objective.
   - `scale`: multiplier for this risk term in the risk expression.
-  - When `ub < Inf` (exclusive to [`Portfolio`](@ref) optimisation): adds constraint `R(w) ≤ ub`.
+  - When `ub < Inf`: adds constraint `R(w) ≤ ub`.
 
-## [`HCPortfolio`](@ref) Optimisation
+## [`optimise!(::HCPortfolio)`](@ref)
 
   - `flag`: no effect.
   - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
@@ -314,7 +398,7 @@ Implements the classical quadratic form of portfolio variance:
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\\\
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\nonumber\\\\
 \\textrm{s.t.} &\\qquad \\sigma^2 = \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\,.
 \\end{align}
 ```
@@ -362,7 +446,7 @@ Reformulates the quadratic variance expression using second-order cone constrain
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\\\
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\nonumber\\\\
 \\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
 \\end{align}
 ```
@@ -372,6 +456,7 @@ Where:
   - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma^2`` is the portfolio variance.
+  - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
 # Behaviour
 
@@ -381,7 +466,7 @@ Where:
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - Often more numerically stable than direct quadratic formulation.
   - Better scaling properties for large portfolios.
-  - Compatible with specialized conic solvers.
+  - Compatible with specialised conic solvers.
   - May introduce more variables but often leads to better solution times.
   - Particularly effective for large-scale problems.
 
@@ -416,7 +501,7 @@ Reformulates the affine standard deviation expression using second-order cone co
 
 ```math
 \\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma\\\\
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma\\nonumber\\\\
 \\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
 \\end{align}
 ```
@@ -426,6 +511,7 @@ Where:
   - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma`` is the portfolio standard deviation.
+  - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
 # Behaviour
 
@@ -435,7 +521,7 @@ Where:
   - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
   - Direct optimisation of standard deviation rather than variance.
   - Often better numerical properties than squared formulations.
-  - Compatible with specialized conic solvers.
+  - Compatible with specialised conic solvers.
   - May provide more intuitive results as risk is in same units as returns.
 
 # Examples
@@ -715,7 +801,7 @@ Worst Realization/Return risk measure.
   - Useful for extremely conservative risk assessment.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_WR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_WR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -748,7 +834,7 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
   - Measures expected loss in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CVaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CVaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -796,7 +882,7 @@ Entropic Value at Risk risk measure.
   - It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -807,7 +893,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Behaviour
 
   - Requires solver capability for exponential cone problems.
-  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
 
 ## Validation
 
@@ -853,7 +943,7 @@ Relativistic Value at Risk risk measure.
   - ``\\lim_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -865,7 +955,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Behaviour
 
   - Requires solver capability for 3D power cone problems.
-  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
 
 ## Validation
 
@@ -906,12 +1000,14 @@ end
 """
     struct MDD <: RiskMeasure
 
-Maximum Drawdown (Calmar ratio) risk measure for uncompounded returns.
+# Description
 
-  - Measures the largest peak-to-trough decline in uncompounded returns.
+Maximum Drawdown (Calmar ratio) risk measure for uncompounded cumulative returns.
+
+  - Measures the largest peak-to-trough decline.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_MDD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_MDD`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -937,12 +1033,14 @@ end
 """
     struct ADD <: RiskMeasure
 
-Average Drawdown risk measure for uncompounded returns.
+# Description
 
-  - Measures the average of all peak-to-trough declines in uncompounded returns.
+Average Drawdown risk measure for uncompounded cumulative returns.
+
+  - Measures the average of all peak-to-trough declines.
   - Provides a more balanced view than the maximum drawdown [`MDD`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_ADD`](@ref), [`MDD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_ADD`](@ref), [`ADD_r`](@ref), [`MDD`](@ref).
 
 # Fields
 
@@ -968,12 +1066,14 @@ end
 """
     mutable struct CDaR{T1 <: Real} <: RiskMeasure
 
-Conditional Drawdown at Risk risk measure.
+# Description
 
-  - Measures expected peak-to-trough loss in the worst `alpha %` of cases.
+Conditional Drawdown at Risk risk measure for uncompounded cumulative returns.
+
+  - Measures the expected peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CDaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_CDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1014,11 +1114,13 @@ end
 """
     mutable struct UCI <: RiskMeasure
 
-Ulcer Index risk measure.
+# Description
+
+Ulcer Index risk measure for uncompounded cumulative returns.
 
   - Penalizes larger drawdowns more than smaller ones.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_UCI`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_UCI`](@ref), [`UCI_r`](@ref).
 
 # Fields
 
@@ -1044,12 +1146,14 @@ end
 """
     mutable struct EDaR{T1 <: Real} <: RiskMeasure
 
-Entropic Drawdown at Risk risk measure.
+# Description
+
+Entropic Drawdown at Risk risk measure for uncompounded cumulative returns.
 
   - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_EDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1060,7 +1164,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Behaviour
 
   - Requires solver capability for exponential cone problems.
-  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
 
 ## Validation
 
@@ -1099,14 +1207,14 @@ end
 
 # Description
 
-Relativistic Drawdown at Risk risk measure.
+Relativistic Drawdown at Risk risk measure for uncompounded cumulative returns.
 
   - It is a generalisation of the [`EDaR`](@ref).
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
   - ``\\lim_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_RLDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref)
 
 # Fields
 
@@ -1118,7 +1226,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 # Behaviour
 
   - Requires solver capability for 3D power cone problems.
-  - Uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref) if `solvers` is `nothing`.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
 
 ## Validation
 
@@ -1681,6 +1793,8 @@ end
 """
     struct SSkew <: RiskMeasure
 
+# Description
+
 Define the Quadratic Semi Skewness risk measure.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk`](@ref), [`_Skew`](@ref).
@@ -1760,54 +1874,79 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
 end
 
 """
+    mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Defines the Semi Variance risk measure.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_SVariance`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `target::T1 = 0.0`: minimum return threshold for downside classification.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
+
+# Behaviour
+
+  - If `isnothing(w)`: computes the unweighted mean portfolio return.
+
+# Examples
+
+```@example
+# Default settings
+svariance = SVariance()
+
+# Custom configuration with specific target
+w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
+svariance = SVariance(; target = 0.02,  # 2 % return target
+                      settings = HCRMSettings(; scale = 2.0), w = w)
 ```
-@kwdef mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    target::T1 = 0.0
-    w::Union{<:AbstractWeights, Nothing} = nothing
-    mu::Union{<:AbstractVector, Nothing} = nothing
-end
-```
-
-Defines the Semi Variance [`_SVariance`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-
-  - `target`: minimum return threshold for classifying downside returns.
-  - `w`: optional `T×1` vector of weights for computing the expected return in [`_SVariance`](@ref).
-  - `mu`: optional `N×1` vector of expected asset returns.
-
-      + if `nothing`: use the expected asset returns stored in the instance of [`Portfolio`](@ref).
-      + else: use this one.
 """
 mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
     w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
 end
 function SVariance(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SVariance{typeof(target)}(settings, target, w, mu)
+    return SVariance{typeof(target)}(settings, target, w)
 end
 
 """
+    mutable struct VaR{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Defines the Value at Risk risk measure.
+
+  - Measures lower bound of the losses in the worst `alpha %` of cases.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref)
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+var = VaR()
+
+# Custom significance level
+var = VaR(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01)
 ```
-@kwdef mutable struct VaR{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Value at Risk [`_VaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct VaR{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -1825,19 +1964,37 @@ function Base.setproperty!(obj::VaR, sym::Symbol, val)
 end
 
 """
+    mutable struct DaR{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Defines the Drawdown at Risk for uncompounded cumulative returns risk measure.
+
+  - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
+  - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_DaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+dar = DaR()
+
+# Custom significance level
+dar = DaR(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
-@kwdef mutable struct DaR{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Drawdown at Risk of uncompounded cumulative returns [`_DaR`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct DaR{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -1855,19 +2012,37 @@ function Base.setproperty!(obj::DaR, sym::Symbol, val)
 end
 
 """
+    mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Defines the Drawdown at Risk for compounded cumulative returns risk measure.
+
+  - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
+  - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_DaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+dar = DaR_r()
+
+# Custom significance level
+dar = DaR_r(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
-@kwdef mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Drawdown at Risk of compounded cumulative returns [`_DaR_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct DaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -1885,18 +2060,30 @@ function Base.setproperty!(obj::DaR_r, sym::Symbol, val)
 end
 
 """
+    mutable struct MDD_r <: HCRiskMeasure
+
+# Description
+
+Maximum Drawdown (Calmar ratio) risk measure for compounded cumulative returns.
+
+  - Measures the largest peak-to-trough decline.
+  - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_MDD_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+mdd = MDD_r()
+
+# Custom significance level
+mdd = MDD_r(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
-@kwdef mutable struct MDD_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Maximum Drawdown (Calmar ratio) of compounded cumulative returns [`_MDD_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct MDD_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1906,18 +2093,30 @@ function MDD_r(; settings::HCRMSettings = HCRMSettings())
 end
 
 """
+    mutable struct ADD_r <: HCRiskMeasure
+
+# Description
+
+Average Drawdown risk measure for uncompounded cumulative returns.
+
+  - Measures the average of all peak-to-trough declines.
+  - Provides a more balanced view than the maximum drawdown [`MDD_r`](@ref).
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_ADD_r`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+add = ADD_r()
+
+# Custom significance level
+add = ADD_r(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
-@kwdef mutable struct ADD_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Average Drawdown of compounded cumulative returns [`_ADD_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct ADD_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1927,19 +2126,37 @@ function ADD_r(; settings::HCRMSettings = HCRMSettings())
 end
 
 """
+    mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Conditional Drawdown at Risk risk measure for compounded cumulative returns.
+
+  - Measures the expected peak-to-trough loss in the worst `alpha %` of cases.
+  - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_CDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+
+# Behaviour
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+cdar_r = CDaR_r()
+
+# Custom significance level
+cdar_r = CDaR_r(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % significance level
 ```
-@kwdef mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Conditional Drawdown at Risk of compounded cumulative returns [`_CDaR_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
 """
 mutable struct CDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -1957,18 +2174,29 @@ function Base.setproperty!(obj::CDaR_r, sym::Symbol, val)
 end
 
 """
+    mutable struct UCI_r{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Ulcer Index risk measure for compounded cumulative returns.
+
+  - Penalizes larger drawdowns more than smaller ones.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_UCI_r`](@ref), [`UCI`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+uci_r = UCI_r()
+
+# Custom settings
+uci_r = UCI_r(; settings = HCRMSettings(; scale = 1.5))
 ```
-@kwdef mutable struct UCI_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-end
-```
-
-Defines the Ulcer Index of compounded cumulative returns [`_UCI_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 struct UCI_r <: HCRiskMeasure
     settings::HCRMSettings
@@ -1978,25 +2206,46 @@ function UCI_r(; settings::HCRMSettings = HCRMSettings())
 end
 
 """
+    mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+
+# Description
+
+Entropic Drawdown at Risk risk measure for compounded cumulative returns.
+
+  - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
+  - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
+
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_EDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+
+# Fields
+
+  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems.
+
+# Behaviour
+
+  - Requires solver capability for exponential cone problems.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+edar_r = EDaR_r()
+
+# Custom configuration with specific solver
+edar_r = EDaR_r(; alpha = 0.025,  # 2.5 % significance level
+                solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Entropic Drawdown at Risk of compounded cumulative returns [`_EDaR_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -2016,26 +2265,51 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
 end
 
 """
+    mutable struct RLDaR_r{T1 <: Real} <: RiskMeasure
+
+# Description
+
+Relativistic Drawdown at Risk risk measure for compounded cumulative returns.
+
+  - It is a generalisation of the [`EDaR`](@ref).
+  - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
+  - ``\\lim_{\\kappa \\to 0} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha)``
+  - ``\\lim_{\\kappa \\to 1} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD_{r}}(\\bm{X})``
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`_RLDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref)
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
+  - `kappa::T1 = 0.3`: significance level, `kappa ∈ (0, 1)`.
+  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for 3D power cone problems.
+
+# Behaviour
+
+  - Requires solver capability for 3D power cone problems.
+
+  - When computing [`calc_risk`](@ref):
+
+      + If `isnothing(solvers)`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers`: provided else uses the solvers provided.
+
+## Validation
+
+  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+  - When setting `kappa` at construction or runtime, `kappa ∈ (0, 1)`.
+
+# Examples
+
+```@example
+# Default settings
+rldar = RLDaR()
+
+# Custom configuration
+rldar = RLDaR(; alpha = 0.05, # 5 % significance level
+              kappa = 0.3,    # 30 % Deformation parameter
+              solvers = Dict("solver" => my_solver))
 ```
-@kwdef mutable struct RLDaR_r{T1 <: Real} <: RiskMeasure
-    settings::RMSettings = RMSettings()
-    alpha::T1 = 0.05
-    solvers::Union{<:AbstractDict, Nothing} = nothing
-end
-```
-
-Defines the Relativistic Drawdown at Risk of compounded cumulative returns [`_RLDaR_r`](@ref) risk measure.
-
-# Parameters
-
-  - `settings`: risk measure settings [`RMSettings`](@ref).
-
-  - `alpha`: significance level, `alpha ∈ (0, 1)`.
-  - `kappa`: relativistic deformation parameter, `κ ∈ (0, 1)`.
-  - `solvers`: optional abstract dict containing the a JuMP-compatible solver capable of solving 3D power cone problems.
-
-      + if `nothing`: use the solvers stored in the instance of [`Portfolio`](@ref) or [`HCPortfolio`](@ref).
-      + else: use these ones.
 """
 mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
@@ -2057,17 +2331,27 @@ function Base.setproperty!(obj::RLDaR_r, sym::Symbol, val)
 end
 
 """
+    struct Equal <: HCRiskMeasure
+
+# Description
+
+Equal risk measure.
+
+  - Risk is allocated evenly among a group of assets.
+
+# Fields
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Examples
+
+```@example
+# Default settings
+equal = Equal()
+
+# Custom configuration
+equal = Equal(; settings = HCRMSettings(; scale = 3))
 ```
-@kwdef struct Equal <: HCRiskMeasure
-    settings::HCRMSettings = HCRMSettings()
-end
-```
-
-Defines the Equal risk measure, where risk is allocated evenly among a group of assets.
-
-# Parameters
-
-  - `settings`: risk measure settings [`HCRMSettings`](@ref).
 """
 mutable struct Equal <: HCRiskMeasure
     settings::HCRMSettings
