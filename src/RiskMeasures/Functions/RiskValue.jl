@@ -87,7 +87,7 @@ sv1 = _SVariance(returns)
 sv2 = _SVariance(returns, 0.01)
 
 # Calculate with weights
-weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+weights = eweights(1:length(return), 0.3)
 sv3 = _SVariance(returns, 0.01, weights)
 ```
 """
@@ -184,7 +184,7 @@ returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 mad1 = _MAD(returns)
 
 # Calculate with weights
-weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+weights = eweights(1:length(return), 0.3)
 mad2 = _MAD(returns, weights)
 ```
 """
@@ -236,7 +236,7 @@ ssd1 = _SSD(returns)
 ssd2 = _SSD(returns, 0.01)
 
 # Calculate with weights
-weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+weights = eweights(1:length(return), 0.3)
 ssd3 = _SSD(returns, 0.01, weights)
 ```
 """
@@ -2284,10 +2284,10 @@ N = 3
 w = [0.3, 0.4, 0.3]
 
 # Create instance of risk measure.
-sd = SD(; sigma = Σ)
+sd_rm = SD(; sigma = Σ)
 
 # Calculate portfolio standard deviation
-risk = calc_risk(sd, w)
+risk = calc_risk(sd_rm, w)
 ```
 """
 function calc_risk(sd::SD, w::AbstractVector; kwargs...)
@@ -2297,11 +2297,11 @@ end
 """
     calc_risk(variance::Variance, w::AbstractVector; kwargs...)
 
-# Descrip
+# Description
 
 Compute the [`Variance`](@ref) via [`_Variance`](@ref).
 
-See also: [`Variance`](@ref) via [`_Variance`](@ref).
+See also: [`Variance`](@ref), [`_Variance`](@ref).
 
 # Inputs
 
@@ -2333,10 +2333,10 @@ N = 3
 w = [0.3, 0.4, 0.3]
 
 # Create instance of risk measure.
-variance = Variance(; sigma = Σ)
+variance_rm = Variance(; sigma = Σ)
 
 # Calculate portfolio standard deviation
-risk = calc_risk(variance, w)
+risk = calc_risk(variance_rm, w)
 ```
 """
 function calc_risk(variance::Variance, w::AbstractVector; kwargs...)
@@ -2344,30 +2344,110 @@ function calc_risk(variance::Variance, w::AbstractVector; kwargs...)
 end
 
 """
-```
-calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`MAD`](@ref) via [`_MAD`](@ref). Inputs correspond to those of [`_MAD`](@ref).
+# Description
+
+Compute the [`MAD`](@ref) via [`_MAD`](@ref).
+
+See also: [`MAD`](@ref), [`_MAD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `mad::MAD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `mad::Real`: mean absolute deviation.
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+mad_rm1 = MAD()
+mad_risk1 = calc_risk(mad_rm, w; X = returns)
+
+# Calculate using mean returns using weighted mean
+mad_rm2 = MAD(; w = eweights(1:size(returns, 1), 0.3))
+mad_risk2 = calc_risk(mad_rm, w; X = returns)
+```
 """
 function calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MAD(X * w, mad.w)
 end
 
 """
-```
-calc_risk(mad::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`SSD`](@ref) via [`_SSD`](@ref). Inputs correspond to those of [`_SSD`](@ref).
+# Description
+
+Compute the [`SSD`](@ref) via [`_SSD`](@ref).
+
+See also: [`SSD`](@ref), [`_SSD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `ssd::SSD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `ssd::Real`: mean absolute deviation.
+
+# Behaviour
+
+  - If `w` is `nothing`: uses simple arithmetic mean.
+  - If `w` is provided: uses weighted mean for calculating deviations.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+ssd_rm1 = SSD()
+ssd_risk1 = calc_risk(ssd_rm, w; X = returns)
+
+# Calculate using mean returns using weighted mean and 1.5 % return target
+ssd_rm2 = SSD(; w = eweights(1:size(returns, 1), 0.3), target = 0.015)
+ssd_risk2 = calc_risk(ssd_rm, w; X = returns)
+```
 """
 function calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SSD(X * w, ssd.target, ssd.w)
