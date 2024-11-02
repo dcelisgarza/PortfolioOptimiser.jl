@@ -2367,11 +2367,6 @@ See also: [`MAD`](@ref), [`_MAD`](@ref).
 
   - `mad::Real`: mean absolute deviation.
 
-# Behaviour
-
-  - If `w` is `nothing`: uses simple arithmetic mean.
-  - If `w` is provided: uses weighted mean for calculating deviations.
-
 # Examples
 
 ```@example
@@ -2387,11 +2382,11 @@ w = [0.3, 0.5, 0.2]
 
 # Calculate the mean absolute deviation with default parameters
 mad_rm1 = MAD()
-mad_risk1 = calc_risk(mad_rm, w; X = returns)
+mad_risk1 = calc_risk(mad_rm1, w; X = returns)
 
 # Calculate using mean returns using weighted mean
 mad_rm2 = MAD(; w = eweights(1:size(returns, 1), 0.3))
-mad_risk2 = calc_risk(mad_rm, w; X = returns)
+mad_risk2 = calc_risk(mad_rm2, w; X = returns)
 ```
 """
 function calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
@@ -2420,12 +2415,7 @@ See also: [`SSD`](@ref), [`_SSD`](@ref).
 
 # Outputs
 
-  - `ssd::Real`: mean absolute deviation.
-
-# Behaviour
-
-  - If `w` is `nothing`: uses simple arithmetic mean.
-  - If `w` is provided: uses weighted mean for calculating deviations.
+  - `ssd::Real`: semi standard deviation.
 
 # Examples
 
@@ -2442,11 +2432,11 @@ w = [0.3, 0.5, 0.2]
 
 # Calculate the mean absolute deviation with default parameters
 ssd_rm1 = SSD()
-ssd_risk1 = calc_risk(ssd_rm, w; X = returns)
+ssd_risk1 = calc_risk(ssd_rm1, w; X = returns)
 
 # Calculate using mean returns using weighted mean and 1.5 % return target
 ssd_rm2 = SSD(; w = eweights(1:size(returns, 1), 0.3), target = 0.015)
-ssd_risk2 = calc_risk(ssd_rm, w; X = returns)
+ssd_risk2 = calc_risk(ssd_rm2, w; X = returns)
 ```
 """
 function calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
@@ -2454,60 +2444,196 @@ function calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 """
-```
-calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`SVariance`](@ref) via [`_SVariance`](@ref). Inputs correspond to those of [`_SVariance`](@ref).
+# Description
+
+Compute the [`SVariance`](@ref) via [`_SVariance`](@ref).
+
+See also: [`SVariance`](@ref), [`_SVariance`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `svariance::SVariance`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `svariance::Real`: semi variance.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+svariance_rm1 = SSD()
+svariance_risk1 = calc_risk(svariance_rm1, w; X = returns)
+
+# Calculate using mean returns using weighted mean and 1.5 % return target
+svariance_rm2 = SSD(; w = eweights(1:size(returns, 1), 0.3), target = 0.015)
+svariance_risk2 = calc_risk(svariance_rm2, w; X = returns)
+```
 """
 function calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SVariance(X * w, svariance.target, svariance.w)
 end
 
 """
-```
-calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`FLPM`](@ref) via [`_FLPM`](@ref). Inputs correspond to those of [`_FLPM`](@ref).
+# Description
+
+Compute the [`FLPM`](@ref) via [`_FLPM`](@ref).
+
+See also: [`FLPM`](@ref), [`_FLPM`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `flpm::FLPM`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `flpm::Real`: first lower partial moment.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+flpm_rm1 = FLPM()
+flpm_risk1 = calc_risk(flpm_rm1, w; X = returns)
+
+# Calculate using mean returns using a 1.5 % return target
+flpm_rm2 = FLPM(; target = 0.015)
+flpm_risk2 = calc_risk(flpm_rm2, w; X = returns)
+```
 """
 function calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _FLPM(X * w, flpm.target)
 end
 
 """
-```
-calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`SLPM`](@ref) via [`_SLPM`](@ref). Inputs correspond to those of [`_SLPM`](@ref).
+# Description
+
+Compute the [`SLPM`](@ref) via [`_SLPM`](@ref).
+
+See also: [`SLPM`](@ref), [`_SLPM`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `slpm::SLPM`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `slpm::Real`: second lower partial moment.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+slpm_rm1 = SLPM()
+slpm_risk1 = calc_risk(slpm_rm1, w; X = returns)
+
+# Calculate using mean returns using a 1.5 % return target
+slpm_rm2 = SLPM(; target = 0.015)
+slpm_risk2 = calc_risk(slpm_rm2, w; X = returns)
+```
 """
 function calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SLPM(X * w, slpm.target)
 end
 
 """
-```
-calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`WR`](@ref) via [`_WR`](@ref). Inputs correspond to those of [`_WR`](@ref).
+# Description
+
+Compute the [`WR`](@ref) via [`_WR`](@ref).
+
+See also: [`WR`](@ref), [`_WR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `wr::WR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `wr::Real`: worst realisation.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the mean absolute deviation with default parameters
+wr_rm = WR()
+wr_risk = calc_risk(wr_rm, w; X = returns)
+```
 """
 function calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _WR(X * w)
