@@ -1873,7 +1873,7 @@ Compute the Quadratic Skewness/Semi Skewness.
 Where:
 
   - ``\\bm{w}`` is the vector of asset weights.
-  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of coskewness or semicoskewness.
+  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of the coskewness or semicoskewness.
 
 See also: [`Skew`](@ref), [`calc_risk(::Skew, ::AbstractWeights)`](@ref), [`SSkew`](@ref), [`calc_risk(::SSkew, ::AbstractWeights)`](@ref).
 
@@ -2080,7 +2080,7 @@ returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 tg1 = _TG(returns)
 
 # Calculate with custom parameters
-tg2 = _TG(returns; alpha_i = 0.3, alpha = 0.07, a_sim = 131)
+tg2 = _TG(returns; alpha_i = 0.003, alpha = 0.07, a_sim = 131)
 ```
 """
 function _TG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
@@ -2137,8 +2137,8 @@ returns = [0.05, -0.03, 0.02, -0.01, 0.04]
 tgrg1 = _TGRG(returns)
 
 # Calculate with custom parameters
-tgrg2 = _TGRG(returns; alpha_i = 0.3, alpha = 0.07, a_sim = 131, beta_i = 0.1, beta = 0.03,
-              a_sim = 97)
+tgrg2 = _TGRG(returns; alpha_i = 0.003, alpha = 0.07, a_sim = 131, beta_i = 0.001,
+              beta = 0.03, b_sim = 97)
 ```
 """
 function _TGRG(x::AbstractVector; alpha_i::Real = 0.0001, alpha::Real = 0.05,
@@ -2640,375 +2640,1243 @@ function calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 """
-```
-calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`VaR`](@ref) via [`_VaR`](@ref). Inputs correspond to those of [`_VaR`](@ref).
+# Description
+
+Compute the [`VaR`](@ref) via [`_VaR`](@ref).
+
+See also: [`VaR`](@ref), [`_VaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `var::VaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `var::Real`: Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the value at risk with default parameters
+var_rm1 = VaR()
+var_risk1 = calc_risk(var_rm1, w; X = returns)
+
+# Calculate the value at risk with 50 % significance parameter
+var_rm2 = VaR(; alpha = 0.5)
+var_risk2 = calc_risk(var_rm2, w; X = returns)
+```
 """
 function calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _VaR(X * w, var.alpha)
 end
 
 """
-```
-calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`CVaR`](@ref) via [`_CVaR`](@ref). Inputs correspond to those of [`_CVaR`](@ref).
+# Description
+
+Compute the [`CVaR`](@ref) via [`_CVaR`](@ref).
+
+See also: [`CVaR`](@ref), [`_CVaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `cvar::CVaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `cvar::Real`: Conditional Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the conditional value at risk with default parameters
+cvar_rm1 = CVaR()
+cvar_risk1 = calc_risk(cvar_rm1, w; X = returns)
+
+# Calculate the conditional value at risk with 50 % significance parameter
+cvar_rm2 = CVaR(; alpha = 0.5)
+cvar_risk2 = calc_risk(cvar_rm2, w; X = returns)
+```
 """
 function calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CVaR(X * w, cvar.alpha)
 end
 
 """
-```
 calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
 
-Compute the [`EVaR`](@ref) via [`_EVaR`](@ref). Inputs correspond to those of [`_EVaR`](@ref).
+# Description
+
+Compute the [`EVaR`](@ref) via [`_EVaR`](@ref).
+
+See also: [`EVaR`](@ref), [`_EVaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `evar::EVaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `evar::Real`: Entropic Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the entropic value at risk with default parameters
+evar_rm1 = EVaR(; solvers = my_solvers)
+evar_risk1 = calc_risk(evar_rm1, w; X = returns)
+
+# Calculate the entropic value at risk with 50 % significance parameter
+evar_rm2 = EVaR(; solvers = my_solvers, alpha = 0.5)
+evar_risk2 = calc_risk(evar_rm2, w; X = returns)
+```
 """
 function calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EVaR(X * w, evar.solvers, evar.alpha)
 end
 
 """
-```
-calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref). Inputs correspond to those of [`_RLVaR`](@ref).
+# Description
+
+Compute the [`RLVaR`](@ref) via [`_RLVaR`](@ref).
+
+See also: [`RLVaR`](@ref), [`_RLVaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `rlvar::RLVaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `rlvar::Real`: Relativistic Value at Risk.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the relativistic value at risk with default parameters
+rlvar_rm1 = RLVaR(; solvers = my_solvers)
+rlvar_risk1 = calc_risk(rlvar_rm1, w; X = returns)
+
+# Calculate the relativistic value at risk with 50 % significance parameter
+# and 15 % deformation parameter.
+rlvar_rm2 = RLVaR(; solvers = my_solvers, alpha = 0.5, kappa = 0.15)
+rlvar_risk2 = calc_risk(rlvar_rm2, w; X = returns)
+```
 """
 function calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RLVaR(X * w, rlvar.solvers, rlvar.alpha, rlvar.kappa)
 end
 
 """
-```
-calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`DaR`](@ref) via [`_DaR`](@ref). Inputs correspond to those of [`_DaR`](@ref).
+# Description
+
+Compute the [`DaR`](@ref) via [`_DaR`](@ref).
+
+See also: [`DaR`](@ref), [`_DaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `dar::DaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `dar::Real`: Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of uncompounded cumulative 
+# returns with default parameters
+dar_rm1 = DaR()
+dar_risk1 = calc_risk(dar_rm1, w; X = returns)
+
+# Calculate the drawdown at risk of uncompounded cumulative 
+# returns with 50 % significance parameter
+dar_rm2 = DaR(; alpha = 0.5)
+dar_risk2 = calc_risk(dar_rm2, w; X = returns)
+```
 """
 function calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _DaR(X * w, dar.alpha)
 end
 
 """
-```
-calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`MDD`](@ref) via [`_MDD`](@ref). Inputs correspond to those of [`_MDD`](@ref).
+# Description
+
+Compute the [`MDD`](@ref) via [`_MDD`](@ref).
+
+See also: [`MDD`](@ref), [`_MDD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `mdd::MDD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `mdd::Real`: Maximum Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of uncompounded cumulative 
+# returns
+mdd_rm = MDD()
+mdd_risk = calc_risk(mdd_rm, w; X = returns)
+```
 """
 function calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MDD(X * w)
 end
 
 """
-```
-calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`ADD`](@ref) via [`_ADD`](@ref). Inputs correspond to those of [`_ADD`](@ref).
+# Description
+
+Compute the [`ADD`](@ref) via [`_ADD`](@ref).
+
+See also: [`ADD`](@ref), [`_ADD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `add::ADD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `add::Real`: Average Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of uncompounded cumulative 
+# returns with default parameters
+add_rm = ADD()
+add_risk = calc_risk(add_rm, w; X = returns)
+```
 """
 function calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _ADD(X * w)
 end
 
 """
-```
-calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`CDaR`](@ref) via [`_CDaR`](@ref). Inputs correspond to those of [`_CDaR`](@ref).
+# Description
+
+Compute the [`CDaR`](@ref) via [`_CDaR`](@ref).
+
+See also: [`CDaR`](@ref), [`_CDaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `cdar::CDaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `cdar::Real`: Conditional Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the conditional drawdown at risk of uncompounded cumulative 
+# returns with default parameters
+cdar_rm1 = CDaR()
+cdar_risk1 = calc_risk(cdar_rm1, w; X = returns)
+
+# Calculate the conditional drawdown at risk of uncompounded cumulative 
+# returns with 50 % significance parameter
+cdar_rm2 = CDaR(; alpha = 0.5)
+cdar_risk2 = calc_risk(cdar_rm2, w; X = returns)
+```
 """
 function calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CDaR(X * w, cdar.alpha)
 end
 
 """
-```
-calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`UCI`](@ref) via [`_UCI`](@ref). Inputs correspond to those of [`_UCI`](@ref).
+# Description
+
+Compute the [`UCI`](@ref) via [`_UCI`](@ref).
+
+See also: [`UCI`](@ref), [`_UCI`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `uci::UCI`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `uci::Real`: Ulcer Index of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the ulcer index at risk of uncompounded cumulative 
+# returns with default parameters
+uci_rm = UCI()
+uci_risk = calc_risk(uci_rm, w; X = returns)
+```
 """
 function calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _UCI(X * w)
 end
 
 """
-```
-calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`EDaR`](@ref) via [`_EDaR`](@ref). Inputs correspond to those of [`_EDaR`](@ref).
+# Description
+
+Compute the [`EDaR`](@ref) via [`_EDaR`](@ref).
+
+See also: [`EDaR`](@ref), [`_EDaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `edar::EDaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `edar::Real`: Entropic Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the entropic drawdown at risk of uncompounded cumulative 
+# returns with default parameters
+edar_rm1 = EDaR(; solvers = my_solvers)
+edar_risk1 = calc_risk(edar_rm1, w; X = returns)
+
+# Calculate the entropic drawdown at risk of uncompounded cumulative
+# returns with 50 % significance parameter
+edar_rm2 = EDaR(; solvers = my_solvers, alpha = 0.5)
+edar_risk2 = calc_risk(edar_rm2, w; X = returns)
+```
 """
 function calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _EDaR(X * w, edar.solvers, edar.alpha)
 end
 
 """
-```
-calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref). Inputs correspond to those of [`_RLDaR`](@ref).
+# Description
+
+Compute the [`RLDaR`](@ref) via [`_RLDaR`](@ref).
+
+See also: [`RLDaR`](@ref), [`_RLDaR`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `rldar::RLDaR`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `rldar::Real`: Relativistic Drawdown at Risk of uncompounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the entropic drawdown at risk of uncompounded cumulative 
+# returns with default parameters
+rldar_rm1 = RLDaR(; solvers = my_solvers)
+rldar_risk1 = calc_risk(rldar_rm1, w; X = returns)
+
+# Calculate the entropic drawdown at risk of uncompounded cumulative
+# returns with 50 % significance parameter
+rldar_rm2 = RLDaR(; solvers = my_solvers, alpha = 0.5)
+rldar_risk2 = calc_risk(rldar_rm2, w; X = returns)
+```
 """
 function calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RLDaR(X * w, rldar.solvers, rldar.alpha, rldar.kappa)
 end
 
 """
-```
-calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(dar_r::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`DaR_r`](@ref) via [`_DaR_r`](@ref). Inputs correspond to those of [`_DaR_r`](@ref).
+# Description
+
+Compute the [`DaR_r`](@ref) via [`_DaR_r`](@ref).
+
+See also: [`DaR_r`](@ref), [`_DaR_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `dar_r::DaR_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `dar_r::Real`: Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of compounded cumulative 
+# returns with default parameters
+dar_r_rm1 = DaR_r()
+dar_r_risk1 = calc_risk(dar_r_rm1, w; X = returns)
+
+# Calculate the drawdown at risk of compounded cumulative 
+# returns with 50 % significance parameter
+dar_r_rm2 = DaR_r(; alpha = 0.5)
+dar_r_risk2 = calc_risk(dar_r_rm2, w; X = returns)
+```
 """
-function calc_risk(dar::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _DaR_r(X * w, dar.alpha)
+function calc_risk(dar_r::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _DaR_r(X * w, dar_r.alpha)
 end
 
 """
-```
-calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`MDD_r`](@ref) via [`_MDD_r`](@ref). Inputs correspond to those of [`_MDD_r`](@ref).
+# Description
+
+Compute the [`MDD_r`](@ref) via [`_MDD_r`](@ref).
+
+See also: [`MDD_r`](@ref), [`_MDD_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `mdd_r::MDD_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `mdd_r::Real`: Maximum Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of compounded cumulative 
+# returns
+mdd_r_rm = MDD_r()
+mdd_r_risk = calc_risk(mdd_rm, w; X = returns)
+```
 """
 function calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _MDD_r(X * w)
 end
 
 """
-```
-calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`ADD_r`](@ref) via [`_ADD_r`](@ref). Inputs correspond to those of [`_ADD_r`](@ref).
+# Description
+
+Compute the [`ADD_r`](@ref) via [`_ADD_r`](@ref).
+
+See also: [`ADD_r`](@ref), [`_ADD_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `add_r::ADD_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `add_r::Real`: Average Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the drawdown at risk of compounded cumulative 
+# returns with default parameters
+add_r_rm = ADD_r()
+add_r_risk = calc_risk(add_r_rm, w; X = returns)
+```
 """
 function calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _ADD_r(X * w)
 end
 
 """
-```
-calc_risk(cdar::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+calc_risk(cdar_r::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`CDaR_r`](@ref) via [`_CDaR_r`](@ref). Inputs correspond to those of [`_CDaR_r`](@ref).
+# Description
+
+Compute the [`CDaR_r`](@ref) via [`_CDaR_r`](@ref).
+
+See also: [`CDaR_r`](@ref), [`_CDaR_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `cdar::CDaR_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `cdar_r::Real`: Conditional Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the conditional drawdown at risk of compounded cumulative 
+# returns with default parameters
+cdar_r_rm1 = CDaR_r()
+cdar_r_risk1 = calc_risk(cdar_r_rm1, w; X = returns)
+
+# Calculate the conditional drawdown at risk of compounded cumulative 
+# returns with 50 % significance parameter
+cdar_r_rm2 = CDaR_r(; alpha = 0.5)
+cdar_r_risk2 = calc_risk(cdar_r_rm2, w; X = returns)
+```
 """
-function calc_risk(cdar::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _CDaR_r(X * w, cdar.alpha)
+function calc_risk(cdar_r::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _CDaR_r(X * w, cdar_r.alpha)
 end
 
 """
-```
-calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`UCI_r`](@ref) via [`_UCI_r`](@ref). Inputs correspond to those of [`_UCI_r`](@ref).
+Compute the [`UCI_r`](@ref) via [`_UCI_r`](@ref).
+
+See also: [`UCI_r`](@ref), [`_UCI_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `uci_r::UCI_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `uci_r::Real`: Ulcer Index of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the ulcer index at risk of compounded cumulative 
+# returns with default parameters
+uci_r_rm = UCI_r()
+uci_r_risk = calc_risk(uci_r_rm, w; X = returns)
+```
 """
 function calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _UCI_r(X * w)
 end
 
 """
-```
-calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(edar_r::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`EDaR_r`](@ref) via [`_EDaR_r`](@ref). Inputs correspond to those of [`_EDaR_r`](@ref).
+# Description
+
+Compute the [`EDaR_r`](@ref) via [`_EDaR_r`](@ref).
+
+See also: [`EDaR_r`](@ref), [`_EDaR_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `edar_r::EDaR_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `edar_r::Real`: Entropic Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the entropic drawdown at risk of compounded cumulative 
+# returns with default parameters
+edar_r_rm1 = EDaR_r(; solvers = my_solvers)
+edar_r_risk1 = calc_risk(edar_r_rm1, w; X = returns)
+
+# Calculate the entropic drawdown at risk of compounded cumulative
+# returns with 50 % significance parameter
+edar_r_rm2 = EDaR_r(; solvers = my_solvers, alpha = 0.5)
+edar_r_risk2 = calc_risk(edar_r_rm2, w; X = returns)
+```
 """
-function calc_risk(edar::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _EDaR_r(X * w, edar.solvers, edar.alpha)
+function calc_risk(edar_r::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _EDaR_r(X * w, edar_r.solvers, edar_r.alpha)
 end
 
 """
-```
-calc_risk(rldar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(rldar_r::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref). Inputs correspond to those of [`_RLDaR_r`](@ref).
+# Description
+
+Compute the [`RLDaR_r`](@ref) via [`_RLDaR_r`](@ref).
+
+See also: [`RLDaR_r`](@ref), [`_RLDaR_r`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `rldar_r::RLDaR_r`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `rldar_r::Real`: Relativistic Drawdown at Risk of compounded cumulative returns.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the relativistic drawdown at risk of compounded cumulative 
+# returns with default parameters
+rldar_r_rm1 = RLDaR_r(; solvers = my_solvers)
+rldar_r_risk1 = calc_risk(rldar_r_rm1, w; X = returns)
+
+# Calculate the relativistic drawdown at risk of compounded cumulative
+# returns with 50 % significance parameter
+rldar_r_rm2 = RLDaR_r(; solvers = my_solvers, alpha = 0.5)
+rldar_r_risk2 = calc_risk(rldar_r_rm2, w; X = returns)
+```
 """
-function calc_risk(rldar::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLDaR_r(X * w, rldar.solvers, rldar.alpha, rldar.kappa)
+function calc_risk(rldar_r::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return _RLDaR_r(X * w, rldar_r.solvers, rldar_r.alpha, rldar_r.kappa)
 end
 
 """
-```
-calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`Kurt`](@ref) via [`_Kurt`](@ref). Inputs correspond to those of [`_Kurt`](@ref).
+# Description
+
+Compute the [`Kurt`](@ref) via [`_Kurt`](@ref).
+
+See also: [`Kurt`](@ref), [`_Kurt`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `kurt::Kurt`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `kurt::Real`: square root kurtosis.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the square root kurtosis with default parameters
+kurt_rm1 = Kurt()
+kurt_risk1 = calc_risk(kurt_rm1, w; X = returns)
+
+# Calculate the square root kurtosis using a weighted 
+# mean returns using weighted mean
+kurt_rm2 = Kurt(; w = eweights(1:size(returns, 1), 0.3))
+kurt_risk2 = calc_risk(kurt_rm2, w; X = returns)
+```
 """
 function calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _Kurt(X * w, kt.w)
 end
 
 """
-```
-calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`SKurt`](@ref) via [`_SKurt`](@ref). Inputs correspond to those of [`_SKurt`](@ref).
+# Description
+
+Compute the [`SKurt`](@ref) via [`_SKurt`](@ref).
+
+See also: [`SKurt`](@ref), [`_SKurt`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `skurt::SKurt`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `skurt::Real`: square root semi.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the square root semi kurtosis with default parameters
+skurt_rm1 = SKurt()
+skurt_risk1 = calc_risk(skurt_rm1, w; X = returns)
+
+# Calculate the square root semi kurtosis using mean returns using a 
+# weighted mean and 1.5 % return target
+skurt_rm2 = SKurt(; w = eweights(1:size(returns, 1), 0.3), target = 0.015)
+skurt_risk2 = calc_risk(skurt_rm2, w; X = returns)
+```
 """
 function calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _SKurt(X * w, skt.target, skt.w)
 end
 
 """
-```
-calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`GMD`](@ref) via [`_GMD`](@ref). Inputs correspond to those of [`_GMD`](@ref).
+# Description
+
+Compute the [`GMD`](@ref) via [`_GMD`](@ref).
+
+See also: [`GMD`](@ref), [`_GMD`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `gmd::GMD`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `gmd::Real`: Gini Mean Difference.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the gini mean difference with default parameters
+gmd_rm = GMD()
+gmd_risk = calc_risk(gmd_rm, w; X = returns)
+```
 """
 function calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _GMD(X * w)
 end
 
 """
-```
-calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`RG`](@ref) via [`_RG`](@ref). Inputs correspond to those of [`_RG`](@ref).
+# Description
+
+Compute the [`RG`](@ref) via [`_RG`](@ref).
+
+See also: [`RG`](@ref), [`RG`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `rg::RG`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `rg::Real`: Gini Mean Difference.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the range with default parameters
+rg_rm = RG()
+rg_risk = calc_risk(rg_rm, w; X = returns)
+```
 """
 function calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _RG(X * w)
 end
 
 """
-```
-calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`CVaRRG`](@ref) via [`_CVaRRG`](@ref). Inputs correspond to those of [`_CVaRRG`](@ref).
+# Description
+
+Compute the [`CVaRRG`](@ref) via [`_CVaRRG`](@ref).
+
+See also: [`CVaRRG`](@ref), [`_CVaRRG`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `cvarrg::CVaRRG`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `cvarrg::Real`: Conditional Value at Risk Range.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the conditional value at risk range with default parameters
+cvarrg_rm1 = CVaRRG()
+cvarrg_risk1 = calc_risk(cvarrg_rm1, w; X = returns)
+
+# Calculate conditional value at risk range  with 7 % significance 
+# parameter of losses and 32 % significance parameter of gains.
+cvarrg_rm2 = CVaRRG(; alpha = 0.07, beta = 0.32)
+cvarrg_risk2 = calc_risk(cvarrg_rm2, w; X = returns)
+```
 """
 function calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _CVaRRG(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
 end
 
 """
-```
-calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`TG`](@ref) via [`_TG`](@ref). Inputs correspond to those of [`_TG`](@ref).
+# Description
+
+Compute the [`TG`](@ref) via [`_TG`](@ref).
+
+See also: [`TG`](@ref), [`_TG`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `tg::TG`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `tg::Real`: Tail Gini.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the tail gini with default parameters
+tg_rm1 = TG()
+tg_risk1 = calc_risk(tg_rm1, w; X = returns)
+
+# Calculate the tail gini with custom parameters
+tg_rm2 = TG(; alpha_i = 0.003, alpha = 0.07, a_sim = 131)
+tg_risk2 = calc_risk(tg_rm2, w; X = returns)
+```
 """
 function calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
 end
 
 """
-```
-calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`TGRG`](@ref) via [`_TGRG`](@ref). Inputs correspond to those of [`_TGRG`](@ref).
+# Description
+
+Compute the [`TGRG`](@ref) via [`_TGRG`](@ref).
+
+See also: [`TGRG`](@ref), [`_TGRG`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `tgrg::TGRG`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `tgrg::Real`: Tail Gini Range.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the tail gini range with default parameters
+tgrg_rm1 = TGRG()
+tgrg_risk1 = calc_risk(tgrg_rm1, w; X = returns)
+
+# Calculate the tail gini range with custom parameters
+tgrg_rm2 = TGRG(; alpha_i = 0.003, alpha = 0.07, a_sim = 131, beta_i = 0.001, beta = 0.03,
+                b_sim = 97)
+tgrg_risk2 = calc_risk(tgrg_rm2, w; X = returns)
+```
 """
 function calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _TGRG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
@@ -3016,80 +3884,219 @@ function calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 """
-```
-calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`OWA`](@ref) via [`_OWA`](@ref). Inputs correspond to those of [`_OWA`](@ref).
+# Description
+
+Compute the [`OWA`](@ref) via [`_OWA`](@ref).
+
+See also: [`OWA`](@ref), [`_OWA`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `owa::OWA`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `owa::Real`: Ordered Weight Array risk.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the ordered weight array risk for the default L-moment
+owa_rm = OWA(; w = owa_l_moment_crm(size(returns, 1)))
+owa_risk = calc_risk(owa_rm, w; X = returns)
+```
 """
 function calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
 end
 
 """
-```
-calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
-```
+    calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
 
-Compute the [`BDVariance`](@ref) via [`_BDVariance`](@ref). Inputs correspond to those of [`_BDVariance`](@ref).
+# Description
+
+Compute the [`BDVariance`](@ref) via [`_BDVariance`](@ref).
+
+See also: [`BDVariance`](@ref), [`_BDVariance`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `bdvariance::BDVariance`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `X::AbstractMatrix`: `T×N` matrix of asset returns.
 
 # Outputs
 
-  - `r`: risk.
+  - `bdvariance::Real`: Brownian Distance Variance.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the Brownian distance variance
+bdvariance_rm = BDVariance()
+bdvariance_risk = calc_risk(bdvariance_rm, w; X = returns)
+```
 """
 function calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
     return _BDVariance(X * w)
 end
 
 """
-```
-calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
-```
+    calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
 
-Compute the [`Skew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).
+# Description
+
+Compute the [`Skew`](@ref) via [`_Skew`](@ref).
+
+See also: [`Skew`](@ref), [`_Skew`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `skew::Skew`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `V::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the coskewness.
 
 # Outputs
 
-  - `r`: risk.
+  - `skew::Real`: Quadratic Skewness.
+
+# Examples
+
+```@example
+# Create sample sum of the symmetric negative spectral slices 
+# of the coskewness
+V = [0.04 0.02 0.01;
+     0.02 0.09 0.03;
+     0.01 0.03 0.06]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the skew
+skew_rm = Skew()
+skew_risk = calc_risk(skew_rm, w; V = V)
+```
 """
 function calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
     return _Skew(w, V)
 end
 
 """
-```
-calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
-```
+    calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
 
-Compute the [`SSkew`](@ref) via [`_Skew`](@ref). Inputs correspond to those of [`_Skew`](@ref).
+# Description
+
+Compute the [`SSkew`](@ref) via [`_Skew`](@ref).
+
+See also: [`SSkew`](@ref), [`_Skew`](@ref).
+
+# Inputs
+
+## Positional
+
+  - `sskew::SSkew`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `SV::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
 
 # Outputs
 
-  - `r`: risk.
+  - `sskew::Real`: Quadratic Semi Skewness.
+
+# Examples
+
+```@example
+# Create sample sum of the symmetric negative spectral slices 
+# of the semi cosskewness.
+SV = [0.04 0.02 0.01;
+      0.02 0.09 0.03;
+      0.01 0.03 0.06]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the semi skew
+sskew_rm = SSkew()
+sskew_risk = calc_risk(sskew_rm, w; SV = SV)
+```
 """
 function calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
     return _Skew(w, SV)
 end
 
 """
-```
-calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
-```
+    calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
+
+# Description
 
 Compute the risk as the inverse of the length of `w`.
 
 # Inputs
 
-  - `w`: `N×1` vector of weights.
-  - `delta`: is a displacement, used in [`risk_contribution`](@ref) and [`factor_risk_contribution`](@ref).
+## Positional
+
+  - `equal::Equal`: risk measure.
+  - `w::AbstractVector`: `N×1` vector of asset weights.
+
+## Named
+
+  - `delta::Real`: is a displacement, used in [`risk_contribution`](@ref) and [`factor_risk_contribution`](@ref).
 
 # Outputs
 
-  - `r`: risk.
+  - `equal::Real`: Equal Risk.
+
+# Examples
+
+```@example
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the equal risk measure
+equal_rm = Equal()
+equal_risk = calc_risk(equal_rm, w)
+```
 """
 function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta

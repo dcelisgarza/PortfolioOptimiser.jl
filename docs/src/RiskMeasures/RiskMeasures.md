@@ -73,11 +73,11 @@ OWASettings
 
 ## Risk measures
 
-These risk measures are compatible with both [`Portfolio`](@ref) and [`HCPortfolio`](@ref). Different risk measures account for different aspects of the returns.
+These risk measures are compatible with both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) optimisations. Different risk measures account for different aspects of the returns.
 
 ### Dispersion risk measures
 
-These measure the characteristics of the returns distribution.
+These measure the spread of the returns distribution.
 
 #### Full dispersion risk measures
 
