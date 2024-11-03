@@ -1880,7 +1880,7 @@ See also: [`Skew`](@ref), [`calc_risk(::Skew, ::AbstractWeights)`](@ref), [`SSke
 # Inputs
 
   - `w::AbstractVector`: `N×1` vector of weights.
-  - `V::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the coskewness or semi coskewness.
+  - `V::AbstractMatrix`: `N×N` matrix of the sum of negative spectral slices of the coskewness or semi coskewness.
 
 # Outputs
 
@@ -3993,7 +3993,7 @@ See also: [`Skew`](@ref), [`_Skew`](@ref).
 
 ## Named
 
-  - `V::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the coskewness.
+  - `V::AbstractMatrix`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
 
 # Outputs
 
@@ -4038,7 +4038,7 @@ See also: [`SSkew`](@ref), [`_Skew`](@ref).
 
 ## Named
 
-  - `SV::AbstractMatrix`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
+  - `SV::AbstractMatrix`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
 
 # Outputs
 

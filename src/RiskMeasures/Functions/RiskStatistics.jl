@@ -1,33 +1,54 @@
 """
-```
-risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
-            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-            SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-            scale::Bool = false, kwargs...)
-```
+    risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
+                X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+                scale::Bool = false, kwargs...)
+
+# Description
 
 Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset weight vectors.
 
+See also: [`AbstractRiskMeasure`](@ref), [`calc_risk`](@ref).
+
 # Inputs
 
-  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
+## Positional
 
-  - `w1`: `N×1` vector of asset weights for lower bound.
-  - `w2`: `N×1` vector of asset weights for upper bound.
-  - `X`: `T×N` matrix of asset returns.
-  - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
-  - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
-  - `delta`: small displacement used for computing the [`Equal`](@ref) risk measure.
-  - `scale`:
+  - `rm::AbstractRiskMeasure`: risk measure.
+  - `w1::AbstractVector`: `N×1` vector of asset weights for lower bound.
+  - `w2::AbstractVector`: `N×1` vector of asset weights for upper bound.
 
-      + if `true:` divides the kurtosis and semi kurtosis by 2, used in [`risk_contribution`](@ref).
-  - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
+## Named
+
+  - `X::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `T×N` matrix of asset returns.
+  - `V::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
+  - `SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
+  - `delta::Real = 1e-6`: small displacement used for computing the [`Equal`](@ref) risk measure.
+  - `scale::Bool = false`: flag for scaling the kurtosis and semi kurtosis in [`risk_contribution`](@ref).
 
 # Outputs
 
-  - `r1`: lower risk bound.
-  - `r2`: upper risk bound.
+  - `r1::Real`: lower risk bound/risk corresponding to `w1`.
+  - `r2::Real`: upper risk bound/risk corresponding to `w2`.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w1 = [0.7, 0.2, 0.1]
+w2 = [0.3, 0.5, 0.2]
+
+# Calculate the risk bounds for the default conditional value at risk
+r1, r2 = risk_bounds(CVaR(), w1, w2; X = returns)
+```
 """
 function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -40,34 +61,58 @@ function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVe
 end
 
 """
-```
-risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
-                  X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                  V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                  SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                  delta::Real = 1e-6, marginal::Bool = false, kwargs...)
-```
+    risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
+                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                      V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                      SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+                      marginal::Bool = false, kwargs...)
+
+# Description
 
 Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) and asset weight vector.
 
+See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`calc_risk`](@ref).
+
 # Inputs
 
-  - `rm`: risk measure [`AbstractRiskMeasure`](@ref).
+## Positional
 
-  - `w`: `N×1` vector of asset weights.
-  - `X`: `T×N` matrix of asset returns.
-  - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
-  - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
-  - `delta`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
-  - `marginal`:
+  - `rm::AbstractRiskMeasure`: risk measure.
+  - `w1::AbstractVector`: `N×1` vector of asset weights for lower bound.
+  - `w2::AbstractVector`: `N×1` vector of asset weights for upper bound.
+
+## Named
+
+  - `X::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `T×N` matrix of asset returns.
+
+  - `V::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
+  - `SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
+  - `delta::Real = 1e-6`: small displacement used for computing the [`Equal`](@ref) risk measure.
+  - `marginal::Bool = false`:
 
       + if `true`: compute the marginal risk contribution.
-      + else: compute the risk by contribution by multiplying the marginal risk by the asset weight.
-  - `kwargs`: catch-all for any missing keyword arguments for [`calc_risk`](@ref).
+      + else: compute the risk contribution by multiplying the marginal risk by the asset weight.
 
 # Outputs
 
-  - `rc`: `N×1` vector of risk contribution per asset.
+  - `rc::AbstractVector`: `N×1` vector of risk contribution per asset.
+
+# Examples
+
+```@example
+# Sample returns matrix
+returns = [ 0.19 -0.41 -0.70;
+            1.15 -1.20 -1.27;
+           -0.27 -1.98 -0.77;
+           -0.65  0.22  0.59;
+           -0.04  0.35 -0.99]
+
+# Sample weights vector
+w = [0.3, 0.5, 0.2]
+
+# Calculate the risk bounds for the default conditional value at risk
+rc = risk_contribution(CVaR(), w; X = returns)
+```
 """
 function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -102,18 +147,16 @@ function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
 end
 
 """
-```
-factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
-                         X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                         assets::AbstractVector = Vector{String}(undef, 0),
-                         F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                         f_assets::AbstractVector = Vector{String}(undef, 0),
-                         B::DataFrame = DataFrame(),
-                         regression_type::RegressionType = FReg(),
-                         V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                         SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                         delta::Real = 1e-6, kwargs...)
-```
+    factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
+                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                            assets::AbstractVector = Vector{String}(undef, 0),
+                            F::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                            f_assets::AbstractVector = Vector{String}(undef, 0),
+                            B::DataFrame = DataFrame(),
+                            regression_type::RegressionType = FReg(),
+                            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                            SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                            delta::Real = 1e-6, kwargs...)
 
 Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) and asset weight vector.
 
@@ -181,8 +224,8 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
   - `w`: `N×1` vector of asset weights.
   - `mu`: `N×1` vector of expected returns.
   - `X`: `T×N` matrix of asset returns.
-  - `V`: `N×N` matrix of sum of negative spectral slices of the coskewness.
-  - `SV`: `N×N` matrix of sum of negative spectral slices of the semi coskewness.
+  - `V`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
+  - `SV`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
   - `delta`: small displacement used for computing the [`Equal`](@ref) risk measure.
   - `rf`: risk free rate.
   - `kelly`:
