@@ -83,18 +83,12 @@ end
 function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
                                                    w::AbstractVector, X::AbstractMatrix;
                                                    rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
-                                                   V::AbstractMatrix = Matrix{Float64}(undef,
-                                                                                       0,
-                                                                                       0),
-                                                   SV::AbstractMatrix = Matrix{Float64}(undef,
-                                                                                        0,
-                                                                                        0),
                                                    delta::Real = 1e-6,
                                                    percentage::Bool = false,
                                                    erc_line::Bool = true, t_factor = 252,
                                                    marginal::Bool = false, kwargs_bar = (;),
                                                    kwargs_line = (;))
-    rc = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta, marginal = marginal)
+    rc = risk_contribution(rm, w; X = X, delta = delta, marginal = marginal)
 
     DDs = (DaR, MDD, ADD, CDaR, EDaR, RLDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
            RLDaR_r, UCI_r)
@@ -149,7 +143,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
         if percentage
             erc = 1 / length(rc)
         else
-            erc = calc_risk(rm, w; X = X, V = V, SV = SV)
+            erc = calc_risk(rm, w; X = X)
 
             erc /= length(rc)
 
@@ -176,21 +170,25 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                    marginal::Bool = false,
                                                    allocated::Bool = false,
                                                    kwargs_bar = (;), kwargs_line = (;))
-    solver_flag, sigma_flag = PortfolioOptimiser.set_rm_properties!(rm, port.solvers,
-                                                                    port.cov)
+    solver_flag, sigma_flag, skew_flag, sskew_flag = PortfolioOptimiser.set_rm_properties!(rm,
+                                                                                           port.solvers,
+                                                                                           port.cov,
+                                                                                           port.V,
+                                                                                           port.SV)
     fig = PortfolioOptimiser.plot_risk_contribution(port.assets,
                                                     if !allocated
                                                         port.optimal[type].weights
                                                     else
                                                         port.alloc_optimal[type].weights
-                                                    end, X; rm = rm, V = port.V,
-                                                    SV = port.SV, percentage = percentage,
+                                                    end, X; rm = rm,
+                                                    percentage = percentage,
                                                     erc_line = erc_line,
                                                     t_factor = t_factor, delta = delta,
                                                     marginal = marginal,
                                                     kwargs_bar = kwargs_bar,
                                                     kwargs_line = kwargs_line)
-    PortfolioOptimiser.unset_set_rm_properties!(rm, solver_flag, sigma_flag)
+    PortfolioOptimiser.unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag,
+                                                sskew_flag)
     return fig
 end
 

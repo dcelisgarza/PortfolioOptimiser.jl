@@ -70,9 +70,10 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     rm_i = get_first_rm(rm)
     rm_i.settings.ub = Inf
 
-    solver_flag, sigma_flag = set_rm_properties!(rm_i, port.solvers, sigma)
-    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, V = port.V, SV = port.SV,
-                               delta = 0)
+    solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm_i, port.solvers,
+                                                                        sigma, port.V,
+                                                                        port.SV)
+    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -109,7 +110,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         if isempty(w)
             continue
         end
-        rk = calc_risk(rm_i, w.weights; X = returns, V = port.V, SV = port.SV)
+        rk = calc_risk(rm_i, w.weights; X = returns)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
@@ -119,7 +120,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                   class = class, w_ini = w_min_ini)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(rm_i, w.weights; X = returns, V = port.V, SV = port.SV)
+        rk = calc_risk(rm_i, w.weights; X = returns)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
@@ -132,6 +133,6 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                                 :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
-    unset_set_rm_properties!(rm_i, solver_flag, sigma_flag)
+    unset_set_rm_properties!(rm_i, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return port.frontier[rmsym]
 end

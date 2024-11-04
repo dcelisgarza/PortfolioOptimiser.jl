@@ -51,21 +51,18 @@ r1, r2 = risk_bounds(CVaR(), w1, w2; X = returns)
 ```
 """
 function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
-                     X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                     V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                     SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+                     X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                      scale::Bool = false, kwargs...)
-    r1 = calc_risk(rm, w1; X = X, V = V, SV = SV, delta = delta, scale = scale, kwargs...)
-    r2 = calc_risk(rm, w2; X = X, V = V, SV = SV, delta = -delta, scale = scale, kwargs...)
+    r1 = calc_risk(rm, w1; X = X, delta = delta, scale = scale, kwargs...)
+    r2 = calc_risk(rm, w2; X = X, delta = -delta, scale = scale, kwargs...)
     return r1, r2
 end
 
 """
     risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                      V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                      SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-                      marginal::Bool = false, kwargs...)
+                      delta::Real = 1e-6, marginal::Bool = false, 
+                      kwargs...)
 
 # Description
 
@@ -85,8 +82,6 @@ See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`calc_risk`](@r
 
   - `X::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `T×N` matrix of asset returns.
 
-  - `V::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
-  - `SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
   - `delta::Real = 1e-6`: small displacement used for computing the [`Equal`](@ref) risk measure.
   - `marginal::Bool = false`:
 
@@ -116,8 +111,6 @@ rc = risk_contribution(CVaR(), w; X = returns)
 """
 function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                           V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                           SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                            delta::Real = 1e-6, marginal::Bool = false, kwargs...)
     N = length(w)
     ew = eltype(w)
@@ -134,8 +127,7 @@ function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
         w2 .= w
         w2[i] -= delta
 
-        r1, r2 = risk_bounds(rm, w1, w2; X = X, V = V, SV = SV, delta = delta, scale = true,
-                             kwargs...)
+        r1, r2 = risk_bounds(rm, w1, w2; X = X, delta = delta, scale = true, kwargs...)
 
         rci = (r1 - r2) / (2 * delta)
         if !marginal
@@ -154,8 +146,6 @@ end
                             f_assets::AbstractVector = Vector{String}(undef, 0),
                             B::DataFrame = DataFrame(),
                             regression_type::RegressionType = FReg(),
-                            V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                            SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                             delta::Real = 1e-6, kwargs...)
 
 # Description
@@ -179,8 +169,6 @@ See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`calc_risk`](@r
   - `f_assets::AbstractVector = Vector{String}(undef, 0)`: `Nf×` vector of factor names.
   - `B::DataFrame = DataFrame()`: optional `Na×Nf` loadings matrix.
   - `regression_type::RegressionType = FReg()`: regression type used for computing the loadings matrix.
-  - `V::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `Na×Na` matrix of sum of negative spectral slices of the coskewness.
-  - `SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0)`: `Na×Na` matrix of sum of negative spectral slices of the semi coskewness.
   - `delta::Real = 1e-6`: small displacement used for computing the marginal risk and equal risk measure [`Equal`](@ref).
 
 # Behaviour
@@ -259,11 +247,9 @@ function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                                   f_assets::AbstractVector = Vector{String}(undef, 0),
                                   B::DataFrame = DataFrame(),
                                   regression_type::RegressionType = FReg(),
-                                  V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                  SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
                                   delta::Real = 1e-6, kwargs...)
-    marginal_risk = risk_contribution(rm, w; X = X, V = V, SV = SV, delta = delta,
-                                      marginal = true, kwargs...)
+    marginal_risk = risk_contribution(rm, w; X = X, delta = delta, marginal = true,
+                                      kwargs...)
 
     if isempty(B)
         B = regression(regression_type, DataFrame(F, f_assets), DataFrame(X, assets))
@@ -281,9 +267,8 @@ end
     sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                 mu::AbstractVector = Vector{Float64}(undef, 0),
                 X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-                rf::Real = 0.0, kelly::Bool = false)
+                delta::Real = 1e-6, rf::Real = 0.0, 
+                kelly::Bool = false)
 
 # Description
 
@@ -311,16 +296,14 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
 """
 function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
-                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                      V::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                      SV::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                       rf::Real = 0.0, kelly::Bool = false)
     ret = if kelly
         1 / size(X, 1) * sum(log.(one(eltype(X)) .+ X * w))
     else
         dot(mu, w)
     end
-    risk = calc_risk(rm, w; X = X, V = V, SV = SV, delta = delta)
+    risk = calc_risk(rm, w; X = X, delta = delta)
     return (ret - rf) / risk
 end
 
