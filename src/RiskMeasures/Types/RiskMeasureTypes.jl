@@ -1747,17 +1747,26 @@ skew = Skew(; settings = RMSettings(; ub = 0.5))
 """
 mutable struct Skew <: RiskMeasure
     settings::RMSettings
+    skew::Union{<:AbstractMatrix, Nothing}
     V::Union{<:AbstractMatrix, Nothing}
 end
 function Skew(; settings::RMSettings = RMSettings(),
+              skew::Union{<:AbstractMatrix, Nothing} = nothing,
               V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(skew)
+        @smart_assert(size(skew, 1)^2 == size(skew, 2))
+    end
     if !isnothing(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
-    return Skew(settings, V)
+    return Skew(settings, skew, V)
 end
 function Base.setproperty!(obj::Skew, sym::Symbol, val)
-    if sym == :V
+    if sym == :skew
+        if !isnothing(val)
+            @smart_assert(size(val, 1)^2 == size(val, 2))
+        end
+    elseif sym == :V
         if !isnothing(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
@@ -1790,17 +1799,26 @@ sskew = SSkew(; settings = RMSettings(; ub = 0.5))
 """
 mutable struct SSkew <: RiskMeasure
     settings::RMSettings
+    skew::Union{<:AbstractMatrix, Nothing}
     V::Union{Nothing, <:AbstractMatrix}
 end
 function SSkew(; settings::RMSettings = RMSettings(),
+               skew::Union{<:AbstractMatrix, Nothing} = nothing,
                V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(skew)
+        @smart_assert(size(skew, 1)^2 == size(skew, 2))
+    end
     if !isnothing(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
-    return SSkew(settings, V)
+    return SSkew(settings, skew, V)
 end
 function Base.setproperty!(obj::SSkew, sym::Symbol, val)
-    if sym == :V
+    if sym == :skew
+        if !isnothing(val)
+            @smart_assert(size(val, 1)^2 == size(val, 2))
+        end
+    elseif sym == :V
         if !isnothing(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end

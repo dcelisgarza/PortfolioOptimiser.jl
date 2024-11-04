@@ -1,8 +1,8 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+prices = TimeArray(CSV.File("./test/assets/stock_prices.csv"); timestamp = :date)
+factors = TimeArray(CSV.File("./test/assets/factor_prices.csv"); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -174,7 +174,7 @@ end
     @test !isapprox(w3.weights, w4.weights)
 end
 
-@testset "Kurt and cov via rm" begin
+@testset "Kurt, skew and cov via rm" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                              :check_sol => (allow_local = true,
@@ -189,6 +189,8 @@ end
     sigma = cov(PortCovCor(), portfolio.returns)
     kt = cokurt(KurtFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
     skt = cokurt(KurtSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    ske, V = coskew(SkewFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    sske, SV = coskew(SkewSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
 
     type = HRP()
     rm = SD(; sigma = sigma)
@@ -223,6 +225,30 @@ end
     w9 = optimise!(portfolio; rm = rm, type = type)
     @test isapprox(rm[2].kt, skt)
 
+    type = HRP()
+    rm = Skew(; V = 2 * V)
+    w19 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * V)
+    rm = SSkew(; V = 2 * SV)
+    w20 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * SV)
+
+    type = HERC()
+    rm = Skew(; V = 2 * V)
+    w21 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * V)
+    rm = SSkew(; V = 2 * SV)
+    w22 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * SV)
+
+    type = NCO()
+    rm = Skew(; V = V)
+    w23 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, V)
+    rm = SSkew(; V = SV)
+    w24 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, SV)
+
     asset_statistics!(portfolio; set_mu = false)
 
     type = HRP()
@@ -239,6 +265,18 @@ end
     w16 = optimise!(portfolio; rm = SD(), type = type)
     w17 = optimise!(portfolio; rm = Kurt(), type = type)
     w18 = optimise!(portfolio; rm = SKurt(), type = type)
+
+    type = HRP()
+    w25 = optimise!(portfolio; rm = Skew(), type = type)
+    w26 = optimise!(portfolio; rm = SSkew(), type = type)
+
+    type = HERC()
+    w27 = optimise!(portfolio; rm = Skew(), type = type)
+    w28 = optimise!(portfolio; rm = SSkew(), type = type)
+
+    type = NCO()
+    w29 = optimise!(portfolio; rm = Skew(), type = type)
+    w30 = optimise!(portfolio; rm = SSkew(), type = type)
 
     w1t = [0.0340651548944211, 0.06082255360286802, 0.03077687672960238, 0.0534368868018595,
            0.05877994040717266, 0.0712034395934151, 0.02903369558864982,
@@ -395,6 +433,13 @@ end
     @test isapprox(w7.weights, w16.weights)
     @test isapprox(w8.weights, w17.weights)
     @test isapprox(w9.weights, w18.weights)
+
+    @test isapprox(w19.weights, w25.weights)
+    @test isapprox(w20.weights, w26.weights)
+    @test isapprox(w21.weights, w27.weights)
+    @test isapprox(w22.weights, w28.weights)
+    @test isapprox(w23.weights, w29.weights)
+    @test isapprox(w24.weights, w30.weights)
 end
 
 @testset "Kurt and cov via rm vecs" begin
@@ -2077,6 +2122,7 @@ end
     hclust_opt = HCOpt()
     cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
     type = HRP()
+
     w1 = optimise!(portfolio; rm = SD(), type = type)
     wt = [0.03692879524929352, 0.06173471900996101, 0.05788485449055379,
           0.02673494374797732, 0.051021461747188426, 0.06928891082994745,

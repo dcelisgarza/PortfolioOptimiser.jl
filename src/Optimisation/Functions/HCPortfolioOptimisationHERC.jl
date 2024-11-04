@@ -1,10 +1,10 @@
 function naive_risk(port, cluster, rm)
     sigma_old = _set_hc_rm_sigma(rm, port, cluster)
     cret = view(port.returns, :, cluster)
-    old_V = gen_cluster_skew_sskew(rm, port, cluster)
+    old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = _naive_risk(rm, cret)
     _unset_hc_rm_sigma(rm, sigma_old)
-    _unset_hc_rm_skew(rm, old_V)
+    _unset_hc_rm_skew(rm, old_V, old_skew)
     return crisk
 end
 function _optimise!(::HERC, port::HCPortfolio,
