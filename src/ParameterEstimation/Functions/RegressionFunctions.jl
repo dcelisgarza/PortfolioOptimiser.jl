@@ -39,6 +39,11 @@ function _regression(method::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
 
     return beta
 end
+"""
+    regression(method::PCAReg, x::DataFrame, y::DataFrame)
+
+# Description
+"""
 function regression(method::PCAReg, x::DataFrame, y::DataFrame)
     features = names(x)
     rows = ncol(y)
