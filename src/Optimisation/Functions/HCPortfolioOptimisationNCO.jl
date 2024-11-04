@@ -2,8 +2,8 @@ function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
     cov_idx = Vector{Int}(undef, 0)
     kurt_idx = Vector{Int}(undef, 0)
     skurt_idx = Vector{Int}(undef, 0)
-    set_skew = false
-    set_sskew = false
+    skew_idx = Vector{Int}(undef, 0)
+    sskew_idx = Vector{Int}(undef, 0)
     if !isa(rm, AbstractVector)
         if isa(rm, SD)
             push!(cov_idx, 1)
@@ -14,8 +14,12 @@ function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
         if isa(rm, SKurt)
             push!(skurt_idx, 1)
         end
-        set_skew = isa(rm, Skew)
-        set_sskew = isa(rm, SSkew)
+        if isa(rm, Skew)
+            push!(skew_idx, 1)
+        end
+        if isa(rm, SSkew)
+            push!(sskew_idx, 1)
+        end
     else
         rm_flat = reduce(vcat, rm)
         for (i, r) ∈ enumerate(rm_flat) #! Do not change this enumerate to pairs.
@@ -28,28 +32,28 @@ function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
             if isa(r, SKurt)
                 push!(skurt_idx, i)
             end
-            if !set_skew
-                set_skew = isa(r, Skew)
+            if isa(r, Skew)
+                push!(skew_idx, i)
             end
-            if !set_sskew
-                set_sskew = isa(r, SSkew)
+            if isa(r, SSkew)
+                push!(sskew_idx, i)
             end
         end
     end
 
-    return cov_idx, kurt_idx, skurt_idx, set_skew, set_sskew
+    return cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx
 end
-function _get_skew(::Union{Skew, Val{true}}, port, cluster, idx)
+function _get_skew(::Skew, port, cluster, idx)
     return view(port.skew, cluster, idx)
 end
-function _get_skew(::Union{SSkew, Val{false}}, port, cluster, idx)
+function _get_skew(::SSkew, port, cluster, idx)
     return view(port.sskew, cluster, idx)
 end
 function gen_cluster_skew_sskew(args...)
-    return Matrix(undef, 0, 0)
+    return nothing
 end
-function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, port,
-                                cluster, Nc = nothing, idx = nothing)
+function gen_cluster_skew_sskew(rm::RMSkew, port, cluster, Nc = nothing, idx = nothing)
+    old_V = rm.V
     if isnothing(idx)
         idx = Int[]
         N = size(port.returns, 2)
@@ -71,8 +75,10 @@ function gen_cluster_skew_sskew(rm::Union{Skew, SSkew, Val{true}, Val{false}}, p
     if all(iszero.(diag(V)))
         V .= V + eps(eltype(skew)) * I
     end
-    return V
+    rm.V = V
+    return old_V
 end
+
 function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
     if !isa(rm, AbstractVector)
         if isnothing(rm.kt) || isempty(rm.kt)
@@ -96,6 +102,19 @@ function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, ol
     end
     return nothing
 end
+function _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx, old_Vs)
+    if !isa(rm, AbstractVector)
+        old_V = gen_cluster_skew_sskew(rm, port, cluster, Nc, idx)
+        push!(old_Vs, old_V)
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, skew_idx)
+            old_V = gen_cluster_skew_sskew(r, port, cluster, Nc, idx)
+            push!(old_Vs, old_V)
+        end
+    end
+    return nothing
+end
 function _set_cov_rm(rm, cov_idx, idx, old_covs)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.sigma) || isempty(rm.sigma))
@@ -113,8 +132,8 @@ function _set_cov_rm(rm, cov_idx, idx, old_covs)
     end
     return nothing
 end
-function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, set_skew,
-                           set_sskew)
+function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, skew_idx,
+                           sskew_idx)
     cassets = port.assets[cidx]
     cret = view(port.returns, :, cidx)
     cmu = !isempty(port.mu) ? port.mu[cidx] : Vector{eltype(port.returns)}(undef, 0)
@@ -126,12 +145,15 @@ function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, set_ske
     old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
-    cV = Matrix{eltype(port.returns)}(undef, 0, 0)
-    cSV = Matrix{eltype(port.returns)}(undef, 0, 0)
+    old_Vs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_SVs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     if !isempty(cov_idx)
         _set_cov_rm(rm, cov_idx, cidx, old_covs)
     end
-    if !isempty(kurt_idx) || !isempty(skurt_idx) || set_skew || set_sskew
+    if !isempty(kurt_idx) ||
+       !isempty(skurt_idx) ||
+       !isempty(skew_idx) ||
+       !isempty(sskew_idx)
         idx = Int[]
         N = size(port.returns, 2)
         cluster = findall(cidx)
@@ -146,14 +168,14 @@ function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, set_ske
         if !isempty(skurt_idx)
             _set_kt_rm(Val(false), rm, port, skurt_idx, idx, old_skurts)
         end
-        if set_skew
-            cV = gen_cluster_skew_sskew(Val(true), port, cluster, Nc, idx)
+        if !isempty(skew_idx)
+            _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx, old_Vs)
         end
-        if set_sskew
-            cSV = gen_cluster_skew_sskew(Val(false), port, cluster, Nc, idx)
+        if !isempty(sskew_idx)
+            _set_skew_rm(rm, port, sskew_idx, cluster, Nc, idx, old_SVs)
         end
     end
-    return cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, cV, cSV
+    return cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, old_Vs, old_SVs
 end
 function _get_port_kt(::Val{true}, port, idx)
     return view(port.kurt, idx, idx)
@@ -177,16 +199,40 @@ function _set_kt_rm_nothing(rm, kt_idx, old_kts)
         end
     end
 end
-function set_kurt_skurt_nothing(port, rm, kurt_idx, skurt_idx)
+function _set_skew_rm_nothing(rm, skew_idx, old_Vs)
+    if !isa(rm, AbstractVector)
+        if !(isnothing(rm.V) || isempty(rm.V))
+            push!(old_Vs, rm.V)
+            rm.V = nothing
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, skew_idx)
+            if !(isnothing(r.V) || isempty(r.V))
+                push!(old_Vs, r.V)
+                r.V = nothing
+            end
+        end
+    end
+end
+function set_kurt_skurt_skew_nothing(port, rm, kurt_idx, skurt_idx, skew_idx, sskew_idx)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_Vs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_SVs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     if !isempty(kurt_idx)
         _set_kt_rm_nothing(rm, kurt_idx, old_kurts)
     end
     if !isempty(skurt_idx)
         _set_kt_rm_nothing(rm, skurt_idx, old_skurts)
     end
-    return old_kurts, old_skurts
+    if !isempty(skew_idx)
+        _set_skew_rm_nothing(rm, skew_idx, old_Vs)
+    end
+    if !isempty(sskew_idx)
+        _set_skew_rm_nothing(rm, sskew_idx, old_SVs)
+    end
+    return old_kurts, old_skurts, old_Vs, old_SVs
 end
 function _reset_kt_rm(rm, kt_idx, old_kts)
     if !isempty(kt_idx) && !isempty(old_kts)
@@ -212,17 +258,31 @@ function _reset_cov_rm(rm, cov_idx, old_covs)
         end
     end
 end
+function _reset_skew_rm(rm, skew_idx, old_Vs)
+    if !isempty(skew_idx) && !isempty(old_Vs)
+        if !isa(rm, AbstractVector)
+            rm.V = old_Vs[1]
+        else
+            rm_flat = reduce(vcat, rm)
+            for (r, old_V) ∈ zip(view(rm_flat, skew_idx), old_Vs)
+                r.V = old_V
+            end
+        end
+    end
+end
 function reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
-                                     old_skurts)
+                                     old_skurts, skew_idx, old_Vs, sskew_idx, old_SVs)
     _reset_cov_rm(rm, cov_idx, old_covs)
     _reset_kt_rm(rm, kurt_idx, old_kurts)
     _reset_kt_rm(rm, skurt_idx, old_skurts)
+    _reset_skew_rm(rm, skew_idx, old_Vs)
+    _reset_skew_rm(rm, sskew_idx, old_SVs)
     return nothing
 end
-function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx, cV, cSV,
-                       opt_kwargs, port_kwargs, factor_kwargs)
-    intra_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov, V = cV,
-                           SV = cSV, solvers = port.solvers, port_kwargs...)
+function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx, opt_kwargs,
+                       port_kwargs, factor_kwargs)
+    intra_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                           solvers = port.solvers, port_kwargs...)
     if !isempty(kurt_idx) || !isempty(skurt_idx)
         intra_port.L_2, intra_port.S_2 = dup_elim_sum_matrices(size(cret, 2))[2:3]
     end
@@ -245,21 +305,21 @@ function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_
     w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
     cfails = Dict{Int, Dict}()
 
-    cov_idx, kurt_idx, skurt_idx, set_skew, set_sskew = find_cov_kurt_skew_rm(rm)
+    cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx = find_cov_kurt_skew_rm(rm)
     for i ∈ 1:(port.k)
         cidx = idx .== i
-        cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, cV, cSV = gen_cluster_stats(port,
-                                                                                               rm,
-                                                                                               cidx,
-                                                                                               cov_idx,
-                                                                                               kurt_idx,
-                                                                                               skurt_idx,
-                                                                                               set_skew,
-                                                                                               set_sskew)
+        cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, old_Vs, old_SVs = gen_cluster_stats(port,
+                                                                                                       rm,
+                                                                                                       cidx,
+                                                                                                       cov_idx,
+                                                                                                       kurt_idx,
+                                                                                                       skurt_idx,
+                                                                                                       skew_idx,
+                                                                                                       sskew_idx)
         cw, cfail = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx,
-                                  cV, cSV, opt_kwargs, port_kwargs, factor_kwargs)
+                                  opt_kwargs, port_kwargs, factor_kwargs)
         reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
-                                    old_skurts)
+                                    old_skurts, skew_idx, old_Vs, sskew_idx, old_SVs)
 
         w[cidx, i] .= cw
         if !isempty(cfail)
@@ -325,14 +385,18 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, factor_kwargs
         Matrix{eltype(port.returns)}(undef, 0, 0)
     end
 
-    cov_idx, kurt_idx, skurt_idx, set_skew, set_sskew = find_cov_kurt_skew_rm(rm)
+    cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx = find_cov_kurt_skew_rm(rm)
     old_covs = compute_cov_rm(port, rm, cov_idx, wi)
-    old_kurts, old_skurts = set_kurt_skurt_nothing(port, rm, kurt_idx, skurt_idx)
+    old_kurts, old_skurts, old_Vs, old_SVs = set_kurt_skurt_skew_nothing(port, rm, kurt_idx,
+                                                                         skurt_idx,
+                                                                         skew_idx,
+                                                                         sskew_idx)
     cw, cfail = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov,
-                              !isempty(kurt_idx), !isempty(skurt_idx), set_skew, set_sskew,
-                              opt_kwargs, port_kwargs, factor_kwargs, stat_kwargs)
+                              !isempty(kurt_idx), !isempty(skurt_idx), !isempty(skew_idx),
+                              !isempty(sskew_idx), opt_kwargs, port_kwargs, factor_kwargs,
+                              stat_kwargs)
     reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
-                                old_skurts)
+                                old_skurts, skew_idx, old_Vs, sskew_idx, old_SVs)
 
     w = wi * cw
     if !isempty(cfail)

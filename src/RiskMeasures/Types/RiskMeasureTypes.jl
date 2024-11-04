@@ -521,7 +521,7 @@ Implements portfolio Standard Deviation risk.
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
   - `formulation::SDFormulation = SOCSD()`: strategy for standard deviation/variance calculation. Only affects [`Portfolio`](@ref) optimisations.
-  - `sigma::Union{AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
+  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
 
 # Behaviour
 
@@ -565,7 +565,7 @@ sd_risk = SD(; formulation = SimpleSD())
 mutable struct SD <: RiskMeasure
     settings::RMSettings
     formulation::SDFormulation
-    sigma::Union{AbstractMatrix, Nothing}
+    sigma::Union{<:AbstractMatrix, Nothing}
 end
 function SD(; settings::RMSettings = RMSettings(), formulation = SOCSD(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
@@ -1745,11 +1745,24 @@ skew = Skew()
 skew = Skew(; settings = RMSettings(; ub = 0.5))
 ```
 """
-struct Skew <: RiskMeasure
+mutable struct Skew <: RiskMeasure
     settings::RMSettings
+    V::Union{<:AbstractMatrix, Nothing}
 end
-function Skew(; settings::RMSettings = RMSettings())
-    return Skew(settings)
+function Skew(; settings::RMSettings = RMSettings(),
+              V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(V)
+        @smart_assert(size(V, 1) == size(V, 2))
+    end
+    return Skew(settings, V)
+end
+function Base.setproperty!(obj::Skew, sym::Symbol, val)
+    if sym == :V
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
@@ -1775,15 +1788,28 @@ sskew = SSkew()
 sskew = SSkew(; settings = RMSettings(; ub = 0.5))
 ```
 """
-struct SSkew <: RiskMeasure
+mutable struct SSkew <: RiskMeasure
     settings::RMSettings
+    V::Union{Nothing, <:AbstractMatrix}
 end
-function SSkew(; settings::RMSettings = RMSettings())
-    return SSkew(settings)
+function SSkew(; settings::RMSettings = RMSettings(),
+               V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(V)
+        @smart_assert(size(V, 1) == size(V, 2))
+    end
+    return SSkew(settings, V)
+end
+function Base.setproperty!(obj::SSkew, sym::Symbol, val)
+    if sym == :V
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
-    mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
+    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: HCRiskMeasure
 
 # Description
 
@@ -1794,7 +1820,7 @@ See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`
 # Fields
 
   - `settings::HCRMSettings = HCRMSettings()`: hierarchical risk measure configuration settings.
-  - `sigma::Union{AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
+  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
 
 # Behaviour
 
@@ -1815,16 +1841,16 @@ variance = Variance()
 variance = Variance(; settings = HCRMSettings(; scale = 3))
 ```
 """
-mutable struct Variance{T1 <: Union{AbstractMatrix, Nothing}} <: HCRiskMeasure
+mutable struct Variance <: HCRiskMeasure
     settings::HCRMSettings
-    sigma::T1
+    sigma::Union{<:AbstractMatrix, Nothing}
 end
 function Variance(; settings::HCRMSettings = HCRMSettings(),
                   sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance{Union{<:AbstractMatrix, Nothing}}(settings, sigma)
+    return Variance(settings, sigma)
 end
 function Base.setproperty!(obj::Variance, sym::Symbol, val)
     if sym == :sigma
@@ -2353,6 +2379,7 @@ end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
 const RMSigma = Union{SD, Variance}
+const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 
 export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, QuadSD, SOCSD, SimpleSD, SD,

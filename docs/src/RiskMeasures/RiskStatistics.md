@@ -1,6 +1,6 @@
 # Risk statistics
 
-It is possible to compute risk-derived statistics given a [`RiskMeasure`](@ref)/[`HCRiskMeasure`](@ref), a vector of weights, together with other relevant data.
+It is possible to compute risk-derived statistics given a [`RiskMeasure`](@ref)/[`HCRiskMeasure`](@ref), a vector of weights, and other relevant data.
 
 There are similarly named higher level functions that operate at the level of [`PortfolioOptimiser.AbstractPortfolio`](@ref).
 

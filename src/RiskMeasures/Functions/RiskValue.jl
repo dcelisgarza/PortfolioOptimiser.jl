@@ -3976,7 +3976,7 @@ function calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...
 end
 
 """
-    calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
+    calc_risk(::Skew, w::AbstractVector; kwargs...)
 
 # Description
 
@@ -3990,10 +3990,6 @@ See also: [`Skew`](@ref), [`_Skew`](@ref).
 
   - `skew::Skew`: risk measure.
   - `w::AbstractVector`: `N×1` vector of asset weights.
-
-## Named
-
-  - `V::AbstractMatrix`: `N×N` matrix of the sum of negative spectral slices of the coskewness.
 
 # Outputs
 
@@ -4016,53 +4012,8 @@ skew_rm = Skew()
 skew_risk = calc_risk(skew_rm, w; V = V)
 ```
 """
-function calc_risk(::Skew, w::AbstractVector; V::AbstractMatrix, kwargs...)
-    return _Skew(w, V)
-end
-
-"""
-    calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
-
-# Description
-
-Compute the [`SSkew`](@ref) via [`_Skew`](@ref).
-
-See also: [`SSkew`](@ref), [`_Skew`](@ref).
-
-# Inputs
-
-## Positional
-
-  - `sskew::SSkew`: risk measure.
-  - `w::AbstractVector`: `N×1` vector of asset weights.
-
-## Named
-
-  - `SV::AbstractMatrix`: `N×N` matrix of the sum of negative spectral slices of the semi coskewness.
-
-# Outputs
-
-  - `sskew::Real`: Quadratic Semi Skewness.
-
-# Examples
-
-```@example
-# Create sample sum of the symmetric negative spectral slices 
-# of the semi cosskewness.
-SV = [0.04 0.02 0.01;
-      0.02 0.09 0.03;
-      0.01 0.03 0.06]
-
-# Sample weights vector
-w = [0.3, 0.5, 0.2]
-
-# Calculate the semi skew
-sskew_rm = SSkew()
-sskew_risk = calc_risk(sskew_rm, w; SV = SV)
-```
-"""
-function calc_risk(::SSkew, w::AbstractVector; SV::AbstractMatrix, kwargs...)
-    return _Skew(w, SV)
+function calc_risk(skew::RMSkew, w::AbstractVector; kwargs...)
+    return _Skew(w, skew.V)
 end
 
 """

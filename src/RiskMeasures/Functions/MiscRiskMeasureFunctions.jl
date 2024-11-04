@@ -71,6 +71,28 @@ end
 function _set_rm_sigma(args...)
     return false
 end
+function _set_rm_skew(rm::Skew, V)
+    flag = false
+    if isnothing(rm.V) || isempty(rm.V)
+        rm.V = V
+        flag = true
+    end
+    return flag
+end
+function _set_rm_sskew(rm::SSkew, V)
+    flag = false
+    if isnothing(rm.V) || isempty(rm.V)
+        rm.V = V
+        flag = true
+    end
+    return flag
+end
+function _set_rm_skew(args...)
+    return false
+end
+function _set_rm_sskew(args...)
+    return false
+end
 """
 ```
 set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
@@ -86,10 +108,14 @@ Set properties for risk measures that use solvers or covariance matrices.
   - `sigma`: covariance matrix.
 """
 function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
-                            sigma::Union{Nothing, <:AbstractMatrix{<:Real}})
+                            sigma::Union{Nothing, <:AbstractMatrix{<:Real}},
+                            V::Union{Nothing, <:AbstractMatrix{<:Real}},
+                            SV::Union{Nothing, <:AbstractMatrix{<:Real}})
     solver_flag = _set_rm_solvers!(rm, solvers)
     sigma_flag = _set_rm_sigma(rm, sigma)
-    return solver_flag, sigma_flag
+    skew_flag = _set_rm_skew(rm, V)
+    sskew_flag = _set_rm_sskew(rm, SV)
+    return solver_flag, sigma_flag, skew_flag, sskew_flag
 end
 """
 ```
@@ -112,6 +138,22 @@ end
 function _unset_rm_sigma!(args...)
     return nothing
 end
+function _unset_rm_skew!(rm::Skew, flag)
+    if flag
+        rm.V = nothing
+    end
+end
+function _unset_rm_sskew!(rm::SSkew, flag)
+    if flag
+        rm.V = nothing
+    end
+end
+function _unset_rm_skew!(args...)
+    return nothing
+end
+function _unset_rm_sskew!(args...)
+    return nothing
+end
 """
 ```
 unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool, sigma_flag::Bool)
@@ -126,9 +168,11 @@ Unset properties for risk measures that use solvers or covariance matrices.
   - `sigma`: covariance matrix.
 """
 function unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool,
-                                  sigma_flag::Bool)
+                                  sigma_flag::Bool, skew_flag::Bool, sskew_flag::Bool)
     _unset_rm_solvers!(rm, solver_flag)
     _unset_rm_sigma!(rm, sigma_flag)
+    _unset_rm_skew!(rm, skew_flag)
+    _unset_rm_sskew!(rm, sskew_flag)
     return nothing
 end
 function number_effective_assets(w::AbstractVector)

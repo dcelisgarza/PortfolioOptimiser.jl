@@ -1627,7 +1627,13 @@ end
 function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP}, obj; kwargs...)
     model = port.model
 
-    G = real(sqrt(port.V))
+    V = if (isnothing(rm.V) || isempty(rm.V))
+        port.V
+    else
+        rm.V
+    end
+
+    G = real(sqrt(V))
     @variable(model, t_skew)
     w = model[:w]
     @constraint(model, [t_skew; G * w] ∈ SecondOrderCone())
@@ -1639,7 +1645,13 @@ end
 function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP}, obj; kwargs...)
     model = port.model
 
-    G = real(sqrt(port.SV))
+    SV = if (isnothing(rm.V) || isempty(rm.V))
+        port.SV
+    else
+        rm.V
+    end
+
+    G = real(sqrt(SV))
     @variable(model, t_sskew)
     w = model[:w]
     @constraint(model, [t_sskew; G * w] ∈ SecondOrderCone())
