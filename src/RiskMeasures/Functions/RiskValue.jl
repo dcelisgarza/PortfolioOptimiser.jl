@@ -3976,7 +3976,7 @@ function calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...
 end
 
 """
-    calc_risk(::Skew, w::AbstractVector; kwargs...)
+    calc_risk(::RMSkew, w::AbstractVector; kwargs...)
 
 # Description
 

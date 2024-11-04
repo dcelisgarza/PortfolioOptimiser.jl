@@ -1641,7 +1641,7 @@ end
     @test isapprox(w99.weights, w4t)
     @test isapprox(w100.weights, w5t, rtol = 5.0e-7)
 
-    rm1 = SSkew()
+    rm = SSkew()
     w101 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     w102 = optimise!(portfolio; rm = rm,
                      type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))

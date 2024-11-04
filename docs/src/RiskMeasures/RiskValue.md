@@ -29,7 +29,7 @@ calc_risk(::TGRG, ::AbstractVector)
 PortfolioOptimiser._TGRG
 calc_risk(::GMD, ::AbstractVector)
 PortfolioOptimiser._GMD
-calc_risk(::Skew, ::AbstractVector)
+calc_risk(::PortfolioOptimiser.RMSkew, w::AbstractVector)
 PortfolioOptimiser._Skew
 calc_risk(::BDVariance, ::AbstractVector)
 PortfolioOptimiser._BDVariance
@@ -50,7 +50,6 @@ calc_risk(::SLPM, ::AbstractVector)
 PortfolioOptimiser._SLPM
 calc_risk(::SKurt, ::AbstractVector)
 PortfolioOptimiser._SKurt
-calc_risk(::SSkew, ::AbstractVector)
 ```
 
 ## Downside

@@ -1,5 +1,41 @@
 using SafeTestsets
 
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "Constraints" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "RRP optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
 end
@@ -62,40 +98,4 @@ end
 
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "Constraints" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
-@safetestset "RRP optimisation" begin
-    include("RRPOptimisationTests.jl")
 end
