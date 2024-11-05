@@ -529,8 +529,8 @@ Implements portfolio Standard Deviation risk.
 
   - If `sigma` is `nothing`:
 
-      + For [`Portfolio`](@ref): uses the covariance matrix `cov`, `fm_cov`, `bl_cov` or `blfm_cov`, depending on the `class::`[`PortClass`](@ref) parameter of [`optimise!`](@ref).
-      + For [`HCPortfolio`](@ref): uses the covariance matrix `cov`.
+      + With [`Portfolio`](@ref): uses the covariance matrix `cov`, `fm_cov`, `bl_cov` or `blfm_cov`, depending on the `class::`[`PortClass`](@ref) parameter of [`optimise!`](@ref).
+      + With [`HCPortfolio`](@ref): uses the covariance matrix `cov`.
 
   - If `sigma` provided: uses custom covariance matrix.
 
@@ -1734,6 +1734,39 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom coskewness matrix.
+  - `V::Union{Nothing, <:AbstractMatrix}`: optional `Na×Na` custom sum of the symmetric negative spectral slices of the coskewness.
+
+# Behaviour
+
+## Coskewness matrix usage
+
+  - If `skew` is `nothing`:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
+      + With [`HCPortfolio`](@ref): uses the portfolio coskewness matrix `skew` to generate the `V` matrix.
+
+  - If `skew` provided:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
+      + With [`HCPortfolio`](@ref): uses the custom coskew matrix to generate the `V` matrix.
+
+## `V` matrix
+
+  - If `V` is `nothing`:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `V` matrix.
+      + With [`HCPortfolio`](@ref): no effect.
+
+  - If `V` provided:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
+      + With [`HCPortfolio`](@ref): no effect.
+
+## Validation
+
+  - When setting `skew` at construction or runtime, the matrix must have dimensions (`N×N²`).
+  - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
 
 # Examples
 
@@ -1786,6 +1819,39 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom semi coskewness matrix.
+  - `V::Union{Nothing, <:AbstractMatrix}`: optional `Na×Na` custom sum of the symmetric negative spectral slices of the semi coskewness.
+
+# Behaviour
+
+## Coskewness matrix usage
+
+  - If `skew` is `nothing`:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
+      + With [`HCPortfolio`](@ref): uses the portfolio semi coskewness matrix `sskew` to generate the `V` matrix.
+
+  - If `skew` provided:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
+      + With [`HCPortfolio`](@ref): uses the custom semi coskew matrix to generate the `V` matrix.
+
+## `V` matrix
+
+  - If `V` is `nothing`:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `SV` matrix.
+      + With [`HCPortfolio`](@ref): no effect.
+
+  - If `V` provided:
+
+      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
+      + With [`HCPortfolio`](@ref): no effect.
+
+## Validation
+
+  - When setting `skew` at construction or runtime, the matrix must have dimensions (`N×N²`).
+  - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
 
 # Examples
 
@@ -1842,7 +1908,7 @@ See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`
 
 # Behaviour
 
-  - If `sigma` is `nothing`: uses the covariance matrix `cov`.
+  - If `sigma` is `nothing`: uses the covariance matrix `cov` from the [`HCPortfolio`](@ref) (or [`Portfolio`] when used in [`calc_risk`](@ref)) instance.
   - If `sigma` provided: uses custom covariance matrix.
 
 ## Validation

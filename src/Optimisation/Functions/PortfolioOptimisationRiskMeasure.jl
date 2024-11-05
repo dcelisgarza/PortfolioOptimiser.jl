@@ -256,6 +256,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
+    iT = inv(T)
     count = length(rms)
     @variable(model, mad[1:T, 1:count] >= 0)
     @expression(model, mad_risk[1:count], zero(AffExpr))
@@ -265,7 +266,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
             mu = rm.mu
         end
         abs_dev = returns .- transpose(mu)
-        add_to_expression!(mad_risk[i], inv(T), sum(view(mad, :, i)))
+        add_to_expression!(mad_risk[i], iT, sum(view(mad, :, i)))
         @constraint(model, abs_dev * w .>= -view(mad, :, i))
         _set_rm_risk_upper_bound(obj, type, model, mad_risk[i], 0.5 * rm.settings.ub)
         _set_risk_expression(model, mad_risk[i], rm.settings.scale, rm.settings.flag)
@@ -296,6 +297,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
+    iTm1 = inv(sqrt(T - 1))
     count = length(rms)
     @variable(model, ssd[1:T, 1:count])
     @variable(model, sdev[1:count])
@@ -308,7 +310,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
         abs_dev = returns .- transpose(mu)
         target = rm.target
         @constraint(model, view(ssd, :, i) .>= 0)
-        add_to_expression!(sdev_risk[i], inv(sqrt(T - 1)), sdev[i])
+        add_to_expression!(sdev_risk[i], iTm1, sdev[i])
         @constraint(model, abs_dev * w .>= -view(ssd, :, i))
         @constraint(model, [sdev[i]; view(ssd, :, i) .+ target] ∈ SecondOrderCone())
         _set_rm_risk_upper_bound(obj, type, model, sdev_risk[i], rm.settings.ub)
@@ -356,11 +358,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
         @expression(model, X, returns * w)
     end
     T = size(returns, 1)
+    iT = inv(T)
     count = length(rms)
     @variable(model, flpm[1:T, 1:count] .>= 0)
     @expression(model, flpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        add_to_expression!(flpm_risk[i], inv(T), sum(view(flpm, :, i)))
+        add_to_expression!(flpm_risk[i], iT, sum(view(flpm, :, i)))
         _lpm_risk(type, obj, model, view(flpm, :, i), rm.target)
         _set_rm_risk_upper_bound(obj, type, model, flpm_risk[i], rm.settings.ub)
         _set_risk_expression(model, flpm_risk[i], rm.settings.scale, rm.settings.flag)
@@ -392,12 +395,13 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
         @expression(model, X, returns * w)
     end
     T = size(returns, 1)
+    iTm1 = inv(sqrt(T - 1))
     count = length(rms)
     @variable(model, slpm[1:T, 1:count] .>= 0)
     @variable(model, tslpm[1:count])
     @expression(model, slpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        add_to_expression!(slpm_risk[i], inv(sqrt(T - 1)), tslpm[i])
+        add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
         @constraint(model, [tslpm[i]; view(slpm, :, i)] ∈ SecondOrderCone())
         _lpm_risk(type, obj, model, view(slpm, :, i), rm.target)
         _set_rm_risk_upper_bound(obj, type, model, slpm_risk[i], rm.settings.ub)
@@ -1599,12 +1603,11 @@ end
 function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RP}, obj;
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    T = size(returns, 1)
-
     if !haskey(model, :X)
         w = model[:w]
         @expression(model, X, returns * w)
     end
+    T = size(returns, 1)
     iT2 = inv(T^2)
     ovec = range(1; stop = 1, length = T)
     @variable(model, Dt[1:T, 1:T], Symmetric)
@@ -1626,15 +1629,13 @@ function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RP}, obj;
 end
 function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP}, obj; kwargs...)
     model = port.model
-
+    @variable(model, t_skew)
     V = if (isnothing(rm.V) || isempty(rm.V))
         port.V
     else
         rm.V
     end
-
     G = real(sqrt(V))
-    @variable(model, t_skew)
     w = model[:w]
     @constraint(model, [t_skew; G * w] ∈ SecondOrderCone())
     @expression(model, skew_risk, t_skew^2)
@@ -1642,22 +1643,60 @@ function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP}, obj; kwargs...
     _set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
+function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, RP}, obj;
+                kwargs...)
+    model = port.model
+    count = length(rms)
+    @variable(model, t_skew[1:count])
+    @expression(model, skew_risk, t_skew .^ 2)
+    for (idx, rm) ∈ pairs(rms)
+        V = if (isnothing(rm.V) || isempty(rm.V))
+            port.V
+        else
+            rm.V
+        end
+        G = real(sqrt(V))
+        w = model[:w]
+        @constraint(model, [t_skew[idx]; G * w] ∈ SecondOrderCone())
+        _set_rm_risk_upper_bound(obj, type, model, t_skew[idx], rm.settings.ub)
+        _set_risk_expression(model, skew_risk[idx], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
 function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP}, obj; kwargs...)
     model = port.model
-
+    @variable(model, t_sskew)
     SV = if (isnothing(rm.V) || isempty(rm.V))
         port.SV
     else
         rm.V
     end
-
     G = real(sqrt(SV))
-    @variable(model, t_sskew)
     w = model[:w]
     @constraint(model, [t_sskew; G * w] ∈ SecondOrderCone())
     @expression(model, sskew_risk, t_sskew^2)
     _set_rm_risk_upper_bound(obj, type, model, t_sskew, rm.settings.ub)
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad, RP}, obj;
+                kwargs...)
+    model = port.model
+    count = length(rms)
+    @variable(model, t_sskew[1:count])
+    @expression(model, sskew_risk, t_sskew .^ 2)
+    for (idx, rm) ∈ pairs(rms)
+        V = if (isnothing(rm.V) || isempty(rm.V))
+            port.SV
+        else
+            rm.V
+        end
+        G = real(sqrt(V))
+        w = model[:w]
+        @constraint(model, [t_sskew[idx]; G * w] ∈ SecondOrderCone())
+        _set_rm_risk_upper_bound(obj, type, model, t_sskew[idx], rm.settings.ub)
+        _set_risk_expression(model, sskew_risk[idx], rm.settings.scale, rm.settings.flag)
+    end
     return nothing
 end
 function risk_constraints(port, obj, type::Union{Trad, RP}, rm::RiskMeasure, mu, sigma,

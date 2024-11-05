@@ -2197,6 +2197,70 @@ end
     @test value(portfolio.model[:owa_t][2]) != 0
 end
 
+@testset "Skew vec" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    rm = Skew()
+
+    obj = MinRisk()
+    w1 = optimise!(portfolio; rm = [[rm]], kelly = NoKelly(), obj = obj)
+    r1 = calc_risk(portfolio; type = :Trad, rm = rm)
+    ret1 = dot(portfolio.mu, w1.weights)
+    wt = [2.409023468372493e-6, 0.17210378292297784, 5.103256374511177e-7,
+          4.2722770517309445e-7, 3.5848058134265105e-6, 6.972041664934061e-7,
+          3.2915769657012085e-7, 0.1415418122674741, 4.3289050477603765e-7,
+          4.5431144777227054e-7, 0.07897482123611543, 0.023295191901219474,
+          2.0444083999934734e-6, 3.3398275530097316e-6, 0.1761574592680367,
+          0.042496745295449355, 3.003590887382274e-6, 0.23119283730811144,
+          6.400097708092224e-7, 0.1342194770175644]
+    riskt = 0.0016553752647584506
+    rett = 0.0001952238162305396
+    @test isapprox(w1.weights, wt)
+    @test isapprox(r1, riskt)
+    @test isapprox(ret1, rett)
+
+    rm.V = 2 * portfolio.V
+    w2 = optimise!(portfolio; rm = [[rm]], kelly = NoKelly(), obj = obj)
+    @test isapprox(w2.weights, wt, rtol = 5.0e-5)
+end
+
+@testset "SSkew vec" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    rm = SSkew()
+
+    obj = MinRisk()
+    w1 = optimise!(portfolio; rm = [[rm]], kelly = NoKelly(), obj = obj)
+    r1 = calc_risk(portfolio; type = :Trad, rm = rm)
+    ret1 = dot(portfolio.mu, w1.weights)
+    wt = [7.610819221245223e-7, 2.0842051720782308e-5, 6.71139244607462e-7,
+          8.839948442444747e-7, 2.1807270401133766e-6, 1.0842040956915447e-6,
+          2.7830339110192037e-7, 0.1280975813408656, 4.697915971310934e-7,
+          7.433008049916792e-7, 0.4996629306075607, 1.043320338349008e-6,
+          4.5083144725397534e-7, 0.026586616541717394, 2.6481651179988687e-5,
+          0.013510133781810273, 3.2563765357090695e-6, 0.21130849297469684,
+          6.622336342182562e-7, 0.1207744357455529]
+    riskt = 0.0033523757385970935
+    rett = 0.0003452673005217105
+    @test isapprox(w1.weights, wt)
+    @test isapprox(r1, riskt)
+    @test isapprox(ret1, rett)
+
+    rm.V = 2 * portfolio.SV
+    w2 = optimise!(portfolio; rm = [[rm]], kelly = NoKelly(), obj = obj)
+    @test isapprox(w2.weights, wt, rtol = 0.0001)
+end
+
 @testset "Add Skew and SSkew to SD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

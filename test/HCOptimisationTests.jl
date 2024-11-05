@@ -189,8 +189,9 @@ end
     sigma = cov(PortCovCor(), portfolio.returns)
     kt = cokurt(KurtFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
     skt = cokurt(KurtSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
-    ske, V = coskew(SkewFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
-    sske, SV = coskew(SkewSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    skew, V = coskew(SkewFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    sskew, SV = coskew(SkewSemi(), portfolio.returns,
+                       vec(mean(portfolio.returns; dims = 1)))
 
     type = HRP()
     rm = SD(; sigma = sigma)
@@ -233,6 +234,15 @@ end
     w20 = optimise!(portfolio; rm = rm, type = type)
     @test isapprox(rm[2].V, 2 * SV)
 
+    rm = Skew(; skew = 2 * skew)
+    w19_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w19_1.weights, w19.weights, rtol = 1.0e-5)
+    rm = SSkew(; skew = 2 * sskew)
+    w20_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w20_1.weights, w20.weights)
+
     type = HERC()
     rm = Skew(; V = 2 * V)
     w21 = optimise!(portfolio; rm = rm, type = type)
@@ -241,6 +251,15 @@ end
     w22 = optimise!(portfolio; rm = rm, type = type)
     @test isapprox(rm[2].V, 2 * SV)
 
+    rm = Skew(; skew = 2 * skew)
+    w21_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w21_1.weights, w21.weights)
+    rm = SSkew(; skew = 2 * sskew)
+    w22_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w22_1.weights, w22.weights)
+
     type = NCO()
     rm = Skew(; V = V)
     w23 = optimise!(portfolio; rm = rm, type = type)
@@ -248,6 +267,15 @@ end
     rm = SSkew(; V = SV)
     w24 = optimise!(portfolio; rm = rm, type = type)
     @test isapprox(rm[2].V, SV)
+
+    rm = Skew(; skew = 2 * skew)
+    w23_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w23_1.weights, w23.weights, rtol = 0.0001)
+    rm = SSkew(; skew = 2 * sskew)
+    w24_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w24_1.weights, w24.weights, rtol = 5.0e-5)
 
     asset_statistics!(portfolio; set_mu = false)
 
@@ -457,6 +485,9 @@ end
     sigma = cov(PortCovCor(), portfolio.returns)
     kt = cokurt(KurtFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
     skt = cokurt(KurtSemi(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    skew, V = coskew(SkewFull(), portfolio.returns, vec(mean(portfolio.returns; dims = 1)))
+    sskew, SV = coskew(SkewSemi(), portfolio.returns,
+                       vec(mean(portfolio.returns; dims = 1)))
 
     type = HRP()
     rm = [CVaR(), SD(; sigma = sigma)]
@@ -491,6 +522,57 @@ end
     w9 = optimise!(portfolio; rm = rm, type = type)
     @test isapprox(rm[2].kt, skt)
 
+    type = HRP()
+    rm = [CVaR(), Skew(; V = 2 * V)]
+    w19 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * V)
+    rm = [CVaR(), SSkew(; V = 2 * SV)]
+    w20 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * SV)
+
+    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    w19_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w19_1.weights, w19.weights, rtol = 1.0e-2)
+    rm = SSkew(; skew = 2 * sskew)
+    w20_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w20_1.weights, w20.weights, rtol = 0.25)
+
+    type = HERC()
+    rm = [CVaR(), Skew(; V = 2 * V)]
+    w21 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * V)
+    rm = [CVaR(), SSkew(; V = 2 * SV)]
+    w22 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, 2 * SV)
+
+    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    w21_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w21_1.weights, w21.weights, rtol = 0.005)
+    rm = [CVaR(), SSkew(; skew = 2 * sskew)]
+    w22_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w22_1.weights, w22.weights, rtol = 0.0001)
+
+    type = NCO()
+    rm = [CVaR(), Skew(; V = V)]
+    w23 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, V)
+    rm = [CVaR(), SSkew(; V = SV)]
+    w24 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].V, SV)
+
+    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    w23_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * skew)
+    @test isapprox(w23_1.weights, w23.weights)
+    rm = [CVaR(), SSkew(; skew = 2 * sskew)]
+    w24_1 = optimise!(portfolio; rm = rm, type = type)
+    @test isapprox(rm[2].skew, 2 * sskew)
+    @test isapprox(w24_1.weights, w24.weights, rtol = 5.0e-7)
+
     asset_statistics!(portfolio; set_mu = false)
 
     type = HRP()
@@ -507,6 +589,18 @@ end
     w16 = optimise!(portfolio; rm = [CVaR(), SD()], type = type)
     w17 = optimise!(portfolio; rm = [CVaR(), Kurt()], type = type)
     w18 = optimise!(portfolio; rm = [CVaR(), SKurt()], type = type)
+
+    type = HRP()
+    w25 = optimise!(portfolio; rm = [CVaR(), Skew()], type = type)
+    w26 = optimise!(portfolio; rm = [CVaR(), SSkew()], type = type)
+
+    type = HERC()
+    w27 = optimise!(portfolio; rm = [CVaR(), Skew()], type = type)
+    w28 = optimise!(portfolio; rm = [CVaR(), SSkew()], type = type)
+
+    type = NCO()
+    w29 = optimise!(portfolio; rm = [CVaR(), Skew()], type = type)
+    w30 = optimise!(portfolio; rm = [CVaR(), SSkew()], type = type)
 
     w1t = [0.03254484426590352, 0.05839419693527047, 0.02817333443727999, 0.052955721319801,
            0.05828237048595385, 0.06948067226379642, 0.0315088396349272,
@@ -663,6 +757,13 @@ end
     @test isapprox(w7.weights, w16.weights)
     @test isapprox(w8.weights, w17.weights)
     @test isapprox(w9.weights, w18.weights)
+
+    @test isapprox(w19.weights, w25.weights)
+    @test isapprox(w20.weights, w26.weights)
+    @test isapprox(w21.weights, w27.weights)
+    @test isapprox(w22.weights, w28.weights)
+    @test isapprox(w23.weights, w29.weights)
+    @test isapprox(w24.weights, w30.weights)
 end
 
 @testset "NCO" begin

@@ -67,7 +67,7 @@ function gen_cluster_skew_sskew(rm::RMSkew, port, cluster, Nc = nothing, idx = n
     skew = if isnothing(rm.skew) || isempty(rm.skew)
         _get_skew(rm, port, cluster, idx)
     else
-        rm.skew
+        view(rm.skew, cluster, idx)
     end
     V = zeros(eltype(skew), Nc, Nc)
     for i ∈ 1:Nc
