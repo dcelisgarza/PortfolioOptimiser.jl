@@ -53,6 +53,8 @@ l = 2.0
     cov_u = rand(N, N)
     cov_mu = rand(N, N)
     cov_sigma = rand(N^2, N^2)
+    V = rand(N, N)
+    SV = rand(N, N)
     portfolio = Portfolio(; prices = prices, network_adj = SDP(; A = A),
                           cluster_adj = SDP(; A = A))
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
@@ -70,7 +72,7 @@ l = 2.0
                           bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
                           blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
-                          d_mu = fill(inv(9 * N), N))
+                          d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
@@ -99,6 +101,8 @@ l = 2.0
     @test portfolio.cov_mu == cov_mu
     @test portfolio.cov_sigma == cov_sigma
     @test portfolio.d_mu == fill(inv(9 * N), N)
+    @test portfolio.V == V
+    @test portfolio.SV == SV
 
     M = size(portfolio_copy.returns, 1)
     kurt = rand(N^2, N^2)
