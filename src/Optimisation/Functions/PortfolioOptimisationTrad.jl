@@ -3,9 +3,11 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
                     w_ini::AbstractVector, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
-    set_string_names_on_creation(port.model, str_names)
+    model = port.model
+    set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
-    set_sr_k(obj, port.model)
+    set_sr_k(obj, model)
+    @expression(model, obj_penalty, zero(AffExpr))
     kelly_approx_idx = Int[]
     risk_constraints(port, obj, type, rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
@@ -17,7 +19,9 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     cluster_constraints(port.cluster_adj, port, obj, type)
     tracking_err_constraints(port.tracking_err, port, returns, obj)
     turnover_constraints(port.turnover, port, obj)
-    rebalance_constraints(port.rebalance, port, obj)
+    rebalance_penalty(port.rebalance, port, obj)
+    L1_reg(port)
+    L2_reg(port)
     objective_function(port, obj, type, kelly)
     return convex_optimisation(port, obj, type, class)
 end

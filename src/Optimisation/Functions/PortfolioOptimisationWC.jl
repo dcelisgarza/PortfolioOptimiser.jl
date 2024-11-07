@@ -79,6 +79,7 @@ function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
+    @expression(model, obj_penalty, zero(AffExpr))
     network_constraints(port.network_adj, port, obj, type)
     cluster_constraints(port.cluster_adj, port, obj, type)
     wc_constraints(port, obj, type)
@@ -88,7 +89,9 @@ function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::
     num_assets_constraints(port, obj)
     tracking_err_constraints(port.tracking_err, port, port.returns, obj)
     turnover_constraints(port.turnover, port, obj)
-    rebalance_constraints(port.rebalance, port, obj)
+    rebalance_penalty(port.rebalance, port, obj)
+    L1_reg(port)
+    L2_reg(port)
     objective_function(port, obj, type, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end

@@ -141,10 +141,12 @@ function network_constraints(network::IP, port, ::Any, ::Any)
 end
 function network_constraints(network::SDP, port, obj, ::Trad)
     _sdp(port, obj)
-    W = port.model[:W]
-    @constraint(port.model, network.A .* W .== 0)
-    if !haskey(port.model, :sd_risk)
-        @expression(port.model, network_penalty, network.penalty * tr(W))
+    model = port.model
+    W = model[:W]
+    @constraint(model, network.A .* W .== 0)
+    if !haskey(model, :sd_risk)
+        @expression(model, network_penalty, network.penalty * tr(W))
+        add_to_expression!(model[:obj_penalty], network_penalty)
     end
     return nothing
 end
@@ -160,7 +162,6 @@ end
 function cluster_constraints(cluster::IP, port, ::Sharpe, ::Any)
     N = size(port.returns, 2)
     model = port.model
-
     @variable(model, tip_bin2[1:N], binary = true)
     @constraint(model, cluster.A * tip_bin2 .<= cluster.k)
     # Sharpe ratio
@@ -197,10 +198,12 @@ function cluster_constraints(cluster::IP, port, ::Any, ::Any)
 end
 function cluster_constraints(cluster::SDP, port, obj, ::Trad)
     _sdp(port, obj)
-    W = port.model[:W]
-    @constraint(port.model, cluster.A .* W .== 0)
-    if !haskey(port.model, :sd_risk)
-        @expression(port.model, cluster_penalty, cluster.penalty * tr(W))
+    model = port.model
+    W = model[:W]
+    @constraint(model, cluster.A .* W .== 0)
+    if !haskey(model, :sd_risk)
+        @expression(model, cluster_penalty, cluster.penalty * tr(W))
+        add_to_expression!(model[:obj_penalty], cluster_penalty)
     end
     return nothing
 end
@@ -299,7 +302,7 @@ function _turnover_constraints(::Sharpe, model, turnover)
     @constraint(model, t_turnov .<= turnover.val * k)
     return nothing
 end
-function turnover_constraints(turnover::NoTR, ::Any, ::Any)
+function turnover_constraints(::NoTR, ::Any, ::Any)
     return nothing
 end
 function turnover_constraints(turnover::TR, port, obj)
@@ -310,33 +313,57 @@ function turnover_constraints(turnover::TR, port, obj)
     end
     return nothing
 end
-function _rebalance_constraints(::Any, model, rebalance)
+function _rebalance_penalty(::Any, model, rebalance)
     N = length(rebalance.w)
     @variable(model, t_rebal[1:N] >= 0)
     w = model[:w]
     @expression(model, rebal, w .- rebalance.w)
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, sum_t_rebal, sum(rebalance.val .* t_rebal))
+    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    add_to_expression!(model[:obj_penalty], rebalance_penalty)
     return nothing
 end
-function _rebalance_constraints(::Sharpe, model, rebalance)
+function _rebalance_penalty(::Sharpe, model, rebalance)
     N = length(rebalance.w)
     @variable(model, t_rebal[1:N] >= 0)
     w = model[:w]
     k = model[:k]
     @expression(model, rebal, w .- rebalance.w * k)
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, sum_t_rebal, sum(rebalance.val .* t_rebal))
+    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    add_to_expression!(model[:obj_penalty], rebalance_penalty)
     return nothing
 end
-function rebalance_constraints(turnover::NoTR, ::Any, ::Any)
+function rebalance_penalty(::NoTR, ::Any, ::Any)
     return nothing
 end
-function rebalance_constraints(rebalance::TR, port, obj)
+function rebalance_penalty(rebalance::TR, port, obj)
     if !(isa(rebalance.val, Real) && iszero(rebalance.val) ||
          isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
          isempty(rebalance.w))
-        _rebalance_constraints(obj, port.model, port.rebalance)
+        _rebalance_penalty(obj, port.model, port.rebalance)
+    end
+    return nothing
+end
+function L1_reg(port)
+    if !isinf(port.l1)
+        model = port.model
+        w = model[:w]
+        @variable(model, t_l1 >= 0)
+        @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
+        @expression(model, l1_reg, port.l1 * t_l1)
+        add_to_expression!(model[:obj_penalty], l1_reg)
+    end
+    return nothing
+end
+function L2_reg(port)
+    if !isinf(port.l2)
+        model = port.model
+        w = model[:w]
+        @variable(model, t_l2 >= 0)
+        @constraint(model, [t_l2; w] in SecondOrderCone())
+        @expression(model, l2_reg, port.l2 * t_l2)
+        add_to_expression!(model[:obj_penalty], l2_reg)
     end
     return nothing
 end

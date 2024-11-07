@@ -1,9 +1,11 @@
-function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model, p)
+function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model)
     ret = model[:ret]
+    p = model[:obj_penalty]
     @objective(model, Max, ret - p)
     return nothing
 end
-function _objective(::Trad, ::Sharpe, ::Any, model, p)
+function _objective(::Trad, ::Sharpe, ::Any, model)
+    p = model[:obj_penalty]
     if !haskey(model, :alt_sr)
         risk = model[:risk]
         @objective(model, Min, risk + p)
@@ -12,53 +14,44 @@ function _objective(::Trad, ::Sharpe, ::Any, model, p)
         @objective(model, Max, ret - p)
     end
 end
-function _objective(::Trad, ::MinRisk, ::Any, model, p)
+function _objective(::Trad, ::MinRisk, ::Any, model)
     risk = model[:risk]
+    p = model[:obj_penalty]
     @objective(model, Min, risk + p)
     return nothing
 end
-function _objective(::WC, obj::Sharpe, ::Any, model, p)
+function _objective(::WC, obj::Sharpe, ::Any, model)
     ret = model[:ret]
+    p = model[:obj_penalty]
     @objective(model, Max, ret - p)
     return nothing
 end
-function _objective(::WC, ::MinRisk, ::Any, model, p)
+function _objective(::WC, ::MinRisk, ::Any, model)
     risk = model[:risk]
+    p = model[:obj_penalty]
     @objective(model, Min, risk + p)
     return nothing
 end
-function _objective(::Any, obj::Utility, ::Any, model, p)
+function _objective(::Any, obj::Utility, ::Any, model)
     ret = model[:ret]
     risk = model[:risk]
+    p = model[:obj_penalty]
     l = obj.l
     @objective(model, Max, ret - l * risk - p)
     return nothing
 end
-function _objective(::Any, obj::MaxRet, ::Any, model, p)
+function _objective(::Any, obj::MaxRet, ::Any, model)
     ret = model[:ret]
+    p = model[:obj_penalty]
     @objective(model, Max, ret - p)
     return nothing
 end
 function objective_function(port, obj, ::Trad, kelly)
-    p = zero(eltype(port.returns))
-    if haskey(port.model, :network_penalty)
-        p += port.model[:network_penalty]
-    end
-    if haskey(port.model, :cluster_penalty)
-        p += port.model[:cluster_penalty]
-    end
-    if haskey(port.model, :sum_t_rebal)
-        p += port.model[:sum_t_rebal]
-    end
-    _objective(Trad(), obj, kelly, port.model, p)
+    _objective(Trad(), obj, kelly, port.model)
     return nothing
 end
 function objective_function(port, obj, ::WC, ::Any)
-    p = zero(eltype(port.returns))
-    if haskey(port.model, :sum_t_rebal)
-        p += port.model[:sum_t_rebal]
-    end
-    _objective(WC(), obj, nothing, port.model, p)
+    _objective(WC(), obj, nothing, port.model)
     return nothing
 end
 function objective_function(port, ::Any, ::NOC, ::Any)
