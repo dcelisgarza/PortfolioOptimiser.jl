@@ -57,6 +57,40 @@ function num_assets_constraints(port, ::Any)
     end
     return nothing
 end
+function management_fees(fees, model, w)
+    if !(isa(fees, Real) && iszero(fees) ||
+         isa(fees, AbstractVector) && isempty(fees) ||
+         isa(fees, AbstractVector) && all(iszero.(fees)))
+        @expression(model, total_fee, sum(fees .* w))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], total_fee)
+    end
+    return nothing
+end
+function short_long_management_fees(fees, short_fees, model, long_w, short_w)
+    if !(isa(fees, Real) && iszero(fees) ||
+         isa(fees, AbstractVector) && isempty(fees) ||
+         isa(fees, AbstractVector) && all(iszero.(fees)))
+        @expression(model, long_fee, sum(fees .* long_w))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], long_fee)
+    end
+
+    if !(isa(short_fees, Real) && iszero(short_fees) ||
+         isa(short_fees, AbstractVector) && isempty(short_fees) ||
+         isa(short_fees, AbstractVector) && all(iszero.(short_fees)))
+        @expression(model, short_fee, sum(short_fees .* short_w))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], short_fee)
+    end
+    return nothing
+end
 function weight_constraints(port, ::Sharpe)
     N = size(port.returns, 2)
     model = port.model
@@ -66,6 +100,8 @@ function weight_constraints(port, ::Sharpe)
     if !port.short
         @constraint(model, w .<= port.long_u * k)
         @constraint(model, w .>= 0)
+
+        management_fees(port.fees, model, w)
     else
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
@@ -75,6 +111,8 @@ function weight_constraints(port, ::Sharpe)
 
         @constraint(model, w .<= tw_ulong)
         @constraint(model, w .>= -tw_ushort)
+
+        short_long_management_fees(port.fees, port.short_fees, model, tw_ulong, tw_ushort)
     end
     return nothing
 end
@@ -86,6 +124,8 @@ function weight_constraints(port, ::Any)
     if !port.short
         @constraint(model, w .<= port.long_u)
         @constraint(model, w .>= 0)
+
+        management_fees(port.fees, model, w)
     else
         @variable(model, tw_ulong[1:N] .>= 0)
         @variable(model, tw_ushort[1:N] .>= 0)
@@ -95,6 +135,8 @@ function weight_constraints(port, ::Any)
 
         @constraint(model, w .<= tw_ulong)
         @constraint(model, w .>= -tw_ushort)
+
+        short_long_management_fees(port.fees, port.short_fees, model, tw_ulong, tw_ushort)
     end
     return nothing
 end

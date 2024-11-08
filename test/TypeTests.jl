@@ -59,10 +59,10 @@ l = 2.0
                           cluster_adj = SDP(; A = A))
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
                           cluster_adj = IP(; A = A))
-    portfolio = Portfolio(; prices = prices, f_prices = factors,
+    portfolio = Portfolio(; prices = prices, f_prices = factors, fees = fill(1, N),
+                          short_fees = fill(3, N),
                           rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
-                          transaction = TR(; val = 7, w = fill(inv(3 * N), N)),
                           tracking_err = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
                           bl_bench_weights = fill(inv(4 * N), N),
                           network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
@@ -75,12 +75,12 @@ l = 2.0
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
                           d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
+    @test portfolio.fees == fill(1, N)
+    @test portfolio.short_fees == fill(3, N)
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
     @test portfolio.turnover.w == fill(inv(2 * N), N)
-    @test portfolio.transaction.val == 7
-    @test portfolio.transaction.w == fill(inv(3 * N), N)
     @test portfolio.tracking_err.err == 11
     @test portfolio.tracking_err.w == fill(inv(3 * N), N)
     @test portfolio.bl_bench_weights == fill(inv(4 * N), N)
@@ -113,13 +113,11 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, f_prices = factors, kurt = kurt, skurt = skurt,
                           rebalance = TR(; val = fill(inv(N), N)),
                           turnover = TR(; val = fill(inv(2 * N), N)),
-                          transaction = TR(; val = fill(inv(3 * N), N)),
                           risk_budget = collect(1.0:N),
                           f_risk_budget = collect(1.0:div(N, 2)),
                           tracking_err = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
     @test portfolio.rebalance.val == fill(inv(N), N)
     @test portfolio.turnover.val == fill(inv(2 * N), N)
-    @test portfolio.transaction.val == fill(inv(3 * N), N)
     @test portfolio.risk_budget == collect(1:N) / sum(1:N)
     @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
     @test portfolio.tracking_err.err == 11

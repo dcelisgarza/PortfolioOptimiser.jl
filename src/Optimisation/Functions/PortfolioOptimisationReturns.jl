@@ -133,54 +133,9 @@ function set_returns(obj::Sharpe, ::EKelly, model, mu_l::Real; mu::AbstractVecto
     end
     return nothing
 end
-function transaction_costs(::NoTR, args...)
-    return nothing
-end
-function _transaction_costs(::Sharpe, model, transaction, mu)
-    N = length(transaction.w)
-    @variable(model, t_transaction[1:N] >= 0)
-    w = model[:w]
-    k = model[:k]
-    @expression(model, trans, w .- transaction.w * k)
-    @constraint(model, [i = 1:N], [t_transaction[i]; trans[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, total_transaction_cost, sum(transaction.val .* t_transaction))
-end
-function _transaction_costs(::Any, model, transaction, mu)
-    N = length(transaction.w)
-    @variable(model, t_transaction[1:N] >= 0)
-    w = model[:w]
-    ret = model[:ret]
-    @expression(model, tw_diff, w .- transaction.w)
-    @constraint(model, [i = 1:N], [t_transaction[i]; tw_diff[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, total_transaction_cost, -sum(transaction.val .* t_transaction))
-    add_to_expression!(ret, total_transaction_cost)
-    return nothing
-end
-function transaction_costs(transaction::TR, port, obj, mu)
-    if haskey(port.model, :ret) &&
-       (!(isa(transaction.val, Real) && iszero(transaction.val) ||
-          isa(transaction.val, AbstractVector) && isempty(transaction.val) ||
-          isempty(transaction.w)))
-        _transaction_costs(obj, port.model, transaction, mu)
-    end
-    return nothing
-end
-function management_fees(port)
-    if haskey(port.model, :mu) && (!(isa(port.fees, Real) && iszero(port.fees) ||
-                                     isa(port.fees, AbstractVector) && isempty(port.fees)))
-        model = port.model
-        w = model[:w]
-        ret = model[:ret]
-        @expression(model, total_fee, -sum(port.fees .* w))
-        add_to_expression!(ret, total_fee)
-    end
-    return nothing
-end
 function return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     set_returns(obj, kelly, port.model, port.mu_l; mu = mu, sigma = sigma,
                 returns = returns, kelly_approx_idx = kelly_approx_idx,
                 adjacency_constraint = _get_ntwk_clust_method(Trad(), port))
-    transaction_costs(port.transaction, port, obj, mu)
-    management_fees(port)
     return nothing
 end
