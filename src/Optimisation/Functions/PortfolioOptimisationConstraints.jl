@@ -146,6 +146,9 @@ function network_constraints(network::SDP, port, obj, ::Trad)
     @constraint(model, network.A .* W .== 0)
     if !haskey(model, :sd_risk)
         @expression(model, network_penalty, network.penalty * tr(W))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
         add_to_expression!(model[:obj_penalty], network_penalty)
     end
     return nothing
@@ -203,6 +206,9 @@ function cluster_constraints(cluster::SDP, port, obj, ::Trad)
     @constraint(model, cluster.A .* W .== 0)
     if !haskey(model, :sd_risk)
         @expression(model, cluster_penalty, cluster.penalty * tr(W))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
         add_to_expression!(model[:obj_penalty], cluster_penalty)
     end
     return nothing
@@ -320,6 +326,9 @@ function _rebalance_penalty(::Any, model, rebalance)
     @expression(model, rebal, w .- rebalance.w)
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
     @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    if !haskey(model, :obj_penalty)
+        @expression(model, obj_penalty, zero(AffExpr))
+    end
     add_to_expression!(model[:obj_penalty], rebalance_penalty)
     return nothing
 end
@@ -331,6 +340,9 @@ function _rebalance_penalty(::Sharpe, model, rebalance)
     @expression(model, rebal, w .- rebalance.w * k)
     @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
     @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    if !haskey(model, :obj_penalty)
+        @expression(model, obj_penalty, zero(AffExpr))
+    end
     add_to_expression!(model[:obj_penalty], rebalance_penalty)
     return nothing
 end
@@ -352,6 +364,9 @@ function L1_reg(port)
         @variable(model, t_l1 >= 0)
         @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
         @expression(model, l1_reg, port.l1 * t_l1)
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
         add_to_expression!(model[:obj_penalty], l1_reg)
     end
     return nothing
@@ -363,6 +378,9 @@ function L2_reg(port)
         @variable(model, t_l2 >= 0)
         @constraint(model, [t_l2; w] in SecondOrderCone())
         @expression(model, l2_reg, port.l2 * t_l2)
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
         add_to_expression!(model[:obj_penalty], l2_reg)
     end
     return nothing

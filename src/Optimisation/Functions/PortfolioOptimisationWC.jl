@@ -79,7 +79,6 @@ function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
-    @expression(model, obj_penalty, zero(AffExpr))
     network_constraints(port.network_adj, port, obj, type)
     cluster_constraints(port.cluster_adj, port, obj, type)
     wc_constraints(port, obj, type)

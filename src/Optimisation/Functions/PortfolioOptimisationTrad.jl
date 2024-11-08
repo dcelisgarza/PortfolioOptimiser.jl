@@ -7,7 +7,6 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     set_sr_k(obj, model)
-    @expression(model, obj_penalty, zero(AffExpr))
     kelly_approx_idx = Int[]
     risk_constraints(port, obj, type, rm, mu, sigma, returns, kelly_approx_idx)
     return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)

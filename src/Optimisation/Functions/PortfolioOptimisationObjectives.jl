@@ -1,49 +1,74 @@
 function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model)
     ret = model[:ret]
-    p = model[:obj_penalty]
-    @objective(model, Max, ret - p)
+    @expression(model, obj_func, ret)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, -model[:obj_penalty])
+    end
+    @objective(model, Max, obj_func)
     return nothing
 end
 function _objective(::Trad, ::Sharpe, ::Any, model)
-    p = model[:obj_penalty]
     if !haskey(model, :alt_sr)
         risk = model[:risk]
-        @objective(model, Min, risk + p)
+        @expression(model, obj_func, risk)
+        if haskey(model, :obj_penalty)
+            add_to_expression!(obj_func, model[:obj_penalty])
+        end
+        @objective(model, Min, obj_func)
     else
         ret = model[:ret]
-        @objective(model, Max, ret - p)
+        @expression(model, obj_func, ret)
+        if haskey(model, :obj_penalty)
+            add_to_expression!(obj_func, -model[:obj_penalty])
+        end
+        @objective(model, Max, obj_func)
     end
 end
 function _objective(::Trad, ::MinRisk, ::Any, model)
     risk = model[:risk]
-    p = model[:obj_penalty]
-    @objective(model, Min, risk + p)
+    @expression(model, obj_func, risk)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, model[:obj_penalty])
+    end
+    @objective(model, Min, obj_func)
     return nothing
 end
 function _objective(::WC, obj::Sharpe, ::Any, model)
     ret = model[:ret]
-    p = model[:obj_penalty]
-    @objective(model, Max, ret - p)
+    @expression(model, obj_func, ret)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, -model[:obj_penalty])
+    end
+    @objective(model, Max, obj_func)
     return nothing
 end
 function _objective(::WC, ::MinRisk, ::Any, model)
     risk = model[:risk]
-    p = model[:obj_penalty]
-    @objective(model, Min, risk + p)
+    @expression(model, obj_func, risk)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, model[:obj_penalty])
+    end
+    @objective(model, Min, obj_func)
     return nothing
 end
 function _objective(::Any, obj::Utility, ::Any, model)
     ret = model[:ret]
     risk = model[:risk]
-    p = model[:obj_penalty]
     l = obj.l
-    @objective(model, Max, ret - l * risk - p)
+    @expression(model, obj_func, ret - l * risk)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, -model[:obj_penalty])
+    end
+    @objective(model, Max, obj_func)
     return nothing
 end
 function _objective(::Any, obj::MaxRet, ::Any, model)
     ret = model[:ret]
-    p = model[:obj_penalty]
-    @objective(model, Max, ret - p)
+    @expression(model, obj_func, ret)
+    if haskey(model, :obj_penalty)
+        add_to_expression!(obj_func, -model[:obj_penalty])
+    end
+    @objective(model, Max, obj_func)
     return nothing
 end
 function objective_function(port, obj, ::Trad, kelly)
@@ -60,6 +85,7 @@ function objective_function(port, ::Any, ::NOC, ::Any)
     log_risk = model[:log_risk]
     log_w = model[:log_w]
     log_1mw = model[:log_1mw]
-    @objective(model, Min, -log_ret - log_risk - sum(log_w + log_1mw))
+    @expression(model, obj_func, -log_ret - log_risk - sum(log_w + log_1mw))
+    @objective(model, Min, obj_func)
     return nothing
 end
