@@ -5,6 +5,262 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "L1 reg" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e0
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e1
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e4
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e8
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e12
+    w7 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w2.weights, rtol = 0.001)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test norm(w1.weights - we) >
+          norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w7.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e0
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e1
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e4
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e8
+    w6 = optimise!(portfolio; obj = obj)
+    we = zeros(20)
+    we[7] = 1
+
+    @test isapprox(w1.weights, w2.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w3.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w4.weights, rtol = 2.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 2.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 2.0)
+    @test norm(w2.weights - we) >
+          norm(w1.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    portfolio.short = true
+    obj = MinRisk()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e0
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e1
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e4
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e8
+    w6 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w2.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test norm(w1.weights - we) >
+          norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e0
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e1
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e4
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l1 = 1e8
+    w6 = optimise!(portfolio; obj = obj)
+    we = zeros(20)
+    we[7] = 1
+
+    @test isapprox(w1.weights, w2.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w3.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w4.weights, rtol = 2.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 2.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 2.0)
+    @test norm(w2.weights - we) >
+          norm(w1.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w6.weights - we) >
+          norm(w5.weights - we)
+end
+
+@testset "L2 reg" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-8
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-4
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-1
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w2.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test norm(w1.weights - we) >
+          norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-8
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-4
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-1
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    we = [0.041376266303105654, 0.05666645319555945, 0.08352739946828353,
+          0.06150084987871073, 0.21791287989307231, 5.448018761016227e-9,
+          0.12640798881227971, 0.006702514018053057, 0.05519452934147245,
+          0.0034859919050957166, 7.184828915344657e-7, 5.643974315194501e-9,
+          3.102953654619841e-9, 1.3543031927767463e-8, 3.0963336086431847e-9,
+          0.11425527897115648, 0.09945867201106565, 0.01217634523511552,
+          0.07441256767591756, 0.04692151397390829]
+
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-6)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w6.weights, rtol = 1)
+    @test norm(w1.weights - we) >
+          norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    portfolio.short = true
+    obj = MinRisk()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-8
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-4
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-1
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w2.weights, rtol = 0.0001)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test norm(w1.weights - we) >
+          norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-8
+    w2 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-4
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e-1
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.l2 = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    we = [0.05366096432005882, 0.06937691408321196, 0.09198184936532505,
+          0.07554174186349713, 0.2097346285987282, -0.01544625352860224,
+          0.13464361508441428, 0.02789461036632136, 0.07290027227010806,
+          0.027434542005605068, 0.021655213815367214, -0.012975026831135123,
+          -0.07775851206959881, 6.321446041180682e-10, -0.09382019512833997,
+          0.12715777844736514, 0.10675920416629704, 0.0310266850476233, 0.08792745953801993,
+          0.062304507953589244]
+
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-6)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test norm(w2.weights - we) >
+          norm(w1.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+end
+
 @testset "Network and Dendrogram SD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
@@ -107,7 +363,7 @@ l = 2.0
     @test isapprox(w6.weights, wc6.weights)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -266,7 +522,7 @@ l = 2.0
     @test isapprox(w16.weights, wc16.weights, rtol = 5.0e-6)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -434,7 +690,7 @@ end
     @test isapprox(w6.weights, wc6.weights)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -602,7 +858,7 @@ end
     @test isapprox(w16.weights, wc16.weights, rtol = 0.0005)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -832,7 +1088,7 @@ end
     @test isapprox(w6.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -933,7 +1189,7 @@ end
     @test isapprox(w16.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1050,7 +1306,7 @@ end
     @test isapprox(w6.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1163,7 +1419,7 @@ end
     @test isapprox(w16.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1304,7 +1560,7 @@ end
     @test isapprox(w6.weights, wc6.weights)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1463,7 +1719,7 @@ end
     @test isapprox(w16.weights, wc16.weights, rtol = 5.0e-6)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1631,7 +1887,7 @@ end
     @test isapprox(w6.weights, wc6.weights)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -1799,7 +2055,7 @@ end
     @test isapprox(w16.weights, wc16.weights, rtol = 0.0005)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -2029,7 +2285,7 @@ end
     @test isapprox(w6.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -2130,7 +2386,7 @@ end
     @test isapprox(w16.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -2247,7 +2503,7 @@ end
     @test isapprox(w6.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w7 = optimise!(portfolio; obj = obj, rm = rm)
@@ -2360,7 +2616,7 @@ end
     @test isapprox(w16.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.cluster_adj = IP(; A = B)
     w17 = optimise!(portfolio; obj = obj, rm = rm)
@@ -2514,7 +2770,7 @@ end
     @test isapprox(portfolio.b_cent, average_centrality(portfolio))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -2702,7 +2958,7 @@ end
                    average_centrality(portfolio; network_type = network_type))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -2887,7 +3143,7 @@ end
     @test isapprox(portfolio.b_cent, average_centrality(portfolio))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -3083,7 +3339,7 @@ end
                    average_centrality(portfolio; network_type = network_type))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -3445,7 +3701,7 @@ end
                    average_centrality(portfolio; network_type = network_type))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -3575,7 +3831,7 @@ end
     @test isapprox(w16.weights, wt)
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -3716,7 +3972,7 @@ end
     end
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -3854,7 +4110,7 @@ end
     # @test isapprox(portfolio.b_cent, average_centrality(portfolio; network_type = network_type))
 
     portfolio.a_vec_cent = []
-    portfolio.b_cent = Inf
+    portfolio.b_cent = 0
 
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)

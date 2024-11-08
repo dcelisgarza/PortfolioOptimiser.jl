@@ -231,7 +231,7 @@ function _centrality_constraints(::Any, model, A, B)
     return nothing
 end
 function centrality_constraints(port, obj)
-    if !(isempty(port.a_vec_cent) || isinf(port.b_cent))
+    if !(isempty(port.a_vec_cent) || iszero(port.b_cent))
         _centrality_constraints(obj, port.model, port.a_vec_cent, port.b_cent)
     end
     return nothing
@@ -358,7 +358,7 @@ function rebalance_penalty(rebalance::TR, port, obj)
     return nothing
 end
 function L1_reg(port)
-    if !isinf(port.l1)
+    if !iszero(port.l1)
         model = port.model
         w = model[:w]
         @variable(model, t_l1 >= 0)
@@ -372,7 +372,7 @@ function L1_reg(port)
     return nothing
 end
 function L2_reg(port)
-    if !isinf(port.l2)
+    if !iszero(port.l2)
         model = port.model
         w = model[:w]
         @variable(model, t_l2 >= 0)
