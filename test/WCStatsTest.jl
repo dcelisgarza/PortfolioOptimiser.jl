@@ -12,7 +12,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     wc = WCType(;)
     wc.box.seed = 123456789
     wc.ellipse.seed = 123456789
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_lt = reshape([0.0001900398448469987, 8.229245923050758e-5, 0.000123639962019087,
                       9.734180206120994e-5, 0.00013839737318255353, 4.856968895842206e-5,
                       4.2800458234594194e-5, 2.95889533220933e-5, 7.366352156920032e-5,
@@ -635,7 +635,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     @test isapprox(portfolio.k_sigma, k_sigmat, rtol = 1.0e-4)
 
     wc.diagonal = true
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_mut = reshape([2.3460985729815366e-7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                        2.3633904674978842e-7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -712,7 +712,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     wc.diagonal = false
     wc.k_sigma = KGeneralWC()
     wc.k_mu = KGeneralWC()
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     k_mut = 4.358898943540673
     k_sigmat = 4.358898943540673
     @test isapprox(portfolio.k_mu, k_mut)
@@ -720,14 +720,14 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
     wc.k_sigma = 0.05
     wc.k_mu = 0.05
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     @test isapprox(portfolio.k_mu, wc.k_mu)
     @test isapprox(portfolio.k_sigma, wc.k_sigma)
 
     wc.k_sigma = KNormalWC()
     wc.k_mu = KNormalWC()
     wc.box = DeltaWC()
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_lt = reshape([0.00018897824005366279, 8.823307169857932e-5, 0.0001266963692665932,
                       0.00010640491421834081, 0.0001425567497757355, 5.5825172620025534e-5,
                       7.40216340677847e-5, 3.7600762638982225e-5, 8.151438783251559e-5,
@@ -1352,7 +1352,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     wc.ellipse = ArchWC(; bootstrap = StationaryBS())
     wc.box.seed = 123456789
     wc.ellipse.seed = 123456789
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_lt = reshape([0.00015432055033611237, 7.34134097681148e-5, 0.00010634555161593393,
                       9.115279921137885e-5, 0.00012317169517618682, 4.034407880095843e-5,
                       -1.013470664320935e-5, 2.596316643419238e-5, 6.243582836368531e-5,
@@ -1979,7 +1979,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     wc.ellipse = ArchWC(; bootstrap = CircularBS())
     wc.box.seed = 123456789
     wc.ellipse.seed = 123456789
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_lt = reshape([0.00015664065467660299, 7.480917277266156e-5, 0.0001089265917046285,
                       9.20406435632441e-5, 0.000123865025454486, 4.2200366601820274e-5,
                       -1.415969678462393e-6, 2.7360282665830828e-5, 6.360109776848628e-5,
@@ -2607,7 +2607,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     wc.ellipse = ArchWC(; bootstrap = MovingBS())
     wc.box.seed = 123456789
     wc.ellipse.seed = 123456789
-    wc_statistics!(portfolio, wc)
+    wc_statistics!(portfolio; wc_type = wc)
     cov_lt = reshape([0.00015717061933139012, 7.515341582516388e-5, 0.00010914304718793453,
                       9.17661912475374e-5, 0.00012417517502604674, 4.1972304099381775e-5,
                       -2.6900305983277906e-6, 2.6881259116191796e-5, 6.475804058697103e-5,

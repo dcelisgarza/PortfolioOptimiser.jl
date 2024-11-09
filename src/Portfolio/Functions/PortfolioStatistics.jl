@@ -106,7 +106,7 @@ end
 
 """
 ```
-wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
+wc_statistics!(port::Portfolio; wc_type::WCType = WCType(), set_box::Bool = true,
                         set_ellipse::Bool = true)
 ```
 
@@ -124,20 +124,20 @@ Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optim
 
       + if `true`: compute and set the elliptical uncertainty sets and parameters, `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
 """
-function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = true,
+function wc_statistics!(port::Portfolio; wc_type::WCType = WCType(), set_box::Bool = true,
                         set_ellipse::Bool = true)
     returns = port.returns
-    cov_type = wc.cov_type
-    mu_type = wc.mu_type
-    posdef = wc.posdef
+    cov_type = wc_type.cov_type
+    mu_type = wc_type.mu_type
+    posdef = wc_type.posdef
 
     sigma, mu = _sigma_mu(returns, cov_type, mu_type)
 
     covs = nothing
     cov_mu = nothing
     if set_box
-        cov_l, cov_u, d_mu, covs, cov_mu = calc_sets(Box(), wc.box, wc.cov_type, wc.mu_type,
-                                                     returns, sigma, mu)
+        cov_l, cov_u, d_mu, covs, cov_mu = calc_sets(Box(), wc_type.box, wc_type.cov_type,
+                                                     wc_type.mu_type, returns, sigma, mu)
         posdef_fix!(posdef, cov_l)
         posdef_fix!(posdef, cov_u)
 
@@ -147,19 +147,19 @@ function wc_statistics!(port::Portfolio, wc::WCType = WCType(); set_box::Bool = 
     end
 
     if set_ellipse
-        cov_sigma, cov_mu, A_sigma, A_mu = calc_sets(Ellipse(), wc.ellipse, wc.cov_type,
-                                                     wc.mu_type, returns, sigma, mu, covs,
-                                                     cov_mu)
+        cov_sigma, cov_mu, A_sigma, A_mu = calc_sets(Ellipse(), wc_type.ellipse,
+                                                     wc_type.cov_type, wc_type.mu_type,
+                                                     returns, sigma, mu, covs, cov_mu)
         posdef_fix!(posdef, cov_sigma)
         posdef_fix!(posdef, cov_mu)
 
-        if wc.diagonal
+        if wc_type.diagonal
             cov_mu .= Diagonal(cov_mu)
             cov_sigma .= Diagonal(cov_sigma)
         end
 
-        k_sigma = calc_k_wc(wc.k_sigma, wc.ellipse.q, A_sigma, cov_sigma)
-        k_mu = calc_k_wc(wc.k_mu, wc.ellipse.q, A_mu, cov_mu)
+        k_sigma = calc_k_wc(wc_type.k_sigma, wc_type.ellipse.q, A_sigma, cov_sigma)
+        k_mu = calc_k_wc(wc_type.k_mu, wc_type.ellipse.q, A_mu, cov_mu)
 
         port.cov_mu = cov_mu
         port.cov_sigma = cov_sigma

@@ -487,6 +487,8 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                   L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+                   S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
                    skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -645,6 +647,14 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(skurt)
         @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
     end
+    if !isempty(L_2)
+        N = size(returns, 2)
+        @smart_assert(size(L_2) == (Int(N * (N + 1) / 2), N^2))
+    end
+    if !isempty(S_2)
+        N = size(returns, 2)
+        @smart_assert(size(S_2) == (Int(N * (N + 1) / 2), N^2))
+    end
     if !isempty(skew)
         @smart_assert(size(skew, 1) == size(returns, 2) &&
                       size(skew, 2) == size(returns, 2)^2)
@@ -701,9 +711,6 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(latest_prices)
         @smart_assert(length(latest_prices) == size(returns, 2))
     end
-
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
     return Portfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(f_assets),
                      typeof(f_timestamps), typeof(f_returns), typeof(loadings),
@@ -1223,6 +1230,8 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+                     S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
                      skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1266,6 +1275,14 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     end
     if !isempty(skurt)
         @smart_assert(size(skurt, 1) == size(skurt, 2) == size(returns, 2)^2)
+    end
+    if !isempty(L_2)
+        N = size(returns, 2)
+        @smart_assert(size(L_2) == (Int(N * (N + 1) / 2), N^2))
+    end
+    if !isempty(S_2)
+        N = size(returns, 2)
+        @smart_assert(size(S_2) == (Int(N * (N + 1) / 2), N^2))
     end
     if !isempty(skew)
         @smart_assert(size(skew, 1) == size(returns, 2) &&
@@ -1319,9 +1336,6 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     if !isempty(latest_prices)
         @smart_assert(length(latest_prices) == size(returns, 2))
     end
-
-    L_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
-    S_2 = SparseMatrixCSC{Float64, Int}(undef, 0, 0)
 
     return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(mu),
                        typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),

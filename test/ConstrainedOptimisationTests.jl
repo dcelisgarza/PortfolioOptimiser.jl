@@ -854,9 +854,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -1176,9 +1176,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.22
     portfolio.short_u = 0.22
@@ -1340,9 +1340,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.27
     portfolio.short_u = 0.27
@@ -2051,9 +2051,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -2373,9 +2373,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.22
     portfolio.short_u = 0.22
@@ -2537,9 +2537,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.27
     portfolio.short_u = 0.27
@@ -3248,9 +3248,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -3616,9 +3616,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.22
     portfolio.short_u = 0.22
@@ -3797,9 +3797,9 @@ end
                                                                                                                                          "verbose" => false,
                                                                                                                                          "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
     portfolio.short = true
     portfolio.short_budget = 0.27
     portfolio.short_u = 0.27

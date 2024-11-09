@@ -13,9 +13,9 @@ l = 2.0
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    wc_statistics!(portfolio,
-                   WCType(; box = NormalWC(; seed = 123456789),
-                          ellipse = NormalWC(; seed = 123456789)))
+    wc_statistics!(portfolio;
+                   wc_type = WCType(; box = NormalWC(; seed = 123456789),
+                                    ellipse = NormalWC(; seed = 123456789)))
 
     obj = MinRisk()
     w1 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)

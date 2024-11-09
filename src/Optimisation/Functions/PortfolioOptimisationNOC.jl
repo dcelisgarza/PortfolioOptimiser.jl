@@ -27,7 +27,7 @@ function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk1, risk2, risk3
 end
-function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
+function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     w1 = if isempty(type.w_min)
@@ -93,7 +93,7 @@ end
 function _optimise!(type::NOC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
                     w_ini::AbstractVector, str_names::Bool)
-    risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, str_names)
+    risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)

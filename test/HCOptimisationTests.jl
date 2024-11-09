@@ -7,6 +7,50 @@ factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "NCO WC" begin
+    portfolio = HCPortfolio(; prices = prices,
+                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                             :check_sol => (allow_local = true,
+                                                                            allow_almost = true),
+                                                             :params => Dict("verbose" => false,
+                                                                             "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+
+    w1 = optimise!(portfolio;
+                   type = NCO(; opt_kwargs = (; type = WC(), obj = MinRisk()),
+                              wc_kwargs = (;
+                                           wc_type = WCType(;
+                                                            box = NormalWC(;
+                                                                           seed = 123456789)))))
+    wt = [0.021485669380806937, 0.03437984056015191, 0.003282696891762141,
+          0.00788938017814389, 4.438370645755374e-6, 0.04959702998756213,
+          9.701065449079705e-6, 0.13776888617667635, 1.8023234827764574e-5,
+          0.016777178794843247, 0.27186366274947005, 3.0935713594667536e-5,
+          2.6602538314016606e-6, 0.12280560760129879, 1.9473794317842483e-5,
+          5.040691227397394e-5, 0.055072741144625195, 0.20352313032826114,
+          3.1920002531811816e-5, 0.07538661685892582]
+    @test isapprox(w1.weights, wt)
+
+    w2 = optimise!(portfolio;
+                   type = NCO(;
+                              opt_kwargs = (; type = WC(; mu = Ellipse(), cov = Ellipse()),
+                                            obj = MinRisk()),
+                              wc_kwargs = (;
+                                           wc_type = WCType(;
+                                                            ellipse = NormalWC(;
+                                                                               seed = 123456789)))))
+    wt = [0.02203032018297392, 0.03596633323293889, 0.004847058557491557,
+          0.011260253384451979, 2.8694789762952257e-8, 0.053876068458644136,
+          1.733206817455792e-8, 0.14208849558000447, 6.013167756337472e-8,
+          0.027690323358430902, 0.2568470665722784, 4.6933242499892626e-8,
+          6.960179530134563e-9, 0.1222305518794618, 3.063959020768561e-8,
+          7.32001108249751e-8, 0.0543270328487554, 0.19259389071000968,
+          7.073551001009127e-8, 0.07624227060739035]
+    @test isapprox(w2.weights, wt)
+end
+
 @testset "Weight bounds" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -143,6 +187,7 @@ end
 
     w2 = optimise!(portfolio;
                    type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
+                              factor_kwargs = (; mu_type = MuSimple()),
                               opt_kwargs = (; class = FM(), obj = MinRisk())))
     wt = [0.05109914899016135, 0.050215140451460485, 0.04135353593026219,
           0.02681788291627889, 0.0322776857129373, 0.060200449755958466,
