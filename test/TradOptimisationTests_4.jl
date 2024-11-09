@@ -2405,7 +2405,7 @@ end
     @test dot(portfolio.mu, w40.weights) >= ret8
 end
 
-@testset "All negative expected returns, NoKelly" begin
+@testset "All negative expected returns" begin
     prices = TimeArray(CSV.File("./assets/stock_prices3.csv"); timestamp = :date)
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -2420,5 +2420,18 @@ end
     wt = [0.00311521181774291, 0.015041130948158468, 0.014275036280673663,
           0.03378501078187111, 0.0033133981428761583, 0.023387653909272554,
           0.8193621567911251, 0.053968628117395404, 0.03375177321088466]
+    @test isapprox(w1.weights, wt)
+
+    portfolio.l2 = 0.1
+    w1 = optimise!(portfolio; obj = Sharpe(; rf = 3.5 / 100 / 252))
+    wt = [0.0890513184798637, 0.1141946511956981, 0.11401555099047776, 0.11794291007785883,
+          0.09106115997437965, 0.11615256310052689, 0.12092555386544819,
+          0.11864499064752043, 0.11801130166822638]
+    @test isapprox(w1.weights, wt)
+
+    w1 = optimise!(portfolio; obj = Sharpe(; rf = 3.5 / 100 / 252), kelly = EKelly())
+    wt = [0.08303413898736864, 0.1145302265750804, 0.11445398279616067, 0.12020685443816316,
+          0.08555951284105201, 0.117025737789932, 0.12415450137294667, 0.12067966697835636,
+          0.12035537822094015]
     @test isapprox(w1.weights, wt)
 end
