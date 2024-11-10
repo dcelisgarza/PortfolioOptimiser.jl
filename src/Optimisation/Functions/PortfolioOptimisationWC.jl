@@ -73,7 +73,9 @@ function wc_constraints(port, obj, type)
     return nothing
 end
 function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::Any, ::Any,
-                    w_ini::AbstractVector, str_names::Bool)
+                    w_ini::AbstractVector,
+                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
+                    str_names::Bool)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)
@@ -91,6 +93,7 @@ function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::
     rebalance_penalty(port.rebalance, port, obj)
     L1_reg(port)
     L2_reg(port)
+    custom_constraint_objective_penatly(c_const_obj_pen, port)
     objective_function(port, obj, type, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end

@@ -200,8 +200,8 @@ function PortfolioOptimiser.dbht_similarity(DBHT::DBHTTuneableLinComboMaxDistExp
     return max_dist + exp_dec
 end
 clust_alg = DBHT(;
-                  similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
-                                                              expdeca_c = 1, argcoef = 0.4))
+                 similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
+                                                             expdeca_c = 1, argcoef = 0.4))
 clust_opt = ClustOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
@@ -288,8 +288,8 @@ And finally the tuneable linear combination of max distance and exponential deca
 
 ````@example 4_hrp_portfolios
 clust_alg = DBHT(;
-                  similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
-                                                              expdeca_c = 1, argcoef = 0.4))
+                 similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
+                                                             expdeca_c = 1, argcoef = 0.4))
 clust_opt = ClustOpt(; k_method = TwoDiff())
 cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 

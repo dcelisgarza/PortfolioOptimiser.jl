@@ -1,6 +1,8 @@
 function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
-                    w_ini::AbstractVector, str_names::Bool)
+                    w_ini::AbstractVector,
+                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
+                    str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
     model = port.model
@@ -21,6 +23,7 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     rebalance_penalty(port.rebalance, port, obj)
     L1_reg(port)
     L2_reg(port)
+    custom_constraint_objective_penatly(c_const_obj_pen, port)
     objective_function(port, obj, type, kelly)
     return convex_optimisation(port, obj, type, class)
 end

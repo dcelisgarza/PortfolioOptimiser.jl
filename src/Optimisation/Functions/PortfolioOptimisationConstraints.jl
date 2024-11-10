@@ -427,3 +427,6 @@ function L2_reg(port)
     end
     return nothing
 end
+function custom_constraint_objective_penatly(::Nothing, port)
+    return nothing
+end

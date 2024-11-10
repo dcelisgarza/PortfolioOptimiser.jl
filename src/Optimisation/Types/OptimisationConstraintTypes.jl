@@ -296,4 +296,6 @@ function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
     return TR{typeof(val), typeof(w)}(val, w)
 end
 
+abstract type CustomConstraintObjectivePenalty end
+
 export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR

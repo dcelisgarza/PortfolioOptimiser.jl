@@ -27,12 +27,13 @@ function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk1, risk2, risk3
 end
-function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
+function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     w1 = if isempty(type.w_min)
         _w_min = optimise!(port; rm = rm, type = type.type, obj = MinRisk(), kelly = kelly,
-                           class = class, w_ini = type.w_min_ini)
+                           class = class, w_ini = type.w_min_ini,
+                           c_const_obj_pen = c_const_obj_pen)
         !isempty(_w_min) ? _w_min.weights : Vector{eltype(returns)}(undef, 0)
     else
         type.w_min
@@ -40,7 +41,8 @@ function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
 
     w2 = if isempty(type.w_max)
         _w_max = optimise!(port; rm = rm, type = type.type, obj = MaxRet(), kelly = kelly,
-                           class = class, w_ini = type.w_max_ini)
+                           class = class, w_ini = type.w_max_ini,
+                           c_const_obj_pen = c_const_obj_pen)
         !isempty(_w_max) ? _w_max.weights : Vector{eltype(returns)}(undef, 0)
 
     else
@@ -49,7 +51,7 @@ function noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
 
     w3 = if isempty(type.w_opt)
         _w_opt = optimise!(port; rm = rm, type = type.type, obj = obj, kelly = kelly,
-                           class = class, w_ini = w_ini)
+                           class = class, w_ini = w_ini, c_const_obj_pen = c_const_obj_pen)
         !isempty(_w_opt) ? _w_opt.weights : Vector{eltype(returns)}(undef, 0)
     else
         type.w_opt
@@ -92,8 +94,10 @@ function noc_constraints(model, risk0, ret0)
 end
 function _optimise!(type::NOC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
-                    w_ini::AbstractVector, str_names::Bool)
-    risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini)
+                    w_ini::AbstractVector,
+                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
+                    str_names::Bool)
+    risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)

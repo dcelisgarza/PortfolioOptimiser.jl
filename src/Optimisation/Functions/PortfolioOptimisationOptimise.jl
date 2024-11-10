@@ -11,19 +11,22 @@ function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = S
                    type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
+                   c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing} = nothing,
                    str_names::Bool = false)
     empty!(port.fail)
-    return _optimise!(type, port, rm, obj, kelly, class, w_ini, str_names)
+    return _optimise!(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen, str_names)
 end
 
 function frontier_limits!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                           kelly::RetType = NoKelly(), class::PortClass = Classic(),
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
+                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
+                          c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty,
+                                                 Nothing} = nothing)
     w_min = optimise!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                      w_ini = w_min_ini)
+                      w_ini = w_min_ini, c_const_obj_pen = c_const_obj_pen)
     w_max = optimise!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
-                      w_ini = w_max_ini)
+                      w_ini = w_max_ini, c_const_obj_pen = c_const_obj_pen)
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
@@ -49,13 +52,16 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                              kelly::RetType = NoKelly(), class::PortClass = Classic(),
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty,
+                                                    Nothing} = nothing,
                              points::Integer = 20, rf::Real = 0.0)
     optimal1 = deepcopy(port.optimal)
     fail1 = deepcopy(port.fail)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
     fl = frontier_limits!(port; rm = rm, kelly = kelly, class = class,
-                          w_min_ini = w_min_ini, w_max_ini = w_max_ini)
+                          w_min_ini = w_min_ini, w_max_ini = w_max_ini,
+                          c_const_obj_pen = c_const_obj_pen)
     w1 = fl.w_min
     w2 = fl.w_max
 
@@ -86,7 +92,8 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     for (j, (r, m)) ∈ enumerate(zip(risks, mus)) #! Do not change this enumerate to pairs.
         if i == 0
             w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
-                          class = class, w_ini = w_min_ini)
+                          class = class, w_ini = w_min_ini,
+                          c_const_obj_pen = c_const_obj_pen)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -97,13 +104,14 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                 rm_i.settings.ub = Inf
             end
             w = optimise!(port; rm = rm, type = type, obj = MaxRet(), kelly = kelly,
-                          class = class, w_ini = w_ini)
+                          class = class, w_ini = w_ini, c_const_obj_pen = c_const_obj_pen)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 rm_i.settings.ub = Inf
                 port.mu_l = m
                 w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
-                              class = class, w_ini = w_ini)
+                              class = class, w_ini = w_ini,
+                              c_const_obj_pen = c_const_obj_pen)
                 port.mu_l = Inf
             end
         end
@@ -117,7 +125,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     end
     rm_i.settings.ub = Inf
     w = optimise!(port; rm = rm, type = type, obj = Sharpe(; rf = rf), kelly = kelly,
-                  class = class, w_ini = w_min_ini)
+                  class = class, w_ini = w_min_ini, c_const_obj_pen = c_const_obj_pen)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(rm_i, w.weights; X = returns)
