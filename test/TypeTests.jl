@@ -1,5 +1,5 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
-      PortfolioOptimiser, JuMP, Clustering
+      PortfolioOptimiser, JuMP, Clustering, SparseArrays
 
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
@@ -55,6 +55,8 @@ l = 2.0
     cov_sigma = rand(N^2, N^2)
     V = rand(N, N)
     SV = rand(N, N)
+    L_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
+    S_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
     portfolio = Portfolio(; prices = prices, network_adj = SDP(; A = A),
                           cluster_adj = SDP(; A = A))
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
@@ -67,9 +69,9 @@ l = 2.0
                           bl_bench_weights = fill(inv(4 * N), N),
                           network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
                           a_vec_cent = fill(inv(5 * N), N), a_mtx_ineq = a_mtx_ineq,
-                          risk_budget = 1:N, f_risk_budget = 1:div(N, 2), skew = skew,
-                          sskew = sskew, f_mu = fill(inv(M), M), f_cov = f_cov,
-                          fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
+                          risk_budget = 1:N, f_risk_budget = 1:div(N, 2), L_2 = L_2,
+                          S_2 = S_2, skew = skew, sskew = sskew, f_mu = fill(inv(M), M),
+                          f_cov = f_cov, fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
                           bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
                           blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
@@ -89,6 +91,8 @@ l = 2.0
     @test portfolio.a_mtx_ineq == a_mtx_ineq
     @test portfolio.risk_budget == collect(1:N) / sum(1:N)
     @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
+    @test portfolio.L_2 == L_2
+    @test portfolio.S_2 == S_2
     @test portfolio.skew == skew
     @test portfolio.sskew == sskew
     @test portfolio.f_mu == fill(inv(M), M)
@@ -204,19 +208,23 @@ end
     SV = rand(N, N)
     rho = rand(N, N)
     delta = rand(N, N)
+    L_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
+    S_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
 
     portfolio = HCPortfolio(; assets = setdiff(names(returns), ("timestamp",)),
                             ret = Matrix(returns[!,
                                                  setdiff(names(returns), ("timestamp",))]),
                             mu = fill(inv(N), N), cov = sigma, kurt = kurt, skurt = skurt,
-                            skew = skew, sskew = sskew, V = V, SV = SV, w_min = 0.2,
-                            w_max = 0.8, cor = rho, dist = delta)
+                            L_2 = L_2, S_2 = S_2, skew = skew, sskew = sskew, V = V,
+                            SV = SV, w_min = 0.2, w_max = 0.8, cor = rho, dist = delta)
     @test portfolio.assets == setdiff(names(returns), ("timestamp",))
     @test portfolio.returns == Matrix(returns[!, setdiff(names(returns), ("timestamp",))])
     @test portfolio.mu == fill(inv(N), N)
     @test portfolio.cov == sigma
     @test portfolio.kurt == kurt
     @test portfolio.skurt == skurt
+    @test portfolio.L_2 == L_2
+    @test portfolio.S_2 == S_2
     @test portfolio.skew == skew
     @test portfolio.sskew == sskew
     @test portfolio.V == V
