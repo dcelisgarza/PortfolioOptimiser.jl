@@ -101,8 +101,8 @@ We'll now use a completely different set of parameters for computing the worst c
 
 ````@example 7_worst_case_statistics
 wc_type = WCType(; cov_type = PortCovCor(; ce = CorGerber1(; normalise = true)),
-            mu_type = MuBOP(), box = NormalWC(), ellipse = ArchWC(), k_sigma = KNormalWC(),
-            k_mu = KGeneralWC(), diagonal = false)
+                 mu_type = MuBOP(), box = NormalWC(), ellipse = ArchWC(),
+                 k_sigma = KNormalWC(), k_mu = KGeneralWC(), diagonal = false)
 wc_statistics!(portfolio; wc_type = wc_type)
 w2 = optimise!(portfolio; type = type, obj = obj)
 
