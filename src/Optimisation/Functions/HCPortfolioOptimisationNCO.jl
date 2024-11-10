@@ -403,14 +403,11 @@ function inter_nco_opt(port, rm, cassets, wi, set_kurt, set_skurt, set_skew, set
             wc_statistics!(inter_port; wc_kwargs...)
         end
     else
-        ccor = transpose(wi) * port.cor * wi
-        cdist = transpose(wi) * port.dist * wi
         inter_port = HCPortfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
-                                 cor = ccor, dist = cdist, solvers = port.solvers,
-                                 port_kwargs...)
-        asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = false,
-                          set_dist = false, set_kurt = set_kurt, set_skurt = set_skurt,
-                          set_skew = set_skew, set_sskew = set_sskew, stat_kwargs...)
+                                 solvers = port.solvers, port_kwargs...)
+        asset_statistics!(inter_port; set_cov = false, set_mu = false, set_kurt = set_kurt,
+                          set_skurt = set_skurt, set_skew = set_skew, set_sskew = set_sskew,
+                          stat_kwargs...)
         cluster_assets!(inter_port; cluster_kwargs...)
     end
     w = optimise!(inter_port; rm = rm, opt_kwargs...)
