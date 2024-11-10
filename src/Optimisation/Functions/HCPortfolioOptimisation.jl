@@ -11,7 +11,7 @@ include("./HCPortfolioOptimisationNCO.jl")
 optimise!(port::HCPortfolio; rm::Union{AbstractVector, <:AbstractRiskMeasure} = SD(),
                    rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
                    type::HCOptimType = HRP(), cluster::Bool = true,
-                   hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt(),
+                   clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt(),
                    max_iter::Int = 100)
 ```
 """

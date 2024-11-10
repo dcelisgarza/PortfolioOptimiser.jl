@@ -16,8 +16,9 @@ obj = MinRisk()
 rm = SD()
 w1 = optimise!(portfolio; type = Trad(), rm = rm, kelly = EKelly(), obj = obj)
 
-idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = HAC(),
-                                          hclust_opt = HCOpt(; k_method = StdSilhouette()))
+idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = HAC(),
+                                          clust_opt = ClustOpt(;
+                                                               k_method = StdSilhouette()))
 
 plot_clusters(portfolio.assets, S, idx, clustering, k, (-1, 1), :Spectral, true)
 

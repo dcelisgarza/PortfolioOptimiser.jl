@@ -84,9 +84,9 @@ end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
     clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
-                              hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1]
+                              clust_alg = clust_alg, clust_opt = clust_opt)[1]
 
     N = size(X, 2)
     A_c = Vector{Int}(undef, 0)
@@ -121,9 +121,9 @@ end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
     A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
-                         hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+                         clust_alg = clust_alg, clust_opt = clust_opt)
     R_a = con_rel_assets(A_c, w)
     return R_a
 end

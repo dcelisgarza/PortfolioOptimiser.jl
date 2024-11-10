@@ -163,8 +163,8 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = HAC()
-    hclust_opt = HCOpt()
+    clust_alg = HAC()
+    clust_opt = ClustOpt()
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -192,7 +192,7 @@ end
 
     portfolio.w_min = w_min
     portfolio.w_max = w_max
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     w1 = optimise!(portfolio; type = HRP(), rm = CDaR())
     wt = [0.05927474378621105, 0.050096081527465364, 0.057435012961977804,
@@ -923,9 +923,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = DBHT()
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     rm = SD()
     w1 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
@@ -1992,8 +1992,8 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = HAC()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = HAC()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
     rm = BDVariance()
     w106 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
     w107 = optimise!(portfolio; rm = rm,
@@ -2162,9 +2162,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = DBHT(; root_method = EqualDBHT())
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT(; root_method = EqualDBHT())
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     w1 = optimise!(portfolio; rm = SD(), rm_o = CDaR(),
                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = EKelly()),
@@ -2226,8 +2226,8 @@ end
     @test !isapprox(w2.weights, w4.weights)
     @test !isapprox(w3.weights, w4.weights)
 
-    hclust_alg = DBHT()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
     w5 = optimise!(portfolio; rm_o = SD(), rm = CDaR(), type = HERC())
     wt = [0.10871059727246735, 0.05431039601849186, 0.10533650868181384,
           0.027317993835046576, 0.07431929926304212, 0.00954218610227609,
@@ -2259,9 +2259,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = HAC()
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = HAC()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     portfolio.w_min = -0.2
     portfolio.w_max = 0.8
@@ -2367,9 +2367,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = DBHT()
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
     type = HRP()
 
     w1 = optimise!(portfolio; rm = SD(), type = type)
@@ -2561,8 +2561,8 @@ end
           0.030056876315924044, 0.08438215987786517]
     @test isapprox(w19.weights, wt)
 
-    hclust_alg = HAC()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = HAC()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
     w20 = optimise!(portfolio; rm = BDVariance())
     wt = [0.034616203287809656, 0.05339682894540566, 0.0277781553250953,
           0.04211296639608739, 0.05429852976387857, 0.07556907274344477,
@@ -2700,9 +2700,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = DBHT()
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     type = HERC()
     w1 = optimise!(portfolio; rm = SD(), type = type)
@@ -2892,8 +2892,8 @@ end
           0.07539747498510434]
     @test isapprox(w19.weights, wt)
 
-    hclust_alg = HAC()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = HAC()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     w20 = optimise!(portfolio; rm = BDVariance(), type = type)
     wt = [0.11814156791628717, 0.1127352219498846, 0.0948040083033778, 0.05910201284574831,

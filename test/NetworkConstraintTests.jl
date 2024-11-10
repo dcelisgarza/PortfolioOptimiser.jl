@@ -8,8 +8,8 @@ l = 2.0
 
 @testset "Cluster and connection matrices" begin
     portfolio = Portfolio(; prices = prices)
-    hclust_alg = DBHT()
-    A = cluster_matrix(portfolio; hclust_alg = hclust_alg)
+    clust_alg = DBHT()
+    A = cluster_matrix(portfolio; clust_alg = clust_alg)
     At = reshape([0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1,
                   0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0,
                   0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -345,7 +345,7 @@ end
     C = connected_assets(portfolio; type = :Trad, network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
-    hclust_alg = DBHT()
-    C = related_assets(portfolio; type = :Trad, hclust_alg = hclust_alg)
+    clust_alg = DBHT()
+    C = related_assets(portfolio; type = :Trad, clust_alg = clust_alg)
     @test isapprox(C, 0.3171332022604018)
 end

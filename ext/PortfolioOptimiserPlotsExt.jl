@@ -757,8 +757,8 @@ end
 function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortfolio;
                                           cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                           dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
-                                          hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
-                                          hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
+                                          clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
+                                          clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                           cluster::Bool = true, show_clusters::Bool = true,
                                           theme_d = :Spectral, theme_h = :Spectral,
                                           theme_h_kwargs = (;), kwargs_d1 = (;),
@@ -766,7 +766,7 @@ function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortf
                                           kwargs = (;))
     idx, clustering, k, S = if cluster || isa(port, PortfolioOptimiser.Portfolio)
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
-                       hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1:4]
+                       clust_alg = clust_alg, clust_opt = clust_opt)[1:4]
     else
         clustering, k, S = port.clusters, port.k, port.cor
         idx = cutree(clustering; k = k)
@@ -838,13 +838,13 @@ end
 function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPortfolio;
                                             cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                             dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
-                                            hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
-                                            hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
+                                            clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
+                                            clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                             cluster::Bool = true, theme = :Spectral,
                                             kwargs_d = (;), kwargs = (;))
     idx, clustering, k = if cluster || isa(port, PortfolioOptimiser.Portfolio)
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
-                       hclust_alg = hclust_alg, hclust_opt = hclust_opt)[1:3]
+                       clust_alg = clust_alg, clust_opt = clust_opt)[1:3]
     else
         clustering, k = port.clusters, port.k
         idx = cutree(clustering; k = k)
@@ -906,15 +906,15 @@ function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfo
                                          end,
                                          cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                          dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
-                                         hclust_alg::PortfolioOptimiser.HClustAlg = HAC(),
-                                         hclust_opt::PortfolioOptimiser.HCOpt = HCOpt(),
+                                         clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
+                                         clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                          network_type::PortfolioOptimiser.NetworkType = MST(),
                                          cluster::Bool = true, allocation::Bool = true,
                                          allocated::Bool = false, theme = :Spectral,
                                          kwargs = (;))
     idx, clustering, k, S, D = if cluster || isa(port, PortfolioOptimiser.Portfolio)
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
-                       hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+                       clust_alg = clust_alg, clust_opt = clust_opt)
     else
         clustering, k, S, D = port.clusters, port.k, port.cor, port.dist
         idx = cutree(clustering; k = k)

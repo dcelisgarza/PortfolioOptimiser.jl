@@ -1,15 +1,15 @@
 """
 ```
-abstract type HClustAlg end
+abstract type ClustAlg end
 ```
 
 Abstract type for subtyping hierarchical clustering methods.
 """
-abstract type HClustAlg end
+abstract type ClustAlg end
 
 """
 ```
-@kwdef mutable struct HAC <: HClustAlg
+@kwdef mutable struct HAC <: ClustAlg
     linkage::Symbol = :ward
 end
 ```
@@ -20,7 +20,7 @@ Use a hierarchical clustering algorithm from [`Clustering.jl`](https://github.co
 
   - `linkage`: linkage type supported by [`hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
 """
-mutable struct HAC <: HClustAlg
+mutable struct HAC <: ClustAlg
     linkage::Symbol
 end
 function HAC(; linkage::Symbol = :ward)
@@ -109,7 +109,7 @@ struct EqualDBHT <: DBHTRootMethod end
 
 """
 ```
-mutable struct DBHT <: HClustAlg
+mutable struct DBHT <: ClustAlg
     distance::DistMethod
     similarity::DBHTSimilarity
     root_method::DBHTRootMethod
@@ -124,7 +124,7 @@ Defines the parameters for computing [`DBHTs`](@ref) [DBHTs](@cite).
   - `similarity`: method for computing the similarity matrix from the correlation and/or distance ones [`DBHTSimilarity`](@ref), [`dbht_similarity`](@ref).
   - `root_method`: method for choosing clique roots [`DBHTRootMethod`](@ref).
 """
-mutable struct DBHT <: HClustAlg
+mutable struct DBHT <: ClustAlg
     distance::DistMethod
     similarity::DBHTSimilarity
     root_method::DBHTRootMethod
@@ -175,7 +175,7 @@ end
 
 """
 ```
-@kwdef mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
+@kwdef mutable struct ClustOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol = :optimal
     k_method::NumClusterMethod = TwoDiff()
     k::T1 = 0
@@ -198,15 +198,15 @@ Defines the options for processing clustering results in an instance of [`Cluste
 
       + if `0`: defaults to `⌈sqrt(N)⌉`.
 """
-mutable struct HCOpt{T1 <: Integer, T2 <: Integer}
+mutable struct ClustOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol
     k_method::NumClusterMethod
     k::T1
     max_k::T2
 end
-function HCOpt(; branchorder::Symbol = :optimal, k_method::NumClusterMethod = TwoDiff(),
-               k::Integer = 0, max_k::Integer = 0)
-    return HCOpt{typeof(k), typeof(max_k)}(branchorder, k_method, k, max_k)
+function ClustOpt(; branchorder::Symbol = :optimal, k_method::NumClusterMethod = TwoDiff(),
+                  k::Integer = 0, max_k::Integer = 0)
+    return ClustOpt{typeof(k), typeof(max_k)}(branchorder, k_method, k, max_k)
 end
 
 """
@@ -263,4 +263,4 @@ struct ClusterNode{tid, tl, tr, td, tcnt}
 end
 
 export HAC, DBHTExp, DBHTMaxDist, UniqueDBHT, EqualDBHT, DBHT, TwoDiff, StdSilhouette,
-       HCOpt, ClusterNode
+       ClustOpt, ClusterNode

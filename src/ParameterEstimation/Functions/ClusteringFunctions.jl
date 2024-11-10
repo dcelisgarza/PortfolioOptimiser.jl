@@ -95,7 +95,7 @@ function to_tree(a::Hclust)
     end
     return nd, d
 end
-function _validate_k_value(clustering, nodes, k)
+function _validate_k_value(clustering::Hclust, nodes, k)
     idx = cutree(clustering; k = k)
     clusters = Vector{Vector{Int}}(undef, length(minimum(idx):maximum(idx)))
     for i ∈ eachindex(clusters)
@@ -122,7 +122,7 @@ function _validate_k_value(clustering, nodes, k)
     end
     return true
 end
-function _valid_k_clusters(arr::AbstractArray, clustering)
+function _valid_k_clusters(arr::AbstractArray, clustering::Hclust)
     nodes = to_tree(clustering)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
@@ -137,7 +137,7 @@ function _valid_k_clusters(arr::AbstractArray, clustering)
         arr[k] = -Inf
     end
 end
-function _calc_k_clusters(k::Integer, max_k::Integer, clustering)
+function _calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
     N = length(clustering.order)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -196,7 +196,8 @@ function _calc_k_clusters(k::Integer, max_k::Integer, clustering)
 
     return k
 end
-function _calc_k_clusters(method::TwoDiff, max_k::Integer, dist::AbstractMatrix, clustering)
+function _calc_k_clusters(::TwoDiff, max_k::Integer, dist::AbstractMatrix,
+                          clustering::Hclust)
     N = size(dist, 1)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -238,7 +239,7 @@ function _calc_k_clusters(method::TwoDiff, max_k::Integer, dist::AbstractMatrix,
     return _valid_k_clusters(gaps, clustering)
 end
 function _calc_k_clusters(method::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
-                          clustering)
+                          clustering::Hclust)
     metric = method.metric
     N = size(dist, 1)
     if iszero(max_k)
@@ -260,34 +261,36 @@ function _calc_k_clusters(method::StdSilhouette, max_k::Integer, dist::AbstractM
 end
 """
 ```
-calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
+calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
 ```
 """
-function calc_k_clusters(hclust_opt::HCOpt, dist::AbstractMatrix, clustering)
-    return if !iszero(hclust_opt.k)
-        _calc_k_clusters(hclust_opt.k, hclust_opt.max_k, clustering)
+function calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
+    return if !iszero(clust_opt.k)
+        _calc_k_clusters(clust_opt.k, clust_opt.max_k, clustering)
     else
-        _calc_k_clusters(hclust_opt.k_method, hclust_opt.max_k, dist, clustering)
+        _calc_k_clusters(clust_opt.k_method, clust_opt.max_k, dist, clustering)
     end
 end
 
-function _hcluster(ca::HAC, X::AbstractMatrix,
-                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                   dist_type::DistMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
+function _clusterise(ca::HAC, X::AbstractMatrix,
+                     cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                     dist_type::DistMethod = DistCanonical(),
+                     clust_opt::ClustOpt = ClustOpt())
     dist_type = get_default_dist(dist_type, cor_type)
     _set_absolute_dist!(cor_type, dist_type)
 
     S = cor(cor_type, X)
     D = dist(dist_type, S, X)
 
-    clustering = hclust(D; linkage = ca.linkage, branchorder = hclust_opt.branchorder)
-    k = calc_k_clusters(hclust_opt, D, clustering)
+    clustering = hclust(D; linkage = ca.linkage, branchorder = clust_opt.branchorder)
+    k = calc_k_clusters(clust_opt, D, clustering)
 
     return clustering, k, S, D
 end
-function _hcluster(ca::DBHT, X::AbstractMatrix,
-                   cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                   dist_type::DistMethod = DistCanonical(), hclust_opt::HCOpt = HCOpt())
+function _clusterise(ca::DBHT, X::AbstractMatrix,
+                     cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                     dist_type::DistMethod = DistCanonical(),
+                     clust_opt::ClustOpt = ClustOpt())
     dist_type = get_default_dist(dist_type, cor_type)
     _set_absolute_dist!(cor_type, dist_type)
 
@@ -295,19 +298,17 @@ function _hcluster(ca::DBHT, X::AbstractMatrix,
     D = dist(dist_type, S, X)
     S = dbht_similarity(ca.similarity, S, D)
 
-    clustering = DBHTs(D, S; branchorder = hclust_opt.branchorder, method = ca.root_method)[end]
-    k = calc_k_clusters(hclust_opt, D, clustering)
+    clustering = DBHTs(D, S; branchorder = clust_opt.branchorder, method = ca.root_method)[end]
+    k = calc_k_clusters(clust_opt, D, clustering)
 
     return clustering, k, S, D
 end
 function cluster_assets(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
-    clustering, k, S, D = _hcluster(hclust_alg, X, cor_type, dist_type, hclust_opt)
-
+                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
+    clustering, k, S, D = _clusterise(clust_alg, X, cor_type, dist_type, clust_opt)
     idx = cutree(clustering; k = k)
-
     return idx, clustering, k, S, D
 end
 

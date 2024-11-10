@@ -268,9 +268,9 @@ end
                                                                              "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    hclust_alg = DBHT()
-    hclust_opt = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
     rm = SD(; formulation = SimpleSD())
     w1 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))

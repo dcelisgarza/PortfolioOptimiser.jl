@@ -81,7 +81,7 @@ function filter_best(assets, rms, best, cov_type, cor_type)
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
-        cluster_assets!(hp; hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
         w = optimise!(hp; type = HERC(), rm = rm)
 
         if isempty(w)
@@ -139,7 +139,7 @@ covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
 asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
-cluster_assets!(hp; hclust_opt = HCOpt(; k_method = TwoDiff()))
+cluster_assets!(hp; clust_opt = ClustOpt(; k_method = TwoDiff()))
 ````
 
 We'll use the nested clustering optimisation. We will also use the maximum risk adjusted return ratio objective function. We will also allocate the portfolio according to our availabe cash and the latest prices.
@@ -170,7 +170,7 @@ function filter_worst(assets, rms, best, cov_type, cor_type)
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
-        cluster_assets!(hp; hclust_opt = HCOpt(; k_method = StdSilhouette()))
+        cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
         w = optimise!(hp; type = HERC(), rm = rm)
 
         if isempty(w)
@@ -229,7 +229,7 @@ covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
 asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = mu_type,
                   set_kurt = false, set_skurt = false, set_skew = false, set_sskew = false)
-cluster_assets!(hp; hclust_opt = hclust_opt = HCOpt(; k_method = TwoDiff()))
+cluster_assets!(hp; clust_opt = clust_opt = ClustOpt(; k_method = TwoDiff()))
 ````
 
 For this we need to use the max ret objective and set the appropriate bounds on the asset weights.

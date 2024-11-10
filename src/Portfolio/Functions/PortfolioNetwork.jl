@@ -63,7 +63,7 @@ end
 cluster_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                dist_type::DistMethod = DistCanonical(),
-               hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+               clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
 ```
 
 Compute the centrality vector [`cluster_matrix`](@ref). See the argument types' docs for details.
@@ -74,8 +74,8 @@ Compute the centrality vector [`cluster_matrix`](@ref). See the argument types' 
   - `X`: `T×N` returns matrix.
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref).
-  - `hclust_alg`: method for hierarhically clustering assets [`HClustAlg`](@ref).
-  - `hclust_opt`: options for determining the number of clusters [`HCOpt`](@ref).
+  - `clust_alg`: method for hierarhically clustering assets [`ClustAlg`](@ref).
+  - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 
 # Outputs
 
@@ -84,9 +84,9 @@ Compute the centrality vector [`cluster_matrix`](@ref). See the argument types' 
 function cluster_matrix(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
     return cluster_matrix(X; cor_type = cor_type, dist_type = dist_type,
-                          hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+                          clust_alg = clust_alg, clust_opt = clust_opt)
 end
 
 """
@@ -126,7 +126,7 @@ related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                dist_type::DistMethod = DistCanonical(),
-               hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+               clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
 ```
 
 Compute the percentage of the portfolio comprised of related assets  [`related_assets`](@ref) via a cluster-based adjacency matrix. See the argument types' docs for details.
@@ -137,8 +137,8 @@ Compute the percentage of the portfolio comprised of related assets  [`related_a
   - `X`: `T×N` returns matrix.
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref).
-  - `hclust_alg`: method for hierarhically clustering assets [`HClustAlg`](@ref).
-  - `hclust_opt`: options for determining the number of clusters [`HCOpt`](@ref).
+  - `clust_alg`: method for hierarhically clustering assets [`ClustAlg`](@ref).
+  - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 
 # Outputs
 
@@ -148,10 +148,10 @@ function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.return
                         type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
-                        hclust_alg::HClustAlg = HAC(), hclust_opt::HCOpt = HCOpt())
+                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
     return related_assets(X, port.optimal[type].weights; cor_type = cor_type,
-                          dist_type = dist_type, hclust_alg = hclust_alg,
-                          hclust_opt = hclust_opt)
+                          dist_type = dist_type, clust_alg = clust_alg,
+                          clust_opt = clust_opt)
 end
 
 function average_centrality(port::AbstractPortfolio; X::AbstractMatrix = port.returns,

@@ -88,10 +88,10 @@ We'll use the default values for everything, see [`optimise!`](@ref) for details
 rm = SD()
 
 ## Hierachical clustering with Ward's linkage.
-hclust_alg = HAC(; linkage = :ward)
+clust_alg = HAC(; linkage = :ward)
 ## Method for determining the number of clusters is the two-difference gap statistic [`TwoDiff`](@ref).
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 ## Optimise.
 w1 = optimise!(portfolio; rm = rm)
@@ -111,10 +111,10 @@ Before moving on to DBHT clustering, we'll use a different linkage function. Gen
 =#
 
 ## Hierarchical clustering with complete linkage.
-hclust_alg = HAC(; linkage = :complete)
+clust_alg = HAC(; linkage = :complete)
 ## Method for determining the number of clusters is the Standard silhouette score [`StdSilhouette`](@ref).
-hclust_opt = HCOpt(; k_method = StdSilhouette())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_opt = ClustOpt(; k_method = StdSilhouette())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 ## Optimise.
 w2 = optimise!(portfolio; rm = rm)
@@ -135,9 +135,9 @@ Again we will use default parameters first. We're not setting `cluster = flase` 
 =#
 
 ## DBHT clustering, using the distance from the maximum value of the dissimilarity matrix [`DBHTMaxDist`](@ref).
-hclust_alg = DBHT(; similarity = DBHTMaxDist())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTMaxDist())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 w3 = optimise!(portfolio; rm = rm)
 pretty_table(w3; formatters = fmt1)
 
@@ -152,9 +152,9 @@ We will again plot the clusters. Note how different the clusters are.
 Now we'll see the effect changing the similarity matrix calculation to exponential decay of the disimilarity score.
 =#
 
-hclust_alg = DBHT(; similarity = DBHTExp())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTExp())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w4 = optimise!(portfolio; rm = rm)
 pretty_table(w4; formatters = fmt1)
@@ -173,9 +173,9 @@ struct DBHTClamp <: PortfolioOptimiser.DBHTSimilarity end
 function PortfolioOptimiser.dbht_similarity(::DBHTClamp, S, D)
     return S .+ abs(minimum(S))
 end
-hclust_alg = DBHT(; similarity = DBHTClamp())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTClamp())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w5 = optimise!(portfolio; rm = rm)
 pretty_table(w5; formatters = fmt1)
@@ -197,11 +197,11 @@ function PortfolioOptimiser.dbht_similarity(DBHT::DBHTTuneableLinComboMaxDistExp
     exp_dec = exp.(-DBHT.argcoef * D)
     return max_dist + exp_dec
 end
-hclust_alg = DBHT(;
-                  similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
-                                                              expdeca_c = 1, argcoef = 0.4))
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(;
+                 similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
+                                                             expdeca_c = 1, argcoef = 0.4))
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w6 = optimise!(portfolio; rm = rm)
 pretty_table(w6; formatters = fmt1)
@@ -223,9 +223,9 @@ asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
                   dist_type = dist_type)
 
 # First we try Ward's linkage.
-hclust_alg = HAC(; linkage = :ward)
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = HAC(; linkage = :ward)
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w7 = optimise!(portfolio; rm = rm)
 pretty_table(w7; formatters = fmt1)
@@ -233,9 +233,9 @@ pretty_table(w7; formatters = fmt1)
 #md plot_clusters(portfolio; cluster = false)
 
 # Then complete, and we'll see categorise the number of clusters according to the standard silhouette score.
-hclust_alg = HAC(; linkage = :complete)
-hclust_opt = HCOpt(; k_method = StdSilhouette())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = HAC(; linkage = :complete)
+clust_opt = ClustOpt(; k_method = StdSilhouette())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w8 = optimise!(portfolio; rm = rm)
 pretty_table(w8; formatters = fmt1)
@@ -243,9 +243,9 @@ pretty_table(w8; formatters = fmt1)
 #md plot_clusters(portfolio; cluster = false)
 
 # Now we'll use DBHT clustering with max distance similarity.
-hclust_alg = DBHT(; similarity = DBHTMaxDist())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTMaxDist())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w9 = optimise!(portfolio; rm = rm)
 pretty_table(w9; formatters = fmt1)
@@ -253,9 +253,9 @@ pretty_table(w9; formatters = fmt1)
 #md plot_clusters(portfolio; cluster = false)
 
 # Now we'll use the exponential decay similarity.
-hclust_alg = DBHT(; similarity = DBHTExp())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTExp())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w10 = optimise!(portfolio; rm = rm)
 pretty_table(w10; formatters = fmt1)
@@ -263,9 +263,9 @@ pretty_table(w10; formatters = fmt1)
 #md plot_clusters(portfolio; cluster = false)
 
 # Now we'll try the clamp method.
-hclust_alg = DBHT(; similarity = DBHTClamp())
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(; similarity = DBHTClamp())
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w11 = optimise!(portfolio; rm = rm)
 pretty_table(w11; formatters = fmt1)
@@ -273,11 +273,11 @@ pretty_table(w11; formatters = fmt1)
 #md plot_clusters(portfolio; cluster = false)
 
 # And finally the tuneable linear combination of max distance and exponential decay.
-hclust_alg = DBHT(;
-                  similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
-                                                              expdeca_c = 1, argcoef = 0.4))
-hclust_opt = HCOpt(; k_method = TwoDiff())
-cluster_assets!(portfolio; hclust_alg = hclust_alg, hclust_opt = hclust_opt)
+clust_alg = DBHT(;
+                 similarity = DBHTTuneableLinComboMaxDistExp(; maxdist_c = 0.3,
+                                                             expdeca_c = 1, argcoef = 0.4))
+clust_opt = ClustOpt(; k_method = TwoDiff())
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
 w12 = optimise!(portfolio; rm = rm)
 pretty_table(w12; formatters = fmt1)

@@ -1017,7 +1017,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [5.2456519308516375e-9, 1.3711772920494845e-8, 1.828307590553689e-8,
@@ -1353,7 +1353,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [1.3566877119847358e-9, 2.0446966457964675e-8, 0.002262512310895483,
@@ -1616,7 +1616,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     rm = CDaR()
     obj = MinRisk()
@@ -1720,7 +1720,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [0.0, 0.0, 0.07233520665470376, 0.0, 0.3107248736916702, 0.0, 0.0,
@@ -1940,7 +1940,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     portfolio.short = true
     portfolio.short_u = 0.18
@@ -2214,7 +2214,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [5.2456519308516375e-9, 1.3711772920494845e-8, 1.828307590553689e-8,
@@ -2550,7 +2550,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [1.3566877119847358e-9, 2.0446966457964675e-8, 0.002262512310895483,
@@ -2813,7 +2813,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     rm = CDaR()
     obj = MinRisk()
@@ -2917,7 +2917,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [0.0, 0.0, 0.07233520665470376, 0.0, 0.3107248736916702, 0.0, 0.0,
@@ -3137,7 +3137,7 @@ end
 
     A = centrality_vector(portfolio; network_type = TMFG())
     B = connection_matrix(portfolio; network_type = TMFG())
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     portfolio.short = true
     portfolio.short_u = 0.18
@@ -3429,7 +3429,7 @@ end
     network_type = TMFG()
     A = centrality_vector(portfolio; network_type = network_type)
     B = connection_matrix(portfolio; network_type = network_type)
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [5.2456519308516375e-9, 1.3711772920494845e-8, 1.828307590553689e-8,
@@ -3810,7 +3810,7 @@ end
     network_type = TMFG()
     A = centrality_vector(portfolio; network_type = network_type)
     B = connection_matrix(portfolio; network_type = network_type)
-    C = cluster_matrix(portfolio; hclust_alg = DBHT())
+    C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [1.3566877119847358e-9, 2.0446966457964675e-8, 0.002262512310895483,
@@ -4208,10 +4208,10 @@ end
     asset_statistics!(portfolio)
 
     network_type = TMFG()
-    hclust_alg = DBHT()
+    clust_alg = DBHT()
     A = centrality_vector(portfolio; network_type = network_type)
     B = connection_matrix(portfolio; network_type = network_type)
-    C = cluster_matrix(portfolio; hclust_alg = hclust_alg)
+    C = cluster_matrix(portfolio; clust_alg = clust_alg)
 
     rm = CDaR()
     obj = MinRisk()
@@ -4341,10 +4341,10 @@ end
     obj = Sharpe(; rf = rf)
 
     network_type = TMFG()
-    hclust_alg = DBHT()
+    clust_alg = DBHT()
     A = centrality_vector(portfolio; network_type = network_type)
     B = connection_matrix(portfolio; network_type = network_type)
-    C = cluster_matrix(portfolio; hclust_alg = hclust_alg)
+    C = cluster_matrix(portfolio; clust_alg = clust_alg)
 
     w11 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [0.0, 0.0, 0.07233520665470376, 0.0, 0.3107248736916702, 0.0, 0.0,
@@ -4615,10 +4615,10 @@ end
     obj = Sharpe(; rf = rf)
 
     network_type = TMFG()
-    hclust_alg = DBHT()
+    clust_alg = DBHT()
     A = centrality_vector(portfolio; network_type = network_type)
     B = connection_matrix(portfolio; network_type = network_type)
-    C = cluster_matrix(portfolio; hclust_alg = hclust_alg)
+    C = cluster_matrix(portfolio; clust_alg = clust_alg)
 
     portfolio.short = true
     portfolio.short_u = 0.18

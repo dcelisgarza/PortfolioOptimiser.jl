@@ -38,8 +38,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))),)
     asset_statistics!(hcportfolio)
-    cluster_assets!(hcportfolio; hclust_alg = HAC(),
-                    hclust_opt = HCOpt(; k_method = StdSilhouette()))
+    cluster_assets!(hcportfolio; clust_alg = HAC(),
+                    clust_opt = ClustOpt(; k_method = StdSilhouette()))
     w = optimise!(hcportfolio)
 
     plt11 = plot_clusters(hcportfolio; cluster = false)
@@ -58,9 +58,9 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     @test plt17.n == 48
     plt18 = plot_dendrogram(portfolio; cluster = false)
     @test plt18.n == 22
-    plt19 = plot_clusters(portfolio; cluster = true, hclust_alg = DBHT())
+    plt19 = plot_clusters(portfolio; cluster = true, clust_alg = DBHT())
     @test plt19.n == 48
-    plt20 = plot_dendrogram(portfolio; cluster = true, hclust_alg = DBHT())
+    plt20 = plot_dendrogram(portfolio; cluster = true, clust_alg = DBHT())
     @test plt20.n == 22
     ptl21 = plot_network(portfolio; type = :RP, cluster = true, network_type = TMFG())
     @test ptl21.n == 75

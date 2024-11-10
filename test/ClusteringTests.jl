@@ -11,10 +11,10 @@ l = 2.0
                       set_mu = false)
 
     ca = DBHT()
-    ct = HCOpt()
-    cluster_assets!(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = ca, clust_opt = ct)
 
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -41,8 +41,8 @@ l = 2.0
     @test isequal(portfolio.clusters.order, ordert)
     @test isequal(portfolio.k, kt)
 
-    ct = HCOpt(; k = 6)
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt(; k = 6)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 2, 1, 1, 1, 3, 2, 1, 4, 5, 3, 4, 5, 3, 3, 5, 2, 1, 4, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -63,8 +63,8 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    ct = HCOpt(; k_method = StdSilhouette())
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt(; k_method = StdSilhouette())
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -90,8 +90,8 @@ l = 2.0
                       set_mu = false)
 
     ca = HAC()
-    ct = HCOpt()
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt()
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -107,8 +107,8 @@ l = 2.0
 
     kt = 4
 
-    ct = HCOpt(; k_method = StdSilhouette())
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt(; k_method = StdSilhouette())
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -132,7 +132,7 @@ l = 2.0
     @test isequal(k, kt)
 
     ct.k = 9
-    idx, clustering, k = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 4, 4, 2, 5, 5, 2, 3, 5, 1, 2, 4, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -162,10 +162,10 @@ end
                       set_mu = false)
 
     ca = HAC()
-    ct = HCOpt()
-    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    ct = ClustOpt()
+    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
-    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 3, 3, 2, 3, 3, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -189,7 +189,7 @@ end
     @test isequal(k, kt)
 
     ca = DBHT()
-    idx, clustering, k, S, D = cluster_assets(portfolio; hclust_alg = ca, hclust_opt = ct)
+    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -218,31 +218,31 @@ end
                       dist_type = DistDistMLP(), set_kurt = false, set_skurt = false,
                       set_skew = false, set_sskew = false)
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k_method = StdSilhouette()))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k_method = StdSilhouette()))
     @test portfolio.k == 3
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k_method = TwoDiff()))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k_method = TwoDiff()))
     @test portfolio.k == 3
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k = 18, max_k = 1))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k = 18, max_k = 1))
     @test portfolio.k == 1
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k = 1))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k = 1))
     @test portfolio.k == 1
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k = 7))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k = 7))
     @test portfolio.k == 8
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k = 11))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k = 11))
     @test portfolio.k == 10
 
-    cluster_assets!(portfolio; hclust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    hclust_opt = HCOpt(; k = 16))
+    cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
+                    clust_opt = ClustOpt(; k = 16))
     @test portfolio.k == 15
 end
