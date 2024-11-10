@@ -140,7 +140,7 @@ function _set_cov_rm(rm, cov_idx, idx, old_covs)
     return nothing
 end
 function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, skew_idx,
-                           sskew_idx)
+                           sskew_idx, opt_kwargs)
     cassets = port.assets[cidx]
     cret = view(port.returns, :, cidx)
     cmu = !isempty(port.mu) ? port.mu[cidx] : Vector{eltype(port.returns)}(undef, 0)
@@ -149,6 +149,13 @@ function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, skew_id
     else
         Matrix{eltype(port.returns)}(undef, 0, 0)
     end
+    ccor, cdist = if haskey(opt_kwargs, :type) && isa(opt_kwargs.type, HCOptimType)
+        view(port.cor, cidx, cidx), view(port.dist, cidx, cidx)
+    else
+        Matrix{eltype(port.returns)}(undef, 0, 0), Matrix{eltype(port.returns)}(undef, 0,
+                                                                                0)
+    end
+
     old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
@@ -184,8 +191,8 @@ function gen_cluster_stats(port, rm, cidx, cov_idx, kurt_idx, skurt_idx, skew_id
             _set_skew_rm(rm, port, sskew_idx, cluster, Nc, idx, old_SVs, old_sskews)
         end
     end
-    return cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, old_Vs, old_skews,
-           old_SVs, old_sskews
+    return cassets, cret, cmu, ccov, ccor, cdist, old_covs, old_kurts, old_skurts, old_Vs,
+           old_skews, old_SVs, old_sskews
 end
 function _get_port_kt(::Val{true}, port, idx)
     return view(port.kurt, idx, idx)
@@ -298,18 +305,30 @@ function reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts,
     _reset_skew_rm(rm, sskew_idx, old_SVs, old_sskews)
     return nothing
 end
-function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx, opt_kwargs,
-                       port_kwargs, factor_kwargs, wc_kwargs)
-    intra_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
-                           solvers = port.solvers, port_kwargs...)
-    if !isempty(kurt_idx) || !isempty(skurt_idx)
-        intra_port.L_2, intra_port.S_2 = dup_elim_sum_matrices(size(cret, 2))[2:3]
+function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ccor, cdist, set_kurt,
+                       set_sskurt, opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs,
+                       cluster_kwargs)
+    L_2, S_2 = if set_kurt || set_sskurt
+        dup_elim_sum_matrices(size(cret, 2))[2:3]
+    else
+        SparseMatrixCSC{eltype(cret), Int}(undef, 0, 0),
+        SparseMatrixCSC{eltype(cret), Int}(undef, 0, 0)
     end
-    if haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC})
-        factor_statistics!(intra_port; factor_kwargs...)
-    end
-    if haskey(opt_kwargs, :type) && isa(opt_kwargs.type, WC)
-        wc_statistics!(intra_port; wc_kwargs...)
+    if !haskey(opt_kwargs, :type) ||
+       haskey(opt_kwargs, :type) && isa(opt_kwargs.type, OptimType)
+        intra_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                               L_2 = L_2, S_2 = S_2, solvers = port.solvers, port_kwargs...)
+        if haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC})
+            factor_statistics!(intra_port; factor_kwargs...)
+        end
+        if haskey(opt_kwargs, :type) && isa(opt_kwargs.type, WC)
+            wc_statistics!(intra_port; wc_kwargs...)
+        end
+    else
+        intra_port = HCPortfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                                 cor = ccor, dist = cdist, L_2 = L_2, S_2 = S_2,
+                                 solvers = port.solvers, port_kwargs...)
+        cluster_assets!(intra_port; cluster_kwargs...)
     end
 
     w = optimise!(intra_port; rm = rm, opt_kwargs...)
@@ -322,7 +341,7 @@ function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx, 
     return w, intra_port.fail
 end
 function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_kwargs,
-                            port_kwargs, factor_kwargs, wc_kwargs)
+                            port_kwargs, factor_kwargs, wc_kwargs, cluster_kwargs)
     idx = cutree(port.clusters; k = port.k)
     w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
     cfails = Dict{Int, Dict}()
@@ -330,16 +349,18 @@ function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_
     cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx = find_cov_kurt_skew_rm(rm)
     for i ∈ 1:(port.k)
         cidx = idx .== i
-        cassets, cret, cmu, ccov, old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews = gen_cluster_stats(port,
-                                                                                                                              rm,
-                                                                                                                              cidx,
-                                                                                                                              cov_idx,
-                                                                                                                              kurt_idx,
-                                                                                                                              skurt_idx,
-                                                                                                                              skew_idx,
-                                                                                                                              sskew_idx)
-        cw, cfail = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, kurt_idx, skurt_idx,
-                                  opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs)
+        cassets, cret, cmu, ccov, ccor, cdist, old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews = gen_cluster_stats(port,
+                                                                                                                                           rm,
+                                                                                                                                           cidx,
+                                                                                                                                           cov_idx,
+                                                                                                                                           kurt_idx,
+                                                                                                                                           skurt_idx,
+                                                                                                                                           skew_idx,
+                                                                                                                                           sskew_idx,
+                                                                                                                                           opt_kwargs)
+        cw, cfail = intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ccor, cdist,
+                                  !isempty(kurt_idx), !isempty(skurt_idx), opt_kwargs,
+                                  port_kwargs, factor_kwargs, wc_kwargs, cluster_kwargs)
         reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
                                     old_skurts, skew_idx, old_Vs, old_skews, sskew_idx,
                                     old_SVs, old_sskews)
@@ -354,19 +375,43 @@ function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_
     end
     return w
 end
-function inter_nco_opt(port, rm, cassets, cret, cmu, ccov, set_kurt, set_skurt, set_skew,
-                       set_sskew, opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs,
+function inter_nco_opt(port, rm, cassets, wi, set_kurt, set_skurt, set_skew, set_sskew,
+                       opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs, cluster_kwargs,
                        stat_kwargs)
-    inter_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
-                           solvers = port.solvers, port_kwargs...)
-    asset_statistics!(inter_port; set_cov = false, set_mu = false, set_kurt = set_kurt,
-                      set_skurt = set_skurt, set_skew = set_skew, set_sskew = set_sskew,
-                      stat_kwargs...)
-    if haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC})
-        factor_statistics!(inter_port; factor_kwargs...)
+    cret = port.returns * wi
+    cmu = if !isempty(port.mu)
+        transpose(wi) * port.mu
+    else
+        Vector{eltype(port.returns)}(undef, 0)
     end
-    if haskey(opt_kwargs, :type) && isa(opt_kwargs.type, WC)
-        wc_statistics!(inter_port; wc_kwargs...)
+    ccov = if !isempty(port.cov)
+        transpose(wi) * port.cov * wi
+    else
+        Matrix{eltype(port.returns)}(undef, 0, 0)
+    end
+    if !haskey(opt_kwargs, :type) ||
+       haskey(opt_kwargs, :type) && isa(opt_kwargs.type, OptimType)
+        inter_port = Portfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                               solvers = port.solvers, port_kwargs...)
+        asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = false,
+                          set_dist = false, set_kurt = set_kurt, set_skurt = set_skurt,
+                          set_skew = set_skew, set_sskew = set_sskew, stat_kwargs...)
+        if haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC})
+            factor_statistics!(inter_port; factor_kwargs...)
+        end
+        if haskey(opt_kwargs, :type) && isa(opt_kwargs.type, WC)
+            wc_statistics!(inter_port; wc_kwargs...)
+        end
+    else
+        ccor = transpose(wi) * port.cor * wi
+        cdist = transpose(wi) * port.dist * wi
+        inter_port = HCPortfolio(; assets = cassets, ret = cret, mu = cmu, cov = ccov,
+                                 cor = ccor, dist = cdist, solvers = port.solvers,
+                                 port_kwargs...)
+        asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = false,
+                          set_dist = false, set_kurt = set_kurt, set_skurt = set_skurt,
+                          set_skew = set_skew, set_sskew = set_sskew, stat_kwargs...)
+        cluster_assets!(inter_port; cluster_kwargs...)
     end
     w = optimise!(inter_port; rm = rm, opt_kwargs...)
 
@@ -399,19 +444,7 @@ function compute_cov_rm(port, rm, cov_idx, wi)
     return old_covs
 end
 function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs,
-                            stat_kwargs)
-    cret = port.returns * wi
-    cmu = if !isempty(port.mu)
-        transpose(wi) * port.mu
-    else
-        Vector{eltype(port.returns)}(undef, 0)
-    end
-    ccov = if !isempty(port.cov)
-        transpose(wi) * port.cov * wi
-    else
-        Matrix{eltype(port.returns)}(undef, 0, 0)
-    end
-
+                            cluster_kwargs, stat_kwargs)
     cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx = find_cov_kurt_skew_rm(rm)
     old_covs = compute_cov_rm(port, rm, cov_idx, wi)
     old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews = set_kurt_skurt_skew_nothing(port,
@@ -420,10 +453,10 @@ function calc_inter_weights(port, wi, rm, opt_kwargs, port_kwargs, factor_kwargs
                                                                                                 skurt_idx,
                                                                                                 skew_idx,
                                                                                                 sskew_idx)
-    cw, cfail = inter_nco_opt(port, rm, 1:size(cret, 2), cret, cmu, ccov,
-                              !isempty(kurt_idx), !isempty(skurt_idx), !isempty(skew_idx),
-                              !isempty(sskew_idx), opt_kwargs, port_kwargs, factor_kwargs,
-                              wc_kwargs, stat_kwargs)
+    cw, cfail = inter_nco_opt(port, rm, 1:size(wi, 2), wi, !isempty(kurt_idx),
+                              !isempty(skurt_idx), !isempty(skew_idx), !isempty(sskew_idx),
+                              opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs,
+                              cluster_kwargs, stat_kwargs)
     reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
                                 old_skurts, skew_idx, old_Vs, old_skews, sskew_idx, old_SVs,
                                 old_sskews)
@@ -440,9 +473,10 @@ function _optimise!(type::NCO, port::HCPortfolio,
                     rm_o::Union{AbstractVector, <:AbstractRiskMeasure}, ::Any, ::Any)
     port.fail = Dict()
     wi = calc_intra_weights(port, rm_i, type.opt_kwargs, type.port_kwargs,
-                            type.factor_kwargs, type.wc_kwargs)
+                            type.factor_kwargs, type.wc_kwargs, type.cluster_kwargs)
     w = calc_inter_weights(port, wi, rm_o, type.opt_kwargs_o, type.port_kwargs_o,
-                           type.factor_kwargs_o, type.wc_kwargs_o, type.stat_kwargs_o)
+                           type.factor_kwargs_o, type.wc_kwargs_o, type.cluster_kwargs_o,
+                           type.stat_kwargs_o)
 
     return w
 end
