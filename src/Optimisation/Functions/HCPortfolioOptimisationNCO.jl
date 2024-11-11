@@ -1,4 +1,4 @@
-function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:RiskMeasure})
+function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     cov_idx = Vector{Int}(undef, 0)
     kurt_idx = Vector{Int}(undef, 0)
     skurt_idx = Vector{Int}(undef, 0)
@@ -340,8 +340,9 @@ function intra_nco_opt(port, rm, cassets, cret, cmu, ccov, ccor, cdist, set_kurt
 
     return w, intra_port.fail
 end
-function calc_intra_weights(port, rm::Union{AbstractVector, <:RiskMeasure}, opt_kwargs,
-                            port_kwargs, factor_kwargs, wc_kwargs, cluster_kwargs)
+function calc_intra_weights(port, rm::Union{AbstractVector, <:AbstractRiskMeasure},
+                            opt_kwargs, port_kwargs, factor_kwargs, wc_kwargs,
+                            cluster_kwargs)
     idx = cutree(port.clusters; k = port.k)
     w = zeros(eltype(port.returns), size(port.returns, 2), port.k)
     cfails = Dict{Int, Dict}()
