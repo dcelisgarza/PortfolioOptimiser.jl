@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -98,4 +94,8 @@ end
 
 @safetestset "Clustering tests" begin
     include("ClusteringTests.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
 end

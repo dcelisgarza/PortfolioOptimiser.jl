@@ -15,10 +15,10 @@ function _naive_risk(rm::AbstractRiskMeasure, returns)
     end
     return inv_risk / sum(inv_risk)
 end
-function _set_hc_rm_sigma(rm::RMSigma, port, cluster)
+function _set_hc_rm_sigma(rm::RMSigma, sigma, cluster)
     sigma_old = rm.sigma
     if isnothing(rm.sigma) || isempty(rm.sigma)
-        rm.sigma = view(port.cov, cluster, cluster)
+        rm.sigma = view(sigma, cluster, cluster)
     else
         rm.sigma = view(sigma_old, cluster, cluster)
     end
@@ -42,8 +42,8 @@ end
 function _unset_hc_rm_skew(args...)
     return nothing
 end
-function cluster_risk(port, cluster, rm)
-    sigma_old = _set_hc_rm_sigma(rm, port, cluster)
+function cluster_risk(port, sigma, cluster, rm)
+    sigma_old = _set_hc_rm_sigma(rm, sigma, cluster)
     cret = view(port.returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     cw = _naive_risk(rm, cret)

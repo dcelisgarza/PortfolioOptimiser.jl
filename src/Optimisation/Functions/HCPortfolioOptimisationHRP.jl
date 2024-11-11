@@ -1,7 +1,9 @@
-function _optimise!(::HRP, port::HCPortfolio,
+function _optimise!(::HRP, port::HCPortfolio, class::PortClass,
                     rm::Union{AbstractVector, <:AbstractRiskMeasure}, ::Any, w_min, w_max)
-    N = size(port.returns, 2)
-    weights = ones(eltype(port.returns), N)
+    sigma, returns = mu_sigma_returns_class(port, class)[2:3]
+
+    N = size(returns, 2)
+    weights = ones(eltype(returns), N)
     items = [port.clusters.order]
 
     while length(items) > 0
@@ -18,9 +20,9 @@ function _optimise!(::HRP, port::HCPortfolio,
                 solver_flag = _set_rm_solvers!(r, port.solvers)
                 scale = r.settings.scale
                 # Left risk.
-                lrisk += cluster_risk(port, lc, r) * scale
+                lrisk += cluster_risk(port, sigma, lc, r) * scale
                 # Right risk.
-                rrisk += cluster_risk(port, rc, r) * scale
+                rrisk += cluster_risk(port, sigma, rc, r) * scale
                 _unset_rm_solvers!(r, solver_flag)
             end
             # Allocate weight to clusters.
