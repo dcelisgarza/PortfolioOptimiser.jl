@@ -189,7 +189,12 @@ abstract type RetType end
 struct NoKelly <: RetType end
 ```
 """
-struct NoKelly <: RetType end
+mutable struct NoKelly <: RetType
+    mu::WorstCaseSet
+end
+function NoKelly(; mu::WorstCaseSet = NoWC())
+    return NoKelly(mu)
+end
 
 """
 ```

@@ -64,7 +64,7 @@ function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any, class::Port
     set_string_names_on_creation(model, str_names)
     initial_w(port, w_ini)
     rrp_constraints(type, port, sigma)
-    set_returns(nothing, NoKelly(), port.model, port.mu_l; mu = mu)
+    set_returns(nothing, NoKelly(), port; mu = mu)
     linear_constraints(port, nothing)
     risk = model[:risk]
     @objective(model, Min, risk)
