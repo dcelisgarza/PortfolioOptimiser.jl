@@ -543,7 +543,7 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                       zero(promote_type(typeof(budget), typeof(long_u))))
     end
     if !isempty(f_prices)
-        f_returns = dropmissing!(DataFrame(percentchange(f_prices)))
+        f_returns = dropmissing!(DataFrame(percentchange(f_prices, ret_type)))
     end
     if !isempty(f_returns)
         f_assets = setdiff(names(f_returns), ("timestamp",))
@@ -674,6 +674,9 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     end
     if !isempty(f_cov)
         @smart_assert(size(f_cov, 1) == size(f_cov, 2) == size(f_returns, 2))
+    end
+    if !isempty(fm_returns)
+        @smart_assert(size(fm_returns) == size(returns))
     end
     if !isempty(fm_mu)
         @smart_assert(length(fm_mu) == size(returns, 2))
@@ -923,7 +926,8 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                           size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
-    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns)
+    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns,
+                  :fm_returns)
         if !isempty(val) && !isempty(getfield(obj, sym))
             @smart_assert(size(val) == size(getfield(obj, sym)))
         end
@@ -1138,12 +1142,20 @@ Structure for defining a hierarchical clustering portfolio.
   - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
   - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
 """
-mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
-                           tsskew, tsv, wmi, wma, tco, tdist, tcl, tk, topt, tsolv, tf, tlp,
-                           taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio
+mutable struct HCPortfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, blbw, tmu, tcov, tkurt,
+                           tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf, tcovf, trfm,
+                           tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf, wmi, wma, tco,
+                           tdist, tcl, tk, topt, tsolv, tf, tlp, taopt, talo, tasolv, taf,
+                           tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
+    loadings::l
+    regression_type::lo
+    bl_bench_weights::blbw
     mu::tmu
     cov::tcov
     kurt::tkurt
@@ -1154,6 +1166,15 @@ mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tske
     V::tv
     sskew::tsskew
     SV::tsv
+    f_mu::tmuf
+    f_cov::tcovf
+    fm_returns::trfm
+    fm_mu::tmufm
+    fm_cov::tcovfm
+    bl_mu::tmubl
+    bl_cov::tcovbl
+    blfm_mu::tmublf
+    blfm_cov::tcovblf
     w_min::wmi
     w_max::wma
     cor::tco
@@ -1227,6 +1248,14 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      timestamps::AbstractVector{<:Dates.AbstractTime} = Vector{Date}(undef,
                                                                                      0),
                      assets::AbstractVector = Vector{String}(undef, 0),
+                     f_prices::TimeArray = TimeArray(TimeType[], []),
+                     f_returns::DataFrame = DataFrame(),
+                     f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+                     f_assets::AbstractVector = Vector{String}(undef, 0),
+                     loadings::DataFrame = DataFrame(),
+                     regression_type::Union{<:RegressionType, Nothing} = nothing,
+                     bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                      cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1237,6 +1266,15 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      SV::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     f_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     f_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     fm_returns::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     fm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     fm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     bl_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     bl_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                     blfm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     blfm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                      w_min::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                      w_max::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
                      cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -1262,6 +1300,20 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     else
         @smart_assert(length(assets) == size(ret, 2))
         returns = ret
+    end
+    if !isempty(f_prices)
+        f_returns = dropmissing!(DataFrame(percentchange(f_prices, ret_type)))
+    end
+    if !isempty(f_returns)
+        f_assets = setdiff(names(f_returns), ("timestamp",))
+        f_timestamps = f_returns[!, "timestamp"]
+        f_returns = Matrix(f_returns[!, f_assets])
+    else
+        @smart_assert(length(f_assets) == size(f_ret, 2))
+        f_returns = f_ret
+    end
+    if !isempty(bl_bench_weights)
+        @smart_assert(length(bl_bench_weights) == size(returns, 2))
     end
     if !isempty(mu)
         @smart_assert(length(mu) == size(returns, 2))
@@ -1296,6 +1348,33 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     end
     if !isempty(SV)
         @smart_assert(size(SV, 1) == size(SV, 2) == size(returns, 2))
+    end
+    if !isempty(f_mu)
+        @smart_assert(length(f_mu) == size(f_returns, 2))
+    end
+    if !isempty(f_cov)
+        @smart_assert(size(f_cov, 1) == size(f_cov, 2) == size(f_returns, 2))
+    end
+    if !isempty(fm_mu)
+        @smart_assert(length(fm_mu) == size(returns, 2))
+    end
+    if !isempty(fm_cov)
+        @smart_assert(size(fm_cov, 1) == size(fm_cov, 2) == size(returns, 2))
+    end
+    if !isempty(fm_returns)
+        @smart_assert(size(fm_returns) == size(returns))
+    end
+    if !isempty(bl_mu)
+        @smart_assert(length(bl_mu) == size(returns, 2))
+    end
+    if !isempty(bl_cov)
+        @smart_assert(size(bl_cov, 1) == size(bl_cov, 2) == size(returns, 2))
+    end
+    if !isempty(blfm_mu)
+        @smart_assert(length(blfm_mu) == size(returns, 2))
+    end
+    if !isempty(blfm_cov)
+        @smart_assert(size(blfm_cov, 1) == size(blfm_cov, 2) == size(returns, 2))
     end
     if isa(w_min, Real)
         if isa(w_max, Real)
@@ -1336,20 +1415,28 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
         @smart_assert(length(latest_prices) == size(returns, 2))
     end
 
-    return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns), typeof(mu),
-                       typeof(cov), typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
-                       typeof(skew), typeof(V), typeof(sskew), typeof(SV),
+    return HCPortfolio{typeof(assets), typeof(timestamps), typeof(returns),
+                       typeof(f_assets), typeof(f_timestamps), typeof(f_returns),
+                       typeof(loadings), Union{<:RegressionType, Nothing},
+                       typeof(bl_bench_weights), typeof(mu), typeof(cov), typeof(kurt),
+                       typeof(skurt), typeof(L_2), typeof(S_2), typeof(skew), typeof(V),
+                       typeof(sskew), typeof(SV), typeof(f_mu), typeof(f_cov),
+                       typeof(fm_returns), typeof(fm_mu), typeof(fm_cov), typeof(bl_mu),
+                       typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
                        Union{<:Real, <:AbstractVector{<:Real}},
                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(cor), typeof(dist),
                        typeof(clusters), typeof(k), typeof(optimal), typeof(solvers),
                        typeof(fail), typeof(latest_prices), typeof(alloc_optimal),
                        typeof(alloc_leftover), typeof(alloc_solvers), typeof(alloc_fail),
-                       typeof(alloc_model)}(assets, timestamps, returns, mu, cov, kurt,
-                                            skurt, L_2, S_2, skew, V, sskew, SV, w_min,
-                                            w_max, cor, dist, clusters, k, optimal, solvers,
-                                            fail, latest_prices, alloc_optimal,
-                                            alloc_leftover, alloc_solvers, alloc_fail,
-                                            alloc_model)
+                       typeof(alloc_model)}(assets, timestamps, returns, f_assets,
+                                            f_timestamps, f_returns, loadings,
+                                            regression_type, bl_bench_weights, mu, cov,
+                                            kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu,
+                                            f_cov, fm_returns, fm_mu, fm_cov, bl_mu, bl_cov,
+                                            blfm_mu, blfm_cov, w_min, w_max, cor, dist,
+                                            clusters, k, optimal, solvers, fail,
+                                            latest_prices, alloc_optimal, alloc_leftover,
+                                            alloc_solvers, alloc_fail, alloc_model)
 end
 function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
     if sym == :k
@@ -1384,7 +1471,7 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                 end
             end
         end
-    elseif sym ∈ (:mu, :latest_prices)
+    elseif sym ∈ (:mu, :fm_mu, :bl_mu, :blfm_mu, :latest_prices)
         if !isempty(val)
             @smart_assert(length(val) == size(obj.returns, 2))
         end
@@ -1400,10 +1487,38 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
                           size(val, 2) == size(obj.returns, 2)^2)
         end
         val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns,
+                  :fm_returns)
+        if !isempty(val) && !isempty(getfield(obj, sym))
+            @smart_assert(size(val) == size(getfield(obj, sym)))
+        end
+    elseif sym == :f_mu
+        if !isempty(val)
+            @smart_assert(length(val) == size(obj.f_returns, 2))
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_cov
+        if !isempty(val)
+            @smart_assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2))
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
             N = size(obj.returns, 2)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :bl_bench_weights
+        if isempty(val)
+            N = size(obj.returns, 2)
+            val = fill(inv(N), N)
+        else
+            @smart_assert(length(val) == size(obj.returns, 2))
+            if isa(val, AbstractRange)
+                val = collect(val / sum(val))
+            else
+                val ./= sum(val)
+            end
         end
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym ∈ (:cov, :cor, :dist, :V, :SV)
@@ -1416,9 +1531,15 @@ function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
 end
 function Base.deepcopy(obj::HCPortfolio)
     return HCPortfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
+                       typeof(obj.f_assets), typeof(obj.f_timestamps),
+                       typeof(obj.f_returns), typeof(obj.loadings),
+                       Union{<:RegressionType, Nothing}, typeof(obj.bl_bench_weights),
                        typeof(obj.mu), typeof(obj.cov), typeof(obj.kurt), typeof(obj.skurt),
                        typeof(obj.L_2), typeof(obj.S_2), typeof(obj.skew), typeof(obj.V),
-                       typeof(obj.sskew), typeof(obj.SV),
+                       typeof(obj.sskew), typeof(obj.SV), typeof(obj.f_mu),
+                       typeof(obj.f_cov), typeof(obj.fm_returns), typeof(obj.fm_mu),
+                       typeof(obj.fm_cov), typeof(obj.bl_mu), typeof(obj.bl_cov),
+                       typeof(obj.blfm_mu), typeof(obj.blfm_cov),
                        Union{<:Real, <:AbstractVector{<:Real}},
                        Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor),
                        typeof(obj.dist), typeof(obj.clusters), typeof(obj.k),
@@ -1428,6 +1549,12 @@ function Base.deepcopy(obj::HCPortfolio)
                        typeof(obj.alloc_fail), typeof(obj.alloc_model)}(deepcopy(obj.assets),
                                                                         deepcopy(obj.timestamps),
                                                                         deepcopy(obj.returns),
+                                                                        deepcopy(obj.f_assets),
+                                                                        deepcopy(obj.f_timestamps),
+                                                                        deepcopy(obj.f_returns),
+                                                                        deepcopy(obj.loadings),
+                                                                        deepcopy(obj.regression_type),
+                                                                        deepcopy(obj.bl_bench_weights),
                                                                         deepcopy(obj.mu),
                                                                         deepcopy(obj.cov),
                                                                         deepcopy(obj.kurt),
@@ -1438,6 +1565,15 @@ function Base.deepcopy(obj::HCPortfolio)
                                                                         deepcopy(obj.V),
                                                                         deepcopy(obj.sskew),
                                                                         deepcopy(obj.SV),
+                                                                        deepcopy(obj.f_mu),
+                                                                        deepcopy(obj.f_cov),
+                                                                        deepcopy(obj.fm_returns),
+                                                                        deepcopy(obj.fm_mu),
+                                                                        deepcopy(obj.fm_cov),
+                                                                        deepcopy(obj.bl_mu),
+                                                                        deepcopy(obj.bl_cov),
+                                                                        deepcopy(obj.blfm_mu),
+                                                                        deepcopy(obj.blfm_cov),
                                                                         deepcopy(obj.w_min),
                                                                         deepcopy(obj.w_max),
                                                                         deepcopy(obj.cor),

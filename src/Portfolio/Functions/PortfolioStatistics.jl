@@ -172,7 +172,7 @@ end
 
 """
 ```
-factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
+factor_statistics!(port::AbstractPortfolio; factor_type::FactorType = FactorType(),
                    cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                    mu_type::MeanEstimator = MuSimple())
 ```
@@ -181,12 +181,12 @@ Compute the factor statistics. See the argument types' docs for details.
 
 # Inputs
 
-  - `port`: portfolio [`Portfolio`](@ref).
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
   - `factor_type`: factor statistics estimator [`FactorType`](@ref).
   - `cov_type`: covariance estimator [`PortfolioOptimiserCovCor`](@ref).
   - `mu_type`: expected returns estimator [`MeanEstimator`](@ref).
 """
-function factor_statistics!(port::Portfolio; factor_type::FactorType = FactorType(),
+function factor_statistics!(port::AbstractPortfolio; factor_type::FactorType = FactorType(),
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                             mu_type::MeanEstimator = MuSimple())
     port.f_cov, port.f_mu, port.fm_mu, port.fm_cov, port.fm_returns, port.loadings = factor_statistics(port.assets,
@@ -203,7 +203,7 @@ end
 
 """
 ```
-black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
+black_litterman_statistics!(port::AbstractPortfolio; P::AbstractMatrix, Q::AbstractVector,
                             w::AbstractVector = port.bl_bench_weights,
                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                             mu_type::MeanEstimator = MuSimple(),
@@ -214,7 +214,7 @@ Compute the factor statistics. `N` is the number of assets, `Nv` is the number o
 
 # Inputs
 
-  - `port`: portfolio [`Portfolio`](@ref).
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
   - `P`: `Nv×N` matrix of asset views.
   - `Q`: `Nv×1` vector of asset views.
   - `w`: `N×1` vector of benchmark weights for the Black-Litterman model.
@@ -222,7 +222,8 @@ Compute the factor statistics. `N` is the number of assets, `Nv` is the number o
   - `mu_type`: expected returns estimator [`MeanEstimator`](@ref).
   - `bl_type`: Black Litterman model estimator [`BLType`](@ref).
 """
-function black_litterman_statistics!(port::Portfolio; P::AbstractMatrix, Q::AbstractVector,
+function black_litterman_statistics!(port::AbstractPortfolio; P::AbstractMatrix,
+                                     Q::AbstractVector,
                                      w::AbstractVector = port.bl_bench_weights,
                                      cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                      mu_type::MeanEstimator = MuSimple(),
@@ -242,7 +243,7 @@ end
 
 """
 ```
-black_litterman_factor_statistics!(port::Portfolio;
+black_litterman_factor_statistics!(port::AbstractPortfolio;
                                    w::AbstractVector = port.bl_bench_weights,
                                    B::Union{DataFrame, Nothing} = port.loadings,
                                    P::Union{AbstractMatrix, Nothing} = nothing,
@@ -261,7 +262,7 @@ Compute the Black Litterman factor model statistics. `Na` is the number of asset
 
 # Inputs
 
-  - `port`: portfolio [`Portfolio`](@ref).
+  - `port`: portfolio [`AbstractPortfolio`](@ref).
 
   - `w`: `N×1` vector of benchmark weights for the Black-Litterman model.
   - `B`: loadings matrix.
@@ -278,7 +279,7 @@ Compute the Black Litterman factor model statistics. `Na` is the number of asset
   - `f_mu_type`: factor expected returns estimator [`MeanEstimator`](@ref).
   - `bl_type`: Black Litterman factor model estimator [`BlackLittermanFactor`](@ref).
 """
-function black_litterman_factor_statistics!(port::Portfolio;
+function black_litterman_factor_statistics!(port::AbstractPortfolio;
                                             w::AbstractVector = port.bl_bench_weights,
                                             B::Union{DataFrame, Nothing} = port.loadings,
                                             P::Union{AbstractMatrix, Nothing} = nothing,

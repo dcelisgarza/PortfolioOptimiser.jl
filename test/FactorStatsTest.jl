@@ -533,9 +533,11 @@ end
 
 @testset "Factor statistics" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    hcportfolio = HCPortfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     factor_statistics!(portfolio; cov_type = PortCovCor(; posdef = NoPosdef()))
+    factor_statistics!(hcportfolio; cov_type = PortCovCor(; posdef = NoPosdef()))
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                       5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
                       6.735131559151525e-5, 6.590933068160697e-5, 5.032199930722891e-5,
@@ -724,6 +726,14 @@ end
     @test isapprox(mu_ft, portfolio.f_mu)
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
+
+    @test names(hcportfolio.loadings) == nms
+    @test hcportfolio.loadings[!, 1] == hcportfolio.assets
+    @test isapprox(loadingst, Matrix(hcportfolio.loadings[!, 2:end]))
+    @test isapprox(cov_ft, hcportfolio.f_cov)
+    @test isapprox(mu_ft, hcportfolio.f_mu)
+    @test isapprox(cov_fmt, hcportfolio.fm_cov)
+    @test isapprox(mu_fmt, hcportfolio.fm_mu)
 
     factor_statistics!(portfolio; cov_type = CovFull())
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
