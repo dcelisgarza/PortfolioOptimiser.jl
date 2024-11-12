@@ -1,5 +1,5 @@
 function num_assets_constraints(port, ::Sharpe)
-    if port.num_assets_u > 0
+    if size(port.returns, 2) > port.num_assets_u > 0
         N = size(port.returns, 2)
         model = port.model
 
@@ -21,8 +21,41 @@ function num_assets_constraints(port, ::Sharpe)
             @constraint(model, w .>= -port.short_u * tnau_bin_sharpe)
         end
     end
+    if !isnothing(port.group_num_assets_u)
+        group_num_assets_u = port.group_num_assets_u
+        model = port.model
+        w = model[:w]
+        k = model[:k]
+        for gnau ∈ group_num_assets_u
+            assets = gnau.assets
+            if !isempty(assets)
+                N = length(assets)
+                number = group_num_assets_u.number
+                if number < N
+                    if !gnau.flag
+                        assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
+                    end
+                    scale = group_num_assets_u.scale
+                    tgnau_bin = @variable(model, [1:N], binary = true)
+                    @constraint(model, sum(tgnau_bin) <= number)
+                    # Sharpe ratio
+                    tgnau_bin_sharpe = @variable(model, [1:N], lower_bound = 0)
+                    @constraint(model, tgnau_bin_sharpe .<= k)
+                    @constraint(model, tgnau_bin_sharpe .<= scale * tgnau_bin)
+                    @constraint(model, tgnau_bin_sharpe .>= k .- scale * (1 .- tgnau_bin))
+                    # Long and short
+                    wa = w[assets]
+                    if !port.short
+                        @constraint(model, wa .<= port.long_u * tgnau_bin_sharpe)
+                    else
+                        @constraint(model, wa .<= port.long_u * tgnau_bin_sharpe)
+                        @constraint(model, wa .>= -port.short_u * tgnau_bin_sharpe)
+                    end
+                end
+            end
+        end
+    end
     if port.num_assets_l > 0
-        N = size(port.returns, 2)
         model = port.model
         @variable(model, tnal >= 0)
         w = model[:w]
@@ -30,10 +63,29 @@ function num_assets_constraints(port, ::Sharpe)
         k = model[:k]
         @constraint(model, tnal * sqrt(port.num_assets_l) <= k)
     end
+    if !isnothing(port.group_num_assets_l)
+        group_num_assets_l = port.group_num_assets_l
+        model = port.model
+        w = model[:w]
+        k = model[:k]
+        for gnal ∈ group_num_assets_l
+            assets = gnal.assets
+            if !isempty(assets)
+                if !gnal.flag
+                    assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
+                end
+                number = gnal.number
+                tgnal = @variable(model, lower_bound = 0)
+                wa = w[assets]
+                @constraint(model, [tgnal; wa] ∈ SecondOrderCone())
+                @constraint(model, tgnal * sqrt(number) <= k)
+            end
+        end
+    end
     return nothing
 end
 function num_assets_constraints(port, ::Any)
-    if port.num_assets_u > 0
+    if size(port.returns, 2) > port.num_assets_u > 0
         N = size(port.returns, 2)
         model = port.model
         @variable(model, tnau_bin[1:N], binary = true)
@@ -47,13 +99,57 @@ function num_assets_constraints(port, ::Any)
             @constraint(model, w .>= -port.short_u * tnau_bin)
         end
     end
+    if !isnothing(port.group_num_assets_u)
+        group_num_assets_u = port.group_num_assets_u
+        model = port.model
+        w = model[:w]
+        for gnau ∈ group_num_assets_u
+            assets = gnau.assets
+            if !isempty(assets)
+                N = length(assets)
+                number = gnau.number
+                if number < N
+                    if !gnau.flag
+                        assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
+                    end
+                    tgnau_bin = @variable(model, [1:N], binary = true)
+                    @constraint(model, sum(tgnau_bin) <= number)
+                    # Long and short
+                    wa = w[assets]
+                    if !port.short
+                        @constraint(model, wa .<= port.long_u * tgnau_bin)
+                    else
+                        @constraint(model, wa .<= port.long_u * tgnau_bin)
+                        @constraint(model, wa .>= -port.short_u * tgnau_bin)
+                    end
+                end
+            end
+        end
+    end
     if port.num_assets_l > 0
-        N = size(port.returns, 2)
         model = port.model
         @variable(model, tnal >= 0)
         w = model[:w]
         @constraint(model, [tnal; w] ∈ SecondOrderCone())
         @constraint(model, tnal * sqrt(port.num_assets_l) <= 1)
+    end
+    if !isnothing(port.group_num_assets_l)
+        group_num_assets_l = port.group_num_assets_l
+        model = port.model
+        w = model[:w]
+        for gnal ∈ group_num_assets_l
+            assets = gnal.assets
+            if !isempty(assets)
+                if !gnal.flag
+                    assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
+                end
+                number = gnal.number
+                tgnal = @variable(model, lower_bound = 0)
+                wa = w[assets]
+                @constraint(model, [tgnal; wa] ∈ SecondOrderCone())
+                @constraint(model, tgnal * sqrt(number) <= 1)
+            end
+        end
     end
     return nothing
 end

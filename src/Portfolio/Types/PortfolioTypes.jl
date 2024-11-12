@@ -285,12 +285,12 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
   - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
 """
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, lb, sb, ul, us, tfee,
-                         tsfee, nal, nau, naus, mnak, mnaks, l1t, l2t, rb, to, kte, ami,
-                         bvi, rbv, frbv, nm, cm, amc, bvc, ler, tmu, tcov, tkurt, tskurt,
-                         tl2, ts2, tskew, tv, tsskew, tsv, tmuf, tcovf, trfm, tmufm, tcovfm,
-                         blbw, tmubl, tcovbl, tmublf, tcovblf, tcovl, tcovu, tcovmu, tcovs,
-                         tdmu, tkmu, tks, topt, tlim, tfront, tsolv, tf, tmod, tlp, taopt,
-                         talo, tasolv, taf, tamod} <: AbstractPortfolio
+                         tsfee, nal, nau, naus, gnal, gnau, mnak, mnaks, l1t, l2t, rb, to,
+                         kte, ami, bvi, rbv, frbv, nm, cm, amc, bvc, ler, tmu, tcov, tkurt,
+                         tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf, tcovf, trfm, tmufm,
+                         tcovfm, blbw, tmubl, tcovbl, tmublf, tcovblf, tcovl, tcovu, tcovmu,
+                         tcovs, tdmu, tkmu, tks, topt, tlim, tfront, tsolv, tf, tmod, tlp,
+                         taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio
     assets::ast
     timestamps::dat
     returns::r
@@ -309,6 +309,8 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, lb, sb, ul, u
     num_assets_l::nal
     num_assets_u::nau
     num_assets_u_scale::naus
+    group_num_assets_l::gnal
+    group_num_assets_u::gnau
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
     l1::l1t
@@ -470,10 +472,12 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                    fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                    short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                    num_assets_l::Integer = 0, num_assets_u::Integer = 0,
-                   num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
-                   max_num_assets_kurt_scale::Integer = 2, l1::Real = 0.0, l2::Real = 0.0,
-                   rebalance::AbstractTR = NoTR(), turnover::AbstractTR = NoTR(),
-                   tracking_err::TrackingErr = NoTracking(),
+                   num_assets_u_scale::Real = 100_000.0,
+                   group_num_assets_l::Union{<:GNAL, <:AbstractVector{<:GNAL}, Nothing} = nothing,
+                   group_num_assets_u::Union{<:GNAU, <:AbstractVector{<:GNAU}, Nothing} = nothing,
+                   max_num_assets_kurt::Integer = 0, max_num_assets_kurt_scale::Integer = 2,
+                   l1::Real = 0.0, l2::Real = 0.0, rebalance::AbstractTR = NoTR(),
+                   turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
                    a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                    b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                    risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -722,6 +726,8 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(num_assets_l),
                      typeof(num_assets_u), typeof(num_assets_u_scale),
+                     Union{<:GNAL, <:AbstractVector{<:GNAL}, Nothing},
+                     Union{<:GNAU, <:AbstractVector{<:GNAU}, Nothing},
                      typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
                      typeof(l1), typeof(l2), AbstractTR, AbstractTR, TrackingErr,
                      typeof(a_mtx_ineq), typeof(b_vec_ineq), typeof(risk_budget),
@@ -744,6 +750,8 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                               short_u, fees, short_fees,
                                                               num_assets_l, num_assets_u,
                                                               num_assets_u_scale,
+                                                              group_num_assets_l,
+                                                              group_num_assets_u,
                                                               max_num_assets_kurt,
                                                               max_num_assets_kurt_scale, l1,
                                                               l2, rebalance, turnover,
@@ -965,6 +973,8 @@ function Base.deepcopy(obj::Portfolio)
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.num_assets_l),
                      typeof(obj.num_assets_u), typeof(obj.num_assets_u_scale),
+                     Union{<:GNAL, <:AbstractVector{<:GNAL}, Nothing},
+                     Union{<:GNAU, <:AbstractVector{<:GNAU}, Nothing},
                      typeof(obj.max_num_assets_kurt), typeof(obj.max_num_assets_kurt_scale),
                      typeof(obj.l1), typeof(obj.l2), AbstractTR, AbstractTR, TrackingErr,
                      typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
@@ -997,6 +1007,8 @@ function Base.deepcopy(obj::Portfolio)
                                               deepcopy(obj.num_assets_l),
                                               deepcopy(obj.num_assets_u),
                                               deepcopy(obj.num_assets_u_scale),
+                                              deepcopy(obj.group_num_assets_l),
+                                              deepcopy(obj.group_num_assets_u),
                                               deepcopy(obj.max_num_assets_kurt),
                                               deepcopy(obj.max_num_assets_kurt_scale),
                                               deepcopy(obj.l1), deepcopy(obj.l2),

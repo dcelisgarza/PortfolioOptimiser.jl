@@ -301,6 +301,60 @@ function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
     return TR{typeof(val), typeof(w)}(val, w)
 end
 
+mutable struct GNAU{T1 <: AbstractVector, T2 <: Integer, T3 <: Real}
+    flag::Bool
+    assets::T1
+    number::T2
+    scale::T3
+end
+function GNAU(; flag::Bool = true, assets::AbstractVector = Int[], number::Integer = 0,
+              scale::Real = 100_000.0)
+    @smart_assert(number >= zero(number))
+    @smart_assert(scale >= zero(scale))
+    return GNAU{typeof(assets), typeof(number), typeof(scale)}(flag, assets, number, scale)
+end
+function Base.setproperty!(obj::GNAU, sym::Symbol, val)
+    if sym ∈ (:number, scale)
+        @smart_assert(val >= zero(val))
+    end
+    return setfield!(obj, sym, val)
+end
+function Base.length(::GNAU)
+    return 1
+end
+function Base.getindex(S::GNAU, ::Any)
+    return S
+end
+function Base.view(S::GNAU, ::Any)
+    return S
+end
+
+mutable struct GNAL{T1 <: AbstractVector, T2 <: Real}
+    flag::Bool
+    assets::T1
+    number::T2
+end
+function GNAL(; flag::Bool = true, assets::AbstractVector = Int[], number::Real = 0.0)
+    @smart_assert(number >= zero(number))
+    return GNAL{typeof(assets), typeof(number)}(flag, assets, number)
+end
+function Base.setproperty!(obj::GNAL, sym::Symbol, val)
+    if sym == :number
+        @smart_assert(val >= zero(val))
+    end
+    return setfield!(obj, sym, val)
+end
+function Base.length(::GNAL)
+    return 1
+end
+function Base.getindex(S::GNAL, ::Any)
+    return S
+end
+function Base.view(S::GNAL, ::Any)
+    return S
+end
+
 abstract type CustomConstraintObjectivePenalty end
 
-export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR
+export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR,
+       GNAU, GNAL
