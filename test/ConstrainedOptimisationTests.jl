@@ -49,7 +49,6 @@ l = 2.0
     A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_cmtx_ineq = A
     portfolio.b_cvec_ineq = B
-    rm = MAD()
     w1 = optimise!(portfolio; rm = rm)
     @test count(w1.weights .>= 1e-10) <= 7
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 2
@@ -78,6 +77,62 @@ l = 2.0
     portfolio.a_cmtx_ineq = A
     portfolio.b_cvec_ineq = B
     rm = CDaR()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    @test count(w1.weights .>= 1e-10) <= 4
+    @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
+
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 0
+    portfolio.short = true
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
+                            :Weight => [11], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    rm = MAD()
+    w1 = optimise!(portfolio; rm = rm)
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 11
+    w2 = optimise!(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights)
+
+    constraints = DataFrame(:Enabled => [true, true, true],
+                            :Type => ["Subset", "Subset", "Subset"],
+                            :Sign => ["<=", "<=", "<="], :Weight => [11, 1, 1],
+                            :Set => ["All", "PDBHT", "PDBHT"], :Position => [1, 4, 3])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    w1 = optimise!(portfolio; rm = rm)
+    @test count(w1.weights .>= 1e-10) <= 11
+    @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
+    @test count(w1.weights[.!iszero.(A[3, :])] .>= 1e-10) <= 1
+
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 0
+    rm = CDaR()
+    obj = Sharpe(; rf = rf)
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
+                            :Weight => [8], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 8
+    w2 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+
+    constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
+                            :Sign => ["<=", "<="], :Weight => [4, 1],
+                            :Set => ["All", "G2DBHT"], :Position => [1, 3])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
     w1 = optimise!(portfolio; rm = rm, obj = obj)
     @test count(w1.weights .>= 1e-10) <= 4
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
