@@ -55,24 +55,16 @@ function num_assets_constraints(port, ::Sharpe)
         k = model[:k]
         @constraint(model, tnal * sqrt(port.num_assets_l) <= k)
     end
-    if !isnothing(port.group_num_assets_l)
-        group_num_assets_l = port.group_num_assets_l
+    if !(isempty(port.a_smtx_ineq) || isempty(port.b_svec_ineq))
+        A = port.a_smtx_ineq
+        B = port.b_svec_ineq
         model = port.model
         w = model[:w]
         k = model[:k]
-        for gnal ∈ group_num_assets_l
-            assets = gnal.assets
-            if !isempty(assets)
-                if !gnal.flag
-                    assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
-                end
-                number = gnal.number
-                tgnal = @variable(model, lower_bound = 0)
-                wa = w[assets]
-                @constraint(model, [tgnal; wa] ∈ SecondOrderCone())
-                @constraint(model, tgnal * sqrt(number) <= k)
-            end
-        end
+        N = length(B)
+        @variable(model, tgnal[1:N] >= 0)
+        @constraint(model, [i = 1:N], [tgnal[i]; w[A[i, :]]] ∈ SecondOrderCone())
+        @constraint(model, tgnal .* sqrt.(B) .<= k)
     end
     return nothing
 end
@@ -117,23 +109,15 @@ function num_assets_constraints(port, ::Any)
         @constraint(model, [tnal; w] ∈ SecondOrderCone())
         @constraint(model, tnal * sqrt(port.num_assets_l) <= 1)
     end
-    if !isnothing(port.group_num_assets_l)
-        group_num_assets_l = port.group_num_assets_l
+    if !(isempty(port.a_smtx_ineq) || isempty(port.b_svec_ineq))
+        A = port.a_smtx_ineq
+        B = port.b_svec_ineq
         model = port.model
         w = model[:w]
-        for gnal ∈ group_num_assets_l
-            assets = gnal.assets
-            if !isempty(assets)
-                if !gnal.flag
-                    assets = [findfirst(x -> x == x, port.assets) for x ∈ assets]
-                end
-                number = gnal.number
-                tgnal = @variable(model, lower_bound = 0)
-                wa = w[assets]
-                @constraint(model, [tgnal; wa] ∈ SecondOrderCone())
-                @constraint(model, tgnal * sqrt(number) <= 1)
-            end
-        end
+        N = length(B)
+        @variable(model, tgnal[1:N] >= 0)
+        @constraint(model, [i = 1:N], [tgnal[i]; w[A[i, :]]] ∈ SecondOrderCone())
+        @constraint(model, tgnal .* sqrt.(B) .<= 1)
     end
     return nothing
 end

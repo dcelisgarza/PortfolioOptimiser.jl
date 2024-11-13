@@ -5,6 +5,94 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Number of effective assets groups" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                             "verbose" => false,
+                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                      MOI.Silent() => true),
+                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                         "verbose" => false,
+                                                                                                                                         "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2],
+                           "All" => ones(Int, length(portfolio.assets)))
+
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [13], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = WR()
+    w1 = optimise!(portfolio; rm = rm)
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    portfolio.num_assets_l = 13
+    w2 = optimise!(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = SSD()
+    w1 = optimise!(portfolio; rm = rm)
+    @test isapprox(500,
+                   floor(Int,
+                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    obj = Sharpe(; rf = rf)
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [13], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = WR()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    portfolio.num_assets_l = 13
+    w2 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = SSD()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(500,
+                   floor(Int,
+                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
+end
+
 @testset "Cardinality Group constraints" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
@@ -43,6 +131,7 @@ l = 2.0
     w2 = optimise!(portfolio; rm = rm)
     @test isapprox(w1.weights, w2.weights)
 
+    portfolio.num_assets_u = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [7, 2],
                             :Set => ["All", "Pward"], :Position => [1, 1])
@@ -70,6 +159,7 @@ l = 2.0
     w2 = optimise!(portfolio; rm = rm, obj = obj)
     @test isapprox(w1.weights, w2.weights)
 
+    portfolio.num_assets_u = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [4, 1],
                             :Set => ["All", "Pward"], :Position => [1, 2])
@@ -98,6 +188,7 @@ l = 2.0
     w2 = optimise!(portfolio; rm = rm)
     @test isapprox(w1.weights, w2.weights)
 
+    portfolio.num_assets_u = 0
     constraints = DataFrame(:Enabled => [true, true, true],
                             :Type => ["Subset", "Subset", "Subset"],
                             :Sign => ["<=", "<=", "<="], :Weight => [11, 1, 1],
@@ -127,6 +218,7 @@ l = 2.0
     w2 = optimise!(portfolio; rm = rm, obj = obj)
     @test isapprox(w1.weights, w2.weights)
 
+    portfolio.num_assets_u = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [4, 1],
                             :Set => ["All", "G2DBHT"], :Position => [1, 3])
