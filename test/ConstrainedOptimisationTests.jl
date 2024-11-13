@@ -5,6 +5,84 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Cardinality Group constraints" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                             "verbose" => false,
+                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                      MOI.Silent() => true),
+                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                         "verbose" => false,
+                                                                                                                                         "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2],
+                           "All" => ones(Int, length(portfolio.assets)))
+
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
+                            :Weight => [7], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    rm = MAD()
+    w1 = optimise!(portfolio; rm = rm)
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 7
+    w2 = optimise!(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights)
+
+    constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
+                            :Sign => ["<=", "<="], :Weight => [7, 2],
+                            :Set => ["All", "Pward"], :Position => [1, 1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    rm = MAD()
+    w1 = optimise!(portfolio; rm = rm)
+    @test count(w1.weights .>= 1e-10) <= 7
+    @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 2
+
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 0
+    obj = Sharpe(; rf = rf)
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
+                            :Weight => [4], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    rm = CDaR()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_cvec_ineq = []
+    portfolio.num_assets_u = 4
+    w2 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+
+    constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
+                            :Sign => ["<=", "<="], :Weight => [4, 1],
+                            :Set => ["All", "Pward"], :Position => [1, 2])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_cmtx_ineq = A
+    portfolio.b_cvec_ineq = B
+    rm = CDaR()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    @test count(w1.weights .>= 1e-10) <= 4
+    @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
+end
+
 @testset "Management fees" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
