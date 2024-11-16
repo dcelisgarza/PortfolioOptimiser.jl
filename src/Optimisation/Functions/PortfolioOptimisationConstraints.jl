@@ -6,7 +6,7 @@ function MIP_constraints(port)
 
     Flags for deciding whether the problem is MIP.
     =#
-    card_flag = size(port.returns, 2) > port.cardinality > 0
+    card_flag = size(port.returns, 2) > port.card > 0
     gcard_ineq_flag = !(isempty(port.a_card_ineq) || isempty(port.b_card_ineq))
     gcard_eq_flag = !(isempty(port.a_card_eq) || isempty(port.b_card_eq))
     ntwk_flag = isa(port.network, IP)
@@ -38,12 +38,12 @@ function MIP_constraints(port)
         - Extra variables are needed.
     =#
     short = port.short
-    long_u = port.long_u
     long_t = port.long_t
-    short_u = port.short_u
+    long_u = port.long_u
     short_t = port.short_t
-    if !isinf(short_t) && short
-        scale = port.is_invested_scale
+    short_u = port.short_u
+    if !iszero(short_t) && short
+        scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], binary = true
                        is_invested_short_bool[1:N], binary = true
@@ -93,7 +93,7 @@ function MIP_constraints(port)
             @expression(model, is_invested, is_invested_bool)
         else
             @variable(model, is_invested_float[1:N] .>= 0)
-            scale = port.is_invested_scale
+            scale = port.card_scale
             @constraints(model,
                          begin
                              is_invested_float .<= k
@@ -103,7 +103,7 @@ function MIP_constraints(port)
             @expression(model, is_invested, is_invested_float)
         end
         @constraint(model, w .<= is_invested .* long_u)
-        if !isinf(long_t)
+        if !iszero(long_t)
             @constraint(model, w .>= is_invested .* long_t)
         end
         if short
@@ -115,8 +115,8 @@ function MIP_constraints(port)
     ## Portfolio cardinality
     =#
     if card_flag
-        cardinality = port.cardinality
-        @constraint(model, sum(is_invested_bool) <= cardinality)
+        card = port.card
+        @constraint(model, sum(is_invested_bool) <= card)
     end
 
     #=
@@ -263,7 +263,7 @@ function weight_constraints(port)
     #=
     ## Number of effective assets
     =#
-    nea = port.num_effective_assets
+    nea = port.nea
     if nea > zero(nea)
         @variable(model, nea_var >= 0)
         @constraints(model, begin
@@ -302,17 +302,15 @@ function weight_constraints(port)
 
     return nothing
 end
-function tracking_error_benchmark(tracking_err::TrackWeight, returns)
-    return returns * tracking_err.w
+function tracking_error_benchmark(tracking::TrackWeight, returns)
+    return returns * tracking.w
 end
-function tracking_error_benchmark(tracking_err::TrackRet, ::Any)
-    return tracking_err.w
+function tracking_error_benchmark(tracking::TrackRet, ::Any)
+    return tracking.w
 end
 function tracking_error_constraints(port, returns)
-    tracking_err = port.tracking_err
-    if isa(tracking_err, NoTracking) ||
-       isempty(isempty(tracking_err.w)) ||
-       isinf(tracking_err.err)
+    tracking = port.tracking
+    if isa(tracking, NoTracking) || isempty(isempty(tracking.w)) || isinf(tracking.err)
         return nothing
     end
 
@@ -321,14 +319,14 @@ function tracking_error_constraints(port, returns)
     k = model[:k]
 
     T = size(returns, 1)
-    benchmark = tracking_error_benchmark(tracking_err, returns)
-    err = tracking_err.err
+    benchmark = tracking_error_benchmark(tracking, returns)
+    err = tracking.err
 
-    @variable(model, t_tracking_err >= 0)
-    @expression(model, tracking_err, returns * w .- benchmark * k)
+    @variable(model, t_tracking_error >= 0)
+    @expression(model, tracking_error, returns * w .- benchmark * k)
     @constraints(model, begin
-                     [t_tracking_err; tracking_err] ∈ SecondOrderCone()
-                     t_tracking_err <= err * k * sqrt(T - 1)
+                     [t_tracking_error; tracking_error] ∈ SecondOrderCone()
+                     t_tracking_error <= err * k * sqrt(T - 1)
                  end)
 
     return nothing
@@ -359,67 +357,54 @@ function turnover_constraints(port)
 
     return nothing
 end
-function regularisation(port)
+function L1_regularisation(port)
     l1 = port.l1
-    l2 = port.l2
-    l1_flag = iszero(l1)
-    l2_flag = iszero(l2)
-
-    if l1_flag && l2_flag
-        @expression(model, l1_l2_reg, 0)
+    if iszero(l1)
         return nothing
     end
 
     model = port.model
     w = model[:w]
 
-    if !l1_flag
-        @variable(model, t_l1 >= 0)
-        @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
-        @expression(model, l1_reg, l1 * t_l1)
-    else
-        @expression(model, l1_reg, 0)
+    @variable(model, t_l1 >= 0)
+    @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
+    @expression(model, l1_reg, l1 * t_l1)
+
+    return nothing
+end
+function L2_regularisation(port)
+    l2 = port.l2
+    if iszero(l2)
+        return nothing
     end
 
-    if !l2_flag
-        @variable(model, t_l2 >= 0)
-        @constraint(model, [t_l2; w] in SecondOrderCone())
-        @expression(model, l2_reg, l2 * t_l2)
-    else
-        @expression(model, l2_reg, 0)
-    end
+    model = port.model
+    w = model[:w]
 
-    @expression(model, l1_l2_reg, l1_reg + l2_reg)
+    @variable(model, t_l2 >= 0)
+    @constraint(model, [t_l2; w] in SecondOrderCone())
+    @expression(model, l2_reg, l2 * t_l2)
 
     return nothing
 end
 function management_fee(port)
     short = port.short
-    fees = port.fees
+    long_fees = port.long_fees
+    short_fees = port.short_fees
     model = port.model
 
-    if !(isa(fees, Real) && iszero(fees) ||
-         isa(fees, AbstractVector) && isempty(fees) ||
-         isa(fees, AbstractVector) && all(iszero.(fees)))
+    if !(isa(long_fees, Real) && iszero(long_fees) ||
+         isa(long_fees, AbstractVector) && isempty(long_fees) ||
+         isa(long_fees, AbstractVector) && all(iszero.(long_fees)))
         long_w = model[:long_w]
-        @expression(model, long_fee, sum(fees .* long_w))
-    else
-        @expression(model, long_fee, 0)
+        @expression(model, long_fee, sum(long_fees .* long_w))
     end
 
-    if short
-        short_fees = port.short_fees
-        if !(isa(short_fees, Real) && iszero(short_fees) ||
-             isa(short_fees, AbstractVector) && isempty(short_fees) ||
-             isa(short_fees, AbstractVector) && all(iszero.(short_fees)))
-            short_w = model[:short_w]
-            @expression(model, short_fee, sum(short_fees .* short_w))
-        else
-            @expression(model, short_fee, 0)
-        end
-        @expression(model, management_fee, long_fee + short_fee)
-    else
-        @expression(model, management_fee, long_fee)
+    if short && !(isa(short_fees, Real) && iszero(short_fees) ||
+                  isa(short_fees, AbstractVector) && isempty(short_fees) ||
+                  isa(short_fees, AbstractVector) && all(iszero.(short_fees)))
+        short_w = model[:short_w]
+        @expression(model, short_fee, sum(short_fees .* short_w))
     end
 
     return nothing
@@ -431,7 +416,6 @@ function rebalance_cost(port)
        isa(rebalance.val, Real) && iszero(rebalance.val) ||
        isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
        isempty(rebalance.w)
-        @expression(model, rebalance_cost, 0)
         return nothing
     end
 
@@ -460,12 +444,10 @@ function _SDP_constraints(model)
 
     return nothing
 end
-function SDP_network_constraints(port)
-    network = port.network
-    cluster = port.cluster
+function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
+    network_cluster = ntwk_flag ? port.network : port.cluster
     model = port.model
-    if !(isa(network, SDP) || isa(cluster, SDP))
-        @expression(model, network_penalty, 0)
+    if !isa(network_cluster, SDP)
         return nothing
     end
 
@@ -473,12 +455,25 @@ function SDP_network_constraints(port)
         _SDP_constraints(model)
     end
 
+    W = model[:W]
+    A = network_cluster.A
+    @constraint(model, A .* W .== 0)
+
     if !haskey(model, :sd_risk)
-        @expression(model, network_penalty, network.penalty * tr(W))
-    else
-        @expression(model, network_penalty, 0)
+        penalty = network_cluster.penalty
+        if ntwk_flag
+            @expression(model, network_penalty, penalty * tr(W))
+        else
+            @expression(model, cluster_penalty, penalty * tr(W))
+        end
     end
 
+    return nothing
+end
+function custom_constraint(port, ::Nothing)
+    return nothing
+end
+function custom_objective(port, ::Nothing)
     return nothing
 end
 
@@ -487,46 +482,6 @@ end
 
 ##########
 ##########
-function network_constraints(network::SDP, port, obj, ::Trad)
-    _sdp(port, obj)
-    model = port.model
-    W = model[:W]
-    @constraint(model, network.A .* W .== 0)
-    if !haskey(model, :sd_risk)
-        @expression(model, network_penalty, network.penalty * tr(W))
-        if !haskey(model, :obj_penalty)
-            @expression(model, obj_penalty, zero(AffExpr))
-        end
-        add_to_expression!(model[:obj_penalty], network_penalty)
-    end
-    return nothing
-end
-function network_constraints(network::SDP, port, obj, ::WC)
-    _sdp(port, obj)
-    W = port.model[:W]
-    @constraint(port.model, network.A .* W .== 0)
-    return nothing
-end
-function cluster_constraints(cluster::SDP, port, obj, ::Trad)
-    _sdp(port, obj)
-    model = port.model
-    W = model[:W]
-    @constraint(model, cluster.A .* W .== 0)
-    if !haskey(model, :sd_risk)
-        @expression(model, cluster_penalty, cluster.penalty * tr(W))
-        if !haskey(model, :obj_penalty)
-            @expression(model, obj_penalty, zero(AffExpr))
-        end
-        add_to_expression!(model[:obj_penalty], cluster_penalty)
-    end
-    return nothing
-end
-function cluster_constraints(cluster::SDP, port, obj, ::WC)
-    _sdp(port, obj)
-    W = port.model[:W]
-    @constraint(port.model, cluster.A .* W .== 0)
-    return nothing
-end
 
 function custom_constraint_objective_penatly(::Nothing, port)
     return nothing
@@ -942,5 +897,45 @@ function rebalance_penalty(rebalance::TR, port, obj)
          isempty(rebalance.w))
         _rebalance_penalty(obj, port.model, port.rebalance)
     end
+    return nothing
+end
+function network_constraints(network::SDP, port, obj, ::Trad)
+    _sdp(port, obj)
+    model = port.model
+    W = model[:W]
+    @constraint(model, network.A .* W .== 0)
+    if !haskey(model, :sd_risk)
+        @expression(model, network_penalty, network.penalty * tr(W))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], network_penalty)
+    end
+    return nothing
+end
+function network_constraints(network::SDP, port, obj, ::WC)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, network.A .* W .== 0)
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::Trad)
+    _sdp(port, obj)
+    model = port.model
+    W = model[:W]
+    @constraint(model, cluster.A .* W .== 0)
+    if !haskey(model, :sd_risk)
+        @expression(model, cluster_penalty, cluster.penalty * tr(W))
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], cluster_penalty)
+    end
+    return nothing
+end
+function cluster_constraints(cluster::SDP, port, obj, ::WC)
+    _sdp(port, obj)
+    W = port.model[:W]
+    @constraint(port.model, cluster.A .* W .== 0)
     return nothing
 end

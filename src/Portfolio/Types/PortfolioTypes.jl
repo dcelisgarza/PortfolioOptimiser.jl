@@ -7,6 +7,246 @@ Abstract type for subtyping portfolios.
 """
 abstract type AbstractPortfolio end
 
+mutable struct OmniPortfolio{T_assets, T_timestamps, T_returns, T_latest_prices, T_f_assets,
+                             T_f_timestamps, T_f_returns, T_loadings, T_regression_type,
+                             T_mu_l, T_mu, T_cov, T_cor, T_dist, T_clusters, T_k,
+                             T_max_num_assets_kurt, T_max_num_assets_kurt_scale, T_kurt,
+                             T_skurt, T_L_2, T_S_2, T_skew, T_V, T_sskew, T_SV, T_f_mu,
+                             T_f_cov, T_fm_returns, T_fm_mu, T_fm_cov, T_bl_bench_weights,
+                             T_bl_mu, T_bl_cov, T_blfm_mu, T_blfm_cov, T_cov_l, T_cov_u,
+                             T_cov_mu, T_cov_sigma, T_d_mu, T_k_mu, T_k_sigma, T_w_min,
+                             T_w_max, T_risk_budget, T_f_risk_budget, T_short, T_long_t,
+                             T_long_u, T_short_t, T_short_u, T_min_budget, T_budget,
+                             T_max_budget, T_min_short_budget, T_short_budget,
+                             T_max_short_budget, T_card_scale, T_card, T_a_card_ineq,
+                             T_b_card_ineq, T_a_card_eq, T_b_card_eq, T_nea, T_a_ineq,
+                             T_b_ineq, T_a_eq, T_b_eq, T_tracking, T_turnover, T_network,
+                             T_cluster, T_a_cent_ineq, T_b_cent_ineq, T_a_cent_eq,
+                             T_b_cent_eq, T_l1, T_l2, T_long_fees, T_short_fees,
+                             T_rebalance, T_model, T_solvers, T_optimal, T_fail, T_limits,
+                             T_frontier, T_alloc_model, T_alloc_solvers, T_alloc_optimal,
+                             T_alloc_fail, T_alloc_leftover} <: AbstractPortfolio
+    # Assets and factors
+    assets::T_assets
+    timestamps::T_timestamps
+    returns::T_returns
+    latest_prices::T_latest_prices
+    f_assets::T_f_assets
+    f_timestamps::T_f_timestamps
+    f_returns::T_f_returns
+    loadings::T_loadings
+    regression_type::T_regression_type
+    # Statistics
+    mu_l::T_mu_l
+    mu::T_mu
+    cov::T_cov
+    cor::T_cor
+    dist::T_dist
+    clusters::T_clusters
+    k::T_k
+    max_num_assets_kurt::T_max_num_assets_kurt
+    max_num_assets_kurt_scale::T_max_num_assets_kurt_scale
+    kurt::T_kurt
+    skurt::T_skurt
+    L_2::T_L_2
+    S_2::T_S_2
+    skew::T_skew
+    V::T_V
+    sskew::T_sskew
+    SV::T_SV
+    f_mu::T_f_mu
+    f_cov::T_f_cov
+    fm_returns::T_fm_returns
+    fm_mu::T_fm_mu
+    fm_cov::T_fm_cov
+    bl_bench_weights::T_bl_bench_weights
+    bl_mu::T_bl_mu
+    bl_cov::T_bl_cov
+    blfm_mu::T_blfm_mu
+    blfm_cov::T_blfm_cov
+    cov_l::T_cov_l
+    cov_u::T_cov_u
+    cov_mu::T_cov_mu
+    cov_sigma::T_cov_sigma
+    d_mu::T_d_mu
+    k_mu::T_k_mu
+    k_sigma::T_k_sigma
+    # Min and max weights
+    w_min::T_w_min
+    w_max::T_w_max
+    # Risk budgetting
+    risk_budget::T_risk_budget
+    f_risk_budget::T_f_risk_budget
+    # Budget and shorting
+    short::T_short
+    long_t::T_long_t
+    long_u::T_long_u
+    short_t::T_short_t
+    short_u::T_short_u
+    min_budget::T_min_budget
+    budget::T_budget
+    max_budget::T_max_budget
+    min_short_budget::T_min_short_budget
+    short_budget::T_short_budget
+    max_short_budget::T_max_short_budget
+    # Cardinality
+    card_scale::T_card_scale
+    card::T_card
+    a_card_ineq::T_a_card_ineq
+    b_card_ineq::T_b_card_ineq
+    a_card_eq::T_a_card_eq
+    b_card_eq::T_b_card_eq
+    # Effective assets
+    nea::T_nea
+    # Linear constraints
+    a_ineq::T_a_ineq
+    b_ineq::T_b_ineq
+    a_eq::T_a_eq
+    b_eq::T_b_eq
+    # Tracking
+    tracking::T_tracking
+    # Turnover
+    turnover::T_turnover
+    # Network
+    network::T_network
+    # Cluster
+    cluster::T_cluster
+    # Centrality
+    a_cent_ineq::T_a_cent_ineq
+    b_cent_ineq::T_b_cent_ineq
+    a_cent_eq::T_a_cent_eq
+    b_cent_eq::T_b_cent_eq
+    # Regularisation
+    l1::T_l1
+    l2::T_l2
+    # Fees
+    long_fees::T_long_fees
+    short_fees::T_short_fees
+    # Rebalance cost
+    rebalance::T_rebalance
+    # Solution
+    model::T_model
+    solvers::T_solvers
+    optimal::T_optimal
+    fail::T_fail
+    limits::T_limits
+    frontier::T_frontier
+    alloc_model::T_alloc_model
+    alloc_solvers::T_alloc_solvers
+    alloc_optimal::T_alloc_optimal
+    alloc_fail::T_alloc_fail
+    alloc_leftover::T_alloc_leftover
+end
+
+function OmniPortfolio(;
+                       # Assets and factors
+                       prices::TimeArray = TimeArray(TimeType[], []),
+                       ret_type::Symbol = :simple, returns::DataFrame = DataFrame(),
+                       ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       timestamps::AbstractVector = Vector{Date}(undef, 0),
+                       assets::AbstractVector = Vector{String}(undef, 0),
+                       f_prices::TimeArray = TimeArray(TimeType[], []),
+                       f_returns::DataFrame = DataFrame(),
+                       f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+                       f_assets::AbstractVector = Vector{String}(undef, 0),
+                       loadings::DataFrame = DataFrame(),
+                       regression_type::Union{<:RegressionType, Nothing} = nothing,
+                       # Statistics
+                       mu_l::Real = Inf, mu::AbstractVector = Vector{Float64}(undef, 0),
+                       cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       clusters::Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
+                                                          Float64[], Int64[], :nothing),
+                       k::Integer = 0, max_num_assets_kurt::Integer = 0,
+                       max_num_assets_kurt_scale::Integer = 2,
+                       kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       L_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+                       S_2::AbstractMatrix = SparseMatrixCSC{Float64, Int}(undef, 0, 0),
+                       skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       SV::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       f_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       f_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       fm_returns::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       fm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       fm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       bl_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       bl_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       blfm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       blfm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       cov_mu::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       k_mu::Real = Inf, k_sigma::Real = Inf,
+                       # Min and max weights
+                       w_min::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                       w_max::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
+                       # Risk budgetting
+                       risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       # Budget and shorting
+                       short::Bool = false,
+                       long_t::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                       long_u::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
+                       short_t::Union{<:Real, <:AbstractVector{<:Real}} = -0.0,
+                       short_u::Union{<:Real, <:AbstractVector{<:Real}} = -0.2,
+                       min_budget::Real = Inf, budget::Real = 1.0, max_budget::Real = Inf,
+                       min_short_budget::Real = -Inf, short_budget::Real = -0.2,
+                       max_short_budget::Real = -Inf,
+                       # Cardinality
+                       card_scale::Real = 1e3, card::Integer = 0,
+                       a_card_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_card_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       a_card_eq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_card_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       # Effective assets
+                       nea::Real = 0.0,
+                       # Linear constraints
+                       a_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       a_eq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       # Tracking
+                       tracking::TrackingErr = NoTracking(),
+                       # Turnover
+                       turnover::AbstractTR = NoTR(),
+                       # Network
+                       network::AdjacencyConstraint = NoAdj(),
+                       # Cluster
+                       cluster::AdjacencyConstraint = NoAdj(),
+                       # Centrality
+                       a_cent_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       b_cent_ineq::Real = 0.0,
+                       a_cent_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       b_cent_eq::Real = 0.0,
+                       # Regularisation
+                       l1::Real = 0.0, l2::Real = 0.0,
+                       # Fees
+                       long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                       short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,) end
+#=
+# Rebalance cost
+rebalance::T_rebalance
+# Solution
+model::T_model
+solvers::T_solvers
+optimal::T_optimal
+fail::T_fail
+limits::T_limits
+frontier::T_frontier
+alloc_model::T_alloc_model
+alloc_solvers::T_alloc_solvers
+alloc_optimal::T_alloc_optimal
+alloc_fail::T_alloc_fail
+alloc_leftover::T_alloc_leftover
+=#
 """
 ```
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
