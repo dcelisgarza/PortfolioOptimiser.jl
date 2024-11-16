@@ -43,6 +43,7 @@ function MIP_constraints(port)
     short_u = port.short_u
     short_t = port.short_t
     if !isinf(short_t) && short
+        scale = port.is_invested_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], binary = true
                        is_invested_short_bool[1:N], binary = true
@@ -58,7 +59,6 @@ function MIP_constraints(port)
                            is_invested_long_float[1:N] .>= 0
                            is_invested_short_float[1:N] .>= 0
                        end)
-            scale = port.is_invested_scale
             @constraints(model,
                          begin
                              is_invested_long_float .<= k
@@ -76,17 +76,16 @@ function MIP_constraints(port)
                              is_invested_short, is_invested_short_float
                          end)
         end
-        scale_t = port.is_invested_threshold_scale
         @constraints(model,
                      begin
                          is_invested .<= 1
                          w .<= is_invested_long .* long_u
                          w .>= is_invested_short .* short_u
                          w .>=
-                         is_invested_long .* long_t - scale_t * (1 - is_invested_long_bool)
+                         is_invested_long .* long_t - scale * (1 - is_invested_long_bool)
                          w .<=
                          is_invested_short .* short_t -
-                         scale_t * (1 - is_invested_short_bool)
+                         scale * (1 - is_invested_short_bool)
                      end)
     else
         @variable(model, is_invested_bool[1:N], binary = true)
@@ -363,24 +362,31 @@ end
 function regularisation(port)
     l1 = port.l1
     l2 = port.l2
+    l1_flag = iszero(l1)
+    l2_flag = iszero(l2)
+
+    if l1_flag && l2_flag
+        @expression(model, l1_l2_reg, 0)
+        return nothing
+    end
 
     model = port.model
     w = model[:w]
 
-    if !iszero(l1)
+    if !l1_flag
         @variable(model, t_l1 >= 0)
         @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
         @expression(model, l1_reg, l1 * t_l1)
     else
-        @variable(model, l1_reg == 0)
+        @expression(model, l1_reg, 0)
     end
 
-    if !iszero(l2)
+    if !l2_flag
         @variable(model, t_l2 >= 0)
         @constraint(model, [t_l2; w] in SecondOrderCone())
         @expression(model, l2_reg, l2 * t_l2)
     else
-        @variable(model, l2_reg == 0)
+        @expression(model, l2_reg, 0)
     end
 
     @expression(model, l1_l2_reg, l1_reg + l2_reg)
@@ -398,7 +404,7 @@ function management_fee(port)
         long_w = model[:long_w]
         @expression(model, long_fee, sum(fees .* long_w))
     else
-        @variable(model, long_fee == 0)
+        @expression(model, long_fee, 0)
     end
 
     if short
@@ -409,11 +415,68 @@ function management_fee(port)
             short_w = model[:short_w]
             @expression(model, short_fee, sum(short_fees .* short_w))
         else
-            @variable(model, short_fee == 0)
+            @expression(model, short_fee, 0)
         end
         @expression(model, management_fee, long_fee + short_fee)
     else
         @expression(model, management_fee, long_fee)
+    end
+
+    return nothing
+end
+function rebalance_cost(port)
+    rebalance = port.rebalance
+    model = port.model
+    if isa(rebalance, NoTR) ||
+       isa(rebalance.val, Real) && iszero(rebalance.val) ||
+       isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
+       isempty(rebalance.w)
+        @expression(model, rebalance_cost, 0)
+        return nothing
+    end
+
+    benchmark = rebalance.w
+    val = rebalance.val
+
+    w = model[:w]
+    k = model[:k]
+    N = length(w)
+
+    @variable(model, t_rebalance[1:N] >= 0)
+    @expression(model, rebalance, w .- benchmark * k)
+    @constraint(model, [i = 1:N], [t_rebalance[i]; rebalance[i]] ∈ MOI.NormOneCone(2))
+    @expression(model, rebalance_cost, sum(val .* t_rebalance))
+
+    return nothing
+end
+function _SDP_constraints(model)
+    w = model[:w]
+    k = model[:k]
+    N = length(w)
+
+    @variable(model, W[1:N, 1:N], Symmetric)
+    @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, k)))
+    @constraint(model, M ∈ PSDCone())
+
+    return nothing
+end
+function SDP_network_constraints(port)
+    network = port.network
+    cluster = port.cluster
+    model = port.model
+    if !(isa(network, SDP) || isa(cluster, SDP))
+        @expression(model, network_penalty, 0)
+        return nothing
+    end
+
+    if !haskey(model, :W)
+        _SDP_constraints(model)
+    end
+
+    if !haskey(model, :sd_risk)
+        @expression(model, network_penalty, network.penalty * tr(W))
+    else
+        @expression(model, network_penalty, 0)
     end
 
     return nothing
@@ -462,44 +525,6 @@ function cluster_constraints(cluster::SDP, port, obj, ::WC)
     _sdp(port, obj)
     W = port.model[:W]
     @constraint(port.model, cluster.A .* W .== 0)
-    return nothing
-end
-function _rebalance_penalty(::Any, model, rebalance)
-    N = length(rebalance.w)
-    @variable(model, t_rebal[1:N] >= 0)
-    w = model[:w]
-    @expression(model, rebal, w .- rebalance.w)
-    @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
-    if !haskey(model, :obj_penalty)
-        @expression(model, obj_penalty, zero(AffExpr))
-    end
-    add_to_expression!(model[:obj_penalty], rebalance_penalty)
-    return nothing
-end
-function _rebalance_penalty(::Sharpe, model, rebalance)
-    N = length(rebalance.w)
-    @variable(model, t_rebal[1:N] >= 0)
-    w = model[:w]
-    k = model[:k]
-    @expression(model, rebal, w .- rebalance.w * k)
-    @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
-    if !haskey(model, :obj_penalty)
-        @expression(model, obj_penalty, zero(AffExpr))
-    end
-    add_to_expression!(model[:obj_penalty], rebalance_penalty)
-    return nothing
-end
-function rebalance_penalty(::NoTR, ::Any, ::Any)
-    return nothing
-end
-function rebalance_penalty(rebalance::TR, port, obj)
-    if !(isa(rebalance.val, Real) && iszero(rebalance.val) ||
-         isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
-         isempty(rebalance.w))
-        _rebalance_penalty(obj, port.model, port.rebalance)
-    end
     return nothing
 end
 
@@ -878,6 +903,44 @@ function L2_reg(port)
             @expression(model, obj_penalty, zero(AffExpr))
         end
         add_to_expression!(model[:obj_penalty], l2_reg)
+    end
+    return nothing
+end
+function _rebalance_penalty(::Any, model, rebalance)
+    N = length(rebalance.w)
+    @variable(model, t_rebal[1:N] >= 0)
+    w = model[:w]
+    @expression(model, rebal, w .- rebalance.w)
+    @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    if !haskey(model, :obj_penalty)
+        @expression(model, obj_penalty, zero(AffExpr))
+    end
+    add_to_expression!(model[:obj_penalty], rebalance_penalty)
+    return nothing
+end
+function _rebalance_penalty(::Sharpe, model, rebalance)
+    N = length(rebalance.w)
+    @variable(model, t_rebal[1:N] >= 0)
+    w = model[:w]
+    k = model[:k]
+    @expression(model, rebal, w .- rebalance.w * k)
+    @constraint(model, [i = 1:N], [t_rebal[i]; rebal[i]] ∈ MOI.NormOneCone(2))
+    @expression(model, rebalance_penalty, sum(rebalance.val .* t_rebal))
+    if !haskey(model, :obj_penalty)
+        @expression(model, obj_penalty, zero(AffExpr))
+    end
+    add_to_expression!(model[:obj_penalty], rebalance_penalty)
+    return nothing
+end
+function rebalance_penalty(::NoTR, ::Any, ::Any)
+    return nothing
+end
+function rebalance_penalty(rebalance::TR, port, obj)
+    if !(isa(rebalance.val, Real) && iszero(rebalance.val) ||
+         isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
+         isempty(rebalance.w))
+        _rebalance_penalty(obj, port.model, port.rebalance)
     end
     return nothing
 end
