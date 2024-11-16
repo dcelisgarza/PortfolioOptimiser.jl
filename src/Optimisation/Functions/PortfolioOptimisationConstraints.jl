@@ -9,8 +9,8 @@ function MIP_constraints(port)
     card_flag = size(port.returns, 2) > port.card > 0
     gcard_ineq_flag = !(isempty(port.a_card_ineq) || isempty(port.b_card_ineq))
     gcard_eq_flag = !(isempty(port.a_card_eq) || isempty(port.b_card_eq))
-    ntwk_flag = isa(port.network, IP)
-    clst_flag = isa(port.cluster, IP)
+    ntwk_flag = isa(port.network_adj, IP)
+    clst_flag = isa(port.cluster_adj, IP)
 
     if !(card_flag || gcard_ineq_flag || gcard_eq_flag || ntwk_flag || clst_flag)
         return nothing
@@ -137,8 +137,8 @@ function MIP_constraints(port)
     ## Network cardinality
     =#
     if ntwk_flag
-        A = port.network.A
-        k = port.network.k
+        A = port.network_adj.A
+        k = port.network_adj.k
         @constraint(model, A * is_invested_bool .<= k)
     end
 
@@ -146,8 +146,8 @@ function MIP_constraints(port)
     ## Cluster cardinality
     =#
     if clst_flag
-        A = port.cluster.A
-        k = port.cluster.k
+        A = port.cluster_adj.A
+        k = port.cluster_adj.k
         @constraint(model, A * is_invested_bool .<= k)
     end
 
@@ -445,7 +445,7 @@ function _SDP_constraints(model)
     return nothing
 end
 function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
-    network_cluster = ntwk_flag ? port.network : port.cluster
+    network_cluster = ntwk_flag ? port.network_adj : port.cluster_adj
     model = port.model
     if !isa(network_cluster, SDP)
         return nothing
