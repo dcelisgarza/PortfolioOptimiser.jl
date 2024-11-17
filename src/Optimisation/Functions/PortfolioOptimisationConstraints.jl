@@ -6,12 +6,19 @@ function MIP_constraints(port)
 
     Flags for deciding whether the problem is MIP.
     =#
-    card_flag = size(port.returns, 2) > port.card > 0
-    gcard_ineq_flag = !(isempty(port.a_card_ineq) || isempty(port.b_card_ineq))
-    gcard_eq_flag = !(isempty(port.a_card_eq) || isempty(port.b_card_eq))
-    ntwk_flag = isa(port.network_adj, IP)
-    clst_flag = isa(port.cluster_adj, IP)
+    card = port.card
+    a_card_ineq = port.a_card_ineq
+    b_card_ineq = port.b_card_ineq
+    a_card_eq = port.a_card_eq
+    b_card_eq = port.b_card_eq
+    network_adj = port.network_adj
+    cluster_adj = port.cluster_adj
 
+    card_flag = size(port.returns, 2) > card > 0
+    gcard_ineq_flag = !(isempty(a_card_ineq) || isempty(b_card_ineq))
+    gcard_eq_flag = !(isempty(a_card_eq) || isempty(b_card_eq))
+    ntwk_flag = isa(network_adj, IP)
+    clst_flag = isa(cluster_adj, IP)
     if !(card_flag || gcard_ineq_flag || gcard_eq_flag || ntwk_flag || clst_flag)
         return nothing
     end
@@ -38,18 +45,18 @@ function MIP_constraints(port)
         - Extra variables are needed.
     =#
     short = port.short
-    long_t = port.long_t
+    long_l = port.long_l
     long_u = port.long_u
-    short_t = port.short_t
+    short_l = port.short_l
     short_u = port.short_u
-    if !iszero(short_t) && short
+    if !iszero(short_l) && short
         scale = port.card_scale
         @variables(model, begin
-                       is_invested_long_bool[1:N], binary = true
-                       is_invested_short_bool[1:N], binary = true
+                       is_invested_long_bool[1:N], (binary = true)
+                       is_invested_short_bool[1:N], (binary = true)
                    end)
         @expression(model, is_invested_bool, is_invested_long_bool + is_invested_short_bool)
-        if is_fixed(k)
+        if isa(k, Real)
             @expressions(model, begin
                              is_invested_long, is_invested_long_bool
                              is_invested_short, is_invested_short_bool
@@ -82,14 +89,14 @@ function MIP_constraints(port)
                          w .<= is_invested_long .* long_u
                          w .>= is_invested_short .* short_u
                          w .>=
-                         is_invested_long .* long_t - scale * (1 - is_invested_long_bool)
+                         is_invested_long .* long_l - scale * (1 - is_invested_long_bool)
                          w .<=
-                         is_invested_short .* short_t -
+                         is_invested_short .* short_l -
                          scale * (1 - is_invested_short_bool)
                      end)
     else
         @variable(model, is_invested_bool[1:N], binary = true)
-        if is_fixed(k)
+        if isa(k, Real)
             @expression(model, is_invested, is_invested_bool)
         else
             @variable(model, is_invested_float[1:N] .>= 0)
@@ -103,8 +110,8 @@ function MIP_constraints(port)
             @expression(model, is_invested, is_invested_float)
         end
         @constraint(model, w .<= is_invested .* long_u)
-        if !iszero(long_t)
-            @constraint(model, w .>= is_invested .* long_t)
+        if !iszero(long_l)
+            @constraint(model, w .>= is_invested .* long_l)
         end
         if short
             @constraint(model, w .>= is_invested .* short_u)
@@ -115,7 +122,6 @@ function MIP_constraints(port)
     ## Portfolio cardinality
     =#
     if card_flag
-        card = port.card
         @constraint(model, sum(is_invested_bool) <= card)
     end
 
@@ -123,32 +129,28 @@ function MIP_constraints(port)
     ## Group cardinality
     =#
     if gcard_ineq_flag
-        A = port.a_card_ineq
-        B = port.b_card_ineq
-        @constraint(model, A * is_invested_bool .>= B)
+        @constraint(model, a_card_ineq * is_invested_bool .>= b_card_ineq)
     end
     if gcard_eq_flag
-        A = port.a_card_eq
-        B = port.b_card_eq
-        @constraint(model, A * is_invested_bool .== B)
+        @constraint(model, a_card_eq * is_invested_bool .== b_card_eq)
     end
 
     #=
     ## Network cardinality
     =#
     if ntwk_flag
-        A = port.network_adj.A
-        k = port.network_adj.k
-        @constraint(model, A * is_invested_bool .<= k)
+        ntwk_A = network_adj.A
+        ntwk_k = network_adj.k
+        @constraint(model, ntwk_A * is_invested_bool .<= ntwk_k)
     end
 
     #=
     ## Cluster cardinality
     =#
     if clst_flag
-        A = port.cluster_adj.A
-        k = port.cluster_adj.k
-        @constraint(model, A * is_invested_bool .<= k)
+        clst_A = cluster_adj.A
+        clst_k = cluster_adj.k
+        @constraint(model, clst_A * is_invested_bool .<= clst_k)
     end
 
     return nothing

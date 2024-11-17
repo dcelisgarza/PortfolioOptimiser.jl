@@ -7,7 +7,8 @@ optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
           str_names::Bool = false)
 ```
 """
-function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
+function optimise!(port::Union{Portfolio, OmniPortfolio};
+                   rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),

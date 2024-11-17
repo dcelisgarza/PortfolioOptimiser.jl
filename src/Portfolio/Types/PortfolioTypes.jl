@@ -23,7 +23,7 @@ mutable struct OmniPortfolio{
                              # Risk budgetting
                              T_risk_budget, T_f_risk_budget,
                              # Budget and shorting
-                             T_short, T_long_t, T_long_u, T_short_t, T_short_u,
+                             T_short, T_long_l, T_long_u, T_short_l, T_short_u,
                              T_min_budget, T_budget, T_max_budget, T_min_short_budget,
                              T_short_budget, T_max_short_budget,
                              # Cardinality
@@ -88,9 +88,9 @@ mutable struct OmniPortfolio{
     f_risk_budget::T_f_risk_budget
     # Budget and shorting
     short::T_short
-    long_t::T_long_t
+    long_l::T_long_l
     long_u::T_long_u
-    short_t::T_short_t
+    short_l::T_short_l
     short_u::T_short_u
     min_budget::T_min_budget
     budget::T_budget
@@ -186,9 +186,12 @@ function risk_budget_assert(risk_budget, n::Integer, name = "")
     return risk_budget
 end
 function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Integer,
-                               name = "")
+                               name = "", f = >=, val = 0.0)
     if isa(x, AbstractVector) && !isempty(x)
         @smart_assert(length(x) == n, "Length of $name must be equal to $n")
+        @smart_assert(all(f.(x, val)))
+    elseif isa(x, Real)
+        @smart_assert(f(x, val))
     end
     return nothing
 end
@@ -222,7 +225,6 @@ function short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_
             @smart_assert(max_budget >= min_budget)
         end
     end
-
     return nothing
 end
 function linear_constraint_assert(A::AbstractMatrix, B::AbstractVector, n::Integer,
@@ -234,7 +236,95 @@ function linear_constraint_assert(A::AbstractMatrix, B::AbstractVector, n::Integ
     end
     return nothing
 end
-
+function tracking_assert(tracking, t, n)
+    if !isa(tracking, NoTracking)
+        @smart_assert(tracking.err >= zero(tracking.err))
+        if isa(tracking, TrackRet)
+            @smart_assert(length(tracking.w) == t)
+        else
+            @smart_assert(length(tracking.w) == n)
+        end
+    end
+    return nothing
+end
+function tr_assert(tr, n::Integer)
+    if isa(tr, TR)
+        if isa(tr.val, Real)
+            @smart_assert(tr.val >= zero(tr.val))
+        elseif isa(tr.val, AbstractVector) && !isempty(tr.val)
+            @smart_assert(length(tr.val) == n && all(tr.val .>= zero(tr.val)))
+        end
+        if !isempty(tr.w)
+            @smart_assert(length(tr.w) == n)
+        end
+    end
+    return nothing
+end
+function adj_assert(adj, n::Integer)
+    if !isa(adj, NoAdj) && !isempty(adj.A)
+        if isa(adj, IP)
+            @smart_assert(size(adj.A, 2) == n)
+        else
+            @smart_assert(size(adj.A) == (n, n))
+        end
+    end
+end
+function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_budget, short,
+                                  short_l, short_u, min_short_budget, short_budget,
+                                  max_short_budget)
+    real_or_vector_assert(long_l, N, :long_l, >=, 0)
+    real_or_vector_assert(long_u, N, :long_u, >=, 0)
+    @smart_assert(long_l <= long_u)
+    min_budget_flag = isfinite(min_budget)
+    budget_flag = isfinite(budget)
+    max_budget_flag = isfinite(max_budget)
+    budget, budget_flag = set_default_budget(budget, 1.0, min_budget_flag, budget_flag,
+                                             max_budget_flag)
+    if short
+        real_or_vector_assert(short_l, N, :short_l, <=, 0)
+        real_or_vector_assert(short_u, N, :short_u, <=, 0)
+        @smart_assert(short_u <= short_l)
+        min_short_budget_flag = isfinite(min_short_budget)
+        short_budget_flag = isfinite(short_budget)
+        max_short_budget_flag = isfinite(max_short_budget)
+        short_budget, short_budget_flag = set_default_budget(budget, -0.2, min_budget_flag,
+                                                             budget_flag, max_budget_flag)
+        if short_budget_flag
+            short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                                budget, max_budget, short_budget, long_u, short_u,
+                                :short_budget)
+        else
+            if min_short_budget_flag
+                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
+                                    min_budget, budget, max_budget, min_short_budget,
+                                    long_u, short_u, :min_short_budget)
+            end
+            if max_short_budget_flag
+                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
+                                    min_budget, budget, max_budget, max_short_budget,
+                                    long_u, short_u, :max_short_budget)
+            end
+            if min_short_budget_flag && max_short_budget_flag
+                @smart_assert(max_short_budget <= min_short_budget)
+            end
+        end
+    else
+        if budget_flag
+            @smart_assert(all(budget .>= long_u .>= 0))
+        else
+            if min_budget_flag
+                @smart_assert(all(min_budget .>= long_u .>= 0))
+            end
+            if max_budget_flag
+                @smart_assert(all(max_budget .>= long_u .>= 0))
+            end
+            if min_budget_flag && max_budget_flag
+                @smart_assert(max_budget >= min_budget)
+            end
+        end
+    end
+    return budget, short_budget
+end
 function OmniPortfolio(;
                        # Assets and factors
                        prices::TimeArray = TimeArray(TimeType[], []),
@@ -291,9 +381,9 @@ function OmniPortfolio(;
                        f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                        # Budget and shorting
                        short::Bool = false,
-                       long_t::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                       long_l::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                        long_u::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
-                       short_t::Union{<:Real, <:AbstractVector{<:Real}} = -0.0,
+                       short_l::Union{<:Real, <:AbstractVector{<:Real}} = -0.0,
                        short_u::Union{<:Real, <:AbstractVector{<:Real}} = -0.2,
                        min_budget::Real = Inf, budget::Real = 1.0, max_budget::Real = Inf,
                        min_short_budget::Real = -Inf, short_budget::Real = -0.2,
@@ -351,11 +441,11 @@ function OmniPortfolio(;
     end
     f_assets, f_timestamps, f_returns = setup_returns_assets_timestamps(f_returns, f_assets,
                                                                         f_timestamps, f_ret)
-    T, N = size(ret)
-    Tf, Nf = size(f_ret)
+    T, N = size(returns)
+    Tf, Nf = size(f_returns)
     vector_assert(latest_prices, N, :latest_prices)
     if !isempty(f_ret)
-        @smart_assert(T, Tf)
+        @smart_assert(T == Tf)
     end
     # Statistics
     vector_assert(mu, N, :mu)
@@ -420,64 +510,38 @@ function OmniPortfolio(;
     risk_budget = risk_budget_assert(risk_budget, N, :risk_budget)
     f_risk_budget = risk_budget_assert(f_risk_budget, Nf, :f_risk_budget)
     # Budget and shorting
-    real_or_vector_assert(long_t, N, :long_t)
-    real_or_vector_assert(long_u, N, :long_u)
-    real_or_vector_assert(short_t, N, :short_t)
-    real_or_vector_assert(short_u, N, :short_u)
-    min_budget_flag = isfinite(min_budget)
-    budget_flag = isfinite(budget)
-    max_budget_flag = isfinite(max_budget)
-    budget, budget_flag = set_default_budget(budget, 1.0, min_budget_flag, budget_flag,
-                                             max_budget_flag)
-    if short
-        min_short_budget_flag = isfinite(min_short_budget)
-        short_budget_flag = isfinite(short_budget)
-        max_short_budget_flag = isfinite(max_short_budget)
-        short_budget, short_budget_flag = set_default_budget(budget, -0.2, min_budget_flag,
-                                                             budget_flag, max_budget_flag)
-        if short_budget_flag
-            short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                                budget, max_budget, short_budget, long_u, short_u,
-                                :short_budget)
-        else
-            if min_short_budget_flag
-                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
-                                    min_budget, budget, max_budget, min_short_budget,
-                                    long_u, short_u, :min_short_budget)
-            end
-            if max_short_budget_flag
-                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
-                                    min_budget, budget, max_budget, max_short_budget,
-                                    long_u, short_u, :max_short_budget)
-            end
-            if min_short_budget_flag && max_short_budget_flag
-                @smart_assert(max_short_budget <= min_short_budget)
-            end
-        end
-    else
-        if budget_flag
-            @smart_assert(all(budget .>= long_u .>= 0))
-        else
-            if min_budget_flag
-                @smart_assert(all(min_budget .>= long_u .>= 0))
-            end
-            if max_budget_flag
-                @smart_assert(all(max_budget .>= long_u .>= 0))
-            end
-            if min_budget_flag && max_budget_flag
-                @smart_assert(max_budget >= min_budget)
-            end
-        end
-    end
+    budget, short_budget = long_short_budget_assert(N, long_l, long_u, min_budget, budget,
+                                                    max_budget, short, short_l, short_u,
+                                                    min_short_budget, short_budget,
+                                                    max_short_budget)
     # Cardinality
     @smart_assert(card >= zero(card))
     linear_constraint_assert(a_card_ineq, b_card_ineq, N, "card_ineq")
     linear_constraint_assert(a_card_eq, b_card_eq, N, "card_eq")
     # Effective assets
-    @smart_assert(nea >= 0.0)
+    @smart_assert(nea >= zero(nea))
     # Linear constraints
     linear_constraint_assert(a_ineq, b_ineq, N, "ineq")
     linear_constraint_assert(a_eq, b_eq, N, "eq")
+    # Tracking
+    tracking_assert(tracking, T, N)
+    # Turnover
+    tr_assert(turnover, N)
+    # Adjacency
+    adj_assert(network_adj, N)
+    adj_assert(cluster_adj, N)
+    # Centrality
+    vector_assert(a_cent_ineq, N, :a_cent_ineq)
+    @smart_assert(b_cent_ineq >= zero(b_cent_ineq))
+    vector_assert(a_cent_eq, N, :a_cent_eq)
+    @smart_assert(b_cent_eq >= zero(b_cent_eq))
+    # Regularisation
+    @smart_assert(l1 >= zero(l1))
+    @smart_assert(l2 >= zero(l2))
+    # Fees
+    real_or_vector_assert(long_fees, N, :long_fees, >=, 0)
+    real_or_vector_assert(short_fees, N, :short_fees, >=, 0)
+    tr_assert(rebalance, N)
 
     return OmniPortfolio{
                          # Assets and factors
@@ -560,8 +624,8 @@ function OmniPortfolio(;
                                                                     risk_budget,
                                                                     f_risk_budget,
                                                                     # Budget and shorting
-                                                                    short, long_t, long_u,
-                                                                    short_t, short_u,
+                                                                    short, long_l, long_u,
+                                                                    short_l, short_u,
                                                                     min_budget, budget,
                                                                     max_budget,
                                                                     min_short_budget,
@@ -603,6 +667,186 @@ function OmniPortfolio(;
                                                                     alloc_fail,
                                                                     alloc_walking)
 end
+function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
+    if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu,
+              :a_cent_ineq, :a_cent_eq)
+        vector_assert(val, size(obj.returns, 2), sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_mu
+        vector_assert(val, size(obj.f_returns, 2), sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:cov, :cor, :dist, :V, :SV, :fm_cov, :bl_cov, :blfm_cov, :cov_l, :cov_u,
+                  :cov_mu)
+        N = size(obj.returns, 2)
+        matrix_assert(val, N, N, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :b_cent_ineq, :b_cent_eq, :l1, :l2)
+        @smart_assert(val >= zero(val))
+    elseif sym ∈ (:kurt, :skurt, :cov_sigma)
+        N = size(obj.returns, 2)
+        matrix_assert(val, N^2, N^2, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:L_2, :S_2)
+        N = size(obj.returns, 2)
+        matrix_assert(val, Int(N * (N + 1) / 2), N^2, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym ∈ (:skew, :sskew)
+        N = size(obj.returns, 2)
+        matrix_assert(val, N, N^2, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_cov
+        Nf = size(obj.f_returns, 2)
+        matrix_assert(val, Nf, Nf, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :fm_returns
+        T, N = size(obj.returns)
+        matrix_assert(val, T, N, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_ret
+        if !isempty(val)
+            T = size(obj.returns, 1)
+            @smart_assert(size(obj.returns, 1) == size(val, 1))
+        end
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :max_num_assets_kurt_scale
+        N = size(obj.returns, 2)
+        val = clamp(val, 1, N)
+    elseif sym == :w_min
+        if isa(val, Real)
+            if isa(obj.w_max, Real)
+                @smart_assert(val <= obj.w_max)
+            elseif !isempty(obj.w_max)
+                @smart_assert(all(val .<= obj.w_max))
+            end
+        elseif isa(val, AbstractVector)
+            if !isempty(val)
+                @smart_assert(length(val) == size(obj.returns, 2))
+                if isa(obj.w_max, Real) || !isempty(obj.w_max)
+                    @smart_assert(all(val .<= obj.w_max))
+                end
+            end
+        end
+    elseif sym == :w_max
+        if isa(val, Real)
+            if isa(obj.w_min, Real)
+                @smart_assert(val >= obj.w_min)
+            elseif !isempty(obj.w_min)
+                @smart_assert(all(val .>= obj.w_min))
+            end
+        elseif isa(val, AbstractVector)
+            if !isempty(val)
+                @smart_assert(length(val) == size(obj.returns, 2))
+                if isa(obj.w_min, Real) || !isempty(obj.w_min)
+                    @smart_assert(all(val .>= obj.w_min))
+                end
+            end
+        end
+    elseif sym == :risk_budget
+        N = size(obj.returns, 2)
+        val = risk_budget_assert(val, N, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :f_risk_budget
+        Nf = size(obj.f_returns, 2)
+        val = risk_budget_assert(val, Nf, sym)
+        val = convert(typeof(getfield(obj, sym)), val)
+    elseif sym == :long_l
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, val, obj.long_u, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
+                                 obj.min_short_budget, obj.short_budget,
+                                 obj.max_short_budget)
+    elseif sym == :long_u
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, val, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
+                                 obj.min_short_budget, obj.short_budget,
+                                 obj.max_short_budget)
+    elseif sym == :min_budget
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, val, obj.budget, obj.max_budget,
+                                 obj.short, obj.short_l, obj.short_u, obj.min_short_budget,
+                                 obj.short_budget, obj.max_short_budget)
+    elseif sym == :budget
+        N = size(obj.returns, 2)
+        val = long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, val,
+                                       obj.max_budget, obj.short, obj.short_l, obj.short_u,
+                                       obj.min_short_budget, obj.short_budget,
+                                       obj.max_short_budget)[1]
+    elseif sym == :max_budget
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget, val,
+                                 obj.short, obj.short_l, obj.short_u, obj.min_short_budget,
+                                 obj.short_budget, obj.max_short_budget)
+    elseif sym == :short_l
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, val, obj.short_u,
+                                 obj.min_short_budget, obj.short_budget,
+                                 obj.max_short_budget)
+    elseif sym == :short_u
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, obj.short_l, val,
+                                 obj.min_short_budget, obj.short_budget,
+                                 obj.max_short_budget)
+    elseif sym == :min_short_budget
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, obj.short_l, obj.short_u, val,
+                                 obj.short_budget, obj.max_short_budget)
+    elseif sym == :short_budget
+        N = size(obj.returns, 2)
+        val = long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget,
+                                       obj.budget, obj.max_budget, obj.short, obj.short_l,
+                                       obj.short_u, obj.min_short_budget, val,
+                                       obj.max_short_budget)
+    elseif sym == :max_short_budget
+        N = size(obj.returns, 2)
+        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
+                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
+                                 obj.min_short_budget, obj.short_budget, val)
+    elseif sym == :a_card_ineq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(val, obj.b_card_ineq, N, "card_ineq")
+    elseif sym == :b_card_ineq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(obj.a_card_ineq, val, N, "card_ineq")
+    elseif sym == :a_card_eq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(val, obj.b_card_eq, N, "card_eq")
+    elseif sym == :b_card_eq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(obj.a_card_eq, :b_card_eq, N, "card_eq")
+    elseif sym == :a_ineq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(val, obj.b_ineq, N, "ineq")
+    elseif sym == :b_ineq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(obj.a_ineq, val, N, "ineq")
+    elseif sym == :a_eq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(val, obj.b_eq, N, "eq")
+    elseif sym == :b_eq
+        N = size(obj.returns, 2)
+        linear_constraint_assert(obj.a_eq, :b_eq, N, "eq")
+    elseif sym == :tracking
+        T, N = size(obj.returns)
+        tracking_assert(val, T, N)
+    elseif sym == :turnover
+        N = size(obj.returns, 2)
+        tr_assert(val, N)
+    elseif sym ∈ (:network_adj, :cluster_adj)
+        N = size(obj.returns, 2)
+        adj_assert(val, N)
+    end
+    return setfield!(obj, sym, val)
+end
+export OmniPortfolio
+#=
+N = size(obj.returns, 2)
+long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget, obj.max_budget, obj.short,
+obj.short_l, obj.short_u, obj.min_short_budget, obj.short_budget,obj.max_short_budget)
+=#
 """
 ```
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
@@ -1195,11 +1439,11 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
     end
     if isa(tracking_err, TrackWeight)
         @smart_assert(length(tracking_err.w) == size(returns, 2))
-        @smart_assert(length(tracking_err.err) >= zero(tracking_err.err))
+        @smart_assert(tracking_err.err >= zero(tracking_err.err))
     end
     if isa(tracking_err, TrackRet)
-        @smart_assert(length(tracking_err.w) == size(returns, 1))
-        @smart_assert(length(tracking_err.err) >= zero(tracking_err.err))
+        @smart_assert(tracking_err.w == size(returns, 1))
+        @smart_assert(tracking_err.err >= zero(tracking_err.err))
     end
     if !isa(network_adj, NoAdj) && !isempty(network_adj.A)
         if isa(network_adj, IP)

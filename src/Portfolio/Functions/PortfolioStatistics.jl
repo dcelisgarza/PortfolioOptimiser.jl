@@ -87,7 +87,7 @@ function asset_statistics!(port::AbstractPortfolio;
         port.sskew, port.SV = coskew(sskew_type, returns, mu)
     end
 
-    if isa(port, HCPortfolio)
+    if isa(port, HCPortfolio) || isa(port, OmniPortfolio)
         if set_cor || set_dist
             rho = Matrix(cor(cor_type, returns))
             if set_cor
