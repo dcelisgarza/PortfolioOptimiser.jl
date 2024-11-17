@@ -153,19 +153,17 @@ function MIP_constraints(port)
 
     return nothing
 end
-function _long_w_budget(budget_flag, max_budget_flag, min_budget_flag, min_budget, budget,
+function _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget, budget,
                         max_budget, short_budget, model, k, long_w)
-    if !budget_flag
+    if budget_flag
         @constraint(model, sum(long_w) == (budget - short_budget) * k)
-    end
-    if !max_budget_flag && budget_flag
-        @constraint(model, sum(long_w) <= (max_budget - short_budget) * k)
-    end
-    if !min_budget_flag && budget_flag
-        @constraint(model, sum(long_w) >= (min_budget - short_budget) * k)
-    end
-    if !budget_flag && !max_budget_flag && !min_budget_flag
-        @constraint(model, sum(long_w) == (1 - short_budget) * k)
+    else
+        if min_budget_flag
+            @constraint(model, sum(long_w) >= (min_budget - short_budget) * k)
+        end
+        if max_budget_flag
+            @constraint(model, sum(long_w) <= (max_budget - short_budget) * k)
+        end
     end
 
     return nothing
@@ -184,20 +182,18 @@ function weight_constraints(port)
     min_budget = port.min_budget
     budget = port.budget
     max_budget = port.max_budget
+    min_budget_flag = isfinite(min_budget)
     budget_flag = isfinite(budget)
     max_budget_flag = isfinite(max_budget)
-    min_budget_flag = isfinite(min_budget)
     if budget_flag
         @constraint(model, sum(w) == budget * k)
-    end
-    if max_budget_flag && !budget_flag
-        @constraint(model, sum(w) <= max_budget * k)
-    end
-    if min_budget_flag && !budget_flag
-        @constraint(model, sum(w) >= min_budget * k)
-    end
-    if !budget_flag && !max_budget_flag && !min_budget_flag
-        @constraint(model, sum(w) == 1 * k)
+    else
+        if min_budget_flag
+            @constraint(model, sum(w) >= min_budget * k)
+        end
+        if max_budget_flag
+            @constraint(model, sum(w) <= max_budget * k)
+        end
     end
 
     #=
@@ -235,28 +231,24 @@ function weight_constraints(port)
         #=
         ## Long-short portfolio budget constraints
         =#
+        min_short_budget_flag = isfinite(min_short_budget)
         short_budget_flag = isfinite(short_budget)
         max_short_budget_flag = isfinite(max_short_budget)
-        min_short_budget_flag = isfinite(min_short_budget)
         if short_budget_flag
             @constraint(model, sum(short_w) == short_budget * k)
-            _long_w_budget(budget_flag, max_budget_flag, min_budget_flag, min_budget,
+            _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
                            budget, max_budget, short_budget, model, k, long_w)
-        end
-        if max_short_budget_flag && !short_budget_flag
-            @constraint(model, sum(short_w) >= max_short_budget * k)
-            _long_w_budget(budget_flag, max_budget_flag, min_budget_flag, min_budget,
-                           budget, max_budget, max_short_budget, model, k, long_w)
-        end
-        if min_short_budget_flag && !short_budget_flag
-            @constraint(model, sum(short_w) <= min_short_budget * k)
-            _long_w_budget(budget_flag, max_budget_flag, min_budget_flag, min_budget,
-                           budget, max_budget, min_short_budget, model, k, long_w)
-        end
-        if !short_budget_flag && !max_short_budget_flag && !min_short_budget_flag
-            @constraint(model, sum(short_w) == -0.2 * k)
-            _long_w_budget(budget_flag, max_budget_flag, min_budget_flag, min_budget,
-                           budget, max_budget, -0.2, model, k, long_w)
+        else
+            if min_short_budget_flag
+                @constraint(model, sum(short_w) <= min_short_budget * k)
+                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                               budget, max_budget, min_short_budget, model, k, long_w)
+            end
+            if max_short_budget_flag
+                @constraint(model, sum(short_w) >= max_short_budget * k)
+                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                               budget, max_budget, max_short_budget, model, k, long_w)
+            end
         end
     end
 

@@ -147,16 +147,94 @@ mutable struct OmniPortfolio{
     alloc_walking::T_alloc_walking
 end
 
+function setup_returns_assets_timestamps(returns, assets, timestamps, ret)
+    if !isempty(returns)
+        assets = setdiff(names(returns), ("timestamp",))
+        timestamps = returns[!, "timestamp"]
+        returns = Matrix(returns[!, assets])
+    else
+        @smart_assert(length(assets) == size(ret, 2))
+        returns = ret
+    end
+    return assets, timestamps, returns
+end
 function vector_assert(x::AbstractVector, n::Integer, name = "")
     if !isempty(x)
         @smart_assert(length(x) == n, "Length of $name must be equal to $n")
     end
+    return nothing
 end
 function matrix_assert(x::AbstractMatrix, n1::Integer, n2::Integer, name = "")
     if !isempty(x)
         @smart_assert(size(x) == (n1, n2), "Size of $name must be equal to ($n1, $n2)")
     end
+    return nothing
 end
+function risk_budget_assert(risk_budget, n::Integer, name = "")
+    if !isempty(risk_budget)
+        @smart_assert(length(risk_budget) == n, "Length of $name must be equal to $n")
+        # @smart_assert(all(risk_budget .>= zero(eltype(returns))))
+        # if isa(risk_budget, AbstractRange)
+        #     risk_budget = collect(risk_budget / sum(risk_budget))
+        # else
+        #     risk_budget ./= sum(risk_budget)
+        # end
+        if isa(risk_budget, AbstractRange)
+            risk_budget = collect(risk_budget)
+        end
+    end
+    return risk_budget
+end
+function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Integer,
+                               name = "")
+    if isa(x, AbstractVector) && !isempty(x)
+        @smart_assert(length(x) == n, "Length of $name must be equal to $n")
+    end
+    return nothing
+end
+function set_default_budget(budget, val, min_budget_flag, budget_flag, max_budget_flag)
+    if !min_budget_flag && !budget_flag && !max_budget_flag
+        budget = val
+        budget_flag = true
+    end
+    return budget, budget_flag
+end
+function short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                             budget, max_budget, short_budget, long_u, short_u, name = "")
+    if budget_flag
+        @smart_assert(all(short_budget .<= short_u .<= 0), "all($name .<= short_u .<= 0)")
+        @smart_assert(all(budget .- short_budget .>= long_u .>= 0,
+                          "all(budget .- $name .>= long_u .>= 0"))
+    else
+        if min_budget_flag
+            @smart_assert(all(short_budget .<= short_u .<= 0),
+                          "all($name .<= short_u .<= 0)")
+            @smart_assert(all(min_budget .- short_budget .>= long_u .>= 0),
+                          "all(min_budget .- $name .>= long_u .>= 0)")
+        end
+        if max_budget_flag
+            @smart_assert(all(short_budget .<= short_u .<= 0),
+                          "all($name .<= short_u .<= 0)")
+            @smart_assert(all(max_budget .- short_budget .>= long_u .>= 0),
+                          "all(max_budget .- $name .>= long_u .>= 0)")
+        end
+        if min_budget_flag && max_budget_flag
+            @smart_assert(max_budget >= min_budget)
+        end
+    end
+
+    return nothing
+end
+function linear_constraint_assert(A::AbstractMatrix, B::AbstractVector, n::Integer,
+                                  name = "")
+    if !(isempty(A) || isempty(B))
+        C, N = size(A)
+        @smart_assert(C == length(B) && N == n,
+                      "$name constraints must be consistent with each other and the number of assets $n")
+    end
+    return nothing
+end
+
 function OmniPortfolio(;
                        # Assets and factors
                        prices::TimeArray = TimeArray(TimeType[], []),
@@ -266,31 +344,19 @@ function OmniPortfolio(;
         returns = dropmissing!(DataFrame(percentchange(prices, ret_type)))
         latest_prices = Vector(dropmissing!(DataFrame(prices))[end, colnames(prices)])
     end
-    if !isempty(returns)
-        assets = setdiff(names(returns), ("timestamp",))
-        timestamps = returns[!, "timestamp"]
-        returns = Matrix(returns[!, assets])
-    else
-        @smart_assert(length(assets) == size(ret, 2))
-        returns = ret
-    end
+    assets, timestamps, returns = setup_returns_assets_timestamps(returns, assets,
+                                                                  timestamps, ret)
     if !isempty(f_prices)
         f_returns = dropmissing!(DataFrame(percentchange(f_prices, ret_type)))
     end
-    if !isempty(f_returns)
-        f_assets = setdiff(names(f_returns), ("timestamp",))
-        f_timestamps = f_returns[!, "timestamp"]
-        f_returns = Matrix(f_returns[!, f_assets])
-    else
-        @smart_assert(length(f_assets) == size(f_ret, 2))
-        f_returns = f_ret
-    end
-
+    f_assets, f_timestamps, f_returns = setup_returns_assets_timestamps(f_returns, f_assets,
+                                                                        f_timestamps, f_ret)
     T, N = size(ret)
     Tf, Nf = size(f_ret)
-
     vector_assert(latest_prices, N, :latest_prices)
-
+    if !isempty(f_ret)
+        @smart_assert(T, Tf)
+    end
     # Statistics
     vector_assert(mu, N, :mu)
     matrix_assert(cov, N, N, :cov)
@@ -321,117 +387,222 @@ function OmniPortfolio(;
     matrix_assert(cov_mu, N, N, :cov_mu)
     matrix_assert(cov_sigma, N^2, N^2, :cov_sigma)
     vector_assert(d_mu, N, :d_mu)
+    # Min and max weights
+    if isa(w_min, Real)
+        if isa(w_max, Real)
+            @smart_assert(w_min <= w_max)
+        elseif !isempty(w_max)
+            @smart_assert(all(w_min .<= w_max))
+        end
+    elseif isa(w_min, AbstractVector)
+        if !isempty(w_min)
+            @smart_assert(length(w_min) == N)
+            if isa(w_max, Real) || !isempty(w_max)
+                @smart_assert(all(w_min .<= w_max))
+            end
+        end
+    end
+    if isa(w_max, Real)
+        if isa(w_min, Real)
+            @smart_assert(w_max >= w_min)
+        elseif !isempty(w_min)
+            @smart_assert(all(w_max .>= w_min))
+        end
+    elseif isa(w_max, AbstractVector)
+        if !isempty(w_max)
+            @smart_assert(length(w_max) == N)
+            if isa(w_min, Real) || !isempty(w_min)
+                @smart_assert(all(w_max .>= w_min))
+            end
+        end
+    end
+    # Risk budgetting
+    risk_budget = risk_budget_assert(risk_budget, N, :risk_budget)
+    f_risk_budget = risk_budget_assert(f_risk_budget, Nf, :f_risk_budget)
+    # Budget and shorting
+    real_or_vector_assert(long_t, N, :long_t)
+    real_or_vector_assert(long_u, N, :long_u)
+    real_or_vector_assert(short_t, N, :short_t)
+    real_or_vector_assert(short_u, N, :short_u)
+    min_budget_flag = isfinite(min_budget)
+    budget_flag = isfinite(budget)
+    max_budget_flag = isfinite(max_budget)
+    budget, budget_flag = set_default_budget(budget, 1.0, min_budget_flag, budget_flag,
+                                             max_budget_flag)
+    if short
+        min_short_budget_flag = isfinite(min_short_budget)
+        short_budget_flag = isfinite(short_budget)
+        max_short_budget_flag = isfinite(max_short_budget)
+        short_budget, short_budget_flag = set_default_budget(budget, -0.2, min_budget_flag,
+                                                             budget_flag, max_budget_flag)
+        if short_budget_flag
+            short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                                budget, max_budget, short_budget, long_u, short_u,
+                                :short_budget)
+        else
+            if min_short_budget_flag
+                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
+                                    min_budget, budget, max_budget, min_short_budget,
+                                    long_u, short_u, :min_short_budget)
+            end
+            if max_short_budget_flag
+                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
+                                    min_budget, budget, max_budget, max_short_budget,
+                                    long_u, short_u, :max_short_budget)
+            end
+            if min_short_budget_flag && max_short_budget_flag
+                @smart_assert(max_short_budget <= min_short_budget)
+            end
+        end
+    else
+        if budget_flag
+            @smart_assert(all(budget .>= long_u .>= 0))
+        else
+            if min_budget_flag
+                @smart_assert(all(min_budget .>= long_u .>= 0))
+            end
+            if max_budget_flag
+                @smart_assert(all(max_budget .>= long_u .>= 0))
+            end
+            if min_budget_flag && max_budget_flag
+                @smart_assert(max_budget >= min_budget)
+            end
+        end
+    end
+    # Cardinality
+    @smart_assert(card >= zero(card))
+    linear_constraint_assert(a_card_ineq, b_card_ineq, N, "card_ineq")
+    linear_constraint_assert(a_card_eq, b_card_eq, N, "card_eq")
+    # Effective assets
+    @smart_assert(nea >= 0.0)
+    # Linear constraints
+    linear_constraint_assert(a_ineq, b_ineq, N, "ineq")
+    linear_constraint_assert(a_eq, b_eq, N, "eq")
 
-    return Portfolio{
-                     # Assets and factors
-                     typeof(assets), typeof(timestamps), typeof(returns),
-                     typeof(latest_prices), typeof(f_assets), typeof(f_timestamps),
-                     typeof(f_returns), typeof(loadings), Union{<:RegressionType, Nothing},
-                     # Statistics
-                     typeof(mu_l), typeof(mu), typeof(cov), typeof(cor), typeof(dist),
-                     typeof(clusters), typeof(k), typeof(max_num_assets_kurt),
-                     typeof(max_num_assets_kurt_scale), typeof(kurt), typeof(skurt),
-                     typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
-                     typeof(SV), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
-                     typeof(fm_mu), typeof(fm_cov), typeof(bl_bench_weights), typeof(bl_mu),
-                     typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l),
-                     typeof(cov_u), typeof(cov_mu), typeof(cov_sigma), typeof(d_mu),
-                     typeof(k_mu), typeof(k_sigma),
-                     # Min and max weights
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     # Risk budgetting
-                     typeof(risk_budget), typeof(f_risk_budget),
-                     # Budget and shorting
-                     typeof(short), Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(min_budget),
-                     typeof(budget), typeof(max_budget), typeof(min_short_budget),
-                     typeof(short_budget), typeof(max_short_budget),
-                     # Cardinality
-                     typeof(card_scale), typeof(card), typeof(a_card_ineq),
-                     typeof(b_card_ineq), typeof(a_card_eq), typeof(b_card_eq),
-                     # Effective assets
-                     typeof(nea),
-                     # Linear constraints
-                     typeof(a_ineq), typeof(b_ineq), typeof(a_eq), typeof(b_eq),
-                     # Tracking
-                     typeof(tracking),
-                     # Turnover
-                     typeof(turnover),
-                     # Adjacency
-                     typeof(network_adj), typeof(cluster_adj),
-                     # Centrality
-                     typeof(a_cent_ineq), typeof(b_cent_ineq), typeof(a_cent_eq),
-                     typeof(b_cent_eq),
-                     # Regularisation
-                     typeof(l1), typeof(l2),
-                     # Fees
-                     typeof(long_fees), typeof(short_fees),
-                     # Rebalance cost
-                     typeof(rebalance),
-                     # Solution
-                     typeof(model), typeof(solvers), typeof(optimal), typeof(fail),
-                     typeof(limits), typeof(frontier), typeof(walking), typeof(alloc_model),
-                     typeof(alloc_solvers), typeof(alloc_optimal), typeof(alloc_fail),
-                     typeof(alloc_walking)}(
-                                            # Assets and factors
-                                            assets, timestamps, returns, latest_prices,
-                                            f_assets, f_timestamps, f_returns, loadings,
-                                            regression_type,
-                                            # Statistics
-                                            mu_l, mu, cov, cor, dist, clusters, k,
-                                            max_num_assets_kurt, max_num_assets_kurt_scale,
-                                            kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu,
-                                            f_cov, fm_returns, fm_mu, fm_cov,
-                                            bl_bench_weights, bl_mu, bl_cov, blfm_mu,
-                                            blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu,
-                                            k_mu, k_sigma,
-                                            # Min and max weights
-                                            w_min, w_max,
-                                            # Risk budgetting
-                                            risk_budget, f_risk_budget,
-                                            # Budget and shorting
-                                            short, long_t, long_u, short_t, short_u,
-                                            min_budget, budget, max_budget,
-                                            min_short_budget, short_budget,
-                                            max_short_budget,
-                                            # Cardinality
-                                            card_scale, card, a_card_ineq, b_card_ineq,
-                                            a_card_eq, b_card_eq,
-                                            # Effective assets
-                                            nea,
-                                            # Linear constraints
-                                            a_ineq, b_ineq, a_eq, b_eq,
-                                            # Tracking
-                                            tracking,
-                                            # Turnover
-                                            turnover,
-                                            # Adjacency
-                                            network_adj, cluster_adj,
-                                            # Centrality
-                                            a_cent_ineq, b_cent_ineq, a_cent_eq, b_cent_eq,
-                                            # Regularisation
-                                            l1, l2,
-                                            # Fees
-                                            long_fees, short_fees,
-                                            # Rebalance cost
-                                            rebalance,
-                                            # Solution
-                                            model, solvers, optimal, fail, limits, frontier,
-                                            walking, alloc_model, alloc_solvers,
-                                            alloc_optimal, alloc_fail, alloc_walking)
+    return OmniPortfolio{
+                         # Assets and factors
+                         typeof(assets), typeof(timestamps), typeof(returns),
+                         typeof(latest_prices), typeof(f_assets), typeof(f_timestamps),
+                         typeof(f_returns), typeof(loadings),
+                         Union{<:RegressionType, Nothing},
+                         # Statistics
+                         typeof(mu_l), typeof(mu), typeof(cov), typeof(cor), typeof(dist),
+                         typeof(clusters), typeof(k), typeof(max_num_assets_kurt),
+                         typeof(max_num_assets_kurt_scale), typeof(kurt), typeof(skurt),
+                         typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
+                         typeof(SV), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
+                         typeof(fm_mu), typeof(fm_cov), typeof(bl_bench_weights),
+                         typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
+                         typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
+                         typeof(d_mu), typeof(k_mu), typeof(k_sigma),
+                         # Min and max weights
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         # Risk budgetting
+                         typeof(risk_budget), typeof(f_risk_budget),
+                         # Budget and shorting
+                         typeof(short), Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(min_budget),
+                         typeof(budget), typeof(max_budget), typeof(min_short_budget),
+                         typeof(short_budget), typeof(max_short_budget),
+                         # Cardinality
+                         typeof(card_scale), typeof(card), typeof(a_card_ineq),
+                         typeof(b_card_ineq), typeof(a_card_eq), typeof(b_card_eq),
+                         # Effective assets
+                         typeof(nea),
+                         # Linear constraints
+                         typeof(a_ineq), typeof(b_ineq), typeof(a_eq), typeof(b_eq),
+                         # Tracking
+                         typeof(tracking),
+                         # Turnover
+                         typeof(turnover),
+                         # Adjacency
+                         typeof(network_adj), typeof(cluster_adj),
+                         # Centrality
+                         typeof(a_cent_ineq), typeof(b_cent_ineq), typeof(a_cent_eq),
+                         typeof(b_cent_eq),
+                         # Regularisation
+                         typeof(l1), typeof(l2),
+                         # Fees
+                         typeof(long_fees), typeof(short_fees),
+                         # Rebalance cost
+                         typeof(rebalance),
+                         # Solution
+                         typeof(model), typeof(solvers), typeof(optimal), typeof(fail),
+                         typeof(limits), typeof(frontier), typeof(walking),
+                         typeof(alloc_model), typeof(alloc_solvers), typeof(alloc_optimal),
+                         typeof(alloc_fail), typeof(alloc_walking)}(
+                                                                    # Assets and factors
+                                                                    assets, timestamps,
+                                                                    returns, latest_prices,
+                                                                    f_assets, f_timestamps,
+                                                                    f_returns, loadings,
+                                                                    regression_type,
+                                                                    # Statistics
+                                                                    mu_l, mu, cov, cor,
+                                                                    dist, clusters, k,
+                                                                    max_num_assets_kurt,
+                                                                    max_num_assets_kurt_scale,
+                                                                    kurt, skurt, L_2, S_2,
+                                                                    skew, V, sskew, SV,
+                                                                    f_mu, f_cov, fm_returns,
+                                                                    fm_mu, fm_cov,
+                                                                    bl_bench_weights, bl_mu,
+                                                                    bl_cov, blfm_mu,
+                                                                    blfm_cov, cov_l, cov_u,
+                                                                    cov_mu, cov_sigma, d_mu,
+                                                                    k_mu, k_sigma,
+                                                                    # Min and max weights
+                                                                    w_min, w_max,
+                                                                    # Risk budgetting
+                                                                    risk_budget,
+                                                                    f_risk_budget,
+                                                                    # Budget and shorting
+                                                                    short, long_t, long_u,
+                                                                    short_t, short_u,
+                                                                    min_budget, budget,
+                                                                    max_budget,
+                                                                    min_short_budget,
+                                                                    short_budget,
+                                                                    max_short_budget,
+                                                                    # Cardinality
+                                                                    card_scale, card,
+                                                                    a_card_ineq,
+                                                                    b_card_ineq, a_card_eq,
+                                                                    b_card_eq,
+                                                                    # Effective assets
+                                                                    nea,
+                                                                    # Linear constraints
+                                                                    a_ineq, b_ineq, a_eq,
+                                                                    b_eq,
+                                                                    # Tracking
+                                                                    tracking,
+                                                                    # Turnover
+                                                                    turnover,
+                                                                    # Adjacency
+                                                                    network_adj,
+                                                                    cluster_adj,
+                                                                    # Centrality
+                                                                    a_cent_ineq,
+                                                                    b_cent_ineq, a_cent_eq,
+                                                                    b_cent_eq,
+                                                                    # Regularisation
+                                                                    l1, l2,
+                                                                    # Fees
+                                                                    long_fees, short_fees,
+                                                                    # Rebalance cost
+                                                                    rebalance,
+                                                                    # Solution
+                                                                    model, solvers, optimal,
+                                                                    fail, limits, frontier,
+                                                                    walking, alloc_model,
+                                                                    alloc_solvers,
+                                                                    alloc_optimal,
+                                                                    alloc_fail,
+                                                                    alloc_walking)
 end
-#=
-# Solution
-alloc_model::T_alloc_model
-alloc_solvers::T_alloc_solvers
-alloc_optimal::T_alloc_optimal
-alloc_fail::T_alloc_fail
-alloc_leftover::T_alloc_leftover
-alloc_walking::T_alloc_walking
-=#
 """
 ```
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
