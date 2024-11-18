@@ -71,6 +71,7 @@ function _objective(::Any, obj::MaxRet, ::Any, model)
     @objective(model, Max, obj_func)
     return nothing
 end
+#! add penalty
 function objective_function(port, obj, ::Trad, kelly)
     _objective(Trad(), obj, kelly, port.model)
     return nothing

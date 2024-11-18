@@ -159,13 +159,35 @@ function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     _sharpe_ekelly_constraints(ret, model, obj, k)
     @expression(model, kret, k .+ returns * w)
     @constraint(model, [i = 1:T], [texact_kelly[i], k, kret[i]] ∈ MOI.ExponentialCone())
-
     _return_bounds(port)
 
     return nothing
 end
-function return_constraints2(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+function _add_fees_to_expected_returns(port)
+    model = port.model
+    if !haskey(model, :ret)
+        return nothing
+    end
+
+    ret = model[:ret]
+    if haskey(model, :long_fee)
+        long_fee = model[:long_fee]
+        add_to_expression!(ret, -long_fee)
+    end
+    if haskey(model, :short_fee)
+        short_fee = model[:short_fee]
+        add_to_expression!(ret, -short_fee)
+    end
+    if haskey(model, :rebalance_cost)
+        rebalance_cost = model[:rebalance_cost]
+        add_to_expression!(ret, -rebalance_cost)
+    end
+
+    return nothing
+end
+function expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     _return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+    _add_fees_to_expected_returns(port)
     return nothing
 end
 ###########

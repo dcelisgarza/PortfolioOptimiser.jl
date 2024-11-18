@@ -1,3 +1,36 @@
+# Risk expression
+function _set_risk_expression(model, rm_risk, scale, flag::Bool)
+    if flag
+        if !haskey(model, :risk)
+            @expression(model, risk, scale * rm_risk)
+        else
+            try
+                risk = model[:risk]
+                add_to_expression!(risk, scale, rm_risk)
+            catch
+                risk = model[:risk]
+                @expression(model, tmp, risk + scale * rm_risk)
+                unregister(model, :risk)
+                @expression(model, risk, tmp)
+                unregister(model, :tmp)
+            end
+        end
+    end
+    return nothing
+end
+function _get_ntwk_clust_method(::Trad, port)
+    return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
+        SDP()
+    else
+        NoAdj()
+    end
+end
+function _get_ntwk_clust_method(args...)
+    return NoAdj()
+end
+function _set_rm_risk_upper_bound(args...)
+    return nothing
+end
 function _set_rm_risk_upper_bound(::Trad, model, rm_risk, ub)
     if isfinite(ub)
         k = model[:k]
@@ -115,6 +148,41 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
     end
     return nothing
 end
+function set_rm(port, rm::SD, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
+                kwargs...)
+    use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
+    if !use_portfolio_sigma
+        sigma = rm.sigma
+    end
+    model = port.model
+
+    G = sqrt(sigma)
+    w = model[:w]
+    @variable(model, sd_risk)
+    @constraint(model, [sd_risk; G * w] ∈ SecondOrderCone())
+    _set_rm_risk_upper_bound(type, model, sd_risk, rm.settings.ub)
+    _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP};
+                sigma::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+
+    w = model[:w]
+    count = length(rms)
+    @variable(model, sd_risk[1:count] >= 0)
+    for (i, rm) ∈ pairs(rms)
+        use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
+        if !use_portfolio_sigma
+            sigma = rm.sigma
+        end
+        G = sqrt(sigma)
+        @constraint(model, [sd_risk[i]; G * w] ∈ SecondOrderCone())
+        _set_rm_risk_upper_bound(type, model, sd_risk[i], rm.settings.ub)
+        _set_risk_expression(model, sd_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
 function risk_constraints(port, type::Union{Trad, RP}, rm::RiskMeasure, mu, sigma, returns,
                           kelly_approx_idx = nothing)
     set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
@@ -131,244 +199,7 @@ function risk_constraints(port, type::Union{Trad, RP}, rms::AbstractVector, mu, 
 end
 ############
 ############
-# Risk upper bounds
-function _set_rm_risk_upper_bound(args...)
-    return nothing
-end
-function _set_rm_risk_upper_bound(::Sharpe, ::Trad, model, rm_risk, ub)
-    if isfinite(ub)
-        k = model[:k]
-        @constraint(model, rm_risk .<= ub * k)
-    end
-    return nothing
-end
-function _set_rm_risk_upper_bound(::Any, ::Trad, model, rm_risk, ub)
-    if isfinite(ub)
-        @constraint(model, rm_risk .<= ub)
-    end
-    return nothing
-end
-# SD risk upper bound (special case)
-function _set_sd_risk_upper_bound(args...)
-    return nothing
-end
-function _set_sd_risk_upper_bound(::SDP, ::Sharpe, ::Trad, model, ub)
-    if isfinite(ub)
-        sd_risk = model[:sd_risk]
-        k = model[:k]
-        @constraint(model, sd_risk .<= ub^2 * k)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::SDP, ::Sharpe, ::Trad, model, ub, idx)
-    if isfinite(ub)
-        sd_risk = model[:sd_risk]
-        k = model[:k]
-        @constraint(model, sd_risk[idx] .<= ub^2 * k)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::SDP, ::Any, ::Trad, model, ub)
-    if isfinite(ub)
-        sd_risk = model[:sd_risk]
-        @constraint(model, sd_risk .<= ub^2)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::SDP, ::Any, ::Trad, model, ub, idx)
-    if isfinite(ub)
-        sd_risk = model[:sd_risk]
-        @constraint(model, sd_risk[idx] .<= ub^2)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::Any, ::Sharpe, ::Trad, model, ub)
-    if isfinite(ub)
-        dev = model[:dev]
-        k = model[:k]
-        @constraint(model, dev .<= ub * k)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::Any, ::Sharpe, ::Trad, model, ub, idx)
-    if isfinite(ub)
-        dev = model[:dev]
-        k = model[:k]
-        @constraint(model, dev[idx] .<= ub * k)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::Any, ::Any, ::Trad, model, ub)
-    if isfinite(ub)
-        dev = model[:dev]
-        @constraint(model, dev .<= ub)
-    end
-    return nothing
-end
-function _set_sd_risk_upper_bound(::Any, ::Any, ::Trad, model, ub, idx)
-    if isfinite(ub)
-        dev = model[:dev]
-        @constraint(model, dev[idx] .<= ub)
-    end
-    return nothing
-end
-# Risk expression
-function _set_risk_expression(model, rm_risk, scale, flag::Bool)
-    if flag
-        if !haskey(model, :risk)
-            @expression(model, risk, scale * rm_risk)
-        else
-            try
-                risk = model[:risk]
-                add_to_expression!(risk, scale, rm_risk)
-            catch
-                risk = model[:risk]
-                @expression(model, tmp, risk + scale * rm_risk)
-                unregister(model, :risk)
-                @expression(model, risk, tmp)
-                unregister(model, :tmp)
-            end
-        end
-    end
-    return nothing
-end
-function _sd_risk(::SDP, ::Any, model, sigma)
-    W = model[:W]
-    @expression(model, sd_risk, tr(sigma * W))
-    return nothing
-end
-function _sd_risk(::SDP, model, sigma, count::Integer)
-    @expression(model, sd_risk[1:count], zero(AffExpr))
-    return nothing
-end
-function _sd_risk(::SDP, ::Any, model, sigma, idx::Integer)
-    sd_risk = model[:sd_risk]
-    W = model[:W]
-    add_to_expression!(sd_risk[idx], tr(sigma * W))
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix)
-    G = sqrt(sigma)
-    @variable(model, dev)
-    @expression(model, sd_risk, dev^2)
-    w = model[:w]
-    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, model::JuMP.Model, sigma::AbstractMatrix,
-                  count::Integer)
-    @variable(model, dev[1:count])
-    @expression(model, sd_risk[1:count], zero(QuadExpr))
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix,
-                  idx::Integer)
-    G = sqrt(sigma)
-    sd_risk = model[:sd_risk]
-    dev = model[:dev]
-    add_to_expression!(sd_risk[idx], dev[idx], dev[idx])
-    w = model[:w]
-    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model, sigma)
-    G = sqrt(sigma)
-    @variable(model, dev)
-    w = model[:w]
-    @expression(model, sd_risk, dot(w, sigma, w))
-    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model::JuMP.Model, sigma::AbstractMatrix,
-                  idx::Integer)
-    G = sqrt(sigma)
-    sd_risk = model[:sd_risk]
-    w = model[:w]
-    add_to_expression!(sd_risk[idx], dot(w, sigma, w))
-    dev = model[:dev]
-    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model::JuMP.Model, sigma::AbstractMatrix)
-    G = sqrt(sigma)
-    @variable(model, dev)
-    @expression(model, sd_risk, dev)
-    w = model[:w]
-    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model, sigma, idx::Integer)
-    G = sqrt(sigma)
-    sd_risk = model[:sd_risk]
-    dev = model[:dev]
-    add_to_expression!(sd_risk[idx], dev[idx])
-    w = model[:w]
-    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _get_ntwk_clust_method(::Trad, port)
-    return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
-        SDP()
-    else
-        NoAdj()
-    end
-end
-function _get_ntwk_clust_method(args...)
-    return NoAdj()
-end
-"""
-    set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
-                sigma::AbstractMatrix{<:Real},
-                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
-"""
-function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
-                sigma::AbstractMatrix{<:Real},
-                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
-    use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
-    if !isnothing(kelly_approx_idx) && use_portfolio_sigma
-        if isempty(kelly_approx_idx)
-            push!(kelly_approx_idx, 0)
-        end
-    end
-    if !use_portfolio_sigma
-        sigma = rm.sigma
-    end
-    model = port.model
 
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
-    _sdp(adjacency_constraint, port, obj)
-    _sd_risk(adjacency_constraint, rm.formulation, model, sigma)
-    _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub)
-    sd_risk = model[:sd_risk]
-    _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
-    return nothing
-end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP}, obj;
-                sigma::AbstractMatrix{<:Real},
-                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
-    model = port.model
-
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
-    _sdp(adjacency_constraint, port, obj)
-    count = length(rms)
-    _sd_risk(adjacency_constraint, model, sigma, count)
-    sd_risk = model[:sd_risk]
-    for (i, rm) ∈ pairs(rms)
-        use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
-        if !isnothing(kelly_approx_idx) && use_portfolio_sigma
-            if isempty(kelly_approx_idx)
-                push!(kelly_approx_idx, i)
-            end
-        end
-        if !use_portfolio_sigma
-            sigma = rm.sigma
-        end
-        _sd_risk(adjacency_constraint, rm.formulation, model, sigma, i)
-        _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub, i)
-        _set_risk_expression(model, sd_risk[i], rm.settings.scale, rm.settings.flag)
-    end
-    return nothing
-end
 function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RP}, obj;
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
@@ -1843,6 +1674,213 @@ function risk_constraints(port, obj, type::Union{Trad, RP}, rms::AbstractVector,
     for rm ∈ rms
         set_rm(port, rm, type, obj; mu = mu, sigma = sigma, returns = returns,
                kelly_approx_idx = kelly_approx_idx)
+    end
+    return nothing
+end
+# Risk upper bounds
+function _set_rm_risk_upper_bound(::Sharpe, ::Trad, model, rm_risk, ub)
+    if isfinite(ub)
+        k = model[:k]
+        @constraint(model, rm_risk .<= ub * k)
+    end
+    return nothing
+end
+function _set_rm_risk_upper_bound(::Any, ::Trad, model, rm_risk, ub)
+    if isfinite(ub)
+        @constraint(model, rm_risk .<= ub)
+    end
+    return nothing
+end
+# SD risk upper bound (special case)
+function _set_sd_risk_upper_bound(args...)
+    return nothing
+end
+function _set_sd_risk_upper_bound(::SDP, ::Sharpe, ::Trad, model, ub)
+    if isfinite(ub)
+        sd_risk = model[:sd_risk]
+        k = model[:k]
+        @constraint(model, sd_risk .<= ub^2 * k)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::SDP, ::Sharpe, ::Trad, model, ub, idx)
+    if isfinite(ub)
+        sd_risk = model[:sd_risk]
+        k = model[:k]
+        @constraint(model, sd_risk[idx] .<= ub^2 * k)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::SDP, ::Any, ::Trad, model, ub)
+    if isfinite(ub)
+        sd_risk = model[:sd_risk]
+        @constraint(model, sd_risk .<= ub^2)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::SDP, ::Any, ::Trad, model, ub, idx)
+    if isfinite(ub)
+        sd_risk = model[:sd_risk]
+        @constraint(model, sd_risk[idx] .<= ub^2)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::Any, ::Sharpe, ::Trad, model, ub)
+    if isfinite(ub)
+        dev = model[:dev]
+        k = model[:k]
+        @constraint(model, dev .<= ub * k)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::Any, ::Sharpe, ::Trad, model, ub, idx)
+    if isfinite(ub)
+        dev = model[:dev]
+        k = model[:k]
+        @constraint(model, dev[idx] .<= ub * k)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::Any, ::Any, ::Trad, model, ub)
+    if isfinite(ub)
+        dev = model[:dev]
+        @constraint(model, dev .<= ub)
+    end
+    return nothing
+end
+function _set_sd_risk_upper_bound(::Any, ::Any, ::Trad, model, ub, idx)
+    if isfinite(ub)
+        dev = model[:dev]
+        @constraint(model, dev[idx] .<= ub)
+    end
+    return nothing
+end
+
+function _sd_risk(::SDP, ::Any, model, sigma)
+    W = model[:W]
+    @expression(model, sd_risk, tr(sigma * W))
+    return nothing
+end
+function _sd_risk(::SDP, model, sigma, count::Integer)
+    @expression(model, sd_risk[1:count], zero(AffExpr))
+    return nothing
+end
+function _sd_risk(::SDP, ::Any, model, sigma, idx::Integer)
+    sd_risk = model[:sd_risk]
+    W = model[:W]
+    add_to_expression!(sd_risk[idx], tr(sigma * W))
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix)
+    G = sqrt(sigma)
+    @variable(model, dev)
+    @expression(model, sd_risk, dev^2)
+    w = model[:w]
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, model::JuMP.Model, sigma::AbstractMatrix,
+                  count::Integer)
+    @variable(model, dev[1:count])
+    @expression(model, sd_risk[1:count], zero(QuadExpr))
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model, sigma::AbstractMatrix,
+                  idx::Integer)
+    G = sqrt(sigma)
+    sd_risk = model[:sd_risk]
+    dev = model[:dev]
+    add_to_expression!(sd_risk[idx], dev[idx], dev[idx])
+    w = model[:w]
+    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model, sigma)
+    G = sqrt(sigma)
+    @variable(model, dev)
+    w = model[:w]
+    @expression(model, sd_risk, dot(w, sigma, w))
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::QuadSD, model::JuMP.Model, sigma::AbstractMatrix,
+                  idx::Integer)
+    G = sqrt(sigma)
+    sd_risk = model[:sd_risk]
+    w = model[:w]
+    add_to_expression!(sd_risk[idx], dot(w, sigma, w))
+    dev = model[:dev]
+    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model::JuMP.Model, sigma::AbstractMatrix)
+    G = sqrt(sigma)
+    @variable(model, dev)
+    @expression(model, sd_risk, dev)
+    w = model[:w]
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _sd_risk(::Union{NoAdj, IP}, ::SimpleSD, model, sigma, idx::Integer)
+    G = sqrt(sigma)
+    sd_risk = model[:sd_risk]
+    dev = model[:dev]
+    add_to_expression!(sd_risk[idx], dev[idx])
+    w = model[:w]
+    @constraint(model, [dev[idx]; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+
+"""
+    set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
+                sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+"""
+function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
+                sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+    use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
+    if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+        if isempty(kelly_approx_idx)
+            push!(kelly_approx_idx, 0)
+        end
+    end
+    if !use_portfolio_sigma
+        sigma = rm.sigma
+    end
+    model = port.model
+
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    _sdp(adjacency_constraint, port, obj)
+    _sd_risk(adjacency_constraint, rm.formulation, model, sigma)
+    _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub)
+    sd_risk = model[:sd_risk]
+    _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP}, obj;
+                sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+    model = port.model
+
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    _sdp(adjacency_constraint, port, obj)
+    count = length(rms)
+    _sd_risk(adjacency_constraint, model, sigma, count)
+    sd_risk = model[:sd_risk]
+    for (i, rm) ∈ pairs(rms)
+        use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
+        if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+            if isempty(kelly_approx_idx)
+                push!(kelly_approx_idx, i)
+            end
+        end
+        if !use_portfolio_sigma
+            sigma = rm.sigma
+        end
+        _sd_risk(adjacency_constraint, rm.formulation, model, sigma, i)
+        _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub, i)
+        _set_risk_expression(model, sd_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end

@@ -46,17 +46,15 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     turnover_constraints(port)
     L1_regularisation(port)
     L2_regularisation(port)
+    # Fees
     management_fee(port)
     rebalance_cost(port)
     #! TODO
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
-    #! TODO
-    return_constraints2(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+    expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     SDP_network_cluster_constraints(port, true)
     SDP_network_cluster_constraints(port, false)
-    #! TODO
     objective_function(port, obj, type, kelly)
-    #!
     return convex_optimisation(port, obj, type, class)
 end
