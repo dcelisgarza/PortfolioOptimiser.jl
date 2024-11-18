@@ -48,6 +48,33 @@ function mu_sigma_returns_class(port, class::BLFM)
     end
     return mu, sigma, returns
 end
+##########
+##########
+function optimal_homogenisation_factor(port, mu, ::Sharpe)
+    val = if !isempty(mu)
+        min(1e3, max(1e-3, mean(abs.(mu))))
+    else
+        one(eltype(port.returns))
+    end
+    model = port.model
+    @expression(model, ohf, val)
+    return nothing
+end
+function optimal_homogenisation_factor(args...)
+    return nothing
+end
+function set_k(port, ::Sharpe)
+    model = port.model
+    @variable(model, k >= 0)
+    return nothing
+end
+function set_k(port, ::Any)
+    model = port.model
+    @expression(model, k, 1)
+    return nothing
+end
+##########
+##########
 # sharpe ratio/RP k
 function set_sr_k(::Sharpe, model)
     @variable(model, k >= 0)

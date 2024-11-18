@@ -84,7 +84,7 @@ These measure the spread of the returns distribution.
 These measure how far the returns deviate from the mean in both the positive and negative directions.
 
 ```@docs
-PortfolioOptimiser.SDFormulation
+PortfolioOptimiser.VarianceFormulation
 PortfolioOptimiser.SDSquaredFormulation
 QuadSD
 SOCSD

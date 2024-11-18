@@ -27,29 +27,7 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     objective_function(port, obj, type, kelly)
     return convex_optimisation(port, obj, type, class)
 end
-function optimal_homogenisation_factor(port, mu, ::Sharpe)
-    val = if !isempty(mu)
-        min(1e3, max(1e-3, mean(abs.(mu))))
-    else
-        1.0
-    end
-    model = port.model
-    @expression(model, ohf, val)
-    return nothing
-end
-function optimal_homogenisation_factor(args...)
-    return nothing
-end
-function set_k(port, ::Sharpe)
-    model = port.model
-    @variable(model, k >= 0)
-    return nothing
-end
-function set_k(port, ::Any)
-    model = port.model
-    @expression(model, k, zero(eltype(port.returns)))
-    return nothing
-end
+
 function _optimise!(type::Trad, port::OmniPortfolio,
                     rm::Union{AbstractVector, <:RiskMeasure}, obj::ObjectiveFunction,
                     kelly::RetType, class::PortClass, w_ini::AbstractVector,
@@ -62,9 +40,6 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     optimal_homogenisation_factor(port, mu, obj)
     initial_w(port, w_ini)
     set_k(port, obj)
-    #! TODO
-    # Risk constraints
-    # Return constraints
     weight_constraints(port)
     MIP_constraints(port)
     tracking_error_constraints(port, returns)
@@ -73,7 +48,15 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     L2_regularisation(port)
     management_fee(port)
     rebalance_cost(port)
+    #! TODO
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    #! TODO
+    return_constraints2(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     SDP_network_cluster_constraints(port, true)
     SDP_network_cluster_constraints(port, false)
-    return nothing
+    #! TODO
+    objective_function(port, obj, type, kelly)
+    #!
+    return convex_optimisation(port, obj, type, class)
 end

@@ -1,3 +1,136 @@
+function _set_rm_risk_upper_bound(::Trad, model, rm_risk, ub)
+    if isfinite(ub)
+        k = model[:k]
+        @constraint(model, rm_risk .<= ub * k)
+    end
+    return nothing
+end
+function _variance_risk(::SDP, ::Any, model, sigma)
+    W = model[:W]
+    @expression(model, variance_risk, tr(sigma * W))
+    return nothing
+end
+function _variance_risk(::SDP, model::JuMP.Model, sigma, count::Integer)
+    @expression(model, variance_risk[1:count], zero(AffExpr))
+    return nothing
+end
+function _variance_risk(::SDP, ::Any, model, sigma, idx::Integer)
+    W = model[:W]
+    variance_risk = model[:variance_risk]
+    add_to_expression!(variance_risk[idx], tr(sigma * W))
+    return nothing
+end
+function _variance_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model,
+                        sigma::AbstractMatrix)
+    G = sqrt(sigma)
+    w = model[:w]
+    @variable(model, dev)
+    @expression(model, variance_risk, dev^2)
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _variance_risk(::Union{NoAdj, IP}, model::JuMP.Model, sigma::AbstractMatrix,
+                        count::Integer)
+    @variable(model, dev[1:count])
+    @expression(model, variance_risk[1:count], zero(QuadExpr))
+    return nothing
+end
+function _variance_risk(::Union{NoAdj, IP}, ::SOCSD, model::JuMP.Model,
+                        sigma::AbstractMatrix, idx::Integer)
+    G = sqrt(sigma)
+    w = model[:w]
+    dev = model[:dev][idx]
+    variance_risk = model[:variance_risk][idx]
+    add_to_expression!(variance_risk, dev, dev)
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _variance_risk(::Union{NoAdj, IP}, ::QuadSD, model, sigma)
+    G = sqrt(sigma)
+    w = model[:w]
+    @variable(model, dev)
+    @expression(model, variance_risk, dot(w, sigma, w))
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _variance_risk(::Union{NoAdj, IP}, ::QuadSD, model::JuMP.Model,
+                        sigma::AbstractMatrix, idx::Integer)
+    G = sqrt(sigma)
+    w = model[:w]
+    dev = model[:dev][idx]
+    variance_risk = model[:variance_risk][idx]
+    add_to_expression!(variance_risk, dot(w, sigma, w))
+    @constraint(model, [dev; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+    use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
+    if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+        if isempty(kelly_approx_idx)
+            push!(kelly_approx_idx, 0)
+        end
+    end
+    if !use_portfolio_sigma
+        sigma = rm.sigma
+    end
+    model = port.model
+
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
+        _SDP_constraints(model)
+    end
+    _variance_risk(adjacency_constraint, rm.formulation, model, sigma)
+    variance_risk = model[:variance_risk]
+    _set_rm_risk_upper_bound(type, model, variance_risk, rm.settings.ub)
+    _set_risk_expression(model, variance_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
+                sigma::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
+    model = port.model
+
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
+        _SDP_constraints(model)
+    end
+
+    count = length(rms)
+    _variance_risk(adjacency_constraint, model, sigma, count)
+    variance_risk = model[:variance_risk]
+    for (i, rm) ∈ pairs(rms)
+        use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
+        if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+            if isempty(kelly_approx_idx)
+                push!(kelly_approx_idx, i)
+            end
+        end
+        if !use_portfolio_sigma
+            sigma = rm.sigma
+        end
+        _variance_risk(adjacency_constraint, rm.formulation, model, sigma, i)
+        _set_rm_risk_upper_bound(type, model, variance_risk, rm.settings.ub, i)
+        _set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function risk_constraints(port, type::Union{Trad, RP}, rm::RiskMeasure, mu, sigma, returns,
+                          kelly_approx_idx = nothing)
+    set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
+           kelly_approx_idx = kelly_approx_idx)
+    return nothing
+end
+function risk_constraints(port, type::Union{Trad, RP}, rms::AbstractVector, mu, sigma,
+                          returns, kelly_approx_idx = nothing)
+    for rm ∈ rms
+        set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
+               kelly_approx_idx = kelly_approx_idx)
+    end
+    return nothing
+end
+############
+############
 # Risk upper bounds
 function _set_rm_risk_upper_bound(args...)
     return nothing

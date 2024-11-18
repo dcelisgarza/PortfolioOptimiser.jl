@@ -453,7 +453,7 @@ function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
     A = network_cluster.A
     @constraint(model, A .* W .== 0)
 
-    if !haskey(model, :sd_risk)
+    if !haskey(model, :variance_risk)
         penalty = network_cluster.penalty
         if ntwk_flag
             @expression(model, network_penalty, penalty * tr(W))
@@ -480,8 +480,6 @@ end
 function custom_constraint_objective_penatly(::Nothing, port)
     return nothing
 end
-##########
-##########
 function num_assets_constraints(port, ::Sharpe)
     if size(port.returns, 2) > port.num_assets_u > 0
         N = size(port.returns, 2)

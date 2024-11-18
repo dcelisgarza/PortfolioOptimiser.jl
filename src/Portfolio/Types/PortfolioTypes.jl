@@ -231,8 +231,9 @@ function linear_constraint_assert(A::AbstractMatrix, B::AbstractVector, n::Integ
                                   name = "")
     if !(isempty(A) || isempty(B))
         C, N = size(A)
-        @smart_assert(C == length(B) && N == n,
-                      "$name constraints must be consistent with each other and the number of assets $n")
+        @smart_assert(C == length(B),
+                      "length(B) = $(length(B)), must be equal to the number of constraints C = $(size(A,1))")
+        @smart_assert(N == n, "size(A, 2)  = $N, must be equal to the number of assets $n")
     end
     return nothing
 end
@@ -808,27 +809,35 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
     elseif sym == :a_card_ineq
         N = size(obj.returns, 2)
         linear_constraint_assert(val, obj.b_card_ineq, N, "card_ineq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :b_card_ineq
         N = size(obj.returns, 2)
         linear_constraint_assert(obj.a_card_ineq, val, N, "card_ineq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_card_eq
         N = size(obj.returns, 2)
         linear_constraint_assert(val, obj.b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :b_card_eq
         N = size(obj.returns, 2)
         linear_constraint_assert(obj.a_card_eq, :b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_ineq
         N = size(obj.returns, 2)
         linear_constraint_assert(val, obj.b_ineq, N, "ineq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :b_ineq
         N = size(obj.returns, 2)
         linear_constraint_assert(obj.a_ineq, val, N, "ineq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :a_eq
         N = size(obj.returns, 2)
         linear_constraint_assert(val, obj.b_eq, N, "eq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :b_eq
         N = size(obj.returns, 2)
         linear_constraint_assert(obj.a_eq, :b_eq, N, "eq")
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :tracking
         T, N = size(obj.returns)
         tracking_assert(val, T, N)
