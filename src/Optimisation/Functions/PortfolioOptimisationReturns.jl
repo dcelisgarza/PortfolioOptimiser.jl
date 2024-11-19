@@ -172,15 +172,15 @@ function _add_fees_to_expected_returns(port)
     ret = model[:ret]
     if haskey(model, :long_fee)
         long_fee = model[:long_fee]
-        add_to_expression!(ret, -long_fee)
+        add_to_expression!(ret, -1, long_fee)
     end
     if haskey(model, :short_fee)
         short_fee = model[:short_fee]
-        add_to_expression!(ret, -short_fee)
+        add_to_expression!(ret, -1, short_fee)
     end
     if haskey(model, :rebalance_cost)
         rebalance_cost = model[:rebalance_cost]
-        add_to_expression!(ret, -rebalance_cost)
+        add_to_expression!(ret, -1, rebalance_cost)
     end
 
     return nothing

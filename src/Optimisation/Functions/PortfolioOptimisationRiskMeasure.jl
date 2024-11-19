@@ -183,14 +183,52 @@ function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP};
     end
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RP}, rm::RiskMeasure, mu, sigma, returns,
-                          kelly_approx_idx = nothing)
-    set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
-           kelly_approx_idx = kelly_approx_idx)
+function set_rm(port::OmniPortfolio, rm::MAD, type::Union{Trad, RP};
+                mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
+    if !(isnothing(rm.mu) || isempty(rm.mu))
+        mu = rm.mu
+    end
+    T = size(returns, 1)
+    model = port.model
+    w = model[:w]
+    abs_dev = returns .- transpose(mu)
+    @variable(model, mad[1:T] >= 0)
+    @expression(model, mad_risk, 2 * sum(mad) / T)
+    @constraint(model, abs_dev * w .>= -mad)
+    _set_rm_risk_upper_bound(type, model, mad_risk, rm.settings.ub)
+    _set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RP}, rms::AbstractVector, mu, sigma,
-                          returns, kelly_approx_idx = nothing)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, RP};
+                mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
+    T = size(returns, 1)
+    iT2 = 2 * inv(T)
+    model = port.model
+    count = length(rms)
+    @variable(model, mad[1:T, 1:count] >= 0)
+    @expression(model, mad_risk[1:count], zero(AffExpr))
+    w = model[:w]
+    for (i, rm) ∈ pairs(rms)
+        if !(isnothing(rm.mu) || isempty(rm.mu))
+            mu = rm.mu
+        end
+        abs_dev = returns .- transpose(mu)
+        add_to_expression!(mad_risk[i], iT2, sum(view(mad, :, i)))
+        @constraint(model, abs_dev * w .>= -view(mad, :, i))
+        _set_rm_risk_upper_bound(type, model, mad_risk[i], rm.settings.ub)
+        _set_risk_expression(model, mad_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+# function risk_constraints(port, type::Union{Trad, RP}, rm::RiskMeasure, mu, sigma, returns,
+#                           kelly_approx_idx = nothing)
+#     set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
+#            kelly_approx_idx = kelly_approx_idx)
+#     return nothing
+# end
+function risk_constraints(port, type::Union{Trad, RP},
+                          rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
+                          kelly_approx_idx = nothing)
     for rm ∈ rms
         set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
                kelly_approx_idx = kelly_approx_idx)

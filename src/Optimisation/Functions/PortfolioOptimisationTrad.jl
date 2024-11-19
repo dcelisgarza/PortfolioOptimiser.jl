@@ -44,12 +44,12 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     MIP_constraints(port)
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
+    # Objective function penalty
     L1_regularisation(port)
     L2_regularisation(port)
     # Fees
     management_fee(port)
     rebalance_cost(port)
-    #! TODO
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)

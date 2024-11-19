@@ -71,13 +71,29 @@ function _objective(::Any, obj::MaxRet, ::Any, model)
     @objective(model, Max, obj_func)
     return nothing
 end
-#! add penalty
+function add_objective_penalty(model)
+    d = objective_sense(model) == MIN_SENSE ? 1 : -1
+    obj_func = model[:obj_func]
+    if haskey(model, :l1_reg)
+        l1_reg = model[:l1_reg]
+        add_to_expression!(obj_func, d, l1_reg)
+    end
+    if haskey(model, :l2_reg)
+        l2_reg = model[:l2_reg]
+        add_to_expression!(obj_func, d, l2_reg)
+    end
+    return nothing
+end
 function objective_function(port, obj, ::Trad, kelly)
-    _objective(Trad(), obj, kelly, port.model)
+    model = port.model
+    _objective(Trad(), obj, kelly, model)
+    add_objective_penalty(model)
     return nothing
 end
 function objective_function(port, obj, ::WC, ::Any)
-    _objective(WC(), obj, nothing, port.model)
+    model = port.model
+    _objective(WC(), obj, nothing, model)
+    add_objective_penalty(model)
     return nothing
 end
 function objective_function(port, ::Any, ::NOC, ::Any)

@@ -49,7 +49,9 @@ function MIP_constraints(port)
     long_u = port.long_u
     short_l = port.short_l
     short_u = port.short_u
-    if !iszero(short_l) && short
+    if (isa(short_l, Real) && !iszero(short_l) ||
+        isa(short_l, AbstractVector) && (!isempty(short_l) || any(.!iszero(short_l)))) &&
+       short
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -110,7 +112,8 @@ function MIP_constraints(port)
             @expression(model, is_invested, is_invested_float)
         end
         @constraint(model, w .<= is_invested .* long_u)
-        if !iszero(long_l)
+        if (isa(long_l, Real) && !iszero(long_l) ||
+            isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
             @constraint(model, w .>= is_invested .* long_l)
         end
         if short
