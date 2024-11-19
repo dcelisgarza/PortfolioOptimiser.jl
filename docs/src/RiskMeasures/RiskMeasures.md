@@ -86,8 +86,8 @@ These measure how far the returns deviate from the mean in both the positive and
 ```@docs
 PortfolioOptimiser.VarianceFormulation
 PortfolioOptimiser.SDSquaredFormulation
-QuadSD
-SOCSD
+Quad
+SOC
 SimpleSD
 SD
 MAD

@@ -28,7 +28,7 @@ struct Ellipse <: WorstCaseSet end
 """
 ```
 @kwdef mutable struct NoWC <: WorstCaseSet
-    formulation::SDSquaredFormulation = SOCSD()
+    formulation::SDSquaredFormulation = SOC()
 end
 ```
 
@@ -41,7 +41,7 @@ Use no set for worst case mean variance optimisation.
 mutable struct NoWC <: WorstCaseSet
     formulation::SDSquaredFormulation
 end
-function NoWC(; formulation::SDSquaredFormulation = SOCSD())
+function NoWC(; formulation::SDSquaredFormulation = SOC())
     return NoWC(formulation)
 end
 

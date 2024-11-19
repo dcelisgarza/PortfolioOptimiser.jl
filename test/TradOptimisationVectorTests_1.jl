@@ -170,7 +170,7 @@
     riskt0 = 0.007704593409157056
     rett0 = 0.0003482663810696356
 
-    rm = [[SD(; formulation = QuadSD()), SD(; formulation = SimpleSD())]]
+    rm = [[SD(; formulation = Quad()), SD(; formulation = SimpleSD())]]
     w9 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r9 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)
@@ -190,7 +190,7 @@
     @test isapprox(r9, riskt)
     @test isapprox(ret9, rett)
 
-    rm = [[SD(; formulation = SimpleSD()), SD(; formulation = QuadSD())]]
+    rm = [[SD(; formulation = SimpleSD()), SD(; formulation = Quad())]]
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
     r10 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret10 = dot(portfolio.mu, w10.weights)

@@ -289,7 +289,7 @@ end
 
 Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in [`Portfolio`](@ref) optimisation, each offering different computational and numerical properties.
 
-See also: [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Type Hierarchy
 
@@ -333,14 +333,14 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma^2`` is the portfolio variance.
 
-See also: [`VarianceFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Type Hierarchy
 
 Direct subtypes:
 
-  - [`QuadSD`](@ref): explicit quadratic formulation of the portfolio variance.
-  - [`SOCSD`](@ref): second-Order Cone (SOC) formulation of the portfolio variance.
+  - [`Quad`](@ref): explicit quadratic formulation of the portfolio variance.
+  - [`SOC`](@ref): second-Order Cone (SOC) formulation of the portfolio variance.
 
 # Behaviour
 
@@ -352,7 +352,7 @@ Direct subtypes:
 abstract type SDSquaredFormulation <: VarianceFormulation end
 
 """
-    struct QuadSD <: SDSquaredFormulation end
+    struct Quad <: SDSquaredFormulation end
 
 # Description
 
@@ -373,7 +373,7 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma^2`` is the portfolio variance.
 
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -387,18 +387,17 @@ See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD
 
 ```@example
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = QuadSD())
+sd_risk = SD(; formulation = Quad())
 
 # Custom configuration with specific covariance matrix
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = QuadSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = Quad(), sigma = my_sigma)
 ```
 """
-struct QuadSD <: SDSquaredFormulation end
+struct Quad <: SDSquaredFormulation end
 
 """
-    struct SOCSD <: SDSquaredFormulation end
+    struct SOC <: SDSquaredFormulation end
 
 # Description
 
@@ -420,7 +419,7 @@ Where:
   - ``\\sigma^2`` is the portfolio variance.
   - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -439,16 +438,15 @@ See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadS
 ```@example
 # Custom configuration with specific covariance matrix
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = SOCSD())
+sd_risk = SD(; formulation = SOC())
 
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOC(), sigma = my_sigma)
 ```
 
-See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref).
+See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref).
 """
-struct SOCSD <: SDSquaredFormulation end
+struct SOC <: SDSquaredFormulation end
 
 """
     struct SimpleSD <: VarianceFormulation end
@@ -473,7 +471,7 @@ Where:
   - ``\\sigma`` is the portfolio standard deviation.
   - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -507,7 +505,7 @@ struct SimpleSD <: VarianceFormulation end
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
 
 ## [`Portfolio`](@ref)
 
@@ -539,8 +537,8 @@ Implements portfolio Standard Deviation risk.
 
 ## Formulation Impact on [`Portfolio`](@ref) Optimisation
 
-  - [`QuadSD`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - [`SOCSD`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`Quad`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`SOC`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - [`SimpleSD`](@ref): Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr). Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
 
 # Examples
@@ -551,11 +549,10 @@ sd_risk = SD()
 
 # Custom configuration with specific covariance matrix
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOC(), sigma = my_sigma)
 
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = QuadSD(), sigma = nothing)
+sd_risk = SD(; formulation = Quad(), sigma = nothing)
 
 # For an NOC optimisation
 sd_risk = SD(; formulation = SimpleSD())
@@ -566,8 +563,7 @@ mutable struct SD <: RiskMeasure
     formulation::VarianceFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
 end
-function SD(; settings::RMSettings = RMSettings(),
-            formulation::VarianceFormulation = SOCSD(),
+function SD(; settings::RMSettings = RMSettings(), formulation::VarianceFormulation = SOC(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
@@ -713,10 +709,12 @@ flpm = FLPM(; target = 0.01)  # 1 % minimum return threshold
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
+    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
 end
-function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
-    return FLPM{typeof(target)}(settings, target)
+function FLPM(; settings::RMSettings = RMSettings(),
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0)
+    return FLPM{typeof(target)}(settings, ret_target, target)
 end
 
 """
@@ -747,10 +745,12 @@ slpm = SLPM(; settings = RMSettings(; scale = 2.0), target = 0.005)
 """
 mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
+    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
 end
-function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
-    return SLPM{typeof(target)}(settings, target)
+function SLPM(; settings::RMSettings = RMSettings(),
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0)
+    return SLPM{typeof(target)}(settings, ret_target, target)
 end
 
 """
@@ -1931,7 +1931,7 @@ mutable struct Variance <: RiskMeasure
     sigma::Union{<:AbstractMatrix, Nothing}
 end
 function Variance(; settings::RMSettings = RMSettings(),
-                  formulation::VarianceFormulation = SOCSD(),
+                  formulation::VarianceFormulation = SOC(),
                   sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
@@ -1980,13 +1980,16 @@ svariance = SVariance(; target = 0.02,  # 2 % return target
 """
 mutable struct SVariance{T1 <: Real} <: RiskMeasure
     settings::RMSettings
+    formulation::VarianceFormulation
     target::T1
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector, Nothing}
 end
-function SVariance(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+function SVariance(; settings::RMSettings = RMSettings(),
+                   formulation::VarianceFormulation = SOC(), target::Real = 0.0,
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SVariance{typeof(target)}(settings, target, w)
+    return SVariance{typeof(target)}(settings, formulation, target, w, mu)
 end
 
 """
@@ -2468,8 +2471,8 @@ const RMSigma = Union{SD, Variance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 
-export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, QuadSD, SOCSD, SimpleSD, SD,
-       MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
+export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD, SD, MAD,
+       SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
        SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
        Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
        Equal
