@@ -49,7 +49,7 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     L2_regularisation(port)
     # Fees
     management_fee(port)
-    rebalance_cost(port)
+    rebalance_fee(port)
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)

@@ -591,7 +591,8 @@ function OmniPortfolio(;
                          # Regularisation
                          typeof(l1), typeof(l2),
                          # Fees
-                         typeof(long_fees), typeof(short_fees),
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
                          # Rebalance cost
                          typeof(rebalance),
                          # Solution

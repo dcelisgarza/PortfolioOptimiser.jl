@@ -1,3 +1,12 @@
+function get_portfolio_returns(model, returns)
+    if haskey(model, :X)
+        return nothing
+    end
+    w = model[:w]
+    @expression(model, X, returns * w)
+
+    return nothing
+end
 function MIP_constraints(port)
     #=
     # MIP constraints
@@ -318,9 +327,11 @@ function tracking_error_constraints(port, returns)
     T = size(returns, 1)
     benchmark = tracking_error_benchmark(tracking, returns)
     err = tracking.err
+    get_portfolio_returns(model, returns)
+    X = model[:X]
 
     @variable(model, t_tracking_error >= 0)
-    @expression(model, tracking_error, returns * w .- benchmark * k)
+    @expression(model, tracking_error, X .- benchmark * k)
     @constraints(model, begin
                      [t_tracking_error; tracking_error] ∈ SecondOrderCone()
                      t_tracking_error <= err * k * sqrt(T - 1)
@@ -406,7 +417,7 @@ function management_fee(port)
 
     return nothing
 end
-function rebalance_cost(port)
+function rebalance_fee(port)
     rebalance = port.rebalance
     model = port.model
     if isa(rebalance, NoTR) ||
@@ -426,8 +437,24 @@ function rebalance_cost(port)
     @variable(model, t_rebalance[1:N] >= 0)
     @expression(model, rebalance, w .- benchmark * k)
     @constraint(model, [i = 1:N], [t_rebalance[i]; rebalance[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, rebalance_cost, sum(val .* t_rebalance))
+    @expression(model, rebalance_fee, sum(val .* t_rebalance))
 
+    return nothing
+end
+function get_fees(model)
+    if haskey(model, :fees)
+        return nothing
+    end
+    @expression(model, fees, zero(AffExpr))
+    if haskey(model, :long_fee)
+        add_to_expression!(fees, model[:long_fee])
+    end
+    if haskey(model, :short_fee)
+        add_to_expression!(fees, model[:short_fee])
+    end
+    if haskey(model, :rebalance_fee)
+        add_to_expression!(fees, model[:rebalance_fee])
+    end
     return nothing
 end
 function _SDP_constraints(model)
