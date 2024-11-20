@@ -458,8 +458,10 @@ function set_rm(port::OmniPortfolio, rm::CVaR, type::Union{Trad, RP};
     net_X = model[:net_X]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
-    @variable(model, var)
-    @variable(model, z_var[1:T] .>= 0)
+    @variables(model, begin
+                   var
+                   z_var[1:T] .>= 0
+               end)
     @expression(model, cvar_risk, var + sum(z_var) * iat)
     @constraint(model, z_var .>= -net_X .- var)
     _set_rm_risk_upper_bound(type, model, cvar_risk, rm.settings.ub)
@@ -473,10 +475,11 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaR}, type::Union{Tr
     net_X = model[:net_X]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, var[1:count])
-    @variable(model, z_var[1:T, 1:count] .>= 0)
+    @variables(model, begin
+                   var[1:count]
+                   z_var[1:T, 1:count] .>= 0
+               end)
     @expression(model, cvar_risk[1:count], zero(AffExpr))
-    X = model[:X]
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         add_to_expression!(cvar_risk[i], var[i])
@@ -493,17 +496,20 @@ function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP};
     get_net_returns(model, returns)
     net_X = model[:net_X]
     T = size(returns, 1)
-
     iat = inv(rm.alpha * T)
     ibt = inv(rm.beta * T)
-    @variable(model, var_l)
-    @variable(model, z_var_l[1:T] .>= 0)
-    @expression(model, cvar_risk_l, var_l + sum(z_var_l) * iat)
-    @constraint(model, z_var_l .>= -net_X .- var_l)
-    @variable(model, var_h)
-    @variable(model, z_var_h[1:T] .<= 0)
-    @expression(model, cvar_risk_h, var_h + sum(z_var_h) * ibt)
-    @constraint(model, z_var_h .<= -net_X .- var_h)
+    @variables(model, begin
+                   var_l
+                   z_var_l[1:T] .>= 0
+                   var_h
+                   z_var_h[1:T] .<= 0
+               end)
+    @expressions(model, begin
+                     cvar_risk_l, var_l + sum(z_var_l) * iat
+                     z_var_l .>= -net_X .- var_l
+                     cvar_risk_h, var_h + sum(z_var_h) * ibt
+                     z_var_h .<= -net_X .- var_h
+                 end)
     @expression(model, rcvar_risk, cvar_risk_l - cvar_risk_h)
     _set_rm_risk_upper_bound(type, model, rcvar_risk, rm.settings.ub)
     _set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
@@ -516,22 +522,28 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaRRG}, type::Union{
     net_X = model[:net_X]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, var_l[1:count])
-    @variable(model, z_var_l[1:T, 1:count] .>= 0)
-    @expression(model, cvar_risk_l[1:count], zero(AffExpr))
-    @variable(model, var_h[1:count])
-    @variable(model, z_var_h[1:T, 1:count] .<= 0)
-    @expression(model, cvar_risk_h[1:count], zero(AffExpr))
-    @expression(model, rcvar_risk[1:count], zero(AffExpr))
+    @variables(model, begin
+                   var_l[1:count]
+                   z_var_l[1:T, 1:count] .>= 0
+                   var_h[1:count]
+                   z_var_h[1:T, 1:count] .<= 0
+               end)
+    @expressions(model, begin
+                     cvar_risk_l[1:count], zero(AffExpr)
+                     cvar_risk_h[1:count], zero(AffExpr)
+                     rcvar_risk[1:count], zero(AffExpr)
+                 end)
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         ibt = inv(rm.beta * T)
+        @constraints(model, begin
+                         view(z_var_l, :, i) .>= -net_X .- var_l[i]
+                         view(z_var_h, :, i) .<= -net_X .- var_h[i]
+                     end)
         add_to_expression!(cvar_risk_l[i], var_l[i])
         add_to_expression!(cvar_risk_l[i], iat, sum(view(z_var_l, :, i)))
-        @constraint(model, view(z_var_l, :, i) .>= -net_X .- var_l[i])
         add_to_expression!(cvar_risk_h[i], var_h[i])
         add_to_expression!(cvar_risk_h[i], ibt, sum(view(z_var_h, :, i)))
-        @constraint(model, view(z_var_h, :, i) .<= -net_X .- var_h[i])
         add_to_expression!(rcvar_risk[i], cvar_risk_l[i])
         add_to_expression!(rcvar_risk[i], -1, cvar_risk_h[i])
         _set_rm_risk_upper_bound(type, model, rcvar_risk[i], rm.settings.ub)
@@ -546,13 +558,18 @@ function set_rm(port::OmniPortfolio, rm::EVaR, type::Union{Trad, RP};
     net_X = model[:net_X]
     T = size(returns, 1)
     at = rm.alpha * T
-    @variable(model, t_evar)
-    @variable(model, z_evar >= 0)
-    @variable(model, u_evar[1:T])
+    @variables(model, begin
+                   t_evar
+                   z_evar >= 0
+                   u_evar[1:T]
+               end)
     @expression(model, evar_risk, t_evar - z_evar * log(at))
-    @constraint(model, sum(u_evar) <= z_evar)
-    @constraint(model, [i = 1:T],
-                [-net_X[i] - t_evar, z_evar, u_evar[i]] ∈ MOI.ExponentialCone())
+    @constraints(model,
+                 begin
+                     sum(u_evar) <= z_evar
+                     [i = 1:T],
+                     [-net_X[i] - t_evar, z_evar, u_evar[i]] ∈ MOI.ExponentialCone()
+                 end)
     _set_rm_risk_upper_bound(type, model, evar_risk, rm.settings.ub)
     _set_risk_expression(model, evar_risk, rm.settings.scale, rm.settings.flag)
 
@@ -565,89 +582,33 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EVaR}, type::Union{Tr
     net_X = model[:net_X]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, t_evar[1:count])
-    @variable(model, z_evar[1:count] >= 0)
-    @variable(model, u_evar[1:T, 1:count])
+    @variables(model, begin
+                   t_evar[1:count]
+                   z_evar[1:count] >= 0
+                   u_evar[1:T, 1:count]
+               end)
     @expression(model, evar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
+        @constraints(model,
+                     begin
+                         sum(view(u_evar, :, j)) <= z_evar[j]
+                         [i = 1:T],
+                         [-net_X[i] - t_evar[j], z_evar[j], u_evar[i, j]] ∈
+                         MOI.ExponentialCone()
+                     end)
         add_to_expression!(evar_risk[j], t_evar[j])
         add_to_expression!(evar_risk[j], -log(at), z_evar[j])
-        @constraint(model, sum(view(u_evar, :, j)) <= z_evar[j])
-        @constraint(model, [i = 1:T],
-                    [-net_X[i] - t_evar[j], z_evar[j], u_evar[i, j]] ∈
-                    MOI.ExponentialCone())
         _set_rm_risk_upper_bound(type, model, evar_risk[j], rm.settings.ub)
         _set_risk_expression(model, evar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RP},
-                          rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
-                          kelly_approx_idx = nothing)
-    for rm ∈ rms
-        set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
-               kelly_approx_idx = kelly_approx_idx)
-    end
-    return nothing
-end
-############
-############
-function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::RLVaR, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    if !haskey(model, :X)
-        w = model[:w]
-        @expression(model, X, returns * w)
-    end
-    T = size(returns, 1)
-    at = rm.alpha * T
-    @variable(model, t_evar)
-    @variable(model, z_evar >= 0)
-    @variable(model, u_evar[1:T])
-    @expression(model, evar_risk, t_evar - z_evar * log(at))
-    @constraint(model, sum(u_evar) <= z_evar)
-    X = model[:X]
-    @constraint(model, [i = 1:T],
-                [-X[i] - t_evar, z_evar, u_evar[i]] ∈ MOI.ExponentialCone())
-    _set_rm_risk_upper_bound(obj, type, model, evar_risk, rm.settings.ub)
-    _set_risk_expression(model, evar_risk, rm.settings.scale, rm.settings.flag)
-
-    return nothing
-end
-function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, RP}, obj;
-                returns::AbstractMatrix{<:Real}, kwargs...)
-    model = port.model
-    if !haskey(model, :X)
-        w = model[:w]
-        @expression(model, X, returns * w)
-    end
-    T = size(returns, 1)
-    count = length(rms)
-    @variable(model, t_evar[1:count])
-    @variable(model, z_evar[1:count] >= 0)
-    @variable(model, u_evar[1:T, 1:count])
-    @expression(model, evar_risk[1:count], zero(AffExpr))
-    X = model[:X]
-    for (j, rm) ∈ pairs(rms)
-        at = rm.alpha * T
-        add_to_expression!(evar_risk[j], t_evar[j])
-        add_to_expression!(evar_risk[j], -log(at), z_evar[j])
-        @constraint(model, sum(view(u_evar, :, j)) <= z_evar[j])
-        @constraint(model, [i = 1:T],
-                    [-X[i] - t_evar[j], z_evar[j], u_evar[i, j]] ∈ MOI.ExponentialCone())
-        _set_rm_risk_upper_bound(obj, type, model, evar_risk[j], rm.settings.ub)
-        _set_risk_expression(model, evar_risk[j], rm.settings.scale, rm.settings.flag)
-    end
-    return nothing
-end
-function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
-                returns::AbstractMatrix{<:Real}, kwargs...)
-    model = port.model
-    if !haskey(model, :X)
-        w = model[:w]
-        @expression(model, X, returns * model[:w])
-    end
+    get_net_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
     lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -657,42 +618,45 @@ function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
     ik = inv(rm.kappa)
     iopk = inv(opk)
     iomk = inv(omk)
-    @variable(model, t_rvar)
-    @variable(model, z_rvar >= 0)
-    @variable(model, omega_rvar[1:T])
-    @variable(model, psi_rvar[1:T])
-    @variable(model, theta_rvar[1:T])
-    @variable(model, epsilon_rvar[1:T])
+    @variables(model, begin
+                   t_rvar
+                   z_rvar >= 0
+                   omega_rvar[1:T]
+                   psi_rvar[1:T]
+                   theta_rvar[1:T]
+                   epsilon_rvar[1:T]
+               end)
     @expression(model, rvar_risk, t_rvar + lnk * z_rvar + sum(psi_rvar .+ theta_rvar))
-    @constraint(model, [i = 1:T],
-                [z_rvar * opk * ik2, psi_rvar[i] * opk * ik, epsilon_rvar[i]] ∈
-                MOI.PowerCone(iopk))
-    @constraint(model, [i = 1:T],
-                [omega_rvar[i] * iomk, theta_rvar[i] * ik, -z_rvar * ik2] ∈
-                MOI.PowerCone(omk))
-    X = model[:X]
-    @constraint(model, -X .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
-    _set_rm_risk_upper_bound(obj, type, model, rvar_risk, rm.settings.ub)
+    @constraints(model,
+                 begin
+                     [i = 1:T],
+                     [z_rvar * opk * ik2, psi_rvar[i] * opk * ik, epsilon_rvar[i]] ∈
+                     MOI.PowerCone(iopk)
+                     [i = 1:T],
+                     [omega_rvar[i] * iomk, theta_rvar[i] * ik, -z_rvar * ik2] ∈
+                     MOI.PowerCone(omk)
+                 end)
+    @constraint(model, -net_X .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
+    _set_rm_risk_upper_bound(type, model, rvar_risk, rm.settings.ub)
     _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    if !haskey(model, :X)
-        w = model[:w]
-        @expression(model, X, returns * w)
-    end
+    get_net_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, t_rvar[1:count])
-    @variable(model, z_rvar[1:count] >= 0)
-    @variable(model, omega_rvar[1:T, 1:count])
-    @variable(model, psi_rvar[1:T, 1:count])
-    @variable(model, theta_rvar[1:T, 1:count])
-    @variable(model, epsilon_rvar[1:T, 1:count])
+    @variables(model, begin
+                   t_rvar[1:count]
+                   z_rvar[1:count] >= 0
+                   omega_rvar[1:T, 1:count]
+                   psi_rvar[1:T, 1:count]
+                   theta_rvar[1:T, 1:count]
+                   epsilon_rvar[1:T, 1:count]
+               end)
     @expression(model, rvar_risk[1:count], zero(AffExpr))
-    X = model[:X]
     for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -702,157 +666,201 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad,
         ik = inv(rm.kappa)
         iopk = inv(opk)
         iomk = inv(omk)
+        @constraints(model,
+                     begin
+                         [i = 1:T],
+                         [z_rvar[j] * opk * ik2, psi_rvar[i, j] * opk * ik,
+                          epsilon_rvar[i, j]] ∈ MOI.PowerCone(iopk)
+                         [i = 1:T],
+                         [omega_rvar[i, j] * iomk, theta_rvar[i, j] * ik,
+                          -z_rvar[j] * ik2] ∈ MOI.PowerCone(omk)
+                         -net_X .- t_rvar[j] .+ view(epsilon_rvar, :, j) .+
+                         view(omega_rvar, :, j) .<= 0
+                     end)
         add_to_expression!(rvar_risk[j], t_rvar[j])
         add_to_expression!(rvar_risk[j], lnk, z_rvar[j])
         add_to_expression!(rvar_risk[j],
                            sum(view(psi_rvar, :, j) .+ view(theta_rvar, :, j)))
-        @constraint(model, [i = 1:T],
-                    [z_rvar[j] * opk * ik2, psi_rvar[i, j] * opk * ik, epsilon_rvar[i, j]] ∈
-                    MOI.PowerCone(iopk))
-        @constraint(model, [i = 1:T],
-                    [omega_rvar[i, j] * iomk, theta_rvar[i, j] * ik, -z_rvar[j] * ik2] ∈
-                    MOI.PowerCone(omk))
-        @constraint(model,
-                    -X .- t_rvar[j] .+ view(epsilon_rvar, :, j) .+
-                    view(omega_rvar, :, j) .<= 0)
-        _set_rm_risk_upper_bound(obj, type, model, rvar_risk[j], rm.settings.ub)
+        _set_rm_risk_upper_bound(type, model, rvar_risk[j], rm.settings.ub)
         _set_risk_expression(model, rvar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function _DaR_setup(model, returns)
-    if !haskey(model, :X)
-        w = model[:w]
-        @expression(model, X, returns * w)
+function _DD_constraints(model, returns)
+    if haskey(model, :dd)
+        return nothing
     end
-    if !haskey(model, :dd)
-        T = size(returns, 1)
-        @variable(model, dd[1:(T + 1)])
-        X = model[:X]
-        @constraint(model, view(dd, 2:(T + 1)) .>= view(dd, 1:T) .- X)
-        @constraint(model, view(dd, 2:(T + 1)) .>= 0)
-        @constraint(model, dd[1] == 0)
-    end
+
+    get_net_returns(model, returns)
+    net_X = model[:net_X]
+    T = size(returns, 1)
+    @variable(model, dd[1:(T + 1)])
+    @constraints(model, begin
+                     view(dd, 2:(T + 1)) .>= view(dd, 1:T) .- net_X
+                     view(dd, 2:(T + 1)) .>= 0
+                     dd[1] == 0
+                 end)
+
     return nothing
 end
-function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::MDD, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
-    _DaR_setup(model, returns)
     @variable(model, mdd)
     @expression(model, mdd_risk, mdd)
-    dd = model[:dd]
     @constraint(model, mdd .>= view(dd, 2:(T + 1)))
-    _set_rm_risk_upper_bound(obj, type, model, view(dd, 2:(T + 1)), rm.settings.ub)
+    _set_rm_risk_upper_bound(type, model, view(dd, 2:(T + 1)), rm.settings.ub)
     _set_risk_expression(model, mdd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::ADD, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    T = size(returns, 1)
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
     dd = model[:dd]
-    @expression(model, add_risk, sum(view(dd, 2:(T + 1))) / T)
-    _set_rm_risk_upper_bound(obj, type, model, add_risk, rm.settings.ub)
+    T = size(returns, 1)
+    w = rm.w
+    if isnothing(w)
+        @expression(model, add_risk, mean(view(dd, 2:(T + 1))))
+    else
+        @expression(model, add_risk, mean(view(dd, 2:(T + 1)), w))
+    end
+    _set_rm_risk_upper_bound(type, model, add_risk, rm.settings.ub)
     _set_risk_expression(model, add_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
-    _DaR_setup(model, returns)
+    count = length(rms)
+    @expression(model, add_risk[1:count], zero(AffExpr))
+    for (i, rm) ∈ pairs(rms)
+        w = rm.w
+        if isnothing(w)
+            add_to_expression!(add_risk[i], mean(view(dd, 2:(T + 1))))
+        else
+            add_to_expression!(add_risk[i], mean(view(dd, 2:(T + 1)), w))
+        end
+        _set_rm_risk_upper_bound(type, model, add_risk[i], rm.settings.ub)
+        _set_risk_expression(model, add_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::OmniPortfolio, rm::UCI, type::Union{Trad, RP};
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    _DD_constraints(model, returns)
+    dd = model[:dd]
+    T = size(returns, 1)
     @variable(model, uci)
     @expression(model, uci_risk, uci / sqrt(T))
-    dd = model[:dd]
     @constraint(model, [uci; view(dd, 2:(T + 1))] ∈ SecondOrderCone())
-    _set_rm_risk_upper_bound(obj, type, model, uci_risk, rm.settings.ub)
+    _set_rm_risk_upper_bound(type, model, uci_risk, rm.settings.ub)
     _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::CDaR, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
-    @variable(model, dar)
-    @variable(model, z_cdar[1:T] .>= 0)
+    @variables(model, begin
+                   dar
+                   z_cdar[1:T] .>= 0
+               end)
     @expression(model, cdar_risk, dar + sum(z_cdar) * iat)
-    dd = model[:dd]
     @constraint(model, z_cdar .>= view(dd, 2:(T + 1)) .- dar)
-    _set_rm_risk_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
+    _set_rm_risk_upper_bound(type, model, cdar_risk, rm.settings.ub)
     _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, dar[1:count])
-    @variable(model, z_cdar[1:T, 1:count] .>= 0)
+    @variables(model, begin
+                   dar[1:count]
+                   z_cdar[1:T, 1:count] .>= 0
+               end)
     @expression(model, cdar_risk[1:count], zero(AffExpr))
-    dd = model[:dd]
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
+        @constraint(model, view(z_cdar, :, i) .>= view(dd, 2:(T + 1)) .- dar[i])
         add_to_expression!(cdar_risk[i], dar[i])
         add_to_expression!(cdar_risk[i], iat, sum(view(z_cdar, :, i)))
-        @constraint(model, view(z_cdar, :, i) .>= view(dd, 2:(T + 1)) .- dar[i])
-        _set_rm_risk_upper_bound(obj, type, model, cdar_risk[i], rm.settings.ub)
+        _set_rm_risk_upper_bound(type, model, cdar_risk[i], rm.settings.ub)
         _set_risk_expression(model, cdar_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::EDaR, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    T = size(returns, 1)
-    _DaR_setup(model, returns)
-    at = rm.alpha * T
-    @variable(model, t_edar)
-    @variable(model, z_edar >= 0)
-    @variable(model, u_edar[1:T])
-    @expression(model, edar_risk, t_edar - z_edar * log(at))
-    @constraint(model, sum(u_edar) <= z_edar)
+    _DD_constraints(model, returns)
     dd = model[:dd]
-    @constraint(model, [i = 1:T],
-                [dd[i + 1] - t_edar, z_edar, u_edar[i]] ∈ MOI.ExponentialCone())
-    _set_rm_risk_upper_bound(obj, type, model, edar_risk, rm.settings.ub)
+    T = size(returns, 1)
+    at = rm.alpha * T
+    @variables(model, begin
+                   t_edar
+                   z_edar >= 0
+                   u_edar[1:T]
+               end)
+    @expression(model, edar_risk, t_edar - z_edar * log(at))
+    @constraints(model,
+                 begin
+                     sum(u_edar) <= z_edar
+                     [i = 1:T],
+                     [dd[i + 1] - t_edar, z_edar, u_edar[i]] ∈ MOI.ExponentialCone()
+                 end)
+    _set_rm_risk_upper_bound(type, model, edar_risk, rm.settings.ub)
     _set_risk_expression(model, edar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, t_edar[1:count])
-    @variable(model, z_edar[1:count] >= 0)
-    @variable(model, u_edar[1:T, 1:count])
+    @variables(model, begin
+                   t_edar[1:count]
+                   z_edar[1:count] >= 0
+                   u_edar[1:T, 1:count]
+               end)
     @expression(model, edar_risk[1:count], zero(AffExpr))
-    dd = model[:dd]
     for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
+        @constraints(model,
+                     begin
+                         sum(view(u_edar, :, j)) <= z_edar[j]
+                         [i = 1:T],
+                         [dd[i + 1] - t_edar[j], z_edar[j], u_edar[i, j]] ∈
+                         MOI.ExponentialCone()
+                     end)
         add_to_expression!(edar_risk[j], t_edar[j])
         add_to_expression!(edar_risk[j], -log(at), z_edar[j])
-        @constraint(model, sum(view(u_edar, :, j)) <= z_edar[j])
-        @constraint(model, [i = 1:T],
-                    [dd[i + 1] - t_edar[j], z_edar[j], u_edar[i, j]] ∈
-                    MOI.ExponentialCone())
-        _set_rm_risk_upper_bound(obj, type, model, edar_risk[j], rm.settings.ub)
+        _set_rm_risk_upper_bound(type, model, edar_risk[j], rm.settings.ub)
         _set_risk_expression(model, edar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rm::RLDaR, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
     lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -862,39 +870,45 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
     ik = inv(rm.kappa)
     iopk = inv(opk)
     iomk = inv(omk)
-    @variable(model, t_rdar)
-    @variable(model, z_rdar >= 0)
-    @variable(model, omega_rdar[1:T])
-    @variable(model, psi_rdar[1:T])
-    @variable(model, theta_rdar[1:T])
-    @variable(model, epsilon_rdar[1:T])
+    @variables(model, begin
+                   t_rdar
+                   z_rdar >= 0
+                   omega_rdar[1:T]
+                   psi_rdar[1:T]
+                   theta_rdar[1:T]
+                   epsilon_rdar[1:T]
+               end)
     @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
-    @constraint(model, [i = 1:T],
-                [z_rdar * opk * ik2, psi_rdar[i] * opk * ik, epsilon_rdar[i]] ∈
-                MOI.PowerCone(iopk))
-    @constraint(model, [i = 1:T],
-                [omega_rdar[i] * iomk, theta_rdar[i] * ik, -z_rdar * ik2] ∈
-                MOI.PowerCone(omk))
-    dd = model[:dd]
-    @constraint(model, view(dd, 2:(T + 1)) .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
-    _set_rm_risk_upper_bound(obj, type, model, rdar_risk, rm.settings.ub)
+    @constraints(model,
+                 begin
+                     [i = 1:T],
+                     [z_rdar * opk * ik2, psi_rdar[i] * opk * ik, epsilon_rdar[i]] ∈
+                     MOI.PowerCone(iopk)
+                     [i = 1:T],
+                     [omega_rdar[i] * iomk, theta_rdar[i] * ik, -z_rdar * ik2] ∈
+                     MOI.PowerCone(omk)
+                     view(dd, 2:(T + 1)) .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0
+                 end)
+    _set_rm_risk_upper_bound(type, model, rdar_risk, rm.settings.ub)
     _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _DaR_setup(model, returns)
+    _DD_constraints(model, returns)
+    dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
-    @variable(model, t_rdar[1:count])
-    @variable(model, z_rdar[1:count] >= 0)
-    @variable(model, omega_rdar[1:T, 1:count])
-    @variable(model, psi_rdar[1:T, 1:count])
-    @variable(model, theta_rdar[1:T, 1:count])
-    @variable(model, epsilon_rdar[1:T, 1:count])
+    @variables(model, begin
+                   t_rdar[1:count]
+                   z_rdar[1:count] >= 0
+                   omega_rdar[1:T, 1:count]
+                   psi_rdar[1:T, 1:count]
+                   theta_rdar[1:T, 1:count]
+                   epsilon_rdar[1:T, 1:count]
+               end)
     @expression(model, rdar_risk[1:count], zero(AffExpr))
-    dd = model[:dd]
     for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -904,27 +918,30 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
         ik = inv(rm.kappa)
         iopk = inv(opk)
         iomk = inv(omk)
+        @constraints(model,
+                     begin
+                         [i = 1:T],
+                         [z_rdar[j] * opk * ik2, psi_rdar[i, j] * opk * ik,
+                          epsilon_rdar[i, j]] ∈ MOI.PowerCone(iopk)
+                         [i = 1:T],
+                         [omega_rdar[i, j] * iomk, theta_rdar[i, j] * ik,
+                          -z_rdar[j] * ik2] ∈ MOI.PowerCone(omk)
+                         view(dd, 2:(T + 1)) .- t_rdar[j] .+ view(epsilon_rdar, :, j) .+
+                         view(omega_rdar, :, j) .<= 0
+                     end)
         add_to_expression!(rdar_risk[j], t_rdar[j])
         add_to_expression!(rdar_risk[j], lnk, z_rdar[j])
         add_to_expression!(rdar_risk[j],
                            sum(view(psi_rdar, :, j) .+ view(theta_rdar, :, j)))
-        @constraint(model, [i = 1:T],
-                    [z_rdar[j] * opk * ik2, psi_rdar[i, j] * opk * ik, epsilon_rdar[i, j]] ∈
-                    MOI.PowerCone(iopk))
-        @constraint(model, [i = 1:T],
-                    [omega_rdar[i, j] * iomk, theta_rdar[i, j] * ik, -z_rdar[j] * ik2] ∈
-                    MOI.PowerCone(omk))
-        @constraint(model,
-                    view(dd, 2:(T + 1)) .- t_rdar[j] .+ view(epsilon_rdar, :, j) .+
-                    view(omega_rdar, :, j) .<= 0)
-        _set_rm_risk_upper_bound(obj, type, model, rdar_risk[j], rm.settings.ub)
+        _set_rm_risk_upper_bound(type, model, rdar_risk[j], rm.settings.ub)
         _set_risk_expression(model, rdar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...)
-    _sdp(port, obj)
+function set_rm(port::OmniPortfolio, rm::Kurt, type::Union{Trad, RP}; kwargs...)
     model = port.model
+    _SDP_constraints(model)
+    W = model[:W]
     N = size(port.returns, 2)
     @variable(model, kurt_risk)
     kt = if (isnothing(rm.kt) || isempty(rm.kt))
@@ -932,12 +949,10 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...
     else
         rm.kt
     end
-    W = model[:W]
     if !iszero(port.max_num_assets_kurt) && N > port.max_num_assets_kurt
         f = port.max_num_assets_kurt_scale
         Nf = f * N
         @variable(model, x_kurt[1:Nf])
-        @constraint(model, [kurt_risk; x_kurt] ∈ SecondOrderCone())
         A = block_vec_pq(kt, N, N)
         vals_A, vecs_A = eigen(A)
         vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
@@ -949,7 +964,10 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...
                         N, N)
             Bi[i] = B
         end
-        @constraint(model, [i = 1:Nf], x_kurt[i] == tr(Bi[i] * W))
+        @constraints(model, begin
+                         [kurt_risk; x_kurt] ∈ SecondOrderCone()
+                         [i = 1:Nf], x_kurt[i] == tr(Bi[i] * W)
+                     end)
     else
         L_2 = port.L_2
         S_2 = port.S_2
@@ -957,14 +975,15 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...
         @expression(model, zkurt, L_2 * vec(W))
         @constraint(model, [kurt_risk; sqrt_sigma_4 * zkurt] ∈ SecondOrderCone())
     end
-    _set_rm_risk_upper_bound(obj, type, model, kurt_risk, rm.settings.ub)
+    _set_rm_risk_upper_bound(type, model, kurt_risk, rm.settings.ub)
     _set_risk_expression(model, kurt_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP}, obj;
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP};
                 kwargs...)
-    _sdp(port, obj)
     model = port.model
+    _SDP_constraints(model)
+    W = model[:W]
     N = size(port.returns, 2)
     count = length(rms)
     @variable(model, kurt_risk[1:count])
@@ -979,7 +998,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
             else
                 rm.kt
             end
-            @constraint(model, [kurt_risk[idx]; view(x_kurt, :, idx)] ∈ SecondOrderCone())
             A = block_vec_pq(kt, N, N)
             vals_A, vecs_A = eigen(A)
             vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
@@ -991,8 +1009,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
                                  view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
-            @constraint(model, [i = 1:Nf], x_kurt[i, idx] == tr(Bi[i] * W))
-            _set_rm_risk_upper_bound(obj, type, model, kurt_risk[idx], rm.settings.ub)
+            @constraints(model,
+                         begin
+                             [kurt_risk[idx]; view(x_kurt, :, idx)] ∈ SecondOrderCone()
+                             [i = 1:Nf], x_kurt[i, idx] == tr(Bi[i] * W)
+                         end)
+            _set_rm_risk_upper_bound(type, model, kurt_risk[idx], rm.settings.ub)
             _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
         end
     else
@@ -1010,13 +1032,127 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
             @constraint(model,
                         [kurt_risk[idx];
                          sqrt_sigma_4 * view(zkurt, :, idx)] ∈ SecondOrderCone())
-            _set_rm_risk_upper_bound(obj, type, model, kurt_risk[idx], rm.settings.ub)
+            _set_rm_risk_upper_bound(type, model, kurt_risk[idx], rm.settings.ub)
             _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
         end
     end
 
     return nothing
 end
+function set_rm(port::OmniPortfolio, rm::SKurt, type::Union{Trad, RP}; kwargs...)
+    model = port.model
+    _SDP_constraints(model)
+    W = model[:W]
+    N = size(port.returns, 2)
+    @variable(model, skurt_risk)
+    kt = if (isnothing(rm.kt) || isempty(rm.kt))
+        port.skurt
+    else
+        rm.kt
+    end
+    if !iszero(port.max_num_assets_kurt) && N > port.max_num_assets_kurt
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+        @variable(model, x_skurt[1:Nf])
+        A = block_vec_pq(kt, N, N)
+        vals_A, vecs_A = eigen(A)
+        vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
+        Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+        N_eig = length(vals_A)
+        for i ∈ 1:Nf
+            j = i - 1
+            B = reshape(real(complex(sqrt(vals_A[end - j])) * view(vecs_A, :, N_eig - j)),
+                        N, N)
+            Bi[i] = B
+        end
+        @constraints(model, begin
+                         [skurt_risk; x_skurt] ∈ SecondOrderCone()
+                         [i = 1:Nf], x_skurt[i] == tr(Bi[i] * W)
+                     end)
+    else
+        L_2 = port.L_2
+        S_2 = port.S_2
+        sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
+        @expression(model, zskurt, L_2 * vec(W))
+        @constraint(model, [skurt_risk; sqrt_sigma_4 * zskurt] ∈ SecondOrderCone())
+    end
+    _set_rm_risk_upper_bound(type, model, skurt_risk, rm.settings.ub)
+    _set_risk_expression(model, skurt_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad, RP};
+                kwargs...)
+    model = port.model
+    _SDP_constraints(model)
+    W = model[:W]
+    N = size(port.returns, 2)
+    count = length(rms)
+    @variable(model, skurt_risk[1:count])
+    W = model[:W]
+    if !iszero(port.max_num_assets_kurt) && N > port.max_num_assets_kurt
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+        @variable(model, x_skurt[1:Nf, 1:count])
+        for (idx, rm) ∈ pairs(rms)
+            kt = if (isnothing(rm.kt) || isempty(rm.kt))
+                port.skurt
+            else
+                rm.kt
+            end
+            A = block_vec_pq(kt, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
+            Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
+            for i ∈ 1:Nf
+                j = i - 1
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
+                Bi[i] = B
+            end
+            @constraints(model,
+                         begin
+                             [skurt_risk[idx]; view(x_skurt, :, idx)] ∈ SecondOrderCone()
+                             [i = 1:Nf], x_skurt[i, idx] == tr(Bi[i] * W)
+                         end)
+            _set_rm_risk_upper_bound(type, model, skurt_risk[idx], rm.settings.ub)
+            _set_risk_expression(model, skurt_risk[idx], rm.settings.scale,
+                                 rm.settings.flag)
+        end
+    else
+        L_2 = port.L_2
+        S_2 = port.S_2
+        @expression(model, zskurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
+        for (idx, rm) ∈ pairs(rms)
+            kt = if (isnothing(rm.kt) || isempty(rm.kt))
+                port.skurt
+            else
+                rm.kt
+            end
+            sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
+            add_to_expression!.(view(zskurt, :, idx), L_2 * vec(W))
+            @constraint(model,
+                        [skurt_risk[idx];
+                         sqrt_sigma_4 * view(zskurt, :, idx)] ∈ SecondOrderCone())
+            _set_rm_risk_upper_bound(type, model, skurt_risk[idx], rm.settings.ub)
+            _set_risk_expression(model, skurt_risk[idx], rm.settings.scale,
+                                 rm.settings.flag)
+        end
+    end
+
+    return nothing
+end
+function risk_constraints(port, type::Union{Trad, RP},
+                          rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
+                          kelly_approx_idx = nothing)
+    for rm ∈ rms
+        set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
+               kelly_approx_idx = kelly_approx_idx)
+    end
+    return nothing
+end
+############
+############
 function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RP}, obj; kwargs...)
     _sdp(port, obj)
     model = port.model
@@ -2275,5 +2411,429 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
         _set_rm_risk_upper_bound(obj, type, model, rcvar_risk[i], rm.settings.ub)
         _set_risk_expression(model, rcvar_risk[i], rm.settings.scale, rm.settings.flag)
     end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    if !haskey(model, :X)
+        w = model[:w]
+        @expression(model, X, returns * w)
+    end
+    T = size(returns, 1)
+    at = rm.alpha * T
+    @variable(model, t_evar)
+    @variable(model, z_evar >= 0)
+    @variable(model, u_evar[1:T])
+    @expression(model, evar_risk, t_evar - z_evar * log(at))
+    @constraint(model, sum(u_evar) <= z_evar)
+    X = model[:X]
+    @constraint(model, [i = 1:T],
+                [-X[i] - t_evar, z_evar, u_evar[i]] ∈ MOI.ExponentialCone())
+    _set_rm_risk_upper_bound(obj, type, model, evar_risk, rm.settings.ub)
+    _set_risk_expression(model, evar_risk, rm.settings.scale, rm.settings.flag)
+
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    if !haskey(model, :X)
+        w = model[:w]
+        @expression(model, X, returns * w)
+    end
+    T = size(returns, 1)
+    count = length(rms)
+    @variable(model, t_evar[1:count])
+    @variable(model, z_evar[1:count] >= 0)
+    @variable(model, u_evar[1:T, 1:count])
+    @expression(model, evar_risk[1:count], zero(AffExpr))
+    X = model[:X]
+    for (j, rm) ∈ pairs(rms)
+        at = rm.alpha * T
+        add_to_expression!(evar_risk[j], t_evar[j])
+        add_to_expression!(evar_risk[j], -log(at), z_evar[j])
+        @constraint(model, sum(view(u_evar, :, j)) <= z_evar[j])
+        @constraint(model, [i = 1:T],
+                    [-X[i] - t_evar[j], z_evar[j], u_evar[i, j]] ∈ MOI.ExponentialCone())
+        _set_rm_risk_upper_bound(obj, type, model, evar_risk[j], rm.settings.ub)
+        _set_risk_expression(model, evar_risk[j], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    if !haskey(model, :X)
+        w = model[:w]
+        @expression(model, X, returns * model[:w])
+    end
+    T = size(returns, 1)
+    iat = inv(rm.alpha * T)
+    lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
+    opk = one(rm.kappa) + rm.kappa
+    omk = one(rm.kappa) - rm.kappa
+    ik2 = inv(2 * rm.kappa)
+    ik = inv(rm.kappa)
+    iopk = inv(opk)
+    iomk = inv(omk)
+    @variable(model, t_rvar)
+    @variable(model, z_rvar >= 0)
+    @variable(model, omega_rvar[1:T])
+    @variable(model, psi_rvar[1:T])
+    @variable(model, theta_rvar[1:T])
+    @variable(model, epsilon_rvar[1:T])
+    @expression(model, rvar_risk, t_rvar + lnk * z_rvar + sum(psi_rvar .+ theta_rvar))
+    @constraint(model, [i = 1:T],
+                [z_rvar * opk * ik2, psi_rvar[i] * opk * ik, epsilon_rvar[i]] ∈
+                MOI.PowerCone(iopk))
+    @constraint(model, [i = 1:T],
+                [omega_rvar[i] * iomk, theta_rvar[i] * ik, -z_rvar * ik2] ∈
+                MOI.PowerCone(omk))
+    X = model[:X]
+    @constraint(model, -X .- t_rvar .+ epsilon_rvar .+ omega_rvar .<= 0)
+    _set_rm_risk_upper_bound(obj, type, model, rvar_risk, rm.settings.ub)
+    _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    if !haskey(model, :X)
+        w = model[:w]
+        @expression(model, X, returns * w)
+    end
+    T = size(returns, 1)
+    count = length(rms)
+    @variable(model, t_rvar[1:count])
+    @variable(model, z_rvar[1:count] >= 0)
+    @variable(model, omega_rvar[1:T, 1:count])
+    @variable(model, psi_rvar[1:T, 1:count])
+    @variable(model, theta_rvar[1:T, 1:count])
+    @variable(model, epsilon_rvar[1:T, 1:count])
+    @expression(model, rvar_risk[1:count], zero(AffExpr))
+    X = model[:X]
+    for (j, rm) ∈ pairs(rms)
+        iat = inv(rm.alpha * T)
+        lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
+        opk = one(rm.kappa) + rm.kappa
+        omk = one(rm.kappa) - rm.kappa
+        ik2 = inv(2 * rm.kappa)
+        ik = inv(rm.kappa)
+        iopk = inv(opk)
+        iomk = inv(omk)
+        add_to_expression!(rvar_risk[j], t_rvar[j])
+        add_to_expression!(rvar_risk[j], lnk, z_rvar[j])
+        add_to_expression!(rvar_risk[j],
+                           sum(view(psi_rvar, :, j) .+ view(theta_rvar, :, j)))
+        @constraint(model, [i = 1:T],
+                    [z_rvar[j] * opk * ik2, psi_rvar[i, j] * opk * ik, epsilon_rvar[i, j]] ∈
+                    MOI.PowerCone(iopk))
+        @constraint(model, [i = 1:T],
+                    [omega_rvar[i, j] * iomk, theta_rvar[i, j] * ik, -z_rvar[j] * ik2] ∈
+                    MOI.PowerCone(omk))
+        @constraint(model,
+                    -X .- t_rvar[j] .+ view(epsilon_rvar, :, j) .+
+                    view(omega_rvar, :, j) .<= 0)
+        _set_rm_risk_upper_bound(obj, type, model, rvar_risk[j], rm.settings.ub)
+        _set_risk_expression(model, rvar_risk[j], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function _DaR_setup(model, returns)
+    if !haskey(model, :X)
+        w = model[:w]
+        @expression(model, X, returns * w)
+    end
+    if !haskey(model, :dd)
+        T = size(returns, 1)
+        @variable(model, dd[1:(T + 1)])
+        X = model[:X]
+        @constraint(model, view(dd, 2:(T + 1)) .>= view(dd, 1:T) .- X)
+        @constraint(model, view(dd, 2:(T + 1)) .>= 0)
+        @constraint(model, dd[1] == 0)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    T = size(returns, 1)
+    _DaR_setup(model, returns)
+    @variable(model, mdd)
+    @expression(model, mdd_risk, mdd)
+    dd = model[:dd]
+    @constraint(model, mdd .>= view(dd, 2:(T + 1)))
+    _set_rm_risk_upper_bound(obj, type, model, view(dd, 2:(T + 1)), rm.settings.ub)
+    _set_risk_expression(model, mdd_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    T = size(returns, 1)
+    _DaR_setup(model, returns)
+    dd = model[:dd]
+    @expression(model, add_risk, sum(view(dd, 2:(T + 1))) / T)
+    _set_rm_risk_upper_bound(obj, type, model, add_risk, rm.settings.ub)
+    _set_risk_expression(model, add_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    T = size(returns, 1)
+    _DaR_setup(model, returns)
+    @variable(model, uci)
+    @expression(model, uci_risk, uci / sqrt(T))
+    dd = model[:dd]
+    @constraint(model, [uci; view(dd, 2:(T + 1))] ∈ SecondOrderCone())
+    _set_rm_risk_upper_bound(obj, type, model, uci_risk, rm.settings.ub)
+    _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    _DaR_setup(model, returns)
+    T = size(returns, 1)
+    iat = inv(rm.alpha * T)
+    @variable(model, dar)
+    @variable(model, z_cdar[1:T] .>= 0)
+    @expression(model, cdar_risk, dar + sum(z_cdar) * iat)
+    dd = model[:dd]
+    @constraint(model, z_cdar .>= view(dd, 2:(T + 1)) .- dar)
+    _set_rm_risk_upper_bound(obj, type, model, cdar_risk, rm.settings.ub)
+    _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kargs...)
+    model = port.model
+    _DaR_setup(model, returns)
+    T = size(returns, 1)
+    count = length(rms)
+    @variable(model, dar[1:count])
+    @variable(model, z_cdar[1:T, 1:count] .>= 0)
+    @expression(model, cdar_risk[1:count], zero(AffExpr))
+    dd = model[:dd]
+    for (i, rm) ∈ pairs(rms)
+        iat = inv(rm.alpha * T)
+        add_to_expression!(cdar_risk[i], dar[i])
+        add_to_expression!(cdar_risk[i], iat, sum(view(z_cdar, :, i)))
+        @constraint(model, view(z_cdar, :, i) .>= view(dd, 2:(T + 1)) .- dar[i])
+        _set_rm_risk_upper_bound(obj, type, model, cdar_risk[i], rm.settings.ub)
+        _set_risk_expression(model, cdar_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    T = size(returns, 1)
+    _DaR_setup(model, returns)
+    at = rm.alpha * T
+    @variable(model, t_edar)
+    @variable(model, z_edar >= 0)
+    @variable(model, u_edar[1:T])
+    @expression(model, edar_risk, t_edar - z_edar * log(at))
+    @constraint(model, sum(u_edar) <= z_edar)
+    dd = model[:dd]
+    @constraint(model, [i = 1:T],
+                [dd[i + 1] - t_edar, z_edar, u_edar[i]] ∈ MOI.ExponentialCone())
+    _set_rm_risk_upper_bound(obj, type, model, edar_risk, rm.settings.ub)
+    _set_risk_expression(model, edar_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    _DaR_setup(model, returns)
+    T = size(returns, 1)
+    count = length(rms)
+    @variable(model, t_edar[1:count])
+    @variable(model, z_edar[1:count] >= 0)
+    @variable(model, u_edar[1:T, 1:count])
+    @expression(model, edar_risk[1:count], zero(AffExpr))
+    dd = model[:dd]
+    for (j, rm) ∈ pairs(rms)
+        at = rm.alpha * T
+        add_to_expression!(edar_risk[j], t_edar[j])
+        add_to_expression!(edar_risk[j], -log(at), z_edar[j])
+        @constraint(model, sum(view(u_edar, :, j)) <= z_edar[j])
+        @constraint(model, [i = 1:T],
+                    [dd[i + 1] - t_edar[j], z_edar[j], u_edar[i, j]] ∈
+                    MOI.ExponentialCone())
+        _set_rm_risk_upper_bound(obj, type, model, edar_risk[j], rm.settings.ub)
+        _set_risk_expression(model, edar_risk[j], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    _DaR_setup(model, returns)
+    T = size(returns, 1)
+    iat = inv(rm.alpha * T)
+    lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
+    opk = one(rm.kappa) + rm.kappa
+    omk = one(rm.kappa) - rm.kappa
+    ik2 = inv(2 * rm.kappa)
+    ik = inv(rm.kappa)
+    iopk = inv(opk)
+    iomk = inv(omk)
+    @variable(model, t_rdar)
+    @variable(model, z_rdar >= 0)
+    @variable(model, omega_rdar[1:T])
+    @variable(model, psi_rdar[1:T])
+    @variable(model, theta_rdar[1:T])
+    @variable(model, epsilon_rdar[1:T])
+    @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
+    @constraint(model, [i = 1:T],
+                [z_rdar * opk * ik2, psi_rdar[i] * opk * ik, epsilon_rdar[i]] ∈
+                MOI.PowerCone(iopk))
+    @constraint(model, [i = 1:T],
+                [omega_rdar[i] * iomk, theta_rdar[i] * ik, -z_rdar * ik2] ∈
+                MOI.PowerCone(omk))
+    dd = model[:dd]
+    @constraint(model, view(dd, 2:(T + 1)) .- t_rdar .+ epsilon_rdar .+ omega_rdar .<= 0)
+    _set_rm_risk_upper_bound(obj, type, model, rdar_risk, rm.settings.ub)
+    _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP}, obj;
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    _DaR_setup(model, returns)
+    T = size(returns, 1)
+    count = length(rms)
+    @variable(model, t_rdar[1:count])
+    @variable(model, z_rdar[1:count] >= 0)
+    @variable(model, omega_rdar[1:T, 1:count])
+    @variable(model, psi_rdar[1:T, 1:count])
+    @variable(model, theta_rdar[1:T, 1:count])
+    @variable(model, epsilon_rdar[1:T, 1:count])
+    @expression(model, rdar_risk[1:count], zero(AffExpr))
+    dd = model[:dd]
+    for (j, rm) ∈ pairs(rms)
+        iat = inv(rm.alpha * T)
+        lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
+        opk = one(rm.kappa) + rm.kappa
+        omk = one(rm.kappa) - rm.kappa
+        ik2 = inv(2 * rm.kappa)
+        ik = inv(rm.kappa)
+        iopk = inv(opk)
+        iomk = inv(omk)
+        add_to_expression!(rdar_risk[j], t_rdar[j])
+        add_to_expression!(rdar_risk[j], lnk, z_rdar[j])
+        add_to_expression!(rdar_risk[j],
+                           sum(view(psi_rdar, :, j) .+ view(theta_rdar, :, j)))
+        @constraint(model, [i = 1:T],
+                    [z_rdar[j] * opk * ik2, psi_rdar[i, j] * opk * ik, epsilon_rdar[i, j]] ∈
+                    MOI.PowerCone(iopk))
+        @constraint(model, [i = 1:T],
+                    [omega_rdar[i, j] * iomk, theta_rdar[i, j] * ik, -z_rdar[j] * ik2] ∈
+                    MOI.PowerCone(omk))
+        @constraint(model,
+                    view(dd, 2:(T + 1)) .- t_rdar[j] .+ view(epsilon_rdar, :, j) .+
+                    view(omega_rdar, :, j) .<= 0)
+        _set_rm_risk_upper_bound(obj, type, model, rdar_risk[j], rm.settings.ub)
+        _set_risk_expression(model, rdar_risk[j], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP}, obj; kwargs...)
+    _sdp(port, obj)
+    model = port.model
+    N = size(port.returns, 2)
+    @variable(model, kurt_risk)
+    kt = if (isnothing(rm.kt) || isempty(rm.kt))
+        port.kurt
+    else
+        rm.kt
+    end
+    W = model[:W]
+    if !iszero(port.max_num_assets_kurt) && N > port.max_num_assets_kurt
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+        @variable(model, x_kurt[1:Nf])
+        @constraint(model, [kurt_risk; x_kurt] ∈ SecondOrderCone())
+        A = block_vec_pq(kt, N, N)
+        vals_A, vecs_A = eigen(A)
+        vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
+        Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+        N_eig = length(vals_A)
+        for i ∈ 1:Nf
+            j = i - 1
+            B = reshape(real(complex(sqrt(vals_A[end - j])) * view(vecs_A, :, N_eig - j)),
+                        N, N)
+            Bi[i] = B
+        end
+        @constraint(model, [i = 1:Nf], x_kurt[i] == tr(Bi[i] * W))
+    else
+        L_2 = port.L_2
+        S_2 = port.S_2
+        sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
+        @expression(model, zkurt, L_2 * vec(W))
+        @constraint(model, [kurt_risk; sqrt_sigma_4 * zkurt] ∈ SecondOrderCone())
+    end
+    _set_rm_risk_upper_bound(obj, type, model, kurt_risk, rm.settings.ub)
+    _set_risk_expression(model, kurt_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP}, obj;
+                kwargs...)
+    _sdp(port, obj)
+    model = port.model
+    N = size(port.returns, 2)
+    count = length(rms)
+    @variable(model, kurt_risk[1:count])
+    W = model[:W]
+    if !iszero(port.max_num_assets_kurt) && N > port.max_num_assets_kurt
+        f = port.max_num_assets_kurt_scale
+        Nf = f * N
+        @variable(model, x_kurt[1:Nf, 1:count])
+        for (idx, rm) ∈ pairs(rms)
+            kt = if (isnothing(rm.kt) || isempty(rm.kt))
+                port.kurt
+            else
+                rm.kt
+            end
+            @constraint(model, [kurt_risk[idx]; view(x_kurt, :, idx)] ∈ SecondOrderCone())
+            A = block_vec_pq(kt, N, N)
+            vals_A, vecs_A = eigen(A)
+            vals_A = clamp.(real(vals_A), 0, Inf) .+ clamp.(imag(vals_A), 0, Inf)im
+            Bi = Vector{Matrix{eltype(kt)}}(undef, Nf)
+            N_eig = length(vals_A)
+            for i ∈ 1:Nf
+                j = i - 1
+                B = reshape(real(complex(sqrt(vals_A[end - j])) *
+                                 view(vecs_A, :, N_eig - j)), N, N)
+                Bi[i] = B
+            end
+            @constraint(model, [i = 1:Nf], x_kurt[i, idx] == tr(Bi[i] * W))
+            _set_rm_risk_upper_bound(obj, type, model, kurt_risk[idx], rm.settings.ub)
+            _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
+        end
+    else
+        L_2 = port.L_2
+        S_2 = port.S_2
+        @expression(model, zkurt[1:size(port.L_2, 1), 1:count], zero(AffExpr))
+        for (idx, rm) ∈ pairs(rms)
+            kt = if (isnothing(rm.kt) || isempty(rm.kt))
+                port.kurt
+            else
+                rm.kt
+            end
+            sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
+            add_to_expression!.(view(zkurt, :, idx), L_2 * vec(W))
+            @constraint(model,
+                        [kurt_risk[idx];
+                         sqrt_sigma_4 * view(zkurt, :, idx)] ∈ SecondOrderCone())
+            _set_rm_risk_upper_bound(obj, type, model, kurt_risk[idx], rm.settings.ub)
+            _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
+        end
+    end
+
     return nothing
 end

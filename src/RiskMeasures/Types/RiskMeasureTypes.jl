@@ -1020,9 +1020,11 @@ add = ADD(; settings = RMSettings(; scale = 1.5))
 """
 struct ADD <: RiskMeasure
     settings::RMSettings
+    w::Union{<:AbstractWeights, Nothing}
 end
-function ADD(; settings::RMSettings = RMSettings())
-    return ADD(settings)
+function ADD(; settings::RMSettings = RMSettings(),
+             w::Union{<:AbstractWeights, Nothing} = nothing)
+    return ADD(settings, w)
 end
 
 """
