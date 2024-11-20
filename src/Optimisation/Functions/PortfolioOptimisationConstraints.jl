@@ -321,14 +321,13 @@ function tracking_error_constraints(port, returns)
     end
 
     model = port.model
-    w = model[:w]
     k = model[:k]
-
-    T = size(returns, 1)
-    benchmark = tracking_error_benchmark(tracking, returns)
-    err = tracking.err
     get_portfolio_returns(model, returns)
     X = model[:X]
+    T = size(returns, 1)
+
+    benchmark = tracking_error_benchmark(tracking, returns)
+    err = tracking.err
 
     @variable(model, t_tracking_error >= 0)
     @expression(model, tracking_error, X .- benchmark * k)
@@ -343,7 +342,8 @@ function turnover_constraints(port)
     turnover = port.turnover
     if isa(turnover, NoTR) ||
        isa(turnover.val, Real) && isinf(turnover.val) ||
-       isa(turnover.val, AbstractVector) && isempty(turnover.val) ||
+       isa(turnover.val, AbstractVector) &&
+       (isempty(turnover.val) || all(isinf.(turnover.val))) ||
        isempty(turnover.w)
         return nothing
     end
@@ -351,8 +351,8 @@ function turnover_constraints(port)
     model = port.model
     w = model[:w]
     k = model[:k]
-
     N = length(w)
+
     benchmark = turnover.w
     val = turnover.val
 
@@ -402,15 +402,14 @@ function management_fee(port)
     model = port.model
 
     if !(isa(long_fees, Real) && iszero(long_fees) ||
-         isa(long_fees, AbstractVector) && isempty(long_fees) ||
-         isa(long_fees, AbstractVector) && all(iszero.(long_fees)))
+         isa(long_fees, AbstractVector) && (isempty(long_fees) || all(iszero.(long_fees))))
         long_w = model[:long_w]
         @expression(model, long_fee, sum(long_fees .* long_w))
     end
 
     if short && !(isa(short_fees, Real) && iszero(short_fees) ||
-                  isa(short_fees, AbstractVector) && isempty(short_fees) ||
-                  isa(short_fees, AbstractVector) && all(iszero.(short_fees)))
+                  isa(short_fees, AbstractVector) &&
+                  (isempty(short_fees) || all(iszero.(short_fees))))
         short_w = model[:short_w]
         @expression(model, short_fee, sum(short_fees .* short_w))
     end
@@ -419,20 +418,21 @@ function management_fee(port)
 end
 function rebalance_fee(port)
     rebalance = port.rebalance
-    model = port.model
     if isa(rebalance, NoTR) ||
        isa(rebalance.val, Real) && iszero(rebalance.val) ||
-       isa(rebalance.val, AbstractVector) && isempty(rebalance.val) ||
+       isa(rebalance.val, AbstractVector) &&
+       (isempty(rebalance.val) || all(iszero.(rebalance.val))) ||
        isempty(rebalance.w)
         return nothing
     end
 
-    benchmark = rebalance.w
-    val = rebalance.val
-
+    model = port.model
     w = model[:w]
     k = model[:k]
     N = length(w)
+
+    benchmark = rebalance.w
+    val = rebalance.val
 
     @variable(model, t_rebalance[1:N] >= 0)
     @expression(model, rebalance, w .- benchmark * k)
@@ -455,6 +455,17 @@ function get_fees(model)
     if haskey(model, :rebalance_fee)
         add_to_expression!(fees, model[:rebalance_fee])
     end
+    return nothing
+end
+function get_net_returns(model, returns)
+    if haskey(model, :net_X)
+        return nothing
+    end
+    get_portfolio_returns(model, returns)
+    get_fees(model)
+    X = model[:X]
+    fees = model[:fees]
+    @expression(model, net_X, X .- fees)
     return nothing
 end
 function _SDP_constraints(model)

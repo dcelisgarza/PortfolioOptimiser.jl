@@ -582,7 +582,7 @@ function OmniPortfolio(;
                          # Tracking
                          typeof(tracking),
                          # Turnover
-                         typeof(turnover),
+                         AbstractTR,
                          # Adjacency
                          typeof(network_adj), typeof(cluster_adj),
                          # Centrality
@@ -594,7 +594,7 @@ function OmniPortfolio(;
                          Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
                          # Rebalance cost
-                         typeof(rebalance),
+                         AbstractTR,
                          # Solution
                          typeof(model), typeof(solvers), typeof(optimal), typeof(fail),
                          typeof(limits), typeof(frontier), typeof(walking),
