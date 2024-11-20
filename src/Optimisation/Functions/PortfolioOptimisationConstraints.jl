@@ -189,6 +189,7 @@ function weight_constraints(port)
     model = port.model
     w = model[:w]
     k = model[:k]
+    N = length(w)
 
     #=
     ## Portfolio budget constraints
@@ -214,8 +215,8 @@ function weight_constraints(port)
     ## Min and max weights, short budget weights.
     =#
     short = port.short
+    long_u = port.long_u
     if !short
-        long_u = port.long_u
         @constraints(model, begin
                          w .<= long_u * k
                          w .>= 0
@@ -457,7 +458,7 @@ function get_fees(model)
     end
     return nothing
 end
-function get_net_returns(model, returns)
+function get_net_portfolio_returns(model, returns)
     if haskey(model, :net_X)
         return nothing
     end

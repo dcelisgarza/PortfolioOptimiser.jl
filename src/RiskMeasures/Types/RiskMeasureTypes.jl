@@ -1692,6 +1692,9 @@ function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
     return OWA(settings, owa, w)
 end
 
+abstract type BDVarianceFormulation end
+struct BDVAbsVal <: BDVarianceFormulation end
+struct BDVIneq <: BDVarianceFormulation end
 """
     struct BDVariance <: RiskMeasure
 
@@ -1719,9 +1722,11 @@ dvar = BDVariance(; settings = RMSettings(; ub = 0.5))
 """
 struct BDVariance <: RiskMeasure
     settings::RMSettings
+    formulation::BDVarianceFormulation
 end
-function BDVariance(; settings::RMSettings = RMSettings())
-    return BDVariance(settings)
+function BDVariance(; settings::RMSettings = RMSettings(),
+                    formulation::BDVarianceFormulation = BDVAbsVal)
+    return BDVariance(settings, formulation)
 end
 
 """
@@ -2477,4 +2482,4 @@ export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD
        SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
        SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
        Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal
+       Equal, BDVAbsVal, BDVIneq

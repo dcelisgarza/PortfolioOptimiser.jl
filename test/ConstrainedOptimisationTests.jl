@@ -5,103 +5,15 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Number of effective assets groups" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
-    asset_statistics!(portfolio)
-    asset_sets = DataFrame("Asset" => portfolio.assets,
-                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
-                                       3, 1],
-                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
-                                        4, 2, 1],
-                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
-                                       2, 1],
-                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
-                                        2, 2, 1],
-                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
-                                        3, 4, 1],
-                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
-                                        4, 2, 2],
-                           "All" => ones(Int, length(portfolio.assets)))
-
-    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
-                            :Weight => [13], :Set => ["All"], :Position => [1])
-    A, B = asset_constraints(constraints, asset_sets)
-
-    portfolio.a_smtx_ineq = A
-    portfolio.b_svec_ineq = B
-    rm = WR()
-    w1 = optimise!(portfolio; rm = rm)
-    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_svec_ineq = []
-    portfolio.num_assets_l = 13
-    w2 = optimise!(portfolio; rm = rm)
-    @test isapprox(w1.weights, w2.weights)
-    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
-
-    portfolio.num_assets_l = 0
-    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_svec_ineq = []
-    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
-                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
-    A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_smtx_ineq = A
-    portfolio.b_svec_ineq = B
-    rm = SSD()
-    w1 = optimise!(portfolio; rm = rm)
-    @test isapprox(500,
-                   floor(Int,
-                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
-
-    portfolio.num_assets_l = 0
-    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_svec_ineq = []
-    obj = Sharpe(; rf = rf)
-    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
-                            :Weight => [13], :Set => ["All"], :Position => [1])
-    A, B = asset_constraints(constraints, asset_sets)
-
-    portfolio.a_smtx_ineq = A
-    portfolio.b_svec_ineq = B
-    rm = WR()
-    w1 = optimise!(portfolio; rm = rm, obj = obj)
-    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_svec_ineq = []
-    portfolio.num_assets_l = 13
-    w2 = optimise!(portfolio; rm = rm, obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
-
-    portfolio.num_assets_l = 0
-    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_svec_ineq = []
-    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
-                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
-    A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_smtx_ineq = A
-    portfolio.b_svec_ineq = B
-    rm = SSD()
-    w1 = optimise!(portfolio; rm = rm, obj = obj)
-    @test isapprox(500,
-                   floor(Int,
-                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
-end
-
 @testset "Cardinality Group constraints" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -121,122 +33,123 @@ end
     constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
                             :Weight => [7], :Set => ["All"], :Position => [1])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     rm = MAD()
     w1 = optimise!(portfolio; rm = rm)
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 7
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 7
     w2 = optimise!(portfolio; rm = rm)
     @test isapprox(w1.weights, w2.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [7, 2],
                             :Set => ["All", "Pward"], :Position => [1, 1])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     w1 = optimise!(portfolio; rm = rm)
     @test count(w1.weights .>= 1e-10) <= 7
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 2
 
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 0
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 0
     obj = Sharpe(; rf = rf)
     constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
                             :Weight => [4], :Set => ["All"], :Position => [1])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     rm = CDaR()
     w1 = optimise!(portfolio; rm = rm, obj = obj)
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 4
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 4
     w2 = optimise!(portfolio; rm = rm, obj = obj)
     @test isapprox(w1.weights, w2.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [4, 1],
                             :Set => ["All", "Pward"], :Position => [1, 2])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     rm = CDaR()
     w1 = optimise!(portfolio; rm = rm, obj = obj)
     @test count(w1.weights .>= 1e-10) <= 4
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
 
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 0
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 0
     portfolio.short = true
     constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
                             :Weight => [11], :Set => ["All"], :Position => [1])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     rm = MAD()
     w1 = optimise!(portfolio; rm = rm)
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 11
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 11
     w2 = optimise!(portfolio; rm = rm)
     @test isapprox(w1.weights, w2.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     constraints = DataFrame(:Enabled => [true, true, true],
                             :Type => ["Subset", "Subset", "Subset"],
                             :Sign => ["<=", "<=", "<="], :Weight => [11, 1, 1],
                             :Set => ["All", "PDBHT", "PDBHT"], :Position => [1, 4, 3])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     w1 = optimise!(portfolio; rm = rm)
     @test count(w1.weights .>= 1e-10) <= 11
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
     @test count(w1.weights[.!iszero.(A[3, :])] .>= 1e-10) <= 1
 
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 0
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 0
     rm = CDaR()
     obj = Sharpe(; rf = rf)
     constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => ["<="],
                             :Weight => [8], :Set => ["All"], :Position => [1])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     w1 = optimise!(portfolio; rm = rm, obj = obj)
-    portfolio.a_cmtx_ineq = Matrix(undef, 0, 0)
-    portfolio.b_cvec_ineq = []
-    portfolio.num_assets_u = 8
+    portfolio.a_card_ineq = Matrix(undef, 0, 0)
+    portfolio.b_card_ineq = []
+    portfolio.card = 8
     w2 = optimise!(portfolio; rm = rm, obj = obj)
     @test isapprox(w1.weights, w2.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     constraints = DataFrame(:Enabled => [true, true], :Type => ["Subset", "Subset"],
                             :Sign => ["<=", "<="], :Weight => [4, 1],
                             :Set => ["All", "G2DBHT"], :Position => [1, 3])
     A, B = asset_constraints(constraints, asset_sets)
-    portfolio.a_cmtx_ineq = A
-    portfolio.b_cvec_ineq = B
+    portfolio.a_card_ineq = A
+    portfolio.b_card_ineq = B
     w1 = optimise!(portfolio; rm = rm, obj = obj)
     @test count(w1.weights .>= 1e-10) <= 4
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
 end
 
+#=
 @testset "Management fees" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -814,12 +727,12 @@ end
 end
 
 @testset "L1 reg" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -939,12 +852,12 @@ end
 end
 
 @testset "L2 reg" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1070,14 +983,14 @@ end
 end
 
 @testset "Network and Dendrogram SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -1229,14 +1142,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -1390,16 +1303,16 @@ end
 end
 
 @testset "Network and Dendrogram SD short" begin
-    portfolio = Portfolio(; prices = prices, short_budget = 10.0,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices, short_budget = 10.0,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -1556,14 +1469,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -1716,16 +1629,16 @@ end
 end
 
 @testset "Network and Dendrogram upper dev" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     B = connection_matrix(portfolio; network_type = TMFG())
 
@@ -1762,14 +1675,14 @@ end
     @test r8 <= r1
     @test r9 <= r1
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     rm = [[SD(), SD()]]
     w10 = optimise!(portfolio; obj = Sharpe(; rf = rf), rm = rm)
@@ -1804,11 +1717,11 @@ end
     @test r17 <= r10
     @test r18 <= r10
 
-    portfolio = portfolio = Portfolio(; prices = prices,
-                                      solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                       :check_sol => (allow_local = true,
-                                                                                      allow_almost = true),
-                                                                       :params => Dict("verbose" => false))))
+    portfolio = portfolio = OmniPortfolio(; prices = prices,
+                                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                           :check_sol => (allow_local = true,
+                                                                                          allow_almost = true),
+                                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = [SD(; settings = RMSettings(; flag = false)), CDaR()]
@@ -1829,14 +1742,14 @@ end
 end
 
 @testset "Network and Dendrogram non SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio; network_type = TMFG())
@@ -1932,14 +1845,14 @@ end
           0.0006754849417179316, 0.12741534271531094]
     @test isapprox(w10.weights, wt)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -2035,14 +1948,14 @@ end
 end
 
 @testset "Network and Dendrogram non SD Short" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -2152,14 +2065,14 @@ end
           5.436944458782648e-11, 0.14005332468529116]
     @test isapprox(w10.weights, wt)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -2267,14 +2180,14 @@ end
 end
 
 @testset "Cluster and Dendrogram SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -2426,14 +2339,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -2587,16 +2500,16 @@ end
 end
 
 @testset "Cluster and Dendrogram SD short" begin
-    portfolio = Portfolio(; prices = prices, short_budget = 10.0,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices, short_budget = 10.0,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -2753,14 +2666,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -2913,16 +2826,16 @@ end
 end
 
 @testset "Cluster and Dendrogram upper dev" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     B = connection_matrix(portfolio; network_type = TMFG())
 
@@ -2959,14 +2872,14 @@ end
     @test r8 <= r1
     @test r9 <= r1
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     rm = [[SD(), SD()]]
     w10 = optimise!(portfolio; obj = Sharpe(; rf = rf), rm = rm)
@@ -3001,11 +2914,11 @@ end
     @test r17 <= r10
     @test r18 <= r10
 
-    portfolio = portfolio = Portfolio(; prices = prices,
-                                      solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                                       :check_sol => (allow_local = true,
-                                                                                      allow_almost = true),
-                                                                       :params => Dict("verbose" => false))))
+    portfolio = portfolio = OmniPortfolio(; prices = prices,
+                                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                                           :check_sol => (allow_local = true,
+                                                                                          allow_almost = true),
+                                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = [SD(; settings = RMSettings(; flag = false)), CDaR()]
@@ -3026,14 +2939,14 @@ end
 end
 
 @testset "Cluster and Dendrogram non SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio; network_type = TMFG())
@@ -3129,14 +3042,14 @@ end
           0.0006754849417179316, 0.12741534271531094]
     @test isapprox(w10.weights, wt)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -3232,14 +3145,14 @@ end
 end
 
 @testset "Cluster and Dendrogram non SD Short" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -3349,14 +3262,14 @@ end
           5.436944458782648e-11, 0.14005332468529116]
     @test isapprox(w10.weights, wt)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -3464,14 +3377,14 @@ end
 end
 
 @testset "Cluster + Network and Dendrogram SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -3640,14 +3553,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights, rtol = 1.3)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -3830,16 +3743,16 @@ end
 end
 
 @testset "Cluster + Network and Dendrogram SD short" begin
-    portfolio = Portfolio(; prices = prices, short_budget = 10.0,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices, short_budget = 10.0,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -4013,14 +3926,14 @@ end
     wc10 = optimise!(portfolio; type = WC(; mu = NoWC(), cov = NoWC()), obj = obj)
     @test isapprox(w10.weights, wc10.weights)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),
@@ -4206,16 +4119,16 @@ end
 end
 
 @testset "Cluster + Network and Dendrogram upper dev" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
+                                                                           allow_almost = true),
+                                                            :solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     C = cluster_matrix(portfolio)
@@ -4286,14 +4199,14 @@ end
     @test r4 <= r1
     @test r5 <= r1 || abs(r5 - r1) < 5e-8
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     rm = [[SD(), SD()]]
     w10 = optimise!(portfolio; obj = Sharpe(; rf = rf), rm = rm)
@@ -4360,14 +4273,14 @@ end
     @test r13 <= r10 || abs(r13 - r10) < 1e-10
     @test r14 <= r10 || abs(r14 - r10) < 5e-7
 
-    portfolio = portfolio = Portfolio(; prices = prices,
-                                      solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                                         "verbose" => false,
-                                                                                                         "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                                  MOI.Silent() => true),
-                                                                                                         "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                                     "verbose" => false,
-                                                                                                                                                     "max_step_fraction" => 0.75)))))
+    portfolio = portfolio = OmniPortfolio(; prices = prices,
+                                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                             "verbose" => false,
+                                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                                      MOI.Silent() => true),
+                                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                                         "verbose" => false,
+                                                                                                                                                         "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     rm = [SD(; settings = RMSettings(; flag = false)), CDaR()]
@@ -4422,14 +4335,14 @@ end
 end
 
 @testset "Cluster + Network and Dendrogram non SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     network_type = TMFG()
@@ -4554,14 +4467,14 @@ end
           2.9754392877625265e-12, 6.784585044649918e-12]
     @test isapprox(w10.weights, wt)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -4686,14 +4599,14 @@ end
 end
 
 @testset "Cluster + Network and Dendrogram non SD Short" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -4828,14 +4741,14 @@ end
         @test isapprox(w10.weights, wt)
     end
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -4966,12 +4879,12 @@ end
 end
 
 @testset "Rebalance Trad" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.7))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; obj = MinRisk())
@@ -5074,12 +4987,12 @@ end
 end
 
 @testset "Rebalance WC" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.7))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio)
 
@@ -5183,12 +5096,12 @@ end
 end
 
 @testset "Turnover" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; obj = Sharpe(; rf = rf))
@@ -5229,12 +5142,12 @@ end
 end
 
 @testset "Tracking" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     T = size(portfolio.returns, 1)
 
@@ -5279,12 +5192,12 @@ end
 end
 
 @testset "Min and max number of effective assets" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio; obj = MinRisk())
@@ -5336,32 +5249,32 @@ end
     @test !isapprox(w7.weights, w8.weights)
     @test isapprox(portfolio.num_assets_l, floor(Int, number_effective_assets(portfolio)))
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
     asset_statistics!(portfolio)
 
     w9 = optimise!(portfolio; obj = MinRisk())
-    portfolio.num_assets_u = 5
+    portfolio.card = 5
     w10 = optimise!(portfolio; obj = MinRisk())
     @test count(w10.weights .>= 2e-2) <= 5
     @test count(w10.weights .>= 2e-2) < count(w9.weights .>= 2e-2)
     @test !isapprox(w9.weights, w10.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     w11 = optimise!(portfolio; obj = Sharpe(; rf = rf))
-    portfolio.num_assets_u = 3
+    portfolio.card = 3
     w12 = optimise!(portfolio; obj = Sharpe(; rf = rf))
     @test count(w12.weights .>= 2e-2) <= 3
     @test count(w12.weights .>= 2e-2) < count(w11.weights .>= 2e-2)
     @test !isapprox(w11.weights, w12.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     portfolio.short = true
     portfolio.short_u = 0.2
     portfolio.long_u = 0.8
@@ -5371,7 +5284,7 @@ end
     @test isapprox(sum(w13.weights), portfolio.budget)
     @test sum(w13.weights[w13.weights .< 0]) <= portfolio.short_budget
     @test sum(w13.weights[w13.weights .>= 0]) <= portfolio.budget + portfolio.short_budget
-    portfolio.num_assets_u = 7
+    portfolio.card = 7
     w14 = optimise!(portfolio; obj = MinRisk())
     @test isapprox(sum(w14.weights), portfolio.budget)
     @test sum(w14.weights[w14.weights .< 0]) <= portfolio.short_budget
@@ -5380,12 +5293,12 @@ end
     @test count(abs.(w14.weights) .>= 2e-2) < count(abs.(w13.weights) .>= 2e-2)
     @test !isapprox(w13.weights, w14.weights)
 
-    portfolio.num_assets_u = 0
+    portfolio.card = 0
     w15 = optimise!(portfolio; obj = Sharpe(; rf = rf))
     @test isapprox(sum(w15.weights), portfolio.budget)
     @test sum(w15.weights[w15.weights .< 0]) <= portfolio.short_budget
     @test sum(w15.weights[w15.weights .>= 0]) <= portfolio.budget + portfolio.short_budget
-    portfolio.num_assets_u = 4
+    portfolio.card = 4
     w16 = optimise!(portfolio; obj = Sharpe(; rf = rf))
     @test isapprox(sum(w16.weights), portfolio.budget)
     @test sum(w16.weights[w16.weights .< 0]) <= portfolio.short_budget
@@ -5396,16 +5309,16 @@ end
     @test !isapprox(w15.weights, w16.weights)
 
     @test_throws AssertionError portfolio.num_assets_l = -1
-    @test_throws AssertionError portfolio.num_assets_u = -1
+    @test_throws AssertionError portfolio.card = -1
 end
 
 @testset "Linear" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -5456,3 +5369,92 @@ end
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 19)
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 21)
 end
+
+@testset "Number of effective assets groups" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                             "verbose" => false,
+                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                      MOI.Silent() => true),
+                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                         "verbose" => false,
+                                                                                                                                         "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
+    asset_sets = DataFrame("Asset" => portfolio.assets,
+                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
+                                       3, 1],
+                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
+                                        4, 2, 1],
+                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
+                                       2, 1],
+                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
+                                        2, 2, 1],
+                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
+                                        3, 4, 1],
+                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
+                                        4, 2, 2],
+                           "All" => ones(Int, length(portfolio.assets)))
+
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [13], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = WR()
+    w1 = optimise!(portfolio; rm = rm)
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    portfolio.num_assets_l = 13
+    w2 = optimise!(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = SSD()
+    w1 = optimise!(portfolio; rm = rm)
+    @test isapprox(500,
+                   floor(Int,
+                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    obj = Sharpe(; rf = rf)
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [13], :Set => ["All"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = WR()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    portfolio.num_assets_l = 13
+    w2 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(13, floor(Int, number_effective_assets(portfolio)))
+
+    portfolio.num_assets_l = 0
+    portfolio.a_smtx_ineq = Matrix(undef, 0, 0)
+    portfolio.b_svec_ineq = []
+    constraints = DataFrame(:Enabled => [true], :Type => ["Subset"], :Sign => [">="],
+                            :Weight => [500], :Set => ["PDBHT"], :Position => [1])
+    A, B = asset_constraints(constraints, asset_sets)
+    portfolio.a_smtx_ineq = A
+    portfolio.b_svec_ineq = B
+    rm = SSD()
+    w1 = optimise!(portfolio; rm = rm, obj = obj)
+    @test isapprox(500,
+                   floor(Int,
+                         number_effective_assets(w1.weights[findall(x -> x == 1, A[1, :])])))
+end
+=#

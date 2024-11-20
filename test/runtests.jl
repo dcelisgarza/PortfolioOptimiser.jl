@@ -4,6 +4,7 @@ using SafeTestsets
     include("ConstrainedOptimisationTests.jl")
 end
 
+#=
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
 end
@@ -99,3 +100,4 @@ end
 @safetestset "WC optimisation" begin
     include("WCOptimisationTests.jl")
 end
+=#

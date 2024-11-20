@@ -851,12 +851,183 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function Base.deepcopy(obj::OmniPortfolio)
+    return OmniPortfolio{
+                         # Assets and factors
+                         typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
+                         typeof(obj.latest_prices), typeof(obj.f_assets),
+                         typeof(obj.f_timestamps), typeof(obj.f_returns),
+                         typeof(obj.loadings), Union{<:RegressionType, Nothing},
+                         # Statistics
+                         typeof(obj.mu_l), typeof(obj.mu), typeof(obj.cov), typeof(obj.cor),
+                         typeof(obj.dist), typeof(obj.clusters), typeof(obj.k),
+                         typeof(obj.max_num_assets_kurt),
+                         typeof(obj.max_num_assets_kurt_scale), typeof(obj.kurt),
+                         typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
+                         typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
+                         typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
+                         typeof(obj.fm_mu), typeof(obj.fm_cov),
+                         typeof(obj.bl_bench_weights), typeof(obj.bl_mu),
+                         typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
+                         typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
+                         typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
+                         typeof(obj.k_sigma),
+                         # Min and max weights
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         # Risk budgetting
+                         typeof(obj.risk_budget), typeof(obj.f_risk_budget),
+                         # Budget and shorting
+                         typeof(obj.short), Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.min_budget),
+                         typeof(obj.budget), typeof(obj.max_budget),
+                         typeof(obj.min_short_budget), typeof(obj.short_budget),
+                         typeof(obj.max_short_budget),
+                         # Cardinality
+                         typeof(obj.card_scale), typeof(obj.card), typeof(obj.a_card_ineq),
+                         typeof(obj.b_card_ineq), typeof(obj.a_card_eq),
+                         typeof(obj.b_card_eq),
+                         # Effective assets
+                         typeof(obj.nea),
+                         # Linear constraints
+                         typeof(obj.a_ineq), typeof(obj.b_ineq), typeof(obj.a_eq),
+                         typeof(obj.b_eq),
+                         # Tracking
+                         typeof(obj.tracking),
+                         # Turnover
+                         AbstractTR,
+                         # Adjacency
+                         typeof(obj.network_adj), typeof(obj.cluster_adj),
+                         # Centrality
+                         typeof(obj.a_cent_ineq), typeof(obj.b_cent_ineq),
+                         typeof(obj.a_cent_eq), typeof(obj.b_cent_eq),
+                         # Regularisation
+                         typeof(obj.l1), typeof(obj.l2),
+                         # Fees
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         Union{<:Real, <:AbstractVector{<:Real}},
+                         # Rebalance cost
+                         AbstractTR,
+                         # Solution
+                         typeof(obj.model), typeof(obj.solvers), typeof(obj.optimal),
+                         typeof(obj.fail), typeof(obj.limits), typeof(obj.frontier),
+                         typeof(obj.walking), typeof(obj.alloc_model),
+                         typeof(obj.alloc_solvers), typeof(obj.alloc_optimal),
+                         typeof(obj.alloc_fail), typeof(obj.alloc_walking)}(
+                                                                            # Assets and factors
+                                                                            deepcopy(obj.assets),
+                                                                            deepcopy(obj.timestamps),
+                                                                            deepcopy(obj.returns),
+                                                                            deepcopy(obj.latest_prices),
+                                                                            deepcopy(obj.f_assets),
+                                                                            deepcopy(obj.f_timestamps),
+                                                                            deepcopy(obj.f_returns),
+                                                                            deepcopy(obj.loadings),
+                                                                            deepcopy(obj.regression_type),
+                                                                            # Statistics
+                                                                            deepcopy(obj.mu_l),
+                                                                            deepcopy(obj.mu),
+                                                                            deepcopy(obj.cov),
+                                                                            deepcopy(obj.cor),
+                                                                            deepcopy(obj.dist),
+                                                                            deepcopy(obj.clusters),
+                                                                            deepcopy(obj.k),
+                                                                            deepcopy(obj.max_num_assets_kurt),
+                                                                            deepcopy(obj.max_num_assets_kurt_scale),
+                                                                            deepcopy(obj.kurt),
+                                                                            deepcopy(obj.skurt),
+                                                                            deepcopy(obj.L_2),
+                                                                            deepcopy(obj.S_2),
+                                                                            deepcopy(obj.skew),
+                                                                            deepcopy(obj.V),
+                                                                            deepcopy(obj.sskew),
+                                                                            deepcopy(obj.SV),
+                                                                            deepcopy(obj.f_mu),
+                                                                            deepcopy(obj.f_cov),
+                                                                            deepcopy(obj.fm_returns),
+                                                                            deepcopy(obj.fm_mu),
+                                                                            deepcopy(obj.fm_cov),
+                                                                            deepcopy(obj.bl_bench_weights),
+                                                                            deepcopy(obj.bl_mu),
+                                                                            deepcopy(obj.bl_cov),
+                                                                            deepcopy(obj.blfm_mu),
+                                                                            deepcopy(obj.blfm_cov),
+                                                                            deepcopy(obj.cov_l),
+                                                                            deepcopy(obj.cov_u),
+                                                                            deepcopy(obj.cov_mu),
+                                                                            deepcopy(obj.cov_sigma),
+                                                                            deepcopy(obj.d_mu),
+                                                                            deepcopy(obj.k_mu),
+                                                                            deepcopy(obj.k_sigma),
+                                                                            # Min and max weights
+                                                                            deepcopy(obj.w_min),
+                                                                            deepcopy(obj.w_max),
+                                                                            # Risk budgetting
+                                                                            deepcopy(obj.risk_budget),
+                                                                            deepcopy(obj.f_risk_budget),
+                                                                            # Budget and shorting
+                                                                            deepcopy(obj.short),
+                                                                            deepcopy(obj.long_l),
+                                                                            deepcopy(obj.long_u),
+                                                                            deepcopy(obj.short_l),
+                                                                            deepcopy(obj.short_u),
+                                                                            deepcopy(obj.min_budget),
+                                                                            deepcopy(obj.budget),
+                                                                            deepcopy(obj.max_budget),
+                                                                            deepcopy(obj.min_short_budget),
+                                                                            deepcopy(obj.short_budget),
+                                                                            deepcopy(obj.max_short_budget),
+                                                                            # Cardinality
+                                                                            deepcopy(obj.card_scale),
+                                                                            deepcopy(obj.card),
+                                                                            deepcopy(obj.a_card_ineq),
+                                                                            deepcopy(obj.b_card_ineq),
+                                                                            deepcopy(obj.a_card_eq),
+                                                                            deepcopy(obj.b_card_eq),
+                                                                            # Effective assets
+                                                                            deepcopy(obj.nea),
+                                                                            # Linear constraints
+                                                                            deepcopy(obj.a_ineq),
+                                                                            deepcopy(obj.b_ineq),
+                                                                            deepcopy(obj.a_eq),
+                                                                            deepcopy(obj.b_eq),
+                                                                            # Tracking
+                                                                            deepcopy(obj.tracking),
+                                                                            # Turnover
+                                                                            deepcopy(obj.turnover),
+                                                                            # Adjacency
+                                                                            deepcopy(obj.network_adj),
+                                                                            deepcopy(obj.cluster_adj),
+                                                                            # Centrality
+                                                                            deepcopy(obj.a_cent_ineq),
+                                                                            deepcopy(obj.b_cent_ineq),
+                                                                            deepcopy(obj.a_cent_eq),
+                                                                            deepcopy(obj.b_cent_eq),
+                                                                            # Regularisation
+                                                                            deepcopy(obj.l1),
+                                                                            deepcopy(obj.l2),
+                                                                            # Fees
+                                                                            deepcopy(obj.long_fees),
+                                                                            deepcopy(obj.short_fees),
+                                                                            # Rebalance cost
+                                                                            deepcopy(obj.rebalance),
+                                                                            # Solution
+                                                                            deepcopy(obj.model),
+                                                                            deepcopy(obj.solvers),
+                                                                            deepcopy(obj.optimal),
+                                                                            deepcopy(obj.fail),
+                                                                            deepcopy(obj.limits),
+                                                                            deepcopy(obj.frontier),
+                                                                            deepcopy(obj.walking),
+                                                                            deepcopy(obj.alloc_model),
+                                                                            deepcopy(obj.alloc_solvers),
+                                                                            deepcopy(obj.alloc_optimal),
+                                                                            deepcopy(obj.alloc_fail),
+                                                                            deepcopy(obj.alloc_walking))
+end
 export OmniPortfolio
-#=
-N = size(obj.returns, 2)
-long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget, obj.max_budget, obj.short,
-obj.short_l, obj.short_u, obj.min_short_budget, obj.short_budget,obj.max_short_budget)
-=#
 """
 ```
 mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
