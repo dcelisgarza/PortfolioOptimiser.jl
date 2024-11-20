@@ -4,6 +4,10 @@ using SafeTestsets
     include("ConstrainedOptimisationTests.jl")
 end
 
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
 #=
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
@@ -19,10 +23,6 @@ end
 
 @safetestset "RRP optimisation" begin
     include("RRPOptimisationTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
 end
 
 @safetestset "Network constraint tests" begin

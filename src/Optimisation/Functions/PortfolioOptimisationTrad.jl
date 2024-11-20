@@ -31,11 +31,9 @@ end
 function _optimise!(type::Trad, port::OmniPortfolio,
                     rm::Union{AbstractVector, <:RiskMeasure}, obj::ObjectiveFunction,
                     kelly::RetType, class::PortClass, w_ini::AbstractVector,
-                    custom_constraint = nothing, custom_objective = nothing,
-                    ohf::Real = 0.0, str_names::Bool = false)
+                    custom_constraint, custom_objective, ohf::Real, str_names::Bool = false)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
-
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     optimal_homogenisation_factor(port, mu, obj, ohf)
     initial_w(port, w_ini)

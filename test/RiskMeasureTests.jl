@@ -4,11 +4,11 @@ using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
 prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
 @testset "Risk measures" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     optimise!(portfolio; obj = Sharpe())
 
@@ -31,7 +31,11 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
            DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        @test isapprox(risk, calc_risk(portfolio; type = :Trad, rm = rm), rtol = 5e-7)
+        r = calc_risk(portfolio; type = :Trad, rm = rm)
+        s = sharpe_ratio(portfolio; type = :Trad, rm = rm)
+        push!(rs, r)
+        push!(sr, s)
+        @test isapprox(risk, r, rtol = 5e-7)
         @test length(rm) == 1
         @test rm[rand(Int)] == rm
     end

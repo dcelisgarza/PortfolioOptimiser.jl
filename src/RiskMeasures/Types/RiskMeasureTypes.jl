@@ -1725,7 +1725,7 @@ struct BDVariance <: RiskMeasure
     formulation::BDVarianceFormulation
 end
 function BDVariance(; settings::RMSettings = RMSettings(),
-                    formulation::BDVarianceFormulation = BDVAbsVal)
+                    formulation::BDVarianceFormulation = BDVAbsVal())
     return BDVariance(settings, formulation)
 end
 

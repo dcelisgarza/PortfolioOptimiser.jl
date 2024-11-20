@@ -21,7 +21,7 @@ function optimise!(port::OmniPortfolio;
                    type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
-                   custom_constraint = nothing, custom_objective = nothing, ohf::Real = 0.0,
+                   custom_constraint = nothing, custom_objective = nothing, ohf::Real = 1.0,
                    str_names::Bool = false)
     empty!(port.fail)
     return _optimise!(type, port, rm, obj, kelly, class, w_ini, custom_constraint,
