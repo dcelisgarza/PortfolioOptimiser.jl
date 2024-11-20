@@ -249,8 +249,6 @@ end
     @test v1 >= v2 >= v3
 end
 
-#=
-
 @testset "L2 reg" begin
     portfolio = OmniPortfolio(; prices = prices,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -260,128 +258,115 @@ end
                                                                                "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
+    w = fill(inv(20), 20)
+
     obj = MinRisk()
     portfolio.l2 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-8
-    w2 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-1
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test norm(w1.weights - we) >
-          norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = Utility()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Sharpe(; rf = rf)
     portfolio.l2 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-8
-    w2 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-1
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    we = [0.05298156231680535, 0.05888075486629607, 0.07718082080727115,
-          0.07006765931014063, 0.15199106219865893, 2.646404586788006e-10,
-          0.15639628611163564, 0.016585121017864846, 0.06378498465627157,
-          0.028610772832785805, 0.012258544557017496, 3.811077593860601e-10,
-          1.4324858470262027e-11, 1.7500310361861137e-9, 3.262811362385295e-11,
-          0.09352037076484476, 0.08015832253403514, 0.023310567285026236,
-          0.06686672338134769, 0.047406444917266595]
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test norm(w2.weights - we) >
-          norm(w1.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = MaxRet()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     portfolio.short = true
     obj = MinRisk()
     portfolio.l2 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-8
-    w2 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-1
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.0001)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test norm(w1.weights - we) >
-          norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = Utility()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Sharpe(; rf = rf)
     portfolio.l2 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-8
-    w2 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e-1
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l2 = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    we = [0.06529816556863346, 0.0716359340541995, 0.09128693733661207, 0.08365363129530295,
-          0.1716219769045593, -0.018125112033365743, 0.17637786634447902,
-          0.026215128161348876, 0.07691053144273366, 0.039136221555458185,
-          0.021568679382423277, -0.004909150153930587, -0.09370884017030932,
-          1.940267261803675e-9, -0.08325689052349418, 0.1088446022955598,
-          0.09448476324472001, 0.033436031156468635, 0.08021577571918924,
-          0.05931374647914458]
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test norm(w2.weights - we) >
-          norm(w1.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = MaxRet()
+    portfolio.l2 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l2 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
+    @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 end
 
+#=
 @testset "Network and Dendrogram SD" begin
     portfolio = OmniPortfolio(; prices = prices,
                               solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
