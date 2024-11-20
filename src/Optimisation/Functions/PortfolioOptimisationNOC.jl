@@ -107,6 +107,6 @@ function _optimise!(type::NOC, port::Portfolio, rm::Union{AbstractVector, <:Risk
     return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
     weight_constraints(port, nothing)
     noc_constraints(port.model, risk0, ret0)
-    objective_function(port, nothing, type, nothing)
+    set_objective_function(port, nothing, type, nothing)
     return convex_optimisation(port, nothing, type, class)
 end

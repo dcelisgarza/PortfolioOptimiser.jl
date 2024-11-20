@@ -142,590 +142,6 @@ l = 2.0
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
 end
 
-#=
-@testset "Management fees" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-
-    obj = MinRisk()
-    portfolio.fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-3
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-1
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e4
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e6
-    w8 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.0001)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.0001)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
-    @test norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w2.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w8.weights - we)
-
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-3
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-1
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e4
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e6
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 0
-    we = optimise!(portfolio; obj = MaxRet())
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.005)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.2)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.2)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
-    @test norm(w5.weights - we.weights) >
-          norm(w4.weights - we.weights) >
-          norm(w3.weights - we.weights) >
-          norm(w2.weights - we.weights) >
-          norm(w7.weights - we.weights) >
-          norm(w6.weights - we.weights)
-
-    portfolio.short = true
-    obj = MinRisk()
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-6
-    portfolio.short_fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-4
-    portfolio.short_fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-2
-    portfolio.short_fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-1
-    portfolio.short_fees = 1e-1
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    portfolio.short_fees = 1e0
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    portfolio.short_fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    we = [0.019225068135363583, 0.027575402765834634, 0.01687651585181283,
-          0.022769730402666454, 0.01658346220524441, 0.03381474158157532,
-          0.0030112060162066894, 0.13681988543506435, 0.005119336800575964,
-          0.013286486837090328, 0.2751061586102229, 0.0036102764957259316,
-          0.0027999937090245753, 0.10356861904234134, 0.00659985070788751,
-          0.017155194244685184, 0.017601381486996425, 0.17666106287197209,
-          0.006595062945963808, 0.09522056385374571]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w8.weights - we)
-
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-6
-    portfolio.short_fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-4
-    portfolio.short_fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-2
-    portfolio.short_fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    portfolio.short_fees = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e1
-    portfolio.short_fees = 1e1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    portfolio.short_fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    we = zeros(20)
-    we[7] = 1
-
-    @test isapprox(w1.weights, w3.weights, rtol = 5e-5)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.005)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.1)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
-    @test norm(w6.weights - we) >
-          norm(w5.weights - we) >
-          norm(w4.weights - we) >
-          norm(w3.weights - we) >
-          norm(w2.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = true
-    obj = MinRisk()
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-1
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    we = [0.015065986827820144, 0.02786520027873768, 0.01385524824826613,
-          0.02427929427811058, 0.013920180047717166, 0.03344931764802979,
-          0.0010405313004410682, 0.138391381144273, 0.0017830035699607952,
-          0.008901159071535885, 0.28119430497411546, 0.001180700956582574,
-          0.0009178161892349309, 0.11441957786815425, 0.0033422968107765004,
-          0.016009238091182758, 0.012441527680889249, 0.18438019735623085,
-          0.002295247617288693, 0.10526779004065231]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w8.weights - we)
-
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    we = zeros(20)
-    we[7] = portfolio.budget + portfolio.short_budget
-    we[13] = -portfolio.short_budget
-
-    @test isapprox(w1.weights, w3.weights, rtol = 5e-5)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.001)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.1)
-    @test norm(w6.weights - we) >
-          norm(w5.weights - we) >
-          norm(w4.weights - we) >
-          norm(w3.weights - we) >
-          norm(w2.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = true
-    obj = MinRisk()
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.short_fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e-1
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e0
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.short = false
-    we = optimise!(portfolio; obj = obj).weights
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w8.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
-
-    portfolio.short = true
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = 0
-    portfolio.short_fees = 0
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = Float64[]
-    portfolio.short_fees = Float64[]
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.short_fees = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e-4
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e0
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 1e2
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.short = false
-    we = optimise!(portfolio; obj = obj).weights
-
-    @test isapprox(w1.weights, w3.weights, rtol = 5e-6)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.5)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w7.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = false
-    portfolio.short_fees = 0
-    obj = MinRisk()
-    portfolio.fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees[11] = 1e-6
-    portfolio.fees[18] = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-5
-    portfolio.fees[18] = 1e-5
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 2e-5
-    portfolio.fees[18] = 2e-5
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 5e-4
-    portfolio.fees[18] = 5e-4
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-4
-    portfolio.fees[18] = 1e-4
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-3
-    portfolio.fees[18] = 1e-3
-    w8 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w8.weights - we) >
-          norm(w6.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we)
-
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees[5] = 1e-3
-    portfolio.fees[17] = 1e-3
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e-2
-    portfolio.fees[17] = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 5e-2
-    portfolio.fees[17] = 5e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e-1
-    portfolio.fees[17] = 1e-1
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 2e-1
-    portfolio.fees[17] = 2e-1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e0
-    portfolio.fees[17] = 1e0
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 0
-    we = [1.2240802569537274e-7, 0.056641608465324705, 0.2728078436268201,
-          0.05246327900483444, 1.1135260502873815e-9, 1.78122132884115e-9,
-          0.09625241600117468, 1.977742730913937e-8, 1.482647822207292e-8,
-          7.78517025733792e-9, 1.4736263207883819e-8, 1.704649935419821e-9,
-          1.11042892349115e-9, 3.821474860591432e-9, 1.0925099494344984e-9,
-          0.18818887902653023, 9.50292734753034e-10, 1.8271225828745775e-8,
-          0.2613923133117478, 0.07225345118487383]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w7.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = true
-    portfolio.short_fees = 0
-    obj = MinRisk()
-    portfolio.fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees[11] = 1e-6
-    portfolio.fees[18] = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-5
-    portfolio.fees[18] = 1e-5
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 2e-5
-    portfolio.fees[18] = 2e-5
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 5e-5
-    portfolio.fees[18] = 5e-5
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-4
-    portfolio.fees[18] = 1e-4
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees[11] = 1e-3
-    portfolio.fees[18] = 1e-3
-    w8 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w8.weights - we) >
-          norm(w6.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we)
-
-    portfolio.short = true
-    portfolio.short_fees = 0
-    obj = Sharpe(; rf = rf)
-    portfolio.fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.fees[5] = 1e-3
-    portfolio.fees[17] = 1e-3
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e-2
-    portfolio.fees[17] = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 2e-2
-    portfolio.fees[17] = 2e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 3e-2
-    portfolio.fees[17] = 3e-2
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e-1
-    portfolio.fees[17] = 1e-1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.fees[5] = 1e0
-    portfolio.fees[17] = 1e0
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.fees = 0
-    we = [5.978851145040287e-8, 0.07801619457595918, 0.22596166226349637,
-          0.07482118033657408, 4.039071614043156e-11, -3.5348250753346015e-8,
-          0.08352498283042216, 0.02966458304303035, 6.781623576814886e-9,
-          5.092077827551042e-9, 0.01873160694082571, -0.03807356232198668,
-          -0.06445892683771992, 9.370192428455347e-10, -0.09746744364360328,
-          0.19587427642000105, -4.21013125841929e-10, 5.817068366000383e-8,
-          0.33243905407882635, 0.16096629727313197]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w8.weights, rtol = 1.1)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w7.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = true
-    portfolio.fees = 0
-    obj = MinRisk()
-    portfolio.short_fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.short_fees[19] = 1e-6
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[19] = 2e-6
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[19] = 3e-6
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[19] = 8e-6
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[19] = 1e-5
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[19] = 1e-4
-    w8 = optimise!(portfolio; obj = obj)
-    we = [0.004577422351784713, 0.03568115587372175, 0.018374944185115573,
-          0.032666671759444044, 0.013331268829431133, 0.05095068039634071,
-          -0.009159870338059917, 0.1388260801675864, -0.049705982052383656,
-          0.016603748627198437, 0.27971092093642924, -0.02169354887979708,
-          -0.008241286581594691, 0.13945307669753076, 0.0006599433224344643,
-          0.025755433019210627, 0.010128699718004484, 0.20034878941100673,
-          3.892313250894602e-8, 0.12173181363346375]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.1)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w8.weights - we)
-
-    portfolio.short = true
-    portfolio.fees = 0
-    obj = Sharpe(; rf = rf)
-    portfolio.short_fees = Float64[]
-    w1 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = zeros(20)
-    w2 = optimise!(portfolio; obj = obj)
-    @test isapprox(w1.weights, w2.weights)
-    portfolio.short_fees[15] = 1e-3
-    w3 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[15] = 1e-2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[15] = 2e-2
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[15] = 3e-2
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[15] = 1e-1
-    w7 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees[15] = 1e0
-    w8 = optimise!(portfolio; obj = obj)
-    portfolio.short_fees = 0
-    we = [2.029332570554556e-9, 1.947942497206229e-8, 2.754989559135288e-7,
-          1.5547423692541317e-8, 0.48686331336880717, -0.06638509634819852,
-          0.057768066895080294, 0.018685417984850364, 5.0979019036784694e-9,
-          4.653262467988487e-9, 3.1231376024469886e-8, -0.07758385934561138,
-          -0.05603101119056826, -1.1064098038909445e-9, 2.7945819992809405e-10,
-          0.17543040752453926, 0.2559784144568277, 2.7181036992226056e-8,
-          0.20527392430919475, 4.245331571663527e-8]
-
-    @test isapprox(w1.weights, w3.weights, rtol = 0.005)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w6.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
-    @test norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w7.weights - we) >
-          norm(w8.weights - we)
-end
-
 @testset "L1 reg" begin
     portfolio = OmniPortfolio(; prices = prices,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -738,118 +154,102 @@ end
     obj = MinRisk()
     portfolio.l1 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e0
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
     w2 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e1
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e4
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e8
-    w6 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e12
-    w7 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.001)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
-    @test norm(w1.weights - we) >
-          norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we) >
-          norm(w7.weights - we)
+    obj = Utility()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
 
     obj = Sharpe(; rf = rf)
     portfolio.l1 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e0
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
     w2 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e1
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e4
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e8
-    w6 = optimise!(portfolio; obj = obj)
-    we = zeros(20)
-    we[7] = 1
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.5)
-    @test isapprox(w1.weights, w3.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w4.weights, rtol = 2.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 2.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 2.0)
-    @test norm(w2.weights - we) >
-          norm(w1.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = MaxRet()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
 
     portfolio.short = true
     obj = MinRisk()
     portfolio.l1 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e0
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
     w2 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e1
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e4
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e8
-    w6 = optimise!(portfolio; obj = obj)
-    we = fill(1 / 20, 20)
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
 
-    @test isapprox(w1.weights, w2.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
-    @test norm(w1.weights - we) >
-          norm(w2.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w5.weights - we) >
-          norm(w6.weights - we)
+    obj = Utility()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
 
     obj = Sharpe(; rf = rf)
     portfolio.l1 = 0
     w1 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e0
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
     w2 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e1
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
     w3 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e2
-    w4 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e4
-    w5 = optimise!(portfolio; obj = obj)
-    portfolio.l1 = 1e8
-    w6 = optimise!(portfolio; obj = obj)
-    we = zeros(20)
-    we[7] = 1
+    v3 = objective_value(portfolio.model)
+    @test v1 <= v2 <= v3
 
-    @test isapprox(w1.weights, w2.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w3.weights, rtol = 1.0)
-    @test isapprox(w1.weights, w4.weights, rtol = 2.0)
-    @test isapprox(w1.weights, w5.weights, rtol = 2.0)
-    @test isapprox(w1.weights, w6.weights, rtol = 2.0)
-    @test norm(w2.weights - we) >
-          norm(w1.weights - we) >
-          norm(w3.weights - we) >
-          norm(w4.weights - we) >
-          norm(w6.weights - we) >
-          norm(w5.weights - we)
+    obj = MaxRet()
+    portfolio.l1 = 0
+    w1 = optimise!(portfolio; obj = obj)
+    v1 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-4
+    w2 = optimise!(portfolio; obj = obj)
+    v2 = objective_value(portfolio.model)
+    portfolio.l1 = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    v3 = objective_value(portfolio.model)
+    @test v1 >= v2 >= v3
 end
+
+#=
 
 @testset "L2 reg" begin
     portfolio = OmniPortfolio(; prices = prices,
@@ -900,21 +300,21 @@ end
     w5 = optimise!(portfolio; obj = obj)
     portfolio.l2 = 1e0
     w6 = optimise!(portfolio; obj = obj)
-    we = [0.041376266303105654, 0.05666645319555945, 0.08352739946828353,
-          0.06150084987871073, 0.21791287989307231, 5.448018761016227e-9,
-          0.12640798881227971, 0.006702514018053057, 0.05519452934147245,
-          0.0034859919050957166, 7.184828915344657e-7, 5.643974315194501e-9,
-          3.102953654619841e-9, 1.3543031927767463e-8, 3.0963336086431847e-9,
-          0.11425527897115648, 0.09945867201106565, 0.01217634523511552,
-          0.07441256767591756, 0.04692151397390829]
+    we = [0.05298156231680535, 0.05888075486629607, 0.07718082080727115,
+          0.07006765931014063, 0.15199106219865893, 2.646404586788006e-10,
+          0.15639628611163564, 0.016585121017864846, 0.06378498465627157,
+          0.028610772832785805, 0.012258544557017496, 3.811077593860601e-10,
+          1.4324858470262027e-11, 1.7500310361861137e-9, 3.262811362385295e-11,
+          0.09352037076484476, 0.08015832253403514, 0.023310567285026236,
+          0.06686672338134769, 0.047406444917266595]
 
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-6)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
-    @test isapprox(w1.weights, w6.weights, rtol = 1)
-    @test norm(w1.weights - we) >
-          norm(w2.weights - we) >
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test norm(w2.weights - we) >
+          norm(w1.weights - we) >
           norm(w3.weights - we) >
           norm(w4.weights - we) >
           norm(w5.weights - we) >
@@ -961,18 +361,18 @@ end
     w5 = optimise!(portfolio; obj = obj)
     portfolio.l2 = 1e0
     w6 = optimise!(portfolio; obj = obj)
-    we = [0.05366096432005882, 0.06937691408321196, 0.09198184936532505,
-          0.07554174186349713, 0.2097346285987282, -0.01544625352860224,
-          0.13464361508441428, 0.02789461036632136, 0.07290027227010806,
-          0.027434542005605068, 0.021655213815367214, -0.012975026831135123,
-          -0.07775851206959881, 6.321446041180682e-10, -0.09382019512833997,
-          0.12715777844736514, 0.10675920416629704, 0.0310266850476233, 0.08792745953801993,
-          0.062304507953589244]
+    we = [0.06529816556863346, 0.0716359340541995, 0.09128693733661207, 0.08365363129530295,
+          0.1716219769045593, -0.018125112033365743, 0.17637786634447902,
+          0.026215128161348876, 0.07691053144273366, 0.039136221555458185,
+          0.021568679382423277, -0.004909150153930587, -0.09370884017030932,
+          1.940267261803675e-9, -0.08325689052349418, 0.1088446022955598,
+          0.09448476324472001, 0.033436031156468635, 0.08021577571918924,
+          0.05931374647914458]
 
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-6)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.0005)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
-    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w2.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w4.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w5.weights, rtol = 1.0)
     @test isapprox(w1.weights, w6.weights, rtol = 1.0)
     @test norm(w2.weights - we) >
           norm(w1.weights - we) >
@@ -5368,6 +4768,589 @@ end
 
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 19)
     @test_throws AssertionError portfolio.a_mtx_ineq = rand(13, 21)
+end
+
+@testset "Management fees" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    portfolio.fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-1
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e4
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e6
+    w8 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.0001)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.0001)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
+    @test norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w2.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w8.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-1
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e4
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e6
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 0
+    we = optimise!(portfolio; obj = MaxRet())
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.005)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.2)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.2)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
+    @test norm(w5.weights - we.weights) >
+          norm(w4.weights - we.weights) >
+          norm(w3.weights - we.weights) >
+          norm(w2.weights - we.weights) >
+          norm(w7.weights - we.weights) >
+          norm(w6.weights - we.weights)
+
+    portfolio.short = true
+    obj = MinRisk()
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-6
+    portfolio.short_fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-4
+    portfolio.short_fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-2
+    portfolio.short_fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-1
+    portfolio.short_fees = 1e-1
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    portfolio.short_fees = 1e0
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    portfolio.short_fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    we = [0.019225068135363583, 0.027575402765834634, 0.01687651585181283,
+          0.022769730402666454, 0.01658346220524441, 0.03381474158157532,
+          0.0030112060162066894, 0.13681988543506435, 0.005119336800575964,
+          0.013286486837090328, 0.2751061586102229, 0.0036102764957259316,
+          0.0027999937090245753, 0.10356861904234134, 0.00659985070788751,
+          0.017155194244685184, 0.017601381486996425, 0.17666106287197209,
+          0.006595062945963808, 0.09522056385374571]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w8.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-6
+    portfolio.short_fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-4
+    portfolio.short_fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-2
+    portfolio.short_fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    portfolio.short_fees = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e1
+    portfolio.short_fees = 1e1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    portfolio.short_fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    we = zeros(20)
+    we[7] = 1
+
+    @test isapprox(w1.weights, w3.weights, rtol = 5e-5)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.005)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.1)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
+    @test norm(w6.weights - we) >
+          norm(w5.weights - we) >
+          norm(w4.weights - we) >
+          norm(w3.weights - we) >
+          norm(w2.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = true
+    obj = MinRisk()
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-1
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    we = [0.015065986827820144, 0.02786520027873768, 0.01385524824826613,
+          0.02427929427811058, 0.013920180047717166, 0.03344931764802979,
+          0.0010405313004410682, 0.138391381144273, 0.0017830035699607952,
+          0.008901159071535885, 0.28119430497411546, 0.001180700956582574,
+          0.0009178161892349309, 0.11441957786815425, 0.0033422968107765004,
+          0.016009238091182758, 0.012441527680889249, 0.18438019735623085,
+          0.002295247617288693, 0.10526779004065231]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w8.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    we = zeros(20)
+    we[7] = portfolio.budget + portfolio.short_budget
+    we[13] = -portfolio.short_budget
+
+    @test isapprox(w1.weights, w3.weights, rtol = 5e-5)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.001)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.1)
+    @test norm(w6.weights - we) >
+          norm(w5.weights - we) >
+          norm(w4.weights - we) >
+          norm(w3.weights - we) >
+          norm(w2.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = true
+    obj = MinRisk()
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.short_fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e-1
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e0
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.short = false
+    we = optimise!(portfolio; obj = obj).weights
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w8.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we)
+
+    portfolio.short = true
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = 0
+    portfolio.short_fees = 0
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = Float64[]
+    portfolio.short_fees = Float64[]
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.short_fees = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e-4
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e0
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 1e2
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.short = false
+    we = optimise!(portfolio; obj = obj).weights
+
+    @test isapprox(w1.weights, w3.weights, rtol = 5e-6)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.5)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w7.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = false
+    portfolio.short_fees = 0
+    obj = MinRisk()
+    portfolio.fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees[11] = 1e-6
+    portfolio.fees[18] = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-5
+    portfolio.fees[18] = 1e-5
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 2e-5
+    portfolio.fees[18] = 2e-5
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 5e-4
+    portfolio.fees[18] = 5e-4
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-4
+    portfolio.fees[18] = 1e-4
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-3
+    portfolio.fees[18] = 1e-3
+    w8 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w8.weights - we) >
+          norm(w6.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we)
+
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees[5] = 1e-3
+    portfolio.fees[17] = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e-2
+    portfolio.fees[17] = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 5e-2
+    portfolio.fees[17] = 5e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e-1
+    portfolio.fees[17] = 1e-1
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 2e-1
+    portfolio.fees[17] = 2e-1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e0
+    portfolio.fees[17] = 1e0
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 0
+    we = [1.2240802569537274e-7, 0.056641608465324705, 0.2728078436268201,
+          0.05246327900483444, 1.1135260502873815e-9, 1.78122132884115e-9,
+          0.09625241600117468, 1.977742730913937e-8, 1.482647822207292e-8,
+          7.78517025733792e-9, 1.4736263207883819e-8, 1.704649935419821e-9,
+          1.11042892349115e-9, 3.821474860591432e-9, 1.0925099494344984e-9,
+          0.18818887902653023, 9.50292734753034e-10, 1.8271225828745775e-8,
+          0.2613923133117478, 0.07225345118487383]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.2)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w7.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = true
+    portfolio.short_fees = 0
+    obj = MinRisk()
+    portfolio.fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees[11] = 1e-6
+    portfolio.fees[18] = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-5
+    portfolio.fees[18] = 1e-5
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 2e-5
+    portfolio.fees[18] = 2e-5
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 5e-5
+    portfolio.fees[18] = 5e-5
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-4
+    portfolio.fees[18] = 1e-4
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees[11] = 1e-3
+    portfolio.fees[18] = 1e-3
+    w8 = optimise!(portfolio; obj = obj)
+    we = fill(1 / 20, 20)
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.0)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w8.weights - we) >
+          norm(w6.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we)
+
+    portfolio.short = true
+    portfolio.short_fees = 0
+    obj = Sharpe(; rf = rf)
+    portfolio.fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.fees[5] = 1e-3
+    portfolio.fees[17] = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e-2
+    portfolio.fees[17] = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 2e-2
+    portfolio.fees[17] = 2e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 3e-2
+    portfolio.fees[17] = 3e-2
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e-1
+    portfolio.fees[17] = 1e-1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.fees[5] = 1e0
+    portfolio.fees[17] = 1e0
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.fees = 0
+    we = [5.978851145040287e-8, 0.07801619457595918, 0.22596166226349637,
+          0.07482118033657408, 4.039071614043156e-11, -3.5348250753346015e-8,
+          0.08352498283042216, 0.02966458304303035, 6.781623576814886e-9,
+          5.092077827551042e-9, 0.01873160694082571, -0.03807356232198668,
+          -0.06445892683771992, 9.370192428455347e-10, -0.09746744364360328,
+          0.19587427642000105, -4.21013125841929e-10, 5.817068366000383e-8,
+          0.33243905407882635, 0.16096629727313197]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w7.weights, rtol = 1.0)
+    @test isapprox(w1.weights, w8.weights, rtol = 1.1)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w7.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = true
+    portfolio.fees = 0
+    obj = MinRisk()
+    portfolio.short_fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.short_fees[19] = 1e-6
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[19] = 2e-6
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[19] = 3e-6
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[19] = 8e-6
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[19] = 1e-5
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[19] = 1e-4
+    w8 = optimise!(portfolio; obj = obj)
+    we = [0.004577422351784713, 0.03568115587372175, 0.018374944185115573,
+          0.032666671759444044, 0.013331268829431133, 0.05095068039634071,
+          -0.009159870338059917, 0.1388260801675864, -0.049705982052383656,
+          0.016603748627198437, 0.27971092093642924, -0.02169354887979708,
+          -0.008241286581594691, 0.13945307669753076, 0.0006599433224344643,
+          0.025755433019210627, 0.010128699718004484, 0.20034878941100673,
+          3.892313250894602e-8, 0.12173181363346375]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.1)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w8.weights - we)
+
+    portfolio.short = true
+    portfolio.fees = 0
+    obj = Sharpe(; rf = rf)
+    portfolio.short_fees = Float64[]
+    w1 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = zeros(20)
+    w2 = optimise!(portfolio; obj = obj)
+    @test isapprox(w1.weights, w2.weights)
+    portfolio.short_fees[15] = 1e-3
+    w3 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[15] = 1e-2
+    w4 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[15] = 2e-2
+    w5 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[15] = 3e-2
+    w6 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[15] = 1e-1
+    w7 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees[15] = 1e0
+    w8 = optimise!(portfolio; obj = obj)
+    portfolio.short_fees = 0
+    we = [2.029332570554556e-9, 1.947942497206229e-8, 2.754989559135288e-7,
+          1.5547423692541317e-8, 0.48686331336880717, -0.06638509634819852,
+          0.057768066895080294, 0.018685417984850364, 5.0979019036784694e-9,
+          4.653262467988487e-9, 3.1231376024469886e-8, -0.07758385934561138,
+          -0.05603101119056826, -1.1064098038909445e-9, 2.7945819992809405e-10,
+          0.17543040752453926, 0.2559784144568277, 2.7181036992226056e-8,
+          0.20527392430919475, 4.245331571663527e-8]
+
+    @test isapprox(w1.weights, w3.weights, rtol = 0.005)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w6.weights, rtol = 0.05)
+    @test isapprox(w1.weights, w7.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w8.weights, rtol = 0.25)
+    @test norm(w2.weights - we) >
+          norm(w3.weights - we) >
+          norm(w4.weights - we) >
+          norm(w5.weights - we) >
+          norm(w6.weights - we) >
+          norm(w7.weights - we) >
+          norm(w8.weights - we)
 end
 
 @testset "Number of effective assets groups" begin

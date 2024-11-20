@@ -1,7 +1,7 @@
 name: Tests
 on:
   push:
-    branches: [master, main, release-*, dev, refactoring-constraints]
+    branches: [master, main, release-*, dev, refactoring_constraints]
     tags: [v*]
   pull_request:
     types: [opened, synchronize, reopened]

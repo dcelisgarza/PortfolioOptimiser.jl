@@ -7,8 +7,7 @@ optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
           str_names::Bool = false)
 ```
 """
-function optimise!(port::Union{Portfolio, OmniPortfolio};
-                   rm::Union{AbstractVector, <:RiskMeasure} = SD(),
+function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
                    kelly::RetType = NoKelly(), class::PortClass = Classic(),
                    w_ini::AbstractVector = Vector{Float64}(undef, 0),
@@ -16,6 +15,17 @@ function optimise!(port::Union{Portfolio, OmniPortfolio};
                    str_names::Bool = false)
     empty!(port.fail)
     return _optimise!(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen, str_names)
+end
+function optimise!(port::OmniPortfolio;
+                   rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
+                   type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
+                   kelly::RetType = NoKelly(), class::PortClass = Classic(),
+                   w_ini::AbstractVector = Vector{Float64}(undef, 0),
+                   custom_constraint = nothing, custom_objective = nothing, ohf::Real = 0.0,
+                   str_names::Bool = false)
+    empty!(port.fail)
+    return _optimise!(type, port, rm, obj, kelly, class, w_ini, custom_constraint,
+                      custom_objective, ohf, str_names)
 end
 
 function frontier_limits!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),

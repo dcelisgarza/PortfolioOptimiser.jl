@@ -272,7 +272,7 @@ function weight_constraints(port)
     =#
     nea = port.nea
     if nea > zero(nea)
-        @variable(model, nea_var >= 0)
+        @variable(model, nea_var)
         @constraints(model, begin
                          [nea_var; w] ∈ SecondOrderCone()
                          nea_var * sqrt(nea) <= k
@@ -330,7 +330,7 @@ function tracking_error_constraints(port, returns)
     benchmark = tracking_error_benchmark(tracking, returns)
     err = tracking.err
 
-    @variable(model, t_tracking_error >= 0)
+    @variable(model, t_tracking_error)
     @expression(model, tracking_error, X .- benchmark * k)
     @constraints(model, begin
                      [t_tracking_error; tracking_error] ∈ SecondOrderCone()
@@ -357,42 +357,12 @@ function turnover_constraints(port)
     benchmark = turnover.w
     val = turnover.val
 
-    @variable(model, t_turnover[1:N] >= 0)
+    @variable(model, t_turnover[1:N])
     @expression(model, turnover, w .- benchmark * k)
     @constraints(model, begin
                      [i = 1:N], [t_turnover[i]; turnover[i]] ∈ MOI.NormOneCone(2)
                      t_turnover .<= val * k
                  end)
-
-    return nothing
-end
-function L1_regularisation(port)
-    l1 = port.l1
-    if iszero(l1)
-        return nothing
-    end
-
-    model = port.model
-    w = model[:w]
-
-    @variable(model, t_l1 >= 0)
-    @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
-    @expression(model, l1_reg, l1 * t_l1)
-
-    return nothing
-end
-function L2_regularisation(port)
-    l2 = port.l2
-    if iszero(l2)
-        return nothing
-    end
-
-    model = port.model
-    w = model[:w]
-
-    @variable(model, t_l2 >= 0)
-    @constraint(model, [t_l2; w] in SecondOrderCone())
-    @expression(model, l2_reg, l2 * t_l2)
 
     return nothing
 end
@@ -435,7 +405,7 @@ function rebalance_fee(port)
     benchmark = rebalance.w
     val = rebalance.val
 
-    @variable(model, t_rebalance[1:N] >= 0)
+    @variable(model, t_rebalance[1:N])
     @expression(model, rebalance, w .- benchmark * k)
     @constraint(model, [i = 1:N], [t_rebalance[i]; rebalance[i]] ∈ MOI.NormOneCone(2))
     @expression(model, rebalance_fee, sum(val .* t_rebalance))
@@ -470,6 +440,10 @@ function get_net_portfolio_returns(model, returns)
     return nothing
 end
 function _SDP_constraints(model)
+    if haskey(model, :W)
+        return nothing
+    end
+
     w = model[:w]
     k = model[:k]
     N = length(w)
@@ -487,12 +461,10 @@ function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
         return nothing
     end
 
-    if !haskey(model, :W)
-        _SDP_constraints(model)
-    end
-
+    _SDP_constraints(model)
     W = model[:W]
     A = network_cluster.A
+
     @constraint(model, A .* W .== 0)
 
     if !haskey(model, :variance_risk)
@@ -512,10 +484,67 @@ end
 function custom_objective(port, ::Nothing)
     return nothing
 end
+function L1_regularisation(port)
+    l1 = port.l1
+    if iszero(l1)
+        return nothing
+    end
+
+    model = port.model
+    w = model[:w]
+
+    @variable(model, t_l1)
+    @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
+    @expression(model, l1_reg, l1 * t_l1)
+
+    return nothing
+end
+function L2_regularisation(port)
+    l2 = port.l2
+    if iszero(l2)
+        return nothing
+    end
+
+    model = port.model
+    w = model[:w]
+
+    @variable(model, t_l2)
+    @constraint(model, [t_l2; w] in SecondOrderCone())
+    @expression(model, l2_reg, l2 * t_l2)
+
+    return nothing
+end
 
 ###########
 ###########
-
+function L1_reg(port)
+    if !iszero(port.l1)
+        model = port.model
+        w = model[:w]
+        @variable(model, t_l1 >= 0)
+        @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
+        @expression(model, l1_reg, port.l1 * t_l1)
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], l1_reg)
+    end
+    return nothing
+end
+function L2_reg(port)
+    if !iszero(port.l2)
+        model = port.model
+        w = model[:w]
+        @variable(model, t_l2 >= 0)
+        @constraint(model, [t_l2; w] in SecondOrderCone())
+        @expression(model, l2_reg, port.l2 * t_l2)
+        if !haskey(model, :obj_penalty)
+            @expression(model, obj_penalty, zero(AffExpr))
+        end
+        add_to_expression!(model[:obj_penalty], l2_reg)
+    end
+    return nothing
+end
 ##########
 ##########
 
@@ -864,34 +893,6 @@ function turnover_constraints(turnover::TR, port, obj)
          isa(turnover.val, AbstractVector) && isempty(turnover.val) ||
          isempty(turnover.w))
         _turnover_constraints(obj, port.model, turnover)
-    end
-    return nothing
-end
-function L1_reg(port)
-    if !iszero(port.l1)
-        model = port.model
-        w = model[:w]
-        @variable(model, t_l1 >= 0)
-        @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
-        @expression(model, l1_reg, port.l1 * t_l1)
-        if !haskey(model, :obj_penalty)
-            @expression(model, obj_penalty, zero(AffExpr))
-        end
-        add_to_expression!(model[:obj_penalty], l1_reg)
-    end
-    return nothing
-end
-function L2_reg(port)
-    if !iszero(port.l2)
-        model = port.model
-        w = model[:w]
-        @variable(model, t_l2 >= 0)
-        @constraint(model, [t_l2; w] in SecondOrderCone())
-        @expression(model, l2_reg, port.l2 * t_l2)
-        if !haskey(model, :obj_penalty)
-            @expression(model, obj_penalty, zero(AffExpr))
-        end
-        add_to_expression!(model[:obj_penalty], l2_reg)
     end
     return nothing
 end

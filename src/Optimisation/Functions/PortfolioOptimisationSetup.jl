@@ -50,14 +50,16 @@ function mu_sigma_returns_class(port, class::BLFM)
 end
 ##########
 ##########
-function optimal_homogenisation_factor(port, mu, ::Sharpe)
-    val = if !isempty(mu)
-        min(1e3, max(1e-3, mean(abs.(mu))))
-    else
-        one(eltype(port.returns))
+function optimal_homogenisation_factor(port, mu, ::Sharpe, ohf)
+    if iszero(ohf)
+        if !isempty(mu)
+            ohf = min(1e3, max(1e-3, mean(abs.(mu))))
+        else
+            ohf = one(eltype(port.returns))
+        end
     end
     model = port.model
-    @expression(model, ohf, val)
+    @expression(model, ohf, ohf)
     return nothing
 end
 function optimal_homogenisation_factor(args...)

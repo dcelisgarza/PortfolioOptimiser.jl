@@ -94,6 +94,6 @@ function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::
     L1_reg(port)
     L2_reg(port)
     custom_constraint_objective_penatly(c_const_obj_pen, port)
-    objective_function(port, obj, type, nothing)
+    set_objective_function(port, obj, type, nothing)
     return convex_optimisation(port, obj, type, nothing)
 end
