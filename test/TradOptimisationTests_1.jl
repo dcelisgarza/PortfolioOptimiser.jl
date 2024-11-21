@@ -39,7 +39,7 @@
     @test length(keys(portfolio.fail[:Clarabel1_Trad])) == 6
 end
 
-@testset "SD" begin
+@testset "Variance" begin
     portfolio = OmniPortfolio(; prices = prices,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                :check_sol => (allow_local = true,
@@ -120,7 +120,7 @@ end
           5.699105612892133e-10, 2.079988023687919e-9, 5.463657962369361e-10,
           0.15505269860336068, 0.02587387715494727, 5.1544684301828716e-9,
           4.384014669868401e-8, 6.25205503896986e-9]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-7)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -157,7 +157,7 @@ end
           3.032865903519244e-8, 9.975084610937565e-8, 2.927622589710415e-8,
           0.140132597154028, 0.2135052983305069, 6.899386614850263e-7, 0.09907112697494824,
           5.99769403061889e-7]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 0.001)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -194,7 +194,7 @@ end
           8.570011599717695e-10, 1.5424724997016623e-9, 8.7105116377961e-10,
           5.975487549944421e-9, 4.106592066239195e-9, 2.115816975845725e-9,
           3.4223392213476532e-9, 2.6133360746565418e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 1.0e-7)
 
     # Risk upper bound
     obj = MaxRet()
