@@ -95,6 +95,18 @@ function _variance_risk(::Union{NoAdj, IP}, ::Quad, model::JuMP.Model,
     @constraint(model, [dev; G * w] ∈ SecondOrderCone())
     return nothing
 end
+function _variance_risk_bounds_expr(::SDP, model)
+    return model[:variance_risk]
+end
+function _variance_risk_bounds_expr(::Union{NoAdj, IP}, model)
+    return model[:dev]
+end
+function _variance_risk_bounds_val(::SDP, ub)
+    return ub
+end
+function _variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
+    return sqrt(ub)
+end
 function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
@@ -113,8 +125,10 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix
     end
     _variance_risk(adjacency_constraint, rm.formulation, model, sigma)
     variance_risk = model[:variance_risk]
-    _set_rm_risk_upper_bound(type, model, variance_risk, rm.settings.ub)
-    _set_risk_expression(model, variance_risk, rm.settings.scale, rm.settings.flag)
+    var_bound_expr = _variance_risk_bounds_expr(adjacency_constraint, model)
+    ub = _variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
+    _set_rm_risk_upper_bound(type, model, var_bound_expr, ub)
+    _set_risk_expression(model, model[:variance_risk], rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
@@ -128,6 +142,7 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
     count = length(rms)
     _variance_risk(adjacency_constraint, model, sigma, count)
     variance_risk = model[:variance_risk]
+    var_bound_expr = _variance_risk_bounds_expr(adjacency_constraint, model)
     for (i, rm) ∈ pairs(rms)
         use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
         if !isnothing(kelly_approx_idx) && use_portfolio_sigma
@@ -139,7 +154,8 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
             sigma = rm.sigma
         end
         _variance_risk(adjacency_constraint, rm.formulation, model, sigma, i)
-        _set_rm_risk_upper_bound(type, model, variance_risk, rm.settings.ub, i)
+        ub = _variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
+        _set_rm_risk_upper_bound(type, model, var_bound_expr[i], ub, i)
         _set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
