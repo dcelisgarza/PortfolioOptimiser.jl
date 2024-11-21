@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -79,10 +83,6 @@ end
 
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
 end
 
 @safetestset "Trad optimisation rm vector" begin
