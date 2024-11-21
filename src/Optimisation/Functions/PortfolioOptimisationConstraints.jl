@@ -481,9 +481,6 @@ end
 function custom_constraint(port, ::Nothing)
     return nothing
 end
-function custom_objective(port, ::Nothing)
-    return nothing
-end
 function L1_regularisation(port)
     l1 = port.l1
     if iszero(l1)
