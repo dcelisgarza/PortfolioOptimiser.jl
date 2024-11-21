@@ -2000,6 +2000,85 @@ function SVariance(; settings::RMSettings = RMSettings(),
 end
 
 """
+```
+abstract type WorstCaseSet end
+```
+
+Abstract type for subtyping worst case mean variance set types.
+"""
+abstract type WorstCaseSet end
+
+"""
+```
+struct Box <: WorstCaseSet end
+```
+
+Box sets for worst case mean variance optimisation.
+"""
+struct Box <: WorstCaseSet end
+
+"""
+```
+struct Ellipse <: WorstCaseSet end
+```
+
+Elliptical sets for worst case mean variance optimisation.
+"""
+struct Ellipse <: WorstCaseSet end
+
+"""
+```
+@kwdef mutable struct NoWC <: WorstCaseSet
+    formulation::SDSquaredFormulation = SOC()
+end
+```
+
+Use no set for worst case mean variance optimisation.
+
+# Parameters
+
+  - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`SDSquaredFormulation`](@ref).
+"""
+mutable struct NoWC <: WorstCaseSet
+    formulation::SDSquaredFormulation
+end
+function NoWC(; formulation::SDSquaredFormulation = SOC())
+    return NoWC(formulation)
+end
+
+mutable struct WCVariance{T1} <: RiskMeasure
+    settings::RMSettings
+    wc_set::WorstCaseSet
+    sigma::Union{<:AbstractMatrix, Nothing}
+    cov_l::Union{AbstractMatrix{<:Real}, Nothing}
+    cov_u::Union{AbstractMatrix{<:Real}, Nothing}
+    cov_mu::Union{AbstractMatrix{<:Real}, Nothing}
+    cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}
+    k_sigma::T1
+end
+function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WorstCaseSet = SOC(),
+                    sigma::Union{<:AbstractMatrix, Nothing} = nothing,
+                    cov_l::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_u::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_mu::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    k_sigma::Real = Inf)
+    if !isnothing(sigma)
+        @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_mu,
+                                       cov_sigma, k_sigma)
+end
+function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
+    if sym ∈ (:sigma, :cov_l, :cov_u, :cov_mu, :cov_sigma)
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
+
+"""
     mutable struct VaR{T1 <: Real} <: HCRiskMeasure
 
 # Description
@@ -2474,7 +2553,7 @@ for (op, name) ∈
 end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
-const RMSigma = Union{SD, Variance}
+const RMSigma = Union{SD, Variance, SVariance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 
@@ -2482,4 +2561,4 @@ export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD
        SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
        SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
        Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal, BDVAbsVal, BDVIneq
+       Equal, BDVAbsVal, BDVIneq, WCVariance

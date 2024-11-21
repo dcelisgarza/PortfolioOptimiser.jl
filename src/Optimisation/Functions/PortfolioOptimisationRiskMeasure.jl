@@ -144,6 +144,137 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
     end
     return nothing
 end
+function _choose_wc_stats_port_rm(port, rm)
+    sigma = if !(isnothing(rm.sigma) || isempty(rm.sigma))
+        rm.sigma
+    else
+        port.sigma
+    end
+
+    cov_l = if !(isnothing(rm.cov_l) || isempty(rm.cov_l))
+        rm.cov_l
+    else
+        port.cov_l
+    end
+
+    cov_u = if !(isnothing(rm.cov_u) || isempty(rm.cov_u))
+        rm.cov_u
+    else
+        port.cov_u
+    end
+
+    cov_mu = if !(isnothing(rm.cov_mu) || isempty(rm.cov_mu))
+        rm.cov_mu
+    else
+        port.cov_mu
+    end
+
+    cov_sigma = if !(isnothing(rm.cov_sigma) || isempty(rm.cov_sigma))
+        rm.cov_sigma
+    else
+        port.cov_sigma
+    end
+
+    k_sigma = if isfinite(rm.k_sigma)
+        rm.k_sigma
+    else
+        port.k_sigma
+    end
+
+    return sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma
+end
+function _wc_variance_risk_variables(::Box, model)
+    if haskey(model, :Au)
+        return nothing
+    end
+
+    W = model[:W]
+    N = size(W, 1)
+    @variables(model, begin
+                   Au[1:N, 1:N] .>= 0, Symmetric
+                   Al[1:N, 1:N] .>= 0, Symmetric
+               end)
+    @constraint(model, Au .- Al .== W)
+    return nothing
+end
+function _wc_variance_risk_variables(::Ellipse, model)
+    if haskey(model, :E)
+        return nothing
+    end
+
+    W = model[:W]
+    N = size(W, 1)
+    @variable(model, E[1:N, 1:N], Symmetric)
+    @expression(model, WpE, W .+ E)
+    @constraint(model, E ∈ PSDCone())
+    return nothing
+end
+function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+    Au = model[:Au]
+    Al = model[:Al]
+    @expression(model, wc_variance_risk, tr(Au * cov_u) - tr(Al * cov_l))
+    return nothing
+end
+function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_mu, cov_sigma,
+                           k_sigma)
+    WpE = model[:WpE]
+    G_sigma = sqrt(cov_sigma)
+    @variable(model, t_ge)
+    @expressions(model, begin
+                     x_ge, G_sigma * vec(WpE)
+                     wc_variance_risk, tr(sigma * WpE) + k_sigma * t_ge
+                 end)
+    @constraint(model, [t_ge; x_ge] ∈ SecondOrderCone())
+    return nothing
+end
+function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma,
+                           wc_variance_risk)
+    Au = model[:Au]
+    Al = model[:Al]
+    add_to_expression!(wc_variance_risk, tr(Au * cov_u) - tr(Al * cov_l))
+    return nothing
+end
+function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_mu, cov_sigma,
+                           k_sigma, wc_variance_risk)
+    WpE = model[:WpE]
+    G_sigma = sqrt(cov_sigma)
+    t_ge = @variable(model)
+    x_ge = @expression(model, G_sigma * vec(WpE))
+    add_to_expression!(wc_variance_risk, tr(sigma * WpE))
+    add_to_expression!(wc_variance_risk, k_sigma, t_ge)
+    @constraint(model, [t_ge; x_ge] ∈ SecondOrderCone())
+    return nothing
+end
+function set_rm(port, rm::WCVariance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
+                kwargs...)
+    model = port.model
+    _SDP_constraints(model)
+    sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
+    _wc_variance_risk_variables(rm.wc_set, model)
+    _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+    wc_variance_risk = model[:wc_variance_risk]
+    _set_rm_risk_upper_bound(type, model, wc_variance_risk, rm.settings.ub)
+    _set_risk_expression(model, wc_variance_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP};
+                sigma::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    _SDP_constraints(model)
+    count = length(rms)
+    @expression(model, wc_variance_risk[1:count], zero(AffExpr))
+    for (i, rm) ∈ pairs(rms)
+        sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
+        _wc_variance_risk_variables(rm.wc_set, model)
+        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma,
+                          wc_variance_risk[i])
+        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+        _set_rm_risk_upper_bound(type, model, wc_variance_risk[i], rm.settings.ub)
+        _set_risk_expression(model, wc_variance_risk[i], rm.settings.scale,
+                             rm.settings.flag)
+    end
+    return nothing
+end
 function set_rm(port, rm::SD, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
                 kwargs...)
     model = port.model
@@ -1727,11 +1858,11 @@ function set_rm(port::OmniPortfolio, rm::BDVariance, type::Union{Trad, RP};
     @variable(model, Dt[1:T, 1:T], Symmetric)
     @expressions(model, begin
                      Dx, X * transpose(ovec) - ovec * transpose(X)
-                     dvar_risk, iT2 * (dot(Dt, Dt) + iT2 * sum(Dt)^2)
+                     bd_variance_risk, iT2 * (dot(Dt, Dt) + iT2 * sum(Dt)^2)
                  end)
     _BDVariance_constraints(rm.formulation, model, Dt, Dx, T)
-    _set_rm_risk_upper_bound(type, model, dvar_risk, rm.settings.ub)
-    _set_risk_expression(model, dvar_risk, rm.settings.scale, rm.settings.flag)
+    _set_rm_risk_upper_bound(type, model, bd_variance_risk, rm.settings.ub)
+    _set_risk_expression(model, bd_variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port::OmniPortfolio, rm::Skew, type::Union{Trad, RP}; kwargs...)
