@@ -385,7 +385,7 @@ end
     B = connection_matrix(portfolio)
     C = cluster_matrix(portfolio)
 
-    rm = SD()
+    rm = Variance()
     obj = MinRisk()
     w1 = optimise!(portfolio; obj = obj, rm = rm)
     wt = [0.00791850924098073, 0.030672065216453506, 0.010501402809199123,

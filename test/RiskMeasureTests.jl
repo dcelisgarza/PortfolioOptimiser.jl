@@ -32,9 +32,6 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
 
     for (risk, rm) ∈ zip(risks, rms)
         r = calc_risk(portfolio; type = :Trad, rm = rm)
-        s = sharpe_ratio(portfolio; type = :Trad, rm = rm)
-        push!(rs, r)
-        push!(sr, s)
         @test isapprox(risk, r, rtol = 5e-7)
         @test length(rm) == 1
         @test rm[rand(Int)] == rm

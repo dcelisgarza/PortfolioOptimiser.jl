@@ -24,14 +24,14 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     L1_reg(port)
     L2_reg(port)
     custom_constraint_objective_penatly(c_const_obj_pen, port)
-    set_objective_function(port, obj, type, kelly)
+    set_objective_function(port, obj, type, kelly, nothing)
     return convex_optimisation(port, obj, type, class)
 end
 
 function _optimise!(type::Trad, port::OmniPortfolio,
                     rm::Union{AbstractVector, <:RiskMeasure}, obj::ObjectiveFunction,
-                    kelly::RetType, class::PortClass, w_ini::AbstractVector,
-                    custom_constraint, custom_objective, ohf::Real, str_names::Bool = false)
+                    kelly::RetType, class::PortClass, w_ini::AbstractVector, custom_constr,
+                    custom_obj, ohf::Real, str_names::Bool = false)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
@@ -53,6 +53,7 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     SDP_network_cluster_constraints(port, true)
     SDP_network_cluster_constraints(port, false)
-    set_objective_function(port, obj, type, kelly)
+    custom_constraint(port, custom_constr)
+    set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
