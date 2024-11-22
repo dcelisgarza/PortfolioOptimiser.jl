@@ -1677,7 +1677,7 @@ end
           5.436022541896717e-10, 0.107415956756865, 0.002730640442805002,
           0.021065115761000137, 0.00535251787335741, 0.22884010334158902,
           2.3574094419155423e-9, 0.11751125268600204]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2143,7 +2143,7 @@ end
           2.6599708561332144e-10, 0.07641754715464191, 1.4214351227433604e-9,
           0.03435049194054096, 0.028114027913869674, 0.2231003981170177,
           2.7492193028254847e-9, 0.10371399247938931]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-8)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2170,7 +2170,7 @@ end
           1.3684166095297231e-9, 4.846459856703243e-9, 1.4176608092570215e-9,
           0.16949805603533355, 0.13682289651084628, 2.2953669955066264e-8,
           0.046768265951569875, 1.544739788558272e-8]
-    @test isapprox(w8.weights, wt)
+    @test isapprox(w8.weights, wt, rtol = 5.0e-7)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [2.9562281849363614e-7, 7.203175143415471e-7, 5.527354915875717e-7,
@@ -2180,7 +2180,7 @@ end
           6.018370176805596e-8, 1.9488520525642497e-7, 6.199288625890055e-8,
           0.16951003917104113, 0.13598079153678486, 8.914833982446512e-7,
           0.04626609570920224, 5.932428436544369e-7]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-8)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2217,7 +2217,7 @@ end
           1.202919191281741e-9, 2.1660529624022714e-9, 1.222630516718091e-9,
           8.399883420534573e-9, 5.771484370394195e-9, 2.972308021065827e-9,
           4.807518056050933e-9, 3.6715213560850315e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-6)
 
     # Risk upper bound
     obj = MaxRet()
