@@ -456,11 +456,11 @@ function _SDP_constraints(model)
 end
 function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
     network_cluster = ntwk_flag ? port.network_adj : port.cluster_adj
-    model = port.model
     if !isa(network_cluster, SDP)
         return nothing
     end
 
+    model = port.model
     _SDP_constraints(model)
     W = model[:W]
     A = network_cluster.A
