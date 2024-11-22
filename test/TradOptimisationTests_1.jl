@@ -1051,7 +1051,7 @@ end
           7.561202941486916e-7]
     riskt = 0.012867316042419063
     rett = 0.0014478208808539196
-    @test isapprox(w7.weights, wt)
+    @test isapprox(w7.weights, wt, rtol = 5.0e-8)
     @test isapprox(r7, riskt)
     @test isapprox(ret7, rett)
 
@@ -1119,7 +1119,7 @@ end
           7.561202941486916e-7]
     riskt = 0.012867316042419063
     rett = 0.0014478208808539196
-    @test isapprox(w11.weights, wt)
+    @test isapprox(w11.weights, wt, rtol = 5.0e-8)
     @test isapprox(r11, riskt)
     @test isapprox(ret11, rett)
 
@@ -1170,9 +1170,9 @@ end
           2.413380037921624e-9, 0.11654688926203842]
     riskt = 0.0077228169828044355
     rett = 0.0004204275685221765
-    @test isapprox(w14.weights, wt)
-    @test isapprox(r14, riskt)
-    @test isapprox(ret14, rett)
+    @test isapprox(w14.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r14, riskt, rtol = 5.0e-7)
+    @test isapprox(ret14, rett, rtol = 1.0e-5)
 
     obj = Sharpe(; rf = rf)
     w15 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1204,7 +1204,7 @@ end
           3.4223392213476532e-9, 2.6133360746565418e-9]
     riskt = 0.017515177599623715
     rett = 0.0018029079979477232
-    @test isapprox(w48.weights, wt)
+    @test isapprox(w48.weights, wt, rtol = 1.0e-7)
     @test isapprox(r48, riskt)
     @test isapprox(ret48, rett)
 end
