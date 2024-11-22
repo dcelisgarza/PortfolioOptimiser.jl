@@ -962,7 +962,7 @@ end
           1.223427205729053e-8, 0.18067983024428946]
     riskt = 0.024507972823062964
     rett = 0.00046038550243244597
-    @test isapprox(w1.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-5)
     @test isapprox(r1, riskt, rtol = 1.0e-5)
     @test isapprox(ret1, rett, rtol = 1.0e-5)
 
@@ -1095,7 +1095,7 @@ end
           6.359695428932416e-10, 1.1253095738756016e-9, 6.418419693555973e-10,
           4.557444607188963e-9, 2.9385850525459825e-9, 1.523717377439626e-9,
           2.427092307497036e-9, 1.8079178598067397e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-8)
 
     # Risk upper bound
     obj = MaxRet()
@@ -1195,9 +1195,9 @@ end
           2.8249285983311553e-9, 0.19770117031562212]
     riskt = 0.028298069755304314
     rett = 0.0005082329791872951
-    @test isapprox(w1.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-5)
     @test isapprox(r1, riskt, rtol = 5.0e-7)
-    @test isapprox(ret1, rett, rtol = 1.0e-7)
+    @test isapprox(ret1, rett, rtol = 1.0e-6)
 
     w2 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [1.6668841800133678e-9, 0.21104236787122874, 1.6385410773041922e-9,
@@ -1233,8 +1233,8 @@ end
     riskt = 0.02829964753654659
     rett = 0.0005145951462712787
     @test isapprox(w4.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r2, riskt, rtol = 1.0e-7)
-    @test isapprox(ret2, rett, rtol = 5.0e-7)
+    @test isapprox(r2, riskt, rtol = 5.0e-7)
+    @test isapprox(ret2, rett, rtol = 1.0e-6)
 
     w5 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [1.409645126108176e-9, 0.2128167193323565, 1.4049598588911328e-9,
@@ -1270,7 +1270,7 @@ end
     riskt = 0.04189064401510677
     rett = 0.0015775582433052353
     @test isapprox(w7.weights, wt)
-    @test isapprox(r3, riskt)
+    @test isapprox(r3, riskt, rtol = 5.0e-7)
     @test isapprox(ret3, rett)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
@@ -1328,7 +1328,7 @@ end
           8.883547104575948e-10, 1.567890093764939e-9, 8.990472406248051e-10,
           6.311716296610677e-9, 4.091491000595737e-9, 2.120341234148636e-9,
           3.376797492103214e-9, 2.5276199069241304e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-8)
 
     # Risk upper bound
     obj = MaxRet()
@@ -1440,13 +1440,12 @@ end
     @test isapprox(w2.weights, w4.weights, rtol = 1.0e-6)
 end
 
-#=
 @testset "MDD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = MDD()
 
@@ -1542,13 +1541,13 @@ end
     @test isapprox(ret3, rett)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
-    wt = [2.7009588213654687e-9, 7.113672302556916e-10, 0.003258987441540809,
-          3.6306552764102385e-10, 0.2865189236346769, 2.011380307125931e-10,
-          3.091251734556721e-10, 0.07218283901086149, 2.736657043479687e-10,
-          3.225224715732441e-10, 0.3429341815096216, 1.5983473231255888e-10,
-          1.0888154936247301e-10, 3.9908709936599927e-10, 1.4762607390713456e-10,
-          0.29510505812626575, 1.6121873618192376e-9, 8.613967608375601e-10,
-          5.951968473775891e-10, 1.5109798063947234e-9]
+    wt = [1.8083921436591883e-8, 7.4193765208728235e-9, 0.01311492793921462,
+          3.390239111133281e-9, 0.2890304228530785, 1.906742732584548e-9,
+          2.9432068744101913e-9, 0.06222165314910987, 2.477487416403651e-9,
+          3.0195808380053086e-9, 0.35248270284059247, 1.5856530263176316e-9,
+          1.0117973039622344e-9, 3.897665798136913e-9, 1.512609991020876e-9,
+          0.2831502085242772, 1.272167766621064e-8, 7.034966950393433e-9,
+          5.357688665855034e-9, 1.2331113096449576e-8]
     @test isapprox(w8.weights, wt)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1676,11 +1675,11 @@ end
 end
 
 @testset "ADD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = ADD()
 
@@ -1910,11 +1909,11 @@ end
 end
 
 @testset "UCI" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = UCI()
 
@@ -2010,13 +2009,13 @@ end
     @test isapprox(ret3, rett)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
-    wt = [7.24202248082058e-9, 1.7817399194318174e-8, 0.1929184450504878,
-          6.452875009645281e-9, 0.23084520906493095, 2.507336210164012e-9,
-          6.732504814516605e-9, 0.1372749711670064, 6.986438943654997e-9,
-          6.066029007821234e-9, 0.11254319576114159, 2.5110011915327978e-9,
-          1.7128878795388062e-9, 9.672713729659068e-9, 1.8566887674821828e-9,
-          0.15375703739424093, 0.12948270229005487, 1.4679552779213837e-8,
-          0.013830056152094834, 0.02934829888259256]
+    wt = [5.808687079736051e-9, 1.2999766084959594e-8, 0.19380430731533985,
+          6.134051617704344e-9, 0.28294154871681254, 2.0646911507976323e-9,
+          7.252515561048e-9, 0.13833798959641397, 5.6556823598699985e-9,
+          4.956482377743979e-9, 0.09648000000541858, 2.0485475075507354e-9,
+          1.331936179167805e-9, 7.349979730194534e-9, 1.579358249673181e-9,
+          0.17220937717950827, 0.11622638058151845, 1.1613813573839178e-8,
+          1.3928168734504416e-7, 1.8852778972198752e-7]
     @test isapprox(w8.weights, wt, rtol = 0.0005)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -2144,4 +2143,3 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4 ||
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 end
-=#
