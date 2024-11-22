@@ -111,7 +111,7 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
     rf = obj.rf
     @variable(model, tapprox_kelly)
     @constraint(model, risk <= ohf)
-    @expression(model, ret, dot(mu, w) - k * rf - 0.5 * tapprox_kelly)
+    @expression(model, ret, dot(mu, w) - 0.5 * tapprox_kelly - k * rf)
     if isnothing(kelly_approx_idx) ||
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
