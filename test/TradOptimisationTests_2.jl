@@ -467,13 +467,12 @@ end
           abs(dot(portfolio.mu, w16.weights) - ret4) < 1e-10
 end
 
-#=
 @testset "CVaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = CVaR()
 
@@ -569,13 +568,13 @@ end
     @test isapprox(ret3, rett)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
-    wt = [2.304102546507255e-9, 3.4058580184231964e-9, 3.264755599420317e-9,
-          2.168529122297692e-9, 0.5593117496370377, 7.139134073206089e-10,
-          0.029474976465948034, 4.9115201797004046e-8, 2.799982453416685e-9,
-          1.6115667456355964e-9, 8.831047243202884e-9, 6.334407262324075e-10,
-          4.1948103829488986e-10, 1.3615475408342457e-9, 4.3425958678632566e-10,
-          0.20296977157601848, 0.20824336902427606, 2.80725022409301e-8,
-          2.143306519713471e-8, 6.727466637284185e-9]
+    wt = [3.260125376099558e-9, 4.792293995000772e-9, 5.251148358206634e-9,
+          2.8719095145610197e-9, 0.5622701776212871, 1.0282930421004356e-9,
+          0.0419214296966734, 1.0257824743281005e-8, 4.122258230708374e-9,
+          2.2282423385457208e-9, 1.0369865938115794e-8, 9.411773319967879e-10,
+          6.249641687080098e-10, 1.910187530008935e-9, 6.455905691142523e-10,
+          0.20851352681573576, 0.18729478415547723, 1.0401848063385941e-8,
+          1.6149675153507028e-8, 6.855422290198149e-9]
     @test isapprox(w8.weights, wt)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -705,11 +704,11 @@ end
 end
 
 @testset "CVaRRG" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
     rm = CVaRRG()
 
@@ -805,13 +804,13 @@ end
     @test isapprox(ret3, rett)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
-    wt = [4.5479034211371995e-9, 8.671827869678778e-9, 1.0994855997347118e-8,
-          1.0595648572365527e-8, 0.4496413256452418, 1.123969446765462e-9,
-          0.048473299215131, 0.06272444786721185, 6.224549555694726e-9,
-          4.168122980471285e-9, 2.3044528006061617e-8, 8.688279026781881e-10,
-          6.459782247496969e-10, 2.2524479146893874e-9, 5.888771273514278e-10,
-          0.11095200843066484, 0.27950312813503714, 2.1292024349338408e-8,
-          0.04870567343073953, 2.2256412634338147e-8]
+    wt = [3.509198669814282e-10, 6.56097501370727e-10, 7.591012080821662e-10,
+          7.524837458553662e-10, 0.5424129482812434, 9.622722688732687e-11,
+          0.05305053334745411, 3.6361465815893177e-9, 4.920349836065714e-10,
+          3.229361783236986e-10, 8.675657442303778e-10, 7.645787219407231e-11,
+          5.523854361418376e-11, 1.7965192007764092e-10, 5.04025392679051e-11,
+          0.13795985360599639, 0.21495010656952404, 1.0077738030996402e-9,
+          0.051626547736383616, 1.1563608071772238e-9]
     @test isapprox(w8.weights, wt, rtol = 5.0e-6)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -940,6 +939,7 @@ end
           abs(dot(portfolio.mu, w16.weights) - ret4) < 1e-10
 end
 
+#=
 @testset "EVaR" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

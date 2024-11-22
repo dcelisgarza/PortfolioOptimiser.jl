@@ -653,11 +653,14 @@ function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP};
                end)
     @expressions(model, begin
                      cvar_risk_l, var_l + sum(z_var_l) * iat
-                     z_var_l .>= -net_X .- var_l
                      cvar_risk_h, var_h + sum(z_var_h) * ibt
+                     rcvar_risk, cvar_risk_l - cvar_risk_h
+                 end)
+    @constraints(model, begin
+                     z_var_l .>= -net_X .- var_l
                      z_var_h .<= -net_X .- var_h
                  end)
-    @expression(model, rcvar_risk, cvar_risk_l - cvar_risk_h)
+
     _set_rm_risk_upper_bound(type, model, rcvar_risk, rm.settings.ub)
     _set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
