@@ -129,3 +129,10 @@ function set_objective_function(port, ::Any, ::NOC, ::Any)
     @objective(model, Min, obj_func)
     return nothing
 end
+function set_objective_function(port, ::Union{RP, RRP}, custom_obj)
+    model = port.model
+    risk = model[:risk]
+    custom_objective(model, risk, 1, custom_obj)
+    @objective(model, Min, risk)
+    return nothing
+end

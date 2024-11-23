@@ -7,24 +7,28 @@ function _rrp_ver_constraints(::BasicRRP, model, sigma)
 end
 function _rrp_ver_constraints(::RegRRP, model, sigma)
     G = sqrt(sigma)
-    @variable(model, rho)
     psi = model[:psi]
     w = model[:w]
-    @constraint(model, [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone())
-    @constraint(model, [rho; G * w] ∈ SecondOrderCone())
+    @variable(model, rho)
+    @constraints(model, begin
+                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
+                     [rho; G * w] ∈ SecondOrderCone()
+                 end)
     return nothing
 end
 function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
     G = sqrt(sigma)
-    @variable(model, rho)
+    theta = Diagonal(sqrt.(diag(sigma)))
     psi = model[:psi]
     w = model[:w]
-    @constraint(model, [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone())
-    theta = Diagonal(sqrt.(diag(sigma)))
-    @constraint(model, [rho; sqrt(version.penalty) * theta * w] ∈ SecondOrderCone())
+    @variable(model, rho)
+    @constraints(model, begin
+                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
+                     [rho; sqrt(version.penalty) * theta * w] ∈ SecondOrderCone()
+                 end)
     return nothing
 end
-function _rrp_constraints(type::RRP, port, sigma)
+function _rrp_constraints(port, type::RRP, sigma)
     model = port.model
     N = size(port.returns, 2)
     @variable(model, psi)
@@ -53,7 +57,7 @@ function rrp_constraints(type::RRP, port, sigma)
     end
     _sd_risk(NoAdj(), SOC(), model, sigma)
     _set_sd_risk_upper_bound(nothing, nothing, type, model, Inf)
-    _rrp_constraints(type, port, sigma)
+    _rrp_constraints(port, type, sigma)
     return nothing
 end
 function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any, class::PortClass,
@@ -69,4 +73,79 @@ function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any, class::Port
     risk = model[:risk]
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, type, class)
+end
+function rrp_constraints(port::OmniPortfolio, type::RRP, sigma)
+    model = port.model
+    w = model[:w]
+    N = length(w)
+
+    risk_budget = port.risk_budget
+    if isempty(risk_budget)
+        risk_budget = port.risk_budget = fill(inv(N), N)
+    end
+
+    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
+        _SDP_constraints(model)
+    end
+    _variance_risk(adjacency_constraint, type.formulation, model, sigma)
+
+    @variables(model, begin
+                   psi
+                   gamma >= 0
+                   zeta[1:N] .>= 0
+               end)
+    @expression(model, risk, psi - gamma)
+    # RRP constraints.
+    @constraints(model,
+                 begin
+                     zeta .== sigma * w
+                     [i = 1:N],
+                     [w[i] + zeta[i]
+                      2 * gamma * sqrt(risk_budget[i])
+                      w[i] - zeta[i]] ∈ SecondOrderCone()
+                 end)
+    _rrp_ver_constraints(type.version, model, sigma)
+    return nothing
+end
+function _optimise!(type::RRP, port::OmniPortfolio, ::Any, ::Any, kelly::RetType,
+                    class::PortClass, w_ini::AbstractVector, custom_constr, custom_obj,
+                    ::Any, str_names::Bool = false)
+    old_short = nothing
+    if port.short
+        old_short = port.short
+        port.short = false
+    end
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    # Weight constraints
+    initial_w(port, w_ini)
+    set_k(port, nothing)
+    weight_constraints(port)
+    MIP_constraints(port)
+    SDP_network_cluster_constraints(port)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    rrp_constraints(port, type, sigma)
+    # Returns
+    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, nothing)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, type, custom_obj)
+    retval = convex_optimisation(port, nothing, type, class)
+    if !isnothing(old_short)
+        port.short = old_short
+    end
+    return retval
 end

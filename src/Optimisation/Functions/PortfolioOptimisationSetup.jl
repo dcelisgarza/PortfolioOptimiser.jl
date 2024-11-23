@@ -6,7 +6,9 @@ function set_w_ini(w, w_ini)
     return nothing
 end
 function initial_w(port, w_ini)
-    @variable(port.model, w[1:size(port.returns, 2)])
+    model = port.model
+    N = size(port.returns, 2)
+    @variable(model, w[1:N])
     set_w_ini(w, w_ini)
     return nothing
 end

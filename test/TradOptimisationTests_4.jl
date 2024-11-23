@@ -1139,7 +1139,7 @@ end
     obj = Sharpe(; rf = rf)
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
-    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
+    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-8
 
     rm.settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)

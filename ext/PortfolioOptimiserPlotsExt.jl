@@ -92,7 +92,6 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
 
     DDs = (DaR, MDD, ADD, CDaR, EDaR, RLDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
            RLDaR_r, UCI_r)
-
     if !any(typeof(rm) .<: DDs)
         rc *= sqrt(t_factor)
     end
@@ -147,7 +146,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
 
             erc /= length(rc)
 
-            if rm ∉ DDs
+            if !any(typeof(rm) .<: DDs)
                 erc *= sqrt(t_factor)
             end
         end

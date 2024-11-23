@@ -21,7 +21,7 @@ function factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix, regression::Reg
     b3 = pinv(transpose(b2))
     return b1, b2, b3, B
 end
-function _rp_class_constraints(::Any, port, w_ini)
+function _rp_class_constraints(port, ::Any, w_ini)
     model = port.model
     if isempty(port.risk_budget)
         port.risk_budget = ()
@@ -37,7 +37,7 @@ function _rp_class_constraints(::Any, port, w_ini)
     @constraint(model, w .>= 0)
     return nothing
 end
-function _rp_class_constraints(class::FC, port, w_ini)
+function _rp_class_constraints(port, class::FC, w_ini)
     model = port.model
     N = size(port.returns, 2)
     if class.flag
@@ -67,15 +67,13 @@ function _rp_class_constraints(class::FC, port, w_ini)
     return nothing
 end
 function rp_constraints(port, class, w_ini)
+    _rp_class_constraints(port, class, w_ini)
     model = port.model
     w = model[:w]
-    k = model[:k]
-    _rp_class_constraints(class, port, w_ini)
     @variable(model, k)
     @constraint(model, sum(w) == k)
     return nothing
 end
-
 function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     ::Any, ::Any, class::PortClass, w_ini::AbstractVector, ::Any,
                     str_names::Bool)
@@ -90,4 +88,101 @@ function _optimise!(type::RP, port::Portfolio, rm::Union{AbstractVector, <:RiskM
     risk = model[:risk]
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, type, class)
+end
+function rp_constraints(port::OmniPortfolio, ::Any, w_ini)
+    N = size(port.returns, 2)
+    risk_budget = port.risk_budget
+    if isempty(risk_budget)
+        risk_budget = port.risk_budget = fill(inv(N), N)
+    end
+    initial_w(port, w_ini)
+    model = port.model
+    w = model[:w]
+    @variables(model, begin
+                   k
+                   log_w[1:N]
+               end)
+    @constraints(model, begin
+                     dot(risk_budget, log_w) >= 1
+                     [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone()
+                 end)
+    return nothing
+end
+function rp_constraints(port::OmniPortfolio, class::FC, w_ini)
+    model = port.model
+    f_returns = port.f_returns
+    loadings = port.loadings
+    regression_type = port.regression_type
+    if class.flag
+        b1, b2 = factors_b1_b2_b3(loadings, f_returns, regression_type)[1:2]
+        N = size(port.returns, 2)
+        N_f = size(b1, 2)
+        @variables(model, begin
+                       w1[1:N_f]
+                       w2[1:(N - N_f)]
+                   end)
+        @expression(model, w, b1 * w1 + b2 * w2)
+    else
+        b1 = factors_b1_b2_b3(loadings, f_returns, regression_type)[1]
+        N_f = size(b1, 2)
+        @variable(model, w1[1:N_f])
+        @expression(model, w, b1 * w1)
+    end
+
+    set_w_ini(w1, w_ini)
+
+    if isempty(port.f_risk_budget) || length(port.f_risk_budget) != N_f
+        port.f_risk_budget = fill(inv(N_f), N_f)
+    end
+    f_risk_budget = port.f_risk_budget
+    @variables(model, begin
+                   k
+                   log_w[1:N_f]
+               end)
+    @constraints(model, begin
+                     dot(f_risk_budget, log_w) >= 1
+                     [i = 1:N_f], [log_w[i], 1, w1[i]] ∈ MOI.ExponentialCone()
+                 end)
+    return nothing
+end
+function _optimise!(type::RP, port::OmniPortfolio, rm::Union{AbstractVector, <:RiskMeasure},
+                    ::Any, kelly::RetType, class::PortClass, w_ini::AbstractVector,
+                    custom_constr, custom_obj, ::Any, str_names::Bool = false)
+    old_short = nothing
+    if port.short
+        old_short = port.short
+        port.short = false
+    end
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    rp_constraints(port, class, w_ini)
+    # Weight constraints
+    weight_constraints(port)
+    MIP_constraints(port)
+    SDP_network_cluster_constraints(port)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    # Returns
+    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, type, custom_obj)
+    retval = convex_optimisation(port, nothing, type, class)
+    if !isnothing(old_short)
+        port.short = old_short
+    end
+    return retval
 end
