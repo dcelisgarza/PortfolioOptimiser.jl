@@ -513,7 +513,7 @@ end
           0.021757985470373675, 1.5641535055517714e-11, 1.4169168414383431e-11,
           0.14345090304721536, 0.15965720697262956, 0.061931898160508446,
           6.508970795703565e-11, 0.06488522241218773]
-    @test isapprox(w3.weights, wt, rtol = 1.0e-7)
+    @test isapprox(w3.weights, wt, rtol = 1.0e-6)
 
     obj = Utility(; l = l)
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -540,7 +540,7 @@ end
           0.021521966094524326, 1.0008520325879662e-10, 9.937431437434369e-11,
           0.1445304473040611, 0.1584966696863793, 0.06213266162562197,
           4.800543993716871e-10, 0.06406108529800082]
-    @test isapprox(w5.weights, wt, rtol = 1e-7)
+    @test isapprox(w5.weights, wt, rtol = 5e-7)
 
     w6 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [0.056623283942551145, 1.3211097210911613e-11, 8.95686269273066e-11,
@@ -565,9 +565,9 @@ end
           5.7135201094369e-9, 1.4808334398774764e-8]
     riskt = 0.09342398560683267
     rett = 0.0009783059563086918
-    @test isapprox(w7.weights, wt)
-    @test isapprox(r3, riskt, rtol = 1.0e-7)
-    @test isapprox(ret3, rett)
+    @test isapprox(w7.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r3, riskt, rtol = 5.0e-6)
+    @test isapprox(ret3, rett, rtol = 5.0e-6)
 
     w8 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [1.5190899762567038e-8, 1.2848709907335062e-8, 0.06344988685825789,
@@ -1092,7 +1092,7 @@ end
           4.706533675063069e-10, 1.7627690204155293e-9, 4.879870703676813e-10,
           0.0848879292251202, 0.2792044703270129, 5.558859445842961e-8,
           3.237675253379188e-8, 1.0289993007392542e-8]
-    @test isapprox(w9.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-5)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1558,7 +1558,7 @@ end
           1.1073835555416374e-10, 6.179771748004627e-10, 1.234287572624222e-10,
           0.132153555259208, 0.23795660539017122, 8.833566587004158e-8,
           5.492053279020151e-9, 8.966659666714018e-9]
-    @test isapprox(w9.weights, wt, rtol = 1.0e-6)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-6)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)

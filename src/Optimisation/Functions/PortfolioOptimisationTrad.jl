@@ -41,21 +41,25 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     # Weight constraints
     weight_constraints(port)
     MIP_constraints(port)
+    SDP_network_cluster_constraints(port)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
-    # Objective function
-    L1_regularisation(port)
-    L2_regularisation(port)
     # Fees
     management_fee(port)
     rebalance_fee(port)
+    # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    # Returns
     expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
-    SDP_network_cluster_constraints(port, true)
-    SDP_network_cluster_constraints(port, false)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
     custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
     set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end

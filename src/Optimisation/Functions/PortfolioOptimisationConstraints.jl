@@ -454,24 +454,49 @@ function _SDP_constraints(model)
 
     return nothing
 end
-function SDP_network_cluster_constraints(port, ntwk_flag::Bool = true)
-    network_cluster = ntwk_flag ? port.network_adj : port.cluster_adj
-    if !isa(network_cluster, SDP)
+function SDP_network_cluster_constraints(port)
+    network_adj = port.network_adj
+    cluster_adj = port.cluster_adj
+    ntwk_flag = isa(network_adj, SDP)
+    clst_flag = isa(cluster_adj, SDP)
+    if !(ntwk_flag || clst_flag)
         return nothing
     end
 
     model = port.model
     _SDP_constraints(model)
     W = model[:W]
-    A = network_cluster.A
 
-    @constraint(model, A .* W .== 0)
+    if ntwk_flag
+        A = network_adj.A
+        @constraint(model, A .* W .== 0)
+    end
 
-    if !haskey(model, :variance_risk)
-        penalty = network_cluster.penalty
+    if clst_flag
+        A = cluster_adj.A
+        @constraint(model, A .* W .== 0)
+    end
+
+    return nothing
+end
+function SDP_network_cluster_penalty(port)
+    network_adj = port.network_adj
+    cluster_adj = port.cluster_adj
+    ntwk_flag = isa(network_adj, SDP)
+    clst_flag = isa(cluster_adj, SDP)
+    if !(ntwk_flag || clst_flag)
+        return nothing
+    end
+
+    model = port.model
+    W = model[:W]
+    if !haskey(model, :variance_risk) || !haskey(model, :wc_variance_risk)
         if ntwk_flag
+            penalty = network_adj.penalty
             @expression(model, network_penalty, penalty * tr(W))
-        else
+        end
+        if clst_flag
+            penalty = cluster_adj.penalty
             @expression(model, cluster_penalty, penalty * tr(W))
         end
     end

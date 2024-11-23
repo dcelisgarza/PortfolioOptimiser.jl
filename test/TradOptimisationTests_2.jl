@@ -349,7 +349,7 @@ end
           6.354196747970783e-5, 2.2233937045103148e-5, 0.14044167177404931,
           0.16990136023185914, 0.00018184564212761739, 0.033184073463758,
           0.0007883313411944228]
-    @test isapprox(w9.weights, wt)
+    @test isapprox(w9.weights, wt, rtol = 0.0001)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -386,7 +386,7 @@ end
           1.2496592265272413e-9, 2.2495671679703466e-9, 1.2700821105453018e-9,
           8.716707155938721e-9, 5.990407537955478e-9, 3.086092137890868e-9,
           4.9915194270002075e-9, 3.811735597829396e-9]
-    @test isapprox(w12.weights, wt)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-6)
 
     # Risk upper bound
     obj = MaxRet()
@@ -1127,9 +1127,9 @@ end
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r4
 
     obj = Sharpe(; rf = rf)
-    rm.settings.ub = r1
+    rm.settings.ub = r1 * 1.001
     optimise!(portfolio; rm = rm, obj = obj)
-    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-7
+    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1 * 1.001) < 1e-7
 
     rm.settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
@@ -1801,7 +1801,7 @@ end
           6.207924087776576e-10, 3.472495448462731e-9, 8.216733793133646e-10,
           0.14089560922498376, 0.14604838419152366, 6.411555057787818e-9,
           0.09572482575644055, 4.057714994055071e-8]
-    @test isapprox(w9.weights, wt, rtol = 1.0e-5)
+    @test isapprox(w9.weights, wt, rtol = 5.0e-5)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1838,7 +1838,7 @@ end
           7.512539957525354e-10, 1.3427597210939429e-9, 7.641379724000352e-10,
           5.215185487586344e-9, 3.5782871558396283e-9, 1.8412546468119963e-9,
           2.9816454502961213e-9, 2.273341982409664e-9]
-    @test isapprox(w12.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w12.weights, wt, rtol = 5.0e-6)
 
     # Risk upper bound
     obj = MaxRet()

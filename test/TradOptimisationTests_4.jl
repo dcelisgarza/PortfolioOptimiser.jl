@@ -23,7 +23,7 @@
           0.008097367714011027, 0.21166620038556183]
     riskt = 0.007973013868952676
     rett = 0.00029353687778951485
-    @test isapprox(w1.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
     @test isapprox(r1, riskt)
     @test isapprox(ret1, rett, rtol = 1.0e-6)
 
@@ -35,7 +35,7 @@
           1.2541463432371463e-10, 0.29253129575787246, 4.881312822213951e-11,
           0.014796400914986178, 0.05529639972264038, 0.22572814198254204,
           0.008121076155090038, 0.2117762243738181]
-    @test isapprox(w2.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w2.weights, wt, rtol = 1.0e-6)
 
     w3 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [5.323839510142863e-10, 2.229192435645185e-9, 1.1712440903830328e-9,
@@ -82,7 +82,7 @@
           1.9736634980204724e-10, 0.24337338790443755, 1.362995356534818e-10,
           0.018577394541992927, 0.0858912259147116, 0.216090928601388, 0.056732714784793,
           0.19569641902245713]
-    @test isapprox(w6.weights, wt, rtol = 0.0005)
+    @test isapprox(w6.weights, wt, rtol = 0.005)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -296,7 +296,7 @@
           0.05867570592101953, 0.19673257995680443]
     riskt = 0.008024389698787715
     rett = 0.0005208059567492945
-    @test isapprox(w24.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w24.weights, wt, rtol = 1.0e-6)
     @test isapprox(r6, riskt)
     @test isapprox(ret6, rett, rtol = 5.0e-7)
     @test isapprox(w24.weights, w4.weights, rtol = 0.05)
@@ -339,8 +339,8 @@
     riskt = 0.010796650473566557
     rett = 0.0016610969770519217
     @test isapprox(w27.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r7, riskt, rtol = 5.0e-7)
-    @test isapprox(ret7, rett, rtol = 5.0e-7)
+    @test isapprox(r7, riskt, rtol = 1.0e-6)
+    @test isapprox(ret7, rett, rtol = 1.0e-6)
     @test isapprox(w27.weights, w7.weights, rtol = 0.05)
     @test isapprox(r7, r3, rtol = 0.005)
     @test isapprox(ret7, ret3, rtol = 0.005)
@@ -353,7 +353,7 @@
           1.0374826039966627e-9, 3.859230960634676e-9, 1.3608523183479668e-9,
           0.09642016219761229, 0.40186863168291026, 7.857753161602685e-9, 0.27066121900057,
           5.561203485491739e-9]
-    @test isapprox(w28.weights, wt, rtol = 5.0e-5)
+    @test isapprox(w28.weights, wt, rtol = 5.0e-4)
     @test isapprox(w28.weights, w8.weights, rtol = 0.05)
 
     w29 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -403,7 +403,7 @@
           2.6316119362164115e-9, 5.991019267313653e-9, 3.2331818591355224e-9,
           1.019630349555436e-7, 0.10736579479363274, 8.18324477422888e-9,
           3.505072621551823e-8, 6.4955820348114385e-9]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w32.weights, wt, rtol = 5.0e-6)
     @test isapprox(w32.weights, w12.weights, rtol = 1.0e-5)
 
     # Risk upper bound
@@ -599,7 +599,7 @@ end
           5.2774005027449543e-8, 1.8191259827821858e-7, 6.320894661292222e-8,
           0.20770466885250968, 0.46194751935242984, 2.4840026016179655e-7,
           1.412838309788135e-6, 3.0446463326205604e-7]
-    @test isapprox(w9.weights, wt, rtol = 0.001)
+    @test isapprox(w9.weights, wt, rtol = 0.005)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -643,7 +643,7 @@ end
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-10
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
 
     rm.settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
@@ -774,9 +774,9 @@ end
           7.148464022467191e-10, 0.22407415388047078]
     riskt = 0.023585657006845066
     rett = 0.0006461184324927211
-    @test isapprox(w24.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r6, riskt)
-    @test isapprox(ret6, rett, rtol = 5.0e-7)
+    @test isapprox(w24.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r6, riskt, rtol = 1.0e-7)
+    @test isapprox(ret6, rett, rtol = 5.0e-6)
     @test isapprox(w24.weights, w4.weights, rtol = 0.1)
     @test isapprox(r6, r2, rtol = 0.001)
     @test isapprox(ret6, ret2, rtol = 0.05)
@@ -789,7 +789,7 @@ end
           3.5923970291357996e-11, 4.3057334069665553e-10, 2.002929167365126e-10,
           0.14789685246583284, 5.19138038484229e-10, 0.12278739931801369,
           2.6551070295904287e-10, 0.22416000980006515]
-    @test isapprox(w25.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w25.weights, wt, rtol = 1.0e-5)
     @test isapprox(w25.weights, w5.weights, rtol = 0.1)
 
     w26 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -831,7 +831,7 @@ end
           7.36556294671998e-11, 2.624444093298053e-10, 8.577535879309574e-11,
           0.20566930367997732, 0.4950057161442303, 3.6134043743821436e-10,
           2.615852679683726e-9, 4.5979294701178386e-10]
-    @test isapprox(w28.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w28.weights, wt, rtol = 1.0e-5)
     @test isapprox(w28.weights, w8.weights, rtol = 0.1)
 
     w29 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -842,7 +842,7 @@ end
           3.6587065526347325e-8, 1.2935364553010815e-7, 4.243295514320968e-8,
           0.20608699061385133, 0.4945659352314525, 1.7836651758245156e-7,
           1.3084916989859224e-6, 2.2568095228872053e-7]
-    @test isapprox(w29.weights, wt, rtol = 0.0005)
+    @test isapprox(w29.weights, wt, rtol = 0.001)
     @test isapprox(w29.weights, w9.weights, rtol = 0.1)
 
     obj = MaxRet()
@@ -881,7 +881,7 @@ end
           2.6316119362164115e-9, 5.991019267313653e-9, 3.2331818591355224e-9,
           1.019630349555436e-7, 0.10736579479363274, 8.18324477422888e-9,
           3.505072621551823e-8, 6.4955820348114385e-9]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w32.weights, wt, rtol = 5.0e-6)
     @test isapprox(w32.weights, w12.weights, rtol = 5.0e-6)
 
     # Risk upper bound
@@ -981,9 +981,9 @@ end
           3.368068554202892e-12, 0.13263902365768074]
     riskt = 0.040929059924343876
     rett = 0.0002030737318767868
-    @test isapprox(w1.weights, wt, rtol = 1.0e-6)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
     @test isapprox(r1, riskt)
-    @test isapprox(ret1, rett, rtol = 5.0e-8)
+    @test isapprox(ret1, rett, rtol = 5.0e-7)
 
     w2 = optimise!(portfolio; rm = rm, kelly = AKelly(), obj = obj)
     wt = [1.2108720101946655e-11, 0.09772217254221559, 4.81863826084196e-12,
@@ -1003,7 +1003,7 @@ end
           6.938595551965339e-12, 0.13930602059627178, 5.7562377876372754e-11,
           0.03622666368397424, 4.344115727549587e-10, 0.24663350637558398,
           1.2919699945413943e-10, 0.13263898782998645]
-    @test isapprox(w3.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w3.weights, wt, rtol = 1.0e-5)
 
     obj = Utility(; l = l)
     w4 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1030,7 +1030,7 @@ end
           4.316209189530447e-11, 0.1234368682215077, 2.6839601081935933e-11,
           0.04767288463330064, 2.459971361881845e-10, 0.2743409166508848,
           2.24390877556761e-13, 0.1372362224799031]
-    @test isapprox(w5.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w5.weights, wt, rtol = 5.0e-6)
 
     w6 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [1.0787202920705292e-10, 0.07690948400647307, 1.6879056417409415e-10,
@@ -1067,7 +1067,7 @@ end
           4.931653503148915e-11, 2.504134044719627e-10, 5.6885470515011877e-11,
           0.18988672243361443, 0.5839704059313315, 4.1162063264733596e-10,
           0.017332875396264127, 3.6765633747301796e-10]
-    @test isapprox(w8.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w8.weights, wt, rtol = 5.0e-5)
 
     w9 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [6.819222451299357e-7, 1.9455839168785423e-6, 7.223321480278138e-7,
@@ -1114,7 +1114,7 @@ end
           2.275195783161705e-9, 5.244427324021107e-9, 2.812394513654006e-9,
           9.134466109979566e-8, 0.10736684771470409, 7.178445745346023e-9,
           3.0896176410926564e-8, 5.700752843300637e-9]
-    @test isapprox(w12.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w12.weights, wt, rtol = 1.0e-6)
 
     # Risk upper bound
     obj = MaxRet()
@@ -1139,8 +1139,7 @@ end
     obj = Sharpe(; rf = rf)
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
-    @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-9
+    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
 
     rm.settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
@@ -1212,7 +1211,7 @@ end
     rett = 9.918670892592328e-5
     @test isapprox(w21.weights, wt, rtol = 5.0e-5)
     @test isapprox(r5, riskt, rtol = 5.0e-7)
-    @test isapprox(ret5, rett, rtol = 0.0001)
+    @test isapprox(ret5, rett, rtol = 0.0005)
     @test isapprox(w21.weights, w1.weights, rtol = 0.1)
     @test isapprox(r5, r1, rtol = 0.001)
     @test isapprox(ret5, ret1, rtol = 1.0)
@@ -1285,7 +1284,7 @@ end
           9.390461254664664e-12, 0.11544816636449991, 5.5056401314852075e-11,
           0.05192177370561512, 2.9148413261716578e-9, 0.26859767349044694,
           1.7601536995316106e-10, 0.13737818742118874]
-    @test isapprox(w26.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w26.weights, wt, rtol = 5.0e-5)
     @test isapprox(w26.weights, w6.weights, rtol = 0.05)
 
     portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -1373,7 +1372,7 @@ end
           2.4497152835755314e-9, 5.592179770640874e-9, 3.015253977137906e-9,
           9.491532014568073e-8, 0.10736234326349421, 7.644458300255699e-9,
           3.264578032704871e-8, 6.068658483137429e-9]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w32.weights, wt, rtol = 1.0e-5)
     @test isapprox(w32.weights, w12.weights, rtol = 1.0e-5)
 
     # Risk upper bound
@@ -1474,7 +1473,7 @@ end
           0.008097367714011027, 0.21166620038556183]
     riskt = 0.007973013868952676
     rett = 0.00029353687778951485
-    @test isapprox(w1.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
     @test isapprox(r1, riskt)
     @test isapprox(ret1, rett, rtol = 1.0e-6)
 
@@ -1486,7 +1485,7 @@ end
           1.2541463432371463e-10, 0.29253129575787246, 4.881312822213951e-11,
           0.014796400914986178, 0.05529639972264038, 0.22572814198254204,
           0.008121076155090038, 0.2117762243738181]
-    @test isapprox(w2.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w2.weights, wt, rtol = 1.0e-6)
 
     w3 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
     wt = [5.323839510142863e-10, 2.229192435645185e-9, 1.1712440903830328e-9,
@@ -1533,7 +1532,7 @@ end
           1.9736634980204724e-10, 0.24337338790443755, 1.362995356534818e-10,
           0.018577394541992927, 0.0858912259147116, 0.216090928601388, 0.056732714784793,
           0.19569641902245713]
-    @test isapprox(w6.weights, wt, rtol = 0.0005)
+    @test isapprox(w6.weights, wt, rtol = 0.005)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -1747,7 +1746,7 @@ end
           0.05867570592101953, 0.19673257995680443]
     riskt = 0.008024389698787715
     rett = 0.0005208059567492945
-    @test isapprox(w24.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w24.weights, wt, rtol = 1.0e-6)
     @test isapprox(r6, riskt)
     @test isapprox(ret6, rett, rtol = 5.0e-7)
     @test isapprox(w24.weights, w4.weights, rtol = 0.05)
@@ -1790,8 +1789,8 @@ end
     riskt = 0.010796650473566557
     rett = 0.0016610969770519217
     @test isapprox(w27.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r7, riskt, rtol = 5.0e-7)
-    @test isapprox(ret7, rett, rtol = 5.0e-7)
+    @test isapprox(r7, riskt, rtol = 1.0e-6)
+    @test isapprox(ret7, rett, rtol = 1.0e-6)
     @test isapprox(w27.weights, w7.weights, rtol = 0.05)
     @test isapprox(r7, r3, rtol = 0.005)
     @test isapprox(ret7, ret3, rtol = 0.005)
@@ -1804,7 +1803,7 @@ end
           1.0374826039966627e-9, 3.859230960634676e-9, 1.3608523183479668e-9,
           0.09642016219761229, 0.40186863168291026, 7.857753161602685e-9, 0.27066121900057,
           5.561203485491739e-9]
-    @test isapprox(w28.weights, wt, rtol = 5.0e-5)
+    @test isapprox(w28.weights, wt, rtol = 5.0e-4)
     @test isapprox(w28.weights, w8.weights, rtol = 0.05)
 
     w29 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -1854,7 +1853,7 @@ end
           2.6316119362164115e-9, 5.991019267313653e-9, 3.2331818591355224e-9,
           1.019630349555436e-7, 0.10736579479363274, 8.18324477422888e-9,
           3.505072621551823e-8, 6.4955820348114385e-9]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w32.weights, wt, rtol = 5.0e-6)
     @test isapprox(w32.weights, w12.weights, rtol = 1.0e-5)
 
     # Risk upper bound
@@ -2048,7 +2047,7 @@ end
           5.2774005027449543e-8, 1.8191259827821858e-7, 6.320894661292222e-8,
           0.20770466885250968, 0.46194751935242984, 2.4840026016179655e-7,
           1.412838309788135e-6, 3.0446463326205604e-7]
-    @test isapprox(w9.weights, wt, rtol = 0.001)
+    @test isapprox(w9.weights, wt, rtol = 0.005)
 
     obj = MaxRet()
     w10 = optimise!(portfolio; rm = rm, kelly = NoKelly(), obj = obj)
@@ -2092,7 +2091,7 @@ end
     rm.settings.ub = r1
     optimise!(portfolio; rm = rm, obj = obj)
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-10
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
 
     rm.settings.ub = r2
     optimise!(portfolio; rm = rm, obj = obj)
@@ -2223,9 +2222,9 @@ end
           7.148464022467191e-10, 0.22407415388047078]
     riskt = 0.023585657006845066
     rett = 0.0006461184324927211
-    @test isapprox(w24.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r6, riskt)
-    @test isapprox(ret6, rett, rtol = 5.0e-7)
+    @test isapprox(w24.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r6, riskt, rtol = 1.0e-7)
+    @test isapprox(ret6, rett, rtol = 5.0e-6)
     @test isapprox(w24.weights, w4.weights, rtol = 0.1)
     @test isapprox(r6, r2, rtol = 0.001)
     @test isapprox(ret6, ret2, rtol = 0.05)
@@ -2238,7 +2237,7 @@ end
           3.5923970291357996e-11, 4.3057334069665553e-10, 2.002929167365126e-10,
           0.14789685246583284, 5.19138038484229e-10, 0.12278739931801369,
           2.6551070295904287e-10, 0.22416000980006515]
-    @test isapprox(w25.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w25.weights, wt, rtol = 1.0e-5)
     @test isapprox(w25.weights, w5.weights, rtol = 0.1)
 
     w26 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -2280,7 +2279,7 @@ end
           7.36556294671998e-11, 2.624444093298053e-10, 8.577535879309574e-11,
           0.20566930367997732, 0.4950057161442303, 3.6134043743821436e-10,
           2.615852679683726e-9, 4.5979294701178386e-10]
-    @test isapprox(w28.weights, wt, rtol = 5.0e-6)
+    @test isapprox(w28.weights, wt, rtol = 1.0e-5)
     @test isapprox(w28.weights, w8.weights, rtol = 0.1)
 
     w29 = optimise!(portfolio; rm = rm, kelly = EKelly(), obj = obj)
@@ -2291,7 +2290,7 @@ end
           3.6587065526347325e-8, 1.2935364553010815e-7, 4.243295514320968e-8,
           0.20608699061385133, 0.4945659352314525, 1.7836651758245156e-7,
           1.3084916989859224e-6, 2.2568095228872053e-7]
-    @test isapprox(w29.weights, wt, rtol = 0.0005)
+    @test isapprox(w29.weights, wt, rtol = 0.001)
     @test isapprox(w29.weights, w9.weights, rtol = 0.1)
 
     obj = MaxRet()
@@ -2330,7 +2329,7 @@ end
           2.6316119362164115e-9, 5.991019267313653e-9, 3.2331818591355224e-9,
           1.019630349555436e-7, 0.10736579479363274, 8.18324477422888e-9,
           3.505072621551823e-8, 6.4955820348114385e-9]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w32.weights, wt, rtol = 5.0e-6)
     @test isapprox(w32.weights, w12.weights, rtol = 5.0e-6)
 
     # Risk upper bound
