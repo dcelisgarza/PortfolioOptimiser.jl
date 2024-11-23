@@ -68,10 +68,10 @@ function _rp_class_constraints(class::FC, port, w_ini)
 end
 function rp_constraints(port, class, w_ini)
     model = port.model
-    _rp_class_constraints(class, port, w_ini)
-    @variable(model, k)
     w = model[:w]
     k = model[:k]
+    _rp_class_constraints(class, port, w_ini)
+    @variable(model, k)
     @constraint(model, sum(w) == k)
     return nothing
 end
