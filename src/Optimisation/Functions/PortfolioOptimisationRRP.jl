@@ -1,33 +1,3 @@
-function _rrp_ver_constraints(::BasicRRP, model, sigma)
-    G = sqrt(sigma)
-    psi = model[:psi]
-    w = model[:w]
-    @constraint(model, [psi; G * w] ∈ SecondOrderCone())
-    return nothing
-end
-function _rrp_ver_constraints(::RegRRP, model, sigma)
-    G = sqrt(sigma)
-    psi = model[:psi]
-    w = model[:w]
-    @variable(model, rho)
-    @constraints(model, begin
-                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
-                     [rho; G * w] ∈ SecondOrderCone()
-                 end)
-    return nothing
-end
-function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
-    G = sqrt(sigma)
-    theta = Diagonal(sqrt.(diag(sigma)))
-    psi = model[:psi]
-    w = model[:w]
-    @variable(model, rho)
-    @constraints(model, begin
-                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
-                     [rho; sqrt(version.penalty) * theta * w] ∈ SecondOrderCone()
-                 end)
-    return nothing
-end
 function _rrp_constraints(port, type::RRP, sigma)
     model = port.model
     N = size(port.returns, 2)
@@ -55,8 +25,6 @@ function rrp_constraints(type::RRP, port, sigma)
     elseif !isapprox(sum(port.risk_budget), one(eltype(port.returns)))
         port.risk_budget ./= sum(port.risk_budget)
     end
-    _sd_risk(NoAdj(), SOC(), model, sigma)
-    _set_sd_risk_upper_bound(nothing, nothing, type, model, Inf)
     _rrp_constraints(port, type, sigma)
     return nothing
 end
@@ -74,6 +42,37 @@ function _optimise!(type::RRP, port::Portfolio, ::Any, ::Any, ::Any, class::Port
     @objective(model, Min, risk)
     return convex_optimisation(port, nothing, type, class)
 end
+function _rrp_ver_constraints(::BasicRRP, model, sigma)
+    w = model[:w]
+    psi = model[:psi]
+    G = sqrt(sigma)
+    @constraint(model, [psi; G * w] ∈ SecondOrderCone())
+    return nothing
+end
+function _rrp_ver_constraints(::RegRRP, model, sigma)
+    w = model[:w]
+    psi = model[:psi]
+    G = sqrt(sigma)
+    @variable(model, rho >= 0)
+    @constraints(model, begin
+                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
+                     [rho; G * w] ∈ SecondOrderCone()
+                 end)
+    return nothing
+end
+function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
+    w = model[:w]
+    psi = model[:psi]
+    G = sqrt(sigma)
+    theta = Diagonal(sqrt.(diag(sigma)))
+    penalty = version.penalty
+    @variable(model, rho >= 0)
+    @constraints(model, begin
+                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
+                     [rho; sqrt(penalty) * theta * w] ∈ SecondOrderCone()
+                 end)
+    return nothing
+end
 function rrp_constraints(port::OmniPortfolio, type::RRP, sigma)
     model = port.model
     w = model[:w]
@@ -84,14 +83,8 @@ function rrp_constraints(port::OmniPortfolio, type::RRP, sigma)
         risk_budget = port.risk_budget = fill(inv(N), N)
     end
 
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
-    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
-        _SDP_constraints(model)
-    end
-    _variance_risk(adjacency_constraint, type.formulation, model, sigma)
-
     @variables(model, begin
-                   psi
+                   psi >= 0
                    gamma >= 0
                    zeta[1:N] .>= 0
                end)

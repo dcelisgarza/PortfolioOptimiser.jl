@@ -490,7 +490,7 @@ function SDP_network_cluster_penalty(port)
 
     model = port.model
     W = model[:W]
-    if !haskey(model, :variance_risk) || !haskey(model, :wc_variance_risk)
+    if !(haskey(model, :variance_risk) || haskey(model, :wc_variance_risk))
         if ntwk_flag
             penalty = network_adj.penalty
             @expression(model, network_penalty, penalty * tr(W))

@@ -18,15 +18,12 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     end
     return nothing
 end
-function _get_ntwk_clust_method(::Trad, port)
+function _get_ntwk_clust_method(port)
     return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
         SDP()
     else
         NoAdj()
     end
-end
-function _get_ntwk_clust_method(args...)
-    return NoAdj()
 end
 function _set_rm_risk_upper_bound(args...)
     return nothing
@@ -119,7 +116,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix
     if !use_portfolio_sigma
         sigma = rm.sigma
     end
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    adjacency_constraint = _get_ntwk_clust_method(port)
     if isa(adjacency_constraint, SDP) && !haskey(model, :W)
         _SDP_constraints(model)
     end
@@ -135,7 +132,7 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    adjacency_constraint = _get_ntwk_clust_method(port)
     if isa(adjacency_constraint, SDP) && !haskey(model, :W)
         _SDP_constraints(model)
     end
@@ -2155,7 +2152,7 @@ function set_rm(port::Portfolio, rm::SD, type::Union{Trad, RP}, obj;
     end
     model = port.model
 
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    adjacency_constraint = _get_ntwk_clust_method(port)
     _sdp(adjacency_constraint, port, obj)
     _sd_risk(adjacency_constraint, rm.formulation, model, sigma)
     _set_sd_risk_upper_bound(adjacency_constraint, obj, type, model, rm.settings.ub)
@@ -2168,7 +2165,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SD}, type::Union{Trad, RP
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
 
-    adjacency_constraint = _get_ntwk_clust_method(type, port)
+    adjacency_constraint = _get_ntwk_clust_method(port)
     _sdp(adjacency_constraint, port, obj)
     count = length(rms)
     _sd_risk(adjacency_constraint, model, sigma, count)

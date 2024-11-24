@@ -132,7 +132,9 @@ end
 function set_objective_function(port, ::Union{RP, RRP}, custom_obj)
     model = port.model
     risk = model[:risk]
-    custom_objective(model, risk, 1, custom_obj)
-    @objective(model, Min, risk)
+    @expression(model, obj_func, risk)
+    add_objective_penalty(model, obj_func, 1)
+    custom_objective(model, obj_func, 1, custom_obj)
+    @objective(model, Min, obj_func)
     return nothing
 end

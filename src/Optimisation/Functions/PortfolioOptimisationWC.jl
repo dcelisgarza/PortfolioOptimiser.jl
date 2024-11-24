@@ -50,7 +50,7 @@ function _wc_risk_constraints(::Ellipse, port, obj)
     return nothing
 end
 function _wc_risk_constraints(type::NoWC, port, ::Any)
-    _sd_risk(_get_ntwk_clust_method(Trad(), port), type.formulation, port.model, port.cov)
+    _sd_risk(_get_ntwk_clust_method(port), type.formulation, port.model, port.cov)
     sd_risk = port.model[:sd_risk]
     @expression(port.model, risk, sd_risk)
     return nothing

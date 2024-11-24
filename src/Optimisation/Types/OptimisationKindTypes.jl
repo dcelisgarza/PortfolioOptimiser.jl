@@ -77,10 +77,9 @@ end
 """
 mutable struct RRP <: OptimType
     version::RRPVersion
-    formulation::VarianceFormulation
 end
-function RRP(; version::RRPVersion = BasicRRP(), formulation = SOC())
-    return RRP(version, formulation)
+function RRP(; version::RRPVersion = BasicRRP())
+    return RRP(version)
 end
 
 """

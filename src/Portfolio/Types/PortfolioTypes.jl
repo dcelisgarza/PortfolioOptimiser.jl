@@ -584,7 +584,7 @@ function OmniPortfolio(;
                          # Turnover
                          AbstractTR,
                          # Adjacency
-                         typeof(network_adj), typeof(cluster_adj),
+                         AdjacencyConstraint, AdjacencyConstraint,
                          # Centrality
                          typeof(a_cent_ineq), typeof(b_cent_ineq), typeof(a_cent_eq),
                          typeof(b_cent_eq),
@@ -900,7 +900,7 @@ function Base.deepcopy(obj::OmniPortfolio)
                          # Turnover
                          AbstractTR,
                          # Adjacency
-                         typeof(obj.network_adj), typeof(obj.cluster_adj),
+                         AdjacencyConstraint, AdjacencyConstraint,
                          # Centrality
                          typeof(obj.a_cent_ineq), typeof(obj.b_cent_ineq),
                          typeof(obj.a_cent_eq), typeof(obj.b_cent_eq),
