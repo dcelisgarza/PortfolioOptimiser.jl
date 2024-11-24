@@ -105,8 +105,6 @@ function rp_constraints(port::OmniPortfolio, ::Any, w_ini)
     @constraints(model, begin
                      dot(risk_budget, log_w) >= 1
                      [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone()
-                     w .>= 0
-                     sum(w) == k
                  end)
     return nothing
 end
