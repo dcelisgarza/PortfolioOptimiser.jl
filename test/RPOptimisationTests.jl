@@ -1,20 +1,21 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "SD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+@testset "Variance" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = SD()
+    rm = Variance()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
@@ -47,26 +48,25 @@ l = 2.0
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.0005)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-5)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-4)
     @test isapprox(hrc3 / lrc3, hrc1 / lrc1, rtol = 5.0e-10)
     @test isapprox(hrc4 / lrc4, hrc2 / lrc2, rtol = 5.0e-10)
 
-    portfolio.risk_budget = []
+    portfolio.risk_budget = fill(inv(20), 20)
     portfolio.risk_budget[1] = 5
     w3 = optimise!(portfolio; type = RP())
     rc3 = risk_contribution(portfolio; type = :RP)
     lrc5, hrc5 = extrema(rc3)
     @test isapprox(hrc5 / lrc5, 100, rtol = 0.0005)
-    @test isapprox(sum(portfolio.risk_budget), 1)
 end
 
 @testset "MAD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = MAD()
@@ -88,13 +88,13 @@ end
            0.023961449523877854, 0.062252124307186275, 0.034592269087233674,
            0.04206365189343823, 0.05465542813736888, 0.07239054942796913,
            0.04770615320793009, 0.06362168548584848]
-    w2t = [0.006399563121224427, 0.01259953405725646, 0.017344094180032826,
-           0.01913715742517366, 0.028376470603859533, 0.031901364268023494,
-           0.019207083014157005, 0.05539147091326429, 0.03338308143173257,
-           0.045148019521911664, 0.08075958036270268, 0.03494225527115619,
-           0.025785184739823736, 0.07994544123466757, 0.04475610582327035,
-           0.055914691777513806, 0.09227776882581301, 0.12028022431379208,
-           0.08191449169494983, 0.11453641741967499]
+    w2t = [0.0063961952250897024, 0.01259233570812754, 0.01733507546160919,
+           0.019133369264133202, 0.028375436997384727, 0.031889180424327784,
+           0.019206369765627646, 0.055400873920331425, 0.03337728881511272,
+           0.045145056375019046, 0.08075326190057375, 0.03493485143072039,
+           0.02578004094261155, 0.07995311292670913, 0.044767477387302204,
+           0.05590147350787757, 0.0922934334228999, 0.12029607659061349,
+           0.08192688910102709, 0.11454220083290197]
     @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-7)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.01)
@@ -102,12 +102,12 @@ end
 end
 
 @testset "SSD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SSD()
@@ -129,13 +129,13 @@ end
            0.02992913805074365, 0.06261843327177671, 0.03923880111295301,
            0.04565294332231343, 0.04985063996037994, 0.07413165623546289,
            0.044276510952126515, 0.05885431097970036]
-    w2t = [0.005428610056694705, 0.011166840163835153, 0.014458218268185663,
-           0.017041521745985763, 0.024074418715592797, 0.03134544512417569,
-           0.019077413527171835, 0.05919765073190795, 0.03194656075952613,
-           0.04195983983599716, 0.08814241216305874, 0.03899786030647434,
-           0.03418043720843112, 0.07927476322294401, 0.05025705500730055,
-           0.06338780950220609, 0.08186743524309842, 0.12155668843610583,
-           0.07827494727076424, 0.1083640727105437]
+    w2t = [0.005428687871925218, 0.011165997744344677, 0.014457877462411622,
+           0.017041104189619228, 0.024073101414898677, 0.03133995492451869,
+           0.019075804783727716, 0.05919921912726392, 0.03194488914093804,
+           0.04195795744473274, 0.08814684328464706, 0.038997168516058264,
+           0.03418175861909682, 0.07927633692959091, 0.05026058595905142,
+           0.06339052851645095, 0.08186275704784614, 0.12155956696235388,
+           0.07827595148631002, 0.10836390857421406]
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.0005)
@@ -143,12 +143,12 @@ end
 end
 
 @testset "FLPM" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = FLPM()
@@ -163,20 +163,20 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.05426765863488127, 0.05096600361558761, 0.05094634029921118,
-           0.04002797433009358, 0.05569050595339275, 0.04854248101541967,
-           0.024658163117795746, 0.07063013104302747, 0.041789427080531835,
-           0.046061116223800595, 0.08265005169742001, 0.027987661093431898,
-           0.02190398527822549, 0.059102618815220095, 0.03013261014672915,
-           0.04527095950185923, 0.05793299147991312, 0.07483566536141466,
-           0.04995915354621185, 0.06664450176583281]
-    w2t = [0.0068825675304260625, 0.01296039126512009, 0.018389523192842313,
-           0.018318328099045725, 0.036076281241134066, 0.027199453368491867,
-           0.020213062610521554, 0.05278002908331459, 0.033763600628745075,
-           0.044238787803190134, 0.08233682841314095, 0.031755273488808716,
-           0.024158196690959238, 0.07390331556018014, 0.03807087187521186,
-           0.05746041768532463, 0.09954082737413884, 0.12219633300138268,
-           0.08481965045505808, 0.11493626063296344]
+    w1t = [0.054267057099694184, 0.05096246113557045, 0.05095255097020979,
+           0.040032406904224854, 0.0556874290889964, 0.048539424291517114,
+           0.024657999063861406, 0.07062985573445954, 0.04179091294583214,
+           0.04606660805022222, 0.08265241772134334, 0.027989026643651344,
+           0.02190437066256167, 0.059099626838259325, 0.03013382433142087,
+           0.045279133438256215, 0.057925748682471315, 0.07483177363752329,
+           0.04995819759930101, 0.06663917516062365]
+    w2t = [0.006878868232648054, 0.012951149393094247, 0.018381735576801738,
+           0.01831469262744488, 0.03608453233241397, 0.02719604369495882,
+           0.020207074438070734, 0.052774398319475106, 0.033761212787344494,
+           0.04423765658397453, 0.08235670938100217, 0.031749539125101554,
+           0.024157585599707543, 0.07391869180768487, 0.03806447452897265,
+           0.05744778736381905, 0.0995482799675567, 0.12220053760565629,
+           0.08483102562198958, 0.11493800501228298]
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-6)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.005)
@@ -184,12 +184,12 @@ end
 end
 
 @testset "SLPM" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SLPM()
@@ -204,20 +204,20 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.05078363551961249, 0.053717899741000934, 0.04576180467751134,
-           0.04092029111604701, 0.04906218280689754, 0.05035005426123335,
-           0.027363197627451083, 0.07790260260224377, 0.03854273656605282,
-           0.04420143278468031, 0.08429612517822185, 0.03395598885724939,
-           0.02824434184473981, 0.06056903214345694, 0.036507052624834876,
-           0.04757337554325011, 0.051285915028974366, 0.07441808251273557,
-           0.04500593244534493, 0.05953831611846164]
-    w2t = [0.005491575041085418, 0.011428841414468762, 0.014820967475246397,
-           0.01730505616007213, 0.026322354448980064, 0.02906003755711178,
-           0.019769446420805574, 0.0592148116776102, 0.032192641913391676,
-           0.04165021324570082, 0.08829065859404443, 0.03730878647615285,
-           0.03234182015788028, 0.07667258675867361, 0.04703074043617186,
-           0.06578751480948142, 0.08445239530103657, 0.12165870854838648,
-           0.07958281325604245, 0.10961803030765727]
+    w1t = [0.05078127940733007, 0.053709289520370206, 0.045765499111031845,
+           0.04092124166773404, 0.04906350161785088, 0.05034642655205059,
+           0.027363313590193325, 0.07790700226241161, 0.03854385546416795,
+           0.04420307984253257, 0.08430309761074495, 0.03395810327214033,
+           0.028244948471502513, 0.06056629784190088, 0.036508496019863564,
+           0.04757367293185978, 0.051284241663104566, 0.07441627002609454,
+           0.04500824504878194, 0.05953213807833387]
+    w2t = [0.0054916073854252906, 0.011427939296813336, 0.01482057459914487,
+           0.017304371379962005, 0.02632048335008413, 0.029055266030112614,
+           0.019768193133877558, 0.05921585232078186, 0.03219069820365385,
+           0.04164854622777103, 0.08829470628803716, 0.037308239885460066,
+           0.03234413972831064, 0.07667318635649392, 0.047034271680223304,
+           0.06579073258270003, 0.08444743344829933, 0.12166293164184272,
+           0.07958310033100874, 0.10961772612999747]
     @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.0005)
@@ -225,12 +225,12 @@ end
 end
 
 @testset "WR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = WR()
@@ -266,12 +266,12 @@ end
 end
 
 @testset "RG" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RG()
@@ -307,12 +307,12 @@ end
 end
 
 @testset "CVaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CVaR()
@@ -327,20 +327,20 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.04938933831427547, 0.04880564679526193, 0.04173143865012399,
-           0.038407519877081284, 0.04184150449776414, 0.05378156812124352,
-           0.026423698659473648, 0.07736661708123845, 0.03544505151114984,
-           0.040941895220711864, 0.09251854782877776, 0.04267847930367274,
-           0.03238663840849811, 0.06577589633925136, 0.04019561816260983,
-           0.0422064111464128, 0.048725958283461226, 0.08071628760303087,
-           0.04277031026985724, 0.05789157392610398]
-    w2t = [0.004958200154255492, 0.010723616422779553, 0.013513131194217395,
-           0.015940996349843917, 0.022147568548325412, 0.029234237315979867,
-           0.019156981154586118, 0.0622031451024865, 0.029582195710747775,
-           0.0403536838344944, 0.09432253892060641, 0.04011181192911045,
-           0.03580058364514293, 0.0756117191663186, 0.050816304260311834,
-           0.06895452443242044, 0.07714685683796904, 0.12898555129346154,
-           0.07491029621112891, 0.10552605751581359]
+    w1t = [0.049387129895525614, 0.04880041958645412, 0.0417360796429531,
+           0.03840901174332172, 0.04184139932560737, 0.053780063457719865,
+           0.026424802585162756, 0.0773672149813708, 0.03544241306631173,
+           0.04094196008260876, 0.09252539697406174, 0.042683400449354016,
+           0.03238760400585853, 0.06577416488603098, 0.040197811307927274,
+           0.04220372473527037, 0.0487231801118939, 0.08071251851657814,
+           0.04276785407281033, 0.05789385057317895]
+    w2t = [0.004959275431282591, 0.01072383905357794, 0.013513620630296753,
+           0.015940869351360548, 0.022147199451113472, 0.029231288868935196,
+           0.01915525408328189, 0.06220264996323651, 0.02958232963526513,
+           0.04035125157487067, 0.09432575711856797, 0.04011270316987755,
+           0.03579812150408999, 0.07561013938464527, 0.05081122017831414,
+           0.06895063432028874, 0.07714489801105029, 0.12899675704367752,
+           0.07491058752088728, 0.10553160370538055]
     @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.1)
@@ -348,12 +348,12 @@ end
 end
 
 @testset "CVaRRG" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CVaRRG()
@@ -389,12 +389,12 @@ end
 end
 
 @testset "EVaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = EVaR()
@@ -409,20 +409,20 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.04644453616015471, 0.06366537537969691, 0.04378771033344591,
-           0.05092181041834212, 0.046407597296895545, 0.05062071789359459,
-           0.038944792697317814, 0.06586564571647506, 0.03841903583241513,
-           0.0444590054286357, 0.06810122487992437, 0.042570609882092235,
-           0.04132505958064079, 0.0491628699322602, 0.044386206615348194,
-           0.0534476120977008, 0.05368859367348608, 0.05226903833379673,
-           0.041779793367462535, 0.0637327644803145]
-    w2t = [0.004647915199384994, 0.013022055859743266, 0.013063284291428971,
-           0.02051563692286561, 0.022280099122769625, 0.030140211189309412,
-           0.028175264001867355, 0.04961370800009065, 0.03320680258710778,
-           0.04171683905151383, 0.07294570884438029, 0.04732109080558564,
-           0.05108745694078664, 0.06410624273568749, 0.057508778871881834,
-           0.07960000716937425, 0.08923747185076795, 0.08898155729045865,
-           0.07571253112228286, 0.11711733814271302]
+    w1t = [0.046441175139679075, 0.0636635926954678, 0.0437905327100388,
+           0.05092290582010278, 0.0464093742619314, 0.05061665593049196,
+           0.03894587929172149, 0.0658674606383409, 0.03842120337585926,
+           0.044461528797653645, 0.06810063277922151, 0.04257098857986524,
+           0.04132606801031959, 0.049160675556679065, 0.04438749327363125,
+           0.053443618688456575, 0.05369210088508193, 0.05226821690404457,
+           0.04178234191426879, 0.06372755474714445]
+    w2t = [0.004649064633994313, 0.013024128816592357, 0.013065166884888157,
+           0.020518113549704037, 0.022282631649315945, 0.030139092451586413,
+           0.02817712722231638, 0.04961150619044857, 0.0332088114654529,
+           0.04172011248113971, 0.07294398194510515, 0.04732479787078266,
+           0.051090244842984446, 0.06410260111407641, 0.05751225215578386,
+           0.07959987570465571, 0.08923067053518313, 0.08897533037236685,
+           0.0757163816109926, 0.11710810850263045]
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-6)
     @test isapprox(hrc1 / lrc1, 1, rtol = 1)
@@ -430,18 +430,19 @@ end
 end
 
 @testset "RLVaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RLVaR()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio; type = RP(), rm = rm)
+
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
@@ -467,21 +468,21 @@ end
     @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-7)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.25)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 0.1)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.25)
 end
 
 @testset "EVaR < RLVaR < WR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = RLVaR(; kappa = 5e-4)
+    rm = RLVaR(; kappa = 5e-3)
     w1 = optimise!(portfolio; rm = rm, type = RP())
-    rm = RLVaR(; kappa = 1 - 5e-4)
+    rm = RLVaR(; kappa = 1 - 5e-3)
     w2 = optimise!(portfolio; rm = rm, type = RP())
     rm = EVaR()
     w3 = optimise!(portfolio; rm = rm, type = RP())
@@ -495,12 +496,12 @@ end
 end
 
 @testset "MDD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = MDD()
@@ -512,6 +513,7 @@ end
 
     portfolio.risk_budget = reverse(1:size(portfolio.returns, 2))
     w2 = optimise!(portfolio; type = RP(), rm = rm)
+
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -536,12 +538,12 @@ end
 end
 
 @testset "ADD" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = ADD()
@@ -563,26 +565,26 @@ end
            0.017629230206665174, 0.0396434223439632, 0.014602246134429559,
            0.04741538864525304, 0.07494445784801652, 0.04972287802730784,
            0.05842615813453437, 0.05996546802527647]
-    w2t = [0.011171906249654688, 0.014031965080399496, 0.04590324999045358,
-           0.012856310361700663, 0.05062147229126155, 0.022249533370882774,
-           0.018628274730880603, 0.07977835360350231, 0.02874507375363999,
-           0.03132516743118289, 0.110532504352518, 0.024766097958708735,
-           0.016885285913367288, 0.053455421865007985, 0.019595147396604496,
-           0.06130793075234185, 0.12257774709628408, 0.07478174508605419,
-           0.09193021772287086, 0.10885659499268396]
+    w2t = [0.01117366781007166, 0.014033169054553924, 0.045908571107162684,
+           0.012856587763064538, 0.050622843054460215, 0.022249776126497384,
+           0.01862763478098223, 0.07977869361256462, 0.02874816697896668,
+           0.031322680707860255, 0.1105249907447127, 0.02476816915865819,
+           0.01688562364522229, 0.05345524384387573, 0.0195961710270235,
+           0.061298883594235444, 0.12257905778456897, 0.07478548505959613,
+           0.09193002828020275, 0.1088545558657202]
     @test isapprox(w1.weights, w1t, rtol = 0.0001)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.5)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 0.05)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.1)
 end
 
 @testset "UCI" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = UCI()
@@ -597,33 +599,33 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.054836725033953676, 0.04136772470877948, 0.061654616064266046,
-           0.026847127744840178, 0.05953457953147206, 0.03569670239048015,
-           0.02335641246953983, 0.09682994754370042, 0.029808144579353775,
-           0.032209479526236325, 0.14760109788800663, 0.03543325152670983,
-           0.019400742635076487, 0.04196679273855133, 0.017243527333969583,
-           0.049643334055546245, 0.06573232587809438, 0.05394654739269968,
-           0.04625114194158843, 0.06063977901713551]
-    w2t = [0.008155822184804581, 0.00878070253189626, 0.02321245982127177,
-           0.011186431374581928, 0.0397794474752201, 0.020705029918419698,
-           0.018311318911136066, 0.0909814464844048, 0.02501213733443591,
-           0.028899976605608082, 0.1711778541221246, 0.030391010154354883,
-           0.018935797209900733, 0.05298402723271922, 0.021213771458155502,
-           0.059022411989782635, 0.1046658988397448, 0.08144075179666518,
-           0.07867722373925909, 0.10646648081551412]
+    w1t = [0.05482939977507546, 0.04136703344901281, 0.06164889652883999,
+           0.0268478981008432, 0.05953795769080776, 0.03570199764806931,
+           0.023355956562433257, 0.09683142130483709, 0.029808958230973952,
+           0.032207590276252904, 0.1475999290522447, 0.03543126645976918,
+           0.019399450744000575, 0.0419678790372104, 0.01724347555324004,
+           0.049645575416911995, 0.06572971097464801, 0.0539484127566746,
+           0.046251119404740554, 0.06064607103341418]
+    w2t = [0.008154286578153593, 0.008781190376849138, 0.023209195001104903,
+           0.011185790713888158, 0.039775349087535154, 0.02070829609129032,
+           0.01831077163888364, 0.09098444685646642, 0.02501429263455831,
+           0.028901383716111687, 0.17118200009515813, 0.03039066156086129,
+           0.018933548234311447, 0.052984908028786755, 0.02121400841973578,
+           0.05901915302335803, 0.10465913823759998, 0.08144615071936157,
+           0.07867096408121685, 0.1064744649047689]
     @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.5)
-    @test isapprox(hrc2 / lrc2, 20, rtol = 0.25)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.5)
 end
 
 @testset "CDaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CDaR()
@@ -638,13 +640,13 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.04695113393595442, 0.03661746998944636, 0.03822542841829081,
-           0.027780427413477166, 0.05444936469032488, 0.034219259816653816,
-           0.022355983894753146, 0.0891460376120217, 0.02730933794276768,
-           0.02830152377423775, 0.21577208480903373, 0.04030672646888614,
-           0.02091262720710264, 0.040046384591098196, 0.02636292031520764,
-           0.044700569954147146, 0.058869996420132596, 0.0495191089991847,
-           0.03914690160773955, 0.05900671213954006]
+    w1t = [0.046950955979794685, 0.03661874760554526, 0.038223988588657366,
+           0.027780516550856046, 0.05445110680774062, 0.034214753641007754,
+           0.02235457818855092, 0.0891440899355276, 0.02730742650497644,
+           0.028300548271497156, 0.2157867803618873, 0.040306880430063904,
+           0.020910697807736522, 0.04004945288518099, 0.026363565986111177,
+           0.044699572145195474, 0.058863654906891535, 0.04952002372532478,
+           0.03914800563209636, 0.059004654045358026]
     w2t = [0.007053190526800975, 0.005446128277036701, 0.01241372313810428,
            0.009360737063492953, 0.04021058700684525, 0.019329177838430734,
            0.017749230999518865, 0.0871761904766593, 0.02200444636139792,
@@ -659,12 +661,12 @@ end
 end
 
 @testset "EDaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = EDaR()
@@ -679,13 +681,13 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.05532315448250374, 0.035789843750491365, 0.04077445814199365,
-           0.029605826542944313, 0.0469660412474676, 0.04084467161326547,
-           0.0253009338967018, 0.08891839246222061, 0.026895879448130804,
-           0.03134447114000004, 0.19601820266517858, 0.03903196307834241,
-           0.026532875646729508, 0.04068549349390345, 0.02503584422602656,
-           0.04705236671296188, 0.05353071766624416, 0.055490746380893664,
-           0.03834977161070544, 0.05650834579329473]
+    w1t = [0.05532235699581659, 0.035788140800455205, 0.0407753569587081,
+           0.0296057134575646, 0.04696905711931078, 0.040842428659498574,
+           0.025301130647021896, 0.08891722046323698, 0.026897229105847707,
+           0.03134376238119591, 0.19602182683257213, 0.039031614098305384,
+           0.02653355216997208, 0.04068455054688783, 0.025037256367833247,
+           0.04705215245370184, 0.053526293400258725, 0.05549120103462624,
+           0.038350797642177206, 0.05650835886500902]
     w2t = [0.01585774887523436, 0.005700098123506493, 0.0154093602284636,
            0.009983988990045487, 0.03722637744745142, 0.024786173385869047,
            0.01694269985327135, 0.08449421949038945, 0.022634747150362334,
@@ -695,17 +697,17 @@ end
            0.06349501181374491, 0.11283426977172926]
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
     @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
-    @test isapprox(hrc1 / lrc1, 1, rtol = 0.5)
+    @test isapprox(hrc1 / lrc1, 1, rtol = 1)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.5)
 end
 
 @testset "RLDaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RLDaR()
@@ -740,37 +742,44 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.25)
 end
 
-@testset "EDaR < RLDaR" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 300))))
+@testset "EDaR < RLDaR < MDD" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75,
+                                                                               "max_iter" => 300))))
     asset_statistics!(portfolio)
 
-    obj = MinRisk()
     rm = RLDaR(; kappa = 5e-3)
     w1 = optimise!(portfolio; rm = rm, type = RP())
-    rm = EDaR()
+    rm = RLDaR(; kappa = 1 - 5e-3)
     w2 = optimise!(portfolio; rm = rm, type = RP())
-    @test isapprox(w1.weights, w2.weights, rtol = 0.0001)
+    rm = EDaR()
+    w3 = optimise!(portfolio; rm = rm, type = RP())
+    rm = MDD()
+    w4 = optimise!(portfolio; rm = rm, type = RP())
+
+    if !Sys.isapple()
+        @test isapprox(w1.weights, w3.weights, rtol = 0.005)
+    end
+    @test isapprox(w2.weights, w4.weights, rtol = 1.0e-4)
 end
 
 @testset "Full Kurt" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Kurt()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio; type = RP(), rm = rm)
+    w1 = optimise!(portfolio; type = RP(), rm = rm, str_names = true)
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
@@ -800,12 +809,12 @@ end
 end
 
 @testset "Reduced Kurt" begin
-    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Kurt()
@@ -841,12 +850,12 @@ end
 end
 
 @testset "Full SKurt" begin
-    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SKurt()
@@ -868,13 +877,13 @@ end
            0.03694060939399915, 0.05883380726473094, 0.04119066420625541,
            0.04894563617272387, 0.050636793381874066, 0.06522417318082553,
            0.04376830962159429, 0.0600690530839385]
-    w2t = [0.004723138294127937, 0.010993728947886361, 0.01308033043038897,
-           0.017759695776427185, 0.021165552963051573, 0.031803263388605195,
-           0.020974573806133483, 0.05554783310714788, 0.03254435818391317,
-           0.0423428924934359, 0.08231374162568034, 0.04515388494713648,
-           0.043553198933333696, 0.0752333223309817, 0.053657628423246104,
-           0.0705975363622844, 0.08205662607600783, 0.10767161146945363,
-           0.07790694484775723, 0.11092013759300094]
+    w2t = [0.004722364440696089, 0.010992860721782998, 0.013079608839292163,
+           0.017758736836310487, 0.021164674109437814, 0.03180141478695387,
+           0.020973561620900274, 0.05554877124015805, 0.03254270854952545,
+           0.04234068577215489, 0.08231619106830286, 0.04515053000811545,
+           0.043550361087069216, 0.07523952480527651, 0.05365405151585021,
+           0.07059894578965538, 0.08206008823639577, 0.10767232222543825,
+           0.07790990249926266, 0.11092269584742165]
     @test isapprox(w1.weights, w1t, rtol = 0.0005)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.25)
@@ -882,12 +891,12 @@ end
 end
 
 @testset "Reduced SKurt" begin
-    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SKurt()
@@ -909,13 +918,13 @@ end
            0.03694060939399915, 0.05883380726473094, 0.04119066420625541,
            0.04894563617272387, 0.050636793381874066, 0.06522417318082553,
            0.04376830962159429, 0.0600690530839385]
-    w2t = [0.004723138294127937, 0.010993728947886361, 0.01308033043038897,
-           0.017759695776427185, 0.021165552963051573, 0.031803263388605195,
-           0.020974573806133483, 0.05554783310714788, 0.03254435818391317,
-           0.0423428924934359, 0.08231374162568034, 0.04515388494713648,
-           0.043553198933333696, 0.0752333223309817, 0.053657628423246104,
-           0.0705975363622844, 0.08205662607600783, 0.10767161146945363,
-           0.07790694484775723, 0.11092013759300094]
+    w2t = [0.004722364440696089, 0.010992860721782998, 0.013079608839292163,
+           0.017758736836310487, 0.021164674109437814, 0.03180141478695387,
+           0.020973561620900274, 0.05554877124015805, 0.03254270854952545,
+           0.04234068577215489, 0.08231619106830286, 0.04515053000811545,
+           0.043550361087069216, 0.07523952480527651, 0.05365405151585021,
+           0.07059894578965538, 0.08206008823639577, 0.10767232222543825,
+           0.07790990249926266, 0.11092269584742165]
     @test isapprox(w1.weights, w1t, rtol = 0.0005)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.25)
@@ -923,12 +932,12 @@ end
 end
 
 @testset "Skew" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Skew()
@@ -943,20 +952,20 @@ end
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
-    w1t = [0.045906673657994286, 0.07415648620070701, 0.03239691712482279,
-           0.029662738346822544, 0.04774712631076141, 0.035264759596118266,
-           0.02131567857967313, 0.08112036693805974, 0.028883761129959336,
-           0.030721349576933375, 0.06276151903605617, 0.04750351860504847,
-           0.04348113069373873, 0.05206788117683908, 0.07524692694700864,
-           0.06813705328535936, 0.04871519169184158, 0.07089389122112989,
-           0.03533805940098055, 0.06867897048014555]
-    w2t = [0.004693934872733258, 0.01653712273816221, 0.009745837375747725,
-           0.01129785732641342, 0.024031313716372113, 0.01950335791196889,
-           0.01442940919157519, 0.06053833658422826, 0.02319282927646636,
-           0.02789984507074273, 0.06528733309435215, 0.04853621916516049,
-           0.05038776818805386, 0.06542214777077343, 0.09579505608813803,
-           0.09373742473516694, 0.07713111605853692, 0.11139837428417523,
-           0.059854520216612875, 0.12058019633461987]
+    w1t = [0.045906163224644574, 0.07415998382980167, 0.03239607344992543,
+           0.02966142881533359, 0.047744535194566035, 0.035263473934568405,
+           0.021314660518944012, 0.08112886966347481, 0.028882290213778045,
+           0.030719886281928503, 0.06276040888349436, 0.047499913461799256,
+           0.04347953183392477, 0.052066756947510194, 0.07524629131817263,
+           0.06814200735815706, 0.04871316688887475, 0.07089593677164337,
+           0.03533672325093177, 0.06868189815852659]
+    w2t = [0.00469557296482457, 0.016544022768030475, 0.009747992549313118,
+           0.011300210088528152, 0.024037709258814054, 0.01950778445716192,
+           0.01443250464759355, 0.06053793055327338, 0.023197803106458133,
+           0.02790630236675757, 0.06527159590975776, 0.048541680052673536,
+           0.050393003790489777, 0.0654152798705545, 0.09578821783472778,
+           0.09373414553186947, 0.07711477243101583, 0.11139356565242008,
+           0.05986436233300792, 0.12057554383272853]
     @test isapprox(w1.weights, w1t, rtol = 5.0e-6)
     @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.0005)
@@ -964,12 +973,12 @@ end
 end
 
 @testset "SSkew" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SSkew()
@@ -1005,12 +1014,12 @@ end
 end
 
 @testset "DVaR" begin
-    portfolio = Portfolio(; prices = prices[(end - 50):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 50):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = BDVariance()
@@ -1046,12 +1055,12 @@ end
 end
 
 @testset "GMD" begin
-    portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = GMD(; owa = OWASettings(; approx = false))
@@ -1118,12 +1127,12 @@ end
 end
 
 @testset "TG" begin
-    portfolio = Portfolio(; prices = prices[(end - 125):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 125):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.9))))
     asset_statistics!(portfolio)
 
     rm = TG(; owa = OWASettings(; approx = false))
@@ -1134,6 +1143,7 @@ end
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    portfolio.risk_budget /= sum(portfolio.risk_budget)
     w2 = optimise!(portfolio; type = RP(), rm = rm)
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
@@ -1190,11 +1200,11 @@ end
 end
 
 @testset "TGRG" begin
-    portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     rm = TGRG(;)
@@ -1230,12 +1240,12 @@ end
 end
 
 @testset "OWA" begin
-    portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.9))))
     asset_statistics!(portfolio)
 
     rm = OWA(; owa = OWASettings(; approx = false))

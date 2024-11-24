@@ -118,7 +118,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix
     end
     adjacency_constraint = _get_ntwk_clust_method(port)
     if isa(adjacency_constraint, SDP) && !haskey(model, :W)
-        _SDP_constraints(model)
+        _SDP_constraints(model, type)
     end
     _variance_risk(adjacency_constraint, rm.formulation, model, sigma)
     variance_risk = model[:variance_risk]
@@ -134,7 +134,7 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
     model = port.model
     adjacency_constraint = _get_ntwk_clust_method(port)
     if isa(adjacency_constraint, SDP) && !haskey(model, :W)
-        _SDP_constraints(model)
+        _SDP_constraints(model, type)
     end
     count = length(rms)
     _variance_risk(adjacency_constraint, model, sigma, count)
@@ -261,7 +261,7 @@ end
 function set_rm(port, rm::WCVariance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
                 kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
     _wc_variance_risk_variables(rm.wc_set, model)
     _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
@@ -273,7 +273,7 @@ end
 function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     count = length(rms)
     @expression(model, wc_variance_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
@@ -1087,7 +1087,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLDaR}, type::Union{T
 end
 function set_rm(port::OmniPortfolio, rm::Kurt, type::Union{Trad, RP}; kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     @variable(model, kurt_risk)
@@ -1129,7 +1129,7 @@ end
 function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP};
                 kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     count = length(rms)
@@ -1188,7 +1188,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt}, type::Union{Tr
 end
 function set_rm(port::OmniPortfolio, rm::SKurt, type::Union{Trad, RP}; kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     @variable(model, skurt_risk)
@@ -1230,7 +1230,7 @@ end
 function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad, RP};
                 kwargs...)
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     count = length(rms)

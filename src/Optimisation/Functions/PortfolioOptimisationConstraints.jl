@@ -439,7 +439,7 @@ function get_net_portfolio_returns(model, returns)
     @expression(model, net_X, X .- fees)
     return nothing
 end
-function _SDP_constraints(model)
+function _SDP_constraints(model, ::Trad)
     if haskey(model, :W)
         return nothing
     end
@@ -454,7 +454,21 @@ function _SDP_constraints(model)
 
     return nothing
 end
-function SDP_network_cluster_constraints(port)
+function _SDP_constraints(model, ::Any)
+    if haskey(model, :W)
+        return nothing
+    end
+
+    w = model[:w]
+    N = length(w)
+
+    @variable(model, W[1:N, 1:N], Symmetric)
+    @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, 1)))
+    @constraint(model, M ∈ PSDCone())
+
+    return nothing
+end
+function SDP_network_cluster_constraints(port, type)
     network_adj = port.network_adj
     cluster_adj = port.cluster_adj
     ntwk_flag = isa(network_adj, SDP)
@@ -464,7 +478,7 @@ function SDP_network_cluster_constraints(port)
     end
 
     model = port.model
-    _SDP_constraints(model)
+    _SDP_constraints(model, type)
     W = model[:W]
 
     if ntwk_flag

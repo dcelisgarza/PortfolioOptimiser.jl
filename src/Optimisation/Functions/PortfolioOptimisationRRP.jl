@@ -117,7 +117,7 @@ function _optimise!(type::RRP, port::OmniPortfolio, ::Any, ::Any, kelly::RetType
     set_k(port, nothing)
     weight_constraints(port)
     MIP_constraints(port)
-    SDP_network_cluster_constraints(port)
+    SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)

@@ -207,7 +207,7 @@ function _optimise!(type::NOC, port::OmniPortfolio,
     flag = type.flag
     if flag
         MIP_constraints(port)
-        SDP_network_cluster_constraints(port)
+        SDP_network_cluster_constraints(port, nothing)
         # Tracking
         tracking_error_constraints(port, returns)
         turnover_constraints(port)

@@ -41,7 +41,7 @@ function _optimise!(type::Trad, port::OmniPortfolio,
     # Weight constraints
     weight_constraints(port)
     MIP_constraints(port)
-    SDP_network_cluster_constraints(port)
+    SDP_network_cluster_constraints(port, type)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
