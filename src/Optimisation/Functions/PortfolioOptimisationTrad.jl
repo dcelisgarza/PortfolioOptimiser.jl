@@ -22,6 +22,6 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     L1_reg(port)
     L2_reg(port)
     custom_constraint_objective_penatly(c_const_obj_pen, port)
-    set_objective_function(port, obj, type, kelly, nothing)
+    set_objective_function(port, obj, type, kelly, c_const_obj_pen)
     return convex_optimisation(port, obj, type, class)
 end
