@@ -119,13 +119,15 @@ function set_objective_function(port, obj, ::WC, ::Any)
     _objective(WC(), obj, nothing, model)
     return nothing
 end
-function set_objective_function(port, ::Any, ::NOC, ::Any)
+function set_objective_function(port, ::NOC, custom_obj)
     model = port.model
     log_ret = model[:log_ret]
     log_risk = model[:log_risk]
     log_w = model[:log_w]
     log_1mw = model[:log_1mw]
     @expression(model, obj_func, -log_ret - log_risk - sum(log_w + log_1mw))
+    add_objective_penalty(model, obj_func, 1)
+    custom_objective(model, obj_func, 1, custom_obj)
     @objective(model, Min, obj_func)
     return nothing
 end

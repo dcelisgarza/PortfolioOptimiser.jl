@@ -117,7 +117,7 @@ end
 mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real}, T3 <: AbstractVector{<:Real},
                    T4 <: AbstractVector{<:Real}, T5 <: AbstractVector{<:Real},
                    T6 <: AbstractVector{<:Real}} <: OptimType
-    type::Union{WC, Trad}
+    type::OptimType
     bins::T1
     w_opt::T2
     w_min::T3
@@ -125,7 +125,7 @@ mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real}, T3 <: AbstractVecto
     w_min_ini::T5
     w_max_ini::T6
 end
-function NOC(; type::Union{WC, Trad} = Trad(), bins::Real = 20.0,
+function NOC(; type::OptimType = Trad(), bins::Real = 20.0,
              w_opt::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_min::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_max::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
