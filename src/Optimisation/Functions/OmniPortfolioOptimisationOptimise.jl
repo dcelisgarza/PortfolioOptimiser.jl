@@ -133,9 +133,9 @@ function optimise!(port::OmniPortfolio, type::NOC;
                    rm::Union{AbstractVector, <:RiskMeasure} = SD(),
                    obj::ObjectiveFunction = MinRisk(), kelly::RetType = NoKelly(),
                    class::PortClass = Classic(),
-                   w_ini::AbstractVector = Vector{Float64(undef, 0)},
+                   w_ini::AbstractVector = Vector{Float64}(undef, 0),
                    custom_constr::CustomConstraint = NoCustomConstraint(),
-                   custom_obj::CustomObjective = NoCustomObjective(), ohf::Real,
+                   custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
                    str_names::Bool = false, kwargs...)
     empty!(port.fail)
     old_short = nothing

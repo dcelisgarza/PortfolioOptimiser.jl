@@ -3,7 +3,7 @@
                               solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                             :params => Dict("log_to_console" => false))))
     asset_statistics!(portfolio)
-    optimise!(portfolio)
+    optimise!(portfolio, Trad())
 
     @test !isempty(portfolio.fail)
     @test haskey(portfolio.fail, :HiGHS_Trad)

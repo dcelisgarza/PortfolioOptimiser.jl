@@ -20,7 +20,8 @@ function add_objective_penalty(model, obj_func, d)
     end
     return nothing
 end
-function custom_objective(model, obj_func, sense::Integer, custom_obj::NoCustomObjective)
+function custom_objective(model, obj_func, sense::Integer,
+                          custom_obj::Union{NoCustomObjective, Nothing})
     return nothing
 end
 function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model, custom_obj)
