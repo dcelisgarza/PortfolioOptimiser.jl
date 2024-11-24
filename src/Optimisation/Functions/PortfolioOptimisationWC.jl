@@ -73,9 +73,7 @@ function wc_constraints(port, obj, type)
     return nothing
 end
 function _optimise!(type::WC, port::Portfolio, ::Any, obj::ObjectiveFunction, ::Any, ::Any,
-                    w_ini::AbstractVector,
-                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
-                    str_names::Bool)
+                    w_ini::AbstractVector, c_const_obj_pen, str_names::Bool)
     port.model = JuMP.Model()
     model = port.model
     set_string_names_on_creation(model, str_names)

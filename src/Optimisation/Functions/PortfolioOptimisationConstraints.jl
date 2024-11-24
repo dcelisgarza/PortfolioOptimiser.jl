@@ -517,7 +517,7 @@ function SDP_network_cluster_penalty(port)
 
     return nothing
 end
-function custom_constraint(port, ::Nothing)
+function custom_constraint(port, ::NoCustomConstraint)
     return nothing
 end
 function L1_regularisation(port)

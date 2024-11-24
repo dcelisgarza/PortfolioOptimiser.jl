@@ -94,9 +94,7 @@ function noc_constraints(model, risk0, ret0)
 end
 function _optimise!(type::NOC, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
-                    w_ini::AbstractVector,
-                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
-                    str_names::Bool)
+                    w_ini::AbstractVector, c_const_obj_pen, str_names::Bool)
     risk0, ret0 = noc_risk_ret(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
@@ -184,67 +182,4 @@ function noc_risk_ret(port::OmniPortfolio, type, rm, obj, kelly, class, w_ini,
     risk3 += d_risk
 
     return risk3, ret3
-end
-function _optimise!(type::NOC, port::OmniPortfolio,
-                    rm::Union{AbstractVector, <:RiskMeasure}, obj::ObjectiveFunction,
-                    kelly::RetType, class::PortClass, w_ini::AbstractVector, custom_constr,
-                    custom_obj, ohf::Real, str_names::Bool = false)
-    old_short = nothing
-    if port.short
-        old_short = port.short
-        port.short = false
-    end
-    risk0, ret0 = noc_risk_ret(port, type, rm, obj, kelly, class, w_ini, custom_constr,
-                               custom_obj, ohf)
-    port.model = JuMP.Model()
-    set_string_names_on_creation(port.model, str_names)
-    mu, sigma, returns = mu_sigma_returns_class(port, class)
-    optimal_homogenisation_factor(port, mu, obj, ohf)
-    initial_w(port, w_ini)
-    set_k(port, nothing)
-    # Weight constraints
-    weight_constraints(port)
-    flag = type.flag
-    if flag
-        MIP_constraints(port)
-        SDP_network_cluster_constraints(port, nothing)
-        # Tracking
-        tracking_error_constraints(port, returns)
-        turnover_constraints(port)
-    else
-        old_ntwk_adj = port.network_adj
-        old_clst_adj = port.cluster_adj
-        port.network_adj = NoAdj()
-        port.cluster_adj = NoAdj()
-        custom_constr = nothing
-        custom_obj = nothing
-    end
-    # Fees
-    management_fee(port)
-    rebalance_fee(port)
-    # Risk
-    kelly_approx_idx = Int[]
-    risk_constraints(port, type.type, rm, mu, sigma, returns, kelly_approx_idx)
-    # Returns
-    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
-    if flag
-        # Objective function penalties
-        L1_regularisation(port)
-        L2_regularisation(port)
-        SDP_network_cluster_penalty(port)
-    else
-        port.network_adj = old_ntwk_adj
-        port.cluster_adj = old_clst_adj
-    end
-    # NOC constraints
-    noc_constraints(port, risk0, ret0)
-    # Custom constraints
-    custom_constraint(port, custom_constr)
-    # Objective function and custom penalties
-    set_objective_function(port, type, custom_obj)
-    retval = convex_optimisation(port, obj, type, class)
-    if !isnothing(old_short)
-        port.short = old_short
-    end
-    return retval
 end

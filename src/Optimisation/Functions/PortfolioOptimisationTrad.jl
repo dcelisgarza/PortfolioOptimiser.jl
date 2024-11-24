@@ -1,8 +1,6 @@
 function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:RiskMeasure},
                     obj::ObjectiveFunction, kelly::RetType, class::PortClass,
-                    w_ini::AbstractVector,
-                    c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing},
-                    str_names::Bool)
+                    w_ini::AbstractVector, c_const_obj_pen, str_names::Bool)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     port.model = JuMP.Model()
     model = port.model
@@ -25,41 +23,5 @@ function _optimise!(type::Trad, port::Portfolio, rm::Union{AbstractVector, <:Ris
     L2_reg(port)
     custom_constraint_objective_penatly(c_const_obj_pen, port)
     set_objective_function(port, obj, type, kelly, nothing)
-    return convex_optimisation(port, obj, type, class)
-end
-
-function _optimise!(type::Trad, port::OmniPortfolio,
-                    rm::Union{AbstractVector, <:RiskMeasure}, obj::ObjectiveFunction,
-                    kelly::RetType, class::PortClass, w_ini::AbstractVector, custom_constr,
-                    custom_obj, ohf::Real, str_names::Bool = false)
-    port.model = JuMP.Model()
-    set_string_names_on_creation(port.model, str_names)
-    mu, sigma, returns = mu_sigma_returns_class(port, class)
-    optimal_homogenisation_factor(port, mu, obj, ohf)
-    initial_w(port, w_ini)
-    set_k(port, obj)
-    # Weight constraints
-    weight_constraints(port)
-    MIP_constraints(port)
-    SDP_network_cluster_constraints(port, type)
-    # Tracking
-    tracking_error_constraints(port, returns)
-    turnover_constraints(port)
-    # Fees
-    management_fee(port)
-    rebalance_fee(port)
-    # Risk
-    kelly_approx_idx = Int[]
-    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
-    # Returns
-    expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
-    # Objective function penalties
-    L1_regularisation(port)
-    L2_regularisation(port)
-    SDP_network_cluster_penalty(port)
-    # Custom constraints
-    custom_constraint(port, custom_constr)
-    # Objective function and custom penalties
-    set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
