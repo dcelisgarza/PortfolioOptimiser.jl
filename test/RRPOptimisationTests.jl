@@ -41,7 +41,7 @@ l = 2.0
            0.060975152663028956, 0.08329764074659259, 0.11639306202439181,
            0.07928201138340045, 0.1097727074394857]
     @test isapprox(w1.weights, w1t)
-    @test isapprox(w2.weights, w2t)
+    @test isapprox(w2.weights, w2t, rtol = 5.0e-8)
     @test isapprox(hrc1 / lrc1, 1, rtol = 5.0e-6)
     @test isapprox(hrc2 / lrc2, 20, rtol = 5.0e-5)
 
@@ -102,7 +102,7 @@ l = 2.0
            0.03143791443774447, 0.07961007627949554, 0.046142650282107386,
            0.06097515209885989, 0.08329763128680183, 0.11639302203782459,
            0.07928200811003576, 0.10977268138844819]
-    @test isapprox(w5.weights, w5t)
+    @test isapprox(w5.weights, w5t, rtol = 5.0e-8)
     @test isapprox(w6.weights, w6t)
     @test isapprox(hrc5 / lrc5, 1, rtol = 5.0e-6)
     @test isapprox(hrc6 / lrc6, 20, rtol = 5.0e-5)

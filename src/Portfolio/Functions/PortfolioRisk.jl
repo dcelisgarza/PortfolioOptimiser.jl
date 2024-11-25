@@ -160,6 +160,7 @@ number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP
 
 Compute the number of effective assets.
 """
-function number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
+function number_effective_assets(port::AbstractPortfolio;
+                                 type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
     return number_effective_assets(port.optimal[type].weights)
 end
