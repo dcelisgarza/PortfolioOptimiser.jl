@@ -7,7 +7,7 @@ function get_portfolio_returns(model, returns)
 
     return nothing
 end
-function MIP_constraints(port)
+function MIP_constraints(port, allow_shorting = true)
     #=
     # MIP constraints
 
@@ -60,7 +60,8 @@ function MIP_constraints(port)
     short_u = port.short_u
     if (isa(short_l, Real) && !iszero(short_l) ||
         isa(short_l, AbstractVector) && (!isempty(short_l) || any(.!iszero(short_l)))) &&
-       short
+       short &&
+       allow_shorting
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -182,7 +183,7 @@ function _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budge
 
     return nothing
 end
-function weight_constraints(port)
+function weight_constraints(port, allow_shorting = true)
     #=
     # Weight constraints
     =#
@@ -222,7 +223,7 @@ function weight_constraints(port)
                          w .>= 0
                      end)
         @expression(model, long_w, w)
-    else
+    elseif short && allow_shorting
         #=
         ## Short min and max weights
         =#

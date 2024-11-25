@@ -185,6 +185,22 @@ function risk_budget_assert(risk_budget, n::Integer, name = "")
     end
     return risk_budget
 end
+function factor_risk_budget_assert(risk_budget, n::Integer, name = "")
+    if !isempty(risk_budget)
+        @smart_assert(length(risk_budget) <= n,
+                      "Length of $name must be less than or equal to $n")
+        # @smart_assert(all(risk_budget .>= zero(eltype(returns))))
+        # if isa(risk_budget, AbstractRange)
+        #     risk_budget = collect(risk_budget / sum(risk_budget))
+        # else
+        #     risk_budget ./= sum(risk_budget)
+        # end
+        if isa(risk_budget, AbstractRange)
+            risk_budget = collect(risk_budget)
+        end
+    end
+    return risk_budget
+end
 function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Integer,
                                name = "", f = >=, val = 0.0)
     if isa(x, AbstractVector) && !isempty(x)
@@ -206,8 +222,8 @@ function short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_
                              budget, max_budget, short_budget, long_u, short_u, name = "")
     if budget_flag
         @smart_assert(all(short_budget .<= short_u .<= 0), "all($name .<= short_u .<= 0)")
-        @smart_assert(all(budget .- short_budget .>= long_u .>= 0,
-                          "all(budget .- $name .>= long_u .>= 0"))
+        @smart_assert(all(budget .- short_budget .>= long_u .>= 0),
+                      "all(budget .- $name .>= long_u .>= 0")
     else
         if min_budget_flag
             @smart_assert(all(short_budget .<= short_u .<= 0),
@@ -281,6 +297,7 @@ function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_bud
     max_budget_flag = isfinite(max_budget)
     budget, budget_flag = set_default_budget(budget, 1.0, min_budget_flag, budget_flag,
                                              max_budget_flag)
+
     if short
         real_or_vector_assert(short_l, N, :short_l, <=, 0)
         real_or_vector_assert(short_u, N, :short_u, <=, 0)
@@ -288,8 +305,10 @@ function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_bud
         min_short_budget_flag = isfinite(min_short_budget)
         short_budget_flag = isfinite(short_budget)
         max_short_budget_flag = isfinite(max_short_budget)
-        short_budget, short_budget_flag = set_default_budget(budget, -0.2, min_budget_flag,
-                                                             budget_flag, max_budget_flag)
+
+        short_budget, short_budget_flag = set_default_budget(short_budget, -0.2,
+                                                             min_budget_flag, budget_flag,
+                                                             max_budget_flag)
         if short_budget_flag
             short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
                                 budget, max_budget, short_budget, long_u, short_u,
@@ -509,7 +528,7 @@ function OmniPortfolio(;
     end
     # Risk budgetting
     risk_budget = risk_budget_assert(risk_budget, N, :risk_budget)
-    f_risk_budget = risk_budget_assert(f_risk_budget, Nf, :f_risk_budget)
+    f_risk_budget = factor_risk_budget_assert(f_risk_budget, Nf, :f_risk_budget)
     # Budget and shorting
     budget, short_budget = long_short_budget_assert(N, long_l, long_u, min_budget, budget,
                                                     max_budget, short, short_l, short_u,
@@ -750,7 +769,7 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :f_risk_budget
         Nf = size(obj.f_returns, 2)
-        val = risk_budget_assert(val, Nf, sym)
+        val = factor_risk_budget_assert(val, Nf, sym)
         val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :long_l
         N = size(obj.returns, 2)
@@ -802,7 +821,7 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
         val = long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget,
                                        obj.budget, obj.max_budget, obj.short, obj.short_l,
                                        obj.short_u, obj.min_short_budget, val,
-                                       obj.max_short_budget)
+                                       obj.max_short_budget)[2]
     elseif sym == :max_short_budget
         N = size(obj.returns, 2)
         long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,

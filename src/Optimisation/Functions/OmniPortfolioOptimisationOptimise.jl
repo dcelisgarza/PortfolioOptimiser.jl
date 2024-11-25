@@ -46,18 +46,13 @@ function optimise!(port::OmniPortfolio, type::RP;
                    custom_obj::CustomObjective = NoCustomObjective(),
                    str_names::Bool = false, kwargs...)
     empty!(port.fail)
-    old_short = nothing
-    if port.short
-        old_short = port.short
-        port.short = false
-    end
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     rp_constraints(port, class, w_ini)
     # Weight constraints
-    weight_constraints(port)
-    MIP_constraints(port)
+    weight_constraints(port, false)
+    MIP_constraints(port, false)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
@@ -78,11 +73,7 @@ function optimise!(port::OmniPortfolio, type::RP;
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    retval = convex_optimisation(port, nothing, type, class)
-    if !isnothing(old_short)
-        port.short = old_short
-    end
-    return retval
+    return convex_optimisation(port, nothing, type, class)
 end
 function optimise!(port::OmniPortfolio, type::RRP; kelly::RetType = NoKelly(),
                    class::PortClass = Classic(),
@@ -91,19 +82,14 @@ function optimise!(port::OmniPortfolio, type::RRP; kelly::RetType = NoKelly(),
                    custom_obj::CustomObjective = NoCustomObjective(),
                    str_names::Bool = false, kwargs...)
     empty!(port.fail)
-    old_short = nothing
-    if port.short
-        old_short = port.short
-        port.short = false
-    end
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     # Weight constraints
     initial_w(port, w_ini)
     set_k(port, nothing)
-    weight_constraints(port)
-    MIP_constraints(port)
+    weight_constraints(port, false)
+    MIP_constraints(port, false)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
@@ -123,11 +109,7 @@ function optimise!(port::OmniPortfolio, type::RRP; kelly::RetType = NoKelly(),
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    retval = convex_optimisation(port, nothing, type, class)
-    if !isnothing(old_short)
-        port.short = old_short
-    end
-    return retval
+    return convex_optimisation(port, nothing, type, class)
 end
 function optimise!(port::OmniPortfolio, type::NOC;
                    rm::Union{AbstractVector, <:RiskMeasure} = SD(),
@@ -138,11 +120,6 @@ function optimise!(port::OmniPortfolio, type::NOC;
                    custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
                    str_names::Bool = false, kwargs...)
     empty!(port.fail)
-    old_short = nothing
-    if port.short
-        old_short = port.short
-        port.short = false
-    end
     risk0, ret0 = noc_risk_ret(port, type, rm, obj, kelly, class, w_ini, custom_constr,
                                custom_obj, ohf)
     port.model = JuMP.Model()
@@ -152,10 +129,10 @@ function optimise!(port::OmniPortfolio, type::NOC;
     initial_w(port, w_ini)
     set_k(port, nothing)
     # Weight constraints
-    weight_constraints(port)
+    weight_constraints(port, false)
     flag = type.flag
     if flag
-        MIP_constraints(port)
+        MIP_constraints(port, false)
         SDP_network_cluster_constraints(port, nothing)
         # Tracking
         tracking_error_constraints(port, returns)
@@ -191,11 +168,7 @@ function optimise!(port::OmniPortfolio, type::NOC;
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    retval = convex_optimisation(port, obj, type, class)
-    if !isnothing(old_short)
-        port.short = old_short
-    end
-    return retval
+    return convex_optimisation(port, obj, type, class)
 end
 function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
                           rm::Union{AbstractVector, <:RiskMeasure} = Variance(),

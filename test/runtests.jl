@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
 @safetestset "Factor Stats tests" begin
     include("FactorStatsTest.jl")
 end
@@ -55,10 +59,6 @@ end
 #=
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
 end
 
 @safetestset "Plotting" begin
