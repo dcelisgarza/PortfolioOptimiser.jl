@@ -291,7 +291,7 @@ function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_bud
                                   max_short_budget)
     real_or_vector_assert(long_l, N, :long_l, >=, 0)
     real_or_vector_assert(long_u, N, :long_u, >=, 0)
-    @smart_assert(long_l <= long_u)
+    @smart_assert(all(long_l .<= long_u))
     min_budget_flag = isfinite(min_budget)
     budget_flag = isfinite(budget)
     max_budget_flag = isfinite(max_budget)
@@ -794,6 +794,7 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
                                        obj.max_budget, obj.short, obj.short_l, obj.short_u,
                                        obj.min_short_budget, obj.short_budget,
                                        obj.max_short_budget)[1]
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :max_budget
         N = size(obj.returns, 2)
         long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget, val,
@@ -822,6 +823,7 @@ function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
                                        obj.budget, obj.max_budget, obj.short, obj.short_l,
                                        obj.short_u, obj.min_short_budget, val,
                                        obj.max_short_budget)[2]
+        val = convert(typeof(getfield(obj, sym)), val)
     elseif sym == :max_short_budget
         N = size(obj.returns, 2)
         long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,

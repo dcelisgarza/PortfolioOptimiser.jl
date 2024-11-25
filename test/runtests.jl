@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
+end
+
 @safetestset "Portfolio classes" begin
     include("PortfolioClassesTests.jl")
 end
@@ -73,16 +81,8 @@ end
     include("HCOptimisationTests.jl")
 end
 
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
 @safetestset "Type tests" begin
     include("TypeTests.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
 end
 
 @safetestset "Trad optimisation rm vector" begin

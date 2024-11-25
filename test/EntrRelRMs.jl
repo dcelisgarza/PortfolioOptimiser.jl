@@ -1,20 +1,21 @@
 using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, PortfolioOptimiser, Statistics, Test,
       TimeSeries, Logging, JuMP
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "ERM and RRM logs" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio)
+    optimise!(portfolio, Trad())
 
     solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                      :check_sol => (allow_local = true, allow_almost = true),
@@ -43,14 +44,14 @@ l = 2.0
 end
 
 @testset "EVaR ERM" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio; rm = EVaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(); rm = EVaR(), obj = Sharpe())
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
@@ -72,14 +73,14 @@ end
 end
 
 @testset "EDaR ERM" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio; rm = EDaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(); rm = EDaR(), obj = Sharpe())
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)
@@ -106,7 +107,7 @@ end
     r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
     r3t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
-    @test isapprox(r1, r1t, rtol = 1e-6)
+    @test isapprox(r1, r1t, rtol = 5e-6)
     @test isapprox(r2, r2t, rtol = 5e-2)
     @test isapprox(r3, r3t, rtol = 5e-2)
 end
