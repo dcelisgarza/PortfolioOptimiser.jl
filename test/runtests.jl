@@ -1,5 +1,17 @@
 using SafeTestsets
 
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
 @safetestset "Entropic and Relativistic RM tests" begin
     include("EntrRelRMs.jl")
 end
@@ -65,17 +77,6 @@ end
 end
 
 #=
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
 
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")

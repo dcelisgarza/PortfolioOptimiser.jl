@@ -1,16 +1,17 @@
 using Test, PortfolioOptimiser, DataFrames, TimeSeries, CSV, Dates, Clarabel, LinearAlgebra,
       StatsPlots, GraphRecipes
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "Plotting" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = SD()
-    w = optimise!(portfolio; type = RP())
+    w = optimise!(portfolio, RP())
     plt1 = plot_returns(portfolio; type = :RP, per_asset = true)
     @test plt1.n == 20
     plt2 = plot_returns(portfolio; type = :RP, per_asset = false)
@@ -33,31 +34,26 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
     plt10 = plot_range(portfolio; type = :RP)
     @test plt10.n == 4
 
-    hcportfolio = HCPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))),)
-    asset_statistics!(hcportfolio)
-    cluster_assets!(hcportfolio; clust_alg = HAC(),
+    cluster_assets!(portfolio; clust_alg = HAC(),
                     clust_opt = ClustOpt(; k_method = StdSilhouette()))
-    w = optimise!(hcportfolio)
+    w = optimise!(portfolio, HRP())
 
-    plt11 = plot_clusters(hcportfolio; cluster = false)
+    plt11 = plot_clusters(portfolio; cluster = false)
     @test plt11.n == 51
-    plt12 = plot_dendrogram(hcportfolio; cluster = false)
+    plt12 = plot_dendrogram(portfolio; cluster = false)
     @test plt12.n == 23
-    plt13 = plot_clusters(hcportfolio; cluster = true)
+    plt13 = plot_clusters(portfolio; cluster = true)
     @test plt13.n == 48
-    plt14 = plot_dendrogram(hcportfolio; cluster = true)
+    plt14 = plot_dendrogram(portfolio; cluster = true)
     @test plt14.n == 22
-    plt15 = plot_network(hcportfolio; cluster = true)
+    plt15 = plot_network(portfolio; cluster = true)
     @test plt15.n == 40
-    plt16 = plot_network(hcportfolio; cluster = false)
+    plt16 = plot_network(portfolio; cluster = false)
     @test plt16.n == 40
     plt17 = plot_clusters(portfolio; cluster = false)
-    @test plt17.n == 48
+    @test plt17.n == 51
     plt18 = plot_dendrogram(portfolio; cluster = false)
-    @test plt18.n == 22
+    @test plt18.n == 23
     plt19 = plot_clusters(portfolio; cluster = true, clust_alg = DBHT())
     @test plt19.n == 48
     plt20 = plot_dendrogram(portfolio; cluster = true, clust_alg = DBHT())

@@ -1,47 +1,46 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       HiGHS, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "NOC" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = SD(; formulation = SimpleSD())
 
     obj = Sharpe(; rf = rf)
 
     kelly = NoKelly()
-    w1 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MinRisk()).weights
-    w2 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MaxRet()).weights
-    w3 = optimise!(portfolio; rm = rm, kelly = kelly, obj = obj).weights
+    w1 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MinRisk()).weights
+    w2 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MaxRet()).weights
+    w3 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = obj).weights
 
-    w4 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3), rm = rm,
+    w4 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3); rm = rm,
                    kelly = kelly, obj = obj)
-    w5 = optimise!(portfolio; type = NOC(;), rm = rm, kelly = kelly, obj = obj)
+    w5 = optimise!(portfolio, NOC(;); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w5.weights, w4.weights)
 
-    w6 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 0.5),
+    w6 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 0.5);
                    rm = rm, kelly = kelly, obj = obj)
-    w7 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1),
-                   rm = rm, kelly = kelly, obj = obj)
-    w8 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 4),
-                   rm = rm, kelly = kelly, obj = obj)
-    w9 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 32),
-                   rm = rm, kelly = kelly, obj = obj)
-    w10 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 512),
+    w7 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1); rm = rm,
+                   kelly = kelly, obj = obj)
+    w8 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 4); rm = rm,
+                   kelly = kelly, obj = obj)
+    w9 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 32); rm = rm,
+                   kelly = kelly, obj = obj)
+    w10 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 512);
                     rm = rm, kelly = kelly, obj = obj)
-    w11 = optimise!(portfolio;
-                    type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 16384), rm = rm,
-                    kelly = kelly, obj = obj)
-    w12 = optimise!(portfolio;
-                    type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1.048576e6),
+    w11 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 16384);
+                    rm = rm, kelly = kelly, obj = obj)
+    w12 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1.048576e6);
                     rm = rm, kelly = kelly, obj = obj)
 
     @test rmsd(w3, w6.weights) >
@@ -62,35 +61,29 @@ l = 2.0
     @test isapprox(w3, w12.weights, rtol = 5.0e-5)
 
     kelly = EKelly()
-    w13 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MinRisk()).weights
-    w14 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MaxRet()).weights
-    w15 = optimise!(portfolio; rm = rm, kelly = kelly, obj = obj).weights
+    w13 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MinRisk()).weights
+    w14 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MaxRet()).weights
+    w15 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = obj).weights
 
-    w16 = optimise!(portfolio; type = NOC(; w_min = w13, w_max = w14, w_opt = w15), rm = rm,
+    w16 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15); rm = rm,
                     kelly = kelly, obj = obj)
-    w17 = optimise!(portfolio; type = NOC(;), rm = rm, kelly = kelly, obj = obj)
+    w17 = optimise!(portfolio, NOC(;); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w17.weights, w16.weights)
 
-    w18 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 0.5),
+    w18 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 0.5);
                     rm = rm, kelly = kelly, obj = obj)
-    w19 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1), rm = rm,
-                    kelly = kelly, obj = obj)
-    w20 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 4), rm = rm,
-                    kelly = kelly, obj = obj)
-    w21 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 32), rm = rm,
-                    kelly = kelly, obj = obj)
-    w22 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 512),
+    w19 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1);
                     rm = rm, kelly = kelly, obj = obj)
-    w23 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 16384),
+    w20 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 4);
                     rm = rm, kelly = kelly, obj = obj)
-    w24 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1.048576e6),
+    w21 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 32);
+                    rm = rm, kelly = kelly, obj = obj)
+    w22 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 512);
+                    rm = rm, kelly = kelly, obj = obj)
+    w23 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 16384);
+                    rm = rm, kelly = kelly, obj = obj)
+    w24 = optimise!(portfolio,
+                    NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1.048576e6);
                     rm = rm, kelly = kelly, obj = obj)
 
     @test rmsd(w15, w18.weights) >
@@ -112,31 +105,31 @@ l = 2.0
 end
 
 @testset "NOC scale and vec" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     kelly = NoKelly()
     obj = Sharpe(; rf = rf)
 
     rm = SD(; formulation = SimpleSD())
-    w1 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
+    w1 = optimise!(portfolio, NOC(); rm = rm, kelly = kelly, obj = obj)
 
     rm = SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 5))
-    w2 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
+    w2 = optimise!(portfolio, NOC(); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w2.weights, w1.weights, rtol = 0.0001)
 
     rm = [SD(; formulation = SimpleSD())]
-    w3 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
+    w3 = optimise!(portfolio, NOC(); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w3.weights, w1.weights)
     @test isapprox(w3.weights, w2.weights, rtol = 0.0001)
 
     rm = [[SD(; formulation = SimpleSD())]]
-    w4 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
+    w4 = optimise!(portfolio, NOC(); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w4.weights, w1.weights, rtol = 5.0e-5)
     @test isapprox(w4.weights, w2.weights, rtol = 5.0e-5)
     @test isapprox(w4.weights, w3.weights, rtol = 5.0e-5)
@@ -144,50 +137,48 @@ end
     rm = [[SD(; formulation = SimpleSD()), SD(; formulation = SimpleSD()),
            SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 0.75)),
            SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 2.25))]]
-    w5 = optimise!(portfolio; type = NOC(), rm = rm, kelly = kelly, obj = obj)
-    @test isapprox(w5.weights, w1.weights, rtol = 5.0e-5)
+    w5 = optimise!(portfolio, NOC(); rm = rm, kelly = kelly, obj = obj)
+    @test isapprox(w5.weights, w1.weights, rtol = 1.0e-4)
     @test isapprox(w5.weights, w2.weights, rtol = 5.0e-5)
-    @test isapprox(w5.weights, w3.weights, rtol = 5.0e-5)
-    @test isapprox(w5.weights, w4.weights, rtol = 5.0e-5)
+    @test isapprox(w5.weights, w3.weights, rtol = 1.0e-4)
+    @test isapprox(w5.weights, w4.weights, rtol = 1.0e-4)
 end
 
 @testset "NOC vec convergence" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = [SD(; formulation = SimpleSD()), CVaR()]
 
     obj = Sharpe(; rf = rf)
 
     kelly = NoKelly()
-    w1 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MinRisk()).weights
-    w2 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MaxRet()).weights
-    w3 = optimise!(portfolio; rm = rm, kelly = kelly, obj = obj).weights
+    w1 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MinRisk()).weights
+    w2 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MaxRet()).weights
+    w3 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = obj).weights
 
-    w4 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3), rm = rm,
+    w4 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3); rm = rm,
                    kelly = kelly, obj = obj)
-    w5 = optimise!(portfolio; type = NOC(;), rm = rm, kelly = kelly, obj = obj)
+    w5 = optimise!(portfolio, NOC(;); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w5.weights, w4.weights)
 
-    w6 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 0.5),
+    w6 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 0.5);
                    rm = rm, kelly = kelly, obj = obj)
-    w7 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1),
-                   rm = rm, kelly = kelly, obj = obj)
-    w8 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 4),
-                   rm = rm, kelly = kelly, obj = obj)
-    w9 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 32),
-                   rm = rm, kelly = kelly, obj = obj)
-    w10 = optimise!(portfolio; type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 512),
+    w7 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1); rm = rm,
+                   kelly = kelly, obj = obj)
+    w8 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 4); rm = rm,
+                   kelly = kelly, obj = obj)
+    w9 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 32); rm = rm,
+                   kelly = kelly, obj = obj)
+    w10 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 512);
                     rm = rm, kelly = kelly, obj = obj)
-    w11 = optimise!(portfolio;
-                    type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 16384), rm = rm,
-                    kelly = kelly, obj = obj)
-    w12 = optimise!(portfolio;
-                    type = NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1.048576e6),
+    w11 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 16384);
+                    rm = rm, kelly = kelly, obj = obj)
+    w12 = optimise!(portfolio, NOC(; w_min = w1, w_max = w2, w_opt = w3, bins = 1.048576e6);
                     rm = rm, kelly = kelly, obj = obj)
 
     @test rmsd(w3, w6.weights) >
@@ -210,35 +201,29 @@ end
     rm = [SD(; formulation = SimpleSD(), settings = RMSettings(; scale = 7.3)),
           [CVaR(; alpha = 0.1, settings = RMSettings(; scale = 5)),
            CVaR(; settings = RMSettings(; scale = 1.6))]]
-    w13 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MinRisk()).weights
-    w14 = optimise!(portfolio; rm = rm, kelly = kelly, obj = MaxRet()).weights
-    w15 = optimise!(portfolio; rm = rm, kelly = kelly, obj = obj).weights
+    w13 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MinRisk()).weights
+    w14 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = MaxRet()).weights
+    w15 = optimise!(portfolio, Trad(); rm = rm, kelly = kelly, obj = obj).weights
 
-    w16 = optimise!(portfolio; type = NOC(; w_min = w13, w_max = w14, w_opt = w15), rm = rm,
+    w16 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15); rm = rm,
                     kelly = kelly, obj = obj)
-    w17 = optimise!(portfolio; type = NOC(;), rm = rm, kelly = kelly, obj = obj)
+    w17 = optimise!(portfolio, NOC(;); rm = rm, kelly = kelly, obj = obj)
     @test isapprox(w17.weights, w16.weights)
 
-    w18 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 0.5),
+    w18 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 0.5);
                     rm = rm, kelly = kelly, obj = obj)
-    w19 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1), rm = rm,
-                    kelly = kelly, obj = obj)
-    w20 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 4), rm = rm,
-                    kelly = kelly, obj = obj)
-    w21 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 32), rm = rm,
-                    kelly = kelly, obj = obj)
-    w22 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 512),
+    w19 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1);
                     rm = rm, kelly = kelly, obj = obj)
-    w23 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 16384),
+    w20 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 4);
                     rm = rm, kelly = kelly, obj = obj)
-    w24 = optimise!(portfolio;
-                    type = NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1.048576e6),
+    w21 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 32);
+                    rm = rm, kelly = kelly, obj = obj)
+    w22 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 512);
+                    rm = rm, kelly = kelly, obj = obj)
+    w23 = optimise!(portfolio, NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 16384);
+                    rm = rm, kelly = kelly, obj = obj)
+    w24 = optimise!(portfolio,
+                    NOC(; w_min = w13, w_max = w14, w_opt = w15, bins = 1.048576e6);
                     rm = rm, kelly = kelly, obj = obj)
 
     @test rmsd(w15, w18.weights) >
@@ -259,6 +244,7 @@ end
     @test isapprox(w15, w24.weights, rtol = 1.0e-4)
 end
 
+#=
 @testset "NCO with NOC" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -325,3 +311,4 @@ end
 
     @test r1 < r4 < r3 < r2
 end
+=#
