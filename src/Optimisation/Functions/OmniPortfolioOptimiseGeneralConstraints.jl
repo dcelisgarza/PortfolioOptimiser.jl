@@ -7,7 +7,7 @@ function get_portfolio_returns(model, returns)
 
     return nothing
 end
-function MIP_constraints(port, allow_shorting = true)
+function MIP_constraints(port, allow_shorting::Bool = true)
     #=
     # MIP constraints
 
@@ -183,7 +183,7 @@ function _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budge
 
     return nothing
 end
-function weight_constraints(port, allow_shorting = true)
+function weight_constraints(port, allow_shorting::Bool = true)
     #=
     # Weight constraints
     =#
