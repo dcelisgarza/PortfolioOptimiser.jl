@@ -1,6 +1,7 @@
 using CSV, LinearAlgebra, PortfolioOptimiser, Test, TimeSeries
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "DBHT Clustering tests" begin
     D = reshape([0.0, 1.7425505199001374, 3.0376559406319203, 0.992560094200736,
@@ -645,7 +646,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
                    13.0, 2.0, 3.0, 2.0, 2.0, 3.0, 4.0, 6.0, 7.0, 4.0, 11.0, 2.0, 2.0, 3.0,
                    4.0, 6.0, 19.0, 30.0], :, 4)
 
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     asset_statistics!(portfolio)
 
     A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.cor, 5)

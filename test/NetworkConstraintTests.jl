@@ -1,13 +1,14 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Cluster and connection matrices" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     clust_alg = DBHT()
     A = cluster_matrix(portfolio; clust_alg = clust_alg)
     At = reshape([0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1,
@@ -199,14 +200,14 @@ l = 2.0
 end
 
 @testset "Centrality Vector" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    w1 = optimise!(portfolio)
+    w1 = optimise!(portfolio, Trad())
 
     network_type = MST(; steps = 1,
                        centrality = DegreeCentrality(; kwargs = (; normalize = false)))
@@ -304,14 +305,14 @@ end
 end
 
 @testset "Connected and related assets" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    w = optimise!(portfolio)
+    w = optimise!(portfolio, Trad())
 
     network_type = MST(; steps = 1)
     C = connected_assets(portfolio; network_type = network_type)

@@ -1,5 +1,5 @@
 @testset "Coskew and Semi Coskew" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -5614,7 +5614,7 @@
 end
 
 @testset "Mean Estimation" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_skew = false, set_sskew = false, mu_type = MuSimple())

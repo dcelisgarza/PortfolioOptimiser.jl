@@ -112,8 +112,12 @@ Compute the percentage of the portfolio comprised of connected assets [`connecte
   - `c`: percentage of the portfolio comprised of assets connected via a connection-based adjacency matrix.
 """
 function connected_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                          type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                          cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                          type::Symbol = if isa(port, Portfolio) ||
+                                            isa(port, OmniPortfolio)
+                              :Trad
+                          else
+                              :HRP
+                          end, cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                           dist_type::DistMethod = DistCanonical(),
                           network_type::NetworkType = MST())
     return connected_assets(X, port.optimal[type].weights; cor_type = cor_type,
@@ -123,7 +127,7 @@ end
 """
 ```
 related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-               type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+               type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
                cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                dist_type::DistMethod = DistCanonical(),
                clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
@@ -145,8 +149,11 @@ Compute the percentage of the portfolio comprised of related assets  [`related_a
   - `c`: percentage of the portfolio comprised of related assets via a connection-based adjacency matrix.
 """
 function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                        type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                        cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                        type::Symbol = if isa(port, Portfolio) || isa(port, OmniPortfolio)
+                            :Trad
+                        else
+                            :HRP
+                        end, cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
                         clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
     return related_assets(X, port.optimal[type].weights; cor_type = cor_type,
@@ -155,8 +162,13 @@ function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.return
 end
 
 function average_centrality(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                            type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                            type::Symbol = if if !(isa(port, Portfolio))
+                                isa(port, OmniPortfolio)
+                            end
+                                :Trad
+                            else
+                                :HRP
+                            end, cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                             dist_type::DistMethod = DistCanonical(),
                             network_type::NetworkType = MST())
     return average_centrality(X, port.optimal[type].weights; cor_type = cor_type,

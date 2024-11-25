@@ -1,14 +1,16 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test,
       PortfolioOptimiser
 
-prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+assets_path = joinpath(@__DIR__, "assets/stock_prices.csv")
+factors_path = joinpath(@__DIR__, "assets/factor_prices.csv")
+prices_assets = TimeArray(CSV.File(assets_path); timestamp = :date)
+prices_factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Loadings Matrix" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     pval = PVal()
@@ -532,12 +534,10 @@ l = 2.0
 end
 
 @testset "Factor statistics" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-    hcportfolio = HCPortfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     factor_statistics!(portfolio; cov_type = PortCovCor(; posdef = NoPosdef()))
-    factor_statistics!(hcportfolio; cov_type = PortCovCor(; posdef = NoPosdef()))
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
                       5.172315242594955e-5, 5.51672771198704e-5, 6.737792030107118e-5,
                       6.735131559151525e-5, 6.590933068160697e-5, 5.032199930722891e-5,
@@ -726,14 +726,6 @@ end
     @test isapprox(mu_ft, portfolio.f_mu)
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
-
-    @test names(hcportfolio.loadings) == nms
-    @test hcportfolio.loadings[!, 1] == hcportfolio.assets
-    @test isapprox(loadingst, Matrix(hcportfolio.loadings[!, 2:end]))
-    @test isapprox(cov_ft, hcportfolio.f_cov)
-    @test isapprox(mu_ft, hcportfolio.f_mu)
-    @test isapprox(cov_fmt, hcportfolio.fm_cov)
-    @test isapprox(mu_fmt, hcportfolio.fm_mu)
 
     factor_statistics!(portfolio; cov_type = CovFull())
     cov_ft = reshape([8.105068334247097e-5, 6.737792030107118e-5, 6.526436064638604e-5,
@@ -1306,7 +1298,7 @@ end
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
 
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
     factor_type = FactorType()
     mu_type = MuJS()
     @time factor_statistics!(portfolio; factor_type = factor_type, mu_type = mu_type)

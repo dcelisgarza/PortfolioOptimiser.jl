@@ -1,12 +1,14 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-prices2 = TimeArray(CSV.File("./assets/stock_prices2.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+path2 = joinpath(@__DIR__, "assets/stock_prices2.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
+prices2 = TimeArray(CSV.File(path2); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "HC Portfolio Asset Clustering" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -85,7 +87,7 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -157,15 +159,15 @@ l = 2.0
 end
 
 @testset "Portfolio Asset Clustering" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
     ca = HAC()
     ct = ClustOpt()
-    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
-    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 3, 3, 2, 3, 3, 1, 2, 2, 1]
     mergest = [-3 -1; 1 -5; -19 -9; -17 -2; -20 4; 5 2; 6 -4; -14 -6; -11 8; -10 3; 9 -18;
@@ -189,7 +191,7 @@ end
     @test isequal(k, kt)
 
     ca = DBHT()
-    idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
+    idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 3, 2, 2, 3, 2, 2, 3, 1, 1, 2, 1]
     mergest = [-14 -15; -11 -6; -19 -12; -18 -8; -17 -2; -7 5; -16 -10; -13 7; -1 -5; -4 9;
@@ -212,7 +214,7 @@ end
 end
 
 @testset "Non-monotonic clustering" begin
-    portfolio = HCPortfolio(; prices = prices2)
+    portfolio = OmniPortfolio(; prices = prices2)
     asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CorGerberSB1()),
                       cor_type = PortCovCor(; ce = CorGerberSB1()),
                       dist_type = DistDistMLP(), set_kurt = false, set_skurt = false,

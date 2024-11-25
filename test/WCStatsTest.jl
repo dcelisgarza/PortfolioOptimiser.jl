@@ -1,9 +1,10 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "WC Stats" begin
-    portfolio = Portfolio(; prices = prices)
+    portfolio = OmniPortfolio(; prices = prices)
 
     idx = ([342, 226, 51, 222, 313, 209, 317, 352, 213, 104, 106, 145, 6, 141, 394, 139,
             206, 259, 201, 367],

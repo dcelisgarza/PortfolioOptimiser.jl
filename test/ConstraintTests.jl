@@ -1,14 +1,16 @@
 using CSV, DataFrames, LinearAlgebra, PortfolioOptimiser, Statistics, StatsBase, Test,
       TimeSeries, Clarabel, Graphs, Distances
 
-prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+assets_path = joinpath(@__DIR__, "assets/stock_prices.csv")
+factors_path = joinpath(@__DIR__, "assets/factor_prices.csv")
+prices_assets = TimeArray(CSV.File(assets_path); timestamp = :date)
+prices_factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Asset constraints" begin
-    portfolio = Portfolio(; prices = prices_assets)
+    portfolio = OmniPortfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -364,7 +366,7 @@ l = 2.0
 end
 
 @testset "Asset views" begin
-    portfolio = Portfolio(; prices = prices_assets)
+    portfolio = OmniPortfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -475,7 +477,7 @@ end
 end
 
 @testset "Factor constraints" begin
-    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
     loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                DataFrame(portfolio.returns, portfolio.assets), BReg())
 
@@ -674,7 +676,7 @@ end
 end
 
 @testset "HRP constraints" begin
-    portfolio = Portfolio(; prices = prices_assets)
+    portfolio = OmniPortfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -710,7 +712,7 @@ end
 end
 
 @testset "Turnover constraints" begin
-    portfolio = Portfolio(; prices = prices_assets)
+    portfolio = OmniPortfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -738,7 +740,7 @@ end
 end
 
 @testset "RP constraints" begin
-    portfolio = Portfolio(; prices = prices_assets)
+    portfolio = OmniPortfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],

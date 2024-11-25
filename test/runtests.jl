@@ -1,5 +1,37 @@
 using SafeTestsets
 
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
 @safetestset "RRP optimisation" begin
     include("RRPOptimisationTests.jl")
 end
@@ -29,44 +61,16 @@ end
     include("PortfolioClassesTests.jl")
 end
 
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
 end
 
 @safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
 end
 
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
-end
-
-@safetestset "Factor Stats tests" begin
-    include("FactorStatsTest.jl")
 end
 
 @safetestset "Entropic and Relativistic RM tests" begin
@@ -79,10 +83,6 @@ end
 
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
 end
 
 @safetestset "Trad optimisation rm vector" begin
