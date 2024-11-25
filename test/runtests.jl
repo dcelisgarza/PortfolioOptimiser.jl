@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "RRP optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
 @safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
 end
@@ -23,10 +27,6 @@ end
 
 @safetestset "Portfolio classes" begin
     include("PortfolioClassesTests.jl")
-end
-
-@safetestset "RRP optimisation" begin
-    include("RRPOptimisationTests.jl")
 end
 
 @safetestset "Network constraint tests" begin
