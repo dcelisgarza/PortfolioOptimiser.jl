@@ -31,23 +31,29 @@ l = 2.0
     asset_statistics!(portfolio)
     rm = [SD(), [CVaR()], [FLPM(), FLPM()]]
 
-    limits = frontier_limits!(portfolio; rm = rm)
-    w_min = optimise!(portfolio, Trad(); rm = rm, obj = MinRisk())
-    w_max = optimise!(portfolio, Trad(); rm = rm, obj = MaxRet())
+    type = Trad(; rm = rm, obj = Sharpe())
+    limits = frontier_limits!(portfolio, type)
+    type.obj = MinRisk()
+    w_min = optimise!(portfolio, type)
+    type.obj = MaxRet()
+    w_max = optimise!(portfolio, type)
 
     @test isapprox(limits.w_min, w_min.weights)
     @test isapprox(limits.w_max, w_max.weights)
 
     rm = SD()
 
-    limits = frontier_limits!(portfolio; rm = rm)
-    w_min = optimise!(portfolio, Trad(); rm = rm, obj = MinRisk())
-    w_max = optimise!(portfolio, Trad(); rm = rm, obj = MaxRet())
+    type = Trad(; rm = rm)
+    limits = frontier_limits!(portfolio, type)
+    type.obj = MinRisk()
+    w_min = optimise!(portfolio, type)
+    type.obj = MaxRet()
+    w_max = optimise!(portfolio, type)
 
     @test isapprox(limits.w_min, w_min.weights)
     @test isapprox(limits.w_max, w_max.weights)
 
-    frontier1 = efficient_frontier!(portfolio; rm = rm, points = 5, rf = rf)
+    frontier1 = efficient_frontier!(portfolio, type; points = 5, rf = rf)
     wt = reshape([0.007909507116557548, 0.030689815590971746, 0.010506820975926432,
                   0.027486829109498616, 0.012277542618295632, 0.033411420847851196,
                   1.7975271702520832e-8, 0.1398483275799478, 3.0152811334707373e-8,
@@ -130,7 +136,7 @@ l = 2.0
                   2.628707801353928e-9, 1.9131084660782398e-9, 5.84251969297182e-9,
                   1.8637737926838568e-9, 0.1403269734754189, 0.213377177297938,
                   2.8301813554462742e-8, 0.09854041682213821, 2.6419203527148663e-8], 20, :)
-    frontier2 = efficient_frontier!(portfolio; kelly = EKelly(), rm = SD(), points = 5,
-                                    rf = rf)
+    frontier2 = efficient_frontier!(portfolio, Trad(; kelly = EKelly(), rm = SD());
+                                    points = 5, rf = rf)
     @test isapprox(Matrix(frontier2[:weights][!, 2:end]), wt, rtol = 5.0e-6)
 end

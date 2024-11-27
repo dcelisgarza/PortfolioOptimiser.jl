@@ -244,14 +244,34 @@ end
 struct HRP <: HCOptimType end
 ```
 """
-struct HRP <: HCOptimType end
+mutable struct HRP{T1} <: HCOptimType
+    rm::Union{AbstractVector, <:AbstractRiskMeasure}
+    class::PortClass
+    max_iter::T1
+end
+function HRP(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
+             class::PortClass = Classic(), max_iter::Integer = 100)
+    return HRP{typeof(max_iter)}(rm, class, max_iter)
+end
 
 """
 ```
 struct HERC <: HCOptimType end
 ```
 """
-struct HERC <: HCOptimType end
+mutable struct HERC{T1} <: HCOptimType
+    rm::Union{AbstractVector, <:AbstractRiskMeasure}
+    rm_o::Union{AbstractVector, <:AbstractRiskMeasure}
+    class::PortClass
+    class_o::PortClass
+    max_iter::T1
+end
+function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
+              rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
+              class::PortClass = Classic(), class_o::PortClass = class,
+              max_iter::Integer = 100, kwargs...)
+    return HERC{typeof(max_iter)}(rm, rm_o, class, class_o, max_iter)
+end
 
 """
 ```
@@ -279,9 +299,10 @@ function NCOArgs(; opt_kwargs::NamedTuple = (;), port_kwargs::NamedTuple = (;),
     return NCOArgs(opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
                    cluster_kwargs)
 end
-mutable struct NCO <: HCOptimType
+mutable struct NCO{T1} <: HCOptimType
     internal::NCOArgs
     external::NCOArgs
+    max_iter::T1
     opt_kwargs::NamedTuple
     opt_kwargs_o::NamedTuple
     port_kwargs::NamedTuple
@@ -295,15 +316,16 @@ mutable struct NCO <: HCOptimType
     stat_kwargs_o::NamedTuple
 end
 function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
-             opt_kwargs::NamedTuple = (;), opt_kwargs_o::NamedTuple = opt_kwargs,
-             port_kwargs::NamedTuple = (;), port_kwargs_o::NamedTuple = port_kwargs,
-             factor_kwargs::NamedTuple = (;), factor_kwargs_o::NamedTuple = factor_kwargs,
-             wc_kwargs::NamedTuple = (;), wc_kwargs_o::NamedTuple = wc_kwargs,
-             cluster_kwargs::NamedTuple = (;),
+             max_iter::Integer = 100, opt_kwargs::NamedTuple = (;),
+             opt_kwargs_o::NamedTuple = opt_kwargs, port_kwargs::NamedTuple = (;),
+             port_kwargs_o::NamedTuple = port_kwargs, factor_kwargs::NamedTuple = (;),
+             factor_kwargs_o::NamedTuple = factor_kwargs, wc_kwargs::NamedTuple = (;),
+             wc_kwargs_o::NamedTuple = wc_kwargs, cluster_kwargs::NamedTuple = (;),
              cluster_kwargs_o::NamedTuple = cluster_kwargs, stat_kwargs_o::NamedTuple = (;))
-    return NCO(internal, external, opt_kwargs, opt_kwargs_o, port_kwargs, port_kwargs_o,
-               factor_kwargs, factor_kwargs_o, wc_kwargs, wc_kwargs_o, cluster_kwargs,
-               cluster_kwargs_o, stat_kwargs_o)
+    return NCO{typeof(max_iter)}(internal, external, max_iter, opt_kwargs, opt_kwargs_o,
+                                 port_kwargs, port_kwargs_o, factor_kwargs, factor_kwargs_o,
+                                 wc_kwargs, wc_kwargs_o, cluster_kwargs, cluster_kwargs_o,
+                                 stat_kwargs_o)
 end
 
 for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),

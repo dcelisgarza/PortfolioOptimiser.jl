@@ -169,7 +169,7 @@ function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
 
-    rmsym = get_rm_symbol(rm)
+    rmsym = get_rm_symbol(type.rm)
     port.limits[rmsym] = limits
 
     return port.limits[rmsym]
