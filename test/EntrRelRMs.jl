@@ -51,7 +51,7 @@ end
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio, Trad(); rm = EVaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(; rm = EVaR(), obj = Sharpe()))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
@@ -80,7 +80,7 @@ end
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio, Trad(); rm = EDaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(; rm = EDaR(), obj = Sharpe()))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)
