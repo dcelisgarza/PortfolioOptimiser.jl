@@ -37,11 +37,11 @@ l = 2.0
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
     rm = MAD()
-    w1 = optimise!(portfolio, Trad(); rm = rm)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
     portfolio.a_card_ineq = Matrix(undef, 0, 0)
     portfolio.b_card_ineq = []
     portfolio.card = 7
-    w2 = optimise!(portfolio, Trad(); rm = rm)
+    w2 = optimise!(portfolio, Trad(; rm = rm))
     @test isapprox(w1.weights, w2.weights)
 
     portfolio.card = 0
@@ -51,7 +51,7 @@ l = 2.0
     A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
-    w1 = optimise!(portfolio, Trad(); rm = rm)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
     @test count(w1.weights .>= 1e-10) <= 7
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 2
 
@@ -65,11 +65,11 @@ l = 2.0
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
     rm = CDaR()
-    w1 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w1 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     portfolio.a_card_ineq = Matrix(undef, 0, 0)
     portfolio.b_card_ineq = []
     portfolio.card = 4
-    w2 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w2 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test isapprox(w1.weights, w2.weights)
 
     portfolio.card = 0
@@ -80,7 +80,7 @@ l = 2.0
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
     rm = CDaR()
-    w1 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w1 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test count(w1.weights .>= 1e-10) <= 4
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
 
@@ -94,11 +94,11 @@ l = 2.0
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
     rm = MAD()
-    w1 = optimise!(portfolio, Trad(); rm = rm)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
     portfolio.a_card_ineq = Matrix(undef, 0, 0)
     portfolio.b_card_ineq = []
     portfolio.card = 11
-    w2 = optimise!(portfolio, Trad(); rm = rm)
+    w2 = optimise!(portfolio, Trad(; rm = rm))
     @test isapprox(w1.weights, w2.weights)
 
     portfolio.card = 0
@@ -109,7 +109,7 @@ l = 2.0
     A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
-    w1 = optimise!(portfolio, Trad(); rm = rm)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
     @test count(w1.weights .>= 1e-10) <= 11
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
     @test count(w1.weights[.!iszero.(A[3, :])] .>= 1e-10) <= 1
@@ -124,11 +124,11 @@ l = 2.0
     A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
-    w1 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w1 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     portfolio.a_card_ineq = Matrix(undef, 0, 0)
     portfolio.b_card_ineq = []
     portfolio.card = 8
-    w2 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w2 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test isapprox(w1.weights, w2.weights)
 
     portfolio.card = 0
@@ -138,7 +138,7 @@ l = 2.0
     A, B = asset_constraints(constraints, asset_sets)
     portfolio.a_card_ineq = A
     portfolio.b_card_ineq = B
-    w1 = optimise!(portfolio, Trad(); rm = rm, obj = obj)
+    w1 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test count(w1.weights .>= 1e-10) <= 4
     @test count(w1.weights[.!iszero.(A[2, :])] .>= 1e-10) <= 1
 end
@@ -154,98 +154,98 @@ end
 
     obj = MinRisk()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
 
     obj = Utility()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
 
     obj = Sharpe(; rf = rf)
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
 
     obj = MaxRet()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
 
     portfolio.short = true
     obj = MinRisk()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
 
     obj = Utility()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
 
     obj = Sharpe(; rf = rf)
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
 
     obj = MaxRet()
     portfolio.l1 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l1 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l1 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
 end
@@ -263,52 +263,52 @@ end
 
     obj = MinRisk()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Utility()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Sharpe(; rf = rf)
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = MaxRet()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
@@ -316,52 +316,52 @@ end
     portfolio.short = true
     obj = MinRisk()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Utility()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = Sharpe(; rf = rf)
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 <= v2 <= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)
 
     obj = MaxRet()
     portfolio.l2 = 0
-    w1 = optimise!(portfolio, Trad(); obj = obj)
+    w1 = optimise!(portfolio, Trad(; obj = obj))
     v1 = objective_value(portfolio.model)
     portfolio.l2 = 1e-4
-    w2 = optimise!(portfolio, Trad(); obj = obj)
+    w2 = optimise!(portfolio, Trad(; obj = obj))
     v2 = objective_value(portfolio.model)
     portfolio.l2 = 1e-3
-    w3 = optimise!(portfolio, Trad(); obj = obj)
+    w3 = optimise!(portfolio, Trad(; obj = obj))
     v3 = objective_value(portfolio.model)
     @test v1 >= v2 >= v3
     @test rmsd(w1.weights, w) >= rmsd(w2.weights, w) >= rmsd(w3.weights, w)

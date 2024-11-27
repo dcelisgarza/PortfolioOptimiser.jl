@@ -18,14 +18,14 @@ l = 2.0
     rm = Variance()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
     rc3 = risk_contribution(portfolio; type = :RP, rm = SD())
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
     rc4 = risk_contribution(portfolio; type = :RP, rm = SD())
@@ -72,12 +72,12 @@ end
     rm = MAD()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -113,12 +113,12 @@ end
     rm = SSD()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -154,12 +154,12 @@ end
     rm = FLPM()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -195,12 +195,12 @@ end
     rm = SLPM()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -236,12 +236,12 @@ end
     rm = WR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -277,12 +277,12 @@ end
     rm = RG()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -318,12 +318,12 @@ end
     rm = CVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -359,12 +359,12 @@ end
     rm = CVaRRG()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -400,12 +400,12 @@ end
     rm = EVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -441,13 +441,13 @@ end
     rm = RLVaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
 
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -481,13 +481,13 @@ end
     asset_statistics!(portfolio)
 
     rm = RLVaR(; kappa = 5e-3)
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rm = RLVaR(; kappa = 1 - 5e-3)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rm = EVaR()
-    w3 = optimise!(portfolio, RP(); rm = rm)
+    w3 = optimise!(portfolio, RP(; rm = rm))
     rm = WR()
-    w4 = optimise!(portfolio, RP(); rm = rm)
+    w4 = optimise!(portfolio, RP(; rm = rm))
 
     if !Sys.isapple()
         @test isapprox(w1.weights, w3.weights, rtol = 0.01)
@@ -507,12 +507,12 @@ end
     rm = MDD()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = reverse(1:size(portfolio.returns, 2))
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
 
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
@@ -549,12 +549,12 @@ end
     rm = ADD()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -590,12 +590,12 @@ end
     rm = UCI()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -631,12 +631,12 @@ end
     rm = CDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -672,12 +672,12 @@ end
     rm = EDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -713,12 +713,12 @@ end
     rm = RLDaR()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -753,13 +753,13 @@ end
     asset_statistics!(portfolio)
 
     rm = RLDaR(; kappa = 5e-3)
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rm = RLDaR(; kappa = 1 - 5e-3)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rm = EDaR()
-    w3 = optimise!(portfolio, RP(); rm = rm)
+    w3 = optimise!(portfolio, RP(; rm = rm))
     rm = MDD()
-    w4 = optimise!(portfolio, RP(); rm = rm)
+    w4 = optimise!(portfolio, RP(; rm = rm))
 
     if !Sys.isapple()
         @test isapprox(w1.weights, w3.weights, rtol = 0.005)
@@ -779,12 +779,12 @@ end
     rm = Kurt()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm, str_names = true)
+    w1 = optimise!(portfolio, RP(; rm = rm, str_names = true))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -820,12 +820,12 @@ end
     rm = Kurt()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -861,12 +861,12 @@ end
     rm = SKurt()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -901,12 +901,12 @@ end
     rm = SKurt()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -941,12 +941,12 @@ end
     rm = Skew()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -982,12 +982,12 @@ end
     rm = SSkew()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1023,12 +1023,12 @@ end
     rm = BDVariance()
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1064,12 +1064,12 @@ end
     rm = GMD(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1095,12 +1095,12 @@ end
     rm = GMD(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1136,13 +1136,13 @@ end
     rm = TG(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     portfolio.risk_budget /= sum(portfolio.risk_budget)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1168,12 +1168,12 @@ end
     rm = TG(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1208,12 +1208,12 @@ end
     rm = TGRG(;)
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1249,12 +1249,12 @@ end
     rm = OWA(; owa = OWASettings(; approx = false))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 
@@ -1280,12 +1280,12 @@ end
     rm = OWA(; owa = OWASettings(; approx = true))
 
     portfolio.risk_budget = []
-    w1 = optimise!(portfolio, RP(); rm = rm)
+    w1 = optimise!(portfolio, RP(; rm = rm))
     rc1 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
-    w2 = optimise!(portfolio, RP(); rm = rm)
+    w2 = optimise!(portfolio, RP(; rm = rm))
     rc2 = risk_contribution(portfolio; type = :RP, rm = rm)
     lrc2, hrc2 = extrema(rc2)
 

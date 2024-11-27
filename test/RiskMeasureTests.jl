@@ -11,7 +11,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                                                                               allow_almost = true),
                                                                :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    optimise!(portfolio, Trad(); obj = Sharpe())
+    optimise!(portfolio, Trad(; obj = Sharpe()))
 
     risks = [0.012732818438689692, 0.009054428305486948, 0.008974573704221727,
              0.0038588790457400107, 0.008278637116930432, 0.04767699262536566,
