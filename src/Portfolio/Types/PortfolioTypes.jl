@@ -687,366 +687,368 @@ function OmniPortfolio(;
                                                                     alloc_fail,
                                                                     alloc_walking)
 end
-function Base.setproperty!(obj::OmniPortfolio, sym::Symbol, val)
+function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
     if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu,
               :a_cent_ineq, :a_cent_eq)
-        vector_assert(val, size(obj.returns, 2), sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        vector_assert(val, size(port.returns, 2), sym)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_mu
-        vector_assert(val, size(obj.f_returns, 2), sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        vector_assert(val, size(port.f_returns, 2), sym)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:cov, :cor, :dist, :V, :SV, :fm_cov, :bl_cov, :blfm_cov, :cov_l, :cov_u,
                   :cov_mu)
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         matrix_assert(val, N, N, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :b_cent_ineq, :b_cent_eq, :l1, :l2)
         @smart_assert(val >= zero(val))
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         matrix_assert(val, N^2, N^2, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:L_2, :S_2)
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         matrix_assert(val, Int(N * (N + 1) / 2), N^2, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:skew, :sskew)
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         matrix_assert(val, N, N^2, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_cov
-        Nf = size(obj.f_returns, 2)
+        Nf = size(port.f_returns, 2)
         matrix_assert(val, Nf, Nf, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :fm_returns
-        T, N = size(obj.returns)
+        T, N = size(port.returns)
         matrix_assert(val, T, N, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_ret
         if !isempty(val)
-            T = size(obj.returns, 1)
-            @smart_assert(size(obj.returns, 1) == size(val, 1))
+            T = size(port.returns, 1)
+            @smart_assert(size(port.returns, 1) == size(val, 1))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :max_num_assets_kurt_scale
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         val = clamp(val, 1, N)
     elseif sym == :w_min
         if isa(val, Real)
-            if isa(obj.w_max, Real)
-                @smart_assert(val <= obj.w_max)
-            elseif !isempty(obj.w_max)
-                @smart_assert(all(val .<= obj.w_max))
+            if isa(port.w_max, Real)
+                @smart_assert(val <= port.w_max)
+            elseif !isempty(port.w_max)
+                @smart_assert(all(val .<= port.w_max))
             end
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2))
-                if isa(obj.w_max, Real) || !isempty(obj.w_max)
-                    @smart_assert(all(val .<= obj.w_max))
+                @smart_assert(length(val) == size(port.returns, 2))
+                if isa(port.w_max, Real) || !isempty(port.w_max)
+                    @smart_assert(all(val .<= port.w_max))
                 end
             end
         end
     elseif sym == :w_max
         if isa(val, Real)
-            if isa(obj.w_min, Real)
-                @smart_assert(val >= obj.w_min)
-            elseif !isempty(obj.w_min)
-                @smart_assert(all(val .>= obj.w_min))
+            if isa(port.w_min, Real)
+                @smart_assert(val >= port.w_min)
+            elseif !isempty(port.w_min)
+                @smart_assert(all(val .>= port.w_min))
             end
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2))
-                if isa(obj.w_min, Real) || !isempty(obj.w_min)
-                    @smart_assert(all(val .>= obj.w_min))
+                @smart_assert(length(val) == size(port.returns, 2))
+                if isa(port.w_min, Real) || !isempty(port.w_min)
+                    @smart_assert(all(val .>= port.w_min))
                 end
             end
         end
     elseif sym == :risk_budget
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         val = risk_budget_assert(val, N, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_risk_budget
-        Nf = size(obj.f_returns, 2)
+        Nf = size(port.f_returns, 2)
         val = factor_risk_budget_assert(val, Nf, sym)
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :long_l
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, val, obj.long_u, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
-                                 obj.min_short_budget, obj.short_budget,
-                                 obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, val, port.long_u, port.min_budget, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_u,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :long_u
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, val, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
-                                 obj.min_short_budget, obj.short_budget,
-                                 obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, val, port.min_budget, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_u,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :min_budget
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, val, obj.budget, obj.max_budget,
-                                 obj.short, obj.short_l, obj.short_u, obj.min_short_budget,
-                                 obj.short_budget, obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, val, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_u,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :budget
-        N = size(obj.returns, 2)
-        val = long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, val,
-                                       obj.max_budget, obj.short, obj.short_l, obj.short_u,
-                                       obj.min_short_budget, obj.short_budget,
-                                       obj.max_short_budget)[1]
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        val = long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, val,
+                                       port.max_budget, port.short, port.short_l,
+                                       port.short_u, port.min_short_budget,
+                                       port.short_budget, port.max_short_budget)[1]
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :max_budget
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget, val,
-                                 obj.short, obj.short_l, obj.short_u, obj.min_short_budget,
-                                 obj.short_budget, obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+                                 val, port.short, port.short_l, port.short_u,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :short_l
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, val, obj.short_u,
-                                 obj.min_short_budget, obj.short_budget,
-                                 obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+                                 port.max_budget, port.short, val, port.short_u,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :short_u
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, obj.short_l, val,
-                                 obj.min_short_budget, obj.short_budget,
-                                 obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+                                 port.max_budget, port.short, port.short_l, val,
+                                 port.min_short_budget, port.short_budget,
+                                 port.max_short_budget)
     elseif sym == :min_short_budget
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, obj.short_l, obj.short_u, val,
-                                 obj.short_budget, obj.max_short_budget)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_u,
+                                 val, port.short_budget, port.max_short_budget)
     elseif sym == :short_budget
-        N = size(obj.returns, 2)
-        val = long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget,
-                                       obj.budget, obj.max_budget, obj.short, obj.short_l,
-                                       obj.short_u, obj.min_short_budget, val,
-                                       obj.max_short_budget)[2]
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        val = long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget,
+                                       port.budget, port.max_budget, port.short,
+                                       port.short_l, port.short_u, port.min_short_budget,
+                                       val, port.max_short_budget)[2]
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :max_short_budget
-        N = size(obj.returns, 2)
-        long_short_budget_assert(N, obj.long_l, obj.long_u, obj.min_budget, obj.budget,
-                                 obj.max_budget, obj.short, obj.short_l, obj.short_u,
-                                 obj.min_short_budget, obj.short_budget, val)
+        N = size(port.returns, 2)
+        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_u,
+                                 port.min_short_budget, port.short_budget, val)
     elseif sym == :a_card_ineq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(val, obj.b_card_ineq, N, "card_ineq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_card_ineq, N, "card_ineq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_card_ineq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(obj.a_card_ineq, val, N, "card_ineq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_card_ineq, val, N, "card_ineq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_card_eq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(val, obj.b_card_eq, N, "card_eq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_card_eq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(obj.a_card_eq, :b_card_eq, N, "card_eq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_card_eq, :b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_ineq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(val, obj.b_ineq, N, "ineq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_ineq, N, "ineq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_ineq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(obj.a_ineq, val, N, "ineq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_ineq, val, N, "ineq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_eq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(val, obj.b_eq, N, "eq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_eq, N, "eq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_eq
-        N = size(obj.returns, 2)
-        linear_constraint_assert(obj.a_eq, :b_eq, N, "eq")
-        val = convert(typeof(getfield(obj, sym)), val)
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_eq, :b_eq, N, "eq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :tracking
-        T, N = size(obj.returns)
+        T, N = size(port.returns)
         tracking_assert(val, T, N)
     elseif sym == :turnover
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         tr_assert(val, N)
     elseif sym ∈ (:network_adj, :cluster_adj)
-        N = size(obj.returns, 2)
+        N = size(port.returns, 2)
         adj_assert(val, N)
     end
-    return setfield!(obj, sym, val)
+    return setfield!(port, sym, val)
 end
-function Base.deepcopy(obj::OmniPortfolio)
+function Base.deepcopy(port::OmniPortfolio)
     return OmniPortfolio{
                          # Assets and factors
-                         typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
-                         typeof(obj.latest_prices), typeof(obj.f_assets),
-                         typeof(obj.f_timestamps), typeof(obj.f_returns),
-                         typeof(obj.loadings), Union{<:RegressionType, Nothing},
+                         typeof(port.assets), typeof(port.timestamps), typeof(port.returns),
+                         typeof(port.latest_prices), typeof(port.f_assets),
+                         typeof(port.f_timestamps), typeof(port.f_returns),
+                         typeof(port.loadings), Union{<:RegressionType, Nothing},
                          # Statistics
-                         typeof(obj.mu_l), typeof(obj.mu), typeof(obj.cov), typeof(obj.cor),
-                         typeof(obj.dist), typeof(obj.clusters), typeof(obj.k),
-                         typeof(obj.max_num_assets_kurt),
-                         typeof(obj.max_num_assets_kurt_scale), typeof(obj.kurt),
-                         typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
-                         typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                         typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
-                         typeof(obj.fm_mu), typeof(obj.fm_cov),
-                         typeof(obj.bl_bench_weights), typeof(obj.bl_mu),
-                         typeof(obj.bl_cov), typeof(obj.blfm_mu), typeof(obj.blfm_cov),
-                         typeof(obj.cov_l), typeof(obj.cov_u), typeof(obj.cov_mu),
-                         typeof(obj.cov_sigma), typeof(obj.d_mu), typeof(obj.k_mu),
-                         typeof(obj.k_sigma),
+                         typeof(port.mu_l), typeof(port.mu), typeof(port.cov),
+                         typeof(port.cor), typeof(port.dist), typeof(port.clusters),
+                         typeof(port.k), typeof(port.max_num_assets_kurt),
+                         typeof(port.max_num_assets_kurt_scale), typeof(port.kurt),
+                         typeof(port.skurt), typeof(port.L_2), typeof(port.S_2),
+                         typeof(port.skew), typeof(port.V), typeof(port.sskew),
+                         typeof(port.SV), typeof(port.f_mu), typeof(port.f_cov),
+                         typeof(port.fm_returns), typeof(port.fm_mu), typeof(port.fm_cov),
+                         typeof(port.bl_bench_weights), typeof(port.bl_mu),
+                         typeof(port.bl_cov), typeof(port.blfm_mu), typeof(port.blfm_cov),
+                         typeof(port.cov_l), typeof(port.cov_u), typeof(port.cov_mu),
+                         typeof(port.cov_sigma), typeof(port.d_mu), typeof(port.k_mu),
+                         typeof(port.k_sigma),
                          # Min and max weights
                          Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
                          # Risk budgetting
-                         typeof(obj.risk_budget), typeof(obj.f_risk_budget),
+                         typeof(port.risk_budget), typeof(port.f_risk_budget),
                          # Budget and shorting
-                         typeof(obj.short), Union{<:Real, <:AbstractVector{<:Real}},
+                         typeof(port.short), Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
-                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.min_budget),
-                         typeof(obj.budget), typeof(obj.max_budget),
-                         typeof(obj.min_short_budget), typeof(obj.short_budget),
-                         typeof(obj.max_short_budget),
+                         Union{<:Real, <:AbstractVector{<:Real}}, typeof(port.min_budget),
+                         typeof(port.budget), typeof(port.max_budget),
+                         typeof(port.min_short_budget), typeof(port.short_budget),
+                         typeof(port.max_short_budget),
                          # Cardinality
-                         typeof(obj.card_scale), typeof(obj.card), typeof(obj.a_card_ineq),
-                         typeof(obj.b_card_ineq), typeof(obj.a_card_eq),
-                         typeof(obj.b_card_eq),
+                         typeof(port.card_scale), typeof(port.card),
+                         typeof(port.a_card_ineq), typeof(port.b_card_ineq),
+                         typeof(port.a_card_eq), typeof(port.b_card_eq),
                          # Effective assets
-                         typeof(obj.nea),
+                         typeof(port.nea),
                          # Linear constraints
-                         typeof(obj.a_ineq), typeof(obj.b_ineq), typeof(obj.a_eq),
-                         typeof(obj.b_eq),
+                         typeof(port.a_ineq), typeof(port.b_ineq), typeof(port.a_eq),
+                         typeof(port.b_eq),
                          # Tracking
-                         typeof(obj.tracking),
+                         typeof(port.tracking),
                          # Turnover
                          AbstractTR,
                          # Adjacency
                          AdjacencyConstraint, AdjacencyConstraint,
                          # Centrality
-                         typeof(obj.a_cent_ineq), typeof(obj.b_cent_ineq),
-                         typeof(obj.a_cent_eq), typeof(obj.b_cent_eq),
+                         typeof(port.a_cent_ineq), typeof(port.b_cent_ineq),
+                         typeof(port.a_cent_eq), typeof(port.b_cent_eq),
                          # Regularisation
-                         typeof(obj.l1), typeof(obj.l2),
+                         typeof(port.l1), typeof(port.l2),
                          # Fees
                          Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
                          # Rebalance cost
                          AbstractTR,
                          # Solution
-                         typeof(obj.model), typeof(obj.solvers), typeof(obj.optimal),
-                         typeof(obj.fail), typeof(obj.limits), typeof(obj.frontier),
-                         typeof(obj.walking), typeof(obj.alloc_model),
-                         typeof(obj.alloc_solvers), typeof(obj.alloc_optimal),
-                         typeof(obj.alloc_fail), typeof(obj.alloc_walking)}(
-                                                                            # Assets and factors
-                                                                            deepcopy(obj.assets),
-                                                                            deepcopy(obj.timestamps),
-                                                                            deepcopy(obj.returns),
-                                                                            deepcopy(obj.latest_prices),
-                                                                            deepcopy(obj.f_assets),
-                                                                            deepcopy(obj.f_timestamps),
-                                                                            deepcopy(obj.f_returns),
-                                                                            deepcopy(obj.loadings),
-                                                                            deepcopy(obj.regression_type),
-                                                                            # Statistics
-                                                                            deepcopy(obj.mu_l),
-                                                                            deepcopy(obj.mu),
-                                                                            deepcopy(obj.cov),
-                                                                            deepcopy(obj.cor),
-                                                                            deepcopy(obj.dist),
-                                                                            deepcopy(obj.clusters),
-                                                                            deepcopy(obj.k),
-                                                                            deepcopy(obj.max_num_assets_kurt),
-                                                                            deepcopy(obj.max_num_assets_kurt_scale),
-                                                                            deepcopy(obj.kurt),
-                                                                            deepcopy(obj.skurt),
-                                                                            deepcopy(obj.L_2),
-                                                                            deepcopy(obj.S_2),
-                                                                            deepcopy(obj.skew),
-                                                                            deepcopy(obj.V),
-                                                                            deepcopy(obj.sskew),
-                                                                            deepcopy(obj.SV),
-                                                                            deepcopy(obj.f_mu),
-                                                                            deepcopy(obj.f_cov),
-                                                                            deepcopy(obj.fm_returns),
-                                                                            deepcopy(obj.fm_mu),
-                                                                            deepcopy(obj.fm_cov),
-                                                                            deepcopy(obj.bl_bench_weights),
-                                                                            deepcopy(obj.bl_mu),
-                                                                            deepcopy(obj.bl_cov),
-                                                                            deepcopy(obj.blfm_mu),
-                                                                            deepcopy(obj.blfm_cov),
-                                                                            deepcopy(obj.cov_l),
-                                                                            deepcopy(obj.cov_u),
-                                                                            deepcopy(obj.cov_mu),
-                                                                            deepcopy(obj.cov_sigma),
-                                                                            deepcopy(obj.d_mu),
-                                                                            deepcopy(obj.k_mu),
-                                                                            deepcopy(obj.k_sigma),
-                                                                            # Min and max weights
-                                                                            deepcopy(obj.w_min),
-                                                                            deepcopy(obj.w_max),
-                                                                            # Risk budgetting
-                                                                            deepcopy(obj.risk_budget),
-                                                                            deepcopy(obj.f_risk_budget),
-                                                                            # Budget and shorting
-                                                                            deepcopy(obj.short),
-                                                                            deepcopy(obj.long_l),
-                                                                            deepcopy(obj.long_u),
-                                                                            deepcopy(obj.short_l),
-                                                                            deepcopy(obj.short_u),
-                                                                            deepcopy(obj.min_budget),
-                                                                            deepcopy(obj.budget),
-                                                                            deepcopy(obj.max_budget),
-                                                                            deepcopy(obj.min_short_budget),
-                                                                            deepcopy(obj.short_budget),
-                                                                            deepcopy(obj.max_short_budget),
-                                                                            # Cardinality
-                                                                            deepcopy(obj.card_scale),
-                                                                            deepcopy(obj.card),
-                                                                            deepcopy(obj.a_card_ineq),
-                                                                            deepcopy(obj.b_card_ineq),
-                                                                            deepcopy(obj.a_card_eq),
-                                                                            deepcopy(obj.b_card_eq),
-                                                                            # Effective assets
-                                                                            deepcopy(obj.nea),
-                                                                            # Linear constraints
-                                                                            deepcopy(obj.a_ineq),
-                                                                            deepcopy(obj.b_ineq),
-                                                                            deepcopy(obj.a_eq),
-                                                                            deepcopy(obj.b_eq),
-                                                                            # Tracking
-                                                                            deepcopy(obj.tracking),
-                                                                            # Turnover
-                                                                            deepcopy(obj.turnover),
-                                                                            # Adjacency
-                                                                            deepcopy(obj.network_adj),
-                                                                            deepcopy(obj.cluster_adj),
-                                                                            # Centrality
-                                                                            deepcopy(obj.a_cent_ineq),
-                                                                            deepcopy(obj.b_cent_ineq),
-                                                                            deepcopy(obj.a_cent_eq),
-                                                                            deepcopy(obj.b_cent_eq),
-                                                                            # Regularisation
-                                                                            deepcopy(obj.l1),
-                                                                            deepcopy(obj.l2),
-                                                                            # Fees
-                                                                            deepcopy(obj.long_fees),
-                                                                            deepcopy(obj.short_fees),
-                                                                            # Rebalance cost
-                                                                            deepcopy(obj.rebalance),
-                                                                            # Solution
-                                                                            deepcopy(obj.model),
-                                                                            deepcopy(obj.solvers),
-                                                                            deepcopy(obj.optimal),
-                                                                            deepcopy(obj.fail),
-                                                                            deepcopy(obj.limits),
-                                                                            deepcopy(obj.frontier),
-                                                                            deepcopy(obj.walking),
-                                                                            deepcopy(obj.alloc_model),
-                                                                            deepcopy(obj.alloc_solvers),
-                                                                            deepcopy(obj.alloc_optimal),
-                                                                            deepcopy(obj.alloc_fail),
-                                                                            deepcopy(obj.alloc_walking))
+                         typeof(port.model), typeof(port.solvers), typeof(port.optimal),
+                         typeof(port.fail), typeof(port.limits), typeof(port.frontier),
+                         typeof(port.walking), typeof(port.alloc_model),
+                         typeof(port.alloc_solvers), typeof(port.alloc_optimal),
+                         typeof(port.alloc_fail), typeof(port.alloc_walking)}(
+                                                                              # Assets and factors
+                                                                              deepcopy(port.assets),
+                                                                              deepcopy(port.timestamps),
+                                                                              deepcopy(port.returns),
+                                                                              deepcopy(port.latest_prices),
+                                                                              deepcopy(port.f_assets),
+                                                                              deepcopy(port.f_timestamps),
+                                                                              deepcopy(port.f_returns),
+                                                                              deepcopy(port.loadings),
+                                                                              deepcopy(port.regression_type),
+                                                                              # Statistics
+                                                                              deepcopy(port.mu_l),
+                                                                              deepcopy(port.mu),
+                                                                              deepcopy(port.cov),
+                                                                              deepcopy(port.cor),
+                                                                              deepcopy(port.dist),
+                                                                              deepcopy(port.clusters),
+                                                                              deepcopy(port.k),
+                                                                              deepcopy(port.max_num_assets_kurt),
+                                                                              deepcopy(port.max_num_assets_kurt_scale),
+                                                                              deepcopy(port.kurt),
+                                                                              deepcopy(port.skurt),
+                                                                              deepcopy(port.L_2),
+                                                                              deepcopy(port.S_2),
+                                                                              deepcopy(port.skew),
+                                                                              deepcopy(port.V),
+                                                                              deepcopy(port.sskew),
+                                                                              deepcopy(port.SV),
+                                                                              deepcopy(port.f_mu),
+                                                                              deepcopy(port.f_cov),
+                                                                              deepcopy(port.fm_returns),
+                                                                              deepcopy(port.fm_mu),
+                                                                              deepcopy(port.fm_cov),
+                                                                              deepcopy(port.bl_bench_weights),
+                                                                              deepcopy(port.bl_mu),
+                                                                              deepcopy(port.bl_cov),
+                                                                              deepcopy(port.blfm_mu),
+                                                                              deepcopy(port.blfm_cov),
+                                                                              deepcopy(port.cov_l),
+                                                                              deepcopy(port.cov_u),
+                                                                              deepcopy(port.cov_mu),
+                                                                              deepcopy(port.cov_sigma),
+                                                                              deepcopy(port.d_mu),
+                                                                              deepcopy(port.k_mu),
+                                                                              deepcopy(port.k_sigma),
+                                                                              # Min and max weights
+                                                                              deepcopy(port.w_min),
+                                                                              deepcopy(port.w_max),
+                                                                              # Risk budgetting
+                                                                              deepcopy(port.risk_budget),
+                                                                              deepcopy(port.f_risk_budget),
+                                                                              # Budget and shorting
+                                                                              deepcopy(port.short),
+                                                                              deepcopy(port.long_l),
+                                                                              deepcopy(port.long_u),
+                                                                              deepcopy(port.short_l),
+                                                                              deepcopy(port.short_u),
+                                                                              deepcopy(port.min_budget),
+                                                                              deepcopy(port.budget),
+                                                                              deepcopy(port.max_budget),
+                                                                              deepcopy(port.min_short_budget),
+                                                                              deepcopy(port.short_budget),
+                                                                              deepcopy(port.max_short_budget),
+                                                                              # Cardinality
+                                                                              deepcopy(port.card_scale),
+                                                                              deepcopy(port.card),
+                                                                              deepcopy(port.a_card_ineq),
+                                                                              deepcopy(port.b_card_ineq),
+                                                                              deepcopy(port.a_card_eq),
+                                                                              deepcopy(port.b_card_eq),
+                                                                              # Effective assets
+                                                                              deepcopy(port.nea),
+                                                                              # Linear constraints
+                                                                              deepcopy(port.a_ineq),
+                                                                              deepcopy(port.b_ineq),
+                                                                              deepcopy(port.a_eq),
+                                                                              deepcopy(port.b_eq),
+                                                                              # Tracking
+                                                                              deepcopy(port.tracking),
+                                                                              # Turnover
+                                                                              deepcopy(port.turnover),
+                                                                              # Adjacency
+                                                                              deepcopy(port.network_adj),
+                                                                              deepcopy(port.cluster_adj),
+                                                                              # Centrality
+                                                                              deepcopy(port.a_cent_ineq),
+                                                                              deepcopy(port.b_cent_ineq),
+                                                                              deepcopy(port.a_cent_eq),
+                                                                              deepcopy(port.b_cent_eq),
+                                                                              # Regularisation
+                                                                              deepcopy(port.l1),
+                                                                              deepcopy(port.l2),
+                                                                              # Fees
+                                                                              deepcopy(port.long_fees),
+                                                                              deepcopy(port.short_fees),
+                                                                              # Rebalance cost
+                                                                              deepcopy(port.rebalance),
+                                                                              # Solution
+                                                                              deepcopy(port.model),
+                                                                              deepcopy(port.solvers),
+                                                                              deepcopy(port.optimal),
+                                                                              deepcopy(port.fail),
+                                                                              deepcopy(port.limits),
+                                                                              deepcopy(port.frontier),
+                                                                              deepcopy(port.walking),
+                                                                              deepcopy(port.alloc_model),
+                                                                              deepcopy(port.alloc_solvers),
+                                                                              deepcopy(port.alloc_optimal),
+                                                                              deepcopy(port.alloc_fail),
+                                                                              deepcopy(port.alloc_walking))
 end
 
 export OmniPortfolio
@@ -1878,154 +1880,155 @@ function Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                                                                      alloc_fail,
                                                                                      alloc_model)
 end
-function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
+function Base.setproperty!(port::Portfolio, sym::Symbol, val)
     if sym == :short_u
-        if obj.short
-            @smart_assert(obj.short_budget >=
+        if port.short
+            @smart_assert(port.short_budget >=
                           val >=
-                          zero(promote_type(typeof(obj.short_budget), typeof(val))))
+                          zero(promote_type(typeof(port.short_budget), typeof(val))))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :short_budget
-        if obj.short
+        if port.short
             @smart_assert(val >=
-                          obj.short_u >=
-                          zero(promote_type(typeof(val), typeof(obj.short_u))))
+                          port.short_u >=
+                          zero(promote_type(typeof(val), typeof(port.short_u))))
 
-            @smart_assert(obj.budget + val >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(val),
-                                            typeof(obj.long_u))))
+            @smart_assert(port.budget + val >=
+                          port.long_u >=
+                          zero(promote_type(typeof(port.budget), typeof(val),
+                                            typeof(port.long_u))))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :long_u
-        if obj.short
-            @smart_assert(obj.budget + obj.short_budget >=
+        if port.short
+            @smart_assert(port.budget + port.short_budget >=
                           val >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.short_budget),
+                          zero(promote_type(typeof(port.budget), typeof(port.short_budget),
                                             typeof(val))))
         else
-            @smart_assert(obj.budget >=
+            @smart_assert(port.budget >=
                           val >=
-                          zero(promote_type(typeof(obj.budget), typeof(val))))
+                          zero(promote_type(typeof(port.budget), typeof(val))))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :budget
-        if obj.short
-            @smart_assert(val + obj.short_budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(val), typeof(obj.short_budget),
-                                            typeof(obj.long_u))))
+        if port.short
+            @smart_assert(val + port.short_budget >=
+                          port.long_u >=
+                          zero(promote_type(typeof(val), typeof(port.short_budget),
+                                            typeof(port.long_u))))
         else
             @smart_assert(val >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(val), typeof(obj.long_u))))
+                          port.long_u >=
+                          zero(promote_type(typeof(val), typeof(port.long_u))))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :short
         if val
-            @smart_assert(obj.short_budget >=
-                          obj.short_u >=
-                          zero(promote_type(typeof(obj.short_budget), typeof(obj.short_u))))
+            @smart_assert(port.short_budget >=
+                          port.short_u >=
+                          zero(promote_type(typeof(port.short_budget),
+                                            typeof(port.short_u))))
 
-            @smart_assert(obj.budget + obj.short_budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.short_budget),
-                                            typeof(obj.long_u))))
+            @smart_assert(port.budget + port.short_budget >=
+                          port.long_u >=
+                          zero(promote_type(typeof(port.budget), typeof(port.short_budget),
+                                            typeof(port.long_u))))
         else
-            @smart_assert(obj.budget >=
-                          obj.long_u >=
-                          zero(promote_type(typeof(obj.budget), typeof(obj.long_u))))
+            @smart_assert(port.budget >=
+                          port.long_u >=
+                          zero(promote_type(typeof(port.budget), typeof(port.long_u))))
         end
     elseif sym == :max_num_assets_kurt
         @smart_assert(val >= zero(val))
     elseif sym == :max_num_assets_kurt_scale
-        val = clamp(val, 1, size(obj.returns, 2))
+        val = clamp(val, 1, size(port.returns, 2))
     elseif sym ∈ (:fees, :short_fees)
         if isa(val, AbstractVector) && !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
-            val = collect(eltype(obj.returns), val)
+            @smart_assert(length(val) == size(port.returns, 2))
+            val = collect(eltype(port.returns), val)
         end
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, TR)
             if isa(val.val, Real)
                 @smart_assert(val.val >= zero(val.val))
             elseif isa(val.val, AbstractVector) && !isempty(val.val)
-                @smart_assert(length(val.val) == size(obj.returns, 2) &&
+                @smart_assert(length(val.val) == size(port.returns, 2) &&
                               all(val.val .>= zero(val.val)))
             end
             if !isempty(val.w)
-                @smart_assert(length(val.w) == size(obj.returns, 2))
+                @smart_assert(length(val.w) == size(port.returns, 2))
             end
         end
     elseif sym == :tracking_err
         if isa(val, TrackWeight)
-            @smart_assert(length(val.w) == size(obj.returns, 2))
+            @smart_assert(length(val.w) == size(port.returns, 2))
             @smart_assert(val.err >= zero(val.err))
         elseif isa(val, TrackRet)
-            @smart_assert(length(val.w) == size(obj.returns, 1))
+            @smart_assert(length(val.w) == size(port.returns, 1))
             @smart_assert(val.err >= zero(val.err))
         end
     elseif sym ∈ (:a_mtx_ineq, :a_cmtx_ineq)
         if !isempty(val)
-            @smart_assert(size(val, 2) == size(obj.returns, 2))
+            @smart_assert(size(val, 2) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_smtx_ineq
         if !(isa(val, BitMatrix) || isa(val, SparseMatrixCSC{Bool, <:Integer}))
-            val = if isa(getfield(obj, sym), BitMatrix)
+            val = if isa(getfield(port, sym), BitMatrix)
                 BitMatrix(val)
             else
                 sparse(BitMatrix(val))
             end
         end
         if !isempty(val)
-            @smart_assert(size(val, 2) == size(obj.returns, 2))
+            @smart_assert(size(val, 2) == size(port.returns, 2))
         end
     elseif sym ∈ (:network_adj, :cluster_adj)
         if !isa(val, NoAdj) && !isempty(val.A)
             if isa(val, IP)
-                @smart_assert(size(val.A, 2) == size(obj.returns, 2))
+                @smart_assert(size(val.A, 2) == size(port.returns, 2))
             else
-                @smart_assert(size(val.A) == (size(obj.returns, 2), size(obj.returns, 2)))
+                @smart_assert(size(val.A) == (size(port.returns, 2), size(port.returns, 2)))
             end
         end
     elseif sym == :a_vec_cent
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(obj.returns, 2))
+            @smart_assert(size(val, 1) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_mu
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.f_returns, 2))
+            @smart_assert(length(val) == size(port.f_returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_cov
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2))
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.f_returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
-            N = size(obj.returns, 2)
+            N = size(port.returns, 2)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :bl_bench_weights
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
+            @smart_assert(length(val) == size(port.returns, 2))
             if isa(val, AbstractRange)
                 val = collect(val)
             end
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :risk_budget
         if isempty(val)
-            N = size(obj.returns, 2)
+            N = size(port.returns, 2)
             val = fill(inv(N), N)
         else
-            @smart_assert(length(val) == size(obj.returns, 2) &&
-                          all(val .>= zero(eltype(obj.returns))))
+            @smart_assert(length(val) == size(port.returns, 2) &&
+                          all(val .>= zero(eltype(port.returns))))
 
             if isa(val, AbstractRange)
                 val = collect(val / sum(val))
@@ -2033,7 +2036,7 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                 val ./= sum(val)
             end
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_risk_budget
         if !isempty(val)
             if isa(val, AbstractRange)
@@ -2042,127 +2045,136 @@ function Base.setproperty!(obj::Portfolio, sym::Symbol, val)
                 val ./= sum(val)
             end
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:num_assets_l, :num_assets_u, :num_assets_u_scale)
         @smart_assert(val >= zero(val))
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.returns, 2)^2)
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:skew, :sskew)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(obj.returns, 2) &&
-                          size(val, 2) == size(obj.returns, 2)^2)
+            @smart_assert(size(val, 1) == size(port.returns, 2) &&
+                          size(val, 2) == size(port.returns, 2)^2)
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns,
                   :fm_returns)
-        if !isempty(val) && !isempty(getfield(obj, sym))
-            @smart_assert(size(val) == size(getfield(obj, sym)))
+        if !isempty(val) && !isempty(getfield(port, sym))
+            @smart_assert(size(val) == size(getfield(port, sym)))
         end
     elseif sym ∈ (:mu, :fm_mu, :bl_mu, :blfm_mu, :d_mu, :latest_prices)
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
+            @smart_assert(length(val) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:cov, :fm_cov, :bl_cov, :blfm_cov, :cov_l, :cov_u, :cov_mu, :V, :SV)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     else
-        if (isa(getfield(obj, sym), AbstractArray) && isa(val, AbstractArray)) ||
-           (isa(getfield(obj, sym), Real) && isa(val, Real))
-            val = convert(typeof(getfield(obj, sym)), val)
+        if (isa(getfield(port, sym), AbstractArray) && isa(val, AbstractArray)) ||
+           (isa(getfield(port, sym), Real) && isa(val, Real))
+            val = convert(typeof(getfield(port, sym)), val)
         end
     end
-    return setfield!(obj, sym, val)
+    return setfield!(port, sym, val)
 end
-function Base.deepcopy(obj::Portfolio)
-    return Portfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
-                     typeof(obj.f_assets), typeof(obj.f_timestamps), typeof(obj.f_returns),
-                     typeof(obj.loadings), Union{<:RegressionType, Nothing},
-                     typeof(obj.short), typeof(obj.budget), typeof(obj.short_budget),
-                     typeof(obj.long_u), typeof(obj.short_u),
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.num_assets_l),
-                     typeof(obj.num_assets_u), typeof(obj.num_assets_u_scale),
-                     typeof(obj.max_num_assets_kurt), typeof(obj.max_num_assets_kurt_scale),
-                     typeof(obj.l1), typeof(obj.l2), AbstractTR, AbstractTR, TrackingErr,
-                     typeof(obj.a_smtx_ineq), typeof(obj.b_svec_ineq),
-                     typeof(obj.a_cmtx_ineq), typeof(obj.b_cvec_ineq),
-                     typeof(obj.a_mtx_ineq), typeof(obj.b_vec_ineq),
-                     typeof(obj.risk_budget), typeof(obj.f_risk_budget),
-                     AdjacencyConstraint, AdjacencyConstraint, typeof(obj.a_vec_cent),
-                     typeof(obj.b_cent), typeof(obj.mu_l), typeof(obj.mu), typeof(obj.cov),
-                     typeof(obj.kurt), typeof(obj.skurt), typeof(obj.L_2), typeof(obj.S_2),
-                     typeof(obj.skew), typeof(obj.V), typeof(obj.sskew), typeof(obj.SV),
-                     typeof(obj.f_mu), typeof(obj.f_cov), typeof(obj.fm_returns),
-                     typeof(obj.fm_mu), typeof(obj.fm_cov), typeof(obj.bl_bench_weights),
-                     typeof(obj.bl_mu), typeof(obj.bl_cov), typeof(obj.blfm_mu),
-                     typeof(obj.blfm_cov), typeof(obj.cov_l), typeof(obj.cov_u),
-                     typeof(obj.cov_mu), typeof(obj.cov_sigma), typeof(obj.d_mu),
-                     typeof(obj.k_mu), typeof(obj.k_sigma), typeof(obj.optimal),
-                     typeof(obj.limits), typeof(obj.frontier), typeof(obj.solvers),
-                     typeof(obj.fail), typeof(obj.model), typeof(obj.latest_prices),
-                     typeof(obj.alloc_optimal), typeof(obj.alloc_leftover),
-                     typeof(obj.alloc_solvers), typeof(obj.alloc_fail),
-                     typeof(obj.alloc_model)}(deepcopy(obj.assets),
-                                              deepcopy(obj.timestamps),
-                                              deepcopy(obj.returns), deepcopy(obj.f_assets),
-                                              deepcopy(obj.f_timestamps),
-                                              deepcopy(obj.f_returns),
-                                              deepcopy(obj.loadings),
-                                              deepcopy(obj.regression_type),
-                                              deepcopy(obj.short), deepcopy(obj.budget),
-                                              deepcopy(obj.short_budget),
-                                              deepcopy(obj.long_u), deepcopy(obj.short_u),
-                                              deepcopy(obj.fees), deepcopy(obj.short_fees),
-                                              deepcopy(obj.num_assets_l),
-                                              deepcopy(obj.num_assets_u),
-                                              deepcopy(obj.num_assets_u_scale),
-                                              deepcopy(obj.max_num_assets_kurt),
-                                              deepcopy(obj.max_num_assets_kurt_scale),
-                                              deepcopy(obj.l1), deepcopy(obj.l2),
-                                              deepcopy(obj.rebalance),
-                                              deepcopy(obj.turnover),
-                                              deepcopy(obj.tracking_err),
-                                              deepcopy(obj.a_smtx_ineq),
-                                              deepcopy(obj.b_svec_ineq),
-                                              deepcopy(obj.a_cmtx_ineq),
-                                              deepcopy(obj.b_cvec_ineq),
-                                              deepcopy(obj.a_mtx_ineq),
-                                              deepcopy(obj.b_vec_ineq),
-                                              deepcopy(obj.risk_budget),
-                                              deepcopy(obj.f_risk_budget),
-                                              deepcopy(obj.network_adj),
-                                              deepcopy(obj.cluster_adj),
-                                              deepcopy(obj.a_vec_cent),
-                                              deepcopy(obj.b_cent), deepcopy(obj.mu_l),
-                                              deepcopy(obj.mu), deepcopy(obj.cov),
-                                              deepcopy(obj.kurt), deepcopy(obj.skurt),
-                                              deepcopy(obj.L_2), deepcopy(obj.S_2),
-                                              deepcopy(obj.skew), deepcopy(obj.V),
-                                              deepcopy(obj.sskew), deepcopy(obj.SV),
-                                              deepcopy(obj.f_mu), deepcopy(obj.f_cov),
-                                              deepcopy(obj.fm_returns), deepcopy(obj.fm_mu),
-                                              deepcopy(obj.fm_cov),
-                                              deepcopy(obj.bl_bench_weights),
-                                              deepcopy(obj.bl_mu), deepcopy(obj.bl_cov),
-                                              deepcopy(obj.blfm_mu), deepcopy(obj.blfm_cov),
-                                              deepcopy(obj.cov_l), deepcopy(obj.cov_u),
-                                              deepcopy(obj.cov_mu), deepcopy(obj.cov_sigma),
-                                              deepcopy(obj.d_mu), deepcopy(obj.k_mu),
-                                              deepcopy(obj.k_sigma), deepcopy(obj.optimal),
-                                              deepcopy(obj.limits), deepcopy(obj.frontier),
-                                              deepcopy(obj.solvers), deepcopy(obj.fail),
-                                              copy(obj.model), deepcopy(obj.latest_prices),
-                                              deepcopy(obj.alloc_optimal),
-                                              deepcopy(obj.alloc_leftover),
-                                              deepcopy(obj.alloc_solvers),
-                                              deepcopy(obj.alloc_fail),
-                                              copy(obj.alloc_model))
+function Base.deepcopy(port::Portfolio)
+    return Portfolio{typeof(port.assets), typeof(port.timestamps), typeof(port.returns),
+                     typeof(port.f_assets), typeof(port.f_timestamps),
+                     typeof(port.f_returns), typeof(port.loadings),
+                     Union{<:RegressionType, Nothing}, typeof(port.short),
+                     typeof(port.budget), typeof(port.short_budget), typeof(port.long_u),
+                     typeof(port.short_u), Union{<:Real, <:AbstractVector{<:Real}},
+                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(port.num_assets_l),
+                     typeof(port.num_assets_u), typeof(port.num_assets_u_scale),
+                     typeof(port.max_num_assets_kurt),
+                     typeof(port.max_num_assets_kurt_scale), typeof(port.l1),
+                     typeof(port.l2), AbstractTR, AbstractTR, TrackingErr,
+                     typeof(port.a_smtx_ineq), typeof(port.b_svec_ineq),
+                     typeof(port.a_cmtx_ineq), typeof(port.b_cvec_ineq),
+                     typeof(port.a_mtx_ineq), typeof(port.b_vec_ineq),
+                     typeof(port.risk_budget), typeof(port.f_risk_budget),
+                     AdjacencyConstraint, AdjacencyConstraint, typeof(port.a_vec_cent),
+                     typeof(port.b_cent), typeof(port.mu_l), typeof(port.mu),
+                     typeof(port.cov), typeof(port.kurt), typeof(port.skurt),
+                     typeof(port.L_2), typeof(port.S_2), typeof(port.skew), typeof(port.V),
+                     typeof(port.sskew), typeof(port.SV), typeof(port.f_mu),
+                     typeof(port.f_cov), typeof(port.fm_returns), typeof(port.fm_mu),
+                     typeof(port.fm_cov), typeof(port.bl_bench_weights), typeof(port.bl_mu),
+                     typeof(port.bl_cov), typeof(port.blfm_mu), typeof(port.blfm_cov),
+                     typeof(port.cov_l), typeof(port.cov_u), typeof(port.cov_mu),
+                     typeof(port.cov_sigma), typeof(port.d_mu), typeof(port.k_mu),
+                     typeof(port.k_sigma), typeof(port.optimal), typeof(port.limits),
+                     typeof(port.frontier), typeof(port.solvers), typeof(port.fail),
+                     typeof(port.model), typeof(port.latest_prices),
+                     typeof(port.alloc_optimal), typeof(port.alloc_leftover),
+                     typeof(port.alloc_solvers), typeof(port.alloc_fail),
+                     typeof(port.alloc_model)}(deepcopy(port.assets),
+                                               deepcopy(port.timestamps),
+                                               deepcopy(port.returns),
+                                               deepcopy(port.f_assets),
+                                               deepcopy(port.f_timestamps),
+                                               deepcopy(port.f_returns),
+                                               deepcopy(port.loadings),
+                                               deepcopy(port.regression_type),
+                                               deepcopy(port.short), deepcopy(port.budget),
+                                               deepcopy(port.short_budget),
+                                               deepcopy(port.long_u),
+                                               deepcopy(port.short_u), deepcopy(port.fees),
+                                               deepcopy(port.short_fees),
+                                               deepcopy(port.num_assets_l),
+                                               deepcopy(port.num_assets_u),
+                                               deepcopy(port.num_assets_u_scale),
+                                               deepcopy(port.max_num_assets_kurt),
+                                               deepcopy(port.max_num_assets_kurt_scale),
+                                               deepcopy(port.l1), deepcopy(port.l2),
+                                               deepcopy(port.rebalance),
+                                               deepcopy(port.turnover),
+                                               deepcopy(port.tracking_err),
+                                               deepcopy(port.a_smtx_ineq),
+                                               deepcopy(port.b_svec_ineq),
+                                               deepcopy(port.a_cmtx_ineq),
+                                               deepcopy(port.b_cvec_ineq),
+                                               deepcopy(port.a_mtx_ineq),
+                                               deepcopy(port.b_vec_ineq),
+                                               deepcopy(port.risk_budget),
+                                               deepcopy(port.f_risk_budget),
+                                               deepcopy(port.network_adj),
+                                               deepcopy(port.cluster_adj),
+                                               deepcopy(port.a_vec_cent),
+                                               deepcopy(port.b_cent), deepcopy(port.mu_l),
+                                               deepcopy(port.mu), deepcopy(port.cov),
+                                               deepcopy(port.kurt), deepcopy(port.skurt),
+                                               deepcopy(port.L_2), deepcopy(port.S_2),
+                                               deepcopy(port.skew), deepcopy(port.V),
+                                               deepcopy(port.sskew), deepcopy(port.SV),
+                                               deepcopy(port.f_mu), deepcopy(port.f_cov),
+                                               deepcopy(port.fm_returns),
+                                               deepcopy(port.fm_mu), deepcopy(port.fm_cov),
+                                               deepcopy(port.bl_bench_weights),
+                                               deepcopy(port.bl_mu), deepcopy(port.bl_cov),
+                                               deepcopy(port.blfm_mu),
+                                               deepcopy(port.blfm_cov),
+                                               deepcopy(port.cov_l), deepcopy(port.cov_u),
+                                               deepcopy(port.cov_mu),
+                                               deepcopy(port.cov_sigma),
+                                               deepcopy(port.d_mu), deepcopy(port.k_mu),
+                                               deepcopy(port.k_sigma),
+                                               deepcopy(port.optimal),
+                                               deepcopy(port.limits),
+                                               deepcopy(port.frontier),
+                                               deepcopy(port.solvers), deepcopy(port.fail),
+                                               copy(port.model),
+                                               deepcopy(port.latest_prices),
+                                               deepcopy(port.alloc_optimal),
+                                               deepcopy(port.alloc_leftover),
+                                               deepcopy(port.alloc_solvers),
+                                               deepcopy(port.alloc_fail),
+                                               copy(port.alloc_model))
 end
 
 """
@@ -2574,152 +2586,152 @@ function HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
                                             latest_prices, alloc_optimal, alloc_leftover,
                                             alloc_solvers, alloc_fail, alloc_model)
 end
-function Base.setproperty!(obj::HCPortfolio, sym::Symbol, val)
+function Base.setproperty!(port::HCPortfolio, sym::Symbol, val)
     if sym == :k
         @smart_assert(val >= zero(val))
     elseif sym == :w_min
         if isa(val, Real)
-            if isa(obj.w_max, Real)
-                @smart_assert(val <= obj.w_max)
-            elseif !isempty(obj.w_max)
-                @smart_assert(all(val .<= obj.w_max))
+            if isa(port.w_max, Real)
+                @smart_assert(val <= port.w_max)
+            elseif !isempty(port.w_max)
+                @smart_assert(all(val .<= port.w_max))
             end
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2))
-                if isa(obj.w_max, Real) || !isempty(obj.w_max)
-                    @smart_assert(all(val .<= obj.w_max))
+                @smart_assert(length(val) == size(port.returns, 2))
+                if isa(port.w_max, Real) || !isempty(port.w_max)
+                    @smart_assert(all(val .<= port.w_max))
                 end
             end
         end
     elseif sym == :w_max
         if isa(val, Real)
-            if isa(obj.w_min, Real)
-                @smart_assert(val >= obj.w_min)
-            elseif !isempty(obj.w_min)
-                @smart_assert(all(val .>= obj.w_min))
+            if isa(port.w_min, Real)
+                @smart_assert(val >= port.w_min)
+            elseif !isempty(port.w_min)
+                @smart_assert(all(val .>= port.w_min))
             end
         elseif isa(val, AbstractVector)
             if !isempty(val)
-                @smart_assert(length(val) == size(obj.returns, 2))
-                if isa(obj.w_min, Real) || !isempty(obj.w_min)
-                    @smart_assert(all(val .>= obj.w_min))
+                @smart_assert(length(val) == size(port.returns, 2))
+                if isa(port.w_min, Real) || !isempty(port.w_min)
+                    @smart_assert(all(val .>= port.w_min))
                 end
             end
         end
     elseif sym ∈ (:mu, :fm_mu, :bl_mu, :blfm_mu, :latest_prices)
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
+            @smart_assert(length(val) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:kurt, :skurt)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2)^2)
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.returns, 2)^2)
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:skew, :sskew)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(obj.returns, 2) &&
-                          size(val, 2) == size(obj.returns, 2)^2)
+            @smart_assert(size(val, 1) == size(port.returns, 2) &&
+                          size(val, 2) == size(port.returns, 2)^2)
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:assets, :timestamps, :returns, :f_assets, :f_timestamps, :f_returns,
                   :fm_returns)
-        if !isempty(val) && !isempty(getfield(obj, sym))
-            @smart_assert(size(val) == size(getfield(obj, sym)))
+        if !isempty(val) && !isempty(getfield(port, sym))
+            @smart_assert(size(val) == size(getfield(port, sym)))
         end
     elseif sym == :f_mu
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.f_returns, 2))
+            @smart_assert(length(val) == size(port.f_returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_cov
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.f_returns, 2))
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.f_returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:L_2, :S_2)
         if !isempty(val)
-            N = size(obj.returns, 2)
+            N = size(port.returns, 2)
             @smart_assert(size(val) == (Int(N * (N + 1) / 2), N^2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :bl_bench_weights
         if !isempty(val)
-            @smart_assert(length(val) == size(obj.returns, 2))
+            @smart_assert(length(val) == size(port.returns, 2))
             if isa(val, AbstractRange)
                 val = collect(val)
             end
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:cov, :cor, :dist, :V, :SV)
         if !isempty(val)
-            @smart_assert(size(val, 1) == size(val, 2) == size(obj.returns, 2))
+            @smart_assert(size(val, 1) == size(val, 2) == size(port.returns, 2))
         end
-        val = convert(typeof(getfield(obj, sym)), val)
+        val = convert(typeof(getfield(port, sym)), val)
     end
-    return setfield!(obj, sym, val)
+    return setfield!(port, sym, val)
 end
-function Base.deepcopy(obj::HCPortfolio)
-    return HCPortfolio{typeof(obj.assets), typeof(obj.timestamps), typeof(obj.returns),
-                       typeof(obj.f_assets), typeof(obj.f_timestamps),
-                       typeof(obj.f_returns), typeof(obj.loadings),
-                       Union{<:RegressionType, Nothing}, typeof(obj.mu), typeof(obj.cov),
-                       typeof(obj.kurt), typeof(obj.skurt), typeof(obj.L_2),
-                       typeof(obj.S_2), typeof(obj.skew), typeof(obj.V), typeof(obj.sskew),
-                       typeof(obj.SV), typeof(obj.f_mu), typeof(obj.f_cov),
-                       typeof(obj.fm_returns), typeof(obj.fm_mu), typeof(obj.fm_cov),
-                       typeof(obj.bl_bench_weights), typeof(obj.bl_mu), typeof(obj.bl_cov),
-                       typeof(obj.blfm_mu), typeof(obj.blfm_cov),
-                       Union{<:Real, <:AbstractVector{<:Real}},
-                       Union{<:Real, <:AbstractVector{<:Real}}, typeof(obj.cor),
-                       typeof(obj.dist), typeof(obj.clusters), typeof(obj.k),
-                       typeof(obj.optimal), typeof(obj.solvers), typeof(obj.fail),
-                       typeof(obj.latest_prices), typeof(obj.alloc_optimal),
-                       typeof(obj.alloc_leftover), typeof(obj.alloc_solvers),
-                       typeof(obj.alloc_fail), typeof(obj.alloc_model)}(deepcopy(obj.assets),
-                                                                        deepcopy(obj.timestamps),
-                                                                        deepcopy(obj.returns),
-                                                                        deepcopy(obj.f_assets),
-                                                                        deepcopy(obj.f_timestamps),
-                                                                        deepcopy(obj.f_returns),
-                                                                        deepcopy(obj.loadings),
-                                                                        deepcopy(obj.regression_type),
-                                                                        deepcopy(obj.mu),
-                                                                        deepcopy(obj.cov),
-                                                                        deepcopy(obj.kurt),
-                                                                        deepcopy(obj.skurt),
-                                                                        deepcopy(obj.L_2),
-                                                                        deepcopy(obj.S_2),
-                                                                        deepcopy(obj.skew),
-                                                                        deepcopy(obj.V),
-                                                                        deepcopy(obj.sskew),
-                                                                        deepcopy(obj.SV),
-                                                                        deepcopy(obj.f_mu),
-                                                                        deepcopy(obj.f_cov),
-                                                                        deepcopy(obj.fm_returns),
-                                                                        deepcopy(obj.fm_mu),
-                                                                        deepcopy(obj.fm_cov),
-                                                                        deepcopy(obj.bl_bench_weights),
-                                                                        deepcopy(obj.bl_mu),
-                                                                        deepcopy(obj.bl_cov),
-                                                                        deepcopy(obj.blfm_mu),
-                                                                        deepcopy(obj.blfm_cov),
-                                                                        deepcopy(obj.w_min),
-                                                                        deepcopy(obj.w_max),
-                                                                        deepcopy(obj.cor),
-                                                                        deepcopy(obj.dist),
-                                                                        deepcopy(obj.clusters),
-                                                                        deepcopy(obj.k),
-                                                                        deepcopy(obj.optimal),
-                                                                        deepcopy(obj.solvers),
-                                                                        deepcopy(obj.fail),
-                                                                        deepcopy(obj.latest_prices),
-                                                                        deepcopy(obj.alloc_optimal),
-                                                                        deepcopy(obj.alloc_leftover),
-                                                                        deepcopy(obj.alloc_solvers),
-                                                                        deepcopy(obj.alloc_fail),
-                                                                        copy(obj.alloc_model))
+function Base.deepcopy(port::HCPortfolio)
+    return HCPortfolio{typeof(port.assets), typeof(port.timestamps), typeof(port.returns),
+                       typeof(port.f_assets), typeof(port.f_timestamps),
+                       typeof(port.f_returns), typeof(port.loadings),
+                       Union{<:RegressionType, Nothing}, typeof(port.mu), typeof(port.cov),
+                       typeof(port.kurt), typeof(port.skurt), typeof(port.L_2),
+                       typeof(port.S_2), typeof(port.skew), typeof(port.V),
+                       typeof(port.sskew), typeof(port.SV), typeof(port.f_mu),
+                       typeof(port.f_cov), typeof(port.fm_returns), typeof(port.fm_mu),
+                       typeof(port.fm_cov), typeof(port.bl_bench_weights),
+                       typeof(port.bl_mu), typeof(port.bl_cov), typeof(port.blfm_mu),
+                       typeof(port.blfm_cov), Union{<:Real, <:AbstractVector{<:Real}},
+                       Union{<:Real, <:AbstractVector{<:Real}}, typeof(port.cor),
+                       typeof(port.dist), typeof(port.clusters), typeof(port.k),
+                       typeof(port.optimal), typeof(port.solvers), typeof(port.fail),
+                       typeof(port.latest_prices), typeof(port.alloc_optimal),
+                       typeof(port.alloc_leftover), typeof(port.alloc_solvers),
+                       typeof(port.alloc_fail), typeof(port.alloc_model)}(deepcopy(port.assets),
+                                                                          deepcopy(port.timestamps),
+                                                                          deepcopy(port.returns),
+                                                                          deepcopy(port.f_assets),
+                                                                          deepcopy(port.f_timestamps),
+                                                                          deepcopy(port.f_returns),
+                                                                          deepcopy(port.loadings),
+                                                                          deepcopy(port.regression_type),
+                                                                          deepcopy(port.mu),
+                                                                          deepcopy(port.cov),
+                                                                          deepcopy(port.kurt),
+                                                                          deepcopy(port.skurt),
+                                                                          deepcopy(port.L_2),
+                                                                          deepcopy(port.S_2),
+                                                                          deepcopy(port.skew),
+                                                                          deepcopy(port.V),
+                                                                          deepcopy(port.sskew),
+                                                                          deepcopy(port.SV),
+                                                                          deepcopy(port.f_mu),
+                                                                          deepcopy(port.f_cov),
+                                                                          deepcopy(port.fm_returns),
+                                                                          deepcopy(port.fm_mu),
+                                                                          deepcopy(port.fm_cov),
+                                                                          deepcopy(port.bl_bench_weights),
+                                                                          deepcopy(port.bl_mu),
+                                                                          deepcopy(port.bl_cov),
+                                                                          deepcopy(port.blfm_mu),
+                                                                          deepcopy(port.blfm_cov),
+                                                                          deepcopy(port.w_min),
+                                                                          deepcopy(port.w_max),
+                                                                          deepcopy(port.cor),
+                                                                          deepcopy(port.dist),
+                                                                          deepcopy(port.clusters),
+                                                                          deepcopy(port.k),
+                                                                          deepcopy(port.optimal),
+                                                                          deepcopy(port.solvers),
+                                                                          deepcopy(port.fail),
+                                                                          deepcopy(port.latest_prices),
+                                                                          deepcopy(port.alloc_optimal),
+                                                                          deepcopy(port.alloc_leftover),
+                                                                          deepcopy(port.alloc_solvers),
+                                                                          deepcopy(port.alloc_fail),
+                                                                          copy(port.alloc_model))
 end
 
 export Portfolio, HCPortfolio

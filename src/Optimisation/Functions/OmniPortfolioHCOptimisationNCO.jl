@@ -6,6 +6,11 @@ struct NCOSpecialRMIdx{T1, T2, T3, T4, T5, T6}
     sskew_idx::T5
     wc_idx::T6
 end
+function find_special_rm(::Nothing)
+    return NCOSpecialRMIdx(Vector{Int}(undef, 0), Vector{Int}(undef, 0),
+                           Vector{Int}(undef, 0), Vector{Int}(undef, 0),
+                           Vector{Int}(undef, 0), Vector{Int}(undef, 0))
+end
 function find_special_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
     cov_idx = Vector{Int}(undef, 0)
     kurt_idx = Vector{Int}(undef, 0)
@@ -320,6 +325,9 @@ function _reset_wc_var_rm(rm, wc_idx, old_wc_rms)
     end
     return nothing
 end
+function reset_special_rms(::Nothing, args...)
+    return nothing
+end
 function reset_special_rms(rm, special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     (; old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews, old_wc_rms) = old_stats
@@ -382,7 +390,39 @@ function get_cluster_tr(x::TR, idx)
     return TR(; val = get_cluster_real_or_vector(x.val, idx),
               w = get_cluster_vector(x.w, idx))
 end
-function get_cluster_portfolio(port, rm, internal_args, cluster, cidx, idx_sq, Nc,
+function get_external_returns(x::AbstractMatrix, w)
+    return !isempty(x) ? x * w : x
+end
+function get_external_vector(x::AbstractVector, w)
+    return !isempty(x) ? transpose(w) * x : x
+end
+function get_external_matrix(x::AbstractMatrix, w)
+    return !isempty(x) ? transpose(w) * x * w : x
+end
+function get_external_loadings(x::DataFrame, w)
+    return DataFrame(!isempty(x) ? transpose(w) * Matrix(x) : x, names(x))
+end
+function get_external_real_or_vector(x::Real, w)
+    return x
+end
+function get_external_real_or_vector(x::AbstractVector, w)
+    return !isempty(x) ? transpose(w) * x : x
+end
+function get_external_cluster_tracking(x::Union{NoTracking, TrackRet}, ::Any)
+    return x
+end
+function get_external_cluster_tracking(x::TrackWeight, w)
+    return TrackWeight(; err = x.err, w = get_external_vector(x.w, w))
+end
+function get_external_tr(x::NoTR, ::Any)
+    return x
+end
+function get_external_tr(x::TR, w)
+    return TR(; val = get_external_real_or_vector(x.val, w),
+              w = get_external_vector(x.w, w))
+end
+
+function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                                special_rm_idx)
     (; opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
 
@@ -394,7 +434,7 @@ function get_cluster_portfolio(port, rm, internal_args, cluster, cidx, idx_sq, N
 
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
-    cov_flag = !isempty(cov_idx) || isa(kelly, AKelly) || wc_flag
+    cov_flag = !isempty(cov_idx) || !isempty(cov) || isa(kelly, AKelly) || wc_flag
     kurt_flag = !isempty(kurt_idx)
     skurt_flag = !isempty(skurt_idx)
     skew_flag = !isempty(skew_idx)
@@ -585,7 +625,7 @@ function get_cluster_portfolio(port, rm, internal_args, cluster, cidx, idx_sq, N
         cluster_assets!(intra_port; cluster_kwargs...)
     end
 
-    w = optimise!(intra_port, type; rm = rm, opt_kwargs...)
+    w = optimise!(intra_port, type; opt_kwargs...)
     if !isempty(w)
         w = w.weights
     else
@@ -593,6 +633,9 @@ function get_cluster_portfolio(port, rm, internal_args, cluster, cidx, idx_sq, N
     end
 
     return w, intra_port.fail
+end
+function set_rm_stats(::OmniPortfolio, ::Nothing, args...)
+    return nothing
 end
 function set_rm_stats(port::OmniPortfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
@@ -634,12 +677,13 @@ function set_rm_stats(port::OmniPortfolio, rm, cluster, cidx, idx_sq, Nc, specia
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms)
 end
-function calc_intra_weights(port::OmniPortfolio, internal_args, rm)
+function calc_intra_weights(port::OmniPortfolio, internal_args)
     k = port.k
     idx = cutree(port.clusters; k = k)
     w = zeros(eltype(port.returns), size(port.returns, 2), k)
     cfails = Dict{Int, Dict}()
 
+    rm = haskey(internal_args.opt_kwargs, :rm) ? internal_args.opt_kwargs.rm : nothing
     special_rm_idx = find_special_rm(rm)
     (; kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     kurt_flag = !isempty(kurt_idx)
@@ -668,8 +712,8 @@ function calc_intra_weights(port::OmniPortfolio, internal_args, rm)
         end
 
         old_stats = set_rm_stats(port, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
-        cw, cfail = get_cluster_portfolio(port, rm, internal_args, cluster, cidx, idx_sq,
-                                          Nc, special_rm_idx)
+        cw, cfail = get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
+                                          special_rm_idx)
         reset_special_rms(rm, special_rm_idx, old_stats)
 
         w[cidx, i] .= cw
@@ -682,9 +726,309 @@ function calc_intra_weights(port::OmniPortfolio, internal_args, rm)
     end
     return w
 end
-function nco_optimise(port, type, rm_i, rm_o)
-    wi = calc_intra_weights(port, type.internal, rm_i)
-    w = calc_inter_weights(port, type.external, rm_o)
+function compute_cov_rm(rm, cov_idx, wi, old_covs)
+    if !isa(rm, AbstractVector)
+        if !(isnothing(rm.sigma) || isempty(rm.sigma))
+            push!(old_covs, rm.sigma)
+            rm.sigma = transpose(wi) * rm.sigma * wi
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, cov_idx)
+            if !(isnothing(r.sigma) || isempty(r.sigma))
+                push!(old_covs, r.sigma)
+                r.sigma = transpose(wi) * r.sigma * wi
+            end
+        end
+    end
+end
+function _set_kt_rm_nothing(rm, kt_idx, old_kts)
+    if !isa(rm, AbstractVector)
+        if !(isnothing(rm.kt) || isempty(rm.kt))
+            push!(old_kts, rm.kt)
+            rm.kt = nothing
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, kt_idx)
+            if !(isnothing(r.kt) || isempty(r.kt))
+                push!(old_kts, r.kt)
+                r.kt = nothing
+            end
+        end
+    end
+end
+function _set_skew_rm_nothing(rm, skew_idx, old_Vs, old_skews)
+    if !isa(rm, AbstractVector)
+        if !(isnothing(rm.V) || isempty(rm.V))
+            push!(old_skews, rm.skew)
+            push!(old_Vs, rm.V)
+            rm.skew = nothing
+            rm.V = nothing
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, skew_idx)
+            if !(isnothing(r.V) || isempty(r.V))
+                push!(old_skews, r.skew)
+                push!(old_Vs, r.V)
+                r.skew = nothing
+                r.V = nothing
+            end
+        end
+    end
+end
+function _set_wc_var_rm_nothing(rm, wc_idx, old_wc_rms)
+    if !isa(rm, AbstractVector)
+        if !(isnothing(rm.sigma) ||
+             isempty(rm.sigma) ||
+             isnothing(rm.cov_l) ||
+             isempty(rm.cov_l) ||
+             isnothing(rm.cov_u) ||
+             isempty(rm.cov_u) ||
+             isnothing(rm.cov_mu) ||
+             isempty(rm.cov_mu) ||
+             isnothing(rm.cov_sigma) ||
+             isempty(rm.cov_sigma))
+            push!(old_wc_rms, rm)
+            rm.sigma = nothing
+            rm.cov_l = nothing
+            rm.cov_u = nothing
+            rm.cov_mu = nothing
+            rm.cov_sigma = nothing
+        end
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, wc_idx)
+            if !(isnothing(r.sigma) ||
+                 isempty(r.sigma) ||
+                 isnothing(r.cov_l) ||
+                 isempty(r.cov_l) ||
+                 isnothing(r.cov_u) ||
+                 isempty(r.cov_u) ||
+                 isnothing(r.cov_mu) ||
+                 isempty(r.cov_mu) ||
+                 isnothing(r.cov_sigma) ||
+                 isempty(r.cov_sigma))
+                push!(old_wc_rms, r)
+                r.sigma = nothing
+                r.cov_l = nothing
+                r.cov_u = nothing
+                r.cov_mu = nothing
+                r.cov_sigma = nothing
+            end
+        end
+    end
+    return nothing
+end
+function set_rm_stats(port, rm, wi, special_rm_idx)
+    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
+
+    cov_flag = !isempty(cov_idx)
+    kurt_flag = !isempty(kurt_idx)
+    skurt_flag = !isempty(skurt_idx)
+    skew_flag = !isempty(skew_idx)
+    sskew_flag = !isempty(sskew_idx)
+    wc_flag = !isempty(wc_idx)
+
+    old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_Vs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_SVs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_skews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_sskews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
+    old_wc_rms = Vector{Union{WCVariance}}(undef, 0)
+
+    if cov_flag
+        compute_cov_rm(rm, cov_idx, wi, old_covs)
+    end
+    if kurt_flag
+        _set_kt_rm_nothing(rm, kurt_idx, old_kurts)
+    end
+    if skurt_flag
+        _set_kt_rm_nothing(rm, skurt_idx, old_skurts)
+    end
+    if skew_flag
+        _set_skew_rm_nothing(rm, skew_idx, old_Vs, old_skews)
+    end
+    if sskew_flag
+        _set_skew_rm_nothing(rm, sskew_idx, old_SVs, old_sskews)
+    end
+    if wc_flag
+        _set_wc_var_rm_nothing(rm, wc_idx, old_wc_rms)
+    end
+    return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
+                       old_sskews, old_wc_rms)
+end
+function get_external_portfolio(port, wi, external_args, special_rm_idx)
+    (; opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = external_args
+
+    type = !haskey(opt_kwargs, :type) ? Trad() : opt_kwargs.type
+    kelly = !haskey(opt_kwargs, :kelly) ? NoKelly() : opt_kwargs.kelly
+    class = !haskey(opt_kwargs, :classic) ? Classic() : opt_kwargs.class
+
+    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_u, short_l, short_u, min_budget, budget, max_budget, min_short_budget, short_budget, max_short_budget, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
+
+    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
+    wc_flag = !isempty(wc_idx)
+    cov_flag = !isempty(cov_idx) || !isempty(cov) || isa(kelly, AKelly) || wc_flag
+    kurt_flag = !isempty(kurt_idx)
+    skurt_flag = !isempty(skurt_idx)
+    skew_flag = !isempty(skew_idx)
+    sskew_flag = !isempty(sskew_idx)
+    factor_flag = isa(class, Union{FM, FC})
+    bl_flag = isa(class, Union{BL, BLFM})
+    blfm_flag = isa(class, BLFM)
+    hc_flag = isa(type, HCOptimType)
+    rp_flag = isa(type, Union{RP, RRP})
+    cvx_flag = isa(type, OptimType)
+
+    assets = 1:size(wi, 2)
+    returns = get_external_returns(returns, wi)
+    mu = get_external_vector(mu, wi)
+    cov = cov_flag ? get_external_matrix(cov, wi) : Matrix{eltype(returns)}(undef, 0, 0)
+
+    if factor_flag
+        fm_returns = get_external_returns(fm_returns, wi)
+        fm_mu = get_external_vector(fm_mu, wi)
+        if cov_flag
+            fm_cov = get_external_matrix(fm_cov, wi)
+        else
+            fm_cov = Matrix{eltype(returns)}(undef, 0, 0)
+        end
+        loadings = get_external_loadings(loadings, wi)
+    else
+        fm_returns = Matrix{eltype(returns)}(undef, 0, 0)
+        fm_mu = Vector{eltype(returns)}(undef, 0)
+        fm_cov = Matrix{eltype(returns)}(undef, 0, 0)
+        loadings = DataFrame()
+    end
+
+    if bl_flag
+        bl_bench_weights = get_external_vector(bl_bench_weights, wi)
+        bl_mu = get_external_vector(bl_mu, wi)
+        if cov_flag
+            bl_cov = get_external_matrix(bl_cov, wi)
+        else
+            bl_cov = Matrix{eltype(returns)}(undef, 0, 0)
+        end
+
+        if blfm_flag
+            blfm_mu = get_external_vector(blfm_mu, wi)
+            if cov_flag
+                blfm_cov = get_external_matrix(blfm_cov, wi)
+            else
+                blfm_cov = Matrix{eltype(returns)}(undef, 0, 0)
+            end
+        else
+            blfm_mu = Vector{eltype(returns)}(undef, 0)
+            blfm_cov = Matrix{eltype(returns)}(undef, 0, 0)
+        end
+    else
+        bl_bench_weights = Vector{eltype(returns)}(undef, 0)
+        bl_mu = Vector{eltype(returns)}(undef, 0)
+        bl_cov = Matrix{eltype(returns)}(undef, 0, 0)
+        blfm_mu = Vector{eltype(returns)}(undef, 0)
+        blfm_cov = Matrix{eltype(returns)}(undef, 0, 0)
+    end
+
+    if hc_flag
+        w_min = get_external_real_or_vector(w_min, wi)
+        w_max = get_external_real_or_vector(w_max, wi)
+    else
+        w_min = 0.0
+        w_max = 1.0
+    end
+
+    if rp_flag
+        risk_budget = get_external_vector(risk_budget, wi)
+    end
+
+    if cvx_flag
+        long_l = get_external_real_or_vector(long_l, wi)
+        long_u = get_external_real_or_vector(long_u, wi)
+        short_l = get_external_real_or_vector(short_l, wi)
+        short_u = get_external_real_or_vector(short_u, wi)
+        tracking = get_external_cluster_tracking(tracking, wi)
+        turnover = get_external_tr(turnover, wi)
+        long_fees = get_external_real_or_vector(long_fees, wi)
+        short_fees = get_external_real_or_vector(short_fees, wi)
+        rebalance = get_external_tr(rebalance, wi)
+    else
+        long_l = 0.0
+        long_u = 1.0
+        short_l = -0.0
+        short_u = -0.2
+        tracking = NoTracking()
+        turnover = NoTR()
+        long_fees = 0.0
+        short_fees = 0.0
+        rebalance = NoTR()
+    end
+
+    inter_port = OmniPortfolio(; assets = assets, ret = returns, f_assets = f_assets,
+                               f_ret = f_returns, loadings = loadings,
+                               regression_type = regression_type, mu_l = mu_l, mu = mu,
+                               cov = cov, k = k, max_num_assets_kurt = max_num_assets_kurt,
+                               max_num_assets_kurt_scale = max_num_assets_kurt_scale,
+                               f_mu = f_mu, f_cov = f_cov, fm_returns = fm_returns,
+                               fm_mu = fm_mu, fm_cov = fm_cov,
+                               bl_bench_weights = bl_bench_weights, bl_mu = bl_mu,
+                               bl_cov = bl_cov, blfm_mu = blfm_mu, blfm_cov = blfm_cov,
+                               w_min = w_min, w_max = w_max, risk_budget = risk_budget,
+                               f_risk_budget = f_risk_budget, short = short,
+                               long_l = long_l, long_u = long_u, short_l = short_l,
+                               short_u = short_u, min_budget = min_budget, budget = budget,
+                               max_budget = max_budget, min_short_budget = min_short_budget,
+                               short_budget = short_budget,
+                               max_short_budget = max_short_budget, card_scale = card_scale,
+                               card = card, nea = nea, tracking = tracking,
+                               turnover = turnover, l1 = l1, l2 = l2, long_fees = long_fees,
+                               short_fees = short_fees, rebalance = rebalance,
+                               solvers = solvers, port_kwargs...)
+
+    asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = hc_flag,
+                      set_dist = hc_flag, set_kurt = kurt_flag, set_skurt = skurt_flag,
+                      set_skew = skew_flag, set_sskew = sskew_flag, stats_kwargs...)
+    if !isempty(factor_kwargs) && factor_flag
+        factor_statistics!(inter_port; factor_kwargs...)
+    end
+    if wc_flag
+        wc_statistics!(inter_port; wc_kwargs...)
+    end
+    if hc_flag
+        cluster_assets!(inter_port; cluster_kwargs...)
+    end
+
+    w = optimise!(inter_port, type; opt_kwargs...)
+
+    if !isempty(w)
+        w = w.weights
+    else
+        w = zeros(eltype(returns), size(returns, 2))
+    end
+
+    return w, inter_port.fail
+end
+function calc_inter_weights(port::OmniPortfolio, wi, external_args)
+    rm = haskey(external_args.opt_kwargs, :rm) ? external_args.opt_kwargs.rm : nothing
+
+    special_rm_idx = find_special_rm(rm)
+    old_stats = set_rm_stats(port, rm, wi, special_rm_idx)
+    cw, cfail = get_external_portfolio(port, wi, external_args, special_rm_idx)
+    reset_special_rms(rm, special_rm_idx, old_stats)
+
+    w = wi * cw
+    if !isempty(cfail)
+        port.fail[:inter] = cfail
+    end
+
+    return w
+end
+function nco_optimise(port, type)
+    wi = calc_intra_weights(port, type.internal)
+    w = calc_inter_weights(port, wi, type.external)
 
     return w
 end

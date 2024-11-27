@@ -25,12 +25,10 @@ function optimise!(port::OmniPortfolio, type::HERC;
     w = herc_optimise(port, rm, rm_o, sigma, sigma_o, returns, returns_o)
     return finalise_weights(type, port, w, w_min, w_max, max_iter)
 end
-function optimise!(port::OmniPortfolio, type::NCO; max_iter::Int = 100,
-                   rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
-                   rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm, kwargs...)
+function optimise!(port::OmniPortfolio, type::NCO; max_iter::Int = 100, kwargs...)
     empty!(port.fail)
     lo, hi = w_limits(type, eltype(port.returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
-    w = nco_optimise(port, type, rm, rm_o)
+    w = nco_optimise(port, type)
     return finalise_weights(type, port, w, w_min, w_max, max_iter)
 end

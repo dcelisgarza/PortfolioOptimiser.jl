@@ -98,43 +98,6 @@ function gen_cluster_stats(port, mu, sigma, returns, rm, cidx, cov_idx, kurt_idx
     return cassets, cret, cmu, ccov, ccor, cdist, old_covs, old_kurts, old_skurts, old_Vs,
            old_skews, old_SVs, old_sskews
 end
-
-function _set_kt_rm_nothing(rm, kt_idx, old_kts)
-    if !isa(rm, AbstractVector)
-        if !(isnothing(rm.kt) || isempty(rm.kt))
-            push!(old_kts, rm.kt)
-            rm.kt = nothing
-        end
-    else
-        rm_flat = reduce(vcat, rm)
-        for r ∈ view(rm_flat, kt_idx)
-            if !(isnothing(r.kt) || isempty(r.kt))
-                push!(old_kts, r.kt)
-                r.kt = nothing
-            end
-        end
-    end
-end
-function _set_skew_rm_nothing(rm, skew_idx, old_Vs, old_skews)
-    if !isa(rm, AbstractVector)
-        if !(isnothing(rm.V) || isempty(rm.V))
-            push!(old_skews, rm.skew)
-            push!(old_Vs, rm.V)
-            rm.skew = nothing
-            rm.V = nothing
-        end
-    else
-        rm_flat = reduce(vcat, rm)
-        for r ∈ view(rm_flat, skew_idx)
-            if !(isnothing(r.V) || isempty(r.V))
-                push!(old_skews, r.skew)
-                push!(old_Vs, r.V)
-                r.skew = nothing
-                r.V = nothing
-            end
-        end
-    end
-end
 function set_kurt_skurt_skew_nothing(port, rm, kurt_idx, skurt_idx, skew_idx, sskew_idx)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_skurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
@@ -285,7 +248,7 @@ function inter_nco_opt(port, mu, sigma, returns, rm, cassets, wi, set_kurt, set_
 
     return w, inter_port.fail
 end
-function compute_cov_rm(port, rm, cov_idx, wi)
+function compute_cov_rm(port::HCPortfolio, rm, cov_idx, wi)
     old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     if !isempty(cov_idx)
         if !isa(rm, AbstractVector)

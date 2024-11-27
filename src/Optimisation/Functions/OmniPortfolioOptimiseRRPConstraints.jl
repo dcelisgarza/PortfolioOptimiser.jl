@@ -29,7 +29,7 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
                  end)
     return nothing
 end
-function rrp_constraints(port::OmniPortfolio, type::RRP, sigma)
+function rrp_constraints(port::OmniPortfolio, version, sigma)
     model = port.model
     w = model[:w]
     N = length(w)
@@ -54,6 +54,6 @@ function rrp_constraints(port::OmniPortfolio, type::RRP, sigma)
                       2 * gamma * sqrt(risk_budget[i])
                       w[i] - zeta[i]] ∈ SecondOrderCone()
                  end)
-    _rrp_ver_constraints(type.version, model, sigma)
+    _rrp_ver_constraints(version, model, sigma)
     return nothing
 end
