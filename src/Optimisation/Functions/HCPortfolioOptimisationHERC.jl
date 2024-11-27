@@ -37,10 +37,10 @@ function _optimise!(::HERC, port::HCPortfolio, class::PortClass,
             scale = r.settings.scale
             for cluster ∈ clusters
                 if issubset(cluster, ln)
-                    lrisk += cluster_risk(port, sigma, cluster, r) * scale
+                    lrisk += cluster_risk(port, sigma, returns, cluster, r) * scale
                     append!(lc, cluster)
                 elseif issubset(cluster, rn)
-                    rrisk += cluster_risk(port, sigma, cluster, r) * scale
+                    rrisk += cluster_risk(port, sigma, returns, cluster, r) * scale
                     append!(rc, cluster)
                 end
             end
@@ -62,7 +62,7 @@ function _optimise!(::HERC, port::HCPortfolio, class::PortClass,
         for r ∈ rm_i
             solver_flag = _set_rm_solvers!(r, port.solvers)
             scale = r.settings.scale
-            risk[cidx] .+= naive_risk(port, sigma, clusters, r) * scale
+            risk[cidx] .+= naive_risk(port, sigma, returns, clusters, r) * scale
             _unset_rm_solvers!(r, solver_flag)
         end
         weights[cidx] .*= risk[cidx]

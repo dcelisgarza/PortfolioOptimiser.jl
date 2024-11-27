@@ -162,7 +162,24 @@ struct HERC <: HCOptimType end
 end
 ```
 """
+
+mutable struct NCOArgs
+    opt_kwargs::NamedTuple
+    port_kwargs::NamedTuple
+    stats_kwargs::NamedTuple
+    wc_kwargs::NamedTuple
+    factor_kwargs::NamedTuple
+    cluster_kwargs::NamedTuple
+end
+function NCOArgs(; opt_kwargs::NamedTuple = (;), port_kwargs::NamedTuple = (;),
+                 stats_kwargs::NamedTuple = (;), wc_kwargs::NamedTuple = (;),
+                 factor_kwargs::NamedTuple = (;), cluster_kwargs::NamedTuple = (;))
+    return NCOArgs(opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
+                   cluster_kwargs)
+end
 mutable struct NCO <: HCOptimType
+    internal::NCOArgs
+    external::NCOArgs
     opt_kwargs::NamedTuple
     opt_kwargs_o::NamedTuple
     port_kwargs::NamedTuple
@@ -175,15 +192,16 @@ mutable struct NCO <: HCOptimType
     cluster_kwargs_o::NamedTuple
     stat_kwargs_o::NamedTuple
 end
-function NCO(; opt_kwargs::NamedTuple = (;), opt_kwargs_o::NamedTuple = opt_kwargs,
+function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = NCOArgs(;),
+             opt_kwargs::NamedTuple = (;), opt_kwargs_o::NamedTuple = opt_kwargs,
              port_kwargs::NamedTuple = (;), port_kwargs_o::NamedTuple = port_kwargs,
              factor_kwargs::NamedTuple = (;), factor_kwargs_o::NamedTuple = factor_kwargs,
              wc_kwargs::NamedTuple = (;), wc_kwargs_o::NamedTuple = wc_kwargs,
              cluster_kwargs::NamedTuple = (;),
              cluster_kwargs_o::NamedTuple = cluster_kwargs, stat_kwargs_o::NamedTuple = (;))
-    return NCO(opt_kwargs, opt_kwargs_o, port_kwargs, port_kwargs_o, factor_kwargs,
-               factor_kwargs_o, wc_kwargs, wc_kwargs_o, cluster_kwargs, cluster_kwargs_o,
-               stat_kwargs_o)
+    return NCO(internal, external, opt_kwargs, opt_kwargs_o, port_kwargs, port_kwargs_o,
+               factor_kwargs, factor_kwargs_o, wc_kwargs, wc_kwargs_o, cluster_kwargs,
+               cluster_kwargs_o, stat_kwargs_o)
 end
 
 for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),
@@ -198,4 +216,4 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),
          end)
 end
 
-export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO
+export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs

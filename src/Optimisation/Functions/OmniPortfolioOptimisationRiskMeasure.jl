@@ -176,12 +176,6 @@ function _choose_wc_stats_port_rm(port, rm)
         port.cov_u
     end
 
-    cov_mu = if !(isnothing(rm.cov_mu) || isempty(rm.cov_mu))
-        rm.cov_mu
-    else
-        port.cov_mu
-    end
-
     cov_sigma = if !(isnothing(rm.cov_sigma) || isempty(rm.cov_sigma))
         rm.cov_sigma
     else
@@ -194,7 +188,7 @@ function _choose_wc_stats_port_rm(port, rm)
         port.k_sigma
     end
 
-    return sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma
+    return sigma, cov_l, cov_u, cov_sigma, k_sigma
 end
 function _wc_variance_risk_variables(::Box, model)
     if haskey(model, :Au)
@@ -222,14 +216,13 @@ function _wc_variance_risk_variables(::Ellipse, model)
     @constraint(model, E ∈ PSDCone())
     return nothing
 end
-function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)
     Au = model[:Au]
     Al = model[:Al]
     @expression(model, wc_variance_risk, tr(Au * cov_u) - tr(Al * cov_l))
     return nothing
 end
-function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_mu, cov_sigma,
-                           k_sigma)
+function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)
     WpE = model[:WpE]
     G_sigma = sqrt(cov_sigma)
     @variable(model, t_ge)
@@ -240,15 +233,15 @@ function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_mu, cov_si
     @constraint(model, [t_ge; x_ge] ∈ SecondOrderCone())
     return nothing
 end
-function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma,
+function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_sigma, k_sigma,
                            wc_variance_risk)
     Au = model[:Au]
     Al = model[:Al]
     add_to_expression!(wc_variance_risk, tr(Au * cov_u) - tr(Al * cov_l))
     return nothing
 end
-function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_mu, cov_sigma,
-                           k_sigma, wc_variance_risk)
+function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, k_sigma,
+                           wc_variance_risk)
     WpE = model[:WpE]
     G_sigma = sqrt(cov_sigma)
     t_ge = @variable(model)
@@ -262,9 +255,9 @@ function set_rm(port, rm::WCVariance, type::Union{Trad, RP}; sigma::AbstractMatr
                 kwargs...)
     model = port.model
     _SDP_constraints(model, type)
-    sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
+    sigma, cov_l, cov_u, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
     _wc_variance_risk_variables(rm.wc_set, model)
-    _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+    _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)
     wc_variance_risk = model[:wc_variance_risk]
     _set_rm_risk_upper_bound(type, model, wc_variance_risk, rm.settings.ub)
     _set_risk_expression(model, wc_variance_risk, rm.settings.scale, rm.settings.flag)
@@ -277,11 +270,11 @@ function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP};
     count = length(rms)
     @expression(model, wc_variance_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
+        sigma, cov_l, cov_u, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
         _wc_variance_risk_variables(rm.wc_set, model)
-        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma,
+        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_sigma, k_sigma,
                           wc_variance_risk[i])
-        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_mu, cov_sigma, k_sigma)
+        _wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)
         _set_rm_risk_upper_bound(type, model, wc_variance_risk[i], rm.settings.ub)
         _set_risk_expression(model, wc_variance_risk[i], rm.settings.scale,
                              rm.settings.flag)

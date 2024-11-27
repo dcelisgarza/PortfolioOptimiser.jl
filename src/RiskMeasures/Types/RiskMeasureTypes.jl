@@ -2052,7 +2052,6 @@ mutable struct WCVariance{T1} <: RiskMeasure
     sigma::Union{<:AbstractMatrix, Nothing}
     cov_l::Union{AbstractMatrix{<:Real}, Nothing}
     cov_u::Union{AbstractMatrix{<:Real}, Nothing}
-    cov_mu::Union{AbstractMatrix{<:Real}, Nothing}
     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}
     k_sigma::T1
 end
@@ -2060,14 +2059,13 @@ function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WorstCaseSet 
                     sigma::Union{<:AbstractMatrix, Nothing} = nothing,
                     cov_l::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_u::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
-                    cov_mu::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     k_sigma::Real = Inf)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_mu,
-                                       cov_sigma, k_sigma)
+    return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_sigma,
+                                       k_sigma)
 end
 function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     if sym ∈ (:sigma, :cov_l, :cov_u, :cov_mu, :cov_sigma)

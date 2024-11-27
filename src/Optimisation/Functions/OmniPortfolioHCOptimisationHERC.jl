@@ -1,6 +1,6 @@
-function naive_risk(port, sigma, cluster, rm)
+function naive_risk(port, sigma, returns, cluster, rm)
     sigma_old = _set_hc_rm_sigma(rm, sigma, cluster)
-    cret = view(port.returns, :, cluster)
+    cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = _naive_risk(rm, cret)
     _unset_hc_rm_sigma(rm, sigma_old)
@@ -10,12 +10,13 @@ end
 function herc_optimise(port::OmniPortfolio,
                        rm_i::Union{AbstractVector, <:AbstractRiskMeasure},
                        rm_o::Union{AbstractVector, <:AbstractRiskMeasure},
-                       sigma::AbstractMatrix, returns::AbstractMatrix)
+                       sigma_i::AbstractMatrix, sigma_o::AbstractMatrix,
+                       returns_i::AbstractMatrix, returns_o::AbstractMatrix)
     nodes = to_tree(port.clusters)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
 
-    weights = ones(eltype(returns), size(returns, 2))
+    weights = ones(eltype(returns_o), size(returns_o, 2))
 
     idx = cutree(port.clusters; k = port.k)
 
@@ -45,10 +46,10 @@ function herc_optimise(port::OmniPortfolio,
             scale = r.settings.scale
             for cluster ∈ clusters
                 if issubset(cluster, ln)
-                    lrisk += cluster_risk(port, sigma, cluster, r) * scale
+                    lrisk += cluster_risk(port, sigma_o, returns_o, cluster, r) * scale
                     append!(lc, cluster)
                 elseif issubset(cluster, rn)
-                    rrisk += cluster_risk(port, sigma, cluster, r) * scale
+                    rrisk += cluster_risk(port, sigma_o, returns_o, cluster, r) * scale
                     append!(rc, cluster)
                 end
             end
@@ -63,14 +64,14 @@ function herc_optimise(port::OmniPortfolio,
         weights[rn] *= 1 - alpha_1
     end
 
-    risk = zeros(eltype(returns), size(returns, 2))
+    risk = zeros(eltype(returns_i), size(returns_i, 2))
     for i ∈ 1:(port.k)
         cidx = idx .== i
         clusters = findall(cidx)
         for r ∈ rm_i
             solver_flag = _set_rm_solvers!(r, port.solvers)
             scale = r.settings.scale
-            risk[cidx] .+= naive_risk(port, sigma, clusters, r) * scale
+            risk[cidx] .+= naive_risk(port, sigma_i, returns_i, clusters, r) * scale
             _unset_rm_solvers!(r, solver_flag)
         end
         weights[cidx] .*= risk[cidx]

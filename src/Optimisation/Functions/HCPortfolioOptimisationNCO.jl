@@ -43,102 +43,7 @@ function find_cov_kurt_skew_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
 
     return cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx
 end
-function _get_skew(::Skew, port, cluster, idx)
-    return view(port.skew, cluster, idx)
-end
-function _get_skew(::SSkew, port, cluster, idx)
-    return view(port.sskew, cluster, idx)
-end
-function gen_cluster_skew_sskew(args...)
-    return nothing, nothing
-end
-function gen_cluster_skew_sskew(rm::RMSkew, port, cluster, Nc = nothing, idx = nothing)
-    old_skew = rm.skew
-    old_V = rm.V
-    if isnothing(idx)
-        idx = Int[]
-        N = size(port.returns, 2)
-        Nc = length(cluster)
-        sizehint!(idx, Nc^2)
-        for c ∈ cluster
-            append!(idx, (((c - 1) * N + 1):(c * N))[cluster])
-        end
-    end
-    skew = if isnothing(rm.skew) || isempty(rm.skew)
-        _get_skew(rm, port, cluster, idx)
-    else
-        view(rm.skew, cluster, idx)
-    end
-    V = zeros(eltype(skew), Nc, Nc)
-    for i ∈ 1:Nc
-        j = (i - 1) * Nc + 1
-        k = i * Nc
-        vals, vecs = eigen(skew[:, j:k])
-        vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
-        V .-= real(vecs * Diagonal(vals) * transpose(vecs))
-    end
-    if all(iszero.(diag(V)))
-        V .= V + eps(eltype(skew)) * I
-    end
-    rm.V = V
-    return old_V, old_skew
-end
 
-function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
-    if !isa(rm, AbstractVector)
-        if isnothing(rm.kt) || isempty(rm.kt)
-            push!(old_kts, rm.kt)
-            rm.kt = _get_port_kt(val, port, idx)
-        else
-            push!(old_kts, rm.kt)
-            rm.kt = view(rm.kt, idx, idx)#_get_port_kt(val, port, idx)
-        end
-    else
-        rm_flat = reduce(vcat, rm)
-        for r ∈ view(rm_flat, kt_idx)
-            if isnothing(r.kt) || isempty(r.kt)
-                push!(old_kts, r.kt)
-                r.kt = _get_port_kt(val, port, idx)
-            else
-                push!(old_kts, r.kt)
-                r.kt = view(r.kt, idx, idx)#_get_port_kt(val, port, idx)
-            end
-        end
-    end
-    return nothing
-end
-function _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx, old_Vs, old_skews)
-    if !isa(rm, AbstractVector)
-        old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster, Nc, idx)
-        push!(old_Vs, old_V)
-        push!(old_skews, old_skew)
-    else
-        rm_flat = reduce(vcat, rm)
-        for r ∈ view(rm_flat, skew_idx)
-            old_V, old_skew = gen_cluster_skew_sskew(r, port, cluster, Nc, idx)
-            push!(old_Vs, old_V)
-            push!(old_skews, old_skew)
-        end
-    end
-    return nothing
-end
-function _set_cov_rm(rm, cov_idx, idx, old_covs)
-    if !isa(rm, AbstractVector)
-        if !(isnothing(rm.sigma) || isempty(rm.sigma))
-            push!(old_covs, rm.sigma)
-            rm.sigma = view(rm.sigma, idx, idx)
-        end
-    else
-        rm_flat = reduce(vcat, rm)
-        for r ∈ view(rm_flat, cov_idx)
-            if !(isnothing(r.sigma) || isempty(r.sigma))
-                push!(old_covs, r.sigma)
-                r.sigma = view(r.sigma, idx, idx)
-            end
-        end
-    end
-    return nothing
-end
 function gen_cluster_stats(port, mu, sigma, returns, rm, cidx, cov_idx, kurt_idx, skurt_idx,
                            skew_idx, sskew_idx, opt_kwargs)
     cassets = port.assets[cidx]
@@ -193,12 +98,7 @@ function gen_cluster_stats(port, mu, sigma, returns, rm, cidx, cov_idx, kurt_idx
     return cassets, cret, cmu, ccov, ccor, cdist, old_covs, old_kurts, old_skurts, old_Vs,
            old_skews, old_SVs, old_sskews
 end
-function _get_port_kt(::Val{true}, port, idx)
-    return view(port.kurt, idx, idx)
-end
-function _get_port_kt(::Val{false}, port, idx)
-    return view(port.skurt, idx, idx)
-end
+
 function _set_kt_rm_nothing(rm, kt_idx, old_kts)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.kt) || isempty(rm.kt))
@@ -255,44 +155,6 @@ function set_kurt_skurt_skew_nothing(port, rm, kurt_idx, skurt_idx, skew_idx, ss
         _set_skew_rm_nothing(rm, sskew_idx, old_SVs, old_sskews)
     end
     return old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews
-end
-function _reset_kt_rm(rm, kt_idx, old_kts)
-    if !isempty(kt_idx) && !isempty(old_kts)
-        if !isa(rm, AbstractVector)
-            rm.kt = old_kts[1]
-        else
-            rm_flat = reduce(vcat, rm)
-            for (r, old_kt) ∈ zip(view(rm_flat, kt_idx), old_kts)
-                r.kt = old_kt
-            end
-        end
-    end
-end
-function _reset_cov_rm(rm, cov_idx, old_covs)
-    if !isempty(cov_idx) && !isempty(old_covs)
-        if !isa(rm, AbstractVector)
-            rm.sigma = old_covs[1]
-        else
-            rm_flat = reduce(vcat, rm)
-            for (r, old_cov) ∈ zip(view(rm_flat, cov_idx), old_covs)
-                r.sigma = old_cov
-            end
-        end
-    end
-end
-function _reset_skew_rm(rm, skew_idx, old_Vs, old_skews)
-    if !isempty(skew_idx) && !isempty(old_Vs)
-        if !isa(rm, AbstractVector)
-            rm.skew = old_skews[1]
-            rm.V = old_Vs[1]
-        else
-            rm_flat = reduce(vcat, rm)
-            for (r, old_V, old_skew) ∈ zip(view(rm_flat, skew_idx), old_Vs, old_skews)
-                r.skew = old_skew
-                r.V = old_V
-            end
-        end
-    end
 end
 function reset_cov_kurt_and_skurt_rm(rm, cov_idx, old_covs, kurt_idx, old_kurts, skurt_idx,
                                      old_skurts, skew_idx, old_Vs, old_skews, sskew_idx,

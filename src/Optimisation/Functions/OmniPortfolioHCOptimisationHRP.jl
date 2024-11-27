@@ -18,9 +18,9 @@ function hrp_optimise(port::OmniPortfolio, rm::Union{AbstractVector, <:AbstractR
                 solver_flag = _set_rm_solvers!(r, port.solvers)
                 scale = r.settings.scale
                 # Left risk.
-                lrisk += cluster_risk(port, sigma, lc, r) * scale
+                lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
                 # Right risk.
-                rrisk += cluster_risk(port, sigma, rc, r) * scale
+                rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
                 _unset_rm_solvers!(r, solver_flag)
             end
             # Allocate weight to clusters.

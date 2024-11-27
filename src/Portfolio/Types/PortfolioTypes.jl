@@ -146,7 +146,6 @@ mutable struct OmniPortfolio{
     alloc_fail::T_alloc_fail
     alloc_walking::T_alloc_walking
 end
-
 function setup_returns_assets_timestamps(returns, assets, timestamps, ret)
     if !isempty(returns)
         assets = setdiff(names(returns), ("timestamp",))
@@ -1049,6 +1048,7 @@ function Base.deepcopy(obj::OmniPortfolio)
                                                                             deepcopy(obj.alloc_fail),
                                                                             deepcopy(obj.alloc_walking))
 end
+
 export OmniPortfolio
 """
 ```
