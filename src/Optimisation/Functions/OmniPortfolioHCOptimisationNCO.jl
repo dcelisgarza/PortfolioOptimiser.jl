@@ -424,11 +424,10 @@ end
 
 function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                                special_rm_idx)
-    (; opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
+    (; type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
 
-    type = !haskey(opt_kwargs, :type) ? Trad() : opt_kwargs.type
-    kelly = !haskey(opt_kwargs, :kelly) ? NoKelly() : opt_kwargs.kelly
-    class = !haskey(opt_kwargs, :classic) ? Classic() : opt_kwargs.class
+    kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
+    class = hasproperty(type, :class) ? type.class : Classic()
 
     (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, cor, dist, k, max_num_assets_kurt, max_num_assets_kurt_scale, kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_u, short_l, short_u, min_budget, budget, max_budget, min_short_budget, short_budget, max_short_budget, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
 
@@ -625,7 +624,7 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
         cluster_assets!(intra_port; cluster_kwargs...)
     end
 
-    w = optimise!(intra_port, type; opt_kwargs...)
+    w = optimise!(intra_port, type)
     if !isempty(w)
         w = w.weights
     else
@@ -683,7 +682,7 @@ function calc_intra_weights(port::OmniPortfolio, internal_args)
     w = zeros(eltype(port.returns), size(port.returns, 2), k)
     cfails = Dict{Int, Dict}()
 
-    rm = haskey(internal_args.opt_kwargs, :rm) ? internal_args.opt_kwargs.rm : nothing
+    rm = internal_args.type.rm
     special_rm_idx = find_special_rm(rm)
     (; kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     kurt_flag = !isempty(kurt_idx)
@@ -862,11 +861,10 @@ function set_rm_stats(port, rm, wi, special_rm_idx)
                        old_sskews, old_wc_rms)
 end
 function get_external_portfolio(port, wi, external_args, special_rm_idx)
-    (; opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = external_args
+    (; type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = external_args
 
-    type = !haskey(opt_kwargs, :type) ? Trad() : opt_kwargs.type
-    kelly = !haskey(opt_kwargs, :kelly) ? NoKelly() : opt_kwargs.kelly
-    class = !haskey(opt_kwargs, :classic) ? Classic() : opt_kwargs.class
+    kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
+    class = hasproperty(type, :class) ? type.class : Classic()
 
     (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_u, short_l, short_u, min_budget, budget, max_budget, min_short_budget, short_budget, max_short_budget, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
 
@@ -1001,7 +999,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         cluster_assets!(inter_port; cluster_kwargs...)
     end
 
-    w = optimise!(inter_port, type; opt_kwargs...)
+    w = optimise!(inter_port, type)
 
     if !isempty(w)
         w = w.weights
@@ -1012,7 +1010,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     return w, inter_port.fail
 end
 function calc_inter_weights(port::OmniPortfolio, wi, external_args)
-    rm = haskey(external_args.opt_kwargs, :rm) ? external_args.opt_kwargs.rm : nothing
+    rm = external_args.type.rm
 
     special_rm_idx = find_special_rm(rm)
     old_stats = set_rm_stats(port, rm, wi, special_rm_idx)

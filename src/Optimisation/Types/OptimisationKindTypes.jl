@@ -286,17 +286,17 @@ end
 """
 
 mutable struct NCOArgs
-    opt_kwargs::NamedTuple
+    type::AbstractOptimType
     port_kwargs::NamedTuple
     stats_kwargs::NamedTuple
     wc_kwargs::NamedTuple
     factor_kwargs::NamedTuple
     cluster_kwargs::NamedTuple
 end
-function NCOArgs(; opt_kwargs::NamedTuple = (;), port_kwargs::NamedTuple = (;),
+function NCOArgs(; type::AbstractOptimType = Trad(), port_kwargs::NamedTuple = (;),
                  stats_kwargs::NamedTuple = (;), wc_kwargs::NamedTuple = (;),
                  factor_kwargs::NamedTuple = (;), cluster_kwargs::NamedTuple = (;))
-    return NCOArgs(opt_kwargs, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
+    return NCOArgs(type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
                    cluster_kwargs)
 end
 mutable struct NCO{T1} <: HCOptimType
@@ -326,6 +326,25 @@ function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
                                  port_kwargs, port_kwargs_o, factor_kwargs, factor_kwargs_o,
                                  wc_kwargs, wc_kwargs_o, cluster_kwargs, cluster_kwargs_o,
                                  stat_kwargs_o)
+end
+function Base.getproperty(nco::NCO, sym::Symbol)
+    if sym ∈ (:rm, :obj, :kelly, :class, :w_ini, :custom_constr, :custom_obj, :str_names)
+        type = nco.internal.type
+        isa(type, NCO) ? getproperty(type, sym) : getfield(type, sym)
+    elseif sym ∈
+           (:rm_o, :obj_o, :kelly_o, :class_o, :w_ini_o, :custom_constr_o, :custom_obj_o,
+            :str_names_o)
+        type = nco.external.type
+        if isa(type, NCO)
+            getproperty(type, sym)
+        else
+            str_sym = string(sym)
+            sym = contains(str_sym, "_o") ? Symbol(str_sym[1:(end - 2)]) : sym
+            getfield(type, sym)
+        end
+    else
+        getfield(nco, sym)
+    end
 end
 
 for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),
