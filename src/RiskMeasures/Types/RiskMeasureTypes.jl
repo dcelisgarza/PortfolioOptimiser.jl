@@ -711,10 +711,12 @@ mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
+    w::Union{AbstractWeights, Nothing}
 end
 function FLPM(; settings::RMSettings = RMSettings(),
-              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0)
-    return FLPM{typeof(target)}(settings, ret_target, target)
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return FLPM{typeof(target)}(settings, ret_target, target, w)
 end
 
 """
@@ -747,10 +749,12 @@ mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
     ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
+    w::Union{AbstractWeights, Nothing}
 end
 function SLPM(; settings::RMSettings = RMSettings(),
-              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0)
-    return SLPM{typeof(target)}(settings, ret_target, target)
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return SLPM{typeof(target)}(settings, ret_target, target, w)
 end
 
 """
