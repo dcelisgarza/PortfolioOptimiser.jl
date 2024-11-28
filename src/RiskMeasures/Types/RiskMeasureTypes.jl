@@ -2525,15 +2525,110 @@ function Equal(; settings::HCRMSettings = HCRMSettings())
     return Equal(settings)
 end
 
+mutable struct TCM <: HCRiskMeasure
+    settings::HCRMSettings
+    w::Union{AbstractWeights, Nothing}
+end
+function TCM(; settings::HCRMSettings = HCRMSettings(;),
+             w::Union{AbstractWeights, Nothing} = nothing)
+    return TCM(settings, w)
+end
+
+mutable struct TLPM{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    w::Union{AbstractWeights, Nothing}
+end
+function TLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return TLPM{typeof(target)}(settings, target, w)
+end
+
+mutable struct FTCM <: HCRiskMeasure
+    settings::HCRMSettings
+    w::Union{AbstractWeights, Nothing}
+end
+function FTCM(; settings::HCRMSettings = HCRMSettings(;),
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return FTCM(settings, w)
+end
+
+mutable struct FTLPM{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    w::Union{AbstractWeights, Nothing}
+end
+function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
+               w::Union{AbstractWeights, Nothing} = nothing)
+    return FTLPM{typeof(target)}(settings, target, w)
+end
+
+mutable struct Skewness <: HCRiskMeasure
+    settings::HCRMSettings
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function Skewness(; settings::HCRMSettings = HCRMSettings(),
+                  mean_w::Union{AbstractWeights, Nothing} = nothing,
+                  ve::CovarianceEstimator = SimpleVariance(),
+                  std_w::Union{AbstractWeights, Nothing} = nothing)
+    return Skewness(settings, mean_w, ve, std_w)
+end
+
+mutable struct SSkewness{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function SSkewness(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+                   mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    return SSkewness{typeof(target)}(settings, target, mean_w, ve, std_w)
+end
+
+mutable struct Kurtosis <: HCRiskMeasure
+    settings::HCRMSettings
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function Kurtosis(; settings::HCRMSettings = HCRMSettings(),
+                  mean_w::Union{AbstractWeights, Nothing} = nothing,
+                  ve::CovarianceEstimator = SimpleVariance(),
+                  std_w::Union{AbstractWeights, Nothing} = nothing)
+    return Kurtosis(settings, mean_w, ve, std_w)
+end
+
+mutable struct SKurtosis{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function SKurtosis(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+                   mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    return SKurtosis{typeof(target)}(settings, target, mean_w, ve, std_w)
+end
+
 for (op, name) ∈
     zip((SD, Variance, MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR,
          MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
          RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-         Equal),
+         Equal, WCVariance, TCM, TLPM, FTCM, FTLPM, Skewness, SSkewness, Kurtosis,
+         SKurtosis),
         ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
          "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
          "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
-         "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal"))
+         "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal",
+         "WCVariance", "TCM", "TLPM", "FTCM", "FTLPM", "Skewness", "SSkewness", "Kurtosis",
+         "SKurtosis"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)
