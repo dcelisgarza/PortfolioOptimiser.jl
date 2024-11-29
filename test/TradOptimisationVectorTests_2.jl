@@ -2293,42 +2293,42 @@ end
 
     rm = EVaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z1 = get_z(portfolio, rm, obj)
+    z1 = get_z(portfolio, rm)
     @test isapprox(z1, 0.004652651226719961, rtol = 5.0e-6)
 
     rm = EDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z2 = get_z(portfolio, rm, obj)
+    z2 = get_z(portfolio, rm)
     @test isapprox(z2, 0.00916553108191174, rtol = 5.0e-5)
 
     rm = RLVaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z3 = get_z(portfolio, rm, obj)
+    z3 = get_z(portfolio, rm)
     @test isapprox(z3, 0.0018050418972062146, rtol = 5.0e-6)
 
     rm = RLDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z4 = get_z(portfolio, rm, obj)
-    @test isapprox(z4, 0.003567371824247327, rtol = 5.0e-8)
+    z4 = get_z(portfolio, rm)
+    @test isapprox(z4, 0.0035673711301259445, rtol = 5.0e-8)
 
     rm = [[EVaR(), EVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z5 = get_z(portfolio, rm[1], obj)
+    z5 = get_z(portfolio, rm[1])
     @test isapprox(z5[1], z5[2])
 
     rm = [[EDaR(), EDaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z6 = get_z(portfolio, rm[1], obj)
-    @test isapprox(z6[1], z6[2], rtol = 5.0e-6)
+    z6 = get_z(portfolio, rm[1])
+    @test isapprox(z6[1], z6[2], rtol = 1.0e-5)
 
     rm = [[RLVaR(), RLVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z7 = get_z(portfolio, rm[1], obj)
+    z7 = get_z(portfolio, rm[1])
     @test isapprox(z7[1], z7[2], rtol = 1.0e-5)
 
     rm = [[RLDaR(), RLDaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z8 = get_z(portfolio, rm[1], obj)
+    z8 = get_z(portfolio, rm[1])
     @test isapprox(z8[1], z8[2], rtol = 5.0e-6)
 
     @test isapprox(z1, z5[1], rtol = 1.0e-5)
@@ -2338,7 +2338,7 @@ end
     @test isapprox(z2, z6[2], rtol = 5.0e-5)
 
     @test isapprox(z3, z7[1], rtol = 5.0e-6)
-    @test isapprox(z3, z7[2], rtol = 5.0e-6)
+    @test isapprox(z3, z7[2], rtol = 1.0e-5)
 
     @test isapprox(z4, z8[1], rtol = 5.0e-6)
     @test isapprox(z4, z8[2], rtol = 5.0e-6)
@@ -2347,42 +2347,42 @@ end
 
     rm = EVaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z9 = get_z(portfolio, rm, obj)
+    z9 = get_z(portfolio, rm)
     @test isapprox(z9, 0.006484925949235588, rtol = 5.0e-6)
 
     rm = EDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z10 = get_z(portfolio, rm, obj)
+    z10 = get_z(portfolio, rm)
     @test isapprox(z10, 0.01165505512394213, rtol = 5.0e-7)
 
     rm = RLVaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z11 = get_z(portfolio, rm, obj)
+    z11 = get_z(portfolio, rm)
     @test isapprox(z11, 0.002530053705676598)
 
     rm = RLDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z12 = get_z(portfolio, rm, obj)
+    z12 = get_z(portfolio, rm)
     @test isapprox(z12, 0.0041978310601217435, rtol = 5.0e-5)
 
     rm = [[EVaR(), EVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z13 = get_z(portfolio, rm[1], obj)
+    z13 = get_z(portfolio, rm[1])
     @test isapprox(z13[1], z13[2])
 
     rm = [[EDaR(), EDaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z14 = get_z(portfolio, rm[1], obj)
+    z14 = get_z(portfolio, rm[1])
     @test isapprox(z14[1], z14[2], rtol = 5.0e-7)
 
     rm = [[RLVaR(), RLVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z15 = get_z(portfolio, rm[1], obj)
-    @test isapprox(z15[1], z15[2])
+    z15 = get_z(portfolio, rm[1])
+    @test isapprox(z15[1], z15[2], rtol = 5.0e-8)
 
     rm = [[RLDaR(), RLDaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    z16 = get_z(portfolio, rm[1], obj)
+    z16 = get_z(portfolio, rm[1])
     @test isapprox(z16[1], z16[2])
 
     @test isapprox(z9, z13[1], rtol = 0.0001)

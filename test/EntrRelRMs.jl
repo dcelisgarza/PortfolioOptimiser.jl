@@ -56,15 +56,15 @@ end
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
     alpha = 0.05
-    r1 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r1 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r1t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.1
-    r2 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r2 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r2t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.15
-    r3 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r3 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r3t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)
@@ -96,15 +96,15 @@ end
     popfirst!(dd)
 
     alpha = 0.05
-    r1 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r1 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r1t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.1
-    r2 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r2 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r2t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.15
-    r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r3t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)

@@ -32,9 +32,10 @@ mutable struct OmniPortfolio{
                              T_a_card_eq, T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq,
                              T_b_eq, T_tracking, T_turnover, T_network_adj, T_cluster_adj,
                              T_a_cent_ineq, T_b_cent_ineq, T_a_cent_eq, T_b_cent_eq, T_l1,
-                             T_l2, T_long_fees, T_short_fees, T_rebalance, T_model,
-                             T_solvers, T_optimal, T_fail, T_limits, T_frontier, T_walking,
-                             T_alloc_model, T_alloc_solvers, T_alloc_optimal, T_alloc_fail,
+                             T_l2, T_long_fees, T_short_fees, T_rebalance,
+                             T_constraint_scale, T_obj_scale, T_model, T_solvers, T_optimal,
+                             T_fail, T_limits, T_frontier, T_walking, T_alloc_model,
+                             T_alloc_solvers, T_alloc_optimal, T_alloc_fail,
                              T_alloc_walking} <: AbstractPortfolio
     # Assets and factors
     assets::T_assets
@@ -135,6 +136,8 @@ mutable struct OmniPortfolio{
     # Rebalance cost
     rebalance::T_rebalance
     # Solution
+    constr_scale::T_constraint_scale
+    obj_scale::T_obj_scale
     model::T_model
     solvers::T_solvers
     optimal::T_optimal
@@ -442,6 +445,7 @@ function OmniPortfolio(;
                        short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                        rebalance::AbstractTR = NoTR(),
                        # Solution
+                       constr_scale::Real = 1.0, obj_scale::Real = 1.0,
                        model::JuMP.Model = JuMP.Model(), solvers::AbstractDict = Dict(),
                        optimal::AbstractDict = Dict(), fail::AbstractDict = Dict(),
                        limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
@@ -564,6 +568,9 @@ function OmniPortfolio(;
     real_or_vector_assert(long_fees, N, :long_fees, >=, 0)
     real_or_vector_assert(short_fees, N, :short_fees, >=, 0)
     tr_assert(rebalance, N)
+    # Constraint and objective scales
+    @smart_assert(constr_scale > zero(constr_scale))
+    @smart_assert(obj_scale > zero(obj_scale))
 
     return OmniPortfolio{
                          # Assets and factors
@@ -618,79 +625,60 @@ function OmniPortfolio(;
                          # Rebalance cost
                          AbstractTR,
                          # Solution
-                         typeof(model), typeof(solvers), typeof(optimal), typeof(fail),
-                         typeof(limits), typeof(frontier), typeof(walking),
-                         typeof(alloc_model), typeof(alloc_solvers), typeof(alloc_optimal),
-                         typeof(alloc_fail), typeof(alloc_walking)}(
-                                                                    # Assets and factors
-                                                                    assets, timestamps,
-                                                                    returns, latest_prices,
-                                                                    f_assets, f_timestamps,
-                                                                    f_returns, loadings,
-                                                                    regression_type,
-                                                                    # Statistics
-                                                                    mu_l, mu, cov, cor,
-                                                                    dist, clusters, k,
-                                                                    min_cluster_size,
-                                                                    max_num_assets_kurt,
-                                                                    max_num_assets_kurt_scale,
-                                                                    kurt, skurt, L_2, S_2,
-                                                                    skew, V, sskew, SV,
-                                                                    f_mu, f_cov, fm_returns,
-                                                                    fm_mu, fm_cov,
-                                                                    bl_bench_weights, bl_mu,
-                                                                    bl_cov, blfm_mu,
-                                                                    blfm_cov, cov_l, cov_u,
-                                                                    cov_mu, cov_sigma, d_mu,
-                                                                    k_mu, k_sigma,
-                                                                    # Min and max weights
-                                                                    w_min, w_max,
-                                                                    # Risk budgetting
-                                                                    risk_budget,
-                                                                    f_risk_budget,
-                                                                    # Budget and shorting
-                                                                    short, long_l, long_u,
-                                                                    short_l, short_u,
-                                                                    min_budget, budget,
-                                                                    max_budget,
-                                                                    min_short_budget,
-                                                                    short_budget,
-                                                                    max_short_budget,
-                                                                    # Cardinality
-                                                                    card_scale, card,
-                                                                    a_card_ineq,
-                                                                    b_card_ineq, a_card_eq,
-                                                                    b_card_eq,
-                                                                    # Effective assets
-                                                                    nea,
-                                                                    # Linear constraints
-                                                                    a_ineq, b_ineq, a_eq,
-                                                                    b_eq,
-                                                                    # Tracking
-                                                                    tracking,
-                                                                    # Turnover
-                                                                    turnover,
-                                                                    # Adjacency
-                                                                    network_adj,
-                                                                    cluster_adj,
-                                                                    # Centrality
-                                                                    a_cent_ineq,
-                                                                    b_cent_ineq, a_cent_eq,
-                                                                    b_cent_eq,
-                                                                    # Regularisation
-                                                                    l1, l2,
-                                                                    # Fees
-                                                                    long_fees, short_fees,
-                                                                    # Rebalance cost
-                                                                    rebalance,
-                                                                    # Solution
-                                                                    model, solvers, optimal,
-                                                                    fail, limits, frontier,
-                                                                    walking, alloc_model,
-                                                                    alloc_solvers,
-                                                                    alloc_optimal,
-                                                                    alloc_fail,
-                                                                    alloc_walking)
+                         typeof(constr_scale), typeof(obj_scale), typeof(model),
+                         typeof(solvers), typeof(optimal), typeof(fail), typeof(limits),
+                         typeof(frontier), typeof(walking), typeof(alloc_model),
+                         typeof(alloc_solvers), typeof(alloc_optimal), typeof(alloc_fail),
+                         typeof(alloc_walking)}(
+                                                # Assets and factors
+                                                assets, timestamps, returns, latest_prices,
+                                                f_assets, f_timestamps, f_returns, loadings,
+                                                regression_type,
+                                                # Statistics
+                                                mu_l, mu, cov, cor, dist, clusters, k,
+                                                min_cluster_size, max_num_assets_kurt,
+                                                max_num_assets_kurt_scale, kurt, skurt, L_2,
+                                                S_2, skew, V, sskew, SV, f_mu, f_cov,
+                                                fm_returns, fm_mu, fm_cov, bl_bench_weights,
+                                                bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l,
+                                                cov_u, cov_mu, cov_sigma, d_mu, k_mu,
+                                                k_sigma,
+                                                # Min and max weights
+                                                w_min, w_max,
+                                                # Risk budgetting
+                                                risk_budget, f_risk_budget,
+                                                # Budget and shorting
+                                                short, long_l, long_u, short_l, short_u,
+                                                min_budget, budget, max_budget,
+                                                min_short_budget, short_budget,
+                                                max_short_budget,
+                                                # Cardinality
+                                                card_scale, card, a_card_ineq, b_card_ineq,
+                                                a_card_eq, b_card_eq,
+                                                # Effective assets
+                                                nea,
+                                                # Linear constraints
+                                                a_ineq, b_ineq, a_eq, b_eq,
+                                                # Tracking
+                                                tracking,
+                                                # Turnover
+                                                turnover,
+                                                # Adjacency
+                                                network_adj, cluster_adj,
+                                                # Centrality
+                                                a_cent_ineq, b_cent_ineq, a_cent_eq,
+                                                b_cent_eq,
+                                                # Regularisation
+                                                l1, l2,
+                                                # Fees
+                                                long_fees, short_fees,
+                                                # Rebalance cost
+                                                rebalance,
+                                                # Solution
+                                                constr_scale, obj_scale, model, solvers,
+                                                optimal, fail, limits, frontier, walking,
+                                                alloc_model, alloc_solvers, alloc_optimal,
+                                                alloc_fail, alloc_walking)
 end
 function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
     if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu,
@@ -876,6 +864,8 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
     elseif sym ∈ (:network_adj, :cluster_adj)
         N = size(port.returns, 2)
         adj_assert(val, N)
+    elseif sym ∈ (:constr_scale, :obj_scale)
+        @smart_assert(val > zero(val))
     end
     return setfield!(port, sym, val)
 end
@@ -940,6 +930,7 @@ function Base.deepcopy(port::OmniPortfolio)
                          # Rebalance cost
                          AbstractTR,
                          # Solution
+                         typeof(port.constr_scale), typeof(port.obj_scale),
                          typeof(port.model), typeof(port.solvers), typeof(port.optimal),
                          typeof(port.fail), typeof(port.limits), typeof(port.frontier),
                          typeof(port.walking), typeof(port.alloc_model),
@@ -1044,6 +1035,8 @@ function Base.deepcopy(port::OmniPortfolio)
                                                                               # Rebalance cost
                                                                               deepcopy(port.rebalance),
                                                                               # Solution
+                                                                              deepcopy(port.constr_scale),
+                                                                              deepcopy(port.obj_scale),
                                                                               deepcopy(port.model),
                                                                               deepcopy(port.solvers),
                                                                               deepcopy(port.optimal),

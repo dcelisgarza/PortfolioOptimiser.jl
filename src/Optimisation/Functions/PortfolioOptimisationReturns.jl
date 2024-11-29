@@ -15,7 +15,7 @@ function _return_bounds(::Sharpe, model, mu_l::Real)
 end
 function set_returns(obj::Any, kelly::NoKelly, port; mu::AbstractVector, kwargs...)
     if !isempty(mu)
-        _wc_return_constraints(kelly.mu, port)
+        _wc_return_constraints(kelly.wc_set, port)
         _return_bounds(obj, port.model, port.mu_l)
     end
     return nothing
@@ -23,7 +23,7 @@ end
 function set_returns(obj::Sharpe, kelly::NoKelly, port; mu::AbstractVector, kwargs...)
     if !isempty(mu)
         model = port.model
-        _wc_return_constraints(kelly.mu, port)
+        _wc_return_constraints(kelly.wc_set, port)
         if !all(mu .< zero(eltype(mu)))
             ret = model[:ret]
             k = model[:k]

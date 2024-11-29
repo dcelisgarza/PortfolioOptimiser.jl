@@ -2013,24 +2013,26 @@ abstract type WorstCaseSet end
 Abstract type for subtyping worst case mean variance set types.
 """
 abstract type WorstCaseSet end
+abstract type WCSetMuSigma <: WorstCaseSet end
+abstract type WCSetMu <: WorstCaseSet end
 
 """
 ```
-struct Box <: WorstCaseSet end
+struct Box <: WCSetMuSigma end
 ```
 
 Box sets for worst case mean variance optimisation.
 """
-struct Box <: WorstCaseSet end
+struct Box <: WCSetMuSigma end
 
 """
 ```
-struct Ellipse <: WorstCaseSet end
+struct Ellipse <: WCSetMuSigma end
 ```
 
 Elliptical sets for worst case mean variance optimisation.
 """
-struct Ellipse <: WorstCaseSet end
+struct Ellipse <: WCSetMuSigma end
 
 """
 ```
@@ -2045,7 +2047,7 @@ Use no set for worst case mean variance optimisation.
 
   - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`SDSquaredFormulation`](@ref).
 """
-mutable struct NoWC <: WorstCaseSet
+mutable struct NoWC <: WCSetMu
     formulation::SDSquaredFormulation
 end
 function NoWC(; formulation::SDSquaredFormulation = SOC())
@@ -2054,15 +2056,15 @@ end
 
 mutable struct WCVariance{T1} <: RiskMeasure
     settings::RMSettings
-    wc_set::WorstCaseSet
+    wc_set::WCSetMuSigma
     sigma::Union{<:AbstractMatrix, Nothing}
     cov_l::Union{AbstractMatrix{<:Real}, Nothing}
     cov_u::Union{AbstractMatrix{<:Real}, Nothing}
     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}
     k_sigma::T1
 end
-function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WorstCaseSet = SOC(),
-                    sigma::Union{<:AbstractMatrix, Nothing} = nothing,
+function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WCSetMuSigma = Box(),
+                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_l::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_u::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,

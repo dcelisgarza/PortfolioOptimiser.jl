@@ -1,40 +1,34 @@
-function adjust_model_value_for_obj(model::JuMP.Model, val, ::Sharpe)
-    return val /= value(model[:k])
-end
-function adjust_model_value_for_obj(::Any, val, ::Any)
-    return val
-end
 """
 ```
 get_z_from_model
 ```
 """
-function get_z_from_model(model::JuMP.Model, ::EVaR, obj::Any)
-    return adjust_model_value_for_obj(model, value(model[:z_evar]), obj)
+function get_z_from_model(model::JuMP.Model, ::EVaR)
+    return value(model[:z_evar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR}, obj::Any)
-    return adjust_model_value_for_obj(model, value.(model[:z_evar]), obj)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR})
+    return value.(model[:z_evar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::RLVaR, obj::Any)
-    return adjust_model_value_for_obj(model, value(model[:z_rvar]), obj)
+function get_z_from_model(model::JuMP.Model, ::RLVaR)
+    return value(model[:z_rvar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLVaR}, obj::Any)
-    return adjust_model_value_for_obj(model, value.(model[:z_rvar]), obj)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLVaR})
+    return value.(model[:z_rvar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::EDaR, obj::Any)
-    return adjust_model_value_for_obj(model, value(model[:z_edar]), obj)
+function get_z_from_model(model::JuMP.Model, ::EDaR)
+    return value(model[:z_edar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR}, obj::Any)
-    return adjust_model_value_for_obj(model, value.(model[:z_edar]), obj)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR})
+    return value.(model[:z_edar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::RLDaR, obj::Any)
-    return adjust_model_value_for_obj(model, value(model[:z_rdar]), obj)
+function get_z_from_model(model::JuMP.Model, ::RLDaR)
+    return value(model[:z_rdar]) / value(model[:k])
 end
-function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLDaR}, obj::Any)
-    return adjust_model_value_for_obj(model, value.(model[:z_rdar]), obj)
+function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLDaR})
+    return value.(model[:z_rdar]) / value(model[:k])
 end
-function get_z(port::OmniPortfolio, rm::Union{AbstractVector, <:RiskMeasure}, obj::Any)
-    return get_z_from_model(port.model, rm, obj)
+function get_z(port::OmniPortfolio, rm::Union{AbstractVector, <:RiskMeasure})
+    return get_z_from_model(port.model, rm)
 end
 
 export get_z_from_model, get_z

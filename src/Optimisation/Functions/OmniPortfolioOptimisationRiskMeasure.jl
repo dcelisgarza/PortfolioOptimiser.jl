@@ -163,7 +163,7 @@ function _choose_wc_stats_port_rm(port, rm)
     sigma = if !(isnothing(rm.sigma) || isempty(rm.sigma))
         rm.sigma
     else
-        port.sigma
+        port.cov
     end
 
     cov_l = if !(isnothing(rm.cov_l) || isempty(rm.cov_l))

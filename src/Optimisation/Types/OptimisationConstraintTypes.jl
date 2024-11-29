@@ -190,10 +190,10 @@ struct NoKelly <: RetType end
 ```
 """
 mutable struct NoKelly <: RetType
-    mu::WorstCaseSet
+    wc_set::WorstCaseSet
 end
-function NoKelly(; mu::WorstCaseSet = NoWC())
-    return NoKelly(mu)
+function NoKelly(; wc_set::WorstCaseSet = NoWC())
+    return NoKelly(wc_set)
 end
 
 """

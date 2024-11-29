@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
 end
@@ -97,7 +101,4 @@ end
     include("AllocationTests.jl")
 end
 
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
 =#

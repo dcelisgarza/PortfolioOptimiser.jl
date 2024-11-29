@@ -17,12 +17,12 @@ function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     ohf = model[:ohf]
     ret = model[:ret]
     rf = obj.rf
-    if !all(mu .< zero(eltype(mu)))
-        @constraint(model, ret - rf * k == ohf)
-    else
+    if all(mu .> zero(eltype(mu))) || haskey(model, :abs_w) || haskey(model, :t_gw)
         risk = model[:risk]
         add_to_expression!(ret, -k, rf)
         @constraint(model, alt_sr, risk <= ohf)
+    else
+        @constraint(model, ret - rf * k == ohf)
     end
     return nothing
 end
@@ -59,7 +59,7 @@ function _return_constraints(port, obj, kelly::NoKelly, mu, args...)
         return nothing
     end
 
-    _wc_return_constraints(port, mu, kelly.mu)
+    _wc_return_constraints(port, mu, kelly.wc_set)
     _sharpe_returns_constraints(port, obj, mu)
     _return_bounds(port)
 
