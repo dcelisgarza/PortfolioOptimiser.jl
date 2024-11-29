@@ -1,11 +1,11 @@
 using SafeTestsets
 
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
 end
 
 @safetestset "NOC optimisation" begin

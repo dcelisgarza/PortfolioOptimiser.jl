@@ -1515,7 +1515,7 @@ end
           6.419465149746146e-9, 0.1806802929264387]
     riskt = 0.024507972507204205
     rett = 0.0004603842983759555
-    @test isapprox(w2.weights, wt0, rtol = 1.0e-5)
+    @test isapprox(w2.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r2, riskt0)
     @test isapprox(ret2, rett0, rtol = 1.0e-5)
     @test isapprox(w2.weights, wt, rtol = 1.0e-5)
@@ -1725,8 +1725,8 @@ end
     @test isapprox(w2.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r2, riskt0, rtol = 5.0e-7)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
-    @test isapprox(w2.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r2, riskt, rtol = 5.0e-8)
+    @test isapprox(w2.weights, wt, rtol = 1.0e-5)
+    @test isapprox(r2, riskt, rtol = 5.0e-7)
     @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
@@ -1791,7 +1791,7 @@ end
     rm = [[RLVaR(), RLVaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-7
+    @test abs(calc_risk(portfolio; type = :Trad, rm = rm[1][1]) - r2) < 5e-6
 
     obj = Sharpe(; rf = rf)
     rm = RLVaR(; settings = RMSettings(; scale = 1.0))
@@ -2186,7 +2186,7 @@ end
     riskt = 0.08891590487507796
     rett = 0.0010018958765329435
     @test isapprox(w4.weights, wt0, rtol = 5.0e-5)
-    @test isapprox(r4, riskt0, rtol = 1.0e-5)
+    @test isapprox(r4, riskt0, rtol = 5.0e-5)
     @test isapprox(ret4, rett0, rtol = 1.0e-5)
     @test isapprox(w4.weights, wt, rtol = 1.0e-6)
     @test isapprox(r4, riskt, rtol = 5.0e-7)

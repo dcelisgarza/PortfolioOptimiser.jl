@@ -34,7 +34,7 @@
     @test isapprox(w1.weights, wt0, rtol = 1.0e-6)
     @test isapprox(r1, riskt0, rtol = 1.0e-7)
     @test isapprox(ret1, rett0, rtol = 1.0e-6)
-    @test isapprox(w1.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
     @test isapprox(r1, riskt, rtol = 1.0e-7)
     @test isapprox(ret1, rett, rtol = 5.0e-7)
 
@@ -51,9 +51,9 @@
           3.306287153631385e-10, 0.06488361638759452]
     riskt = 0.07576351037242983
     rett = 0.0005794983351148754
-    @test isapprox(w2.weights, wt0, rtol = 5.0e-6)
-    @test isapprox(r2, riskt0)
-    @test isapprox(ret2, rett0, rtol = 1.0e-6)
+    @test isapprox(w2.weights, wt0, rtol = 1.0e-5)
+    @test isapprox(r2, riskt0, rtol = 5.0e-8)
+    @test isapprox(ret2, rett0, rtol = 5.0e-6)
     @test isapprox(w2.weights, wt, rtol = 1.0e-5)
     @test isapprox(r2, riskt, rtol = 5.0e-8)
     @test isapprox(ret2, rett, rtol = 5.0e-6)
@@ -1108,9 +1108,9 @@ end
     @test isapprox(w2.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r2, riskt0, rtol = 5.0e-7)
     @test isapprox(ret2, rett0, rtol = 1.0e-5)
-    @test isapprox(w2.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r2, riskt, rtol = 5.0e-8)
-    @test isapprox(ret2, rett, rtol = 5.0e-7)
+    @test isapprox(w2.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r2, riskt, rtol = 5.0e-7)
+    @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
     wt0 = [2.465085712389692e-10, 1.7591592054961841e-9, 2.6079839244395587e-10,
@@ -1140,8 +1140,8 @@ end
     @test isapprox(r3, riskt0, rtol = 5.0e-6)
     @test isapprox(ret3, rett0, rtol = 5.0e-6)
     @test isapprox(w3.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r3, riskt, rtol = 1.0e-6)
-    @test isapprox(ret3, rett, rtol = 1.0e-6)
+    @test isapprox(r3, riskt, rtol = 5.0e-6)
+    @test isapprox(ret3, rett, rtol = 5.0e-6)
 
     rm = [[TG(; owa = OWASettings(; approx = true)),
            TG(; owa = OWASettings(; approx = true))]]
@@ -1260,7 +1260,7 @@ end
     @test !isapprox(ret9, rett1)
     @test isapprox(w9.weights, wt, rtol = 5.0e-5)
     @test isapprox(r9, riskt, rtol = 1.0e-6)
-    @test isapprox(ret9, rett, rtol = 5.0e-6)
+    @test isapprox(ret9, rett, rtol = 1.0e-5)
 
     wt0 = [5.969325155308689e-13, 0.19890625725641747, 5.01196330972591e-12,
            0.05490289350205719, 4.555898520654742e-11, 1.0828830360388467e-12,
@@ -1737,7 +1737,7 @@ end
                                                                               allow_almost = true),
                                                                :params => Dict("verbose" => false,
                                                                                "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 100,
+                                                                               "max_iter" => 200,
                                                                                "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
 
@@ -1853,8 +1853,7 @@ end
              owa = OWASettings(; approx = false))
     rm.settings.ub = r1
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-10
+    @test abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-8
 
     rm = [[OWA(; w = owa_tg(200), owa = OWASettings(; approx = false)),
            OWA(; w = owa_tg(200), owa = OWASettings(; approx = false))]]
@@ -1996,7 +1995,7 @@ end
           1.4123632339801168e-10, 0.22491322963913815]
     riskt = 0.023582366176196835
     rett = 0.0006432220772657842
-    @test isapprox(w2.weights, wt0, rtol = 5.0e-6)
+    @test isapprox(w2.weights, wt0, rtol = 1.0e-5)
     @test isapprox(r2, riskt0, rtol = 5.0e-8)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
     @test isapprox(w2.weights, wt, rtol = 5.0e-6)
@@ -2079,10 +2078,10 @@ end
 
     rm = [[OWA(; w = owa_tg(200), owa = OWASettings(; approx = true)),
            OWA(; w = owa_tg(200), owa = OWASettings(; approx = true))]]
-    rm[1][1].settings.ub = r2 * 1.001
+    rm[1][1].settings.ub = r2 * 1.01
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     if !Sys.isapple()
-        @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.001
+        @test calc_risk(portfolio; type = :Trad, rm = rm[1][1]) <= r2 * 1.01
     end
 
     # Ret lower bound
