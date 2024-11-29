@@ -48,33 +48,31 @@ function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     return risk1, risk2, risk3
 end
 function noc_risk_ret(port::OmniPortfolio, type)
-    (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, trad) = type
-    (; rm, obj, kelly, class, w_ini) = trad
+    (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, rm, obj, kelly, class, w_ini) = type
 
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-    old_obj = obj
     w1 = if isempty(w_min)
-        trad.obj = MinRisk()
-        trad.w_ini = w_min_ini
-        _w_min = optimise!(port, trad)
+        _w_min = optimise!(port,
+                           Trad(; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
+                                w_ini = w_min_ini))
         !isempty(_w_min) ? _w_min.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_min
     end
 
     w2 = if isempty(w_max)
-        trad.obj = MaxRet()
-        trad.w_ini = w_max_ini
-        _w_max = optimise!(port, trad)
+        _w_max = optimise!(port,
+                           Trad(; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
+                                w_ini = w_max_ini))
         !isempty(_w_max) ? _w_max.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_max
     end
 
     w3 = if isempty(w_opt)
-        trad.obj = old_obj
-        trad.w_ini = w_ini
-        _w_opt = optimise!(port, trad)
+        _w_opt = optimise!(port,
+                           Trad(; rm = rm, obj = obj, kelly = kelly, class = class,
+                                w_ini = w_ini))
         !isempty(_w_opt) ? _w_opt.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_opt

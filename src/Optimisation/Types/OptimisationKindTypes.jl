@@ -96,7 +96,7 @@ struct RegRRP <: RRPVersion end
 end
 ```
 """
-mutable struct RegPenRRP{T1 <: Real} <: RRPVersion
+mutable struct RegPenRRP{T1} <: RRPVersion
     penalty::T1
 end
 function RegPenRRP(; penalty::Real = 1.0)
@@ -126,6 +126,13 @@ function RRP(; version::RRPVersion = BasicRRP(), kelly::RetType = NoKelly(),
              custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false,)
     return RRP{typeof(w_ini)}(version, kelly, class, w_ini, custom_constr, custom_obj,
                               str_names)
+end
+function Base.getproperty(obj::RRP, sym::Symbol)
+    return if sym == :rm
+        nothing
+    else
+        getfield(obj, sym)
+    end
 end
 
 """
@@ -160,9 +167,7 @@ end
 end
 ```
 """
-mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real}, T3 <: AbstractVector{<:Real},
-                   T4 <: AbstractVector{<:Real}, T5 <: AbstractVector{<:Real},
-                   T6 <: AbstractVector{<:Real}} <: OptimType
+mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
     flag::Bool
     bins::T1
     w_opt::T2
@@ -170,7 +175,15 @@ mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real}, T3 <: AbstractVecto
     w_max::T4
     w_min_ini::T5
     w_max_ini::T6
-    trad::Trad
+    rm::Union{AbstractVector, <:RiskMeasure}
+    obj::ObjectiveFunction
+    kelly::RetType
+    class::PortClass
+    w_ini::T7
+    custom_constr::CustomConstraint
+    custom_obj::CustomObjective
+    ohf::T8
+    str_names::Bool
 end
 function NOC(; flag::Bool = true, bins::Real = 20.0,
              w_opt::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -181,62 +194,16 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
              obj::ObjectiveFunction = MinRisk(), kelly::RetType = NoKelly(),
              class::PortClass = Classic(),
-             w_ini::AbstractVector = Vector{Float64}(undef, 0),
+             w_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
              custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
              str_names::Bool = false)
     return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_min_ini),
-               typeof(w_max_ini)}(flag, bins, w_opt, w_min, w_max, w_min_ini, w_max_ini,
-                                  Trad(; rm = rm, obj = obj, kelly = kelly, class = class,
-                                       w_ini = w_ini, custom_constr = custom_constr,
-                                       custom_obj = custom_obj, ohf = ohf,
-                                       str_names = str_names))
-end
-function Base.getproperty(noc::NOC, sym::Symbol)
-    if sym == :rm
-        getfield(noc, noc.trad.rm)
-    elseif sym == :obj
-        getfield(noc, noc.trad.obj)
-    elseif sym == :kelly
-        getfield(noc, noc.trad.kelly)
-    elseif sym == :class
-        getfield(noc, noc.trad.class)
-    elseif sym == :w_ini
-        getfield(noc, noc.trad.w_ini)
-    elseif sym == :custom_constr
-        getfield(noc, noc.trad.custom_constr)
-    elseif sym == :custom_obj
-        getfield(noc, noc.trad.custom_obj)
-    elseif sym == :obj
-        getfield(noc, noc.trad.ohf)
-    elseif sym == :str_names
-        getfield(noc, noc.trad.str_names)
-    else
-        getfield(noc, sym)
-    end
-end
-function Base.setproperty!(noc::NOC, sym::Symbol, val)
-    if sym == :rm
-        setfield!(noc, noc.trad.rm, val)
-    elseif sym == :obj
-        setfield!(noc, noc.trad.obj, val)
-    elseif sym == :kelly
-        setfield!(noc, noc.trad.kelly, val)
-    elseif sym == :class
-        setfield!(noc, noc.trad.class, val)
-    elseif sym == :w_ini
-        setfield!(noc, noc.trad.w_ini, val)
-    elseif sym == :custom_constr
-        setfield!(noc, noc.trad.custom_constr, val)
-    elseif sym == :custom_obj
-        setfield!(noc, noc.trad.custom_obj, val)
-    elseif sym == :obj
-        setfield!(noc, noc.trad.ohf, val)
-    elseif sym == :str_names
-        setfield!(noc, noc.trad.str_names, val)
-    else
-        setfield!(noc, sym, val)
-    end
+               typeof(w_max_ini), typeof(w_ini), typeof(ohf)}(flag, bins, w_opt, w_min,
+                                                              w_max, w_min_ini, w_max_ini,
+                                                              rm, obj, kelly, class, w_ini,
+                                                              custom_constr, custom_obj,
+                                                              ohf, str_names)
 end
 
 abstract type HCOptWeightFinaliser end

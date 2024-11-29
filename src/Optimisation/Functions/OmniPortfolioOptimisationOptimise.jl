@@ -97,8 +97,7 @@ function optimise!(port::OmniPortfolio, type::RRP)
     return convex_optimisation(port, nothing, type, class)
 end
 function optimise!(port::OmniPortfolio, type::NOC)
-    (; flag, trad) = type
-    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = trad
+    (; flag, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
 
     empty!(port.fail)
     risk0, ret0 = noc_risk_ret(port, type)
@@ -129,7 +128,7 @@ function optimise!(port::OmniPortfolio, type::NOC)
     rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]
-    risk_constraints(port, trad, rm, mu, sigma, returns, kelly_approx_idx)
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     # Returns
     expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
     if flag

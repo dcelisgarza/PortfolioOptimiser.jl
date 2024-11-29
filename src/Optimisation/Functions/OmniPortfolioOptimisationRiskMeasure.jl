@@ -28,7 +28,7 @@ end
 function _set_rm_risk_upper_bound(args...)
     return nothing
 end
-function _set_rm_risk_upper_bound(::Trad, model, rm_risk, ub)
+function _set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub)
     if isfinite(ub)
         k = model[:k]
         @constraint(model, rm_risk .<= ub * k)
@@ -104,7 +104,8 @@ end
 function _variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
     return sqrt(ub)
 end
-function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
+function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
+                sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
     use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
@@ -129,7 +130,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP}; sigma::AbstractMatrix
     _set_risk_expression(model, model[:variance_risk], rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP};
+function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP, NOC};
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
@@ -252,8 +253,8 @@ function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, k_s
     @constraint(model, [t_ge; x_ge] ∈ SecondOrderCone())
     return nothing
 end
-function set_rm(port, rm::WCVariance, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
-                kwargs...)
+function set_rm(port, rm::WCVariance, type::Union{Trad, RP, NOC};
+                sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _SDP_constraints(model, type)
     sigma, cov_l, cov_u, cov_sigma, k_sigma = _choose_wc_stats_port_rm(port, rm)
@@ -264,7 +265,7 @@ function set_rm(port, rm::WCVariance, type::Union{Trad, RP}; sigma::AbstractMatr
     _set_risk_expression(model, wc_variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP};
+function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _SDP_constraints(model, type)
@@ -282,7 +283,7 @@ function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP};
     end
     return nothing
 end
-function set_rm(port, rm::SD, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Real},
+function set_rm(port, rm::SD, type::Union{Trad, RP, NOC}; sigma::AbstractMatrix{<:Real},
                 kwargs...)
     model = port.model
     w = model[:w]
@@ -297,7 +298,7 @@ function set_rm(port, rm::SD, type::Union{Trad, RP}; sigma::AbstractMatrix{<:Rea
     _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP};
+function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -315,7 +316,7 @@ function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP};
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::MAD, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::MAD, type::Union{Trad, RP, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -331,7 +332,7 @@ function set_rm(port::OmniPortfolio, rm::MAD, type::Union{Trad, RP};
     _set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, RP, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -372,7 +373,7 @@ function _semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1)
     add_to_expression!(svariance_risk, iTm1, tsvariance)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::SVariance, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::SVariance, type::Union{Trad, RP, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -392,7 +393,7 @@ function set_rm(port::OmniPortfolio, rm::SVariance, type::Union{Trad, RP};
     return nothing
 end
 function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SVariance},
-                type::Union{Trad, RP}; mu::AbstractVector{<:Real},
+                type::Union{Trad, RP, NOC}; mu::AbstractVector{<:Real},
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -418,7 +419,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SVariance},
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::SSD, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::SSD, type::Union{Trad, RP, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -442,7 +443,7 @@ function set_rm(port::OmniPortfolio, rm::SSD, type::Union{Trad, RP};
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, RP, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -469,7 +470,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSD}, type::Union{Tra
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::FLPM, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::FLPM, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -485,8 +486,8 @@ function set_rm(port::OmniPortfolio, rm::FLPM, type::Union{Trad, RP};
     _set_risk_expression(model, flpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:FLPM},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
     k = model[:k]
@@ -506,7 +507,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:FLPM}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::SLPM, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::SLPM, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
@@ -528,8 +529,8 @@ function set_rm(port::OmniPortfolio, rm::SLPM, type::Union{Trad, RP};
     _set_risk_expression(model, slpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SLPM},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     w = model[:w]
     k = model[:k]
@@ -567,7 +568,7 @@ function _wr_risk(model, returns)
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::WR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::WR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _wr_risk(model, returns)
@@ -576,7 +577,7 @@ function set_rm(port::OmniPortfolio, rm::WR, type::Union{Trad, RP};
     _set_risk_expression(model, wr_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::RG, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::RG, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _wr_risk(model, returns)
@@ -589,7 +590,7 @@ function set_rm(port::OmniPortfolio, rm::RG, type::Union{Trad, RP};
     _set_risk_expression(model, rg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::CVaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::CVaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
@@ -606,8 +607,8 @@ function set_rm(port::OmniPortfolio, rm::CVaR, type::Union{Trad, RP};
     _set_risk_expression(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -628,7 +629,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaR}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
@@ -656,8 +657,8 @@ function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP};
     _set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaRRG},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -692,7 +693,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaRRG}, type::Union{
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::EVaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::EVaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
@@ -716,8 +717,8 @@ function set_rm(port::OmniPortfolio, rm::EVaR, type::Union{Trad, RP};
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EVaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -745,7 +746,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EVaR}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::RLVaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::RLVaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
@@ -782,8 +783,8 @@ function set_rm(port::OmniPortfolio, rm::RLVaR, type::Union{Trad, RP};
     _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLVaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -844,7 +845,7 @@ function _DD_constraints(model, returns)
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::MDD, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::MDD, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -857,7 +858,7 @@ function set_rm(port::OmniPortfolio, rm::MDD, type::Union{Trad, RP};
     _set_risk_expression(model, mdd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::ADD, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::ADD, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -873,7 +874,7 @@ function set_rm(port::OmniPortfolio, rm::ADD, type::Union{Trad, RP};
     _set_risk_expression(model, add_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -893,7 +894,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:ADD}, type::Union{Tra
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::UCI, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::UCI, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -906,7 +907,7 @@ function set_rm(port::OmniPortfolio, rm::UCI, type::Union{Trad, RP};
     _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::CDaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::CDaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -923,8 +924,8 @@ function set_rm(port::OmniPortfolio, rm::CDaR, type::Union{Trad, RP};
     _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CDaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
     dd = model[:dd]
@@ -945,7 +946,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CDaR}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::EDaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::EDaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -968,8 +969,8 @@ function set_rm(port::OmniPortfolio, rm::EDaR, type::Union{Trad, RP};
     _set_risk_expression(model, edar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EDaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DD_constraints(model, returns)
     dd = model[:dd]
@@ -997,7 +998,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:EDaR}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::RLDaR, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::RLDaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -1034,8 +1035,8 @@ function set_rm(port::OmniPortfolio, rm::RLDaR, type::Union{Trad, RP};
     _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLDaR},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _DD_constraints(model, returns)
     dd = model[:dd]
@@ -1079,7 +1080,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:RLDaR}, type::Union{T
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::Kurt, type::Union{Trad, RP}; kwargs...)
+function set_rm(port::OmniPortfolio, rm::Kurt, type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     _SDP_constraints(model, type)
     W = model[:W]
@@ -1120,8 +1121,8 @@ function set_rm(port::OmniPortfolio, rm::Kurt, type::Union{Trad, RP}; kwargs...)
     _set_risk_expression(model, kurt_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP};
-                kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt},
+                type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     _SDP_constraints(model, type)
     W = model[:W]
@@ -1180,7 +1181,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Kurt}, type::Union{Tr
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::SKurt, type::Union{Trad, RP}; kwargs...)
+function set_rm(port::OmniPortfolio, rm::SKurt, type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     _SDP_constraints(model, type)
     W = model[:W]
@@ -1221,8 +1222,8 @@ function set_rm(port::OmniPortfolio, rm::SKurt, type::Union{Trad, RP}; kwargs...
     _set_risk_expression(model, skurt_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad, RP};
-                kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SKurt},
+                type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     _SDP_constraints(model, type)
     W = model[:W]
@@ -1296,7 +1297,7 @@ function _OWA_constraints(model, returns)
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::GMD, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::GMD, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1354,7 +1355,7 @@ function set_rm(port::OmniPortfolio, rm::GMD, type::Union{Trad, RP};
     _set_risk_expression(model, gmd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::TG, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::TG, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1412,7 +1413,7 @@ function set_rm(port::OmniPortfolio, rm::TG, type::Union{Trad, RP};
 
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1492,7 +1493,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TG}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::TGRG, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::TGRG, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1590,8 +1591,8 @@ function set_rm(port::OmniPortfolio, rm::TGRG, type::Union{Trad, RP};
     _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, RP};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TGRG},
+                type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
     count = length(rms)
@@ -1709,7 +1710,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:TGRG}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::OWA, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::OWA, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1767,7 +1768,7 @@ function set_rm(port::OmniPortfolio, rm::OWA, type::Union{Trad, RP};
     _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     T = size(returns, 1)
@@ -1857,7 +1858,7 @@ function _BDVariance_constraints(::BDVIneq, model, Dt, Dx, T)
                  end)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::BDVariance, type::Union{Trad, RP};
+function set_rm(port::OmniPortfolio, rm::BDVariance, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_portfolio_returns(model, returns)
@@ -1875,7 +1876,7 @@ function set_rm(port::OmniPortfolio, rm::BDVariance, type::Union{Trad, RP};
     _set_risk_expression(model, bd_variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::Skew, type::Union{Trad, RP}; kwargs...)
+function set_rm(port::OmniPortfolio, rm::Skew, type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     w = model[:w]
     @variable(model, t_skew)
@@ -1891,8 +1892,8 @@ function set_rm(port::OmniPortfolio, rm::Skew, type::Union{Trad, RP}; kwargs...)
     _set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, RP};
-                kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Skew},
+                type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     w = model[:w]
     count = length(rms)
@@ -1911,7 +1912,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:Skew}, type::Union{Tr
     end
     return nothing
 end
-function set_rm(port::OmniPortfolio, rm::SSkew, type::Union{Trad, RP}; kwargs...)
+function set_rm(port::OmniPortfolio, rm::SSkew, type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     w = model[:w]
     @variable(model, t_sskew)
@@ -1927,8 +1928,8 @@ function set_rm(port::OmniPortfolio, rm::SSkew, type::Union{Trad, RP}; kwargs...
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad, RP};
-                kwargs...)
+function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSkew},
+                type::Union{Trad, RP, NOC}; kwargs...)
     model = port.model
     w = model[:w]
     count = length(rms)
@@ -1947,7 +1948,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSkew}, type::Union{T
     end
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RP},
+function risk_constraints(port, type::Union{Trad, RP, NOC},
                           rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
                           kelly_approx_idx = nothing)
     for rm ∈ rms
