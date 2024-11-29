@@ -166,8 +166,9 @@ function _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx, old_Vs, old_skews)
 end
 function _set_wc_var_rm(rm, port, wc_idx, cidx, idx, old_wc_rms)
     if !isa(rm, AbstractVector)
+        push!(old_wc_rms, deepcopy(rm))
         if isnothing(rm.sigma) || isempty(rm.sigma)
-            sigma = !isempty(port.sigma) ? view(port.sigma, cidx, cidx) : nothing
+            sigma = !isempty(port.cov) ? view(port.cov, cidx, cidx) : nothing
         else
             sigma = !isempty(rm.sigma) ? view(rm.sigma, cidx, cidx) : nothing
         end
@@ -181,25 +182,19 @@ function _set_wc_var_rm(rm, port, wc_idx, cidx, idx, old_wc_rms)
             cov_l = !isempty(rm.cov_l) ? view(rm.cov_l, cidx, cidx) : nothing
             cov_u = !isempty(rm.cov_u) ? view(rm.cov_u, cidx, cidx) : nothing
         end
-        if isnothing(rm.cov_mu) ||
-           isempty(rm.cov_mu) ||
-           isnothing(rm.cov_sigma) ||
-           isempty(rm.cov_sigma)
-            cov_mu = !isempty(port.cov_mu) ? view(port.cov_mu, cidx, cidx) : nothing
+        if isnothing(rm.cov_sigma) || isempty(rm.cov_sigma)
             cov_sigma = !isempty(port.cov_sigma) ? view(port.cov_sigma, idx, idx) : nothing
         else
-            cov_mu = !isempty(rm.cov_mu) ? view(rm.cov_mu, cidx, cidx) : nothing
             cov_sigma = !isempty(rm.cov_sigma) ? view(rm.cov_sigma, idx, idx) : nothing
         end
-        push!(old_wc_rms, rm)
         rm.sigma = sigma
         rm.cov_l = cov_l
         rm.cov_u = cov_u
-        rm.cov_mu = cov_mu
         rm.cov_sigma = cov_sigma
     else
         rm_flat = reduce(vcat, rm)
         for r ∈ view(rm_flat, wc_idx)
+            push!(old_wc_rms, deepcopy(rm))
             if isnothing(r.sigma) || isempty(r.sigma)
                 sigma = !isempty(port.sigma) ? view(port.sigma, cidx, cidx) : nothing
             else
@@ -215,11 +210,7 @@ function _set_wc_var_rm(rm, port, wc_idx, cidx, idx, old_wc_rms)
                 cov_l = !isempty(r.cov_l) ? view(r.cov_l, cidx, cidx) : nothing
                 cov_u = !isempty(r.cov_u) ? view(r.cov_u, cidx, cidx) : nothing
             end
-            if isnothing(r.cov_mu) ||
-               isempty(r.cov_mu) ||
-               isnothing(r.cov_sigma) ||
-               isempty(r.cov_sigma)
-                cov_mu = !isempty(port.cov_mu) ? view(port.cov_mu, cidx, cidx) : nothing
+            if isnothing(r.cov_sigma) || isempty(r.cov_sigma)
                 cov_sigma = if !isempty(port.cov_sigma)
                     view(port.cov_sigma, idx, idx)
                 else
@@ -227,15 +218,12 @@ function _set_wc_var_rm(rm, port, wc_idx, cidx, idx, old_wc_rms)
                 end
                 k_sigma = port.k_sigma
             else
-                cov_mu = !isempty(r.cov_mu) ? view(r.cov_mu, cidx, cidx) : nothing
                 cov_sigma = !isempty(r.cov_sigma) ? view(r.cov_sigma, idx, idx) : nothing
                 k_sigma = r.k_sigma
             end
-            push!(old_wc_rms, rm)
             r.sigma = sigma
             r.cov_l = cov_l
             r.cov_u = cov_u
-            r.cov_mu = cov_mu
             r.cov_sigma = cov_sigma
             r.k_sigma = k_sigma
         end
@@ -310,16 +298,14 @@ function _reset_wc_var_rm(rm, wc_idx, old_wc_rms)
             rm.sigma = old_wc.sigma
             rm.cov_l = old_wc.cov_l
             rm.cov_u = old_wc.cov_u
-            rm.cov_mu = old_wc.rm.cov_mu
-            rm.cov_sigma = old_wc.rm.cov_sigma
+            rm.cov_sigma = old_wc.cov_sigma
         else
             rm_flat = reduce(vcat, rm)
             for (r, old_wc) ∈ zip(view(rm_flat, wc_idx), old_wc_rms)
                 r.sigma = old_wc.sigma
                 r.cov_l = old_wc.cov_l
                 r.cov_u = old_wc.cov_u
-                r.cov_mu = old_wc.rm.cov_mu
-                r.cov_sigma = old_wc.rm.cov_sigma
+                r.cov_sigma = old_wc.cov_sigma
             end
         end
     end
