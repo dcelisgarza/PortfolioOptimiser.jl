@@ -1,16 +1,24 @@
-function w_limits(type::NCO, datatype = Float64)
-    opt_kwargs = type.opt_kwargs
-    opt_kwargs_o = type.opt_kwargs_o
-    port_kwargs = type.port_kwargs
-    port_kwargs_o = type.port_kwargs_o
-    lo, hi = if haskey(port_kwargs, :short) && port_kwargs.short ||
-                haskey(port_kwargs_o, :short) && port_kwargs_o.short
+function w_limits(port::OmniPortfolio, type::NCO)
+    datatype = eltype(port.returns)
+    (; internal, external) = type
+    port_kwargs = internal.port_kwargs
+    port_kwargs_o = external.port_kwargs
+    class = internal.type.class
+    class_o = external.type.class
+
+    port_short_i = haskey(port_kwargs, :short) && port_kwargs.short
+    port_short_o = haskey(port_kwargs_o, :short) && port_kwargs_o.short
+    port_short = port.short
+
+    lo, hi = if port_short_i || port_short_o || port_short
         la = nothing
         ha = nothing
         lb = nothing
         hb = nothing
+        lc = nothing
+        hc = nothing
 
-        if haskey(port_kwargs, :short) && port_kwargs.short
+        if port_short_i
             if haskey(port_kwargs, :short_u)
                 la = port_kwargs.short_u
             end
@@ -19,7 +27,7 @@ function w_limits(type::NCO, datatype = Float64)
             end
         end
 
-        if haskey(port_kwargs_o, :short) && port_kwargs_o.short
+        if port_short_o
             if haskey(port_kwargs_o, :short_u)
                 lb = port_kwargs_o.short_u
             end
@@ -28,25 +36,45 @@ function w_limits(type::NCO, datatype = Float64)
             end
         end
 
-        if isnothing(la) && isnothing(lb)
-            la = lb = 0.2 * one(datatype)
+        if port_short
+            lc = port.short_u
+            hc = port.long_u
+        end
+
+        if isnothing(la) && isnothing(lb) && isnothing(lc)
+            la = lb = lc = -0.2 * one(datatype)
+        elseif isnothing(la) && isnothing(lb)
+            la = lb = lc
+        elseif isnothing(la) && isnothing(lc)
+            la = lc = lb
+        elseif isnothing(lb) && isnothing(lc)
+            lb = lc = la
         elseif isnothing(la)
-            la = lb
+            la = min(lb, lc)
         elseif isnothing(lb)
-            lb = la
+            lb = min(la, lc)
+        elseif isnothing(lc)
+            lc = min(la, lb)
         end
 
-        if isnothing(ha) && isnothing(hb)
-            ha = hb = one(datatype)
+        if isnothing(ha) && isnothing(hb) && isnothing(hc)
+            ha = hb = hc = one(datatype)
+        elseif isnothing(ha) && isnothing(hb)
+            ha = hb = hc
+        elseif isnothing(ha) && isnothing(hc)
+            ha = hc = hb
+        elseif isnothing(hb) && isnothing(hc)
+            hb = hc = ha
         elseif isnothing(ha)
-            ha = hb
+            ha = max(hb, hc)
         elseif isnothing(hb)
-            hb = ha
+            hb = max(ha, hc)
+        elseif isnothing(hc)
+            hc = max(ha, hb)
         end
 
-        -max(la, lb), max(ha, hb)
-    elseif haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC}) ||
-           haskey(opt_kwargs_o, :class) && isa(opt_kwargs_o.class, Union{FM, FC})
+        min(la, lb), max(ha, hb)
+    elseif isa(class, Union{FM, FC}) || isa(class_o, Union{FM, FC})
         -Inf, Inf
     else
         zero(datatype), one(datatype)

@@ -13,11 +13,12 @@ mutable struct OmniPortfolio{
                              T_f_timestamps, T_f_returns, T_loadings, T_regression_type,
                              # Statistics
                              T_mu_l, T_mu, T_cov, T_cor, T_dist, T_clusters, T_k,
-                             T_max_num_assets_kurt, T_max_num_assets_kurt_scale, T_kurt,
-                             T_skurt, T_L_2, T_S_2, T_skew, T_V, T_sskew, T_SV, T_f_mu,
-                             T_f_cov, T_fm_returns, T_fm_mu, T_fm_cov, T_bl_bench_weights,
-                             T_bl_mu, T_bl_cov, T_blfm_mu, T_blfm_cov, T_cov_l, T_cov_u,
-                             T_cov_mu, T_cov_sigma, T_d_mu, T_k_mu, T_k_sigma,
+                             T_min_cluster_size, T_max_num_assets_kurt,
+                             T_max_num_assets_kurt_scale, T_kurt, T_skurt, T_L_2, T_S_2,
+                             T_skew, T_V, T_sskew, T_SV, T_f_mu, T_f_cov, T_fm_returns,
+                             T_fm_mu, T_fm_cov, T_bl_bench_weights, T_bl_mu, T_bl_cov,
+                             T_blfm_mu, T_blfm_cov, T_cov_l, T_cov_u, T_cov_mu, T_cov_sigma,
+                             T_d_mu, T_k_mu, T_k_sigma,
                              # Min and max weights
                              T_w_min, T_w_max,
                              # Risk budgetting
@@ -53,6 +54,7 @@ mutable struct OmniPortfolio{
     dist::T_dist
     clusters::T_clusters
     k::T_k
+    min_cluster_size::T_min_cluster_size
     max_num_assets_kurt::T_max_num_assets_kurt
     max_num_assets_kurt_scale::T_max_num_assets_kurt_scale
     kurt::T_kurt
@@ -366,7 +368,8 @@ function OmniPortfolio(;
                        dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                        clusters::Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
                                                           Float64[], Int64[], :nothing),
-                       k::Integer = 0, max_num_assets_kurt::Integer = 0,
+                       k::Integer = 0, min_cluster_size::Integer = 2,
+                       max_num_assets_kurt::Integer = 0,
                        max_num_assets_kurt_scale::Integer = 2,
                        kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                        skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -570,14 +573,15 @@ function OmniPortfolio(;
                          Union{<:RegressionType, Nothing},
                          # Statistics
                          typeof(mu_l), typeof(mu), typeof(cov), typeof(cor), typeof(dist),
-                         typeof(clusters), typeof(k), typeof(max_num_assets_kurt),
-                         typeof(max_num_assets_kurt_scale), typeof(kurt), typeof(skurt),
-                         typeof(L_2), typeof(S_2), typeof(skew), typeof(V), typeof(sskew),
-                         typeof(SV), typeof(f_mu), typeof(f_cov), typeof(fm_returns),
-                         typeof(fm_mu), typeof(fm_cov), typeof(bl_bench_weights),
-                         typeof(bl_mu), typeof(bl_cov), typeof(blfm_mu), typeof(blfm_cov),
-                         typeof(cov_l), typeof(cov_u), typeof(cov_mu), typeof(cov_sigma),
-                         typeof(d_mu), typeof(k_mu), typeof(k_sigma),
+                         typeof(clusters), typeof(k), typeof(min_cluster_size),
+                         typeof(max_num_assets_kurt), typeof(max_num_assets_kurt_scale),
+                         typeof(kurt), typeof(skurt), typeof(L_2), typeof(S_2),
+                         typeof(skew), typeof(V), typeof(sskew), typeof(SV), typeof(f_mu),
+                         typeof(f_cov), typeof(fm_returns), typeof(fm_mu), typeof(fm_cov),
+                         typeof(bl_bench_weights), typeof(bl_mu), typeof(bl_cov),
+                         typeof(blfm_mu), typeof(blfm_cov), typeof(cov_l), typeof(cov_u),
+                         typeof(cov_mu), typeof(cov_sigma), typeof(d_mu), typeof(k_mu),
+                         typeof(k_sigma),
                          # Min and max weights
                          Union{<:Real, <:AbstractVector{<:Real}},
                          Union{<:Real, <:AbstractVector{<:Real}},
@@ -627,6 +631,7 @@ function OmniPortfolio(;
                                                                     # Statistics
                                                                     mu_l, mu, cov, cor,
                                                                     dist, clusters, k,
+                                                                    min_cluster_size,
                                                                     max_num_assets_kurt,
                                                                     max_num_assets_kurt_scale,
                                                                     kurt, skurt, L_2, S_2,
@@ -884,7 +889,8 @@ function Base.deepcopy(port::OmniPortfolio)
                          # Statistics
                          typeof(port.mu_l), typeof(port.mu), typeof(port.cov),
                          typeof(port.cor), typeof(port.dist), typeof(port.clusters),
-                         typeof(port.k), typeof(port.max_num_assets_kurt),
+                         typeof(port.k), typeof(port.min_cluster_size),
+                         typeof(port.max_num_assets_kurt),
                          typeof(port.max_num_assets_kurt_scale), typeof(port.kurt),
                          typeof(port.skurt), typeof(port.L_2), typeof(port.S_2),
                          typeof(port.skew), typeof(port.V), typeof(port.sskew),
@@ -957,6 +963,7 @@ function Base.deepcopy(port::OmniPortfolio)
                                                                               deepcopy(port.dist),
                                                                               deepcopy(port.clusters),
                                                                               deepcopy(port.k),
+                                                                              deepcopy(port.min_cluster_size),
                                                                               deepcopy(port.max_num_assets_kurt),
                                                                               deepcopy(port.max_num_assets_kurt_scale),
                                                                               deepcopy(port.kurt),

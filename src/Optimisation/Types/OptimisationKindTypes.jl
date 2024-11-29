@@ -239,19 +239,54 @@ function Base.setproperty!(noc::NOC, sym::Symbol, val)
     end
 end
 
+abstract type HCOptWeightFinaliser end
+mutable struct HWF{T1} <: HCOptWeightFinaliser
+    max_iter::T1
+end
+function HWF(; max_iter::Integer = 100)
+    return HWF{typeof(max_iter)}(max_iter)
+end
+struct JWF <: HCOptWeightFinaliser end
+
 """
 ```
 struct HRP <: HCOptimType end
 ```
 """
-mutable struct HRP{T1} <: HCOptimType
+mutable struct HRP <: HCOptimType
     rm::Union{AbstractVector, <:AbstractRiskMeasure}
     class::PortClass
-    max_iter::T1
+    finaliser::HCOptWeightFinaliser
 end
 function HRP(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
-             class::PortClass = Classic(), max_iter::Integer = 100)
-    return HRP{typeof(max_iter)}(rm, class, max_iter)
+             class::PortClass = Classic(), finaliser::HCOptWeightFinaliser = HWF())
+    return HRP(rm, class, finaliser)
+end
+
+mutable struct SchurParams{T1, T2, T3, T4}
+    rm::RMSigma
+    gamma::T1
+    prop_coef::T2
+    tol::T3
+    max_iter::T4
+end
+function SchurParams(; rm = Variance(;), gamma::Real = 0.5, prop_coef::Real = 0.5,
+                     tol::Real = 1e-2, max_iter::Integer = 10)
+    @smart_assert(zero(gamma) <= gamma <= one(gamma))
+    return SchurParams{typeof(gamma), typeof(prop_coef), typeof(tol), typeof(max_iter)}(rm,
+                                                                                        gamma,
+                                                                                        prop_coef,
+                                                                                        tol,
+                                                                                        max_iter)
+end
+mutable struct SchurHRP <: HCOptimType
+    params::Union{AbstractVector, <:SchurParams}
+    class::PortClass
+    finaliser::HCOptWeightFinaliser
+end
+function SchurHRP(; params::Union{AbstractVector, <:SchurParams} = SchurParams(),
+                  class::PortClass = Classic(), finaliser::HCOptWeightFinaliser = HWF())
+    return SchurHRP(params, class, finaliser)
 end
 
 """
@@ -259,18 +294,18 @@ end
 struct HERC <: HCOptimType end
 ```
 """
-mutable struct HERC{T1} <: HCOptimType
+mutable struct HERC <: HCOptimType
     rm::Union{AbstractVector, <:AbstractRiskMeasure}
     rm_o::Union{AbstractVector, <:AbstractRiskMeasure}
     class::PortClass
     class_o::PortClass
-    max_iter::T1
+    finaliser::HCOptWeightFinaliser
 end
 function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
               rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
               class::PortClass = Classic(), class_o::PortClass = class,
-              max_iter::Integer = 100, kwargs...)
-    return HERC{typeof(max_iter)}(rm, rm_o, class, class_o, max_iter)
+              finaliser::HCOptWeightFinaliser = HWF())
+    return HERC(rm, rm_o, class, class_o, finaliser)
 end
 
 """
@@ -299,10 +334,10 @@ function NCOArgs(; type::AbstractOptimType = Trad(), port_kwargs::NamedTuple = (
     return NCOArgs(type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
                    cluster_kwargs)
 end
-mutable struct NCO{T1} <: HCOptimType
+mutable struct NCO <: HCOptimType
     internal::NCOArgs
     external::NCOArgs
-    max_iter::T1
+    finaliser::HCOptWeightFinaliser
     opt_kwargs::NamedTuple
     opt_kwargs_o::NamedTuple
     port_kwargs::NamedTuple
@@ -316,16 +351,15 @@ mutable struct NCO{T1} <: HCOptimType
     stat_kwargs_o::NamedTuple
 end
 function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
-             max_iter::Integer = 100, opt_kwargs::NamedTuple = (;),
+             finaliser::HCOptWeightFinaliser = HWF(), opt_kwargs::NamedTuple = (;),
              opt_kwargs_o::NamedTuple = opt_kwargs, port_kwargs::NamedTuple = (;),
              port_kwargs_o::NamedTuple = port_kwargs, factor_kwargs::NamedTuple = (;),
              factor_kwargs_o::NamedTuple = factor_kwargs, wc_kwargs::NamedTuple = (;),
              wc_kwargs_o::NamedTuple = wc_kwargs, cluster_kwargs::NamedTuple = (;),
              cluster_kwargs_o::NamedTuple = cluster_kwargs, stat_kwargs_o::NamedTuple = (;))
-    return NCO{typeof(max_iter)}(internal, external, max_iter, opt_kwargs, opt_kwargs_o,
-                                 port_kwargs, port_kwargs_o, factor_kwargs, factor_kwargs_o,
-                                 wc_kwargs, wc_kwargs_o, cluster_kwargs, cluster_kwargs_o,
-                                 stat_kwargs_o)
+    return NCO(internal, external, finaliser, opt_kwargs, opt_kwargs_o, port_kwargs,
+               port_kwargs_o, factor_kwargs, factor_kwargs_o, wc_kwargs, wc_kwargs_o,
+               cluster_kwargs, cluster_kwargs_o, stat_kwargs_o)
 end
 function Base.getproperty(nco::NCO, sym::Symbol)
     if sym ∈ (:rm, :obj, :kelly, :class, :w_ini, :custom_constr, :custom_obj, :str_names)
@@ -347,8 +381,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),
-                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO"))
+for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
+                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -359,4 +393,5 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO),
          end)
 end
 
-export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs
+export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs,
+       SchurHRP, SchurParams, HWF, JWF

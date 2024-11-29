@@ -183,6 +183,8 @@ end
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
+abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
+
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
@@ -2525,7 +2527,7 @@ function Equal(; settings::HCRMSettings = HCRMSettings())
     return Equal(settings)
 end
 
-mutable struct TCM <: HCRiskMeasure
+mutable struct TCM <: NoOptRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
 end
@@ -2563,7 +2565,7 @@ function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
     return FTLPM{typeof(target)}(settings, target, w)
 end
 
-mutable struct Skewness <: HCRiskMeasure
+mutable struct Skewness <: NoOptRiskMeasure
     settings::HCRMSettings
     mean_w::Union{AbstractWeights, Nothing}
     ve::CovarianceEstimator
@@ -2615,38 +2617,6 @@ function SKurtosis(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0
                    ve::CovarianceEstimator = SimpleVariance(),
                    std_w::Union{AbstractWeights, Nothing} = nothing)
     return SKurtosis{typeof(target)}(settings, target, mean_w, ve, std_w)
-end
-
-for (op, name) ∈
-    zip((SD, Variance, MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR,
-         MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
-         RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-         Equal, WCVariance, TCM, TLPM, FTCM, FTLPM, Skewness, SSkewness, Kurtosis,
-         SKurtosis),
-        ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
-         "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
-         "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
-         "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal",
-         "WCVariance", "TCM", "TLPM", "FTCM", "FTLPM", "Skewness", "SSkewness", "Kurtosis",
-         "SKurtosis"))
-    eval(quote
-             Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
-             function Base.String(s::$op)
-                 return $name
-             end
-             function Base.Symbol(::$op)
-                 return Symbol($name)
-             end
-             function Base.length(::$op)
-                 return 1
-             end
-             function Base.getindex(S::$op, ::Any)
-                 return S
-             end
-             function Base.view(S::$op, ::Any)
-                 return S
-             end
-         end)
 end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
