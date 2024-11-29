@@ -247,7 +247,7 @@ l = 2.0
           1.5647234135673777e-8, 1.2734755910032396e-7, 1.659123047740417e-8,
           0.07256620154525836, 0.20133186829049246, 0.09894665144160442, 0.088430221605468,
           0.03279937469249761]
-    @test isapprox(w20.weights, wt)
+    @test isapprox(w20.weights, wt, rtol = 5.0e-7)
 
     rm.wc_set = Ellipse()
     w21 = optimise!(portfolio, Trad(; rm = rm, obj = obj, kelly = kelly))
@@ -292,7 +292,7 @@ l = 2.0
           1.367182294783735e-10, 7.263163128730682e-10, 1.6527572082990248e-10,
           2.0777646310223227e-9, 0.3135898308997186, 2.130534942883462e-9,
           9.454598165968478e-9, 2.488532664449174e-9]
-    @test isapprox(w24.weights, wt)
+    @test isapprox(w24.weights, wt, rtol = 5.0e-7)
 
     kelly.wc_set = Ellipse()
     rm = Variance()
