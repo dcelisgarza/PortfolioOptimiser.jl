@@ -840,6 +840,24 @@ function Base.setproperty!(obj::CVaR, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+mutable struct DRCVaR{T1, T2, T3} <: RiskMeasure
+    settings::RMSettings
+    l::T1
+    alpha::T2
+    r::T3
+end
+function DRCVaR(; settings::RMSettings = RMSettings(), l::Real = 1.0, alpha::Real = 0.05,
+                r::Real = 0.02)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    return DRCVaR{typeof(l), typeof(alpha), typeof(r)}(settings, l, alpha, r)
+end
+function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
+    if sym == :alpha
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+
 """
     mutable struct EVaR{T1 <: Real} <: RiskMeasure
 

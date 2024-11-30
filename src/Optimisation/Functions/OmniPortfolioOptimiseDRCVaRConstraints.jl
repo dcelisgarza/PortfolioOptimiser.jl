@@ -23,9 +23,9 @@ function drcvar_risk(port, returns, l1, alpha, r)
                      l1 * tau .+ a1 * X .+ (u .* (1 .+ returns)) * ovec .<= s
                      l2 * tau .+ a2 * X .+ (v .* (1 .+ returns)) * ovec .<= s
                      [i = 1:T],
-                     [tu_drcvar[i]; -u[i] .- a1 * w] in MOI.NormInfinityCone(1 + N)
+                     [tu_drcvar[i]; -u[i, :] .- a1 * w] in MOI.NormInfinityCone(1 + N)
                      [i = 1:T],
-                     [tv_drcvar[i]; -v[i] .- a2 * w] in MOI.NormInfinityCone(1 + N)
+                     [tv_drcvar[i]; -v[i, :] .- a2 * w] in MOI.NormInfinityCone(1 + N)
                      tu_drcvar .<= lb
                      tv_drcvar .<= lb
                  end)
