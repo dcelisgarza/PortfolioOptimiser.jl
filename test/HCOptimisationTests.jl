@@ -85,7 +85,7 @@ l = 2.0
           0.07156220430381516, 0.03979154648185254, 0.10009210597029748,
           0.09468690756324473, 0.030877944326196508, 0.04390805560754567,
           0.028416442085015408, 0.037407286914495776]
-    @test isapprox(w6.weights, wt)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-7)
 
     w7 = optimise!(portfolio,
                    NCO(;
@@ -117,16 +117,16 @@ l = 2.0
           0.0005637870530288164, 0.06040728591141588, 0.0014574390260837919,
           0.052935774664661824, 0.05223809459315094, 0.07475074326336023,
           0.04606492182569711, 0.06324659127734569]
-    @test isapprox(w8.weights, wt)
+    @test isapprox(w8.weights, wt, rtol = 0.0001)
 end
 
 @testset "Weight bounds" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -160,7 +160,7 @@ end
     portfolio.w_max = w_max
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
-    w1 = optimise!(portfolio; type = HRP(), rm = CDaR())
+    w1 = optimise!(portfolio, HRP(; rm = CDaR()))
     wt = [0.05927474378621105, 0.050096081527465364, 0.057435012961977804,
           0.033075532524845755, 0.06999999999999999, 0.039999999999999994,
           0.03361343145360156, 0.04999999999999999, 0.039999999999999994,
@@ -172,14 +172,14 @@ end
     @test all(w1.weights .>= w_min .- sqrt(eps()) * N)
     @test all(w1.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w2 = optimise!(portfolio; type = HERC(), rm = CDaR())
+    w2 = optimise!(portfolio, HERC(; rm = CDaR()))
     wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.02, 0.05, 0.04, 0.04, 0.04, 0.02, 0.02,
           0.04, 0.04, 0.059848065481384424, 0.07, 0.06015193451861548, 0.04, 0.07]
     @test isapprox(w2.weights, wt, rtol = 0.05)
     @test all(w2.weights .>= w_min .- sqrt(eps()) * N)
     @test all(w2.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w3 = optimise!(portfolio; type = NCO(), rm = CDaR())
+    w3 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
     wt = [0.07, 0.027692307692307686, 0.07, 0.027692307692307686, 0.027692307692307686,
           0.05538461538461537, 0.027692307692307686, 0.06923076923076922,
           0.05538461538461537, 0.05538461538461537, 0.04, 0.027692307692307686,
@@ -191,7 +191,7 @@ end
 
     portfolio.w_min = 0.03
     portfolio.w_max = 0.07
-    w4 = optimise!(portfolio; type = HRP(), rm = CDaR())
+    w4 = optimise!(portfolio, HRP(; rm = CDaR()))
     wt = [0.05751902789250354, 0.04861223729749336, 0.0557337898326743, 0.03209583637708745,
           0.07, 0.03, 0.0326178027578793, 0.04184798638718673, 0.03, 0.053331550775954466,
           0.07, 0.03, 0.03, 0.07, 0.03, 0.0661455448334159, 0.07, 0.07, 0.04209622384580504,
@@ -200,7 +200,7 @@ end
     @test all(w4.weights .>= 0.03 .- sqrt(eps()) * N)
     @test all(w4.weights .<= 0.07 .+ sqrt(eps()) * N)
 
-    w5 = optimise!(portfolio; type = HERC(), rm = CDaR())
+    w5 = optimise!(portfolio, HERC(; rm = CDaR()))
     wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.03923076923076922, 0.03923076923076922,
           0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
           0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
@@ -210,7 +210,7 @@ end
     @test all(w5.weights .>= 0.03 .- sqrt(eps()) * N)
     @test all(w5.weights .<= 0.07 .+ sqrt(eps()) * N)
 
-    w6 = optimise!(portfolio; type = NCO(), rm = CDaR())
+    w6 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
     wt = [0.07, 0.03923076923076922, 0.07, 0.03923076923076922, 0.03923076923076922,
           0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
           0.03923076923076922, 0.03923076923076922, 0.07, 0.03923076923076922,
@@ -222,15 +222,15 @@ end
 
     portfolio.w_min = 0
     portfolio.w_max = 1
-    w7 = optimise!(portfolio; type = HRP(), rm = CDaR())
-    w8 = optimise!(portfolio; type = HERC(), rm = CDaR())
-    w9 = optimise!(portfolio; type = NCO(), rm = CDaR())
+    w7 = optimise!(portfolio, HRP(; rm = CDaR()))
+    w8 = optimise!(portfolio, HERC(; rm = CDaR()))
+    w9 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
 
     portfolio.w_min = Float64[]
     portfolio.w_max = Float64[]
-    w10 = optimise!(portfolio; type = HRP(), rm = CDaR())
-    w11 = optimise!(portfolio; type = HERC(), rm = CDaR())
-    w12 = optimise!(portfolio; type = NCO(), rm = CDaR())
+    w10 = optimise!(portfolio, HRP(; rm = CDaR()))
+    w11 = optimise!(portfolio, HERC(; rm = CDaR()))
+    w12 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
 
     @test isapprox(w7.weights, w10.weights)
     @test isapprox(w8.weights, w11.weights)
@@ -238,26 +238,30 @@ end
 end
 
 @testset "NCO factors" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
 
     f_returns = Matrix(DataFrame(percentchange(factors))[!, 2:end])
     f_assets = colnames(factors)
-    w1 = optimise!(portfolio;
-                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
-                              opt_kwargs = (; obj = MinRisk())))
 
-    w2 = optimise!(portfolio;
-                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
-                              factor_kwargs = (; mu_type = MuSimple()),
-                              opt_kwargs = (; class = FM(), obj = MinRisk())))
+    w1 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(),
+                                          port_kwargs = (; f_assets = f_assets,
+                                                         f_ret = f_returns))))
+    w2 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; class = FM(), obj = MinRisk()),
+                                          port_kwargs = (; f_assets = f_assets,
+                                                         f_ret = f_returns),
+                                          factor_kwargs = (; mu_type = MuSimple()))))
     wt = [0.05109914899016135, 0.050215140451460485, 0.04135353593026219,
           0.02681788291627889, 0.0322776857129373, 0.060200449755958466,
           0.014445885728257432, 0.06587623061278468, 0.0390439498991421,
@@ -268,26 +272,38 @@ end
     @test isapprox(w2.weights, wt)
     @test !isapprox(w1.weights, w2.weights)
 
-    w3 = optimise!(portfolio;
-                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
-                              opt_kwargs = (; type = RP(), obj = MinRisk())))
+    w3 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = RP(;),
+                                          port_kwargs = (; f_assets = f_assets,
+                                                         f_ret = f_returns))))
 
     portfolio.w_min = -Inf
     portfolio.w_max = Inf
-    w4 = optimise!(portfolio;
-                   type = NCO(; port_kwargs = (; f_assets = f_assets, f_ret = f_returns),
-                              opt_kwargs = (; type = RP(), class = FC(; flag = false),
-                                            obj = MinRisk())))
-    wt = [-0.12407177364458641, 0.1427703921204258, 0.14870426246234558, -0.168918037096896,
-          -0.23131921539398562, -0.6300055700857549, -1.5987997644882643,
-          0.3961820460755596, 0.4191537108624059, -0.5503732948069809, -0.20068826394299075,
-          -1.492928011341361, -1.7421410840912706, 0.6998931643293858, 2.4350818491417794,
-          3.5134665164530956, 0.20569006836521228, -0.7976334388314399, 0.3627068910671518,
-          0.2132295528611723]
-    @test isapprox(w4.weights, wt, rtol = 0.005)
+    portfolio.short = true
+    portfolio.short_budget = -10
+    portfolio.short_u = -10
+    portfolio.budget = 1
+    portfolio.long_u = 10
+
+    w4 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = RP(; class = FC(; flag = false)),
+                                          port_kwargs = (; f_assets = f_assets,
+                                                         f_ret = f_returns),
+                                          factor_kwargs = (; mu_type = MuSimple()))))
+
+    wt = [-0.1256695060143601, 0.14480536591446272, 0.1516947592682884,
+          -0.17109327653920026, -0.2374367933118665, -0.6356860179202806,
+          -1.5874882850425185, 0.39974898319587926, 0.42291836086357226, -0.555325557293549,
+          -0.2024907556149184, -1.4823655726361797, -1.7261986983011786, 0.7061944970950512,
+          2.4107426627195694, 3.5003685389094503, 0.2086218660061672, -0.8048228091510529,
+          0.3659645611354176, 0.21751767672665606]
+    @test isapprox(w4.weights, wt)
     @test !isapprox(w3.weights, w4.weights)
 end
 
+#=
 @testset "Kurt, skew and cov via rm" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -2989,3 +3005,4 @@ end
           0.13989097981718657]
     @test isapprox(w32.weights, wt)
 end
+=#

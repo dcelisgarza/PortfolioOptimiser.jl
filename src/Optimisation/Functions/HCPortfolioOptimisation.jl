@@ -24,5 +24,5 @@ function optimise!(port::HCPortfolio;
     lo, hi = w_limits(type, eltype(port.returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
     w = _optimise!(type, port, class, rm, rm_o, w_min, w_max)
-    return finalise_weights(type, port, w, w_min, w_max, max_iter)
+    return finalise_weights(type, port, w, w_min, w_max, HWF())
 end

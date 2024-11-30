@@ -116,7 +116,6 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
     end
     if !use_portfolio_sigma
         sigma = rm.sigma
-        display(sigma)
     end
     adjacency_constraint = _get_ntwk_clust_method(port)
     if isa(adjacency_constraint, SDP) && !haskey(model, :W)

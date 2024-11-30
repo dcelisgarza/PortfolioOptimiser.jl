@@ -33,7 +33,7 @@ function optimise!(port::OmniPortfolio, type::SchurHRP)
     empty!(port.fail)
     sigma = mu_sigma_returns_class(port, class)[2]
     lo, hi = w_limits(type, eltype(port.returns))
-    w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)
+    w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(sigma, 1), lo, hi)
     w = schur_optimise(port, params, sigma)
     return finalise_weights(type, port, w, w_min, w_max, finaliser)
 end

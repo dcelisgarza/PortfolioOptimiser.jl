@@ -986,7 +986,6 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     end
 
     w = optimise!(inter_port, type)
-
     if !isempty(w)
         w = w.weights
     else
@@ -1013,6 +1012,5 @@ end
 function nco_optimise(port, type)
     wi = calc_intra_weights(port, type.internal)
     w = calc_inter_weights(port, wi, type.external)
-
     return w
 end

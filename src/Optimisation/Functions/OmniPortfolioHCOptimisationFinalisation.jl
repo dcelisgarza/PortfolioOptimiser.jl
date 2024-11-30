@@ -63,6 +63,7 @@ function opt_weight_bounds(::Any, w_min, w_max, weights, finaliser::HWF)
 
         old_w = copy(weights)
         weights = max.(min.(weights, w_max), w_min)
+
         idx = weights .< w_max .&& weights .> w_min
         w_add = sum(max.(old_w - w_max, 0.0))
         w_sub = sum(min.(old_w - w_min, 0.0))
