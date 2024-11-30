@@ -45,7 +45,7 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
     return Trad{typeof(w_ini), typeof(ohf)}(rm, obj, kelly, class, w_ini, custom_constr,
                                             custom_obj, ohf, str_names)
 end
-
+#=
 mutable struct DRCVaR{T1, T2, T3, T4} <: OptimType
     l::T1
     alpha::T2
@@ -72,6 +72,7 @@ function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+=#
 
 """
 ```
@@ -375,8 +376,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP, DRCVaR),
-                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP", "DRCVaR"))
+for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
+                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -388,4 +389,4 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP, DRCVaR
 end
 
 export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs,
-       SchurHRP, SchurParams, HWF, JWF, DRCVaR
+       SchurHRP, SchurParams, HWF, JWF

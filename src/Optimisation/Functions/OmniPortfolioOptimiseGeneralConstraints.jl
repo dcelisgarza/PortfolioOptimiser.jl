@@ -435,7 +435,7 @@ function get_one_plus_net_returns(model, returns)
     end
     get_fees(model)
     fees = model[:fees]
-    @expression(model, net_RP1, one(eltype(returns) .+ returns .- fees))
+    @expression(model, net_RP1, one(eltype(returns)) .+ returns .- fees)
     return nothing
 end
 function get_net_portfolio_returns(model, returns)

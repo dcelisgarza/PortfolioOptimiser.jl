@@ -634,17 +634,18 @@ function set_rm(port::OmniPortfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
     model = port.model
     get_net_portfolio_returns(model, returns)
     get_one_plus_net_returns(model, returns)
+    w = model[:w]
     net_X = model[:net_X]
     net_RP1 = model[:net_RP1]
     T, N = size(returns)
 
-    l1 = rm.l
+    b1 = rm.l
     alpha = rm.alpha
     radius = rm.r
 
     a1 = -one(alpha)
-    a2 = a1 - l1 * inv(alpha)
-    l2 = l1 * (one(alpha) - inv(alpha))
+    a2 = -one(alpha) - b1 * inv(alpha)
+    b2 = b1 * (one(alpha) - inv(alpha))
     ovec = range(; start = one(alpha), stop = one(alpha), length = N)
 
     @variables(model, begin
@@ -658,8 +659,8 @@ function set_rm(port::OmniPortfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
-                     l1 * tau .+ a1 * net_X .+ (u .* net_RP1) * ovec .<= s
-                     l2 * tau .+ a2 * net_X .+ (v .* net_RP1) * ovec .<= s
+                     b1 * tau .+ a1 * net_X .+ (u .* net_RP1) * ovec .<= s
+                     b2 * tau .+ a2 * net_X .+ (v .* net_RP1) * ovec .<= s
                      [i = 1:T],
                      [tu_drcvar[i]; -view(u, i, :) .- a1 * w] in
                      MOI.NormInfinityCone(1 + N)
@@ -698,20 +699,20 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:DRCVaR},
                end)
     @expression(model, drcvar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
-        l1 = rm.l
+        b1 = rm.l
         alpha = rm.alpha
         radius = rm.r
 
         a1 = -one(alpha)
-        a2 = a1 - l1 * inv(alpha)
-        l2 = l1 * (one(alpha) - inv(alpha))
+        a2 = a1 - b1 * inv(alpha)
+        b2 = b1 * (one(alpha) - inv(alpha))
         ovec = range(; start = one(alpha), stop = one(alpha), length = N)
 
         @constraints(model,
                      begin
-                         l1 * tau[j] .+ a1 * net_X .+ (u .* net_RP1) * ovec .<=
+                         b1 * tau[j] .+ a1 * net_X .+ (u .* net_RP1) * ovec .<=
                          view(s, :, j)
-                         l2 * tau[j] .+ a2 * net_X .+ (v .* net_RP1) * ovec .<=
+                         b2 * tau[j] .+ a2 * net_X .+ (v .* net_RP1) * ovec .<=
                          view(s, :, j)
                          [i = 1:T],
                          [tu_drcvar[i, j]; -view(u, i, :, j) .- a1 * w] in

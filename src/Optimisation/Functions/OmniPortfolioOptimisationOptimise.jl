@@ -148,6 +148,7 @@ function optimise!(port::OmniPortfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
+#=
 function optimise!(port::OmniPortfolio, type::DRCVaR)
     (; l, alpha, r, class, w_ini, custom_constr, custom_obj, str_names) = type
     empty!(port.fail)
@@ -175,6 +176,7 @@ function optimise!(port::OmniPortfolio, type::DRCVaR)
     set_objective_function(port, MinRisk(), type, nothing, custom_obj)
     return convex_optimisation(port, nothing, type, class)
 end
+=#
 function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
