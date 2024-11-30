@@ -453,7 +453,7 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
     end
 
     if skurt_flag
-        skurt = get_cluster_matrix(skurt, cidx)
+        skurt = get_cluster_matrix(skurt, idx_sq)
     else
         skurt = Matrix{eltype(returns)}(undef, 0, 0)
     end
