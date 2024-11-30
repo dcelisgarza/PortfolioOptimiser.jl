@@ -57,7 +57,7 @@ function _objective(::Trad, ::Sharpe, ::Any, model, custom_obj)
         @objective(model, Max, obj_func)
     end
 end
-function _objective(::Trad, ::MinRisk, ::Any, model, custom_obj)
+function _objective(::Union{Trad, DRCVaR}, ::MinRisk, ::Any, model, custom_obj)
     risk = model[:risk]
     @expression(model, obj_func, risk)
     add_objective_penalty(model, obj_func, 1)
@@ -92,9 +92,9 @@ function _objective(::Any, obj::MaxRet, ::Any, model, custom_obj)
     @objective(model, Max, obj_func)
     return nothing
 end
-function set_objective_function(port, obj, ::Trad, kelly, custom_obj)
+function set_objective_function(port, obj, type::Union{Trad, DRCVaR}, kelly, custom_obj)
     model = port.model
-    _objective(Trad(), obj, kelly, model, custom_obj)
+    _objective(type, obj, kelly, model, custom_obj)
     return nothing
 end
 function set_objective_function(port, ::NOC, custom_obj)

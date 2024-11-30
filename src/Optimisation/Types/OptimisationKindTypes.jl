@@ -46,6 +46,26 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
                                             custom_obj, ohf, str_names)
 end
 
+mutable struct DRCVaR{T1, T2, T3, T4} <: OptimType
+    l::T1
+    alpha::T2
+    r::T3
+    class::PortClass
+    w_ini::T4
+    custom_constr::CustomConstraint
+    custom_obj::CustomObjective
+    str_names::Bool
+end
+function DRCVaR(; l::Real = 1.0, alpha::Real = 0.05, r::Real = 0.02,
+                class::PortClass = Classic(),
+                w_ini::AbstractVector = Vector{Float64}(undef, 0),
+                custom_constr::CustomConstraint = NoCustomConstraint(),
+                custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false)
+    return DRCVaR{typeof(l), typeof(alpha), typeof(r), typeof(w_ini)}(l, alpha, r, class,
+                                                                      w_ini, custom_constr,
+                                                                      custom_obj, str_names)
+end
+
 """
 ```
 struct RP <: OptimType end
@@ -348,8 +368,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
-                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
+for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP, DRCVaR),
+                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP", "DRCVaR"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -361,4 +381,4 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
 end
 
 export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs,
-       SchurHRP, SchurParams, HWF, JWF
+       SchurHRP, SchurParams, HWF, JWF, DRCVaR

@@ -884,7 +884,6 @@ end
 end
 
 #=
-
 @testset "NCO" begin
     portfolio = HCPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

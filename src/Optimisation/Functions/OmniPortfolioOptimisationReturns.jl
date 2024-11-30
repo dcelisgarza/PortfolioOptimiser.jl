@@ -17,7 +17,7 @@ function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     ohf = model[:ohf]
     ret = model[:ret]
     rf = obj.rf
-    if all(mu .> zero(eltype(mu))) || haskey(model, :abs_w) || haskey(model, :t_gw)
+    if all(mu .<= zero(eltype(mu))) || haskey(model, :abs_w) || haskey(model, :t_gw)
         risk = model[:risk]
         add_to_expression!(ret, -k, rf)
         @constraint(model, alt_sr, risk <= ohf)

@@ -148,6 +148,36 @@ function optimise!(port::OmniPortfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
+function optimise!(port::OmniPortfolio, type::DRCVaR)
+    (; l, alpha, r, class, w_ini, custom_constr, custom_obj, str_names) = type
+    empty!(port.fail)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    initial_w(port, w_ini)
+    set_k(port, nothing)
+    # Weight constraints
+    weight_constraints(port)
+    MIP_constraints(port)
+    SDP_network_cluster_constraints(port, type)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    drcvar_risk(port, returns, l, alpha, r)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, MinRisk(), type, nothing, custom_obj)
+    return convex_optimisation(port, nothing, type, class)
+end
 function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
