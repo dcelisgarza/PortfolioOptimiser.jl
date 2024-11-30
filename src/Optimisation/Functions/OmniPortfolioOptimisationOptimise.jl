@@ -163,9 +163,6 @@ function optimise!(port::OmniPortfolio, type::DRCVaR)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
-    # Fees
-    management_fee(port)
-    rebalance_fee(port)
     # Risk
     drcvar_risk(port, returns, l, alpha, r)
     # Objective function penalties

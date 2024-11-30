@@ -61,9 +61,16 @@ function DRCVaR(; l::Real = 1.0, alpha::Real = 0.05, r::Real = 0.02,
                 w_ini::AbstractVector = Vector{Float64}(undef, 0),
                 custom_constr::CustomConstraint = NoCustomConstraint(),
                 custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
     return DRCVaR{typeof(l), typeof(alpha), typeof(r), typeof(w_ini)}(l, alpha, r, class,
                                                                       w_ini, custom_constr,
                                                                       custom_obj, str_names)
+end
+function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
+    if sym == :alpha
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
