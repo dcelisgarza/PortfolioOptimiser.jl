@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 5: Risk parity · PortfolioOptimiser.jl</title><meta name="title" content="Example 5: Risk parity · PortfolioOptimiser.jl"/><meta property="og:title" content="Example 5: Risk parity · PortfolioOptimiser.jl"/><meta property="twitter:title" content="Example 5: Risk parity · PortfolioOptimiser.jl"/><meta name="description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="twitter:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/5_risk_parity_portfolios/"/><meta property="twitter:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/5_risk_parity_portfolios/"/><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/5_risk_parity_portfolios/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PortfolioOptimiser.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../0_not_financial_advice/">Example 0: Not financial advice</a></li><li><a class="tocitem" href="../1_basic_use/">Example 1: Basic use</a></li><li><a class="tocitem" href="../2_asset_statistics/">Example 2: Asset statistics</a></li><li><a class="tocitem" href="../3_shorting_portfolios/">Example 3: Shorting and leveraged portfolios</a></li><li><a class="tocitem" href="../4_hrp_portfolios/">Example 4: Hierarchical risk parity</a></li><li class="is-active"><a class="tocitem" href>Example 5: Risk parity</a><ul class="internal"><li><a class="tocitem" href="#5.1-Downloading-the-data"><span>5.1 Downloading the data</span></a></li><li><a class="tocitem" href="#5.2-Instantiating-an-instance-of-[Portfolio](@ref)."><span>5.2 Instantiating an instance of <code>Portfolio</code>.</span></a></li><li><a class="tocitem" href="#5.3-Optimising-the-portfolio"><span>5.3 Optimising the portfolio</span></a></li></ul></li><li><a class="tocitem" href="../6_worst_case_mv_portfolios/">Example 6: Worst case Mean-Variance</a></li><li><a class="tocitem" href="../7_worst_case_statistics/">Example 7: Worst case statistics</a></li><li><a class="tocitem" href="../8_relaxed_risk_parity_variance_portfolios/">-</a></li></ul></li><li><span class="tocitem">API</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Risk Measures</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures/">Types</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskValue/">Risk value</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskStatistics/">Risk statistics</a></li><li><a class="tocitem" href="../../RiskMeasures/MiscRiskMeasureFunctions/">Miscelaneous Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Parameter Estimation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../ParameterEstimation/PosdefFix/">Fixing non-positive definite matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/MatrixDenoising/">Matrix denoising</a></li><li><a class="tocitem" href="../../ParameterEstimation/DistanceMatrices/">Distance matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/Clustering/">Clustering</a></li><li><a class="tocitem" href="../../ParameterEstimation/CovCorKurtSkew/">Covariance, correlation, cokurtosis and coskewness</a></li><li><a class="tocitem" href="../../ParameterEstimation/MeanEstimators/">Expected returns</a></li><li><a class="tocitem" href="../../ParameterEstimation/WorstCase/">Worst case mean variance sets</a></li><li><a class="tocitem" href="../../ParameterEstimation/Regression/">Regression</a></li><li><a class="tocitem" href="../../ParameterEstimation/BlackLitterman/">Black Litterman models</a></li><li><a class="tocitem" href="../../ParameterEstimation/OWA/">Ordered Weight Arrays</a></li><li><a class="tocitem" href="../../ParameterEstimation/ParameterEstimationMisc/">Miscelaneous</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Constraints</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Constraints/WeightConstraints/">Weight constraints</a></li><li><a class="tocitem" href="../../Constraints/ViewsConstraints/">Views constraints</a></li><li><a class="tocitem" href="../../Constraints/NetworkConstraints/">Network constraints</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">(HC)Portfolio</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Portfolio/PortfolioTypes/">Types</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioStatistics/">Statistics</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioRisk/">Risk</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioClustering/">Clustering</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioNetwork/">Network</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Optimisation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Optimisation/OptimisationKinds/">Optimisation kinds</a></li><li><a class="tocitem" href="../../Optimisation/ObjectiveFunctions/">Objective functions</a></li><li><a class="tocitem" href="../../Optimisation/PortfolioClasses/">Portfolio classes</a></li><li><a class="tocitem" href="../../Optimisation/AssetAllocation/">Asset allocation</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationConstraints/">Constraints</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationSetup/">Setup functions</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationRiskMeasures/">Risk measures</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationGetZ/">Entropic and relativistic moments</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationFinalisation/">Finalisation functions</a></li></ul></li><li><a class="tocitem" href="../../PlotsExtension/">Plots Extension</a></li><li><a class="tocitem" href="../../References/">References</a></li><li><a class="tocitem" href="../../Contents/">Index</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 5: Risk parity</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 5: Risk parity</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/5_risk_parity_portfolios.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><p>The source files for all examples can be found in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/">/examples</a>.</p><h1 id="Example-5:-Risk-parity"><a class="docs-heading-anchor" href="#Example-5:-Risk-parity">Example 5: Risk parity</a><a id="Example-5:-Risk-parity-1"></a><a class="docs-heading-anchor-permalink" href="#Example-5:-Risk-parity" title="Permalink"></a></h1><p>This example follows from previous ones. If something in the preamble is confusing, it is explained there.</p><p>This example focuses on the <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.RP"><code>RP</code></a> optimisation type of <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</p><h2 id="5.1-Downloading-the-data"><a class="docs-heading-anchor" href="#5.1-Downloading-the-data">5.1 Downloading the data</a><a id="5.1-Downloading-the-data-1"></a><a class="docs-heading-anchor-permalink" href="#5.1-Downloading-the-data" title="Permalink"></a></h2><pre><code class="language-julia hljs"># using Pkg
+# Pkg.add.([&quot;StatsPlots&quot;, &quot;GraphRecipes&quot;, &quot;YFinance&quot;, &quot;Clarabel&quot;, &quot;HiGHS&quot;, &quot;CovarianceEstimation&quot;, &quot;SparseArrays&quot;])
+using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YFinance,
+      PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
+      PrettyTables
+
+fmt1 = (v, i, j) -&gt; begin
+    if j == 1
+        return v
+    else
+        return if isa(v, Number)
+            &quot;$(round(v*100, digits=3)) %&quot;
+        else
+            v
+        end
+    end
+end;
+
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x[&quot;timestamp&quot;], m, Symbol.(coln), x[&quot;ticker&quot;])
+end
+assets = [&quot;AAL&quot;, &quot;AAPL&quot;, &quot;AMC&quot;, &quot;BB&quot;, &quot;BBY&quot;, &quot;DELL&quot;, &quot;DG&quot;, &quot;DRS&quot;, &quot;GME&quot;, &quot;INTC&quot;, &quot;LULU&quot;,
+          &quot;MARA&quot;, &quot;MCI&quot;, &quot;MSFT&quot;, &quot;NKLA&quot;, &quot;NVAX&quot;, &quot;NVDA&quot;, &quot;PARA&quot;, &quot;PLNT&quot;, &quot;SAVE&quot;, &quot;SBUX&quot;,
+          &quot;SIRI&quot;, &quot;STX&quot;, &quot;TLRY&quot;, &quot;TSLA&quot;]
+Date_0 = &quot;2019-01-01&quot;
+Date_1 = &quot;2023-01-01&quot;
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
+prices = hcat(prices...)
+cidx = colnames(prices)[occursin.(r&quot;adj&quot;, string.(colnames(prices)))]
+prices = prices[cidx]
+TimeSeries.rename!(prices, Symbol.(assets));</code></pre><h2 id="5.2-Instantiating-an-instance-of-[Portfolio](@ref)."><a class="docs-heading-anchor" href="#5.2-Instantiating-an-instance-of-[Portfolio](@ref).">5.2 Instantiating an instance of <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</a><a id="5.2-Instantiating-an-instance-of-[Portfolio](@ref).-1"></a><a class="docs-heading-anchor-permalink" href="#5.2-Instantiating-an-instance-of-[Portfolio](@ref)." title="Permalink"></a></h2><p>We&#39;ll compute basic statistics for this.</p><pre><code class="language-julia hljs">portfolio = Portfolio(; prices = prices,
+                      # Continuous optimiser.
+                      solvers = Dict(:Clarabel =&gt; Dict(:solver =&gt; Clarabel.Optimizer,
+                                                       :check_sol =&gt; (allow_local = true,
+                                                                      allow_almost = true),
+                                                       :params =&gt; Dict(&quot;verbose&quot; =&gt; false))),
+                      # MIP optimiser for the discrete allocation.
+                      alloc_solvers = Dict(:HiGHS =&gt; Dict(:solver =&gt; HiGHS.Optimizer,
+                                                          :check_sol =&gt; (allow_local = true,
+                                                                         allow_almost = true),
+                                                          :params =&gt; Dict(&quot;log_to_console&quot; =&gt; false))));
+
+asset_statistics!(portfolio)</code></pre><h2 id="5.3-Optimising-the-portfolio"><a class="docs-heading-anchor" href="#5.3-Optimising-the-portfolio">5.3 Optimising the portfolio</a><a id="5.3-Optimising-the-portfolio-1"></a><a class="docs-heading-anchor-permalink" href="#5.3-Optimising-the-portfolio" title="Permalink"></a></h2><p>The <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.RP"><code>RP</code></a> uses a risk budget vector for defining the risk contribution of each asset. The vector defaults to equal risk contribution for all assets.</p><p>Risk parity portfolios don&#39;t use a user-provided objective function. They minimise the risk subject to a constraint that minimises the deviation</p><pre><code class="language-julia hljs">rm = SD()
+type = RP()
+w1 = optimise!(portfolio; type = type, rm = rm)
+pretty_table(w1; formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│
+├─────────┼─────────┤
+│     AAL │ 2.963 % │
+│    AAPL │ 4.687 % │
+│     AMC │ 1.398 % │
+│      BB │ 2.787 % │
+│     BBY │ 4.251 % │
+│    DELL │ 4.449 % │
+│      DG │ 10.13 % │
+│     DRS │ 4.112 % │
+│     GME │ 1.698 % │
+│    INTC │ 4.522 % │
+│    LULU │   4.2 % │
+│    MARA │ 1.716 % │
+│     MCI │ 9.483 % │
+│    MSFT │ 5.026 % │
+│    NKLA │ 2.643 % │
+│    NVAX │ 2.501 % │
+│    NVDA │ 3.035 % │
+│    PARA │  3.48 % │
+│    PLNT │ 3.442 % │
+│    SAVE │ 2.836 % │
+│    SBUX │ 5.267 % │
+│    SIRI │ 5.781 % │
+│     STX │ 4.505 % │
+│    TLRY │ 2.193 % │
+│    TSLA │ 2.896 % │
+└─────────┴─────────┘</code></pre><p>We can check that the risk budget and risk contribution match.</p><pre><code class="language-julia hljs"># Risk budget.
+rb = portfolio.risk_budget
+# Compute the risk contribution, for the [`SD`](@ref) risk measure.
+rc = risk_contribution(portfolio; type = :RP, rm = rm)
+# Normalise risk contribution so it adds up to 1 a.k.a. 100%.
+rc ./= sum(rc)
+
+pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────┬─────────┬──────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│<span class="sgr1">  budget </span>│<span class="sgr1"> contribution </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">      Float64 </span>│
+├─────────┼─────────┼─────────┼──────────────┤
+│     AAL │ 2.963 % │   4.0 % │        4.0 % │
+│    AAPL │ 4.687 % │   4.0 % │        4.0 % │
+│     AMC │ 1.398 % │   4.0 % │        4.0 % │
+│      BB │ 2.787 % │   4.0 % │        4.0 % │
+│     BBY │ 4.251 % │   4.0 % │        4.0 % │
+│    DELL │ 4.449 % │   4.0 % │        4.0 % │
+│      DG │ 10.13 % │   4.0 % │        4.0 % │
+│     DRS │ 4.112 % │   4.0 % │        4.0 % │
+│     GME │ 1.698 % │   4.0 % │        4.0 % │
+│    INTC │ 4.522 % │   4.0 % │        4.0 % │
+│    LULU │   4.2 % │   4.0 % │        4.0 % │
+│    MARA │ 1.716 % │   4.0 % │        4.0 % │
+│     MCI │ 9.483 % │   4.0 % │        4.0 % │
+│    MSFT │ 5.026 % │   4.0 % │        4.0 % │
+│    NKLA │ 2.643 % │   4.0 % │        4.0 % │
+│    NVAX │ 2.501 % │   4.0 % │        4.0 % │
+│    NVDA │ 3.035 % │   4.0 % │        4.0 % │
+│    PARA │  3.48 % │   4.0 % │        4.0 % │
+│    PLNT │ 3.442 % │   4.0 % │        4.0 % │
+│    SAVE │ 2.836 % │   4.0 % │        4.0 % │
+│    SBUX │ 5.267 % │   4.0 % │        4.0 % │
+│    SIRI │ 5.781 % │   4.0 % │        4.0 % │
+│     STX │ 4.505 % │   4.0 % │        4.0 % │
+│    TLRY │ 2.193 % │   4.0 % │        4.0 % │
+│    TSLA │ 2.896 % │   4.0 % │        4.0 % │
+└─────────┴─────────┴─────────┴──────────────┘</code></pre><p>As you can see, the weights of each asset in the portfolio are such that the asset contributes 4% of the risk of the portfolio. This is because we used the default value for the risk budget, which defaults to equal risk contribution per asset, which is equal to <code>1/N</code>, where <code>N</code> is the number of assets.</p><p>We can also plot the risk contribution in asbolute and relative terms.</p><pre><code class="language-julia hljs">plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
+plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="51e25b15.svg" alt="Example block output"/><p>Lets change the risk budget to something a little bit more interesting. The risk budget can be provided from to the <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a> constructor, or after instatiation. Either way, the risk budget will be normalised to add up to 1. If using the latter method, the element type of the vector provided must match that of <code>risk_budget</code> because the normalisation is done in-place to avoid unecessary allocations.</p><pre><code class="language-julia hljs">x = range(; start = 0, stop = 2pi, length = length(w1.weights))
+portfolio.risk_budget = sin.(x) .^ 2;</code></pre><p>Lets optimise using this risk budget to see what happens.</p><pre><code class="language-julia hljs">w1 = optimise!(portfolio; type = type, rm = rm)
+rb = portfolio.risk_budget
+# Compute the risk contribution, for the [`SD`](@ref) risk measure.
+rc = risk_contribution(portfolio; type = :RP, rm = rm)
+# Normalise risk contribution so it adds up to 1 a.k.a. 100%.
+rc ./= sum(rc)
+pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┬─────────┬──────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│<span class="sgr1">  budget </span>│<span class="sgr1"> contribution </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">      Float64 </span>│
+├─────────┼──────────┼─────────┼──────────────┤
+│     AAL │    0.0 % │   0.0 % │        0.0 % │
+│    AAPL │  0.685 % │ 0.558 % │      0.558 % │
+│     AMC │  0.784 % │ 2.083 % │      2.083 % │
+│      BB │  3.001 % │ 4.167 % │      4.167 % │
+│     BBY │  6.352 % │  6.25 % │       6.25 % │
+│    DELL │  8.321 % │ 7.775 % │      7.775 % │
+│      DG │ 18.622 % │ 8.333 % │      8.333 % │
+│     DRS │  7.268 % │ 7.775 % │      7.775 % │
+│     GME │    2.6 % │  6.25 % │       6.25 % │
+│    INTC │  4.733 % │ 4.167 % │      4.167 % │
+│    LULU │  2.226 % │ 2.083 % │      2.083 % │
+│    MARA │   0.29 % │ 0.558 % │      0.558 % │
+│     MCI │    0.0 % │   0.0 % │        0.0 % │
+│    MSFT │   0.73 % │ 0.558 % │      0.558 % │
+│    NKLA │  1.549 % │ 2.083 % │      2.083 % │
+│    NVAX │    2.7 % │ 4.167 % │      4.167 % │
+│    NVDA │   4.87 % │  6.25 % │       6.25 % │
+│    PARA │  6.399 % │ 7.775 % │      7.775 % │
+│    PLNT │  6.819 % │ 8.333 % │      8.333 % │
+│    SAVE │  5.347 % │ 7.775 % │      7.775 % │
+│    SBUX │  7.997 % │  6.25 % │       6.25 % │
+│    SIRI │  5.963 % │ 4.167 % │      4.167 % │
+│     STX │  2.402 % │ 2.083 % │      2.083 % │
+│    TLRY │  0.342 % │ 0.558 % │      0.558 % │
+│    TSLA │    0.0 % │   0.0 % │        0.0 % │
+└─────────┴──────────┴─────────┴──────────────┘</code></pre><p>Lets plot the results.</p><pre><code class="language-julia hljs">plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
+plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)</code></pre><img src="5fa6f6ce.svg" alt="Example block output"/><p>We&#39;ve used the <a href="../../RiskMeasures/RiskMeasures/#PortfolioOptimiser.SD"><code>SD</code></a> risk function for computing the risk parity portfolio, as well as for computing and plotting the risk contribution, but there&#39;s nothing stopping us from computing the risk contribution and/or plotting the risk contribution for risk measures other than the one that was optimised.</p><pre><code class="language-julia hljs"># Compute the risk contribution, for the [`CDaR`](@ref) risk measure.
+rc = risk_contribution(portfolio; type = :RP, rm = CDaR())
+# Normalise risk contribution so it adds up to 1 a.k.a. 100%.
+rc ./= sum(rc)
+pretty_table(hcat(w1, DataFrame(; budget_SD = rb, contribution_CDaR = rc));
+             formatters = fmt1)
+
+plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = false)
+plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = true)</code></pre><img src="00c6a4fd.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../4_hrp_portfolios/">« Example 4: Hierarchical risk parity</a><a class="docs-footer-nextpage" href="../6_worst_case_mv_portfolios/">Example 6: Worst case Mean-Variance »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 10 November 2024 20:50">Sunday 10 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
