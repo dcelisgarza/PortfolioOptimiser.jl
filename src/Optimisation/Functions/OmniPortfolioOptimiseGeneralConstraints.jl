@@ -429,13 +429,11 @@ function get_fees(model)
     end
     return nothing
 end
-function get_one_plus_net_returns(model, returns)
-    if haskey(model, :net_RP1)
+function get_one_plus_returns(model, returns)
+    if haskey(model, :RP1)
         return nothing
     end
-    get_fees(model)
-    fees = model[:fees]
-    @expression(model, net_RP1, one(eltype(returns)) .+ returns .- fees)
+    @expression(model, RP1, one(eltype(returns)) .+ returns)
     return nothing
 end
 function get_net_portfolio_returns(model, returns)

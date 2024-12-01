@@ -632,11 +632,11 @@ end
 function set_rm(port::OmniPortfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    get_net_portfolio_returns(model, returns)
-    get_one_plus_net_returns(model, returns)
+    get_portfolio_returns(model, returns)
+    get_one_plus_returns(model, returns)
     w = model[:w]
-    net_X = model[:net_X]
-    net_RP1 = model[:net_RP1]
+    X = model[:X]
+    RP1 = model[:RP1]
     T, N = size(returns)
 
     b1 = rm.l
@@ -659,8 +659,8 @@ function set_rm(port::OmniPortfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
-                     b1 * tau .+ a1 * net_X .+ (u .* net_RP1) * ovec .<= s
-                     b2 * tau .+ a2 * net_X .+ (v .* net_RP1) * ovec .<= s
+                     b1 * tau .+ a1 * X .+ (u .* RP1) * ovec .<= s
+                     b2 * tau .+ a2 * X .+ (v .* RP1) * ovec .<= s
                      [i = 1:T],
                      [tu_drcvar[i]; -view(u, i, :) .- a1 * w] in
                      MOI.NormInfinityCone(1 + N)
@@ -679,10 +679,11 @@ end
 function set_rm(port::OmniPortfolio, rms::AbstractVector{<:DRCVaR},
                 type::Union{Trad, RP, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    get_net_portfolio_returns(model, returns)
-    get_one_plus_net_returns(model, returns)
-    net_X = model[:net_X]
-    net_RP1 = model[:net_RP1]
+    get_portfolio_returns(model, returns)
+    get_one_plus_returns(model, returns)
+    w = model[:w]
+    X = model[:X]
+    RP1 = model[:RP1]
     T, N = size(returns)
 
     iT = inv(T)
@@ -710,9 +711,9 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:DRCVaR},
 
         @constraints(model,
                      begin
-                         b1 * tau[j] .+ a1 * net_X .+ (u .* net_RP1) * ovec .<=
+                         b1 * tau[j] .+ a1 * X .+ (view(u, :, :, j) .* RP1) * ovec .<=
                          view(s, :, j)
-                         b2 * tau[j] .+ a2 * net_X .+ (v .* net_RP1) * ovec .<=
+                         b2 * tau[j] .+ a2 * X .+ (view(v, :, :, j) .* RP1) * ovec .<=
                          view(s, :, j)
                          [i = 1:T],
                          [tu_drcvar[i, j]; -view(u, i, :, j) .- a1 * w] in
@@ -723,13 +724,10 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:DRCVaR},
                          view(tu_drcvar, :, j) .<= lb[j]
                          view(tv_drcvar, :, j) .<= lb[j]
                      end)
-
-        @expression(model, drcvar_risk, radius * lb + sum(s) * inv(T))
-
-        add_to_expression!(drcvar_risk, radius, lb[j])
-        add_to_expression!(drcvar_risk, iT, sum(view(s, :, j)))
-        _set_rm_risk_upper_bound(type, model, drcvar_risk[i], rm.settings.ub)
-        _set_risk_expression(model, drcvar_risk[i], rm.settings.scale, rm.settings.flag)
+        add_to_expression!(drcvar_risk[j], radius, lb[j])
+        add_to_expression!(drcvar_risk[j], iT, sum(view(s, :, j)))
+        _set_rm_risk_upper_bound(type, model, drcvar_risk[j], rm.settings.ub)
+        _set_risk_expression(model, drcvar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
