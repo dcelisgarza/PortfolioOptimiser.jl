@@ -1,4 +1,5 @@
 function _rrp_ver_constraints(::BasicRRP, model, sigma)
+    constr_scale = model[:constr_scale]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
@@ -6,12 +7,14 @@ function _rrp_ver_constraints(::BasicRRP, model, sigma)
     return nothing
 end
 function _rrp_ver_constraints(::RegRRP, model, sigma)
+    constr_scale = model[:constr_scale]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
-    @variable(model, rho >= 0)
+    @variable(model, rho)
     @constraints(model,
                  begin
+                     constr_scale * rho >= constr_scale * 0
                      [constr_scale * 2 * psi; constr_scale * 2 * G * w;
                       constr_scale * -2 * rho] ∈ SecondOrderCone()
                      [constr_scale * rho; constr_scale * G * w] ∈ SecondOrderCone()
@@ -19,14 +22,16 @@ function _rrp_ver_constraints(::RegRRP, model, sigma)
     return nothing
 end
 function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
+    constr_scale = model[:constr_scale]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
     theta = Diagonal(sqrt.(diag(sigma)))
     penalty = version.penalty
-    @variable(model, rho >= 0)
+    @variable(model, rho)
     @constraints(model,
                  begin
+                     constr_scale * rho >= constr_scale * 0
                      [constr_scale * 2 * psi; constr_scale * 2 * G * w;
                       constr_scale * -2 * rho] ∈ SecondOrderCone()
                      [constr_scale * rho; constr_scale * sqrt(penalty) * theta * w] ∈
@@ -36,6 +41,7 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
 end
 function rrp_constraints(port::OmniPortfolio, version, sigma)
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
     N = length(w)
 
@@ -45,14 +51,17 @@ function rrp_constraints(port::OmniPortfolio, version, sigma)
     end
 
     @variables(model, begin
-                   psi >= 0
-                   gamma >= 0
-                   zeta[1:N] .>= 0
+                   psi
+                   gamma
+                   zeta[1:N]
                end)
     @expression(model, risk, psi - gamma)
     # RRP constraints.
     @constraints(model,
                  begin
+                     constr_scale * psi >= constr_scale * 0
+                     constr_scale * gamma >= constr_scale * 0
+                     constr_scale * zeta .>= constr_scale * 0
                      zeta .== sigma * w
                      [i = 1:N],
                      [constr_scale * (w[i] + zeta[i])
