@@ -1,6 +1,7 @@
 function noc_constraints(port::OmniPortfolio, risk0, ret0)
     model = port.model
     w = model[:w]
+    constr_scale = model[:constr_scale]
     risk = model[:risk]
     ret = model[:ret]
     N = length(w)
@@ -10,11 +11,18 @@ function noc_constraints(port::OmniPortfolio, risk0, ret0)
                    log_w[1:N]
                    log_1mw[1:N]
                end)
-    @constraints(model, begin
-                     [log_risk, 1, risk0 - risk] in MOI.ExponentialCone()
-                     [log_ret, 1, ret - ret0] in MOI.ExponentialCone()
-                     [i = 1:N], [log_w[i], 1, w[i]] ∈ MOI.ExponentialCone()
-                     [i = 1:N], [log_1mw[i], 1, 1 - w[i]] ∈ MOI.ExponentialCone()
+    @constraints(model,
+                 begin
+                     [constr_scale * log_risk, constr_scale * 1,
+                      constr_scale * (risk0 - risk)] in MOI.ExponentialCone()
+                     [constr_scale * log_ret, constr_scale * 1,
+                      constr_scale * (ret - ret0)] in MOI.ExponentialCone()
+                     [i = 1:N],
+                     [constr_scale * log_w[i], constr_scale * 1, constr_scale * w[i]] ∈
+                     MOI.ExponentialCone()
+                     [i = 1:N],
+                     [constr_scale * log_1mw[i], constr_scale * 1,
+                      constr_scale * (1 - w[i])] ∈ MOI.ExponentialCone()
                  end)
     return nothing
 end

@@ -2,7 +2,7 @@ function _rrp_ver_constraints(::BasicRRP, model, sigma)
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
-    @constraint(model, [psi; G * w] ∈ SecondOrderCone())
+    @constraint(model, [constr_scale * psi; constr_scale * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function _rrp_ver_constraints(::RegRRP, model, sigma)
@@ -10,9 +10,11 @@ function _rrp_ver_constraints(::RegRRP, model, sigma)
     psi = model[:psi]
     G = sqrt(sigma)
     @variable(model, rho >= 0)
-    @constraints(model, begin
-                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
-                     [rho; G * w] ∈ SecondOrderCone()
+    @constraints(model,
+                 begin
+                     [constr_scale * 2 * psi; constr_scale * 2 * G * w;
+                      constr_scale * -2 * rho] ∈ SecondOrderCone()
+                     [constr_scale * rho; constr_scale * G * w] ∈ SecondOrderCone()
                  end)
     return nothing
 end
@@ -23,9 +25,12 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
     theta = Diagonal(sqrt.(diag(sigma)))
     penalty = version.penalty
     @variable(model, rho >= 0)
-    @constraints(model, begin
-                     [2 * psi; 2 * G * w; -2 * rho] ∈ SecondOrderCone()
-                     [rho; sqrt(penalty) * theta * w] ∈ SecondOrderCone()
+    @constraints(model,
+                 begin
+                     [constr_scale * 2 * psi; constr_scale * 2 * G * w;
+                      constr_scale * -2 * rho] ∈ SecondOrderCone()
+                     [constr_scale * rho; constr_scale * sqrt(penalty) * theta * w] ∈
+                     SecondOrderCone()
                  end)
     return nothing
 end
@@ -50,9 +55,9 @@ function rrp_constraints(port::OmniPortfolio, version, sigma)
                  begin
                      zeta .== sigma * w
                      [i = 1:N],
-                     [w[i] + zeta[i]
-                      2 * gamma * sqrt(risk_budget[i])
-                      w[i] - zeta[i]] ∈ SecondOrderCone()
+                     [constr_scale * (w[i] + zeta[i])
+                      constr_scale * (2 * gamma * sqrt(risk_budget[i]))
+                      constr_scale * (w[i] - zeta[i])] ∈ SecondOrderCone()
                  end)
     _rrp_ver_constraints(version, model, sigma)
     return nothing

@@ -7,6 +7,165 @@ function get_portfolio_returns(model, returns)
 
     return nothing
 end
+function _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget, budget,
+                        max_budget, short_budget, model, k, long_w, constr_scale)
+    if budget_flag
+        @constraint(model,
+                    constr_scale * sum(long_w) ==
+                    constr_scale * (budget - short_budget) * k)
+    else
+        if min_budget_flag
+            @constraint(model,
+                        constr_scale * sum(long_w) >=
+                        constr_scale * (min_budget - short_budget) * k)
+        end
+        if max_budget_flag
+            @constraint(model,
+                        constr_scale * sum(long_w) <=
+                        constr_scale * (max_budget - short_budget) * k)
+        end
+    end
+
+    return nothing
+end
+function weight_constraints(port, allow_shorting::Bool = true)
+    #=
+    # Weight constraints
+    =#
+    model = port.model
+    w = model[:w]
+    k = model[:k]
+    constr_scale = model[:constr_scale]
+    N = length(w)
+
+    #=
+    ## Portfolio budget constraints
+    =#
+    min_budget = port.min_budget
+    budget = port.budget
+    max_budget = port.max_budget
+    min_budget_flag = isfinite(min_budget)
+    budget_flag = isfinite(budget)
+    max_budget_flag = isfinite(max_budget)
+    if budget_flag
+        @constraint(model, constr_scale * sum(w) == constr_scale * budget * k)
+    else
+        if min_budget_flag
+            @constraint(model, constr_scale * sum(w) >= constr_scale * min_budget * k)
+        end
+        if max_budget_flag
+            @constraint(model, constr_scale * sum(w) <= constr_scale * max_budget * k)
+        end
+    end
+
+    #=
+    ## Min and max weights, short budget weights.
+    =#
+    short = port.short
+    long_u = port.long_u
+    if !short
+        @constraints(model, begin
+                         constr_scale * w .<= constr_scale * long_u * k
+                         constr_scale * w .>= constr_scale * 0
+                     end)
+        @expression(model, long_w, w)
+    elseif short && allow_shorting
+        #=
+        ## Short min and max weights
+        =#
+        short_u = port.short_u
+        min_short_budget = port.min_short_budget
+        short_budget = port.short_budget
+        max_short_budget = port.max_short_budget
+
+        @variables(model, begin
+                       long_w[1:N]
+                       short_w[1:N]
+                   end)
+
+        @constraints(model, begin
+                         constr_scale * long_w .>= constr_scale * 0
+                         constr_scale * short_w .<= constr_scale * 0
+                         constr_scale * w .<= constr_scale * long_u * k
+                         constr_scale * w .>= constr_scale * short_u * k
+                         constr_scale * w .<= constr_scale * long_w
+                         constr_scale * w .>= constr_scale * short_w
+                     end)
+
+        #=
+        ## Long-short portfolio budget constraints
+        =#
+        min_short_budget_flag = isfinite(min_short_budget)
+        short_budget_flag = isfinite(short_budget)
+        max_short_budget_flag = isfinite(max_short_budget)
+        if short_budget_flag
+            _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                           budget, max_budget, short_budget, model, k, long_w, constr_scale)
+            @constraint(model,
+                        constr_scale * sum(short_w) == constr_scale * short_budget * k)
+        else
+            if min_short_budget_flag
+                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                               budget, max_budget, min_short_budget, model, k, long_w,
+                               constr_scale)
+                @constraint(model,
+                            constr_scale * sum(short_w) <=
+                            constr_scale * min_short_budget * k)
+            end
+            if max_short_budget_flag
+                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
+                               budget, max_budget, max_short_budget, model, k, long_w,
+                               constr_scale)
+                @constraint(model,
+                            constr_scale * sum(short_w) >=
+                            constr_scale * max_short_budget * k)
+            end
+        end
+    end
+
+    #=
+    ## Number of effective assets
+    =#
+    nea = port.nea
+    if nea > zero(nea)
+        @variable(model, nea_var)
+        @constraints(model,
+                     begin
+                         [constr_scale * nea_var; constr_scale * w] ∈ SecondOrderCone()
+                         constr_scale * nea_var * sqrt(nea) <= constr_scale * k
+                     end)
+    end
+
+    #=
+    ## Linear constraints
+    =#
+    A = port.a_ineq
+    B = port.b_ineq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * A * w .>= constr_scale * B * k)
+    end
+    A = port.a_eq
+    B = port.b_eq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * A * w .== constr_scale * B * k)
+    end
+
+    #=
+    ### Centrality constraints
+    =#
+    A = port.a_cent_ineq
+    B = port.b_cent_ineq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * dot(A, w) .>= constr_scale * B * k)
+    end
+    A = port.a_cent_eq
+    B = port.b_cent_eq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * dot(A, w) .== constr_scale * B * k)
+    end
+
+    return nothing
+end
 function MIP_constraints(port, allow_shorting::Bool = true)
     #=
     # MIP constraints
@@ -35,6 +194,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     model = port.model
     w = model[:w]
     k = model[:k]
+    constr_scale = model[:constr_scale]
     N = length(w)
 
     #=
@@ -98,13 +258,14 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         @constraints(model,
                      begin
                          is_invested .<= 1
-                         w .<= is_invested_long .* long_u
-                         w .>= is_invested_short .* short_u
-                         w .>=
-                         is_invested_long .* long_l - scale * (1 - is_invested_long_bool)
-                         w .<=
-                         is_invested_short .* short_l -
-                         scale * (1 - is_invested_short_bool)
+                         constr_scale * w .<= constr_scale * is_invested_long .* long_u
+                         constr_scale * w .>= constr_scale * is_invested_short .* short_u
+                         constr_scale * w .>=
+                         constr_scale *
+                         (is_invested_long .* long_l - scale * (1 - is_invested_long_bool))
+                         constr_scale * w .<=
+                         constr_scale * (is_invested_short .* short_l +
+                                         scale * (1 - is_invested_short_bool))
                      end)
     else
         @variable(model, is_invested_bool[1:N], binary = true)
@@ -121,13 +282,13 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          end)
             @expression(model, is_invested, is_invested_float)
         end
-        @constraint(model, w .<= is_invested .* long_u)
+        @constraint(model, constr_scale * w .<= constr_scale * is_invested .* long_u)
         if (isa(long_l, Real) && !iszero(long_l) ||
             isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
-            @constraint(model, w .>= is_invested .* long_l)
+            @constraint(model, constr_scale * w .>= constr_scale * is_invested .* long_l)
         end
-        if short
-            @constraint(model, w .>= is_invested .* short_u)
+        if short && allow_shorting
+            @constraint(model, constr_scale * w .>= constr_scale * is_invested .* short_u)
         end
     end
 
@@ -168,148 +329,6 @@ function MIP_constraints(port, allow_shorting::Bool = true)
 
     return nothing
 end
-function _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget, budget,
-                        max_budget, short_budget, model, k, long_w)
-    if budget_flag
-        @constraint(model, sum(long_w) == (budget - short_budget) * k)
-    else
-        if min_budget_flag
-            @constraint(model, sum(long_w) >= (min_budget - short_budget) * k)
-        end
-        if max_budget_flag
-            @constraint(model, sum(long_w) <= (max_budget - short_budget) * k)
-        end
-    end
-
-    return nothing
-end
-function weight_constraints(port, allow_shorting::Bool = true)
-    #=
-    # Weight constraints
-    =#
-    model = port.model
-    w = model[:w]
-    k = model[:k]
-    N = length(w)
-
-    #=
-    ## Portfolio budget constraints
-    =#
-    min_budget = port.min_budget
-    budget = port.budget
-    max_budget = port.max_budget
-    min_budget_flag = isfinite(min_budget)
-    budget_flag = isfinite(budget)
-    max_budget_flag = isfinite(max_budget)
-    if budget_flag
-        @constraint(model, sum(w) == budget * k)
-    else
-        if min_budget_flag
-            @constraint(model, sum(w) >= min_budget * k)
-        end
-        if max_budget_flag
-            @constraint(model, sum(w) <= max_budget * k)
-        end
-    end
-
-    #=
-    ## Min and max weights, short budget weights.
-    =#
-    short = port.short
-    long_u = port.long_u
-    if !short
-        @constraints(model, begin
-                         w .<= long_u * k
-                         w .>= 0
-                     end)
-        @expression(model, long_w, w)
-    elseif short && allow_shorting
-        #=
-        ## Short min and max weights
-        =#
-        short_u = port.short_u
-        min_short_budget = port.min_short_budget
-        short_budget = port.short_budget
-        max_short_budget = port.max_short_budget
-
-        @variables(model, begin
-                       long_w[1:N] .>= 0
-                       short_w[1:N] .<= 0
-                   end)
-
-        @constraints(model, begin
-                         long_w .<= long_u * k
-                         short_w .>= short_u * k
-                         w .<= long_w
-                         w .>= short_w
-                     end)
-
-        #=
-        ## Long-short portfolio budget constraints
-        =#
-        min_short_budget_flag = isfinite(min_short_budget)
-        short_budget_flag = isfinite(short_budget)
-        max_short_budget_flag = isfinite(max_short_budget)
-        if short_budget_flag
-            @constraint(model, sum(short_w) == short_budget * k)
-            _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                           budget, max_budget, short_budget, model, k, long_w)
-        else
-            if min_short_budget_flag
-                @constraint(model, sum(short_w) <= min_short_budget * k)
-                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                               budget, max_budget, min_short_budget, model, k, long_w)
-            end
-            if max_short_budget_flag
-                @constraint(model, sum(short_w) >= max_short_budget * k)
-                _long_w_budget(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                               budget, max_budget, max_short_budget, model, k, long_w)
-            end
-        end
-    end
-
-    #=
-    ## Number of effective assets
-    =#
-    nea = port.nea
-    if nea > zero(nea)
-        @variable(model, nea_var)
-        @constraints(model, begin
-                         [nea_var; w] ∈ SecondOrderCone()
-                         nea_var * sqrt(nea) <= k
-                     end)
-    end
-
-    #=
-    ## Linear constraints
-    =#
-    A = port.a_ineq
-    B = port.b_ineq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, A * w .>= B * k)
-    end
-    A = port.a_eq
-    B = port.b_eq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, A * w .== B * k)
-    end
-
-    #=
-    ### Centrality constraints
-    =#
-    A = port.a_cent_ineq
-    B = port.b_cent_ineq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, dot(A, w) .>= B * k)
-    end
-    A = port.a_cent_eq
-    B = port.b_cent_eq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, dot(A, w) .== B * k)
-    end
-
-    return nothing
-end
 function tracking_error_benchmark(tracking::TrackWeight, returns)
     return returns * tracking.w
 end
@@ -324,6 +343,7 @@ function tracking_error_constraints(port, returns)
 
     model = port.model
     k = model[:k]
+    constr_scale = model[:constr_scale]
     get_portfolio_returns(model, returns)
     X = model[:X]
     T = size(returns, 1)
@@ -333,9 +353,12 @@ function tracking_error_constraints(port, returns)
 
     @variable(model, t_tracking_error)
     @expression(model, tracking_error, X .- benchmark * k)
-    @constraints(model, begin
-                     [t_tracking_error; tracking_error] ∈ SecondOrderCone()
-                     t_tracking_error <= err * k * sqrt(T - 1)
+    @constraints(model,
+                 begin
+                     [constr_scale * t_tracking_error; constr_scale * tracking_error] ∈
+                     SecondOrderCone()
+                     constr_scale * t_tracking_error <=
+                     constr_scale * err * k * sqrt(T - 1)
                  end)
 
     return nothing
@@ -360,9 +383,12 @@ function turnover_constraints(port)
 
     @variable(model, t_turnover[1:N])
     @expression(model, turnover, w .- benchmark * k)
-    @constraints(model, begin
-                     [i = 1:N], [t_turnover[i]; turnover[i]] ∈ MOI.NormOneCone(2)
-                     t_turnover .<= val * k
+    @constraints(model,
+                 begin
+                     [i = 1:N],
+                     [constr_scale * t_turnover[i]; constr_scale * turnover[i]] ∈
+                     MOI.NormOneCone(2)
+                     constr_scale * t_turnover .<= constr_scale * val * k
                  end)
 
     return nothing
@@ -407,9 +433,13 @@ function rebalance_fee(port)
     val = rebalance.val
 
     @variable(model, t_rebalance[1:N])
-    @expression(model, rebalance, w .- benchmark * k)
-    @constraint(model, [i = 1:N], [t_rebalance[i]; rebalance[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, rebalance_fee, sum(val .* t_rebalance))
+    @expressions(model, begin
+                     rebalance, w .- benchmark * k
+                     rebalance_fee, sum(val .* t_rebalance)
+                 end)
+    @constraint(model, [i = 1:N],
+                [constr_scale * t_rebalance[i]; constr_scale * rebalance[i]] ∈
+                MOI.NormOneCone(2))
 
     return nothing
 end
@@ -451,14 +481,14 @@ function _SDP_constraints(model, ::Trad)
     if haskey(model, :W)
         return nothing
     end
-
+    constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
     N = length(w)
 
     @variable(model, W[1:N, 1:N], Symmetric)
     @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, k)))
-    @constraint(model, M ∈ PSDCone())
+    @constraint(model, constr_scale * M ∈ PSDCone())
 
     return nothing
 end
@@ -466,13 +496,13 @@ function _SDP_constraints(model, ::Any)
     if haskey(model, :W)
         return nothing
     end
-
+    constr_scale = model[:constr_scale]
     w = model[:w]
     N = length(w)
 
     @variable(model, W[1:N, 1:N], Symmetric)
     @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, 1)))
-    @constraint(model, M ∈ PSDCone())
+    @constraint(model, constr_scale * M ∈ PSDCone())
 
     return nothing
 end
@@ -491,12 +521,12 @@ function SDP_network_cluster_constraints(port, type)
 
     if ntwk_flag
         A = network_adj.A
-        @constraint(model, A .* W .== 0)
+        @constraint(model, constr_scale * A .* W .== constr_scale * 0)
     end
 
     if clst_flag
         A = cluster_adj.A
-        @constraint(model, A .* W .== 0)
+        @constraint(model, constr_scale * A .* W .== constr_scale * 0)
     end
 
     return nothing
@@ -538,7 +568,8 @@ function L1_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l1)
-    @constraint(model, [t_l1; w] in MOI.NormOneCone(1 + length(w)))
+    @constraint(model,
+                [constr_scale * t_l1; constr_scale * w] in MOI.NormOneCone(1 + length(w)))
     @expression(model, l1_reg, l1 * t_l1)
 
     return nothing
@@ -553,7 +584,7 @@ function L2_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l2)
-    @constraint(model, [t_l2; w] in SecondOrderCone())
+    @constraint(model, [constr_scale * t_l2; constr_scale * w] in SecondOrderCone())
     @expression(model, l2_reg, l2 * t_l2)
 
     return nothing
