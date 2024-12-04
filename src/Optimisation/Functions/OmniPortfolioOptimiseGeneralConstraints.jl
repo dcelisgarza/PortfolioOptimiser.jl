@@ -566,6 +566,7 @@ function L1_regularisation(port)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
 
     @variable(model, t_l1)
@@ -582,6 +583,7 @@ function L2_regularisation(port)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
 
     @variable(model, t_l2)
