@@ -33,9 +33,9 @@ function weight_constraints(port, allow_shorting::Bool = true)
     # Weight constraints
     =#
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
-    constr_scale = model[:constr_scale]
     N = length(w)
 
     #=
@@ -192,9 +192,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
-    constr_scale = model[:constr_scale]
     N = length(w)
 
     #=
@@ -342,8 +342,8 @@ function tracking_error_constraints(port, returns)
     end
 
     model = port.model
-    k = model[:k]
     constr_scale = model[:constr_scale]
+    k = model[:k]
     get_portfolio_returns(model, returns)
     X = model[:X]
     T = size(returns, 1)
@@ -374,6 +374,7 @@ function turnover_constraints(port)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
     N = length(w)
@@ -425,6 +426,7 @@ function rebalance_fee(port)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
     N = length(w)

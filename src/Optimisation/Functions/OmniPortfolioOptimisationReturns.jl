@@ -21,7 +21,7 @@ function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     rf = obj.rf
     if all(mu .<= zero(eltype(mu))) || haskey(model, :abs_w) || haskey(model, :t_gw)
         risk = model[:risk]
-        add_to_expression!(ret, -k, rf)
+        add_to_expression!(ret, -rf, k)
         @constraint(model, alt_sr, constr_scale * risk <= constr_scale * ohf)
     else
         @constraint(model, constr_scale * (ret - rf * k) == constr_scale * ohf)
@@ -33,30 +33,37 @@ function _sharpe_returns_constraints(args...)
 end
 function _wc_return_constraints(port, mu, ::Box)
     model = port.model
+    get_fees(model)
     constr_scale = model[:constr_scale]
     w = model[:w]
+    fees = model[:fees]
     N = length(mu)
     @variable(model, abs_w[1:N])
     @constraint(model, [i = 1:N],
                 [constr_scale * abs_w[i]; constr_scale * w[i]] ∈ MOI.NormOneCone(2))
-    @expression(model, ret, dot(mu, w) - dot(port.d_mu, abs_w))
+    @expression(model, ret, dot(mu, w) - fees - dot(port.d_mu, abs_w))
     return nothing
 end
 function _wc_return_constraints(port, mu, ::Ellipse)
     model = port.model
+    get_fees(model)
     constr_scale = model[:constr_scale]
     w = model[:w]
+    fees = model[:fees]
     G = sqrt(port.cov_mu)
+    k_mu = port.k_mu
     @expression(model, x_gw, G * w)
     @variable(model, t_gw)
     @constraint(model, [constr_scale * t_gw; constr_scale * x_gw] ∈ SecondOrderCone())
-    @expression(model, ret, dot(mu, w) - port.k_mu * t_gw)
+    @expression(model, ret, dot(mu, w) - fees - k_mu * t_gw)
     return nothing
 end
 function _wc_return_constraints(port, mu, ::NoWC)
     model = port.model
+    get_fees(model)
+    fees = model[:fees]
     w = port.model[:w]
-    @expression(model, ret, dot(mu, w))
+    @expression(model, ret, dot(mu, w) - fees)
     return nothing
 end
 function _return_constraints(port, obj, kelly::NoKelly, mu, args...)
@@ -76,7 +83,9 @@ function _return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly
     end
 
     model = port.model
+    get_fees(model)
     w = model[:w]
+    fees = model[:fees]
     if isnothing(kelly_approx_idx) ||
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
@@ -84,10 +93,11 @@ function _return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly
             _variance_risk(_get_ntwk_clust_method(port), kelly.formulation, model, sigma)
         end
         variance_risk = model[:variance_risk]
-        @expression(model, ret, dot(mu, w) - 0.5 * variance_risk)
+        @expression(model, ret, dot(mu, w) - fees - 0.5 * variance_risk)
     else
         variance_risk = model[:variance_risk]
-        @expression(model, ret, dot(mu, w) - 0.5 * variance_risk[kelly_approx_idx[1]])
+        @expression(model, ret,
+                    dot(mu, w) - fees - 0.5 * variance_risk[kelly_approx_idx[1]])
     end
 
     _return_bounds(port)
@@ -108,15 +118,17 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
     end
 
     model = port.model
+    get_fees(model)
     constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
+    fees = model[:fees]
     ohf = model[:ohf]
     risk = model[:risk]
     rf = obj.rf
     @variable(model, tapprox_kelly)
     @constraint(model, constr_scale * risk <= constr_scale * ohf)
-    @expression(model, ret, dot(mu, w) - 0.5 * tapprox_kelly - k * rf)
+    @expression(model, ret, dot(mu, w) - fees - 0.5 * tapprox_kelly - k * rf)
     if isnothing(kelly_approx_idx) ||
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
@@ -158,12 +170,14 @@ function _sharpe_ekelly_constraints(args...)
 end
 function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     model = port.model
+    get_fees(model)
     constr_scale = model[:constr_scale]
     w = model[:w]
     k = model[:k]
+    fees = model[:fees]
     T = size(returns, 1)
     @variable(model, texact_kelly[1:T])
-    @expression(model, ret, sum(texact_kelly) / T)
+    @expression(model, ret, sum(texact_kelly) / T - fees)
     _sharpe_ekelly_constraints(ret, model, obj, k)
     @expression(model, kret, k .+ returns * w)
     @constraint(model, [i = 1:T],
@@ -173,21 +187,7 @@ function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
 
     return nothing
 end
-function _add_fees_to_expected_returns(port)
-    model = port.model
-    if !haskey(model, :ret)
-        return nothing
-    end
-
-    get_fees(model)
-    ret = model[:ret]
-    fees = model[:fees]
-    add_to_expression!(ret, -1, fees)
-
-    return nothing
-end
 function expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     _return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
-    _add_fees_to_expected_returns(port)
     return nothing
 end

@@ -609,7 +609,7 @@ function OmniPortfolio(;
                          # Linear constraints
                          typeof(a_ineq), typeof(b_ineq), typeof(a_eq), typeof(b_eq),
                          # Tracking
-                         typeof(tracking),
+                         TrackingErr,
                          # Turnover
                          AbstractTR,
                          # Adjacency
@@ -864,6 +864,18 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
     elseif sym ∈ (:network_adj, :cluster_adj)
         N = size(port.returns, 2)
         adj_assert(val, N)
+    elseif sym ∈ (:rebalance, :turnover)
+        if isa(val, TR)
+            if isa(val.val, Real)
+                @smart_assert(val.val >= zero(val.val))
+            elseif isa(val.val, AbstractVector) && !isempty(val.val)
+                @smart_assert(length(val.val) == size(port.returns, 2) &&
+                              all(val.val .>= zero(val.val)))
+            end
+            if !isempty(val.w)
+                @smart_assert(length(val.w) == size(port.returns, 2))
+            end
+        end
     elseif sym ∈ (:constr_scale, :obj_scale)
         @smart_assert(val > zero(val))
     end
@@ -914,7 +926,7 @@ function Base.deepcopy(port::OmniPortfolio)
                          typeof(port.a_ineq), typeof(port.b_ineq), typeof(port.a_eq),
                          typeof(port.b_eq),
                          # Tracking
-                         typeof(port.tracking),
+                         TrackingErr,
                          # Turnover
                          AbstractTR,
                          # Adjacency
