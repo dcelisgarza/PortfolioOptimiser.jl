@@ -516,6 +516,7 @@ function SDP_network_cluster_constraints(port, type)
     end
 
     model = port.model
+    constr_scale = model[:constr_scale]
     _SDP_constraints(model, type)
     W = model[:W]
 
