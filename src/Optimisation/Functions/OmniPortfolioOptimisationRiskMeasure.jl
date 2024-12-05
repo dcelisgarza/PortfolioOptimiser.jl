@@ -1020,12 +1020,13 @@ function _DD_constraints(model, returns)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
     T = size(returns, 1)
-    @variable(model, dd[1:(T + 1)] .>= 0)
+    @variable(model, dd[1:(T + 1)])
     @constraints(model,
                  begin
+                     constr_scale * dd[1] == 0
+                     constr_scale * view(dd, 2:(T + 1)) .>= 0
                      constr_scale * view(dd, 2:(T + 1)) .>=
                      constr_scale * (view(dd, 1:T) .- net_X)
-                     constr_scale * dd[1] == 0
                  end)
 
     return nothing

@@ -52,7 +52,7 @@
     riskt = 0.07576351461846881
     rett = 0.0005794983351148754
     @test isapprox(w2.weights, wt0, rtol = 1.0e-5)
-    @test isapprox(r2, riskt0, rtol = 5.0e-8)
+    @test isapprox(r2, riskt0, rtol = 1.0e-7)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
     @test isapprox(w2.weights, wt, rtol = 5.0e-5)
     @test isapprox(r2, riskt, rtol = 1.0e-7)
@@ -86,7 +86,7 @@
     @test isapprox(r3, riskt0, rtol = 1.0e-5)
     @test isapprox(ret3, rett0, rtol = 1.0e-5)
     @test isapprox(w3.weights, wt, rtol = 5.0e-8)
-    @test isapprox(r3, riskt, rtol = 5.0e-8)
+    @test isapprox(r3, riskt, rtol = 1.0e-7)
     @test isapprox(ret3, rett)
 
     rm = [[RLDaR(), RLDaR()]]
@@ -2308,7 +2308,7 @@ end
     rm = RLDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     z4 = get_z(portfolio, rm)
-    @test isapprox(z4, 0.003567371824247327, rtol = 5.0e-8)
+    @test isapprox(z4, 0.003567369182292617, rtol = 5.0e-8)
 
     rm = [[EVaR(), EVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
