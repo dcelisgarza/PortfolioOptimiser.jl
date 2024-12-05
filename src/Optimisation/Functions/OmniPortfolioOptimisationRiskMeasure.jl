@@ -835,7 +835,7 @@ function set_rm(port::OmniPortfolio, rm::CVaRRG, type::Union{Trad, RP, NOC};
                  end)
     @constraints(model, begin
                      constr_scale * z_var_l .>= constr_scale * 0
-                     constr_scale * z_var_h .>= constr_scale * 0
+                     constr_scale * z_var_h .<= constr_scale * 0
                      constr_scale * z_var_l .>= constr_scale * (-net_X .- var_l)
                      constr_scale * z_var_h .<= constr_scale * (-net_X .- var_h)
                  end)
@@ -869,7 +869,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:CVaRRG},
         @constraints(model,
                      begin
                          constr_scale * view(z_var_l, :, i) .>= constr_scale * 0
-                         constr_scale * view(z_var_h, :, i) .>= constr_scale * 0
+                         constr_scale * view(z_var_h, :, i) .<= constr_scale * 0
                          constr_scale * view(z_var_l, :, i) .>=
                          constr_scale * (-net_X .- var_l[i])
                          constr_scale * view(z_var_h, :, i) .<=

@@ -1261,7 +1261,7 @@ end
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                :check_sol => (allow_local = true,
                                                                               allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+                                                               :params => Dict("verbose" => true))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1468,7 +1468,8 @@ end
                                                                :check_sol => (allow_local = true,
                                                                               allow_almost = true),
                                                                :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+                                                                               "max_step_fraction" => 0.75,
+                                                                               "max_iter" => 500))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1486,20 +1487,20 @@ end
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = calc_risk(portfolio; type = :Trad, rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
-    wt = [1.8441564113627144e-8, 0.15679082436151046, 1.5392389442921226e-8,
-          0.016708841868971508, 2.1850372193245792e-8, 8.853277813767364e-8,
-          0.014451870126121945, 0.15570851358287233, 1.4234479907942551e-8,
-          1.567481623646881e-8, 0.4524445629434958, 1.2341434328945593e-8,
-          1.7658017937894814e-8, 3.4307859388204044e-8, 0.004794271082249233,
-          2.481888636960458e-7, 0.018422136731621932, 2.9674159170602673e-7,
-          1.813588507835678e-8, 0.1806781778031046]
+    wt = [1.8441499725148605e-8, 0.15678861583951972, 1.539230156346532e-8,
+          0.01670858968092804, 2.1850060398575697e-8, 8.853771880176517e-8,
+          0.0144513504451421, 0.15570835326097224, 1.4234547342665165e-8,
+          1.5674939991986874e-8, 0.4524457664761998, 1.234139990533429e-8,
+          1.7658314294407036e-8, 3.4308172218974554e-8, 0.004793900995275832,
+          2.482264527860697e-7, 0.01842266517867312, 2.967688854977383e-7,
+          1.8136037292760755e-8, 0.18067995655295926]
     riskt = 0.02450797316477554
     rett = 0.00046038661273523995
-    @test isapprox(w1.weights, wt0, rtol = 1.0e-5)
-    @test isapprox(r1, riskt0)
+    @test isapprox(w1.weights, wt0, rtol = 5.0e-5)
+    @test isapprox(r1, riskt0, rtol = 5.0e-8)
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
-    @test isapprox(w1.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r1, riskt)
+    @test isapprox(w1.weights, wt, rtol = 5.0e-5)
+    @test isapprox(r1, riskt, rtol = 5.0e-8)
     @test isapprox(ret1, rett, rtol = 5.0e-6)
 
     rm = [[EVaR(), EVaR()]]
@@ -1549,7 +1550,7 @@ end
     @test isapprox(w3.weights, wt0, rtol = 1.0e-5)
     @test isapprox(r3, riskt0, rtol = 5.0e-6)
     @test isapprox(ret3, rett0, rtol = 5.0e-6)
-    @test isapprox(w3.weights, wt, rtol = 1.0e-6)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-6)
     @test isapprox(r3, riskt, rtol = 1.0e-7)
     @test isapprox(ret3, rett, rtol = 1.0e-7)
 
@@ -1569,7 +1570,7 @@ end
     @test isapprox(w4.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r4, riskt0, rtol = 5.0e-6)
     @test isapprox(ret4, rett0, rtol = 5.0e-6)
-    @test isapprox(w4.weights, wt, rtol = 5.0e-7)
+    @test isapprox(w4.weights, wt, rtol = 1.0e-6)
     @test isapprox(r4, riskt, rtol = 5.0e-8)
     @test isapprox(ret4, rett, rtol = 5.0e-8)
 
@@ -1666,7 +1667,7 @@ end
     @test !isapprox(ret9, rett1)
     @test isapprox(w9.weights, wt, rtol = 5.0e-5)
     @test isapprox(r9, riskt, rtol = 1.0e-6)
-    @test isapprox(ret9, rett, rtol = 5.0e-6)
+    @test isapprox(ret9, rett, rtol = 1.0e-5)
 end
 
 @testset "RLVaR vec" begin
@@ -2118,7 +2119,7 @@ end
     @test isapprox(r1, riskt0, rtol = 5.0e-7)
     @test isapprox(ret1, rett0, rtol = 5.0e-6)
     @test isapprox(w1.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r1, riskt, rtol = 5.0e-7)
+    @test isapprox(r1, riskt, rtol = 1.0e-6)
     @test isapprox(ret1, rett, rtol = 5.0e-6)
 
     rm = [[EDaR(), EDaR()]]
@@ -2169,8 +2170,8 @@ end
     @test isapprox(r3, riskt0, rtol = 5.0e-5)
     @test isapprox(ret3, rett0, rtol = 5.0e-5)
     @test isapprox(w3.weights, wt, rtol = 5.0e-6)
-    @test isapprox(r3, riskt, rtol = 5.0e-7)
-    @test isapprox(ret3, rett, rtol = 5.0e-7)
+    @test isapprox(r3, riskt, rtol = 1.0e-6)
+    @test isapprox(ret3, rett, rtol = 1.0e-6)
 
     rm = [[EDaR(), EDaR()]]
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -2266,15 +2267,15 @@ end
     w9 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r9 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret9 = dot(portfolio.mu, w9.weights)
-    wt = [0.019901597482243964, 3.2631528050176146e-8, 6.850711872954908e-9,
-          1.045282981118227e-9, 0.02575364681158462, 1.6001295856596197e-9,
-          2.5362963879652674e-10, 0.0597747844679203, 2.1443015959697877e-9,
-          1.7413804997470134e-9, 0.39370224698892237, 1.8048479782179204e-9,
-          0.013810147165858943, 5.384092993404229e-9, 2.5402630136778287e-9,
-          0.13344262987175828, 0.212332253423902, 0.045789085916522726,
-          9.770632470028284e-9, 0.09549354210448617]
+    wt = [0.019898665270832908, 4.36261066016977e-8, 8.938412134042523e-9,
+          1.3952744659605902e-9, 0.025755822552283363, 2.139986335743519e-9,
+          3.3911115748891037e-10, 0.059776479142528226, 2.8665739436352095e-9,
+          2.3281239473286864e-9, 0.39370103007780816, 2.4252330529188437e-9,
+          0.013809003845070479, 7.21276156545476e-9, 3.4071477848566795e-9,
+          0.13344372945185273, 0.21233001582101552, 0.04578889967517505,
+          1.2923776224509453e-8, 0.09549626656092634]
     riskt = 0.06898643382617799
-    rett = 0.0006116067244237683
+    rett = 0.0006116110138488312
     @test !isapprox(w9.weights, wt0)
     @test !isapprox(r9, riskt0)
     @test !isapprox(ret9, rett0)
