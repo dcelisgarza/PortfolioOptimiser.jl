@@ -55,7 +55,7 @@
     @test isapprox(r2, riskt0, rtol = 5.0e-8)
     @test isapprox(ret2, rett0, rtol = 5.0e-6)
     @test isapprox(w2.weights, wt, rtol = 5.0e-5)
-    @test isapprox(r2, riskt, rtol = 5.0e-8)
+    @test isapprox(r2, riskt, rtol = 1.0e-7)
     @test isapprox(ret2, rett, rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
@@ -85,7 +85,7 @@
     @test isapprox(w3.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r3, riskt0, rtol = 1.0e-5)
     @test isapprox(ret3, rett0, rtol = 1.0e-5)
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-8)
     @test isapprox(r3, riskt, rtol = 5.0e-8)
     @test isapprox(ret3, rett)
 

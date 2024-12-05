@@ -66,7 +66,7 @@ function weight_constraints(port, allow_shorting::Bool = true)
     if !short
         @constraints(model, begin
                          constr_scale * w .<= constr_scale * long_u * k
-                         constr_scale * w .>= constr_scale * 0
+                         w .>= 0
                      end)
         @expression(model, long_w, w)
     elseif short && allow_shorting
@@ -79,13 +79,11 @@ function weight_constraints(port, allow_shorting::Bool = true)
         max_short_budget = port.max_short_budget
 
         @variables(model, begin
-                       long_w[1:N]
-                       short_w[1:N]
+                       long_w[1:N] .>= 0
+                       short_w[1:N] .<= 0
                    end)
 
         @constraints(model, begin
-                         constr_scale * long_w .>= constr_scale * 0
-                         constr_scale * short_w .<= constr_scale * 0
                          constr_scale * w .<= constr_scale * long_u * k
                          constr_scale * w .>= constr_scale * short_u * k
                          constr_scale * w .<= constr_scale * long_w
@@ -524,12 +522,12 @@ function SDP_network_cluster_constraints(port, type)
 
     if ntwk_flag
         A = network_adj.A
-        @constraint(model, constr_scale * A .* W .== constr_scale * 0)
+        @constraint(model, A .* W .== 0)
     end
 
     if clst_flag
         A = cluster_adj.A
-        @constraint(model, constr_scale * A .* W .== constr_scale * 0)
+        @constraint(model, A .* W .== 0)
     end
 
     return nothing
