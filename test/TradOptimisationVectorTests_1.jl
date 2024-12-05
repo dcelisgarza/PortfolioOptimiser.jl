@@ -1261,7 +1261,7 @@ end
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                                :check_sol => (allow_local = true,
                                                                               allow_almost = true),
-                                                               :params => Dict("verbose" => true))))
+                                                               :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
