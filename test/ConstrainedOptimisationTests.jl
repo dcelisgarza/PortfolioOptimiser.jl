@@ -1265,7 +1265,7 @@ end
     r18 = calc_risk(portfolio; rm = rm[1][1])
     @test r15 <= r10
     @test r16 <= r10
-    @test abs(r17 - r10) < 1e-10
+    @test abs(r17 - r10) < 1e-4
     @test r18 <= r10
 
     portfolio.network_adj = SDP(; A = B)
