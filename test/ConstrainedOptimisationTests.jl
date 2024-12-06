@@ -100,7 +100,7 @@ l = 2.0
         @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
     end
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -239,7 +239,7 @@ l = 2.0
     @test isapprox(portfolio.b_ineq[1],
                    average_centrality(portfolio; network_type = network_type))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -374,7 +374,7 @@ end
     @test isapprox(portfolio.b_ineq[1],
                    average_centrality(portfolio; network_type = network_type))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -504,7 +504,7 @@ end
           3.086567074607075e-12, 7.9721616287409e-12]
     @test isapprox(w16.weights, wt)
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -643,7 +643,7 @@ end
     @test isapprox(w6.weights, wt)
     @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -791,7 +791,7 @@ end
     @test isapprox(portfolio.b_ineq[1],
                    average_centrality(portfolio; network_type = network_type))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -943,7 +943,7 @@ end
     @test isapprox(w6.weights, wt)
     @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
@@ -1096,7 +1096,7 @@ end
     @test isapprox(portfolio.b_ineq[1],
                    average_centrality(portfolio; network_type = network_type))
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -1448,7 +1448,7 @@ end
     @test isapprox(w6_2.weights, wt)
     portfolio.cluster_adj = NoAdj()
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -1617,7 +1617,7 @@ end
     @test isapprox(w16_2.weights, wt)
     portfolio.cluster_adj = NoAdj()
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -1796,7 +1796,7 @@ end
     @test isapprox(w6_2.weights, wt)
     portfolio.cluster_adj = NoAdj()
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -1970,7 +1970,7 @@ end
     @test isapprox(w16_2.weights, wt)
     portfolio.cluster_adj = NoAdj()
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -2649,7 +2649,7 @@ end
     portfolio.cluster_adj = NoAdj()
     @test isapprox(w6.weights, w6_2.weights)
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -2790,7 +2790,7 @@ end
     portfolio.cluster_adj = NoAdj()
     @test isapprox(w16.weights, w16_2.weights)
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -2947,7 +2947,7 @@ end
     portfolio.cluster_adj = NoAdj()
     @test isapprox(w6.weights, w6_2.weights)
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
@@ -3100,7 +3100,7 @@ end
     portfolio.cluster_adj = NoAdj()
     @test isapprox(w16.weights, w16_2.weights)
 
-    portfolio.a_ineq = empty!(portfolio.a_ineq)
+    portfolio.a_ineq = Matrix(undef, 0, 0)
     portfolio.b_ineq = empty!(portfolio.b_ineq)
 
     portfolio.network_adj = IP(; A = B)
