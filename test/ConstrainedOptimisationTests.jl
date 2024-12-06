@@ -6,283 +6,286 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-# @testset "Cluster + Network and Dendrogram non variance Short" begin
-portfolio = OmniPortfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
-asset_statistics!(portfolio)
+@testset "Cluster + Network and Dendrogram non variance Short" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
 
-A = centrality_vector(portfolio)
-B = connection_matrix(portfolio)
-C = cluster_matrix(portfolio)
+    A = centrality_vector(portfolio)
+    B = connection_matrix(portfolio)
+    C = cluster_matrix(portfolio)
 
-portfolio.short = true
-portfolio.short_u = -0.13
-portfolio.short_budget = -0.13
-portfolio.long_u = 1
-portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short = true
+    portfolio.short_u = -0.13
+    portfolio.short_budget = -0.13
+    portfolio.long_u = 1
+    portfolio.budget = portfolio.long_u + portfolio.short_u
 
-rm = CDaR()
-obj = MinRisk()
-w1 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [0.0, -0.0033927423088478525, 0.0, -0.0017047316992726633, 0.02620966174092891,
-      -0.048951276707458066, -0.02831053066644215, 0.0797084661157905,
-      -0.006091550656354475, -0.01772949018065388, 0.34963750962788587,
-      -0.009810028561542944, 0.006616206609090757, -1.7025233012195975e-16,
-      -0.01400964921942798, 0.09738313723086256, 0.16435744872368938, 0.01643568935570537,
-      0.10356751838407428, 0.15608436221197253]
-@test isapprox(w1.weights, wt)
+    rm = CDaR()
+    obj = MinRisk()
+    w1 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [0.0, -0.0033927423088478525, 0.0, -0.0017047316992726633, 0.02620966174092891,
+          -0.048951276707458066, -0.02831053066644215, 0.0797084661157905,
+          -0.006091550656354475, -0.01772949018065388, 0.34963750962788587,
+          -0.009810028561542944, 0.006616206609090757, -1.7025233012195975e-16,
+          -0.01400964921942798, 0.09738313723086256, 0.16435744872368938,
+          0.01643568935570537, 0.10356751838407428, 0.15608436221197253]
+    @test isapprox(w1.weights, wt)
 
-portfolio.a_ineq = [A'; -A']
-portfolio.b_ineq = [minimum(A); -minimum(A)]
-w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [-0.09486167717442834, 0.04019416692914485, 0.037577223179041455,
-      -5.0655785389293176e-17, 0.12801741187716315, -7.979727989493313e-17,
-      -0.01998095976345068, 0.13355629824656456, 0.019271038397774838, 0.0,
-      0.28797176886025655, 0.0, 0.008845283123909234, 0.0, -0.015157363062120899,
-      0.10734222426525322, 0.0, 0.061474266941201526, 4.119968255444917e-17,
-      0.17575031817969053]
-@test isapprox(w2.weights, wt)
-@test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w3 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [0.0, 0.0, 0.0, 0.0, 0.334584688856143, 0.0, -2.376571162088226e-16,
-      0.4054153111438569, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.13000000000000034, 0.0, 0.0,
-      -5.551115123125783e-17, 0.0]
-@test isapprox(w3.weights, wt)
-@test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w4 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [1.2226018634763062e-11, 0.040432424389423544, 0.023578631623221498,
-      -7.652713168953688e-12, 0.14639800545349557, -2.1742907775943787e-11,
-      3.32754091111551e-11, 0.21316996161066093, -2.1930170616619015e-11,
-      -1.5435614442497608e-11, 0.13235733921000303, 0.05781499511051747,
-      0.002978615637565548, -1.6737153750877266e-11, 2.18705851128266e-8,
-      0.10757907383089826, 1.1112786400496134e-11, 0.015187634640136088,
-      -0.018322735518700776, 0.148826032174039]
-@test isapprox(w4.weights, wt)
-@test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w5 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [4.204956148989058e-12, 1.4931314541989982e-11, 1.2663572247418938e-11,
-      4.800655691271122e-12, 0.15119009747654316, 1.4014642734047517e-12,
-      -8.441405795403667e-12, 0.23861104300398023, 1.6844290006480935e-13,
-      6.62907630736869e-13, 2.4905089404109546e-11, 1.989873293725653e-11,
-      2.1102368801554813e-11, 6.983180153737673e-12, 0.003761059788230326,
-      0.12999999983317637, 1.5257824618905674e-11, 0.09171651099682025,
-      9.018507666452002e-12, 0.2547212887736924]
-@test isapprox(w5.weights, wt)
-@test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w6 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-if !isempty(w6)
-    wt = [-3.436744679402206e-11, 3.239661533633809e-11, 2.4840447922545817e-11,
-          -9.972810205467658e-12, 0.3351029495116913, 7.839734082797505e-12,
-          -3.5168375152895714e-11, 0.4048970498835798, -2.1168226953999462e-11,
-          7.405357389041877e-12, 2.7811407918484925e-11, 3.871855933414875e-11,
-          3.031055896740596e-11, -1.7227555861709482e-11, 3.5161380685179906e-11,
-          0.13000000053320468, -3.482577397178112e-11, 2.7638894619405443e-11,
-          -4.384228255547239e-11, 3.597490549371302e-11]
-    @test isapprox(w6.weights, wt)
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
+    w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [-0.09486167717442834, 0.04019416692914485, 0.037577223179041455,
+          -5.0655785389293176e-17, 0.12801741187716315, -7.979727989493313e-17,
+          -0.01998095976345068, 0.13355629824656456, 0.019271038397774838, 0.0,
+          0.28797176886025655, 0.0, 0.008845283123909234, 0.0, -0.015157363062120899,
+          0.10734222426525322, 0.0, 0.061474266941201526, 4.119968255444917e-17,
+          0.17575031817969053]
+    @test isapprox(w2.weights, wt)
     @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w3 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [0.0, 0.0, 0.0, 0.0, 0.334584688856143, 0.0, -2.376571162088226e-16,
+          0.4054153111438569, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.13000000000000034, 0.0,
+          0.0, -5.551115123125783e-17, 0.0]
+    @test isapprox(w3.weights, wt)
+    @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w4 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [1.2226018634763062e-11, 0.040432424389423544, 0.023578631623221498,
+          -7.652713168953688e-12, 0.14639800545349557, -2.1742907775943787e-11,
+          3.32754091111551e-11, 0.21316996161066093, -2.1930170616619015e-11,
+          -1.5435614442497608e-11, 0.13235733921000303, 0.05781499511051747,
+          0.002978615637565548, -1.6737153750877266e-11, 2.18705851128266e-8,
+          0.10757907383089826, 1.1112786400496134e-11, 0.015187634640136088,
+          -0.018322735518700776, 0.148826032174039]
+    @test isapprox(w4.weights, wt)
+    @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w5 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [4.204956148989058e-12, 1.4931314541989982e-11, 1.2663572247418938e-11,
+          4.800655691271122e-12, 0.15119009747654316, 1.4014642734047517e-12,
+          -8.441405795403667e-12, 0.23861104300398023, 1.6844290006480935e-13,
+          6.62907630736869e-13, 2.4905089404109546e-11, 1.989873293725653e-11,
+          2.1102368801554813e-11, 6.983180153737673e-12, 0.003761059788230326,
+          0.12999999983317637, 1.5257824618905674e-11, 0.09171651099682025,
+          9.018507666452002e-12, 0.2547212887736924]
+    @test isapprox(w5.weights, wt)
+    @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w6 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    if !isempty(w6)
+        wt = [-3.436744679402206e-11, 3.239661533633809e-11, 2.4840447922545817e-11,
+              -9.972810205467658e-12, 0.3351029495116913, 7.839734082797505e-12,
+              -3.5168375152895714e-11, 0.4048970498835798, -2.1168226953999462e-11,
+              7.405357389041877e-12, 2.7811407918484925e-11, 3.871855933414875e-11,
+              3.031055896740596e-11, -1.7227555861709482e-11, 3.5161380685179906e-11,
+              0.13000000053320468, -3.482577397178112e-11, 2.7638894619405443e-11,
+              -4.384228255547239e-11, 3.597490549371302e-11]
+        @test isapprox(w6.weights, wt)
+        @test isapprox(portfolio.b_ineq[1], average_centrality(portfolio))
+    end
+
+    portfolio.a_ineq = Matrix(undef, 0, 0)
+    portfolio.b_ineq = empty!(portfolio.b_ineq)
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w7 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.938893903907228e-18, 0.0, 0.0, 0.0,
+          0.42517704255085137, -0.0, 0.0, 0.0, -0.0, 0.05890972756969503,
+          0.3859132298794536, 0.0, 0.0, -0.0]
+    @test isapprox(w7.weights, wt)
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w8 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [8.005099809395322e-11, 5.54741874344066e-11, 3.7161008165908413e-10,
+          3.399830567579541e-11, 0.024515641359833074, 2.3077913541693312e-11,
+          -8.557321355409364e-11, 0.0884095404422948, 3.0571544254790295e-11,
+          1.3442669404688171e-11, 0.31877875453680166, 0.013279538620306513,
+          1.6185295915456725e-10, 4.9030713005730264e-11, 1.3508583854644475e-10,
+          0.12732969672456004, 0.196986324697881, 9.532758916856292e-11,
+          8.305964627126601e-11, 0.10070050257131365]
+    @test isapprox(w8.weights, wt)
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w9 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [8.799752177306594e-12, 7.87418978197684e-12, 1.0861317374979072e-11,
+          9.914880666933259e-12, 0.12262771991615018, 2.101320797510526e-12,
+          -2.3623625970142564e-12, 1.3071988562767973e-11, 9.321850907885504e-12,
+          9.035808986042697e-12, 0.3678587967536403, -9.277267513819548e-12,
+          -7.901643481042042e-12, 8.829927703225457e-12, -7.856756361303765e-12,
+          0.15489065765211585, 1.1831790290930169e-11, 0.07584182473373799,
+          1.086050352468032e-11, 0.14878100086925003]
+    @test isapprox(w9.weights, wt)
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w10 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    if !isempty(w10)
+        wt = [5.714715683777237e-12, 3.5136317105336944e-12, 5.8369943427409435e-12,
+              -1.19148080834951e-12, 6.001951208464746e-12, -2.114951066063337e-13,
+              -6.265586756394273e-12, 7.283842094661988e-12, 1.830378102116846e-12,
+              6.837378299528731e-13, 0.40465038840179224, 7.866958277926574e-13,
+              -5.225243165180584e-12, 4.436829788196232e-12, -4.227652520920422e-12,
+              0.11586692349160559, 0.34948268807236954, 5.458758514235868e-12,
+              3.231966844365002e-12, 6.574567542422419e-12]
+        @test isapprox(w10.weights, wt)
+    end
+
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                                 "verbose" => false,
+                                                                                                 "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                                          MOI.Silent() => true),
+                                                                                                 "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                             "verbose" => false,
+                                                                                                                                             "max_step_fraction" => 0.75)))))
+    asset_statistics!(portfolio)
+    obj = Sharpe(; rf = rf)
+
+    network_type = TMFG()
+    clust_alg = DBHT()
+    A = centrality_vector(portfolio; network_type = network_type)
+    B = connection_matrix(portfolio; network_type = network_type)
+    C = cluster_matrix(portfolio; clust_alg = clust_alg)
+
+    portfolio.short = true
+    portfolio.short_u = -0.18
+    portfolio.short_budget = -0.18
+    portfolio.long_u = 0.95
+    portfolio.budget = portfolio.long_u + portfolio.short_u
+
+    w11 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [0.0, 0.0, 0.06455652837124166, 0.0, 0.17806945118716286, -0.1534166903019555,
+          6.554560797119506e-17, 0.12351856122756986, 0.0, 0.0, 0.21867000759778857, 0.0,
+          -0.023295149141940166, 0.0, -0.0032881605561044004, 0.1770017931069312,
+          0.006143447950208067, 0.0, 0.04071674553919559, 0.1413234650199022]
+    @test isapprox(w11.weights, wt)
+
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
+
+    w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [0.0, 0.0, 0.07328869996428454, 0.0, 0.19593630860627667, -0.1516035031548817,
+          -2.228175066036319e-17, 0.1290693464408622, 0.0, 0.0, 0.20897763141227396, 0.0,
+          -0.02192543103531701, 0.0, -0.006471065809801198, 0.18010601289300754,
+          7.366923752795404e-17, 0.0, 0.025951685743898865, 0.13667031493939605]
+    @test isapprox(w12.weights, wt)
+    @test isapprox(portfolio.b_ineq[1],
+                   average_centrality(portfolio; network_type = network_type))
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w13 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [-0.0, -0.0, 0.0, -0.0, 0.6900000000000023, -0.0, -0.0, 0.0, -0.0, -0.0,
+          0.19949253798767527, -0.0, -0.11949253798767445, -0.0, -0.0, 0.0, 0.0, -0.0, 0.0,
+          0.0]
+    @test isapprox(w13.weights, wt)
+    @test isapprox(portfolio.b_ineq[1],
+                   average_centrality(portfolio; network_type = network_type))
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w14 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [5.729819422504901e-10, 2.0269228372716305e-9, 0.09696632723807276,
+          5.082089359526037e-10, 0.2923005297905428, -0.026460476461216943,
+          -2.5253580657168216e-10, 0.028783592571020887, 1.0679460558804796e-10,
+          1.3473000861615002e-11, 0.1927132405380173, -0.019545400146136413,
+          -0.06439842544517828, 8.152378636838173e-10, -0.06959565320653743,
+          0.3351483844459054, 1.1907222580525057e-8, 6.080463477382724e-10,
+          0.004087809834287083, 5.45348706181595e-8]
+    @test isapprox(w14.weights, wt)
+    @test isapprox(portfolio.b_ineq[1],
+                   average_centrality(portfolio; network_type = network_type))
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w15 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [-0.0, -0.0, 0.0, -0.0, 0.6899999999999927, -0.0, -0.0, 0.0, -0.0, -0.0,
+          0.1994925379876753, -0.0, -0.11949253798766485, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0,
+          0.0]
+    @test isapprox(w15.weights, wt)
+    @test isapprox(portfolio.b_ineq[1],
+                   average_centrality(portfolio; network_type = network_type))
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w16 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [4.5825759516488e-12, -5.625398829218788e-14, 2.7106199492541828e-12,
+          -1.2170689627790458e-12, 0.47293220181676904, 1.46708524610976e-12,
+          2.682265481454576e-12, 2.089279181627225e-12, 4.964640378874892e-12,
+          9.666732264910104e-13, 0.08000000017091331, -2.117907285633238e-12,
+          -2.4719082420500955e-12, 4.385821706613677e-12, -2.2058687173679206e-12,
+          0.21706779798099818, 5.405842946491002e-12, 3.2503049980244107e-13,
+          5.5268893538282574e-12, 4.281676476219846e-12]
+    @test isapprox(w16.weights, wt)
+    @test isapprox(portfolio.b_ineq[1],
+                   average_centrality(portfolio; network_type = network_type))
+
+    portfolio.a_ineq = Matrix(undef, 0, 0)
+    portfolio.b_ineq = empty!(portfolio.b_ineq)
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w17 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [-0.0, -0.0, 0.0, -0.0, 0.6751155811095629, -0.0, -0.0, 0.0, -0.0, -0.0,
+          0.208898224965609, -0.0, -0.11401380607517049, -0.0, -0.0, 0.0, 0.0, -0.0, -0.0,
+          0.0]
+    @test isapprox(w17.weights, wt)
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w18 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [1.2058577320916581e-9, 4.600354935991489e-9, 0.05961806206479333,
+          7.691984785591507e-10, 0.29042893436973366, -0.05362496506661214,
+          -5.099931902588078e-10, 0.07230593550170873, 2.0576515901843197e-10,
+          5.604704151041283e-11, 0.19375339923865306, -5.540266268436408e-7,
+          -0.05988787484788537, 1.5924805345076797e-9, -0.06648647561407833,
+          0.3338934617194479, 8.223117467316676e-9, 1.3144927800506113e-9,
+          1.508587671297926e-8, 4.411766819332059e-8]
+    @test isapprox(w18.weights, wt)
+
+    portfolio.network_adj = IP(; A = B)
+    portfolio.cluster_adj = SDP(; A = C)
+    w19 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [9.275486353250718e-13, 5.655572217472991e-12, 5.993687365987823e-12,
+          4.039719305818483e-12, 0.6169500574317381, -2.8813786271890798e-12,
+          -7.461230019291266e-13, 6.284136092070551e-12, 2.8343671192967667e-12,
+          1.865515180382048e-12, 0.2509320397227721, -2.192697968271811e-12,
+          -0.09788209720319403, 1.2191065061592858e-12, -3.975183079910879e-12,
+          8.805042631373223e-12, 6.500024122048496e-12, 3.128482679739266e-12,
+          5.685466774051499e-12, 5.540461295255527e-12]
+    @test isapprox(w19.weights, wt)
+
+    portfolio.network_adj = SDP(; A = B)
+    portfolio.cluster_adj = IP(; A = C)
+    w20 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
+    wt = [1.2305818195374707e-12, 6.638995180407921e-13, 1.4818099637685315e-12,
+          6.446873700377288e-13, 0.5385298458083386, 9.688920546141059e-14,
+          1.859881899987937e-12, 1.7499757900946622e-12, -1.6444783912761784e-13,
+          3.17879317664001e-13, 1.6480292361775621e-12, -0.17999999988660298,
+          -8.95627519573147e-13, 9.75176970539232e-13, -3.014371991930602e-13,
+          0.41147015406512866, 9.498790292467675e-13, 8.291346273853208e-13,
+          7.802681766331766e-13, 1.2690237115010107e-12]
+    @test isapprox(w20.weights, wt)
 end
-
-portfolio.a_ineq = Matrix(undef, 0, 0)
-portfolio.b_ineq = empty!(portfolio.b_ineq)
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w7 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.938893903907228e-18, 0.0, 0.0, 0.0,
-      0.42517704255085137, -0.0, 0.0, 0.0, -0.0, 0.05890972756969503, 0.3859132298794536,
-      0.0, 0.0, -0.0]
-@test isapprox(w7.weights, wt)
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w8 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [8.005099809395322e-11, 5.54741874344066e-11, 3.7161008165908413e-10,
-      3.399830567579541e-11, 0.024515641359833074, 2.3077913541693312e-11,
-      -8.557321355409364e-11, 0.0884095404422948, 3.0571544254790295e-11,
-      1.3442669404688171e-11, 0.31877875453680166, 0.013279538620306513,
-      1.6185295915456725e-10, 4.9030713005730264e-11, 1.3508583854644475e-10,
-      0.12732969672456004, 0.196986324697881, 9.532758916856292e-11, 8.305964627126601e-11,
-      0.10070050257131365]
-@test isapprox(w8.weights, wt)
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w9 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [8.799752177306594e-12, 7.87418978197684e-12, 1.0861317374979072e-11,
-      9.914880666933259e-12, 0.12262771991615018, 2.101320797510526e-12,
-      -2.3623625970142564e-12, 1.3071988562767973e-11, 9.321850907885504e-12,
-      9.035808986042697e-12, 0.3678587967536403, -9.277267513819548e-12,
-      -7.901643481042042e-12, 8.829927703225457e-12, -7.856756361303765e-12,
-      0.15489065765211585, 1.1831790290930169e-11, 0.07584182473373799,
-      1.086050352468032e-11, 0.14878100086925003]
-@test isapprox(w9.weights, wt)
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w10 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-if !isempty(w10)
-    wt = [5.714715683777237e-12, 3.5136317105336944e-12, 5.8369943427409435e-12,
-          -1.19148080834951e-12, 6.001951208464746e-12, -2.114951066063337e-13,
-          -6.265586756394273e-12, 7.283842094661988e-12, 1.830378102116846e-12,
-          6.837378299528731e-13, 0.40465038840179224, 7.866958277926574e-13,
-          -5.225243165180584e-12, 4.436829788196232e-12, -4.227652520920422e-12,
-          0.11586692349160559, 0.34948268807236954, 5.458758514235868e-12,
-          3.231966844365002e-12, 6.574567542422419e-12]
-    @test isapprox(w10.weights, wt)
-end
-
-portfolio = OmniPortfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
-asset_statistics!(portfolio)
-obj = Sharpe(; rf = rf)
-
-network_type = TMFG()
-clust_alg = DBHT()
-A = centrality_vector(portfolio; network_type = network_type)
-B = connection_matrix(portfolio; network_type = network_type)
-C = cluster_matrix(portfolio; clust_alg = clust_alg)
-
-portfolio.short = true
-portfolio.short_u = -0.18
-portfolio.short_budget = -0.18
-portfolio.long_u = 0.95
-portfolio.budget = portfolio.long_u + portfolio.short_u
-
-w11 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [0.0, 0.0, 0.06455652837124166, 0.0, 0.17806945118716286, -0.1534166903019555,
-      6.554560797119506e-17, 0.12351856122756986, 0.0, 0.0, 0.21867000759778857, 0.0,
-      -0.023295149141940166, 0.0, -0.0032881605561044004, 0.1770017931069312,
-      0.006143447950208067, 0.0, 0.04071674553919559, 0.1413234650199022]
-@test isapprox(w11.weights, wt)
-
-portfolio.a_ineq = [A'; -A']
-portfolio.b_ineq = [minimum(A); -minimum(A)]
-
-w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [0.0, 0.0, 0.07328869996428454, 0.0, 0.19593630860627667, -0.1516035031548817,
-      -2.228175066036319e-17, 0.1290693464408622, 0.0, 0.0, 0.20897763141227396, 0.0,
-      -0.02192543103531701, 0.0, -0.006471065809801198, 0.18010601289300754,
-      7.366923752795404e-17, 0.0, 0.025951685743898865, 0.13667031493939605]
-@test isapprox(w12.weights, wt)
-@test isapprox(portfolio.b_ineq[1],
-               average_centrality(portfolio; network_type = network_type))
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w13 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [-0.0, -0.0, 0.0, -0.0, 0.6900000000000023, -0.0, -0.0, 0.0, -0.0, -0.0,
-      0.19949253798767527, -0.0, -0.11949253798767445, -0.0, -0.0, 0.0, 0.0, -0.0, 0.0, 0.0]
-@test isapprox(w13.weights, wt)
-@test isapprox(portfolio.b_ineq[1],
-               average_centrality(portfolio; network_type = network_type))
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w14 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [5.729819422504901e-10, 2.0269228372716305e-9, 0.09696632723807276,
-      5.082089359526037e-10, 0.2923005297905428, -0.026460476461216943,
-      -2.5253580657168216e-10, 0.028783592571020887, 1.0679460558804796e-10,
-      1.3473000861615002e-11, 0.1927132405380173, -0.019545400146136413,
-      -0.06439842544517828, 8.152378636838173e-10, -0.06959565320653743, 0.3351483844459054,
-      1.1907222580525057e-8, 6.080463477382724e-10, 0.004087809834287083,
-      5.45348706181595e-8]
-@test isapprox(w14.weights, wt)
-@test isapprox(portfolio.b_ineq[1],
-               average_centrality(portfolio; network_type = network_type))
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w15 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [-0.0, -0.0, 0.0, -0.0, 0.6899999999999927, -0.0, -0.0, 0.0, -0.0, -0.0,
-      0.1994925379876753, -0.0, -0.11949253798766485, -0.0, -0.0, 0.0, -0.0, -0.0, 0.0, 0.0]
-@test isapprox(w15.weights, wt)
-@test isapprox(portfolio.b_ineq[1],
-               average_centrality(portfolio; network_type = network_type))
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w16 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [4.5825759516488e-12, -5.625398829218788e-14, 2.7106199492541828e-12,
-      -1.2170689627790458e-12, 0.47293220181676904, 1.46708524610976e-12,
-      2.682265481454576e-12, 2.089279181627225e-12, 4.964640378874892e-12,
-      9.666732264910104e-13, 0.08000000017091331, -2.117907285633238e-12,
-      -2.4719082420500955e-12, 4.385821706613677e-12, -2.2058687173679206e-12,
-      0.21706779798099818, 5.405842946491002e-12, 3.2503049980244107e-13,
-      5.5268893538282574e-12, 4.281676476219846e-12]
-@test isapprox(w16.weights, wt)
-@test isapprox(portfolio.b_ineq[1],
-               average_centrality(portfolio; network_type = network_type))
-
-portfolio.a_ineq = Matrix(undef, 0, 0)
-portfolio.b_ineq = empty!(portfolio.b_ineq)
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w17 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [-0.0, -0.0, 0.0, -0.0, 0.6751155811095629, -0.0, -0.0, 0.0, -0.0, -0.0,
-      0.208898224965609, -0.0, -0.11401380607517049, -0.0, -0.0, 0.0, 0.0, -0.0, -0.0, 0.0]
-@test isapprox(w17.weights, wt)
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w18 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [1.2058577320916581e-9, 4.600354935991489e-9, 0.05961806206479333,
-      7.691984785591507e-10, 0.29042893436973366, -0.05362496506661214,
-      -5.099931902588078e-10, 0.07230593550170873, 2.0576515901843197e-10,
-      5.604704151041283e-11, 0.19375339923865306, -5.540266268436408e-7,
-      -0.05988787484788537, 1.5924805345076797e-9, -0.06648647561407833, 0.3338934617194479,
-      8.223117467316676e-9, 1.3144927800506113e-9, 1.508587671297926e-8,
-      4.411766819332059e-8]
-@test isapprox(w18.weights, wt)
-
-portfolio.network_adj = IP(; A = B)
-portfolio.cluster_adj = SDP(; A = C)
-w19 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [9.275486353250718e-13, 5.655572217472991e-12, 5.993687365987823e-12,
-      4.039719305818483e-12, 0.6169500574317381, -2.8813786271890798e-12,
-      -7.461230019291266e-13, 6.284136092070551e-12, 2.8343671192967667e-12,
-      1.865515180382048e-12, 0.2509320397227721, -2.192697968271811e-12,
-      -0.09788209720319403, 1.2191065061592858e-12, -3.975183079910879e-12,
-      8.805042631373223e-12, 6.500024122048496e-12, 3.128482679739266e-12,
-      5.685466774051499e-12, 5.540461295255527e-12]
-@test isapprox(w19.weights, wt)
-
-portfolio.network_adj = SDP(; A = B)
-portfolio.cluster_adj = IP(; A = C)
-w20 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
-wt = [1.2305818195374707e-12, 6.638995180407921e-13, 1.4818099637685315e-12,
-      6.446873700377288e-13, 0.5385298458083386, 9.688920546141059e-14,
-      1.859881899987937e-12, 1.7499757900946622e-12, -1.6444783912761784e-13,
-      3.17879317664001e-13, 1.6480292361775621e-12, -0.17999999988660298,
-      -8.95627519573147e-13, 9.75176970539232e-13, -3.014371991930602e-13,
-      0.41147015406512866, 9.498790292467675e-13, 8.291346273853208e-13,
-      7.802681766331766e-13, 1.2690237115010107e-12]
-@test isapprox(w20.weights, wt)
-# end
 
 @testset "Cluster + Network and Dendrogram non variance" begin
     portfolio = OmniPortfolio(; prices = prices,
@@ -310,8 +313,8 @@ wt = [1.2305818195374707e-12, 6.638995180407921e-13, 1.4818099637685315e-12,
           0.26790888256716056, 0.0, 0.000656017191282443, 0.16484640038932813]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.0, 0.051723138879499364, 0.0, 0.0, 0.05548699473292653,
           0.25666738948843576, 0.0, 0.0, 0.5073286323951223, 0.12879384450401607, 0.0, 0.0,
@@ -440,8 +443,8 @@ wt = [1.2305818195374707e-12, 6.638995180407921e-13, 1.4818099637685315e-12,
           0.2628826637767333, 0.0, 0.0, 0.0, 0.061060459143437176]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.0, 0.13626926674571754, 1.515977496012877e-16, 0.0,
@@ -575,8 +578,8 @@ end
           3.0369340845779798e-6, 0.11652799957572683]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.5426430661259544e-11, 0.07546661314221123, 0.021373033743425803,
           0.027539611826011074, 0.023741467255115698, 0.12266515815974924,
@@ -717,8 +720,8 @@ end
           0.07852527928232693, 1.1300847286552722e-8]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.580964533638559e-11, 9.277053125069126e-10, 9.835000020421294e-10,
@@ -875,8 +878,8 @@ end
           -0.042309313881649505, 0.0812798255323396]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.006455470838151135, 0.022490662735032373, 0.010297316092142877,
           0.02090189685314353, 0.007120602783755049, 0.03337634792081724,
@@ -1022,8 +1025,8 @@ end
           0.18619897771326696, 5.359189660071654e-7]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.2552366135949863e-10, 0.008807224105925661, 0.029398344712608698,
@@ -1369,8 +1372,8 @@ end
           3.0369340845779798e-6, 0.11652799957572683]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.5426430661259544e-11, 0.07546661314221123, 0.021373033743425803,
           0.027539611826011074, 0.023741467255115698, 0.12266515815974924,
@@ -1537,8 +1540,8 @@ end
           0.07852527921167819, 1.1301377011579277e-8]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.580964533638559e-11, 9.277053125069126e-10, 9.835000020421294e-10,
@@ -1717,8 +1720,8 @@ end
           -0.04230931388699771, 0.08127982553304927]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.006455470840768872, 0.022490662735580307, 0.010297316094040901,
           0.020901896852381873, 0.007120602786657216, 0.03337634791965579,
@@ -1891,8 +1894,8 @@ end
           0.18619897771326696, 5.359189660071654e-7]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [3.2552366135949863e-10, 0.008807224105925661, 0.029398344712608698,
           0.019023166629003347, 0.2828940773935552, -0.1222463360526187, 0.0435390759521136,
@@ -2583,8 +2586,8 @@ end
           0.26790888256716056, 0.0, 0.000656017191282443, 0.16484640038932813]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.0, 0.051723138879499364, 0.0, 0.0, 0.05548699473292653,
           0.25666738948843576, 0.0, 0.0, 0.5073286323951223, 0.12879384450401607, 0.0, 0.0,
@@ -2724,8 +2727,8 @@ end
           0.2628826637767333, 0.0, 0.0, 0.0, 0.061060459143437176]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.0, 0.13626926674571754, 1.515977496012877e-16, 0.0,
@@ -2877,8 +2880,8 @@ end
           0.01643568935570537, 0.10356751838407428, 0.15608436221197253]
     @test isapprox(w1.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
     w2 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [-0.09486167717442834, 0.04019416692914485, 0.037577223179041455,
           -5.0655785389293176e-17, 0.12801741187716315, -7.979727989493313e-17,
@@ -3031,8 +3034,8 @@ end
           0.006143447950208067, 0.0, 0.04071674553919559, 0.1413234650199022]
     @test isapprox(w11.weights, wt)
 
-    portfolio.a_ineq = [A'; -A']
-    portfolio.b_ineq = [minimum(A); -minimum(A)]
+    portfolio.a_ineq = A'
+    portfolio.b_ineq = [minimum(A)]
 
     w12 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.07328869996428454, 0.0, 0.19593630860627667, -0.1516035031548817,
