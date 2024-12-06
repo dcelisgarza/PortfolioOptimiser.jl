@@ -75,9 +75,9 @@ function asset_views(views::DataFrame, asset_sets::DataFrame)
         end
 
         if row["Sign"] == ">="
-            d = 1
-        elseif row["Sign"] == "<="
             d = -1
+        elseif row["Sign"] == "<="
+            d = 1
         end
 
         if row["Type"] == "Asset"
@@ -183,9 +183,9 @@ function factor_views(views::DataFrame, loadings::DataFrame)
         end
 
         if row["Sign"] == ">="
-            d = 1
-        elseif row["Sign"] == "<="
             d = -1
+        elseif row["Sign"] == "<="
+            d = 1
         end
 
         idx = findfirst(x -> x == row["Factor"], factor_list)

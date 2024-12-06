@@ -361,8 +361,8 @@ l = 2.0
           0.022, -0.41, -0.41, -0.41, -0.41, -0.41, -0.41, -0.41, 0.0, 0.0, 0.0, 0.0, 0.0,
           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    @test isapprox(A, At)
-    @test isapprox(B, Bt)
+    @test isapprox(A, -At)
+    @test isapprox(B, -Bt)
 end
 
 @testset "Asset views" begin
@@ -586,8 +586,8 @@ end
                   0.6], (14,))
 
     @test isapprox(loadingst[!, 2:end], loadings[!, 2:end])
-    @test isapprox(C, Ct)
-    @test isapprox(D, Dt)
+    @test isapprox(C, -Ct)
+    @test isapprox(D, -Dt)
 end
 
 @testset "Factor views" begin
@@ -671,8 +671,8 @@ end
                   0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 1.0, 0.0, 0.0], size(P))
     Qt = [-0.9, 1.2, 0.3, -0.5, -0.7, 0.13, 0.17, -0.29]
 
-    @test isapprox(P, Pt)
-    @test isapprox(Q, Qt)
+    @test isapprox(P, -Pt)
+    @test isapprox(Q, -Qt)
 end
 
 @testset "HRP constraints" begin
