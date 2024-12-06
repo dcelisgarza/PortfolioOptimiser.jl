@@ -31,8 +31,7 @@ mutable struct OmniPortfolio{
                              T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq,
                              T_a_card_eq, T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq,
                              T_b_eq, T_tracking, T_turnover, T_network_adj, T_cluster_adj,
-                             T_a_cent_ineq, T_b_cent_ineq, T_a_cent_eq, T_b_cent_eq, T_l1,
-                             T_l2, T_long_fees, T_short_fees, T_rebalance,
+                             T_l1, T_l2, T_long_fees, T_short_fees, T_rebalance,
                              T_constraint_scale, T_obj_scale, T_model, T_solvers, T_optimal,
                              T_fail, T_limits, T_frontier, T_walking, T_alloc_model,
                              T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
@@ -122,11 +121,6 @@ mutable struct OmniPortfolio{
     # Adjacency
     network_adj::T_network_adj
     cluster_adj::T_cluster_adj
-    # Centrality
-    a_cent_ineq::T_a_cent_ineq
-    b_cent_ineq::T_b_cent_ineq
-    a_cent_eq::T_a_cent_eq
-    b_cent_eq::T_b_cent_eq
     # Regularisation
     l1::T_l1
     l2::T_l2
@@ -434,11 +428,6 @@ function OmniPortfolio(;
                        # Adjacency
                        network_adj::AdjacencyConstraint = NoAdj(),
                        cluster_adj::AdjacencyConstraint = NoAdj(),
-                       # Centrality
-                       a_cent_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                       b_cent_ineq::Real = 0.0,
-                       a_cent_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                       b_cent_eq::Real = 0.0,
                        # Regularisation
                        l1::Real = 0.0, l2::Real = 0.0,
                        # Fees
@@ -558,11 +547,6 @@ function OmniPortfolio(;
     # Adjacency
     adj_assert(network_adj, N)
     adj_assert(cluster_adj, N)
-    # Centrality
-    vector_assert(a_cent_ineq, N, :a_cent_ineq)
-    @smart_assert(b_cent_ineq >= zero(b_cent_ineq))
-    vector_assert(a_cent_eq, N, :a_cent_eq)
-    @smart_assert(b_cent_eq >= zero(b_cent_eq))
     # Regularisation
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
@@ -616,9 +600,6 @@ function OmniPortfolio(;
                          AbstractTR,
                          # Adjacency
                          AdjacencyConstraint, AdjacencyConstraint,
-                         # Centrality
-                         typeof(a_cent_ineq), typeof(b_cent_ineq), typeof(a_cent_eq),
-                         typeof(b_cent_eq),
                          # Regularisation
                          typeof(l1), typeof(l2),
                          # Fees
@@ -717,11 +698,6 @@ function OmniPortfolio(;
                                                                                             # Adjacency
                                                                                             network_adj,
                                                                                             cluster_adj,
-                                                                                            # Centrality
-                                                                                            a_cent_ineq,
-                                                                                            b_cent_ineq,
-                                                                                            a_cent_eq,
-                                                                                            b_cent_eq,
                                                                                             # Regularisation
                                                                                             l1,
                                                                                             l2,
@@ -748,8 +724,7 @@ function OmniPortfolio(;
                                                                                             alloc_walking)
 end
 function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
-    if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu,
-              :a_cent_ineq, :a_cent_eq)
+    if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu)
         vector_assert(val, size(port.returns, 2), sym)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_mu
@@ -760,7 +735,7 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         N = size(port.returns, 2)
         matrix_assert(val, N, N, sym)
         val = convert(typeof(getfield(port, sym)), val)
-    elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :b_cent_ineq, :b_cent_eq, :l1, :l2)
+    elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :l1, :l2)
         @smart_assert(val >= zero(val))
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
@@ -920,7 +895,7 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_eq
         N = size(port.returns, 2)
-        linear_constraint_assert(port.a_eq, :b_eq, N, "eq")
+        linear_constraint_assert(port.a_eq, val, N, "eq")
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :tracking
         T, N = size(port.returns)
@@ -945,6 +920,11 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         end
     elseif sym ∈ (:constr_scale, :obj_scale)
         @smart_assert(val > zero(val))
+    else
+        if (isa(getfield(port, sym), AbstractArray) && isa(val, AbstractArray)) ||
+           (isa(getfield(port, sym), Real) && isa(val, Real))
+            val = convert(typeof(getfield(port, sym)), val)
+        end
     end
     return setfield!(port, sym, val)
 end
@@ -998,9 +978,6 @@ function Base.deepcopy(port::OmniPortfolio)
                          AbstractTR,
                          # Adjacency
                          AdjacencyConstraint, AdjacencyConstraint,
-                         # Centrality
-                         typeof(port.a_cent_ineq), typeof(port.b_cent_ineq),
-                         typeof(port.a_cent_eq), typeof(port.b_cent_eq),
                          # Regularisation
                          typeof(port.l1), typeof(port.l2),
                          # Fees
@@ -1096,11 +1073,6 @@ function Base.deepcopy(port::OmniPortfolio)
                                                      # Adjacency
                                                      deepcopy(port.network_adj),
                                                      deepcopy(port.cluster_adj),
-                                                     # Centrality
-                                                     deepcopy(port.a_cent_ineq),
-                                                     deepcopy(port.b_cent_ineq),
-                                                     deepcopy(port.a_cent_eq),
-                                                     deepcopy(port.b_cent_eq),
                                                      # Regularisation
                                                      deepcopy(port.l1), deepcopy(port.l2),
                                                      # Fees

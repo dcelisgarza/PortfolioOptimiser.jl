@@ -148,20 +148,6 @@ function weight_constraints(port, allow_shorting::Bool = true)
         @constraint(model, constr_scale * A * w .== constr_scale * B * k)
     end
 
-    #=
-    ### Centrality constraints
-    =#
-    A = port.a_cent_ineq
-    B = port.b_cent_ineq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, constr_scale * dot(A, w) .>= constr_scale * B * k)
-    end
-    A = port.a_cent_eq
-    B = port.b_cent_eq
-    if !(isempty(A) || isempty(B))
-        @constraint(model, constr_scale * dot(A, w) .== constr_scale * B * k)
-    end
-
     return nothing
 end
 function MIP_constraints(port, allow_shorting::Bool = true)
