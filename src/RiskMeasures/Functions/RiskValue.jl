@@ -2260,7 +2260,7 @@ end
 function _TCM(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
     mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = (x .- mu)
+    val = x .- mu
     return sum(val .^ 3) / T
 end
 
@@ -2272,7 +2272,7 @@ function _TLPM(x::AbstractVector, target::Real = 0.0,
     else
         isnothing(w) ? mean(x) : mean(x, w)
     end
-    val = (x .- target)
+    val = x .- target
     return -sum(val[val .<= zero(target)] .^ 3) / T
 end
 
@@ -2282,7 +2282,7 @@ function _Skewness(x::AbstractVector, mean_w::Union{AbstractWeights, Nothing} = 
     T = length(x)
     mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
     dev = isnothing(std_w) ? std(ve, x; mean = mu) : std(ve, x, std_w; mean = mu)
-    val = (x .- mu)
+    val = x .- mu
     return sum(val .^ 3) / T / dev^3
 end
 
@@ -2293,14 +2293,14 @@ function _SSkewness(x::AbstractVector, target::Real = 0.0,
     T = length(x)
     mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
     dev = isnothing(std_w) ? std(ce, x; mean = mu) : std(ce, x, std_w; mean = mu)
-    val = (x .- mu)
+    val = x .- mu
     return -sum(val[val .<= target] .^ 3) / T / dev^3
 end
 
 function _FTCM(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
     mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = (x .- mu)
+    val = x .- mu
     return sum(val .^ 4) / T
 end
 
@@ -2312,7 +2312,7 @@ function _FTLPM(x::AbstractVector, target::Real = 0.0,
     else
         isnothing(w) ? mean(x) : mean(x, w)
     end
-    val = (x .- target)
+    val = x .- target
     return sum(val[val .<= zero(target)] .^ 4) / T
 end
 
@@ -2322,7 +2322,7 @@ function _Kurtosis(x::AbstractVector, mean_w::Union{AbstractWeights, Nothing} = 
     T = length(x)
     mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
     dev = isnothing(std_w) ? std(ve, x; mean = mu) : std(ve, x, std_w; mean = mu)
-    val = (x .- mu)
+    val = x .- mu
     return sum(val .^ 4) / T / dev^4
 end
 
@@ -2333,7 +2333,7 @@ function _SKurtosis(x::AbstractVector, target::Real = 0.0,
     T = length(x)
     mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
     dev = isnothing(std_w) ? std(ce, x; mean = mu) : std(ce, x, std_w; mean = mu)
-    val = (x .- mu)
+    val = x .- mu
     return sum(val[val .<= target] .^ 4) / T / dev^4
 end
 
