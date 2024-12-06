@@ -28,14 +28,15 @@ mutable struct OmniPortfolio{
                              T_min_budget, T_budget, T_max_budget, T_min_short_budget,
                              T_short_budget, T_max_short_budget,
                              # Cardinality
-                             T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_nea,
-                             T_a_ineq, T_b_ineq, T_tracking, T_turnover, T_network_adj,
-                             T_cluster_adj, T_l1, T_l2, T_long_fees, T_short_fees,
-                             T_rebalance, T_constraint_scale, T_obj_scale, T_model,
-                             T_solvers, T_optimal, T_fail, T_limits, T_frontier, T_walking,
-                             T_alloc_model, T_alloc_solvers, T_alloc_optimal,
-                             T_alloc_leftover, T_alloc_fail, T_alloc_walking} <:
-               AbstractPortfolio
+                             T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq,
+                             T_a_card_eq, T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq,
+                             T_b_eq, T_tracking, T_turnover, T_network_adj, T_cluster_adj,
+                             T_a_cent_ineq, T_b_cent_ineq, T_a_cent_eq, T_b_cent_eq, T_l1,
+                             T_l2, T_long_fees, T_short_fees, T_rebalance,
+                             T_constraint_scale, T_obj_scale, T_model, T_solvers, T_optimal,
+                             T_fail, T_limits, T_frontier, T_walking, T_alloc_model,
+                             T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
+                             T_alloc_fail, T_alloc_walking} <: AbstractPortfolio
     # Assets and factors
     assets::T_assets
     timestamps::T_timestamps
@@ -105,11 +106,15 @@ mutable struct OmniPortfolio{
     card::T_card
     a_card_ineq::T_a_card_ineq
     b_card_ineq::T_b_card_ineq
+    a_card_eq::T_a_card_eq
+    b_card_eq::T_b_card_eq
     # Effective assets
     nea::T_nea
     # Linear constraints
     a_ineq::T_a_ineq
     b_ineq::T_b_ineq
+    a_eq::T_a_eq
+    b_eq::T_b_eq
     # Tracking
     tracking::T_tracking
     # Turnover
@@ -117,6 +122,11 @@ mutable struct OmniPortfolio{
     # Adjacency
     network_adj::T_network_adj
     cluster_adj::T_cluster_adj
+    # Centrality
+    a_cent_ineq::T_a_cent_ineq
+    b_cent_ineq::T_b_cent_ineq
+    a_cent_eq::T_a_cent_eq
+    b_cent_eq::T_b_cent_eq
     # Regularisation
     l1::T_l1
     l2::T_l2
@@ -296,7 +306,7 @@ function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_bud
     if short
         real_or_vector_assert(short_l, N, :short_l, <=, 0)
         real_or_vector_assert(short_u, N, :short_u, <=, 0)
-        @smart_assert(all.(short_u .<= short_l))
+        @smart_assert(short_u <= short_l)
         min_short_budget_flag = isfinite(min_short_budget)
         short_budget_flag = isfinite(short_budget)
         max_short_budget_flag = isfinite(max_short_budget)
@@ -408,12 +418,15 @@ function OmniPortfolio(;
                        card_scale::Real = 1e6, card::Integer = 0,
                        a_card_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                        b_card_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-
+                       a_card_eq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_card_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                        # Effective assets
                        nea::Real = 0.0,
                        # Linear constraints
                        a_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
                        b_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       a_eq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+                       b_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
                        # Tracking
                        tracking::TrackingErr = NoTracking(),
                        # Turnover
@@ -421,6 +434,11 @@ function OmniPortfolio(;
                        # Adjacency
                        network_adj::AdjacencyConstraint = NoAdj(),
                        cluster_adj::AdjacencyConstraint = NoAdj(),
+                       # Centrality
+                       a_cent_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       b_cent_ineq::Real = 0.0,
+                       a_cent_eq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                       b_cent_eq::Real = 0.0,
                        # Regularisation
                        l1::Real = 0.0, l2::Real = 0.0,
                        # Fees
@@ -527,10 +545,12 @@ function OmniPortfolio(;
     # Cardinality
     @smart_assert(card >= zero(card))
     linear_constraint_assert(a_card_ineq, b_card_ineq, N, "card_ineq")
+    linear_constraint_assert(a_card_eq, b_card_eq, N, "card_eq")
     # Effective assets
     @smart_assert(nea >= zero(nea))
     # Linear constraints
     linear_constraint_assert(a_ineq, b_ineq, N, "ineq")
+    linear_constraint_assert(a_eq, b_eq, N, "eq")
     # Tracking
     tracking_assert(tracking, T, N)
     # Turnover
@@ -538,6 +558,11 @@ function OmniPortfolio(;
     # Adjacency
     adj_assert(network_adj, N)
     adj_assert(cluster_adj, N)
+    # Centrality
+    vector_assert(a_cent_ineq, N, :a_cent_ineq)
+    @smart_assert(b_cent_ineq >= zero(b_cent_ineq))
+    vector_assert(a_cent_eq, N, :a_cent_eq)
+    @smart_assert(b_cent_eq >= zero(b_cent_eq))
     # Regularisation
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
@@ -580,17 +605,20 @@ function OmniPortfolio(;
                          typeof(short_budget), typeof(max_short_budget),
                          # Cardinality
                          typeof(card_scale), typeof(card), typeof(a_card_ineq),
-                         typeof(b_card_ineq),
+                         typeof(b_card_ineq), typeof(a_card_eq), typeof(b_card_eq),
                          # Effective assets
                          typeof(nea),
                          # Linear constraints
-                         typeof(a_ineq), typeof(b_ineq),
+                         typeof(a_ineq), typeof(b_ineq), typeof(a_eq), typeof(b_eq),
                          # Tracking
                          TrackingErr,
                          # Turnover
                          AbstractTR,
                          # Adjacency
                          AdjacencyConstraint, AdjacencyConstraint,
+                         # Centrality
+                         typeof(a_cent_ineq), typeof(b_cent_ineq), typeof(a_cent_eq),
+                         typeof(b_cent_eq),
                          # Regularisation
                          typeof(l1), typeof(l2),
                          # Fees
@@ -673,12 +701,15 @@ function OmniPortfolio(;
                                                                                             card,
                                                                                             a_card_ineq,
                                                                                             b_card_ineq,
-
+                                                                                            a_card_eq,
+                                                                                            b_card_eq,
                                                                                             # Effective assets
                                                                                             nea,
                                                                                             # Linear constraints
                                                                                             a_ineq,
                                                                                             b_ineq,
+                                                                                            a_eq,
+                                                                                            b_eq,
                                                                                             # Tracking
                                                                                             tracking,
                                                                                             # Turnover
@@ -686,6 +717,11 @@ function OmniPortfolio(;
                                                                                             # Adjacency
                                                                                             network_adj,
                                                                                             cluster_adj,
+                                                                                            # Centrality
+                                                                                            a_cent_ineq,
+                                                                                            b_cent_ineq,
+                                                                                            a_cent_eq,
+                                                                                            b_cent_eq,
                                                                                             # Regularisation
                                                                                             l1,
                                                                                             l2,
@@ -712,7 +748,8 @@ function OmniPortfolio(;
                                                                                             alloc_walking)
 end
 function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
-    if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu)
+    if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu,
+              :a_cent_ineq, :a_cent_eq)
         vector_assert(val, size(port.returns, 2), sym)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :f_mu
@@ -723,7 +760,7 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         N = size(port.returns, 2)
         matrix_assert(val, N, N, sym)
         val = convert(typeof(getfield(port, sym)), val)
-    elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :l1, :l2)
+    elseif sym ∈ (:max_num_assets_kurt, :card, :nea, :b_cent_ineq, :b_cent_eq, :l1, :l2)
         @smart_assert(val >= zero(val))
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:kurt, :skurt, :cov_sigma)
@@ -861,6 +898,14 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         N = size(port.returns, 2)
         linear_constraint_assert(port.a_card_ineq, val, N, "card_ineq")
         val = convert(typeof(getfield(port, sym)), val)
+    elseif sym == :a_card_eq
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(port, sym)), val)
+    elseif sym == :b_card_eq
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_card_eq, :b_card_eq, N, "card_eq")
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_ineq
         N = size(port.returns, 2)
         linear_constraint_assert(val, port.b_ineq, N, "ineq")
@@ -868,6 +913,14 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
     elseif sym == :b_ineq
         N = size(port.returns, 2)
         linear_constraint_assert(port.a_ineq, val, N, "ineq")
+        val = convert(typeof(getfield(port, sym)), val)
+    elseif sym == :a_eq
+        N = size(port.returns, 2)
+        linear_constraint_assert(val, port.b_eq, N, "eq")
+        val = convert(typeof(getfield(port, sym)), val)
+    elseif sym == :b_eq
+        N = size(port.returns, 2)
+        linear_constraint_assert(port.a_eq, :b_eq, N, "eq")
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :tracking
         T, N = size(port.returns)
@@ -892,11 +945,6 @@ function Base.setproperty!(port::OmniPortfolio, sym::Symbol, val)
         end
     elseif sym ∈ (:constr_scale, :obj_scale)
         @smart_assert(val > zero(val))
-    else
-        if (isa(getfield(port, sym), AbstractArray) && isa(val, AbstractArray)) ||
-           (isa(getfield(port, sym), Real) && isa(val, Real))
-            val = convert(typeof(getfield(port, sym)), val)
-        end
     end
     return setfield!(port, sym, val)
 end
@@ -938,16 +986,21 @@ function Base.deepcopy(port::OmniPortfolio)
                          # Cardinality
                          typeof(port.card_scale), typeof(port.card),
                          typeof(port.a_card_ineq), typeof(port.b_card_ineq),
+                         typeof(port.a_card_eq), typeof(port.b_card_eq),
                          # Effective assets
                          typeof(port.nea),
                          # Linear constraints
-                         typeof(port.a_ineq), typeof(port.b_ineq),
+                         typeof(port.a_ineq), typeof(port.b_ineq), typeof(port.a_eq),
+                         typeof(port.b_eq),
                          # Tracking
                          TrackingErr,
                          # Turnover
                          AbstractTR,
                          # Adjacency
                          AdjacencyConstraint, AdjacencyConstraint,
+                         # Centrality
+                         typeof(port.a_cent_ineq), typeof(port.b_cent_ineq),
+                         typeof(port.a_cent_eq), typeof(port.b_cent_eq),
                          # Regularisation
                          typeof(port.l1), typeof(port.l2),
                          # Fees
@@ -1027,11 +1080,15 @@ function Base.deepcopy(port::OmniPortfolio)
                                                      deepcopy(port.card),
                                                      deepcopy(port.a_card_ineq),
                                                      deepcopy(port.b_card_ineq),
+                                                     deepcopy(port.a_card_eq),
+                                                     deepcopy(port.b_card_eq),
                                                      # Effective assets
                                                      deepcopy(port.nea),
                                                      # Linear constraints
                                                      deepcopy(port.a_ineq),
                                                      deepcopy(port.b_ineq),
+                                                     deepcopy(port.a_eq),
+                                                     deepcopy(port.b_eq),
                                                      # Tracking
                                                      deepcopy(port.tracking),
                                                      # Turnover
@@ -1039,6 +1096,11 @@ function Base.deepcopy(port::OmniPortfolio)
                                                      # Adjacency
                                                      deepcopy(port.network_adj),
                                                      deepcopy(port.cluster_adj),
+                                                     # Centrality
+                                                     deepcopy(port.a_cent_ineq),
+                                                     deepcopy(port.b_cent_ineq),
+                                                     deepcopy(port.a_cent_eq),
+                                                     deepcopy(port.b_cent_eq),
                                                      # Regularisation
                                                      deepcopy(port.l1), deepcopy(port.l2),
                                                      # Fees

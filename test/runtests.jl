@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -86,14 +94,6 @@ end
 
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
 end
 #=
 

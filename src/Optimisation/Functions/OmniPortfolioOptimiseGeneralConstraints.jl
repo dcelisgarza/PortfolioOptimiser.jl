@@ -66,7 +66,7 @@ function weight_constraints(port, allow_shorting::Bool = true)
     if !short
         @constraints(model, begin
                          constr_scale * w .<= constr_scale * long_u * k
-                         constr_scale * w .>= 0
+                         w .>= 0
                      end)
         @expression(model, long_w, w)
     elseif short && allow_shorting
@@ -140,7 +140,26 @@ function weight_constraints(port, allow_shorting::Bool = true)
     A = port.a_ineq
     B = port.b_ineq
     if !(isempty(A) || isempty(B))
-        @constraint(model, constr_scale * A * w .<= constr_scale * B * k)
+        @constraint(model, constr_scale * A * w .>= constr_scale * B * k)
+    end
+    A = port.a_eq
+    B = port.b_eq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * A * w .== constr_scale * B * k)
+    end
+
+    #=
+    ### Centrality constraints
+    =#
+    A = port.a_cent_ineq
+    B = port.b_cent_ineq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * dot(A, w) .>= constr_scale * B * k)
+    end
+    A = port.a_cent_eq
+    B = port.b_cent_eq
+    if !(isempty(A) || isempty(B))
+        @constraint(model, constr_scale * dot(A, w) .== constr_scale * B * k)
     end
 
     return nothing
@@ -156,14 +175,17 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     card = port.card
     a_card_ineq = port.a_card_ineq
     b_card_ineq = port.b_card_ineq
+    a_card_eq = port.a_card_eq
+    b_card_eq = port.b_card_eq
     network_adj = port.network_adj
     cluster_adj = port.cluster_adj
 
     card_flag = size(port.returns, 2) > card > 0
     gcard_ineq_flag = !(isempty(a_card_ineq) || isempty(b_card_ineq))
+    gcard_eq_flag = !(isempty(a_card_eq) || isempty(b_card_eq))
     ntwk_flag = isa(network_adj, IP)
     clst_flag = isa(cluster_adj, IP)
-    if !(card_flag || gcard_ineq_flag || ntwk_flag || clst_flag)
+    if !(card_flag || gcard_ineq_flag || gcard_eq_flag || ntwk_flag || clst_flag)
         return nothing
     end
 
@@ -279,7 +301,10 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     ## Group cardinality
     =#
     if gcard_ineq_flag
-        @constraint(model, a_card_ineq * is_invested_bool .<= b_card_ineq)
+        @constraint(model, a_card_ineq * is_invested_bool .>= b_card_ineq)
+    end
+    if gcard_eq_flag
+        @constraint(model, a_card_eq * is_invested_bool .== b_card_eq)
     end
 
     #=

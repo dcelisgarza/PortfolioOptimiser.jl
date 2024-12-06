@@ -103,9 +103,9 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
         end
 
         if row["Sign"] == ">="
-            d = -1
-        elseif row["Sign"] == "<="
             d = 1
+        elseif row["Sign"] == "<="
+            d = -1
         end
 
         if row["Type"] == "Asset"
@@ -294,9 +294,9 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
         end
 
         if row["Sign"] == ">="
-            d = -1
-        elseif row["Sign"] == "<="
             d = 1
+        elseif row["Sign"] == "<="
+            d = -1
         end
 
         C1 = loadings[!, row["Factor"]]
