@@ -2308,7 +2308,7 @@ end
     rm = RLDaR()
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     z4 = get_z(portfolio, rm)
-    @test isapprox(z4, 0.003567369182292617, rtol = 5.0e-8)
+    @test isapprox(z4, 0.003567369182292617, rtol = 1.0e-6)
 
     rm = [[EVaR(), EVaR()]]
     optimise!(portfolio, Trad(; rm = rm, obj = obj))

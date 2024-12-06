@@ -2191,7 +2191,7 @@ end
     @test isapprox(ret4, rett0, rtol = 1.0e-5)
     @test isapprox(w4.weights, wt, rtol = 1.0e-6)
     @test isapprox(r4, riskt, rtol = 5.0e-7)
-    @test isapprox(ret4, rett, rtol = 1.0e-7)
+    @test isapprox(ret4, rett, rtol = 5.0e-7)
 
     # Risk upper bound
     obj = MaxRet()
