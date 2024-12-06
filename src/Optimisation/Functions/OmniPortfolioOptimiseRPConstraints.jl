@@ -59,10 +59,6 @@ function rp_constraints(port::OmniPortfolio, class::FC, w_ini)
                        w1[1:N_f]
                        w2[1:(N - N_f)]
                    end)
-        display(b1)
-        display(b2)
-        display(w1)
-        display(w2)
         @expression(model, w, b1 * w1 + b2 * w2)
     else
         b1 = factors_b1_b2_b3(loadings, f_returns, regression_type)[1]

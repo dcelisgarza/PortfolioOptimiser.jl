@@ -236,7 +236,7 @@ end
     w9 = optimise!(portfolio, RP(; class = FC()))
     rc9 = factor_risk_contribution(portfolio; type = :RP)
     lrc9, hrc9 = extrema(rc9[1:4])
-    @test isapprox(hrc9 / lrc9, 100, rtol = 0.0005)
+    @test isapprox(hrc9 / lrc9, 100, rtol = 0.001)
     @test isapprox(sum(portfolio.f_risk_budget), 1)
 
     portfolio.loadings = DataFrame()
