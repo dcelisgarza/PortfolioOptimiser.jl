@@ -2929,101 +2929,93 @@ end
     @test isapprox(w32.weights, wt)
 end
 
-#=
-
-@testset "NCO vector rm" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
-
-    asset_statistics!(portfolio)
-    cluster_assets!(portfolio)
-
-    w1 = optimise!(portfolio; rm = SD(; sigma = portfolio.cov), type = NCO())
-    w2 = optimise!(portfolio; rm = [[SD(; sigma = portfolio.cov), SD()]], type = NCO())
-    w3 = optimise!(portfolio; rm = [SD(; settings = RMSettings(; scale = 2))], type = NCO())
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
-    @test isapprox(w1.weights, w3.weights, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w3.weights, rtol = 1.0e-5)
-
-    w4 = optimise!(portfolio; rm = [SD(), CDaR()], type = NCO())
-    w5 = optimise!(portfolio; rm = [[SD(), SD()], [CDaR(), CDaR()]], type = NCO())
-    w6 = optimise!(portfolio;
-                   rm = [SD(; settings = RMSettings(; scale = 2)),
-                         CDaR(; settings = RMSettings(; scale = 2))], type = NCO())
-    @test isapprox(w4.weights, w5.weights, rtol = 5.0e-5)
-    @test isapprox(w4.weights, w6.weights, rtol = 5.0e-9)
-    @test isapprox(w5.weights, w6.weights, rtol = 5.0e-5)
-end
-
 @testset "HERC and NCO mixed parameters" begin
     portfolio = OmniPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT(; root_method = EqualDBHT())
     clust_opt = ClustOpt()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
-    w1 = optimise!(portfolio; rm = SD(), rm_o = CDaR(),
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = EKelly()),
-                              opt_kwargs_o = (; obj = Utility(; l = 10 * l),
-                                              kelly = NoKelly())))
-    wt = [8.749535903078065e-9, 0.021318202697098224, 0.010058873436520996,
-          0.0006391710067219409, 0.23847337816224912, 5.078733996478347e-9,
-          0.03433819538761402, 0.00922817630772192, 3.9969791626882106e-8,
-          2.3591257653925676e-8, 5.272610870475486e-8, 4.559863014598392e-9,
-          2.7523314119460396e-9, 9.64460078901257e-9, 3.0307822675469274e-9,
-          0.11722640236879024, 0.4120447177289777, 0.01690611807209831, 0.12415863804756225,
-          0.015607976681640013]
+    w1 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = Variance(),
+                                                      obj = Sharpe(; rf = rf),
+                                                      kelly = EKelly())),
+                       external = NCOArgs(;
+                                          type = Trad(; rm = CDaR(),
+                                                      obj = Utility(; l = 10 * l),
+                                                      kelly = NoKelly()))))
+    wt = [8.746980512426739e-9, 0.02131840205146324, 0.010059177511047296,
+          0.0006390401133837214, 0.23847424877396836, 2.7855378749498208e-9,
+          0.03433829339292149, 0.00922798787029745, 2.192467451561324e-8,
+          1.2946199986589789e-8, 2.891103081143254e-8, 2.500256934208249e-9,
+          1.5087789156517654e-9, 5.291617985989037e-9, 1.6616784928558542e-9,
+          0.11722712873716697, 0.4120482933288371, 0.016905831547980782,
+          0.12415377521862672, 0.015607735177551017]
     @test isapprox(w1.weights, wt, rtol = 5.0e-5)
 
-    w2 = optimise!(portfolio; rm = SD(), rm_o = CDaR(),
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf), kelly = NoKelly()),
-                              opt_kwargs_o = (; obj = Utility(; l = 10 * l),
-                                              kelly = EKelly())))
-    wt = [3.1657435876961315e-10, 0.011350048898726263, 0.005901925005901058,
-          4.145858254573504e-9, 0.24703174384250007, 1.1554588711505922e-10,
-          0.03571166800872377, 2.0093176507817576e-9, 1.1359578457903453e-9,
-          5.740514558667733e-10, 9.252049263004662e-10, 1.1349813784657876e-10,
-          6.974954102659066e-11, 2.3407404085962843e-10, 6.928260874063481e-11,
-          0.1292316915165453, 0.44715804867316167, 2.5109012694019742e-9,
-          0.12361485036662549, 1.1467800437648667e-8]
+    w2 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = Variance(),
+                                                      obj = Sharpe(; rf = rf),
+                                                      kelly = NoKelly())),
+                       external = NCOArgs(;
+                                          type = Trad(; rm = CDaR(),
+                                                      obj = Utility(; l = 10 * l),
+                                                      kelly = EKelly()))))
+    wt = [3.1657474869830236e-10, 0.011350048898912344, 0.00590192500599762,
+          4.145863348570475e-9, 0.24703174384661478, 1.1554967125924781e-10,
+          0.035711668009318916, 2.0093201218328118e-9, 1.1359951214950826e-9,
+          5.740702868245685e-10, 9.252352831708804e-10, 1.1350185465541757e-10,
+          6.975182236561415e-11, 2.340817140646339e-10, 6.928487479990741e-11,
+          0.12923169151529168, 0.4471580486746947, 2.5109043555437692e-9,
+          0.12361485036122226, 1.1467814516690299e-8]
     @test isapprox(w2.weights, wt)
 
-    w3 = optimise!(portfolio; rm = SD(), rm_o = CDaR(),
-                   type = NCO(;
-                              opt_kwargs = (; obj = Utility(; l = 10 * l),
-                                            kelly = EKelly()),
-                              opt_kwargs_o = (; obj = Sharpe(; rf = rf), kelly = NoKelly())))
-    wt = [6.4791954821063925e-9, 0.029812930861426164, 0.010894696408080332,
-          0.011896393137335998, 0.044384433675000466, 2.746543990901563e-9,
-          0.005106858724009885, 0.06946926268324362, 3.8491579305047204e-9,
-          0.02819781049675312, 0.28810639904355484, 9.707590311179332e-10,
-          4.695579190317573e-10, 0.040824363280960715, 5.178841305932862e-10,
-          0.049118688613542884, 0.20174937118162223, 0.10295500372922885,
-          0.06140247037868661, 0.05608130275345569]
+    w3 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = Variance(),
+                                                      obj = Utility(; l = 10 * l),
+                                                      kelly = EKelly())),
+                       external = NCOArgs(;
+                                          type = Trad(; rm = CDaR(),
+                                                      obj = Sharpe(; rf = rf),
+                                                      kelly = NoKelly()))))
+    wt = [4.435123223202006e-9, 0.02981292829609958, 0.010894696928370992,
+          0.011896392392422558, 0.044384434210418426, 2.3521987025134175e-9,
+          0.005106857526739849, 0.0694692584065797, 3.2889458276343186e-9,
+          0.02819781371232407, 0.28810640413584065, 8.305498316970034e-10,
+          4.0191361393894005e-10, 0.04082436761974192, 4.4329905506900117e-10,
+          0.0491186969507823, 0.2017493720580537, 0.10295500017433815, 0.061402464206477235,
+          0.05608130162978066]
     @test isapprox(w3.weights, wt)
 
-    w4 = optimise!(portfolio; rm = SD(), rm_o = CDaR(),
-                   type = NCO(;
-                              opt_kwargs = (; obj = Utility(; l = 10 * l),
-                                            kelly = NoKelly()),
-                              opt_kwargs_o = (; obj = Sharpe(; rf = rf), kelly = EKelly())))
-    wt = [2.0554538223172535e-8, 0.029818986226667964, 0.010923608025930946,
-          0.01186842576568594, 0.04541568191043348, 9.983988311413258e-9,
-          0.005261250564448335, 0.06930507652058161, 2.1332962817997016e-8,
-          0.027639989232562466, 0.2870831936646783, 2.7962815225575495e-10,
-          3.641935755054462e-9, 0.03800725786958468, 3.3607876962123727e-9,
-          0.049529929060475084, 0.2034415850017132, 0.10271915204925444,
-          0.06299503778536726, 0.05599076716877515]
+    w4 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = Variance(),
+                                                      obj = Utility(; l = 10 * l),
+                                                      kelly = NoKelly())),
+                       external = NCOArgs(;
+                                          type = Trad(; rm = CDaR(),
+                                                      obj = Sharpe(; rf = rf),
+                                                      kelly = EKelly()))))
+    wt = [2.055480878765726e-8, 0.0298193787413796, 0.010923751816092748,
+          0.011868581992717992, 0.04541627972831881, 9.98392319910959e-9,
+          0.00526131981959445, 0.06930598880049342, 2.1332823691396522e-8,
+          0.027639808973600202, 0.2870813214020614, 2.7962632861247776e-10,
+          3.6419120035415975e-9, 0.038007009998689924, 3.3607657782551183e-9,
+          0.049529606042490584, 0.2034402582222892, 0.10272050416693007,
+          0.06299462695235125, 0.05599150418913066]
     @test isapprox(w4.weights, wt, rtol = 5.0e-5)
     @test !isapprox(w1.weights, w2.weights)
     @test !isapprox(w1.weights, w3.weights)
@@ -3034,7 +3026,7 @@ end
 
     clust_alg = DBHT()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
-    w5 = optimise!(portfolio; rm_o = SD(), rm = CDaR(), type = HERC())
+    w5 = optimise!(portfolio, HERC(; rm_o = SD(), rm = CDaR()))
     wt = [0.10871059727246735, 0.05431039601849186, 0.10533650868181384,
           0.027317993835046576, 0.07431929926304212, 0.00954218610227609,
           0.024606833580412473, 0.04020099981391352, 0.022469670005659467,
@@ -3044,7 +3036,7 @@ end
           0.04410905860746655, 0.09395840186561562]
     @test isapprox(w5.weights, wt)
 
-    w6 = optimise!(portfolio; rm = SD(), rm_o = CDaR(), type = HERC())
+    w6 = optimise!(portfolio, HERC(; rm = SD(), rm_o = CDaR()))
     wt = [0.08320752059200986, 0.08290256524137433, 0.07517557492907619,
           0.06023885608558014, 0.06626202578072789, 0.024707098983435642,
           0.029699159972552684, 0.0942847206692912, 0.019894956146041556,
@@ -3056,13 +3048,71 @@ end
     @test !isapprox(w5.weights, w6.weights)
 end
 
+@testset "NCO vector rm" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+
+    w1 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(;
+                                                      rm = Variance(;
+                                                                    sigma = portfolio.cov)))))
+    w2 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(;
+                                                      rm = [[Variance(;
+                                                                      sigma = portfolio.cov),
+                                                             Variance()]]))))
+    w3 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(;
+                                                      rm = [Variance(;
+                                                                     settings = RMSettings(;
+                                                                                           scale = 2))]))))
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-5)
+    @test isapprox(w1.weights, w3.weights, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w3.weights, rtol = 1.0e-5)
+
+    w4 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; rm = [Variance(), CDaR()]))))
+    w5 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(;
+                                                      rm = [[Variance(), Variance()],
+                                                            [CDaR(), CDaR()]]))))
+    w6 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(;
+                                                      rm = [Variance(;
+                                                                     settings = RMSettings(;
+                                                                                           scale = 2)),
+                                                            CDaR(;
+                                                                 settings = RMSettings(;
+                                                                                       scale = 2))]))))
+    @test isapprox(w4.weights, w5.weights, rtol = 5.0e-5)
+    @test isapprox(w4.weights, w6.weights, rtol = 5.0e-9)
+    @test isapprox(w5.weights, w6.weights, rtol = 5.0e-5)
+end
+
 @testset "Shorting with NCO" begin
     portfolio = OmniPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -3071,78 +3121,95 @@ end
 
     portfolio.w_min = -0.2
     portfolio.w_max = 0.8
-    w1 = optimise!(portfolio;
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true, budget = 1 - 0.2)))
-    wt = [-0.087301210473091, 0.011322088745794164, 0.013258683926176839,
-          0.004456088735487908, 0.22464713851216647, -0.04347232765939294,
-          0.04304321233588089, 0.02538694929635001, 3.6391344665779835e-10,
-          4.348234024497777e-8, 0.03768812903884124, -1.1037524427811691e-10,
-          -0.013820021862556863, -4.136140736693239e-11, -0.01540643428627949,
-          0.10308907870563483, 0.18282205944978064, 0.03429683638117709,
-          0.11998968304453421, 2.4149790185098565e-9]
-    @test isapprox(w1.weights, wt)
+
+    w1 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true, budget = 1 - 0.2))))
+    wt = [-0.08730120213693945, 0.011322099554646166, 0.013258701666108447,
+          0.004456083736416882, 0.22464712182353377, -0.04347233672893314,
+          0.0430431906337467, 0.025386958821748403, 7.149349161172941e-10,
+          5.56766815404211e-8, 0.03768814394629829, -7.264476589962164e-11,
+          -0.013820028859141065, -1.1279888590095968e-10, -0.01540642352606083,
+          0.10308907493700885, 0.18282202434296457, 0.03429684377765735,
+          0.11998968659630506, 5.20846720848841e-9]
     @test isapprox(w1.weights, wt)
     @test all(w1.weights[w1.weights .>= 0] .<= 0.8)
     @test all(w1.weights[w1.weights .<= 0] .>= -0.2)
     @test sum(w1.weights[w1.weights .>= 0]) <= 0.8
     @test sum(abs.(w1.weights[w1.weights .<= 0])) <= 0.2
 
-    w2 = optimise!(portfolio;
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true, short_budget = 0.3,
-                                             short_u = 0.3, long_u = 0.6,
-                                             budget = 0.6 - 0.3)))
-    wt = [-0.016918145881010444, 0.001712686850666274, 0.003151233891742689,
-          0.000877434644273003, 0.02890364374221545, -0.031938949651537776,
-          0.007380063055004761, 0.006474271417208838, -1.2243771111394412e-12,
-          0.0035435277501784123, 0.0162240125533059, -0.0014765958830886081,
-          -0.004205149992108177, -0.005246447380365774, -0.006973410234892313,
-          0.01793024969296401, 0.023139966869064287, 0.012461571215558315,
-          0.03566741209372675, -0.0007073747516812343]
-    @test isapprox(w2.weights, wt)
+    w2 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true,
+                                                         short_budget = -0.3,
+                                                         short_u = -0.3, long_u = 0.6,
+                                                         budget = 0.6 - 0.3))))
+    wt = [-0.016918125661751243, 0.0017126889827391004, 0.0031512295564527604,
+          0.00087743545602701, 0.02890363413289535, -0.0319389435912711,
+          0.0073800612070850065, 0.006474270699306938, 1.194385717489518e-10,
+          0.0035435264221449813, 0.01622401110353967, -0.0014765953212344742,
+          -0.0042051490570914635, -0.005246447619489081, -0.006973408726769097,
+          0.017930245342585454, 0.023139955294567992, 0.012461570130616495,
+          0.035667407091996665, -0.0007073655617895324]
     @test isapprox(w2.weights, wt)
     @test all(w2.weights[w2.weights .>= 0] .<= 0.8)
     @test all(w2.weights[w2.weights .<= 0] .>= -0.2)
     @test sum(w2.weights[w2.weights .>= 0]) <= 0.6
     @test sum(abs.(w2.weights[w2.weights .<= 0])) <= 0.3
 
-    w3 = optimise!(portfolio;
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs_o = (; short = true, short_budget = 0.6,
-                                               short_u = 0.6, long_u = 0.4,
-                                               budget = 0.4 - 0.6)))
-    wt = [1.0339757656912846e-25, 3.308722450212111e-24, 8.271806125530277e-25,
-          1.6543612251060553e-24, 5.551115123125783e-17, -7.754818242684634e-26,
-          4.163336342344337e-17, -2.7755575615628914e-17, -8.271806125530277e-25,
-          -1.2407709188295415e-24, -8.673617379884035e-19, 1.925929944387236e-34,
-          3.611118645726067e-35, -2.0679515313825692e-25, 1.2924697071141057e-26,
-          1.0339757656912846e-25, 2.7755575615628914e-17, -1.3877787807814457e-17, -0.2,
-          4.1359030627651384e-25]
+    w3 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; obj = Sharpe())),
+                       external = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true,
+                                                         short_budget = -0.6,
+                                                         short_u = -0.6, long_u = 0.4,
+                                                         budget = 0.4 - 0.6))))
+    wt = [1.0339757656912842e-25, 4.9630836753181646e-24, 8.271806125530274e-25,
+          8.271806125530274e-25, 5.551115123125781e-17, -1.0339757656912842e-25,
+          6.938893903907226e-18, -2.7755575615628904e-17, -8.271806125530274e-25,
+          -8.271806125530274e-25, -8.673617379884033e-19, 3.877409121342316e-26,
+          1.2924697071141053e-26, -2.0679515313825685e-25, 1.2924697071141053e-26,
+          1.3877787807814452e-17, 5.551115123125781e-17, -1.3877787807814452e-17,
+          -0.19999999999999996, 4.135903062765137e-25]
     @test isapprox(w3.weights, wt)
     @test all(w3.weights[w3.weights .>= 0] .<= 0.8)
     @test all(w3.weights[w3.weights .<= 0] .>= -0.2)
     @test sum(w3.weights[w3.weights .>= 0]) <= 0.6
     @test sum(abs.(w3.weights[w3.weights .<= 0])) <= 0.3
 
-    w4 = optimise!(portfolio;
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs = (; short = true, short_budget = 0.3,
-                                             short_u = 0.3, long_u = 0.6,
-                                             budget = 0.6 - 0.3),
-                              port_kwargs_o = (; short = true, budget = 1 - 0.2)))
-    wt = [-0.045115057672989595, 0.004567165136595039, 0.008403290748699927,
-          0.0023398258212850554, 0.07707638671287502, -0.08517053748341849,
-          0.019680161942876372, 0.017264724808840448, -3.2650058244204215e-12,
-          0.009449407897343706, 0.043264036055620944, -0.003937587780318715,
-          -0.01121372977736988, -0.013990527181995529, -0.018595754764415592,
-          0.0478139841087731, 0.06170658103975119, 0.03323085855661183, 0.09511310458886758,
-          -0.0018863327543673799]
+    w4 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true,
+                                                         short_budget = -0.3,
+                                                         short_u = -0.3, long_u = 0.6,
+                                                         budget = 0.6 - 0.3)),
+                       external = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true, budget = 1 - 0.2))))
+    wt = [-0.045115002821432035, 0.004567170727617816, 0.008403279014043575,
+          0.002339827937546212, 0.07707635949313746, -0.08517051763050223,
+          0.01968016081423041, 0.017264722145996954, 3.1850286318443816e-10,
+          0.009449403946282449, 0.04326403031405012, -0.003937587042169357,
+          -0.011213729448736826, -0.013990527213158148, -0.018595754332555198,
+          0.04781398173797328, 0.06170654889757941, 0.033230854222851665,
+          0.0951130871276981, -0.0018863082089564777]
     @test isapprox(w4.weights, wt)
     @test all(w4.weights[w4.weights .>= 0] .<= 0.8)
     @test all(w4.weights[w4.weights .<= 0] .>= -0.2)
     @test sum(w4.weights[w4.weights .>= 0]) <= 0.6
     @test sum(abs.(w4.weights[w4.weights .<= 0])) <= 0.3
+
+    w5 = optimise!(portfolio,
+                   NCO(;
+                       external = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true,
+                                                         short_budget = -0.6,
+                                                         short_u = -0.6, long_u = 0.4,
+                                                         budget = 0.4 - 0.6)),
+                       internal = NCOArgs(; type = Trad(; obj = Sharpe()),
+                                          port_kwargs = (; short = true, budget = 1 - 0.2))))
 
     w5 = optimise!(portfolio;
                    type = NCO(; opt_kwargs = (; obj = Sharpe()),
@@ -3150,18 +3217,16 @@ end
                                                short_u = 0.6, long_u = 0.4,
                                                budget = 0.4 - 0.6),
                               port_kwargs = (; short = true, budget = 1 - 0.2)))
-    wt = [-0.004706878592862724, 0.0006104348021668806, 0.0007148470817697388,
-          0.00024025175095859297, 0.012111937526189324, 0.028034645035369427,
-          0.02059326767499224, -0.016371658716560954, -2.3468226455651654e-10,
-          -2.8041102000015e-8, -0.024304503037642658, -5.280709377299777e-11,
-          -0.006611946321967141, 2.6673344541851835e-11, -0.007370937436053205,
-          0.04932115604168774, 0.009856922180849811, -0.022117509817183564, -0.2,
-          1.302045296146306e-10]
+    wt = [-0.004706879982371151, 0.0006104356234245735, 0.0007148483175128095,
+          0.000240251575296871, 0.012111941358492199, 0.0280346551249056,
+          0.020593269042285294, -0.016371667335844244, -4.6105075821153227e-10,
+          -3.590505325760551e-8, -0.024304516327714805, -3.4755630023204015e-11,
+          -0.006611953442069123, 7.274230240773602e-11, -0.0073709364937928085,
+          0.04932118238078999, 0.009856924139104854, -0.022117517932719263,
+          -0.19999999999999996, 2.8081663759928254e-10]
     @test isapprox(w5.weights, wt)
     @test all(w5.weights[w5.weights .>= 0] .<= 0.8)
     @test all(w5.weights[w5.weights .<= 0] .>= -0.2)
     @test sum(w5.weights[w5.weights .>= 0]) <= 0.4
     @test sum(abs.(w5.weights[w5.weights .<= 0])) <= 0.6
 end
-
-=#
