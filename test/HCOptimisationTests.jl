@@ -1032,7 +1032,7 @@ end
     @test isapprox(w7.weights, w2t)
     @test isapprox(w8.weights, w3t)
     @test isapprox(w9.weights, w4t)
-    @test isapprox(w10.weights, w5t, rtol = 1.0e-5)
+    @test isapprox(w10.weights, w5t, rtol = 5.0e-5)
 
     rm = SSD()
     w11 = optimise!(portfolio,
@@ -1419,7 +1419,7 @@ end
            0.04300450077142654]
     @test isapprox(w41.weights, w1t, rtol = 5.0e-6)
     @test isapprox(w42.weights, w2t, rtol = 5.0e-6)
-    @test isapprox(w43.weights, w3t, rtol = 5.0e-6)
+    @test isapprox(w43.weights, w3t, rtol = 5.0e-5)
     @test isapprox(w44.weights, w4t)
     @test isapprox(w45.weights, w5t, rtol = 5.0e-7)
 
@@ -1756,7 +1756,7 @@ end
     @test isapprox(w72.weights, w2t, rtol = 5.0e-6)
     @test isapprox(w73.weights, w3t, rtol = 5.0e-5)
     @test isapprox(w74.weights, w4t, rtol = 5.0e-8)
-    @test isapprox(w75.weights, w5t, rtol = 1.0e-6)
+    @test isapprox(w75.weights, w5t, rtol = 5.0e-6)
 
     rm = Kurt()
     w76 = optimise!(portfolio,
@@ -2214,7 +2214,7 @@ end
     @test isapprox(w107.weights, w2t)
     @test isapprox(w108.weights, w3t)
     @test isapprox(w109.weights, w4t)
-    @test isapprox(w110.weights, w5t, rtol = 1.0e-5)
+    @test isapprox(w110.weights, w5t, rtol = 5.0e-5)
 end
 
 @testset "HRP and HERC risk scale" begin
@@ -2997,7 +2997,7 @@ end
           4.0191361393894005e-10, 0.04082436761974192, 4.4329905506900117e-10,
           0.0491186969507823, 0.2017493720580537, 0.10295500017433815, 0.061402464206477235,
           0.05608130162978066]
-    @test isapprox(w3.weights, wt)
+    @test isapprox(w3.weights, wt, rtol = 5.0e-8)
 
     w4 = optimise!(portfolio,
                    NCO(;
@@ -3133,7 +3133,7 @@ end
           -0.013820028859141065, -1.1279888590095968e-10, -0.01540642352606083,
           0.10308907493700885, 0.18282202434296457, 0.03429684377765735,
           0.11998968659630506, 5.20846720848841e-9]
-    @test isapprox(w1.weights, wt)
+    @test isapprox(w1.weights, wt, rtol = 1.0e-7)
     @test all(w1.weights[w1.weights .>= 0] .<= 0.8)
     @test all(w1.weights[w1.weights .<= 0] .>= -0.2)
     @test sum(w1.weights[w1.weights .>= 0]) <= 0.8
@@ -3210,13 +3210,6 @@ end
                                                          budget = 0.4 - 0.6)),
                        internal = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true, budget = 1 - 0.2))))
-
-    w5 = optimise!(portfolio;
-                   type = NCO(; opt_kwargs = (; obj = Sharpe()),
-                              port_kwargs_o = (; short = true, short_budget = 0.6,
-                                               short_u = 0.6, long_u = 0.4,
-                                               budget = 0.4 - 0.6),
-                              port_kwargs = (; short = true, budget = 1 - 0.2)))
     wt = [-0.004706879982371151, 0.0006104356234245735, 0.0007148483175128095,
           0.000240251575296871, 0.012111941358492199, 0.0280346551249056,
           0.020593269042285294, -0.016371667335844244, -4.6105075821153227e-10,

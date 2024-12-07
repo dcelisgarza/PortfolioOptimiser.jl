@@ -314,7 +314,8 @@ end
 function reset_special_rms(::Nothing, args...)
     return nothing
 end
-function reset_special_rms(rm, special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
+function reset_special_rms(rm::Union{AbstractVector, AbstractRiskMeasure},
+                           special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     (; old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews, old_wc_rms) = old_stats
 

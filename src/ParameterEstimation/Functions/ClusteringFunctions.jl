@@ -122,7 +122,7 @@ function _validate_k_value(clustering::Hclust, nodes, k)
     end
     return true
 end
-function _valid_k_clusters(arr::AbstractArray, clustering::Hclust)
+function _valid_k_clusters(arr::AbstractVector, clustering::Hclust)
     nodes = to_tree(clustering)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
