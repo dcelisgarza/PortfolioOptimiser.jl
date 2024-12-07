@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
 end
@@ -98,4 +94,8 @@ end
 
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
 end
