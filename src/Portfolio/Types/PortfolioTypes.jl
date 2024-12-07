@@ -204,9 +204,9 @@ function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Inte
                                name = "", f = >=, val = 0.0)
     if isa(x, AbstractVector) && !isempty(x)
         @smart_assert(length(x) == n, "Length of $name must be equal to $n")
-        @smart_assert(all(f.(x, val)))
+        @smart_assert(all(f.(x, val)), "Value of $name, $x $(Symbol(f)) $val")
     elseif isa(x, Real)
-        @smart_assert(f(x, val))
+        @smart_assert(f(x, val), "Value of $name, $x $(Symbol(f)) $val")
     end
     return nothing
 end
@@ -1083,14 +1083,14 @@ function Base.deepcopy(port::OmniPortfolio)
                                                      # Solution
                                                      deepcopy(port.constr_scale),
                                                      deepcopy(port.obj_scale),
-                                                     deepcopy(port.model),
+                                                     copy(port.model),
                                                      deepcopy(port.solvers),
                                                      deepcopy(port.optimal),
                                                      deepcopy(port.fail),
                                                      deepcopy(port.limits),
                                                      deepcopy(port.frontier),
                                                      deepcopy(port.walking),
-                                                     deepcopy(port.alloc_model),
+                                                     copy(port.alloc_model),
                                                      deepcopy(port.alloc_solvers),
                                                      deepcopy(port.alloc_optimal),
                                                      deepcopy(port.alloc_leftover),
