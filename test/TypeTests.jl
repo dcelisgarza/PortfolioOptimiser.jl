@@ -47,7 +47,7 @@ l = 2.0
     N = size(prices, 2)
     M = size(factors, 2)
     A = rand(N, N)
-    a_mtx_ineq = rand(3, N)
+    a_ineq = rand(3, N)
     skew = rand(N, N^2)
     sskew = rand(N, N^2)
     f_cov = rand(M, M)
@@ -67,16 +67,15 @@ l = 2.0
                               cluster_adj = SDP(; A = A))
     portfolio = OmniPortfolio(; prices = prices, network_adj = IP(; A = A),
                               cluster_adj = IP(; A = A))
-    portfolio = OmniPortfolio(; prices = prices, f_prices = factors, fees = fill(1, N),
+    portfolio = OmniPortfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
                               short_fees = fill(3, N), bl_bench_weights = 2 * (1:N),
                               rebalance = TR(; val = 3, w = fill(inv(N), N)),
                               turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
-                              tracking_err = TrackWeight(; err = 11,
-                                                         w = fill(inv(3 * N), N)),
+                              tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
                               network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
-                              a_vec_cent = fill(inv(5 * N), N), a_mtx_ineq = a_mtx_ineq,
-                              risk_budget = 1:N, f_risk_budget = 1:div(N, 2), L_2 = L_2,
-                              S_2 = S_2, skew = skew, sskew = sskew, f_mu = fill(inv(M), M),
+                              a_eq = fill(inv(5 * N), N)', a_ineq = a_ineq,
+                              risk_budget = 1:N, f_risk_budget = 1:5, L_2 = L_2, S_2 = S_2,
+                              skew = skew, sskew = sskew, f_mu = fill(inv(M), M),
                               f_cov = f_cov, fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
                               bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
                               blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov,
@@ -84,20 +83,20 @@ l = 2.0
                               cov_sigma = cov_sigma, d_mu = fill(inv(9 * N), N), V = V,
                               SV = SV)
     portfolio.returns = 2 * portfolio.returns
-    @test portfolio.fees == fill(1, N)
+    @test portfolio.long_fees == fill(1, N)
     @test portfolio.short_fees == fill(3, N)
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
     @test portfolio.turnover.w == fill(inv(2 * N), N)
-    @test portfolio.tracking_err.err == 11
-    @test portfolio.tracking_err.w == fill(inv(3 * N), N)
+    @test portfolio.tracking.err == 11
+    @test portfolio.tracking.w == fill(inv(3 * N), N)
     @test portfolio.network_adj.A == A
-    @test portfolio.a_vec_cent == fill(inv(5 * N), N)
-    @test portfolio.a_mtx_ineq == a_mtx_ineq
-    @test portfolio.risk_budget == collect(1:N) / sum(1:N)
+    @test portfolio.a_eq == fill(inv(5 * N), N)'
+    @test portfolio.a_ineq == a_ineq
+    @test portfolio.risk_budget == collect(1:N)
     @test portfolio.bl_bench_weights == 2 * (1:N)
-    @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
+    @test portfolio.f_risk_budget == collect(1:5)
     @test portfolio.L_2 == L_2
     @test portfolio.S_2 == S_2
     @test portfolio.skew == skew
