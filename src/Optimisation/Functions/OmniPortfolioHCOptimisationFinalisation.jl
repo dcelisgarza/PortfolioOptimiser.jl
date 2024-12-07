@@ -91,18 +91,24 @@ function finalise_weights(type::HCOptimType, port, weights, w_min, w_max, finali
 end
 function finalise_weights(type::NCO, port, weights, w_min, w_max, finaliser)
     stype = Symbol(type)
-    opt_kwargs = type.opt_kwargs
-    opt_kwargs_o = type.opt_kwargs_o
-    port_kwargs = type.port_kwargs
-    port_kwargs_o = type.port_kwargs_o
+    (; internal, external) = type
+    port_kwargs = internal.port_kwargs
+    port_kwargs_o = external.port_kwargs
+    class = internal.type.class
+    class_o = external.type.class
+    port_short_i = haskey(port_kwargs, :short) && port_kwargs.short
+    port_short_o = haskey(port_kwargs_o, :short) && port_kwargs_o.short
+    port_short = port.short
+
     weights = opt_weight_bounds(port, w_min, w_max, weights, finaliser)
     port.optimal[stype] = if any(.!isfinite.(weights)) || all(iszero.(weights))
         port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
         DataFrame()
-    elseif haskey(port_kwargs, :short) && port_kwargs.short ||
-           haskey(port_kwargs_o, :short) && port_kwargs_o.short ||
-           haskey(opt_kwargs, :class) && isa(opt_kwargs.class, Union{FM, FC}) ||
-           haskey(opt_kwargs_o, :class) && isa(opt_kwargs_o.class, Union{FM, FC})
+    elseif port_short_i ||
+           port_short_o ||
+           port_short ||
+           isa(class, Union{FM, FC}) ||
+           isa(class_o, Union{FM, FC})
         DataFrame(; tickers = port.assets, weights = weights)
     else
         DataFrame(; tickers = port.assets, weights = weights)

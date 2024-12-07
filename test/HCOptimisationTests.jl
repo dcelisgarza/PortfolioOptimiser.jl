@@ -9,6 +9,40 @@ factors = TimeArray(CSV.File(f_path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Test failures" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75,
+                                                                               "max_iter" => 1))))
+
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+
+    @test_throws ErrorException optimise!(portfolio, HRP(; rm = RLVaR()))
+
+    w1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = RLVaR()))))
+    @test isempty(w1)
+    @test haskey(portfolio.fail, :inter)
+    @test haskey(portfolio.fail, :intra)
+    @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:port]), 1)
+    @test length(keys(portfolio.fail[:intra])) == 3
+    num_assets = 0
+    for val ∈ values(portfolio.fail[:intra])
+        num_assets += size(Matrix(val[:Clarabel_Trad][:port]), 1)
+    end
+    @test num_assets == 20
+
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
+                      set_sskew = false)
+    cluster_assets!(portfolio)
+    portfolio.cov[3, :] .= portfolio.cov[:, 3] .= NaN
+    @test isempty(optimise!(portfolio, HRP()))
+    @test !isempty(portfolio.fail)
+end
+
 @testset "NCO HCOptimType and OptimType" begin
     portfolio = OmniPortfolio(; prices = prices,
                               solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
@@ -879,28 +913,32 @@ end
     @test isapprox(w24.weights, w30.weights)
 end
 
-#=
 @testset "NCO" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
     clust_opt = ClustOpt()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
-    rm = SD()
-    w1 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w2 = optimise!(portfolio; rm = rm,
-                   type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w3 = optimise!(portfolio; rm = rm,
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w4 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w5 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    rm = Variance()
+    w1 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w2 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w3 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w4 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w5 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.013937085585839061, 0.04359528939613315, 0.010055244196525516,
            0.018529417015299345, 0.0060008557954075595, 0.06377945741010448,
            8.830053665226257e-7, 0.13066772968460527, 7.275669461246384e-6,
@@ -943,34 +981,39 @@ end
     @test isapprox(w5.weights, w5t, rtol = 5.0e-5)
 
     rm = MAD()
-    w6 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w7 = optimise!(portfolio; rm = rm,
-                   type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w8 = optimise!(portfolio; rm = rm,
-                   type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w9 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w10 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
-    w1t = [0.04059732374917473, 0.045600643372826564, 0.0008508736496987,
-           0.006437852670865818, 0.002841800035783749, 0.05930362559033975,
-           3.682328495715141e-9, 0.15293340032515007, 0.005759786022651817,
-           5.950241253633107e-8, 0.1987549961908217, 2.0545559421162275e-9,
-           5.32244045270275e-10, 0.10473908918633106, 2.2579839445845772e-10,
-           2.187558110026064e-8, 0.056505427326554836, 0.19033548239854162,
-           0.04096913911515197, 0.09437047249318714]
-    w2t = [0.019135840114057178, 0.04319664563133952, 6.989818506731821e-8,
-           0.010479643822795195, 0.044710601991195954, 0.023524270507582417,
-           0.0027081241614039355, 0.15841866168441052, 0.004902231961856615,
-           0.010598283527252079, 0.17605850844462068, 2.835425217252423e-10,
-           6.674569801134214e-12, 0.07184677071156634, 1.9086830233118526e-11,
-           0.00482767668105368, 0.07950214846405654, 0.1805692837235624,
-           0.06741985554913642, 0.10210138281662147]
-    w3t = [1.7711462588275667e-9, 6.253014446612376e-9, 4.5219875754910405e-9,
-           3.3567391619124057e-9, 0.626542835057035, 4.244688293643053e-12,
-           0.0410106345340863, 3.5790876174967654e-9, 6.627977950621314e-10,
-           4.951758424642855e-9, 1.6115364648536767e-10, 4.154724183802552e-12,
-           2.0959897320947726e-12, 9.858343606151467e-12, 1.5411541422962657e-12,
-           0.13259044906595502, 0.1453951017104159, 3.983210451398619e-9,
-           0.05446094499291796, 5.376799673344027e-9]
+    w6 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w7 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(; type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w8 = optimise!(portfolio,
+                   NCO(;
+                       internal = NCOArgs(;
+                                          type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w9 = optimise!(portfolio,
+                   NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w10 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w1t = [0.04059732452480461, 0.045600642166333714, 0.0008508832264865543,
+           0.006437853767255612, 0.0028417982769144107, 0.05930364215554,
+           3.9051667245469696e-9, 0.15293341427728768, 0.005759784188884512,
+           1.652344063919435e-8, 0.19875502188644184, 1.0514248695659101e-9,
+           1.4780072332606018e-10, 0.1047391054319265, 9.539443511561501e-11,
+           6.074709477576578e-9, 0.05650542360887961, 0.19033546520370817,
+           0.04096914490424977, 0.09437046858335037]
+    w2t = [0.021007904715709336, 0.04431479750515221, 0.003306656556282061,
+           0.008618330291953587, 0.034539688784537184, 0.04052261321637723,
+           2.0651483846297533e-9, 0.15142712053644636, 0.014256524135172746,
+           0.008941938346859975, 0.19513582085940215, 2.108754372098641e-10,
+           3.500860845543409e-5, 0.08578220696546696, 1.4377785984834448e-11,
+           0.0035592330900482503, 0.062174337116155554, 0.18004235846230465,
+           0.04875777829777634, 0.09757768022149844]
+    w3t = [1.6488442933157733e-9, 6.094597446158297e-9, 4.352701116356979e-9,
+           3.216675055419697e-9, 0.6265423411545956, 3.55564504920547e-12,
+           0.041010603937969514, 3.4532909517510285e-9, 4.992008759782647e-10,
+           2.4410459827490494e-9, 1.6731654390844092e-10, 3.2851721535374462e-12,
+           3.53007818516829e-12, 9.26245662419354e-12, 9.394680382529403e-13,
+           0.13258943072391433, 0.1453950018580843, 3.851867293138941e-9,
+           0.05446259135029774, 5.229026147704124e-9]
     w4t = [1.0697281800757452e-7, 1.1311775297941919e-7, 1.3780259688825507e-7,
            1.268055655932939e-7, 8.50822923994295e-6, 3.204283203701939e-13,
            0.9999862377026062, 8.136173647277906e-8, 4.024041566311586e-11,
@@ -978,13 +1021,13 @@ end
            1.137123602399115e-12, 5.126371707340376e-13, 2.1878366160025683e-13,
            2.7532186682419475e-6, 1.431604095722679e-7, 8.5069527979556e-8,
            1.6044460686057254e-6, 1.0206247702601848e-7]
-    w5t = [0.038482572880612374, 0.04124259860035183, 0.036310167752490984,
-           0.03068785441299921, 0.03272027360303007, 0.0569582645840768,
-           0.01903357698244691, 0.06024480428552155, 0.041510930079800556,
-           0.10991717839342878, 0.08278034364647732, 0.0346366457548056,
-           0.039589293259183145, 0.058854479193534, 0.026495842632932323,
-           0.08543930360245622, 0.043229183172491234, 0.06156421651978086,
-           0.0479372991636419, 0.0523651714799385]
+    w5t = [0.0384820255947251, 0.04124424217098382, 0.036313192676561065,
+           0.030686739825600513, 0.032719507454256655, 0.056962822893488835,
+           0.01903250914065054, 0.060249581877158384, 0.04150918291963332,
+           0.10990582270170848, 0.08278646424688123, 0.034636409979171445,
+           0.03958507278580084, 0.0588551505009234, 0.026494341575903916,
+           0.08543088238865078, 0.043231785208553426, 0.06156935974506197,
+           0.047936585368150555, 0.05236832094613573]
     @test isapprox(w6.weights, w1t)
     @test isapprox(w7.weights, w2t)
     @test isapprox(w8.weights, w3t)
@@ -992,13 +1035,19 @@ end
     @test isapprox(w10.weights, w5t, rtol = 1.0e-5)
 
     rm = SSD()
-    w11 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w12 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w13 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w14 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w15 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w11 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w12 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w13 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w14 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w15 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [7.121013120801824e-6, 0.061607987382417705, 1.4912756768376158e-9,
            0.009681807066376894, 0.009020659057053952, 0.059478722069370014,
            1.3179217642229542e-9, 0.11544692256445871, 1.5887557238653072e-9,
@@ -1041,13 +1090,19 @@ end
     @test isapprox(w15.weights, w5t, rtol = 5.0e-5)
 
     rm = FLPM(; target = rf)
-    w16 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w17 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w18 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w19 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w20 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w16 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w17 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w18 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w19 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w20 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.016087285360179032, 0.03929456125680425, 2.654669650722757e-8,
            0.009017145085378016, 0.04852710668341847, 0.022953259582093585,
            0.00113984978745799, 0.1456189117438582, 0.003637704859085449,
@@ -1076,13 +1131,13 @@ end
            1.1378946431508748e-12, 5.129468913623559e-13, 2.1891375482044552e-13,
            2.7542962972698258e-6, 1.432048377198796e-7, 8.510789499184016e-8,
            1.6050937773801256e-6, 1.0210252984489028e-7]
-    w5t = [0.040183831915019924, 0.0434257369874625, 0.037998059938328436,
-           0.0317472517897774, 0.03729164492388537, 0.049675475199063394,
-           0.02023805337478654, 0.060464070967644855, 0.04287003746789862,
-           0.10829254014258542, 0.08072109742895471, 0.031429506535522345,
-           0.03707944602714823, 0.05568975882884374, 0.023775343473611613,
-           0.08922090474464904, 0.045103020475796764, 0.061381817706047864,
-           0.05045637642477227, 0.05295602564820106]
+    w5t = [0.04018453570301376, 0.04342141273452162, 0.03800007001346819,
+           0.03174624368911299, 0.037297611610450795, 0.04966618492167956,
+           0.02023619079312285, 0.06045982005363625, 0.0428777395286891,
+           0.10829686831504556, 0.08072312203473789, 0.03142696468192543,
+           0.03708021422319735, 0.0556911215795128, 0.023773858320579242,
+           0.0892294571140047, 0.045098034877630935, 0.06138013297454211,
+           0.050457652969473174, 0.05295276386165584]
     @test isapprox(w16.weights, w1t)
     @test isapprox(w17.weights, w2t)
     @test isapprox(w18.weights, w3t, rtol = 5.0e-5)
@@ -1090,13 +1145,19 @@ end
     @test isapprox(w20.weights, w5t, rtol = 5.0e-5)
 
     rm = SLPM(; target = rf)
-    w21 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w22 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w23 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w24 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w25 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w21 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w22 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w23 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w24 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w25 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [5.889098113924682e-9, 0.06587618283494774, 1.5750531512406229e-9,
            0.008307801198717074, 0.025055535680020887, 0.031007017694062042,
            6.622189397331921e-9, 0.11895069126754958, 5.227655044085646e-10,
@@ -1138,13 +1199,19 @@ end
     @test isapprox(w25.weights, w5t, rtol = 5.0e-5)
 
     rm = WR()
-    w26 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w27 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w28 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w29 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w30 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w26 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w27 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w28 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w29 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w30 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [1.9747133396600235e-11, 0.28983188049620723, 2.2178320507471025e-11,
            2.3903571001566017e-9, 8.896231855698167e-11, 1.5285685327330832e-10,
            0.15054354915956833, 0.24258042615731373, 3.844939099024774e-20,
@@ -1187,13 +1254,19 @@ end
     @test isapprox(w30.weights, w5t, rtol = 5.0e-5)
 
     rm = CVaR()
-    w31 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w32 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w33 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w34 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w35 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w31 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w32 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w33 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w34 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w35 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [3.664859661161272e-10, 0.0762203721651536, 6.441778816535088e-11,
            0.03138093007735649, 0.027626085711376314, 0.02300652225536527,
            5.844065587830882e-11, 0.13924934619748974, 5.805427791614419e-11,
@@ -1236,13 +1309,19 @@ end
     @test isapprox(w35.weights, w5t, rtol = 5.0e-5)
 
     rm = EVaR()
-    w36 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w37 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w38 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w39 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w40 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w36 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w37 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w38 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w39 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w40 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [1.3785795089567192e-8, 0.1360835835861814, 9.796765065975505e-9,
            0.03979459018377941, 1.6617234434301553e-8, 0.05740929288219373,
            0.04390484034087705, 0.14120918087952655, 7.207773383460931e-9,
@@ -1290,13 +1369,19 @@ end
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.65)))
     rm = RLVaR()
-    w41 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w42 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w43 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w44 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w45 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w41 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w42 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w43 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w44 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w45 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [2.529276503881537e-9, 0.21191459984592514, 2.4711225945029506e-9,
            0.09271239767205439, 7.05231706834582e-9, 0.029526571282439483,
            0.09814897392077784, 0.1951501120999505, 7.101329052225676e-10,
@@ -1311,13 +1396,13 @@ end
            1.896307599653251e-9, 3.787598431493779e-9, 0.018877883803262885,
            3.30735777657766e-9, 0.09601955141542645, 6.174466512333312e-8,
            1.0543645953386197e-8, 0.17753469818310574]
-    w3t = [7.408349638706929e-9, 0.0038186592000146514, 5.835089914154846e-9,
-           2.0063286898793054e-8, 0.5334258282960406, 1.8376899941977034e-11,
-           0.1792828310954398, 0.0009339923167643227, 2.6910367020951073e-10,
-           0.03645665813298778, 0.001470808950642995, 2.4826140427686114e-11,
-           1.218766536400032e-10, 4.4366478375481055e-11, 1.1469569402445713e-11,
-           0.018265611493780018, 0.13315781240098476, 0.08717716213664908,
-           0.006010598751580895, 3.428369265483797e-9]
+    w3t = [7.407935084500628e-9, 0.0038186792670059123, 5.834775791503411e-9,
+           2.0062367407514654e-8, 0.5334271300529785, 1.8393891760014976e-11,
+           0.17928326973218717, 0.0009340083525981799, 2.6935237631265187e-10,
+           0.0364510267932581, 0.00147220170010373, 2.4849095476847513e-11,
+           1.3665815061576729e-10, 4.440750509444722e-11, 1.1480174305845337e-11,
+           0.018261857522027844, 0.1331581349879938, 0.08717736372707571,
+           0.006016290626369066, 3.428182292139245e-9]
     w4t = [7.899825126828249e-8, 8.398383302840335e-8, 1.045159719223709e-7,
            9.545583379702279e-8, 3.920187162969964e-6, 1.1063451637644887e-14,
            0.9999948829831524, 5.7757250340023774e-8, 9.7629952535239e-13,
@@ -1344,13 +1429,19 @@ end
                                                :params => Dict("verbose" => false,
                                                                "max_step_fraction" => 0.75)))
     rm = MDD()
-    w46 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w47 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w48 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w49 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w50 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w46 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w47 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w48 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w49 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w50 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.09306804224438855, 2.965538175980197e-9, 5.120616924704069e-10,
            0.012498074010119991, 3.7922350595309275e-11, 4.389967746479165e-12,
            1.571554053547651e-10, 0.01890604423249791, 1.3485844134776075e-10,
@@ -1393,13 +1484,19 @@ end
     @test isapprox(w50.weights, w5t, rtol = 5.0e-5)
 
     rm = ADD()
-    w51 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w52 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w53 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w54 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w55 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w51 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w52 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w53 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w54 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w55 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [4.858382022674378e-10, 0.053481853549220186, 0.12301036094781877,
            1.1572606679018196e-10, 0.04087812887359, 0.002519516122229487,
            0.00042880092524383425, 0.13309997405160942, 6.61472699038919e-10,
@@ -1442,13 +1539,19 @@ end
     @test isapprox(w55.weights, w5t, rtol = 0.0001)
 
     rm = CDaR()
-    w56 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w57 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w58 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w59 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w60 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w56 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w57 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w58 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w59 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w60 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.011004045505975613, 0.028251183077981752, 0.014422806875229753,
            4.958526061344831e-12, 0.009984293676628531, 2.3450739422880165e-11,
            6.031901028176002e-12, 0.09832765390526335, 1.2991801782199283e-10,
@@ -1491,13 +1594,19 @@ end
     @test isapprox(w60.weights, w5t, rtol = 5.0e-5)
 
     rm = UCI()
-    w61 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w62 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w63 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w64 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w65 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w61 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w62 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w63 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w64 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w65 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [6.339221068451245e-10, 0.04651817931744516, 0.11017171572957145,
            2.3217212095726008e-12, 0.033480752472860545, 0.0017843135154844325,
            5.8154031303529526e-11, 0.13022303335424218, 7.373381378336765e-10,
@@ -1540,13 +1649,19 @@ end
     @test isapprox(w65.weights, w5t, rtol = 0.0001)
 
     rm = EDaR()
-    w66 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w67 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w68 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w69 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w70 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w66 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w67 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w68 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w69 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w70 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.0726312361265007, 0.033384488741601014, 5.103751149075006e-9,
            3.014518528946845e-10, 4.724506670658462e-9, 1.253054866996639e-9,
            2.205095228542095e-10, 0.08141932914872951, 3.6881820699728994e-9,
@@ -1589,13 +1704,19 @@ end
     @test isapprox(w70.weights, w5t, rtol = 5.0e-5)
 
     rm = RLDaR()
-    w71 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w72 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w73 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w74 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w75 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w71 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w72 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w73 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w74 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w75 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [0.08378986882917888, 0.014222281895084562, 1.4640996523981236e-9,
            7.944954882144362e-11, 9.314212297173224e-10, 9.137860256305013e-11,
            1.8245207791188445e-10, 0.05641447999298819, 4.5648697820494774e-10,
@@ -1638,15 +1759,31 @@ end
     @test isapprox(w75.weights, w5t, rtol = 1.0e-6)
 
     rm = Kurt()
-    w76 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w77 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rm_o = Kurt(),
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w78 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)],
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w79 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)],
-                    rm_o = Kurt(; kt = portfolio.kurt),
-                    type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w80 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w76 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w77 = optimise!(portfolio,
+                    NCO(;
+                        external = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l))),
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [Kurt(; kt = portfolio.kurt)],
+                                                       obj = Utility(; l = l)))))
+    w78 = optimise!(portfolio,
+                    NCO(;
+                        external = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf))),
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [Kurt(; kt = portfolio.kurt)],
+                                                       obj = Sharpe(; rf = rf)))))
+    w79 = optimise!(portfolio,
+                    NCO(;
+                        external = NCOArgs(;
+                                           type = Trad(; rm = Kurt(; kt = portfolio.kurt),
+                                                       obj = MaxRet())),
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [Kurt(; kt = portfolio.kurt)],
+                                                       obj = MaxRet()))))
+    w80 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [2.5964437003610723e-8, 0.05105919106221655, 3.467171217276289e-8,
            0.052000269807801806, 2.0285416272445106e-8, 0.07566811426967662,
            0.0033034082607419535, 0.10667421688825035, 8.976013131180923e-8,
@@ -1688,21 +1825,39 @@ end
     @test isapprox(w79.weights, w4t)
     @test isapprox(w80.weights, w5t, rtol = 0.0005)
 
-    w81 = optimise!(portfolio; rm = Kurt(; kt = portfolio.kurt), rm_o = Kurt(),
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = MinRisk())))
-    w82 = optimise!(portfolio; rm = [rm],
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = Utility(; l = l))))
-    w83 = optimise!(portfolio; rm = [Kurt(; kt = portfolio.kurt)], rm_o = Kurt(),
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w84 = optimise!(portfolio; rm = rm,
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = MaxRet())))
-    w85 = optimise!(portfolio; rm = rm,
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; type = RP())))
+    w81 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = Kurt(; kt = portfolio.kurt),
+                                                       obj = MinRisk()),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w82 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [rm], obj = Utility(; l = l)),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(;
+                                           type = Trad(; rm = [rm], obj = Utility(; l = l)),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w83 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [Kurt(; kt = portfolio.kurt)],
+                                                       obj = Sharpe(; rf = rf)),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w84 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w85 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(; type = RP(; rm = rm),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
     w1t = [4.727734278507026e-7, 0.006370060826488009, 5.590615606579003e-7,
            0.022998554451883063, 4.441627320343446e-7, 0.013284150263804119,
            5.970490492158233e-7, 0.0838931742703437, 2.412597531934661e-6,
@@ -1731,13 +1886,13 @@ end
            1.9558227015596087e-13, 1.0424092698175282e-13, 4.836269527424305e-14,
            9.1384537765449e-7, 1.8900370311272044e-7, 1.1468234362776633e-7,
            5.517095420553719e-7, 1.3615946791535004e-7]
-    w5t = [0.03157505508763204, 0.037473833994199506, 0.031164352830716866,
-           0.03450873395242757, 0.027881506416966306, 0.05590865992464623,
-           0.02352762384702192, 0.05776656715170088, 0.042027202277771854,
-           0.14954092268057667, 0.086427388245954, 0.03414306069677871,
-           0.047136137544626214, 0.05678369997557464, 0.03244108703071972,
-           0.07602516032528432, 0.037016336561212136, 0.051840096275088836,
-           0.045501808443562414, 0.04131076673753918]
+    w5t = [0.03157804982018643, 0.03747680727891143, 0.031165822488220623,
+           0.03450967076494636, 0.027883709488852788, 0.05591130187352058,
+           0.023528893250812543, 0.05776503882705131, 0.04202791902100599,
+           0.14953183942071227, 0.08641474530359258, 0.03414215898987479,
+           0.04713467723576176, 0.05678828061160823, 0.03244144965344055,
+           0.07602249414320358, 0.0370236010877867, 0.051834001667857996,
+           0.04550276305236839, 0.041316776020285176]
     @test isapprox(w81.weights, w1t)
     @test isapprox(w82.weights, w2t)
     @test isapprox(w83.weights, w3t, rtol = 5.0e-7)
@@ -1745,15 +1900,30 @@ end
     @test isapprox(w85.weights, w5t, rtol = 5.0e-5)
 
     rm = SKurt()
-    w86 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w87 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt),
-                    rm_o = SKurt(; kt = portfolio.skurt),
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w88 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)],
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w89 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)], rm_o = SKurt(),
-                    type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w90 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w86 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w87 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = SKurt(; kt = portfolio.skurt),
+                                                       obj = Utility(; l = l))),
+                        external = NCOArgs(;
+                                           type = Trad(; rm = SKurt(; kt = portfolio.skurt),
+                                                       obj = Utility(; l = l)))))
+    w88 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(;
+                                                       rm = [SKurt(; kt = portfolio.skurt)],
+                                                       obj = Sharpe(; rf = rf)))))
+    w89 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(;
+                                                       rm = [SKurt(; kt = portfolio.skurt)],
+                                                       obj = MaxRet())),
+                        external = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w90 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [7.551916314181692e-9, 0.08663346505996936, 4.136135363410196e-9,
            0.005142916560864078, 4.818370239459004e-9, 0.08295324360196754,
            3.871908480663506e-9, 0.10161306822488796, 2.29356993539279e-8,
@@ -1795,22 +1965,41 @@ end
     @test isapprox(w89.weights, w4t)
     @test isapprox(w90.weights, w5t, rtol = 0.0005)
 
-    w91 = optimise!(portfolio; rm = SKurt(; kt = portfolio.skurt), rm_o = SKurt(),
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = MinRisk())))
-    w92 = optimise!(portfolio; rm = [rm],
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = Utility(; l = l))))
-    w93 = optimise!(portfolio; rm = [SKurt(; kt = portfolio.skurt)],
-                    rm_o = SKurt(; kt = portfolio.skurt),
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w94 = optimise!(portfolio; rm = rm,
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; obj = MaxRet())))
-    w95 = optimise!(portfolio; rm = rm,
-                    type = NCO(; port_kwargs = (; max_num_assets_kurt = 1),
-                               opt_kwargs = (; type = RP())))
+    w91 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = SKurt(; kt = portfolio.skurt),
+                                                       obj = MinRisk()),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w92 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = [rm], obj = Utility(; l = l)),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(;
+                                           type = Trad(; rm = [rm], obj = Utility(; l = l)),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w93 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(;
+                                                       rm = [SKurt(; kt = portfolio.skurt)],
+                                                       obj = Sharpe(; rf = rf)),
+                                           port_kwargs = (; max_num_assets_kurt = 1)),
+                        external = NCOArgs(;
+                                           type = Trad(; rm = SKurt(; kt = portfolio.skurt),
+                                                       obj = Sharpe(; rf = rf)),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w94 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
+    w95 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(; type = RP(; rm = rm),
+                                           port_kwargs = (; max_num_assets_kurt = 1))))
     w1t = [1.152779741425078e-6, 0.08722539114523502, 6.854407426076873e-7,
            3.068918009983621e-5, 7.947208980494585e-7, 0.07717690266402272,
            6.435899245721492e-7, 0.0992603766984917, 3.1849804524079635e-6,
@@ -1839,13 +2028,13 @@ end
            1.9556440822813114e-13, 1.0423168172753032e-13, 4.835841039747908e-14,
            9.137650148276677e-7, 1.8898737032469956e-7, 1.1467234132136319e-7,
            5.516604676940009e-7, 1.361476615343836e-7]
-    w5t = [0.03371286032622024, 0.03885323133887401, 0.029510251830648974,
-           0.03149106262531467, 0.02902215708107005, 0.05575554476634823,
-           0.022009754271010297, 0.05490862119132229, 0.040420250028205616,
-           0.13170745728250258, 0.08289599265231477, 0.03321679831097424,
-           0.0591519685748792, 0.0574450639058379, 0.03604162471190545, 0.08781851736381807,
-           0.037163179992558235, 0.05202355312248844, 0.045529962818564744,
-           0.04132214780514196]
+    w5t = [0.03371492622823459, 0.03885680909202028, 0.0295127116904648,
+           0.03149315617014066, 0.029024572323534302, 0.055761432358667914,
+           0.02201107558542142, 0.05490639185688602, 0.04042054368876062,
+           0.13169734668204794, 0.08288881287730689, 0.033215260143894476,
+           0.05914956966941689, 0.057450290453859534, 0.036041024444193694,
+           0.0878154083390974, 0.037166407656602715, 0.0520191294135219,
+           0.04552878788429187, 0.04132634344163601]
     @test isapprox(w91.weights, w1t)
     @test isapprox(w92.weights, w2t)
     @test isapprox(w93.weights, w3t, rtol = 5.0e-6)
@@ -1853,13 +2042,19 @@ end
     @test isapprox(w95.weights, w5t, rtol = 5.0e-5)
 
     rm = Skew()
-    w96 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w97 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w98 = optimise!(portfolio; rm = rm,
-                    type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w99 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w100 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w96 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w97 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w98 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(;
+                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w99 = optimise!(portfolio,
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w100 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [9.512843515038461e-7, 0.02679372963723403, 7.481688741710024e-8,
            8.677981868535554e-8, 0.00024374710251416658, 1.6424163064416956e-10,
            9.925303140364328e-8, 0.018337706834624035, 4.199681081018799e-10,
@@ -1888,13 +2083,13 @@ end
            1.3862608503512784e-17, 1.1718109870037684e-17, 5.412442015541036e-18,
            1.015661101908201e-8, 8.50118026514471e-9, 4.925362320042241e-9,
            5.8237163204458354e-9, 5.804903047063175e-9]
-    w5t = [0.02587283980010857, 0.03264463657770643, 0.014158174674160097,
-           0.015798390683037792, 0.021562504541245746, 0.019702542832291847,
-           0.011175680915325443, 0.04053333087337281, 0.02613557862432773,
-           0.13685040056428732, 0.05399833667801738, 0.01325291505118253,
-           0.3224398305305101, 0.03177231426544304, 0.03083051325239583,
-           0.07583058468110429, 0.02019743390256818, 0.039927409011560895,
-           0.03821626595613802, 0.029100316585215984]
+    w5t = [0.025897739886635695, 0.0326561283379726, 0.014168996668904858,
+           0.015810701080819185, 0.021577620843748826, 0.01972115889178686,
+           0.011183145022198507, 0.04055388604205418, 0.026161010017240596,
+           0.13683318786889617, 0.05401366367572873, 0.013262684492999192,
+           0.3221636111063777, 0.031804433196940284, 0.030844131872616542,
+           0.07582332972244796, 0.020213630860370833, 0.039948060105306306,
+           0.038237112051432244, 0.029125768255522586]
     @test isapprox(w96.weights, w1t)
     @test isapprox(w97.weights, w2t)
     @test isapprox(w98.weights, w3t)
@@ -1902,13 +2097,19 @@ end
     @test isapprox(w100.weights, w5t, rtol = 5.0e-7)
 
     rm = SSkew()
-    w101 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w102 = optimise!(portfolio; rm = rm,
-                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w103 = optimise!(portfolio; rm = rm,
-                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w104 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w105 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w101 = optimise!(portfolio,
+                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w102 = optimise!(portfolio,
+                     NCO(;
+                         internal = NCOArgs(;
+                                            type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w103 = optimise!(portfolio,
+                     NCO(;
+                         internal = NCOArgs(;
+                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w104 = optimise!(portfolio,
+                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w105 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [1.0892430594871065e-6, 0.031681259608003894, 6.385841396167424e-7,
            1.0208999440372263e-6, 3.6209703749382284e-6, 9.63334977859699e-6,
            5.195032617345709e-6, 0.16790560775238103, 1.6957722439003348e-6,
@@ -1937,37 +2138,43 @@ end
            4.421019750282232e-16, 3.178085787059933e-16, 1.3941144415954463e-16,
            5.739878651350115e-8, 6.535615364916281e-9, 3.8593171144659175e-9,
            3.7086577022239837e-8, 4.580298321968766e-9]
-    w5t = [0.0339264619542522, 0.038638756632197464, 0.03015595919880873,
-           0.029485590325139945, 0.03172755919967277, 0.05301160166381721,
-           0.02380386625242652, 0.06207621701820662, 0.040253889426890024,
-           0.12465166616658238, 0.09072083579161366, 0.031034596824263225,
-           0.04653553578551491, 0.05952392664850132, 0.03166034045137151,
-           0.08586716691912194, 0.0376304878982509, 0.058963225878939075,
-           0.04715290372556418, 0.043179412238865456]
+    w5t = [0.033929154306477985, 0.038640214714792745, 0.030156418325532557,
+           0.029484313087808987, 0.03172662386112446, 0.05301869378579685,
+           0.023800595405927695, 0.06206195710022938, 0.04025962153252248,
+           0.12466431877947569, 0.09069730279461317, 0.031035927494324978,
+           0.04653954212676665, 0.059522058769001955, 0.031662911168944985,
+           0.08587925177605744, 0.03763306930178136, 0.05894723169753126,
+           0.04715977534634794, 0.04318101862494148]
     @test isapprox(w101.weights, w1t, rtol = 5.0e-8)
     @test isapprox(w102.weights, w2t)
     @test isapprox(w103.weights, w3t)
     @test isapprox(w104.weights, w4t)
     @test isapprox(w105.weights, w5t, rtol = 5.0e-6)
 
-    portfolio = HCPortfolio(; prices = prices[(end - 25):end],
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices[(end - 25):end],
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
     rm = BDVariance()
-    w106 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MinRisk())))
-    w107 = optimise!(portfolio; rm = rm,
-                     type = NCO(; opt_kwargs = (; obj = Utility(; l = l))))
-    w108 = optimise!(portfolio; rm = rm,
-                     type = NCO(; opt_kwargs = (; obj = Sharpe(; rf = rf))))
-    w109 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; obj = MaxRet())))
-    w110 = optimise!(portfolio; rm = rm, type = NCO(; opt_kwargs = (; type = RP())))
+    w106 = optimise!(portfolio,
+                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
+    w107 = optimise!(portfolio,
+                     NCO(;
+                         internal = NCOArgs(;
+                                            type = Trad(; rm = rm, obj = Utility(; l = l)))))
+    w108 = optimise!(portfolio,
+                     NCO(;
+                         internal = NCOArgs(;
+                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
+    w109 = optimise!(portfolio,
+                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
+    w110 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
     w1t = [6.834840718346733e-15, 2.12661660856925e-13, 1.593754486266787e-8,
            3.127395868133335e-15, 2.712330218049574e-15, 1.4202097663079517e-7,
            0.011911258450762945, 0.08622274106594424, 6.220288317998889e-15,
@@ -1996,13 +2203,13 @@ end
            0.9999990477978071, 2.930842604452552e-7, 6.945292174907096e-13,
            4.136941245290735e-8, 3.309976190391047e-14, 4.9824511263715374e-8,
            2.9235556315226516e-14, 3.3518104994705405e-7]
-    w5t = [0.035115457178974414, 0.04430473724919071, 0.06147944704688781,
-           0.029650594706968226, 0.03213846887456715, 0.052933228620072874,
-           0.0662082270653987, 0.058398810568459386, 0.03536903358021121,
-           0.042837814742357594, 0.07939049207576095, 0.040167522274443784,
-           0.019064516076979485, 0.11336435302557887, 0.044398381724289546,
-           0.04225460418266382, 0.04025282445992181, 0.06571777187539703,
-           0.04012680907502655, 0.056826905596850164]
+    w5t = [0.03511450632064662, 0.04430345595107029, 0.06148437221308192,
+           0.029650071751310066, 0.03213766138980017, 0.052932648277201955,
+           0.06621288541172803, 0.058396547728577546, 0.035368505906975364,
+           0.042838902258038596, 0.07938844096835036, 0.040166785803924646,
+           0.01906452173742589, 0.11336283742206299, 0.04440054812302461,
+           0.042255677018139745, 0.04025377718314333, 0.06571441493632324,
+           0.040126856265433684, 0.056826583333741]
     @test isapprox(w106.weights, w1t)
     @test isapprox(w107.weights, w2t)
     @test isapprox(w108.weights, w3t)
@@ -2010,65 +2217,31 @@ end
     @test isapprox(w110.weights, w5t, rtol = 1.0e-5)
 end
 
-@testset "Test failures" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75,
-                                                                             "max_iter" => 1))))
-
-    asset_statistics!(portfolio)
-    cluster_assets!(portfolio)
-
-    @test_throws ErrorException optimise!(portfolio; rm = RLVaR(), type = HRP())
-
-    w1 = optimise!(portfolio; rm = RLVaR(), type = NCO())
-    @test isempty(w1)
-    @test haskey(portfolio.fail, :inter)
-    @test haskey(portfolio.fail, :intra)
-    @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:port]), 1)
-    @test length(keys(portfolio.fail[:intra])) == 3
-    num_assets = 0
-    for val ∈ values(portfolio.fail[:intra])
-        num_assets += size(Matrix(val[:Clarabel_Trad][:port]), 1)
-    end
-    @test num_assets == 20
-
-    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
-                      set_sskew = false)
-    cluster_assets!(portfolio)
-    portfolio.cov[3, :] .= portfolio.cov[:, 3] .= NaN
-    @test isempty(optimise!(portfolio))
-    @test !isempty(portfolio.fail)
-end
-
 @testset "HRP and HERC risk scale" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
 
-    w1 = optimise!(portfolio; rm = SD(), type = HRP())
-    w2 = optimise!(portfolio; rm = CDaR(), type = HRP())
-    w3 = optimise!(portfolio; rm = [SD(; sigma = portfolio.cov), CDaR()], type = HRP())
-    w4 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))],
-                   type = HRP())
-    w5 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e10))],
-                   type = HRP())
-
-    w6 = optimise!(portfolio;
-                   rm = [CDaR(),
-                         SD(; sigma = portfolio.cov,
-                            settings = RMSettings(; scale = 1e-10))], type = HRP())
-    w7 = optimise!(portfolio; rm = [CDaR(), SD(; settings = RMSettings(; scale = 1e10))],
-                   type = HRP())
+    w1 = optimise!(portfolio, HRP(; rm = SD()))
+    w2 = optimise!(portfolio, HRP(; rm = CDaR()))
+    w3 = optimise!(portfolio, HRP(; rm = [SD(; sigma = portfolio.cov), CDaR()]))
+    w4 = optimise!(portfolio,
+                   HRP(; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))]))
+    w5 = optimise!(portfolio,
+                   HRP(; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e10))]))
+    w6 = optimise!(portfolio,
+                   HRP(;
+                       rm = [CDaR(),
+                             SD(; sigma = portfolio.cov,
+                                settings = RMSettings(; scale = 1e-10))]))
+    w7 = optimise!(portfolio,
+                   HRP(; rm = [CDaR(), SD(; settings = RMSettings(; scale = 1e10))]))
     @test isapprox(w1.weights, w4.weights)
     @test isapprox(w2.weights, w5.weights)
     @test isapprox(w2.weights, w6.weights)
@@ -2076,23 +2249,690 @@ end
     @test !isapprox(w1.weights, w3.weights)
     @test !isapprox(w2.weights, w3.weights)
 
-    w1 = optimise!(portfolio; rm = SD(), type = HERC())
-    w2 = optimise!(portfolio; rm = CDaR(), type = HERC())
-    w3 = optimise!(portfolio; rm = [SD(; sigma = portfolio.cov), CDaR()], type = HERC())
-    w4 = optimise!(portfolio; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))],
-                   type = HERC())
-    w5 = optimise!(portfolio;
-                   rm = [CDaR(),
-                         SD(; sigma = portfolio.cov,
-                            settings = RMSettings(; scale = 1e-10))], type = HERC())
+    w1 = optimise!(portfolio, HERC(; rm = SD()))
+    w2 = optimise!(portfolio, HERC(; rm = CDaR()))
+    w3 = optimise!(portfolio, HERC(; rm = [SD(; sigma = portfolio.cov), CDaR()]))
+    w4 = optimise!(portfolio,
+                   HERC(; rm = [SD(), CDaR(; settings = RMSettings(; scale = 1e-10))]))
+    w5 = optimise!(portfolio,
+                   HERC(;
+                        rm = [CDaR(),
+                              SD(; sigma = portfolio.cov,
+                                 settings = RMSettings(; scale = 1e-10))]))
     @test isapprox(w1.weights, w4.weights)
     @test isapprox(w2.weights, w5.weights)
     @test !isapprox(w1.weights, w3.weights)
     @test !isapprox(w2.weights, w3.weights)
 end
 
+@testset "HRP" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
+
+    w1 = optimise!(portfolio, HRP(; rm = SD()))
+    wt = [0.03692879524929352, 0.06173471900996101, 0.05788485449055379,
+          0.02673494374797732, 0.051021461747188426, 0.06928891082994745,
+          0.024148698656475776, 0.047867702815293824, 0.03125471206249845,
+          0.0647453556976089, 0.10088112288028349, 0.038950479132407664,
+          0.025466032983548218, 0.046088041928035575, 0.017522279227008376,
+          0.04994166864441962, 0.076922254387969, 0.05541444481863126, 0.03819947378487138,
+          0.07900404790602693]
+    @test isapprox(w1.weights, wt)
+
+    w2 = optimise!(portfolio, HRP(; rm = MAD()))
+    wt = [0.03818384697661099, 0.0622147651480733, 0.06006655971419491,
+          0.025623934919921716, 0.05562388497425944, 0.0707725175955155,
+          0.025813212789699617, 0.0505495225915194, 0.030626076629624386,
+          0.06238080360591265, 0.09374966122500297, 0.04170897361395994, 0.0238168503353984,
+          0.04472819614772452, 0.016127737407569318, 0.05166088174144377,
+          0.07470415476814536, 0.05398093542616027, 0.03829328495650196, 0.0793741994327616]
+    @test isapprox(w2.weights, wt)
+
+    w3 = optimise!(portfolio, HRP(; rm = SSD()))
+    wt = [0.03685118468964678, 0.060679678711961914, 0.05670047906355952,
+          0.026116775736648376, 0.05374470957245603, 0.07054365460247647,
+          0.025708179197816795, 0.04589886455582043, 0.03028786387008358,
+          0.0634613352386214, 0.10260291820653494, 0.038697426540672014,
+          0.027823289120792207, 0.04746469792344547, 0.01859405658396672,
+          0.052617311519562025, 0.07250127037171229, 0.05655029966386585,
+          0.03752315313496762, 0.07563285169538961]
+    @test isapprox(w3.weights, wt)
+
+    w4 = optimise!(portfolio, HRP(; rm = FLPM(; target = rf)))
+    wt = [0.039336538617540336, 0.06395492117890568, 0.06276820986537449,
+          0.026249574972701337, 0.06242254734451266, 0.06144221460126541,
+          0.026935168312631458, 0.05003386507226852, 0.031591718694359686,
+          0.062032838812258684, 0.08971950983943798, 0.03794006123084816,
+          0.021868414535268534, 0.04077527283143069, 0.014126622482894119,
+          0.053377350594462684, 0.07977242881987609, 0.05414859107042937,
+          0.04026174326124142, 0.0812424078622927]
+    @test isapprox(w4.weights, wt)
+
+    w5 = optimise!(portfolio, HRP(; rm = SLPM(; target = rf)))
+    wt = [0.03752644591926642, 0.06162667128035028, 0.058061904976983145,
+          0.02658920517037755, 0.056905956197316004, 0.06572780540966205,
+          0.026284445157011994, 0.04570757302464124, 0.030832527351205462,
+          0.06360209500884424, 0.10038131818271241, 0.03703703080055575,
+          0.02666888092950761, 0.04516285946254531, 0.01726932945234202,
+          0.053613204742961086, 0.07517335594118413, 0.05681780552493213,
+          0.03852165318888371, 0.07648993227871743]
+    @test isapprox(w5.weights, wt)
+
+    w6 = optimise!(portfolio, HRP(; rm = WR()))
+    wt = [0.05025200880802368, 0.055880855583038826, 0.05675550980104009,
+          0.03045034754117226, 0.046067750416348405, 0.054698528388037695,
+          0.02387947919504387, 0.03257444044988314, 0.02852023603441257,
+          0.06948149861799151, 0.10142635777300404, 0.02403801691456373, 0.0376186609725536,
+          0.0489137277286356, 0.023542345142850748, 0.05182849839922806,
+          0.12037415047550741, 0.06259799738419287, 0.03040731610608419,
+          0.050692274268387696]
+    @test isapprox(w6.weights, wt)
+
+    w7 = optimise!(portfolio, HRP(; rm = CVaR()))
+    wt = [0.03557588495882196, 0.06070721124578364, 0.055279033097091264,
+          0.02659326453716366, 0.053554687039556674, 0.06617470037072191,
+          0.0262740407048504, 0.04720203604560211, 0.02912774720142737, 0.06321093829691052,
+          0.10241165286325946, 0.03903551330484258, 0.029865777325086773,
+          0.04683826432227621, 0.01880807994439806, 0.05468860348477102,
+          0.07181506647247264, 0.0597967463434774, 0.035892100831017446,
+          0.07714865161046885]
+    @test isapprox(w7.weights, wt)
+
+    w8 = optimise!(portfolio, HRP(; rm = EVaR()))
+    wt = [0.04298217683837017, 0.058906176713889875, 0.0574016331486885,
+          0.03020450525284909, 0.0498349903258857, 0.060682817777209165,
+          0.024220257509343413, 0.03449220187183893, 0.028790726943045256,
+          0.06651915441075427, 0.1102093216711328, 0.026320946186565213, 0.0350510342557288,
+          0.04934072008028962, 0.021946092606624574, 0.05048203603428413,
+          0.09622970122852144, 0.06481150812979522, 0.03384174474956397,
+          0.057732254265619835]
+    @test isapprox(w8.weights, wt, rtol = 5.0e-7)
+
+    w9 = optimise!(portfolio, HRP(; rm = RLVaR()))
+    wt = [0.04746219128450875, 0.05772052034931984, 0.057894023300070915,
+          0.030899831490444826, 0.047780697436069414, 0.056496204023026735,
+          0.02359615954618457, 0.032640369565769795, 0.028784216596900798,
+          0.06836029362987105, 0.10450059856679983, 0.02457130647918195,
+          0.03686881087305981, 0.048996934209302734, 0.0227965377657541,
+          0.05134221596812637, 0.11116746180000622, 0.06399587050591148,
+          0.031665735616057476, 0.052460020993633505]
+    @test isapprox(w9.weights, wt, rtol = 5.0e-7)
+
+    w10 = optimise!(portfolio, HRP(; rm = MDD()))
+    wt = [0.06921730086136976, 0.04450738292959614, 0.08140658224086754,
+          0.018672719501981218, 0.053316921973365496, 0.02979463558079051,
+          0.021114260172381653, 0.029076952717003283, 0.026064071405076886,
+          0.07316497416971823, 0.11123520904148268, 0.018576814647316645,
+          0.013991436918012332, 0.05469682002741476, 0.012327710930761682,
+          0.08330184420498327, 0.07332958900751246, 0.060105980885656114,
+          0.049926342635393445, 0.07617245014931591]
+    @test isapprox(w10.weights, wt)
+
+    w11 = optimise!(portfolio, HRP(; rm = ADD()))
+    wt = [0.05548273429645013, 0.03986073873648723, 0.09599318831154405,
+          0.014621119350699974, 0.08212398553813219, 0.024721555415213262,
+          0.017757328803291575, 0.024648542319161523, 0.04053046304894661,
+          0.06980177121920025, 0.07760681699761883, 0.01027851528431043,
+          0.00777588366272761, 0.021591614519396285, 0.0034064806929941845,
+          0.06991915064946408, 0.12960468534402678, 0.062161540752826025,
+          0.08184195485513887, 0.07027193020237012]
+    @test isapprox(w11.weights, wt)
+
+    w12 = optimise!(portfolio, HRP(; rm = CDaR()))
+    wt = [0.06282520890507177, 0.03706824571002148, 0.08139181669684024,
+          0.015787409071561908, 0.05742532060680956, 0.022473205432788673,
+          0.018010510386343107, 0.028690055814249292, 0.031947471924376705,
+          0.07945270069786842, 0.10413378630449394, 0.015162575734861551,
+          0.011642750066910313, 0.04691738037936903, 0.008558622422573802,
+          0.08506702725550051, 0.07867872568683776, 0.06853164241553955,
+          0.06271444623431467, 0.08352109825366769]
+    @test isapprox(w12.weights, wt)
+
+    w13 = optimise!(portfolio, HRP(; rm = UCI()))
+    wt = [0.056222127504695026, 0.03676156065449049, 0.09101083070457834,
+          0.014331694009042086, 0.06981598298437515, 0.02449761185808867,
+          0.017540488246254482, 0.025783651111609372, 0.03897771757340407,
+          0.07792753098849892, 0.09069642716675666, 0.011419250355786286,
+          0.009579825814905836, 0.03155851948684042, 0.005020862393829734,
+          0.07891456352044066, 0.10481408027151863, 0.06296146942913426, 0.0767246147903293,
+          0.0754411911354216]
+    @test isapprox(w13.weights, wt)
+
+    w14 = optimise!(portfolio, HRP(; rm = EDaR()))
+    wt = [0.06368313885096026, 0.03964177645523946, 0.08253885356726247,
+          0.01658630133298382, 0.055878822739450135, 0.025248628049312456,
+          0.019039909877211127, 0.028999411295580237, 0.030719786342128182,
+          0.07837842859043447, 0.10479226890649017, 0.01598505374262056,
+          0.012462054946453145, 0.0503667610779172, 0.009778781140263914,
+          0.08402144368015278, 0.07578137459372361, 0.0651773824278426, 0.05986313372528741,
+          0.0810566886586861]
+    @test isapprox(w14.weights, wt, rtol = 5.0e-7)
+
+    w15 = optimise!(portfolio, HRP(; rm = RLDaR()))
+    wt = [0.06626057100148959, 0.042384460290778865, 0.08229559342069401,
+          0.017571400016583083, 0.054533052228267126, 0.02751643858660513,
+          0.02021038180000024, 0.02882973184000429, 0.028405177937391907,
+          0.0760417757563507, 0.10819526671824652, 0.01714761122061998,
+          0.013186013461541538, 0.05250570179214284, 0.01096704678455384,
+          0.08422872826614602, 0.07476238567443566, 0.0621153409498924,
+          0.054747390549717716, 0.07809593170453868]
+    @test isapprox(w15.weights, wt, rtol = 5.0e-8)
+
+    w16 = optimise!(portfolio, HRP(; rm = Kurt()))
+    wt = [0.029481521953684118, 0.05982735944410474, 0.03557911826015237,
+          0.028474368121041888, 0.025828635808911045, 0.05929340372085539,
+          0.00400811258716055, 0.04856579375773367, 0.028712479333209244,
+          0.0657391879397804, 0.16216057544981644, 0.011489226379288793,
+          0.009094526296241098, 0.08053893478316498, 0.012724404070883372,
+          0.021335119185650623, 0.0855020913192837, 0.11267092582579596,
+          0.03851809818436267, 0.08045611757887891]
+    @test isapprox(w16.weights, wt)
+
+    w17 = optimise!(portfolio, HRP(; rm = SKurt()))
+    wt = [0.041695764288341326, 0.04968730030116381, 0.04519046227953908,
+          0.02228610752801017, 0.036916599549008534, 0.06695518729855642,
+          0.008601057788011419, 0.03832875671733724, 0.023603809923922775,
+          0.05953659154802947, 0.15949334007294313, 0.010345061127586078,
+          0.01551106764201746, 0.07844578132980796, 0.01457102407508962,
+          0.034738374409788796, 0.09106192787421133, 0.1097918256490279, 0.0352173258407637,
+          0.058022634756843806]
+    @test isapprox(w17.weights, wt)
+
+    w18 = optimise!(portfolio, HRP(; rm = Skew()))
+    wt = [4.18164303203965e-6, 0.11905148244884775, 0.13754035964680367,
+          4.18164303203965e-6, 0.13754035964680367, 1.658199358060021e-6,
+          0.028721218707620826, 1.1383557170375464e-10, 8.355416012626526e-16,
+          1.8128635217880256e-6, 0.08532736996421339, 0.007291462719384035,
+          0.10926054871992093, 0.00021830908182616843, 0.2370505968817962,
+          0.10926054871992093, 0.028721218707620826, 3.684313367457248e-6,
+          4.824826616435831e-11, 1.0059308456231142e-6]
+    @test isapprox(w18.weights, wt, rtol = 5.0e-5)
+
+    w19 = optimise!(portfolio, HRP(; rm = SSkew()))
+    wt = [0.03073561997154973, 0.06271788007944147, 0.059839304178611136,
+          0.019020703463231065, 0.054114343500047124, 0.07478195087196789,
+          0.015025906923294915, 0.037423537539572865, 0.02195663364580543,
+          0.07120487867873436, 0.14238956696393482, 0.022992175030255378,
+          0.02427916555268004, 0.040541588877064376, 0.010704183865328891,
+          0.053000134123666075, 0.07802885174200914, 0.06680453879901624,
+          0.030056876315924044, 0.08438215987786517]
+    @test isapprox(w19.weights, wt)
+
+    clust_alg = HAC()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
+    w20 = optimise!(portfolio, HRP(; rm = BDVariance()))
+    wt = [0.034616203287809656, 0.05339682894540566, 0.0277781553250953,
+          0.04211296639608739, 0.05429852976387857, 0.07556907274344477,
+          0.012918417022839884, 0.0639503232740957, 0.025141332254925024,
+          0.05293567401349993, 0.12067634196508455, 0.0237681969964296,
+          0.008823211105214881, 0.08942720087787832, 0.016861747398793574,
+          0.03288067246055758, 0.07170919770494971, 0.0812323656620027, 0.03793954600227262,
+          0.07396401679973474]
+    @test isapprox(w20.weights, wt)
+
+    w21 = optimise!(portfolio, HRP(; rm = Variance()))
+    wt = [0.03360421525593201, 0.053460257098811775, 0.027429766590708997,
+          0.04363053745921338, 0.05279180956461212, 0.07434468966041922,
+          0.012386194792256387, 0.06206960160806503, 0.025502890164538234,
+          0.0542097204834031, 0.12168116639250848, 0.023275086688903004,
+          0.009124639465879256, 0.08924750757276853, 0.017850423121104797,
+          0.032541204698588386, 0.07175228284814082, 0.08318399209117079,
+          0.03809545426566615, 0.07381856017730955]
+    @test isapprox(w21.weights, wt)
+
+    w22 = optimise!(portfolio, HRP(; rm = SVariance()))
+    wt = [0.03352132634395958, 0.05070696394146035, 0.025245292010558144,
+          0.041199581487040476, 0.05550265797278166, 0.07527829480450478,
+          0.01465919892361806, 0.059327687253569454, 0.024511978344932878,
+          0.05322045263668202, 0.12280140260349257, 0.022293827005819677,
+          0.009725576750592858, 0.09323358575910765, 0.01704823566709182,
+          0.037255645640231386, 0.06932731082207985, 0.090058219354306, 0.03762181352060564,
+          0.06746094915756515]
+    @test isapprox(w22.weights, wt)
+
+    w23 = optimise!(portfolio, HRP(; rm = Equal()))
+    wt = [0.05, 0.05000000000000001, 0.05, 0.04999999999999999, 0.04999999999999999,
+          0.05000000000000001, 0.05000000000000001, 0.05, 0.05, 0.05000000000000001,
+          0.04999999999999999, 0.04999999999999999, 0.05, 0.04999999999999999, 0.05,
+          0.04999999999999999, 0.04999999999999999, 0.05, 0.05, 0.04999999999999999]
+    @test isapprox(w23.weights, wt)
+
+    w24 = optimise!(portfolio, HRP(; rm = VaR()))
+    wt = [0.03403717939776512, 0.05917176810341441, 0.029281627698577888,
+          0.04641795773733506, 0.06002080678226616, 0.07336909341225178,
+          0.032392046758139795, 0.05383361136188931, 0.02967264551919885,
+          0.05284095110693102, 0.09521120378350553, 0.04261320776949539,
+          0.01642971834566978, 0.07971670573840162, 0.021147864266696195,
+          0.050803448662520866, 0.06563107532995796, 0.05200824347813839,
+          0.034112945793535646, 0.07128789895430926]
+    @test isapprox(w24.weights, wt)
+
+    w25 = optimise!(portfolio, HRP(; rm = DaR()))
+    wt = [0.057660532702867646, 0.04125282312548106, 0.05922785740065619,
+          0.03223509018499126, 0.10384639449297382, 0.02480551517770064,
+          0.030513023620218654, 0.037564939241009405, 0.02260728843785307,
+          0.05164502511939685, 0.08286147806113833, 0.01696931547695469,
+          0.00418787314771699, 0.06308172456210165, 0.007685315296496237,
+          0.0694006227527249, 0.09119842783020647, 0.09248808273195344,
+          0.044542968010494795, 0.06622570262706394]
+    @test isapprox(w25.weights, wt)
+
+    w26 = optimise!(portfolio, HRP(; rm = DaR_r()))
+    wt = [0.05820921825149978, 0.04281381004716568, 0.061012991673039425,
+          0.037261284520695284, 0.10225280827507012, 0.03171774621579708,
+          0.029035913030571646, 0.03777811595747374, 0.021478656618637317,
+          0.05210098246314737, 0.08336111731195082, 0.0224554330786605,
+          0.008018398540074134, 0.060923985355596684, 0.009489132849269694,
+          0.06345531419794387, 0.0883323204747975, 0.08122137323769983,
+          0.039962166984027804, 0.06911923091688174]
+    @test isapprox(w26.weights, wt)
+
+    w27 = optimise!(portfolio, HRP(; rm = MDD_r()))
+    wt = [0.054750291482807016, 0.05626561538767235, 0.044927537922610235,
+          0.037029800949262545, 0.06286000734501392, 0.038964408950160866,
+          0.033959752237812064, 0.04828571977339982, 0.01937785058895953,
+          0.05279062837229332, 0.10144994531515807, 0.02678668518638289,
+          0.010335110450233378, 0.07434568383344507, 0.01192345099055306,
+          0.05711412672965212, 0.06785463405921893, 0.09152771438398988,
+          0.032677346602089874, 0.07677368943928506]
+    @test isapprox(w27.weights, wt)
+
+    w28 = optimise!(portfolio, HRP(; rm = ADD_r()))
+    wt = [0.05216718533133331, 0.04708278318245931, 0.07158823871210457,
+          0.029511984859220904, 0.12867669205129983, 0.03859596234440916,
+          0.022402839001206605, 0.026020360199894607, 0.030904469636691148,
+          0.054239105004183275, 0.07390114503735276, 0.019880342325388017,
+          0.00476824739544596, 0.03991945523395664, 0.0054480039590591904,
+          0.059645486519252305, 0.11611402694084015, 0.06374794181935534,
+          0.059893035563107475, 0.055492694883439435]
+    @test isapprox(w28.weights, wt)
+
+    w29 = optimise!(portfolio, HRP(; rm = CDaR_r()))
+    wt = [0.055226953695215866, 0.047934679854074826, 0.05395157314076186,
+          0.036982877818185954, 0.08463665680704126, 0.033820937721103415,
+          0.03026563101495272, 0.04118023926554901, 0.02122427296619385,
+          0.05288666614109493, 0.09090289747478623, 0.02380032651263032,
+          0.008673469487824291, 0.06662055705080387, 0.010138402407857017,
+          0.060505269563432176, 0.08319151689594376, 0.08557053458440436,
+          0.038056791259321536, 0.07442974633882277]
+    @test isapprox(w29.weights, wt)
+
+    w30 = optimise!(portfolio, HRP(; rm = UCI_r()))
+    wt = [0.05276898612268049, 0.04614128625526376, 0.06552577565455027, 0.0320518739448942,
+          0.1111735166748811, 0.039154188455666976, 0.025443440854672504,
+          0.03239581981059534, 0.027120969094009423, 0.05445935205465669,
+          0.08028963951603105, 0.02075298500986429, 0.0058131044419531056,
+          0.04948420047533672, 0.006850658262213453, 0.06288836730781266,
+          0.1025592250558978, 0.07454814435900761, 0.050977607512044276,
+          0.05960085913796832]
+    @test isapprox(w30.weights, wt, rtol = 1.0e-7)
+
+    w31 = optimise!(portfolio, HRP(; rm = EDaR_r()))
+    wt = [0.055560528232119676, 0.05252278252766485, 0.04995930852013699,
+          0.036469686665161705, 0.07360443788124264, 0.035484250062529706,
+          0.03187063749286862, 0.04362148704778408, 0.021541875055852516,
+          0.05435689568806405, 0.09401418942704692, 0.024881512156616555,
+          0.009270444002026255, 0.06971378686582017, 0.01078203039784278,
+          0.05939090630801511, 0.07729538472655453, 0.08736656785459875,
+          0.03800312958595158, 0.07429015950210269]
+    @test isapprox(w31.weights, wt, rtol = 5.0e-7)
+
+    w32 = optimise!(portfolio, HRP(; rm = RLDaR_r()))
+    wt = [0.055263520718878155, 0.05470886033764548, 0.04729258737064928,
+          0.03659066826504964, 0.06763240307582324, 0.03707186354483175,
+          0.03301695115922358, 0.04590027827321353, 0.020741988491439888,
+          0.05389295853521278, 0.09778300148886963, 0.025642106200246102,
+          0.00971015663966544, 0.07161140382368784, 0.011262111599036555,
+          0.05878170332530692, 0.07257021270894684, 0.08962515902013113,
+          0.035691384041053154, 0.07521068138108908]
+    @test isapprox(w32.weights, wt, rtol = 5.0e-8)
+end
+
+@testset "HERC" begin
+    portfolio = OmniPortfolio(; prices = prices,
+                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                               :check_sol => (allow_local = true,
+                                                                              allow_almost = true),
+                                                               :params => Dict("verbose" => false,
+                                                                               "max_step_fraction" => 0.75))))
+
+    asset_statistics!(portfolio)
+    clust_alg = DBHT()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
+
+    w1 = optimise!(portfolio, HERC(; rm = SD()))
+    wt = [0.07698450455880468, 0.07670235654605057, 0.06955326092716153,
+          0.055733645924582964, 0.061306348146154536, 0.026630781912285295,
+          0.0274779863650835, 0.08723325075122691, 0.021443967931440197,
+          0.050919570266336714, 0.034721621146346957, 0.013406113465936382,
+          0.018014864090601306, 0.029736261019180265, 0.01130547202588631,
+          0.03532911363416089, 0.08752722816710831, 0.10098629923304404,
+          0.026208793387783046, 0.08877856050082561]
+    @test isapprox(w1.weights, wt)
+
+    w2 = optimise!(portfolio, HERC(; rm = MAD()))
+    wt = [0.0797145490968226, 0.07455683155558127, 0.070334401927198, 0.05349383521987859,
+          0.06513229159697068, 0.026966237124386894, 0.029595506806349627,
+          0.09315224544455303, 0.020640678885583085, 0.047472627309343436,
+          0.032958383881734096, 0.014663096865841139, 0.017152340172727078,
+          0.029195401656427377, 0.010527045845271121, 0.03720496223361964,
+          0.08565021870448736, 0.09947562485956811, 0.025808052654604105,
+          0.08630566815905283]
+    @test isapprox(w2.weights, wt)
+
+    w3 = optimise!(portfolio, HERC(; rm = SSD()))
+    wt = [0.07837975159477181, 0.07443043390995964, 0.06801950779661087,
+          0.055548455549923444, 0.0644736826243098, 0.02739674778042435,
+          0.029790140405552036, 0.08281583015461562, 0.021850035315318022,
+          0.05161041880598439, 0.035414428250310895, 0.013356805631372573,
+          0.02005310749097011, 0.03085778614009161, 0.012088382453633814,
+          0.03792292849371053, 0.08401306865550462, 0.10203433260227453,
+          0.027069661454433437, 0.08287449489022782]
+    @test isapprox(w3.weights, wt)
+
+    w4 = optimise!(portfolio, HERC(; rm = FLPM(; target = rf)))
+    wt = [0.08074577526070313, 0.0758057372636474, 0.0723712035349317, 0.05388227729039704,
+          0.0719726576355769, 0.023357700765219442, 0.030259361503984363,
+          0.09069744656455722, 0.020432554010122735, 0.045981867419973635,
+          0.03127471464903142, 0.013225268293206591, 0.01541923284313144,
+          0.026677624195275505, 0.00924248201367476, 0.03763591530781149,
+          0.08961751171161211, 0.09815629750095696, 0.02604005979180501,
+          0.08720431244438119]
+    @test isapprox(w4.weights, wt)
+
+    w5 = optimise!(portfolio, HERC(; rm = SLPM(; target = rf)))
+    wt = [0.07895203150464367, 0.07513349407323168, 0.06901069326760172,
+          0.05594112932547382, 0.06763676613416904, 0.025518328924508955,
+          0.030140432803640472, 0.08170116913851065, 0.021723048018546902,
+          0.05096388176098718, 0.0345040083464426, 0.012730715665077913,
+          0.018968393009821956, 0.029479897263328572, 0.01127249390583484,
+          0.03813269633505064, 0.0862014575477909, 0.1015604380650207, 0.02714041935142286,
+          0.08328850555889497]
+    @test isapprox(w5.weights, wt)
+
+    w6 = optimise!(portfolio, HERC(; rm = WR()))
+    wt = [0.09799469653109426, 0.07931044806875052, 0.07697883394077526,
+          0.05938016484003881, 0.062482774302560766, 0.024174945904638732,
+          0.021508124985828447, 0.05117445754264079, 0.023413964946189022,
+          0.07738784752841718, 0.02842727729869877, 0.006737256345835118,
+          0.024299987114092203, 0.030479447210160812, 0.014669862619463056,
+          0.033478912079376394, 0.10842038272038522, 0.0983414761742503,
+          0.02496318167060388, 0.05637595817620051]
+    @test isapprox(w6.weights, wt)
+
+    w7 = optimise!(portfolio, HERC(; rm = CVaR()))
+    wt = [0.07701588327689891, 0.07520448896018464, 0.06541770521947644,
+          0.05757000169964883, 0.06337709857771338, 0.025926148616162506,
+          0.030149122854382444, 0.08115573202397372, 0.021487151979485357,
+          0.053917172483500996, 0.03629492645395641, 0.013834276128551553,
+          0.02188007667915268, 0.030097549937467067, 0.012085783569165435,
+          0.04006561840657164, 0.08240686258336018, 0.10281015669469054,
+          0.02647712574837549, 0.08282711810728184]
+    @test isapprox(w7.weights, wt)
+
+    w8 = optimise!(portfolio, HERC(; rm = EVaR()))
+    wt = [0.08699441730392812, 0.07712958717175648, 0.07366521524310121,
+          0.06113285849402033, 0.06395471849180502, 0.025641689880494402,
+          0.024561083982710123, 0.05538393000042802, 0.023397235003817983,
+          0.06889218377773806, 0.032808220114320844, 0.0078354841769452,
+          0.024451109097834427, 0.03131096206947751, 0.01392669730115599,
+          0.03521555916294673, 0.09758384164962133, 0.10406746553380812,
+          0.027502023704060772, 0.06454571784002953]
+    @test isapprox(w8.weights, wt, rtol = 5.0e-7)
+
+    w9 = optimise!(portfolio, HERC(; rm = RLVaR()))
+    wt = [0.09291265811652286, 0.07830058121386262, 0.07669383422811399,
+          0.06048994792338911, 0.0632964281903878, 0.024835265241643308,
+          0.022359240252220428, 0.05137247534829683, 0.023653937183085144,
+          0.07457499324960506, 0.02985537439802565, 0.007019917248757973,
+          0.024398011725401916, 0.03105422675169787, 0.01444843160813441,
+          0.033975817433097084, 0.10534002288596125, 0.10072270393057964,
+          0.026021876211112602, 0.058674256860104405]
+    @test isapprox(w9.weights, wt, rtol = 5.0e-7)
+
+    w10 = optimise!(portfolio, HERC(; rm = MDD()))
+    wt = [0.11942828911415344, 0.06790696087036098, 0.09708343396881959, 0.0322181147701282,
+          0.06358441456867103, 0.010918315222441926, 0.029080597027890735,
+          0.05067903550079908, 0.019797098917560686, 0.032160771893579174,
+          0.04334920387136981, 0.0072395254377313496, 0.004408762771082226,
+          0.030601955352742596, 0.0068971479386845886, 0.02624877427854606,
+          0.100996587649217, 0.10476039799498128, 0.03792180923631091, 0.11471880361492931]
+    @test isapprox(w10.weights, wt)
+
+    w11 = optimise!(portfolio, HERC(; rm = ADD()))
+    wt = [0.10441410900507704, 0.06337257015393993, 0.1388818998669592,
+          0.027515787911662204, 0.1188160882745767, 0.009101280957417223,
+          0.02353511836320865, 0.03744216548824482, 0.015577834189637181,
+          0.01767347121199722, 0.025141762273107857, 0.0033298619605358548,
+          0.0018130367073894856, 0.014126651605875161, 0.002228743288689212,
+          0.016302454122944926, 0.17177480035356854, 0.09442597723364114,
+          0.03145585583242577, 0.08307053119910199]
+    @test isapprox(w11.weights, wt)
+
+    w12 = optimise!(portfolio, HERC(; rm = CDaR()))
+    wt = [0.11749818113343935, 0.05870055826126679, 0.11385134924830828,
+          0.029526234501200906, 0.08032687433988389, 0.008852903280265263,
+          0.026595918536857853, 0.04345063385165379, 0.02084656630749761,
+          0.029413320573451408, 0.04005512791398602, 0.005832294513804399,
+          0.0033062821268677552, 0.02971553377155059, 0.005420678468821243,
+          0.02415714416132541, 0.11618399112873753, 0.10379008396251159,
+          0.040922826850160604, 0.10155349706840978]
+    @test isapprox(w12.weights, wt)
+
+    w13 = optimise!(portfolio, HERC(; rm = UCI()))
+    wt = [0.10987855273964697, 0.060729473692400754, 0.13188113586803757,
+          0.028009359764792043, 0.10116830124988405, 0.00894518902343889,
+          0.02515249217180455, 0.040355519105512605, 0.018050336913773852,
+          0.021728169704026638, 0.031807104420907735, 0.0040047144063036725,
+          0.0023194434166183132, 0.020203823344076888, 0.0032143655180704735,
+          0.019106596337899368, 0.15029999715584982, 0.09854472399816692,
+          0.03553068862836474, 0.08907001254042422]
+    @test isapprox(w13.weights, wt)
+
+    w14 = optimise!(portfolio, HERC(; rm = EDaR()))
+    wt = [0.1177308542531208, 0.06254095321442733, 0.10519293286493245,
+          0.030663052419603157, 0.07121563960435068, 0.009654306131028573,
+          0.02799873014876406, 0.046417936073046444, 0.020983248093459222,
+          0.03096550906654087, 0.04162305259732029, 0.006349196745551905,
+          0.0037357551287625196, 0.030460451517300507, 0.00591394170374592,
+          0.02518714132643887, 0.11143867125608797, 0.10432624097459507,
+          0.040889704525289054, 0.10671268235563422]
+    @test isapprox(w14.weights, wt, rtol = 1.0e-7)
+
+    w15 = optimise!(portfolio, HERC(; rm = RLDaR()))
+    wt = [0.1183325674687939, 0.0652819692615648, 0.10043845905125683, 0.03138018351723441,
+          0.06655539507649458, 0.01031117836998939, 0.02870698570180175,
+          0.048504100847745896, 0.020662238620582297, 0.03196981829418142,
+          0.04288859208876169, 0.006797311243319078, 0.004081222092532856,
+          0.030487185781576095, 0.00636796350460292, 0.026069755474491547,
+          0.10619308223996969, 0.10450491799042878, 0.03982385359055927, 0.1106432197841129]
+    @test isapprox(w15.weights, wt)
+
+    w16 = optimise!(portfolio, HERC(; rm = Kurt()))
+    wt = [0.053466892258046884, 0.10328667521887797, 0.054404919323835864,
+          0.05164034525881938, 0.03949521281426285, 0.02166132115612342,
+          0.005325106752082301, 0.06987092753743517, 0.019722628041309125,
+          0.058905384535264414, 0.04756653865024671, 0.00337013314805977,
+          0.005397558580038606, 0.03531833344651656, 0.005579968832386527,
+          0.012662292885364586, 0.11359655047116007, 0.16209808354457939,
+          0.02645811650511682, 0.11017301104047358]
+    @test isapprox(w16.weights, wt)
+
+    w17 = optimise!(portfolio, HERC(; rm = SKurt()))
+    wt = [0.09195751022271098, 0.07943849543837476, 0.06646961117264624, 0.0491506750340217,
+          0.05429977685689461, 0.026897931456943396, 0.010291696410768226,
+          0.05363160327577018, 0.01926078898577857, 0.06072467774497688,
+          0.047686505861964906, 0.0030930433701959084, 0.009416070036669964,
+          0.037424766409940795, 0.006951516870884198, 0.021088101344911066,
+          0.10896121609215866, 0.1536264710999023, 0.028737457378644478,
+          0.07089208493584212]
+    @test isapprox(w17.weights, wt)
+
+    w18 = optimise!(portfolio, HERC(; rm = Skew()))
+    wt = [0.05013622008238557, 0.05843253495835018, 0.0326340699568634, 0.03810785845352964,
+          0.04151978371454936, 0.020776349162705425, 0.014419467673840766,
+          0.06450029254562262, 0.02337036891691671, 0.0768704564650501, 0.03525278374131375,
+          0.007885328106569226, 0.23227643708915915, 0.029736303978302396,
+          0.019940256048870408, 0.05591386120058815, 0.04641584792557699,
+          0.06294077176658942, 0.036661874867119304, 0.0522091333460975]
+    @test isapprox(w18.weights, wt)
+
+    w19 = optimise!(portfolio, HERC(; rm = SSkew()))
+    wt = [0.06664919970362215, 0.065688537645969, 0.05827905623198537, 0.04923706156165528,
+          0.055949261956495855, 0.030046317963353407, 0.027319842253653435,
+          0.08126769722698507, 0.02377683386943261, 0.08094977263933717,
+          0.04476608242725907, 0.012406273321936936, 0.028493003361406897,
+          0.03436511159723589, 0.014308519726637069, 0.05423891622864567,
+          0.07452547794485952, 0.09337434382384531, 0.028961215530580075,
+          0.07539747498510434]
+    @test isapprox(w19.weights, wt)
+
+    clust_alg = HAC()
+    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
+
+    w20 = optimise!(portfolio, HERC(; rm = BDVariance()))
+    wt = [0.11814156791628717, 0.1127352219498846, 0.0948040083033778, 0.05910201284574831,
+          0.0762034280232549, 0.021900080015085997, 0.005240769029403859,
+          0.02492257943111223, 0.013821146124791104, 0.015571892677105771,
+          0.036219350442415844, 0.012370220354411125, 0.004197597088141013,
+          0.02684034894442968, 0.008021889189561834, 0.01711283206712795,
+          0.1478163099569289, 0.03165769900663641, 0.020856810764390717, 0.1524642358699047]
+    @test isapprox(w20.weights, wt)
+
+    w21 = optimise!(portfolio, HERC(; rm = Variance()))
+    wt = [0.11540105921544155, 0.1145567201312018, 0.09419723372475931,
+          0.060483660234210215, 0.07318364748176763, 0.02168713926476103,
+          0.005201942574220557, 0.023749598552788367, 0.014061923482203057,
+          0.015961970718579934, 0.03686671320264766, 0.012132318435028086,
+          0.00441044709602619, 0.02704002898133752, 0.00862810493627861,
+          0.016962353908264397, 0.14917275390007956, 0.03182856610967728,
+          0.021005280556336624, 0.15346853749439043]
+    @test isapprox(w21.weights, wt)
+
+    w22 = optimise!(portfolio, HERC(; rm = SVariance()))
+    wt = [0.12119760179878843, 0.10929174557400614, 0.09127529194384341,
+          0.06087377541946739, 0.08200705479693754, 0.022938849314970432,
+          0.007017216937835133, 0.02434527249121335, 0.014590759260977745,
+          0.016875525957101834, 0.03832958126981687, 0.012145368603645653,
+          0.005675155901052187, 0.029100679851099043, 0.00994813960444317,
+          0.020296360456609625, 0.13924511135169032, 0.03695562715740502,
+          0.022394390869475853, 0.13549649143962084]
+    @test isapprox(w22.weights, wt)
+
+    w23 = optimise!(portfolio, HERC(; rm = Equal()))
+    wt = [0.09923664122137407, 0.09923664122137407, 0.09923664122137407,
+          0.09923664122137407, 0.09923664122137407, 0.023487962419260135,
+          0.02348796241926013, 0.023487962419260135, 0.023487962419260135,
+          0.023487962419260135, 0.023487962419260135, 0.02348796241926013,
+          0.02348796241926013, 0.023487962419260135, 0.02348796241926013,
+          0.02348796241926013, 0.09923664122137407, 0.023487962419260135,
+          0.023487962419260135, 0.09923664122137407]
+    @test isapprox(w23.weights, wt)
+
+    w24 = optimise!(portfolio, HERC(; rm = VaR()))
+    wt = [0.10414300257102177, 0.09871202573006761, 0.08959251861207183,
+          0.07555514734087271, 0.09769669156091847, 0.022943300926461043,
+          0.016563538745652133, 0.028652238501006684, 0.019401391461582398,
+          0.017501979293453335, 0.030610780860929044, 0.02395924092174919,
+          0.013446069288029138, 0.025629238086958404, 0.01730739640456328,
+          0.028564197108681265, 0.11491557263229325, 0.027680710219061735,
+          0.02230467164850204, 0.12482028808612478]
+    @test isapprox(w24.weights, wt)
+
+    w25 = optimise!(portfolio, HERC(; rm = DaR()))
+    wt = [0.14733227960307277, 0.06614386458233755, 0.15133705565662284,
+          0.035584333675786964, 0.11463609164605132, 0.005518410268992302,
+          0.013171538035678308, 0.010620417669043803, 0.014023858241571917,
+          0.017001289131758357, 0.026781482271749004, 0.007217550381915265,
+          0.0035803904597587304, 0.020388510168558176, 0.0065705021611778035,
+          0.029518131826492447, 0.16035186159841677, 0.026148373666210922,
+          0.027631100950263884, 0.11644295800454063]
+    @test isapprox(w25.weights, wt)
+
+    w26 = optimise!(portfolio, HERC(; rm = DaR_r()))
+    wt = [0.14774355938966005, 0.0684328493553202, 0.15485994881153173, 0.0411979500128519,
+          0.11305584705890495, 0.007216566584313541, 0.011970976561070937,
+          0.011775533919110818, 0.013661517786887336, 0.016951592576994145,
+          0.02646193157189205, 0.008427695298573155, 0.006529147510212775,
+          0.019339548023735872, 0.007726723460706738, 0.02381526338245954,
+          0.15152867379279225, 0.025316906660827858, 0.025417970255231653,
+          0.11856979798692265]
+    @test isapprox(w26.weights, wt)
+
+    w27 = optimise!(portfolio, HERC(; rm = MDD_r()))
+    wt = [0.15079446061615842, 0.08603152475897777, 0.12374041606663375,
+          0.050529282163624914, 0.0857760767414279, 0.009923344774006223,
+          0.0134887577916876, 0.016005392064562644, 0.0148967949294955,
+          0.020046408045779833, 0.029228399800324625, 0.0099793139298191,
+          0.008133340149925354, 0.02141948291605225, 0.00938330394572054,
+          0.02127772796435491, 0.12849798956868397, 0.030338927541390587,
+          0.025120832103469992, 0.14538822412790406]
+    @test isapprox(w27.weights, wt)
+
+    w28 = optimise!(portfolio, HERC(; rm = ADD_r()))
+    wt = [0.12371584689868499, 0.07328365011343618, 0.16977338386193674,
+          0.03354181126220188, 0.14624734118080304, 0.009376911249269603,
+          0.008150033847862812, 0.008167198562468324, 0.012903517155053858,
+          0.011746529657682171, 0.021870250127331976, 0.005917245694323535,
+          0.0032768170628257485, 0.011813734015517456, 0.003743956814916424,
+          0.01775306443497017, 0.19872759251615896, 0.020009027345803686,
+          0.025007088649056427, 0.09497499954969608]
+    @test isapprox(w28.weights, wt)
+
+    w29 = optimise!(portfolio, HERC(; rm = CDaR_r()))
+    wt = [0.1482304036785224, 0.07559110451590667, 0.14480725317353932, 0.04480939008007434,
+          0.10254791389098332, 0.00791620073213515, 0.011996465335688086,
+          0.012913340180870978, 0.014391268171680365, 0.01805225079803855,
+          0.0270384713414632, 0.008561039338370812, 0.006787624092846017,
+          0.01981584825797337, 0.0079340412211216, 0.021763902803450537, 0.1447239549586514,
+          0.026833292915610436, 0.025804676072481453, 0.12948155844059195]
+    @test isapprox(w29.weights, wt)
+
+    w30 = optimise!(portfolio, HERC(; rm = UCI_r()))
+    wt = [0.13177358314927293, 0.07247391549233687, 0.16362956503582105,
+          0.03659195084440874, 0.126920998889531, 0.00897565819404876, 0.010308036952094911,
+          0.010070348969290802, 0.013930178878301605, 0.014394572348790095,
+          0.025070306799710288, 0.006958517882519902, 0.004449124903473799,
+          0.01545135954194139, 0.005243228396110122, 0.021086596858518908,
+          0.17918434540380382, 0.02317354007700532, 0.02618369531594223,
+          0.10413047606707744]
+    @test isapprox(w30.weights, wt)
+
+    w31 = optimise!(portfolio, HERC(; rm = EDaR_r()))
+    wt = [0.1488274121958717, 0.07965043465691322, 0.1338236845244531, 0.04685245137285603,
+          0.09455930834611771, 0.008714107998123267, 0.012663731601521146,
+          0.014222803628373831, 0.015035762837750218, 0.01910358970690992,
+          0.028184597388505987, 0.009107245853358044, 0.007272820589254927,
+          0.020899558111554476, 0.008458685760279014, 0.021738533486077228,
+          0.14067164133836854, 0.028485905052245995, 0.026525362442459087,
+          0.13520236310900652]
+    @test isapprox(w31.weights, wt, rtol = 1.0e-7)
+
+    w32 = optimise!(portfolio, HERC(; rm = RLDaR_r()))
+    wt = [0.14968299216723, 0.08274800409125811, 0.12809346731596793, 0.0484163890815167,
+          0.08949048752314671, 0.009338809076442186, 0.013100309780119947,
+          0.015211346871070416, 0.015288347829970085, 0.01979313346063202,
+          0.029044996716584604, 0.009477734654729942, 0.00761013719713636,
+          0.021271110083134277, 0.008826450239538248, 0.021726662479268907,
+          0.13497973924683532, 0.029701767255421313, 0.02630713511281022,
+          0.13989097981718657]
+    @test isapprox(w32.weights, wt)
+end
+
+#=
+
 @testset "NCO vector rm" begin
-    portfolio = HCPortfolio(; prices = prices,
+    portfolio = OmniPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                              :check_sol => (allow_local = true,
                                                                             allow_almost = true),
@@ -2120,7 +2960,7 @@ end
 end
 
 @testset "HERC and NCO mixed parameters" begin
-    portfolio = HCPortfolio(; prices = prices,
+    portfolio = OmniPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                              :check_sol => (allow_local = true,
                                                                             allow_almost = true),
@@ -2217,7 +3057,7 @@ end
 end
 
 @testset "Shorting with NCO" begin
-    portfolio = HCPortfolio(; prices = prices,
+    portfolio = OmniPortfolio(; prices = prices,
                             solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                              :check_sol => (allow_local = true,
                                                                             allow_almost = true),
@@ -2324,669 +3164,4 @@ end
     @test sum(abs.(w5.weights[w5.weights .<= 0])) <= 0.6
 end
 
-@testset "HRP" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
-
-    asset_statistics!(portfolio)
-    clust_alg = DBHT()
-    clust_opt = ClustOpt()
-    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
-    type = HRP()
-
-    w1 = optimise!(portfolio; rm = SD(), type = type)
-    wt = [0.03692879524929352, 0.06173471900996101, 0.05788485449055379,
-          0.02673494374797732, 0.051021461747188426, 0.06928891082994745,
-          0.024148698656475776, 0.047867702815293824, 0.03125471206249845,
-          0.0647453556976089, 0.10088112288028349, 0.038950479132407664,
-          0.025466032983548218, 0.046088041928035575, 0.017522279227008376,
-          0.04994166864441962, 0.076922254387969, 0.05541444481863126, 0.03819947378487138,
-          0.07900404790602693]
-    @test isapprox(w1.weights, wt)
-
-    w2 = optimise!(portfolio; rm = MAD())
-    wt = [0.03818384697661099, 0.0622147651480733, 0.06006655971419491,
-          0.025623934919921716, 0.05562388497425944, 0.0707725175955155,
-          0.025813212789699617, 0.0505495225915194, 0.030626076629624386,
-          0.06238080360591265, 0.09374966122500297, 0.04170897361395994, 0.0238168503353984,
-          0.04472819614772452, 0.016127737407569318, 0.05166088174144377,
-          0.07470415476814536, 0.05398093542616027, 0.03829328495650196, 0.0793741994327616]
-    @test isapprox(w2.weights, wt)
-
-    w3 = optimise!(portfolio; rm = SSD())
-    wt = [0.03685118468964678, 0.060679678711961914, 0.05670047906355952,
-          0.026116775736648376, 0.05374470957245603, 0.07054365460247647,
-          0.025708179197816795, 0.04589886455582043, 0.03028786387008358,
-          0.0634613352386214, 0.10260291820653494, 0.038697426540672014,
-          0.027823289120792207, 0.04746469792344547, 0.01859405658396672,
-          0.052617311519562025, 0.07250127037171229, 0.05655029966386585,
-          0.03752315313496762, 0.07563285169538961]
-    @test isapprox(w3.weights, wt)
-
-    w4 = optimise!(portfolio; rm = FLPM(; target = rf))
-    wt = [0.039336538617540336, 0.06395492117890568, 0.06276820986537449,
-          0.026249574972701337, 0.06242254734451266, 0.06144221460126541,
-          0.026935168312631458, 0.05003386507226852, 0.031591718694359686,
-          0.062032838812258684, 0.08971950983943798, 0.03794006123084816,
-          0.021868414535268534, 0.04077527283143069, 0.014126622482894119,
-          0.053377350594462684, 0.07977242881987609, 0.05414859107042937,
-          0.04026174326124142, 0.0812424078622927]
-    @test isapprox(w4.weights, wt)
-
-    w5 = optimise!(portfolio; rm = SLPM(; target = rf))
-    wt = [0.03752644591926642, 0.06162667128035028, 0.058061904976983145,
-          0.02658920517037755, 0.056905956197316004, 0.06572780540966205,
-          0.026284445157011994, 0.04570757302464124, 0.030832527351205462,
-          0.06360209500884424, 0.10038131818271241, 0.03703703080055575,
-          0.02666888092950761, 0.04516285946254531, 0.01726932945234202,
-          0.053613204742961086, 0.07517335594118413, 0.05681780552493213,
-          0.03852165318888371, 0.07648993227871743]
-    @test isapprox(w5.weights, wt)
-
-    w6 = optimise!(portfolio; rm = WR())
-    wt = [0.05025200880802368, 0.055880855583038826, 0.05675550980104009,
-          0.03045034754117226, 0.046067750416348405, 0.054698528388037695,
-          0.02387947919504387, 0.03257444044988314, 0.02852023603441257,
-          0.06948149861799151, 0.10142635777300404, 0.02403801691456373, 0.0376186609725536,
-          0.0489137277286356, 0.023542345142850748, 0.05182849839922806,
-          0.12037415047550741, 0.06259799738419287, 0.03040731610608419,
-          0.050692274268387696]
-    @test isapprox(w6.weights, wt)
-
-    w7 = optimise!(portfolio; rm = CVaR())
-    wt = [0.03557588495882196, 0.06070721124578364, 0.055279033097091264,
-          0.02659326453716366, 0.053554687039556674, 0.06617470037072191,
-          0.0262740407048504, 0.04720203604560211, 0.02912774720142737, 0.06321093829691052,
-          0.10241165286325946, 0.03903551330484258, 0.029865777325086773,
-          0.04683826432227621, 0.01880807994439806, 0.05468860348477102,
-          0.07181506647247264, 0.0597967463434774, 0.035892100831017446,
-          0.07714865161046885]
-    @test isapprox(w7.weights, wt)
-
-    w8 = optimise!(portfolio; rm = EVaR())
-    wt = [0.04298217683837017, 0.058906176713889875, 0.0574016331486885,
-          0.03020450525284909, 0.0498349903258857, 0.060682817777209165,
-          0.024220257509343413, 0.03449220187183893, 0.028790726943045256,
-          0.06651915441075427, 0.1102093216711328, 0.026320946186565213, 0.0350510342557288,
-          0.04934072008028962, 0.021946092606624574, 0.05048203603428413,
-          0.09622970122852144, 0.06481150812979522, 0.03384174474956397,
-          0.057732254265619835]
-    @test isapprox(w8.weights, wt, rtol = 5.0e-7)
-
-    w9 = optimise!(portfolio; rm = RLVaR())
-    wt = [0.04746219128450875, 0.05772052034931984, 0.057894023300070915,
-          0.030899831490444826, 0.047780697436069414, 0.056496204023026735,
-          0.02359615954618457, 0.032640369565769795, 0.028784216596900798,
-          0.06836029362987105, 0.10450059856679983, 0.02457130647918195,
-          0.03686881087305981, 0.048996934209302734, 0.0227965377657541,
-          0.05134221596812637, 0.11116746180000622, 0.06399587050591148,
-          0.031665735616057476, 0.052460020993633505]
-    @test isapprox(w9.weights, wt, rtol = 5.0e-7)
-
-    w10 = optimise!(portfolio; rm = MDD())
-    wt = [0.06921730086136976, 0.04450738292959614, 0.08140658224086754,
-          0.018672719501981218, 0.053316921973365496, 0.02979463558079051,
-          0.021114260172381653, 0.029076952717003283, 0.026064071405076886,
-          0.07316497416971823, 0.11123520904148268, 0.018576814647316645,
-          0.013991436918012332, 0.05469682002741476, 0.012327710930761682,
-          0.08330184420498327, 0.07332958900751246, 0.060105980885656114,
-          0.049926342635393445, 0.07617245014931591]
-    @test isapprox(w10.weights, wt)
-
-    w11 = optimise!(portfolio; rm = ADD())
-    wt = [0.05548273429645013, 0.03986073873648723, 0.09599318831154405,
-          0.014621119350699974, 0.08212398553813219, 0.024721555415213262,
-          0.017757328803291575, 0.024648542319161523, 0.04053046304894661,
-          0.06980177121920025, 0.07760681699761883, 0.01027851528431043,
-          0.00777588366272761, 0.021591614519396285, 0.0034064806929941845,
-          0.06991915064946408, 0.12960468534402678, 0.062161540752826025,
-          0.08184195485513887, 0.07027193020237012]
-    @test isapprox(w11.weights, wt)
-
-    w12 = optimise!(portfolio; rm = CDaR())
-    wt = [0.06282520890507177, 0.03706824571002148, 0.08139181669684024,
-          0.015787409071561908, 0.05742532060680956, 0.022473205432788673,
-          0.018010510386343107, 0.028690055814249292, 0.031947471924376705,
-          0.07945270069786842, 0.10413378630449394, 0.015162575734861551,
-          0.011642750066910313, 0.04691738037936903, 0.008558622422573802,
-          0.08506702725550051, 0.07867872568683776, 0.06853164241553955,
-          0.06271444623431467, 0.08352109825366769]
-    @test isapprox(w12.weights, wt)
-
-    w13 = optimise!(portfolio; rm = UCI())
-    wt = [0.056222127504695026, 0.03676156065449049, 0.09101083070457834,
-          0.014331694009042086, 0.06981598298437515, 0.02449761185808867,
-          0.017540488246254482, 0.025783651111609372, 0.03897771757340407,
-          0.07792753098849892, 0.09069642716675666, 0.011419250355786286,
-          0.009579825814905836, 0.03155851948684042, 0.005020862393829734,
-          0.07891456352044066, 0.10481408027151863, 0.06296146942913426, 0.0767246147903293,
-          0.0754411911354216]
-    @test isapprox(w13.weights, wt)
-
-    w14 = optimise!(portfolio; rm = EDaR())
-    wt = [0.06368313885096026, 0.03964177645523946, 0.08253885356726247,
-          0.01658630133298382, 0.055878822739450135, 0.025248628049312456,
-          0.019039909877211127, 0.028999411295580237, 0.030719786342128182,
-          0.07837842859043447, 0.10479226890649017, 0.01598505374262056,
-          0.012462054946453145, 0.0503667610779172, 0.009778781140263914,
-          0.08402144368015278, 0.07578137459372361, 0.0651773824278426, 0.05986313372528741,
-          0.0810566886586861]
-    @test isapprox(w14.weights, wt, rtol = 5.0e-7)
-
-    w15 = optimise!(portfolio; rm = RLDaR())
-    wt = [0.06626057100148959, 0.042384460290778865, 0.08229559342069401,
-          0.017571400016583083, 0.054533052228267126, 0.02751643858660513,
-          0.02021038180000024, 0.02882973184000429, 0.028405177937391907,
-          0.0760417757563507, 0.10819526671824652, 0.01714761122061998,
-          0.013186013461541538, 0.05250570179214284, 0.01096704678455384,
-          0.08422872826614602, 0.07476238567443566, 0.0621153409498924,
-          0.054747390549717716, 0.07809593170453868]
-    @test isapprox(w15.weights, wt, rtol = 5.0e-8)
-
-    w16 = optimise!(portfolio; rm = Kurt())
-    wt = [0.029481521953684118, 0.05982735944410474, 0.03557911826015237,
-          0.028474368121041888, 0.025828635808911045, 0.05929340372085539,
-          0.00400811258716055, 0.04856579375773367, 0.028712479333209244,
-          0.0657391879397804, 0.16216057544981644, 0.011489226379288793,
-          0.009094526296241098, 0.08053893478316498, 0.012724404070883372,
-          0.021335119185650623, 0.0855020913192837, 0.11267092582579596,
-          0.03851809818436267, 0.08045611757887891]
-    @test isapprox(w16.weights, wt)
-
-    w17 = optimise!(portfolio; rm = SKurt())
-    wt = [0.041695764288341326, 0.04968730030116381, 0.04519046227953908,
-          0.02228610752801017, 0.036916599549008534, 0.06695518729855642,
-          0.008601057788011419, 0.03832875671733724, 0.023603809923922775,
-          0.05953659154802947, 0.15949334007294313, 0.010345061127586078,
-          0.01551106764201746, 0.07844578132980796, 0.01457102407508962,
-          0.034738374409788796, 0.09106192787421133, 0.1097918256490279, 0.0352173258407637,
-          0.058022634756843806]
-    @test isapprox(w17.weights, wt)
-
-    w18 = optimise!(portfolio; rm = Skew())
-    wt = [4.18164303203965e-6, 0.11905148244884775, 0.13754035964680367,
-          4.18164303203965e-6, 0.13754035964680367, 1.658199358060021e-6,
-          0.028721218707620826, 1.1383557170375464e-10, 8.355416012626526e-16,
-          1.8128635217880256e-6, 0.08532736996421339, 0.007291462719384035,
-          0.10926054871992093, 0.00021830908182616843, 0.2370505968817962,
-          0.10926054871992093, 0.028721218707620826, 3.684313367457248e-6,
-          4.824826616435831e-11, 1.0059308456231142e-6]
-    @test isapprox(w18.weights, wt, rtol = 5.0e-5)
-
-    w19 = optimise!(portfolio; rm = SSkew())
-    wt = [0.03073561997154973, 0.06271788007944147, 0.059839304178611136,
-          0.019020703463231065, 0.054114343500047124, 0.07478195087196789,
-          0.015025906923294915, 0.037423537539572865, 0.02195663364580543,
-          0.07120487867873436, 0.14238956696393482, 0.022992175030255378,
-          0.02427916555268004, 0.040541588877064376, 0.010704183865328891,
-          0.053000134123666075, 0.07802885174200914, 0.06680453879901624,
-          0.030056876315924044, 0.08438215987786517]
-    @test isapprox(w19.weights, wt)
-
-    clust_alg = HAC()
-    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
-    w20 = optimise!(portfolio; rm = BDVariance())
-    wt = [0.034616203287809656, 0.05339682894540566, 0.0277781553250953,
-          0.04211296639608739, 0.05429852976387857, 0.07556907274344477,
-          0.012918417022839884, 0.0639503232740957, 0.025141332254925024,
-          0.05293567401349993, 0.12067634196508455, 0.0237681969964296,
-          0.008823211105214881, 0.08942720087787832, 0.016861747398793574,
-          0.03288067246055758, 0.07170919770494971, 0.0812323656620027, 0.03793954600227262,
-          0.07396401679973474]
-    @test isapprox(w20.weights, wt)
-
-    w21 = optimise!(portfolio; rm = Variance())
-    wt = [0.03360421525593201, 0.053460257098811775, 0.027429766590708997,
-          0.04363053745921338, 0.05279180956461212, 0.07434468966041922,
-          0.012386194792256387, 0.06206960160806503, 0.025502890164538234,
-          0.0542097204834031, 0.12168116639250848, 0.023275086688903004,
-          0.009124639465879256, 0.08924750757276853, 0.017850423121104797,
-          0.032541204698588386, 0.07175228284814082, 0.08318399209117079,
-          0.03809545426566615, 0.07381856017730955]
-    @test isapprox(w21.weights, wt)
-
-    w22 = optimise!(portfolio; rm = SVariance())
-    wt = [0.03352132634395958, 0.05070696394146035, 0.025245292010558144,
-          0.041199581487040476, 0.05550265797278166, 0.07527829480450478,
-          0.01465919892361806, 0.059327687253569454, 0.024511978344932878,
-          0.05322045263668202, 0.12280140260349257, 0.022293827005819677,
-          0.009725576750592858, 0.09323358575910765, 0.01704823566709182,
-          0.037255645640231386, 0.06932731082207985, 0.090058219354306, 0.03762181352060564,
-          0.06746094915756515]
-    @test isapprox(w22.weights, wt)
-
-    w23 = optimise!(portfolio; rm = Equal())
-    wt = [0.05, 0.05000000000000001, 0.05, 0.04999999999999999, 0.04999999999999999,
-          0.05000000000000001, 0.05000000000000001, 0.05, 0.05, 0.05000000000000001,
-          0.04999999999999999, 0.04999999999999999, 0.05, 0.04999999999999999, 0.05,
-          0.04999999999999999, 0.04999999999999999, 0.05, 0.05, 0.04999999999999999]
-    @test isapprox(w23.weights, wt)
-
-    w24 = optimise!(portfolio; rm = VaR())
-    wt = [0.03403717939776512, 0.05917176810341441, 0.029281627698577888,
-          0.04641795773733506, 0.06002080678226616, 0.07336909341225178,
-          0.032392046758139795, 0.05383361136188931, 0.02967264551919885,
-          0.05284095110693102, 0.09521120378350553, 0.04261320776949539,
-          0.01642971834566978, 0.07971670573840162, 0.021147864266696195,
-          0.050803448662520866, 0.06563107532995796, 0.05200824347813839,
-          0.034112945793535646, 0.07128789895430926]
-    @test isapprox(w24.weights, wt)
-
-    w25 = optimise!(portfolio; rm = DaR())
-    wt = [0.057660532702867646, 0.04125282312548106, 0.05922785740065619,
-          0.03223509018499126, 0.10384639449297382, 0.02480551517770064,
-          0.030513023620218654, 0.037564939241009405, 0.02260728843785307,
-          0.05164502511939685, 0.08286147806113833, 0.01696931547695469,
-          0.00418787314771699, 0.06308172456210165, 0.007685315296496237,
-          0.0694006227527249, 0.09119842783020647, 0.09248808273195344,
-          0.044542968010494795, 0.06622570262706394]
-    @test isapprox(w25.weights, wt)
-
-    w26 = optimise!(portfolio; rm = DaR_r())
-    wt = [0.05820921825149978, 0.04281381004716568, 0.061012991673039425,
-          0.037261284520695284, 0.10225280827507012, 0.03171774621579708,
-          0.029035913030571646, 0.03777811595747374, 0.021478656618637317,
-          0.05210098246314737, 0.08336111731195082, 0.0224554330786605,
-          0.008018398540074134, 0.060923985355596684, 0.009489132849269694,
-          0.06345531419794387, 0.0883323204747975, 0.08122137323769983,
-          0.039962166984027804, 0.06911923091688174]
-    @test isapprox(w26.weights, wt)
-
-    w27 = optimise!(portfolio; rm = MDD_r())
-    wt = [0.054750291482807016, 0.05626561538767235, 0.044927537922610235,
-          0.037029800949262545, 0.06286000734501392, 0.038964408950160866,
-          0.033959752237812064, 0.04828571977339982, 0.01937785058895953,
-          0.05279062837229332, 0.10144994531515807, 0.02678668518638289,
-          0.010335110450233378, 0.07434568383344507, 0.01192345099055306,
-          0.05711412672965212, 0.06785463405921893, 0.09152771438398988,
-          0.032677346602089874, 0.07677368943928506]
-    @test isapprox(w27.weights, wt)
-
-    w28 = optimise!(portfolio; rm = ADD_r())
-    wt = [0.05216718533133331, 0.04708278318245931, 0.07158823871210457,
-          0.029511984859220904, 0.12867669205129983, 0.03859596234440916,
-          0.022402839001206605, 0.026020360199894607, 0.030904469636691148,
-          0.054239105004183275, 0.07390114503735276, 0.019880342325388017,
-          0.00476824739544596, 0.03991945523395664, 0.0054480039590591904,
-          0.059645486519252305, 0.11611402694084015, 0.06374794181935534,
-          0.059893035563107475, 0.055492694883439435]
-    @test isapprox(w28.weights, wt)
-
-    w29 = optimise!(portfolio; rm = CDaR_r())
-    wt = [0.055226953695215866, 0.047934679854074826, 0.05395157314076186,
-          0.036982877818185954, 0.08463665680704126, 0.033820937721103415,
-          0.03026563101495272, 0.04118023926554901, 0.02122427296619385,
-          0.05288666614109493, 0.09090289747478623, 0.02380032651263032,
-          0.008673469487824291, 0.06662055705080387, 0.010138402407857017,
-          0.060505269563432176, 0.08319151689594376, 0.08557053458440436,
-          0.038056791259321536, 0.07442974633882277]
-    @test isapprox(w29.weights, wt)
-
-    w30 = optimise!(portfolio; rm = UCI_r())
-    wt = [0.05276898612268049, 0.04614128625526376, 0.06552577565455027, 0.0320518739448942,
-          0.1111735166748811, 0.039154188455666976, 0.025443440854672504,
-          0.03239581981059534, 0.027120969094009423, 0.05445935205465669,
-          0.08028963951603105, 0.02075298500986429, 0.0058131044419531056,
-          0.04948420047533672, 0.006850658262213453, 0.06288836730781266,
-          0.1025592250558978, 0.07454814435900761, 0.050977607512044276,
-          0.05960085913796832]
-    @test isapprox(w30.weights, wt, rtol = 1.0e-7)
-
-    w31 = optimise!(portfolio; rm = EDaR_r())
-    wt = [0.055560528232119676, 0.05252278252766485, 0.04995930852013699,
-          0.036469686665161705, 0.07360443788124264, 0.035484250062529706,
-          0.03187063749286862, 0.04362148704778408, 0.021541875055852516,
-          0.05435689568806405, 0.09401418942704692, 0.024881512156616555,
-          0.009270444002026255, 0.06971378686582017, 0.01078203039784278,
-          0.05939090630801511, 0.07729538472655453, 0.08736656785459875,
-          0.03800312958595158, 0.07429015950210269]
-    @test isapprox(w31.weights, wt, rtol = 5.0e-7)
-
-    w32 = optimise!(portfolio; rm = RLDaR_r())
-    wt = [0.055263520718878155, 0.05470886033764548, 0.04729258737064928,
-          0.03659066826504964, 0.06763240307582324, 0.03707186354483175,
-          0.03301695115922358, 0.04590027827321353, 0.020741988491439888,
-          0.05389295853521278, 0.09778300148886963, 0.025642106200246102,
-          0.00971015663966544, 0.07161140382368784, 0.011262111599036555,
-          0.05878170332530692, 0.07257021270894684, 0.08962515902013113,
-          0.035691384041053154, 0.07521068138108908]
-    @test isapprox(w32.weights, wt, rtol = 5.0e-8)
-end
-
-@testset "HERC" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
-
-    asset_statistics!(portfolio)
-    clust_alg = DBHT()
-    clust_opt = ClustOpt()
-    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
-
-    type = HERC()
-    w1 = optimise!(portfolio; rm = SD(), type = type)
-    wt = [0.07698450455880468, 0.07670235654605057, 0.06955326092716153,
-          0.055733645924582964, 0.061306348146154536, 0.026630781912285295,
-          0.0274779863650835, 0.08723325075122691, 0.021443967931440197,
-          0.050919570266336714, 0.034721621146346957, 0.013406113465936382,
-          0.018014864090601306, 0.029736261019180265, 0.01130547202588631,
-          0.03532911363416089, 0.08752722816710831, 0.10098629923304404,
-          0.026208793387783046, 0.08877856050082561]
-    @test isapprox(w1.weights, wt)
-
-    w2 = optimise!(portfolio; rm = MAD(), type = type)
-    wt = [0.0797145490968226, 0.07455683155558127, 0.070334401927198, 0.05349383521987859,
-          0.06513229159697068, 0.026966237124386894, 0.029595506806349627,
-          0.09315224544455303, 0.020640678885583085, 0.047472627309343436,
-          0.032958383881734096, 0.014663096865841139, 0.017152340172727078,
-          0.029195401656427377, 0.010527045845271121, 0.03720496223361964,
-          0.08565021870448736, 0.09947562485956811, 0.025808052654604105,
-          0.08630566815905283]
-    @test isapprox(w2.weights, wt)
-
-    w3 = optimise!(portfolio; rm = SSD(), type = type)
-    wt = [0.07837975159477181, 0.07443043390995964, 0.06801950779661087,
-          0.055548455549923444, 0.0644736826243098, 0.02739674778042435,
-          0.029790140405552036, 0.08281583015461562, 0.021850035315318022,
-          0.05161041880598439, 0.035414428250310895, 0.013356805631372573,
-          0.02005310749097011, 0.03085778614009161, 0.012088382453633814,
-          0.03792292849371053, 0.08401306865550462, 0.10203433260227453,
-          0.027069661454433437, 0.08287449489022782]
-    @test isapprox(w3.weights, wt)
-
-    w4 = optimise!(portfolio; rm = FLPM(; target = rf), type = type)
-    wt = [0.08074577526070313, 0.0758057372636474, 0.0723712035349317, 0.05388227729039704,
-          0.0719726576355769, 0.023357700765219442, 0.030259361503984363,
-          0.09069744656455722, 0.020432554010122735, 0.045981867419973635,
-          0.03127471464903142, 0.013225268293206591, 0.01541923284313144,
-          0.026677624195275505, 0.00924248201367476, 0.03763591530781149,
-          0.08961751171161211, 0.09815629750095696, 0.02604005979180501,
-          0.08720431244438119]
-    @test isapprox(w4.weights, wt)
-
-    w5 = optimise!(portfolio; rm = SLPM(; target = rf), type = type)
-    wt = [0.07895203150464367, 0.07513349407323168, 0.06901069326760172,
-          0.05594112932547382, 0.06763676613416904, 0.025518328924508955,
-          0.030140432803640472, 0.08170116913851065, 0.021723048018546902,
-          0.05096388176098718, 0.0345040083464426, 0.012730715665077913,
-          0.018968393009821956, 0.029479897263328572, 0.01127249390583484,
-          0.03813269633505064, 0.0862014575477909, 0.1015604380650207, 0.02714041935142286,
-          0.08328850555889497]
-    @test isapprox(w5.weights, wt)
-
-    w6 = optimise!(portfolio; rm = WR(), type = type)
-    wt = [0.09799469653109426, 0.07931044806875052, 0.07697883394077526,
-          0.05938016484003881, 0.062482774302560766, 0.024174945904638732,
-          0.021508124985828447, 0.05117445754264079, 0.023413964946189022,
-          0.07738784752841718, 0.02842727729869877, 0.006737256345835118,
-          0.024299987114092203, 0.030479447210160812, 0.014669862619463056,
-          0.033478912079376394, 0.10842038272038522, 0.0983414761742503,
-          0.02496318167060388, 0.05637595817620051]
-    @test isapprox(w6.weights, wt)
-
-    w7 = optimise!(portfolio; rm = CVaR(), type = type)
-    wt = [0.07701588327689891, 0.07520448896018464, 0.06541770521947644,
-          0.05757000169964883, 0.06337709857771338, 0.025926148616162506,
-          0.030149122854382444, 0.08115573202397372, 0.021487151979485357,
-          0.053917172483500996, 0.03629492645395641, 0.013834276128551553,
-          0.02188007667915268, 0.030097549937467067, 0.012085783569165435,
-          0.04006561840657164, 0.08240686258336018, 0.10281015669469054,
-          0.02647712574837549, 0.08282711810728184]
-    @test isapprox(w7.weights, wt)
-
-    w8 = optimise!(portfolio; rm = EVaR(), type = type)
-    wt = [0.08699441730392812, 0.07712958717175648, 0.07366521524310121,
-          0.06113285849402033, 0.06395471849180502, 0.025641689880494402,
-          0.024561083982710123, 0.05538393000042802, 0.023397235003817983,
-          0.06889218377773806, 0.032808220114320844, 0.0078354841769452,
-          0.024451109097834427, 0.03131096206947751, 0.01392669730115599,
-          0.03521555916294673, 0.09758384164962133, 0.10406746553380812,
-          0.027502023704060772, 0.06454571784002953]
-    @test isapprox(w8.weights, wt, rtol = 5.0e-7)
-
-    w9 = optimise!(portfolio; rm = RLVaR(), type = type)
-    wt = [0.09291265811652286, 0.07830058121386262, 0.07669383422811399,
-          0.06048994792338911, 0.0632964281903878, 0.024835265241643308,
-          0.022359240252220428, 0.05137247534829683, 0.023653937183085144,
-          0.07457499324960506, 0.02985537439802565, 0.007019917248757973,
-          0.024398011725401916, 0.03105422675169787, 0.01444843160813441,
-          0.033975817433097084, 0.10534002288596125, 0.10072270393057964,
-          0.026021876211112602, 0.058674256860104405]
-    @test isapprox(w9.weights, wt, rtol = 5.0e-7)
-
-    w10 = optimise!(portfolio; rm = MDD(), type = type)
-    wt = [0.11942828911415344, 0.06790696087036098, 0.09708343396881959, 0.0322181147701282,
-          0.06358441456867103, 0.010918315222441926, 0.029080597027890735,
-          0.05067903550079908, 0.019797098917560686, 0.032160771893579174,
-          0.04334920387136981, 0.0072395254377313496, 0.004408762771082226,
-          0.030601955352742596, 0.0068971479386845886, 0.02624877427854606,
-          0.100996587649217, 0.10476039799498128, 0.03792180923631091, 0.11471880361492931]
-    @test isapprox(w10.weights, wt)
-
-    w11 = optimise!(portfolio; rm = ADD(), type = type)
-    wt = [0.10441410900507704, 0.06337257015393993, 0.1388818998669592,
-          0.027515787911662204, 0.1188160882745767, 0.009101280957417223,
-          0.02353511836320865, 0.03744216548824482, 0.015577834189637181,
-          0.01767347121199722, 0.025141762273107857, 0.0033298619605358548,
-          0.0018130367073894856, 0.014126651605875161, 0.002228743288689212,
-          0.016302454122944926, 0.17177480035356854, 0.09442597723364114,
-          0.03145585583242577, 0.08307053119910199]
-    @test isapprox(w11.weights, wt)
-
-    w12 = optimise!(portfolio; rm = CDaR(), type = type)
-    wt = [0.11749818113343935, 0.05870055826126679, 0.11385134924830828,
-          0.029526234501200906, 0.08032687433988389, 0.008852903280265263,
-          0.026595918536857853, 0.04345063385165379, 0.02084656630749761,
-          0.029413320573451408, 0.04005512791398602, 0.005832294513804399,
-          0.0033062821268677552, 0.02971553377155059, 0.005420678468821243,
-          0.02415714416132541, 0.11618399112873753, 0.10379008396251159,
-          0.040922826850160604, 0.10155349706840978]
-    @test isapprox(w12.weights, wt)
-
-    w13 = optimise!(portfolio; rm = UCI(), type = type)
-    wt = [0.10987855273964697, 0.060729473692400754, 0.13188113586803757,
-          0.028009359764792043, 0.10116830124988405, 0.00894518902343889,
-          0.02515249217180455, 0.040355519105512605, 0.018050336913773852,
-          0.021728169704026638, 0.031807104420907735, 0.0040047144063036725,
-          0.0023194434166183132, 0.020203823344076888, 0.0032143655180704735,
-          0.019106596337899368, 0.15029999715584982, 0.09854472399816692,
-          0.03553068862836474, 0.08907001254042422]
-    @test isapprox(w13.weights, wt)
-
-    w14 = optimise!(portfolio; rm = EDaR(), type = type)
-    wt = [0.1177308542531208, 0.06254095321442733, 0.10519293286493245,
-          0.030663052419603157, 0.07121563960435068, 0.009654306131028573,
-          0.02799873014876406, 0.046417936073046444, 0.020983248093459222,
-          0.03096550906654087, 0.04162305259732029, 0.006349196745551905,
-          0.0037357551287625196, 0.030460451517300507, 0.00591394170374592,
-          0.02518714132643887, 0.11143867125608797, 0.10432624097459507,
-          0.040889704525289054, 0.10671268235563422]
-    @test isapprox(w14.weights, wt, rtol = 1.0e-7)
-
-    w15 = optimise!(portfolio; rm = RLDaR(), type = type)
-    wt = [0.1183325674687939, 0.0652819692615648, 0.10043845905125683, 0.03138018351723441,
-          0.06655539507649458, 0.01031117836998939, 0.02870698570180175,
-          0.048504100847745896, 0.020662238620582297, 0.03196981829418142,
-          0.04288859208876169, 0.006797311243319078, 0.004081222092532856,
-          0.030487185781576095, 0.00636796350460292, 0.026069755474491547,
-          0.10619308223996969, 0.10450491799042878, 0.03982385359055927, 0.1106432197841129]
-    @test isapprox(w15.weights, wt)
-
-    w16 = optimise!(portfolio; rm = Kurt(), type = type)
-    wt = [0.053466892258046884, 0.10328667521887797, 0.054404919323835864,
-          0.05164034525881938, 0.03949521281426285, 0.02166132115612342,
-          0.005325106752082301, 0.06987092753743517, 0.019722628041309125,
-          0.058905384535264414, 0.04756653865024671, 0.00337013314805977,
-          0.005397558580038606, 0.03531833344651656, 0.005579968832386527,
-          0.012662292885364586, 0.11359655047116007, 0.16209808354457939,
-          0.02645811650511682, 0.11017301104047358]
-    @test isapprox(w16.weights, wt)
-
-    w17 = optimise!(portfolio; rm = SKurt(), type = type)
-    wt = [0.09195751022271098, 0.07943849543837476, 0.06646961117264624, 0.0491506750340217,
-          0.05429977685689461, 0.026897931456943396, 0.010291696410768226,
-          0.05363160327577018, 0.01926078898577857, 0.06072467774497688,
-          0.047686505861964906, 0.0030930433701959084, 0.009416070036669964,
-          0.037424766409940795, 0.006951516870884198, 0.021088101344911066,
-          0.10896121609215866, 0.1536264710999023, 0.028737457378644478,
-          0.07089208493584212]
-    @test isapprox(w17.weights, wt)
-
-    w18 = optimise!(portfolio; rm = Skew(), type = type)
-    wt = [0.05013622008238557, 0.05843253495835018, 0.0326340699568634, 0.03810785845352964,
-          0.04151978371454936, 0.020776349162705425, 0.014419467673840766,
-          0.06450029254562262, 0.02337036891691671, 0.0768704564650501, 0.03525278374131375,
-          0.007885328106569226, 0.23227643708915915, 0.029736303978302396,
-          0.019940256048870408, 0.05591386120058815, 0.04641584792557699,
-          0.06294077176658942, 0.036661874867119304, 0.0522091333460975]
-    @test isapprox(w18.weights, wt)
-
-    w19 = optimise!(portfolio; rm = SSkew(), type = type)
-    wt = [0.06664919970362215, 0.065688537645969, 0.05827905623198537, 0.04923706156165528,
-          0.055949261956495855, 0.030046317963353407, 0.027319842253653435,
-          0.08126769722698507, 0.02377683386943261, 0.08094977263933717,
-          0.04476608242725907, 0.012406273321936936, 0.028493003361406897,
-          0.03436511159723589, 0.014308519726637069, 0.05423891622864567,
-          0.07452547794485952, 0.09337434382384531, 0.028961215530580075,
-          0.07539747498510434]
-    @test isapprox(w19.weights, wt)
-
-    clust_alg = HAC()
-    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
-
-    w20 = optimise!(portfolio; rm = BDVariance(), type = type)
-    wt = [0.11814156791628717, 0.1127352219498846, 0.0948040083033778, 0.05910201284574831,
-          0.0762034280232549, 0.021900080015085997, 0.005240769029403859,
-          0.02492257943111223, 0.013821146124791104, 0.015571892677105771,
-          0.036219350442415844, 0.012370220354411125, 0.004197597088141013,
-          0.02684034894442968, 0.008021889189561834, 0.01711283206712795,
-          0.1478163099569289, 0.03165769900663641, 0.020856810764390717, 0.1524642358699047]
-    @test isapprox(w20.weights, wt)
-
-    w21 = optimise!(portfolio; rm = Variance(), type = type)
-    wt = [0.11540105921544155, 0.1145567201312018, 0.09419723372475931,
-          0.060483660234210215, 0.07318364748176763, 0.02168713926476103,
-          0.005201942574220557, 0.023749598552788367, 0.014061923482203057,
-          0.015961970718579934, 0.03686671320264766, 0.012132318435028086,
-          0.00441044709602619, 0.02704002898133752, 0.00862810493627861,
-          0.016962353908264397, 0.14917275390007956, 0.03182856610967728,
-          0.021005280556336624, 0.15346853749439043]
-    @test isapprox(w21.weights, wt)
-
-    w22 = optimise!(portfolio; rm = SVariance(), type = type)
-    wt = [0.12119760179878843, 0.10929174557400614, 0.09127529194384341,
-          0.06087377541946739, 0.08200705479693754, 0.022938849314970432,
-          0.007017216937835133, 0.02434527249121335, 0.014590759260977745,
-          0.016875525957101834, 0.03832958126981687, 0.012145368603645653,
-          0.005675155901052187, 0.029100679851099043, 0.00994813960444317,
-          0.020296360456609625, 0.13924511135169032, 0.03695562715740502,
-          0.022394390869475853, 0.13549649143962084]
-    @test isapprox(w22.weights, wt)
-
-    w23 = optimise!(portfolio; rm = Equal(), type = type)
-    wt = [0.09923664122137407, 0.09923664122137407, 0.09923664122137407,
-          0.09923664122137407, 0.09923664122137407, 0.023487962419260135,
-          0.02348796241926013, 0.023487962419260135, 0.023487962419260135,
-          0.023487962419260135, 0.023487962419260135, 0.02348796241926013,
-          0.02348796241926013, 0.023487962419260135, 0.02348796241926013,
-          0.02348796241926013, 0.09923664122137407, 0.023487962419260135,
-          0.023487962419260135, 0.09923664122137407]
-    @test isapprox(w23.weights, wt)
-
-    w24 = optimise!(portfolio; rm = VaR(), type = type)
-    wt = [0.10414300257102177, 0.09871202573006761, 0.08959251861207183,
-          0.07555514734087271, 0.09769669156091847, 0.022943300926461043,
-          0.016563538745652133, 0.028652238501006684, 0.019401391461582398,
-          0.017501979293453335, 0.030610780860929044, 0.02395924092174919,
-          0.013446069288029138, 0.025629238086958404, 0.01730739640456328,
-          0.028564197108681265, 0.11491557263229325, 0.027680710219061735,
-          0.02230467164850204, 0.12482028808612478]
-    @test isapprox(w24.weights, wt)
-
-    w25 = optimise!(portfolio; rm = DaR(), type = type)
-    wt = [0.14733227960307277, 0.06614386458233755, 0.15133705565662284,
-          0.035584333675786964, 0.11463609164605132, 0.005518410268992302,
-          0.013171538035678308, 0.010620417669043803, 0.014023858241571917,
-          0.017001289131758357, 0.026781482271749004, 0.007217550381915265,
-          0.0035803904597587304, 0.020388510168558176, 0.0065705021611778035,
-          0.029518131826492447, 0.16035186159841677, 0.026148373666210922,
-          0.027631100950263884, 0.11644295800454063]
-    @test isapprox(w25.weights, wt)
-
-    w26 = optimise!(portfolio; rm = DaR_r(), type = type)
-    wt = [0.14774355938966005, 0.0684328493553202, 0.15485994881153173, 0.0411979500128519,
-          0.11305584705890495, 0.007216566584313541, 0.011970976561070937,
-          0.011775533919110818, 0.013661517786887336, 0.016951592576994145,
-          0.02646193157189205, 0.008427695298573155, 0.006529147510212775,
-          0.019339548023735872, 0.007726723460706738, 0.02381526338245954,
-          0.15152867379279225, 0.025316906660827858, 0.025417970255231653,
-          0.11856979798692265]
-    @test isapprox(w26.weights, wt)
-
-    w27 = optimise!(portfolio; rm = MDD_r(), type = type)
-    wt = [0.15079446061615842, 0.08603152475897777, 0.12374041606663375,
-          0.050529282163624914, 0.0857760767414279, 0.009923344774006223,
-          0.0134887577916876, 0.016005392064562644, 0.0148967949294955,
-          0.020046408045779833, 0.029228399800324625, 0.0099793139298191,
-          0.008133340149925354, 0.02141948291605225, 0.00938330394572054,
-          0.02127772796435491, 0.12849798956868397, 0.030338927541390587,
-          0.025120832103469992, 0.14538822412790406]
-    @test isapprox(w27.weights, wt)
-
-    w28 = optimise!(portfolio; rm = ADD_r(), type = type)
-    wt = [0.12371584689868499, 0.07328365011343618, 0.16977338386193674,
-          0.03354181126220188, 0.14624734118080304, 0.009376911249269603,
-          0.008150033847862812, 0.008167198562468324, 0.012903517155053858,
-          0.011746529657682171, 0.021870250127331976, 0.005917245694323535,
-          0.0032768170628257485, 0.011813734015517456, 0.003743956814916424,
-          0.01775306443497017, 0.19872759251615896, 0.020009027345803686,
-          0.025007088649056427, 0.09497499954969608]
-    @test isapprox(w28.weights, wt)
-
-    w29 = optimise!(portfolio; rm = CDaR_r(), type = type)
-    wt = [0.1482304036785224, 0.07559110451590667, 0.14480725317353932, 0.04480939008007434,
-          0.10254791389098332, 0.00791620073213515, 0.011996465335688086,
-          0.012913340180870978, 0.014391268171680365, 0.01805225079803855,
-          0.0270384713414632, 0.008561039338370812, 0.006787624092846017,
-          0.01981584825797337, 0.0079340412211216, 0.021763902803450537, 0.1447239549586514,
-          0.026833292915610436, 0.025804676072481453, 0.12948155844059195]
-    @test isapprox(w29.weights, wt)
-
-    w30 = optimise!(portfolio; rm = UCI_r(), type = type)
-    wt = [0.13177358314927293, 0.07247391549233687, 0.16362956503582105,
-          0.03659195084440874, 0.126920998889531, 0.00897565819404876, 0.010308036952094911,
-          0.010070348969290802, 0.013930178878301605, 0.014394572348790095,
-          0.025070306799710288, 0.006958517882519902, 0.004449124903473799,
-          0.01545135954194139, 0.005243228396110122, 0.021086596858518908,
-          0.17918434540380382, 0.02317354007700532, 0.02618369531594223,
-          0.10413047606707744]
-    @test isapprox(w30.weights, wt)
-
-    w31 = optimise!(portfolio; rm = EDaR_r(), type = type)
-    wt = [0.1488274121958717, 0.07965043465691322, 0.1338236845244531, 0.04685245137285603,
-          0.09455930834611771, 0.008714107998123267, 0.012663731601521146,
-          0.014222803628373831, 0.015035762837750218, 0.01910358970690992,
-          0.028184597388505987, 0.009107245853358044, 0.007272820589254927,
-          0.020899558111554476, 0.008458685760279014, 0.021738533486077228,
-          0.14067164133836854, 0.028485905052245995, 0.026525362442459087,
-          0.13520236310900652]
-    @test isapprox(w31.weights, wt, rtol = 1.0e-7)
-
-    w32 = optimise!(portfolio; rm = RLDaR_r(), type = type)
-    wt = [0.14968299216723, 0.08274800409125811, 0.12809346731596793, 0.0484163890815167,
-          0.08949048752314671, 0.009338809076442186, 0.013100309780119947,
-          0.015211346871070416, 0.015288347829970085, 0.01979313346063202,
-          0.029044996716584604, 0.009477734654729942, 0.00761013719713636,
-          0.021271110083134277, 0.008826450239538248, 0.021726662479268907,
-          0.13497973924683532, 0.029701767255421313, 0.02630713511281022,
-          0.13989097981718657]
-    @test isapprox(w32.weights, wt)
-end
 =#

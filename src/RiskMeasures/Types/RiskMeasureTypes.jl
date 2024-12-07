@@ -2639,7 +2639,7 @@ function SKurtosis(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0
 end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
-const RMSigma = Union{SD, Variance, SVariance, WCVariance}
+const RMSigma = Union{SD, Variance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 

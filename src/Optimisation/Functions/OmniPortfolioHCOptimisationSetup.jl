@@ -5,7 +5,6 @@ function w_limits(port::OmniPortfolio, type::NCO)
     port_kwargs_o = external.port_kwargs
     class = internal.type.class
     class_o = external.type.class
-
     port_short_i = haskey(port_kwargs, :short) && port_kwargs.short
     port_short_o = haskey(port_kwargs_o, :short) && port_kwargs_o.short
     port_short = port.short

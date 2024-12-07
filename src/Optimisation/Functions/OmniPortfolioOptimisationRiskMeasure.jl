@@ -460,11 +460,12 @@ function set_rm(port::OmniPortfolio, rm::SSD, type::Union{Trad, RP, NOC};
     mar = returns .- transpose(mu)
     target = rm.target
     @variables(model, begin
-                   ssd[1:T] .>= 0
+                   ssd[1:T]
                    sdev
                end)
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
     @constraints(model, begin
+                     constr_scale * ssd .>= constr_scale * target
                      constr_scale * mar * w .>= constr_scale * -ssd
                      [constr_scale * sdev; constr_scale * ssd] ∈ SecondOrderCone()
                  end)
@@ -481,7 +482,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSD}, type::Union{Tra
     T = size(returns, 1)
     iTm1 = inv(sqrt(T - 1))
     count = length(rms)
-    @variable(model, ssd[1:T, 1:count] .>= 0)
+    @variable(model, ssd[1:T, 1:count])
     @variable(model, sdev[1:count])
     @expression(model, sdev_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
@@ -492,6 +493,7 @@ function set_rm(port::OmniPortfolio, rms::AbstractVector{<:SSD}, type::Union{Tra
         target = rm.target
         @constraints(model,
                      begin
+                         constr_scale * view(ssd, :, i) .>= constr_scale * target
                          constr_scale * mar * w .>= constr_scale * -view(ssd, :, i)
                          [constr_scale * sdev[i]; constr_scale * view(ssd, :, i)] ∈
                          SecondOrderCone()
