@@ -562,15 +562,14 @@ sd_risk = SD(; formulation = SimpleSD())
 """
 mutable struct SD <: RiskMeasure
     settings::RMSettings
-    formulation::VarianceFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
 end
-function SD(; settings::RMSettings = RMSettings(), formulation::VarianceFormulation = SOC(),
+function SD(; settings::RMSettings = RMSettings(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return SD(settings, formulation, sigma)
+    return SD(settings, sigma)
 end
 function Base.setproperty!(obj::SD, sym::Symbol, val)
     if sym == :sigma

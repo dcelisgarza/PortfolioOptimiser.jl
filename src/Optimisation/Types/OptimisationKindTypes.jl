@@ -333,28 +333,10 @@ mutable struct NCO <: HCOptimType
     internal::NCOArgs
     external::NCOArgs
     finaliser::HCOptWeightFinaliser
-    opt_kwargs::NamedTuple
-    opt_kwargs_o::NamedTuple
-    port_kwargs::NamedTuple
-    port_kwargs_o::NamedTuple
-    factor_kwargs::NamedTuple
-    factor_kwargs_o::NamedTuple
-    wc_kwargs::NamedTuple
-    wc_kwargs_o::NamedTuple
-    cluster_kwargs::NamedTuple
-    cluster_kwargs_o::NamedTuple
-    stat_kwargs_o::NamedTuple
 end
 function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
-             finaliser::HCOptWeightFinaliser = HWF(), opt_kwargs::NamedTuple = (;),
-             opt_kwargs_o::NamedTuple = opt_kwargs, port_kwargs::NamedTuple = (;),
-             port_kwargs_o::NamedTuple = port_kwargs, factor_kwargs::NamedTuple = (;),
-             factor_kwargs_o::NamedTuple = factor_kwargs, wc_kwargs::NamedTuple = (;),
-             wc_kwargs_o::NamedTuple = wc_kwargs, cluster_kwargs::NamedTuple = (;),
-             cluster_kwargs_o::NamedTuple = cluster_kwargs, stat_kwargs_o::NamedTuple = (;))
-    return NCO(internal, external, finaliser, opt_kwargs, opt_kwargs_o, port_kwargs,
-               port_kwargs_o, factor_kwargs, factor_kwargs_o, wc_kwargs, wc_kwargs_o,
-               cluster_kwargs, cluster_kwargs_o, stat_kwargs_o)
+             finaliser::HCOptWeightFinaliser = HWF())
+    return NCO(internal, external, finaliser)
 end
 function Base.getproperty(nco::NCO, sym::Symbol)
     if sym ∈ (:rm, :obj, :kelly, :class, :w_ini, :custom_constr, :custom_obj, :str_names)

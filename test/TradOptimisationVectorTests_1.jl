@@ -188,7 +188,7 @@
     @test isapprox(r9, riskt)
     @test isapprox(ret9, rett)
 
-    rm = [[SD(; formulation = SimpleSD())], [Variance(; formulation = Quad())]]
+    rm = [[SD()], [Variance(; formulation = Quad())]]
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r10 = calc_risk(portfolio; type = :Trad, rm = rm[1][1])
     ret10 = dot(portfolio.mu, w10.weights)

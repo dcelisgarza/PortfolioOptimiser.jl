@@ -39,9 +39,8 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
 
     return plot(timestamps, ret; kwargs...)
 end
-function PortfolioOptimiser.plot_returns(port; type = isa(port, Portfolio) ? :Trad : :HRP,
-                                         allocated::Bool = false, per_asset::Bool = false,
-                                         kwargs...)
+function PortfolioOptimiser.plot_returns(port; type = :Trad, allocated::Bool = false,
+                                         per_asset::Bool = false, kwargs...)
     return PortfolioOptimiser.plot_returns(port.timestamps, port.assets, port.returns,
                                            if !allocated
                                                port.optimal[type].weights
@@ -71,8 +70,7 @@ function PortfolioOptimiser.plot_bar(assets, data; kwargs...)
     return bar(assets, data * 100; kwargs...)
 end
 function PortfolioOptimiser.plot_bar(port::PortfolioOptimiser.AbstractPortfolio;
-                                     type = isa(port, Portfolio) ? :Trad : :HRP,
-                                     allocated::Bool = false, kwargs...)
+                                     type = :Trad, allocated::Bool = false, kwargs...)
     return PortfolioOptimiser.plot_bar(port.assets, if !allocated
                                            port.optimal[type].weights
                                        else
@@ -157,11 +155,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
     return plt
 end
 function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.AbstractPortfolio;
-                                                   type = if isa(port, Portfolio)
-                                                       :Trad
-                                                   else
-                                                       :HRP
-                                                   end, X = port.returns,
+                                                   type = :Trad, X = port.returns,
                                                    rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
                                                    percentage::Bool = false,
                                                    erc_line::Bool = true, t_factor = 252,
@@ -481,14 +475,10 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
     return full_plt
 end
 function PortfolioOptimiser.plot_drawdown(port::PortfolioOptimiser.AbstractPortfolio;
-                                          type::Symbol = if isa(port, Portfolio)
-                                              :Trad
-                                          else
-                                              :HRP
-                                          end, alpha::Real = 0.05, kappa::Real = 0.3,
-                                          allocated::Bool = false, theme = :Dark2_5,
-                                          kwargs_ret = (;), kwargs_dd = (;),
-                                          kwargs_risks = (;), kwargs = (;))
+                                          type::Symbol = :Trad, alpha::Real = 0.05,
+                                          kappa::Real = 0.3, allocated::Bool = false,
+                                          theme = :Dark2_5, kwargs_ret = (;),
+                                          kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
     return PortfolioOptimiser.plot_drawdown(port.timestamps,
                                             if !allocated
                                                 port.optimal[type].weights
@@ -571,11 +561,7 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
     return plt
 end
 function PortfolioOptimiser.plot_hist(port::PortfolioOptimiser.AbstractPortfolio;
-                                      type::Symbol = if isa(port, Portfolio)
-                                          :Trad
-                                      else
-                                          :HRP
-                                      end,
+                                      type::Symbol = :Trad,
                                       points::Integer = ceil(Int,
                                                              4 *
                                                              sqrt(size(port.returns, 1))),
@@ -647,15 +633,11 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
 end
 
 function PortfolioOptimiser.plot_range(port::PortfolioOptimiser.AbstractPortfolio;
-                                       type::Symbol = if isa(port, Portfolio)
-                                           :Trad
-                                       else
-                                           :HRP
-                                       end, alpha_i::Real = 0.0001, alpha::Real = 0.05,
-                                       a_sim::Int = 100, beta_i::Real = alpha_i,
-                                       beta::Real = alpha, b_sim::Integer = a_sim,
-                                       allocated::Bool = false, theme = :Set1_5,
-                                       kwargs_h = (;), kwargs_risks = (;))
+                                       type::Symbol = :Trad, alpha_i::Real = 0.0001,
+                                       alpha::Real = 0.05, a_sim::Int = 100,
+                                       beta_i::Real = alpha_i, beta::Real = alpha,
+                                       b_sim::Integer = a_sim, allocated::Bool = false,
+                                       theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
     return PortfolioOptimiser.plot_range(if !allocated
                                              port.optimal[type].weights
                                          else
@@ -763,7 +745,7 @@ function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortf
                                           theme_h_kwargs = (;), kwargs_d1 = (;),
                                           kwargs_d2 = (;), kwargs_h = (;), kwargs_l = (;),
                                           kwargs = (;))
-    idx, clustering, k, S = if cluster || isa(port, PortfolioOptimiser.Portfolio)
+    idx, clustering, k, S = if cluster
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                        clust_alg = clust_alg, clust_opt = clust_opt)[1:4]
     else
@@ -841,7 +823,7 @@ function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPor
                                             clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                             cluster::Bool = true, theme = :Spectral,
                                             kwargs_d = (;), kwargs = (;))
-    idx, clustering, k = if cluster || isa(port, PortfolioOptimiser.Portfolio)
+    idx, clustering, k = if cluster
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                        clust_alg = clust_alg, clust_opt = clust_opt)[1:3]
     else
@@ -898,11 +880,7 @@ function PortfolioOptimiser.plot_network(assets::AbstractVector, rho::AbstractMa
 end
 
 function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfolio;
-                                         type::Symbol = if isa(port, Portfolio)
-                                             :Trad
-                                         else
-                                             :HRP
-                                         end,
+                                         type::Symbol = :Trad,
                                          cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
                                          dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
                                          clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
@@ -911,7 +889,7 @@ function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfo
                                          cluster::Bool = true, allocation::Bool = true,
                                          allocated::Bool = false, theme = :Spectral,
                                          kwargs = (;))
-    idx, clustering, k, S, D = if cluster || isa(port, PortfolioOptimiser.Portfolio)
+    idx, clustering, k, S, D = if cluster
         cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
                        clust_alg = clust_alg, clust_opt = clust_opt)
     else

@@ -86,19 +86,15 @@ function asset_statistics!(port::AbstractPortfolio;
     if set_sskew
         port.sskew, port.SV = coskew(sskew_type, returns, mu)
     end
-
-    if isa(port, HCPortfolio) || isa(port, OmniPortfolio)
-        if set_cor || set_dist
-            rho = Matrix(cor(cor_type, returns))
-            if set_cor
-                port.cor = rho
-            end
+    if set_cor || set_dist
+        rho = Matrix(cor(cor_type, returns))
+        if set_cor
+            port.cor = rho
         end
-
-        if set_dist
-            dist_type = get_default_dist(dist_type, cor_type)
-            port.dist = dist(dist_type, rho, returns)
-        end
+    end
+    if set_dist
+        dist_type = get_default_dist(dist_type, cor_type)
+        port.dist = dist(dist_type, rho, returns)
     end
 
     return nothing
@@ -124,7 +120,7 @@ Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optim
 
       + if `true`: compute and set the elliptical uncertainty sets and parameters, `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
 """
-function wc_statistics!(port::Union{Portfolio, OmniPortfolio}; wc_type::WCType = WCType(),
+function wc_statistics!(port::OmniPortfolio; wc_type::WCType = WCType(),
                         set_box::Bool = true, set_ellipse::Bool = true)
     returns = port.returns
     cov_type = wc_type.cov_type

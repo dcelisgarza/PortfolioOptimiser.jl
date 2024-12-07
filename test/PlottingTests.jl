@@ -46,9 +46,9 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     @test plt13.n == 48
     plt14 = plot_dendrogram(portfolio; cluster = true)
     @test plt14.n == 22
-    plt15 = plot_network(portfolio; cluster = true)
+    plt15 = plot_network(portfolio; type = :HRP, cluster = true)
     @test plt15.n == 40
-    plt16 = plot_network(portfolio; cluster = false)
+    plt16 = plot_network(portfolio; type = :HRP, cluster = false)
     @test plt16.n == 40
     plt17 = plot_clusters(portfolio; cluster = false)
     @test plt17.n == 51

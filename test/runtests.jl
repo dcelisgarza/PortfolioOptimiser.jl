@@ -4,6 +4,14 @@ using SafeTestsets
     include("TypeTests.jl")
 end
 
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
 @safetestset "WC optimisation" begin
     include("WCOptimisationTests.jl")
 end
@@ -14,10 +22,6 @@ end
 
 @safetestset "OWA Weights" begin
     include("OWAWeightsTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
 end
 
 @safetestset "Plotting" begin
@@ -94,8 +98,4 @@ end
 
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
 end

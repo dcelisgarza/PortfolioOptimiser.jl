@@ -19,7 +19,7 @@ l = 2.0
 
     asset_statistics!(portfolio; cor_type = PortCovCor(; ce = CorLTD()))
     cluster_assets!(portfolio)
-    sd = SD(; formulation = SimpleSD())
+    sd = SD()
 
     w1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = HRP(; rm = sd))))
     wt = [0.023212410493909395, 0.04180507918898045, 0.02097173779429894,
@@ -104,10 +104,6 @@ l = 2.0
           0.019630375733016587, 0.015381429099365612, 0.20950354632439225,
           5.105839271293184e-6, 0.13678235357224355]
     @test isapprox(w7.weights, wt)
-
-    type = NOC(; rm = sd)
-
-    type.class
 
     w8 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = NOC(; rm = sd))))
     wt = [0.04657186846076186, 0.05063463283102664, 0.045222349659841156,
