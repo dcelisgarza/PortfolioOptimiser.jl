@@ -32,7 +32,7 @@ jobs:
         with:
           annotate: true
       - uses: julia-actions/julia-processcoverage@latest
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}

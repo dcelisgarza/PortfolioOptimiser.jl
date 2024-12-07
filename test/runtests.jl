@@ -1,5 +1,33 @@
 using SafeTestsets
 
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -70,32 +98,4 @@ end
 
 @safetestset "RRP optimisation" begin
     include("RRPOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
 end
