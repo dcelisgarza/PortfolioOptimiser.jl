@@ -241,7 +241,19 @@ end
 function HWF(; max_iter::Integer = 100)
     return HWF{typeof(max_iter)}(max_iter)
 end
-struct JWF <: HCOptWeightFinaliser end
+mutable struct JWF{T1 <: Integer} <: HCOptWeightFinaliser
+    type::T1
+end
+function JWF(; type::Integer = 1)
+    @smart_assert(type ∈ (1, 2, 3, 4))
+    return JWF{typeof(type)}(type)
+end
+function Base.setproperty!(obj::JWF, sym::Symbol, val)
+    if sym == :type
+        @smart_assert(val ∈ (1, 2, 3, 4))
+    end
+    return setfield!(obj, sym, val)
+end
 
 """
 ```
@@ -265,7 +277,7 @@ mutable struct SchurParams{T1, T2, T3, T4}
     tol::T3
     max_iter::T4
 end
-function SchurParams(; rm = Variance(;), gamma::Real = 0.5, prop_coef::Real = 0.5,
+function SchurParams(; rm::RMSigma = Variance(;), gamma::Real = 0.5, prop_coef::Real = 0.5,
                      tol::Real = 1e-2, max_iter::Integer = 10)
     @smart_assert(zero(gamma) <= gamma <= one(gamma))
     return SchurParams{typeof(gamma), typeof(prop_coef), typeof(tol), typeof(max_iter)}(rm,

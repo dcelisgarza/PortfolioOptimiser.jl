@@ -81,30 +81,36 @@ function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, inves
                Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices))
     end
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
 
-    port.alloc_model = JuMP.Model()
-    model = port.alloc_model
-
+    model = port.alloc_model = JuMP.Model()
     set_string_names_on_creation(model, string_names)
 
-    weights /= sum(weights)
+    weights ./= sum(weights)
 
     N = length(tickers)
     # Integer allocation
     # x := number of shares
-    @variable(model, x[1:N] .>= 0, Int)
     # u := bounding variable
-    @variable(model, u)
+    @variables(model, begin
+                   x[1:N] .>= 0, Int
+                   u
+               end)
 
-    # Remaining money
-    @expression(model, r, investment - dot(latest_prices, x))
-    # weights * investment - allocation * latest_prices
-    eta = weights * investment - x .* latest_prices
+    # r := remaining money
+    # eta := ideal_investment - discrete_investment
+    @expressions(model, begin
+                     r, investment - dot(latest_prices, x)
+                     eta, weights * investment - x .* latest_prices
+                 end)
 
-    @constraint(model, [u; eta] ∈ MOI.NormOneCone(N + 1))
-    @constraint(model, r >= 0)
+    @constraints(model, begin
+                     constr_scale * r >= 0
+                     [constr_scale * u; constr_scale * eta] ∈ MOI.NormOneCone(N + 1)
+                 end)
 
-    @objective(model, Min, u + r)
+    @objective(model, Min, obj_scale * (u + r))
 
     shares, cost, allocated_weights, available_funds = _optimise_allocation(port, label,
                                                                             tickers,

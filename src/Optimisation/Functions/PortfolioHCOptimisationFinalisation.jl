@@ -1,9 +1,36 @@
-function opt_weight_bounds(port, w_min, w_max, weights, ::JWF)
+function _finaliser_type_constraint(type, model, weights, constr_scale)
+    N = length(weights)
+    w = model[:w]
+    t = model[:t]
+    if type == 1
+        weights[iszero.(weights)] .= eps(eltype(weights))
+        @constraint(model,
+                    [constr_scale * t; constr_scale * (w ./ weights .- 1)] in
+                    MOI.NormOneCone(N + 1))
+    elseif type == 2
+        weights[iszero.(weights)] .= eps(eltype(weights))
+        @constraint(model,
+                    [constr_scale * t; constr_scale * (w ./ weights .- 1)] in
+                    SecondOrderCone())
+    elseif type == 3
+        @constraint(model,
+                    [constr_scale * t; constr_scale * (w .- weights)] in
+                    MOI.NormOneCone(N + 1))
+    else
+        @constraint(model,
+                    [constr_scale * t; constr_scale * (w .- weights)] in SecondOrderCone())
+    end
+    return nothing
+end
+function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
     if !(any(w_max .< weights) || any(w_min .> weights))
         return weights
     end
-
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
     solvers = port.solvers
+    type = finaliser.type
+
     model = JuMP.Model()
 
     N = length(weights)
@@ -13,9 +40,9 @@ function opt_weight_bounds(port, w_min, w_max, weights, ::JWF)
     @constraint(model, sum(w) == budget)
     if all(weights .>= 0)
         @constraints(model, begin
-                         w .>= 0
-                         w .>= w_min
-                         w .<= w_max
+                         constr_scale * w .>= 0
+                         constr_scale * w .>= constr_scale * w_min
+                         constr_scale * w .<= constr_scale * w_max
                      end)
     else
         short_budget = sum(weights[weights .< zero(eltype(weights))])
@@ -25,18 +52,20 @@ function opt_weight_bounds(port, w_min, w_max, weights, ::JWF)
                        short_w[1:N] .<= 0
                    end)
 
-        @constraints(model, begin
-                         long_w .<= w_max
-                         short_w .>= w_min
-                         w .<= long_w
-                         w .>= short_w
-                         sum(short_w) == short_budget
-                         sum(long_w) == budget - short_budget
+        @constraints(model,
+                     begin
+                         constr_scale * long_w .<= constr_scale * w_max
+                         constr_scale * short_w .>= constr_scale * w_min
+                         constr_scale * w .<= constr_scale * long_w
+                         constr_scale * w .>= constr_scale * short_w
+                         constr_scale * sum(short_w) == constr_scale * short_budget
+                         constr_scale * sum(long_w) ==
+                         constr_scale * (budget - short_budget)
                      end)
     end
     @variable(model, t)
-    @constraint(model, [t; (w ./ weights .- 1)] in SecondOrderCone())
-    @objective(model, Min, t)
+    _finaliser_type_constraint(type, model, weights, constr_scale)
+    @objective(model, Min, obj_scale * t)
 
     success, solvers_tried = _optimise_JuMP_model(model, solvers)
 

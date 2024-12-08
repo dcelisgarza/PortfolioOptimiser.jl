@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
 @safetestset "Portfolio classes" begin
     include("PortfolioClassesTests.jl")
 end
@@ -52,10 +60,6 @@ end
     include("RPOptimisationTests.jl")
 end
 
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -66,10 +70,6 @@ end
 
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
 end
 
 @safetestset "WC optimisation" begin
