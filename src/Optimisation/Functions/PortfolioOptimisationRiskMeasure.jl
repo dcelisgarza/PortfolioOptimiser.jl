@@ -19,7 +19,8 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     return nothing
 end
 function _get_ntwk_clust_method(port)
-    return if isa(port.network_adj, SDP) || isa(port.cluster_adj, SDP)
+    model = port.model
+    return if haskey(model, :c_ntwk_sdp) || haskey(model, :c_clst_sdp)
         SDP()
     else
         NoAdj()
@@ -123,9 +124,6 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
         sigma = rm.sigma
     end
     adjacency_constraint = _get_ntwk_clust_method(port)
-    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
-        _SDP_constraints(model, type)
-    end
     _variance_risk(adjacency_constraint, rm.formulation, model, sigma)
     variance_risk = model[:variance_risk]
     var_bound_expr = _variance_risk_bounds_expr(adjacency_constraint, model)
@@ -139,9 +137,6 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP, NOC
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
     adjacency_constraint = _get_ntwk_clust_method(port)
-    if isa(adjacency_constraint, SDP) && !haskey(model, :W)
-        _SDP_constraints(model, type)
-    end
     count = length(rms)
     _variance_risk(adjacency_constraint, model, sigma, count)
     variance_risk = model[:variance_risk]
