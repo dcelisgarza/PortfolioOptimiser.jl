@@ -119,10 +119,6 @@ function optimise!(port::Portfolio, type::NOC)
         tracking_error_constraints(port, returns)
         turnover_constraints(port)
     else
-        old_ntwk_adj = port.network_adj
-        old_clst_adj = port.cluster_adj
-        port.network_adj = NoAdj()
-        port.cluster_adj = NoAdj()
         custom_constr = NoCustomConstraint()
         custom_obj = NoCustomObjective()
     end
@@ -139,9 +135,6 @@ function optimise!(port::Portfolio, type::NOC)
         L1_regularisation(port)
         L2_regularisation(port)
         SDP_network_cluster_penalty(port)
-    else
-        port.network_adj = old_ntwk_adj
-        port.cluster_adj = old_clst_adj
     end
     # NOC constraints
     noc_constraints(port, risk0, ret0)
