@@ -7,12 +7,12 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "WC" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     wc_statistics!(portfolio;
                    wc_type = WCType(; box = NormalWC(; seed = 123456789),

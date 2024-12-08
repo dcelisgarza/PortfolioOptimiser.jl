@@ -1,4 +1,4 @@
-function hrp_optimise(port::OmniPortfolio, rm::Union{AbstractVector, <:AbstractRiskMeasure},
+function hrp_optimise(port::Portfolio, rm::Union{AbstractVector, <:AbstractRiskMeasure},
                       sigma::AbstractMatrix, returns::AbstractMatrix)
     N = size(returns, 2)
     weights = ones(eltype(returns), N)

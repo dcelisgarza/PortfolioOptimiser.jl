@@ -21,7 +21,7 @@ function factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix, regression::Reg
     b3 = pinv(transpose(b2))
     return b1, b2, b3, B
 end
-function rp_constraints(port::OmniPortfolio, ::Any, w_ini)
+function rp_constraints(port::Portfolio, ::Any, w_ini)
     N = size(port.returns, 2)
     risk_budget = port.risk_budget
     if isempty(risk_budget)
@@ -45,7 +45,7 @@ function rp_constraints(port::OmniPortfolio, ::Any, w_ini)
                  end)
     return nothing
 end
-function rp_constraints(port::OmniPortfolio, class::FC, w_ini)
+function rp_constraints(port::Portfolio, class::FC, w_ini)
     model = port.model
     constr_scale = model[:constr_scale]
     f_returns = port.f_returns

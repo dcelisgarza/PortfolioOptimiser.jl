@@ -8,14 +8,14 @@ factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "OmniPortfolio" begin
-    portfolio = OmniPortfolio(; prices = prices, short = true, budget = 3.0,
-                              short_budget = -0.5, long_u = 1.0, short_u = -0.3,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+@testset "Portfolio" begin
+    portfolio = Portfolio(; prices = prices, short = true, budget = 3.0,
+                          short_budget = -0.5, long_u = 1.0, short_u = -0.3,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     @test_throws AssertionError portfolio.max_num_assets_kurt = -1
     @test portfolio.max_num_assets_kurt == 0
@@ -63,25 +63,24 @@ l = 2.0
     L_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
     S_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
 
-    portfolio = OmniPortfolio(; prices = prices, network_adj = SDP(; A = A),
-                              cluster_adj = SDP(; A = A))
-    portfolio = OmniPortfolio(; prices = prices, network_adj = IP(; A = A),
-                              cluster_adj = IP(; A = A))
-    portfolio = OmniPortfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
-                              short_fees = fill(3, N), bl_bench_weights = 2 * (1:N),
-                              rebalance = TR(; val = 3, w = fill(inv(N), N)),
-                              turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
-                              tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
-                              network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
-                              a_eq = fill(inv(5 * N), N)', a_ineq = a_ineq,
-                              risk_budget = 1:N, f_risk_budget = 1:5, L_2 = L_2, S_2 = S_2,
-                              skew = skew, sskew = sskew, f_mu = fill(inv(M), M),
-                              f_cov = f_cov, fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
-                              bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
-                              blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov,
-                              cov_l = cov_l, cov_u = cov_u, cov_mu = cov_mu,
-                              cov_sigma = cov_sigma, d_mu = fill(inv(9 * N), N), V = V,
-                              SV = SV)
+    portfolio = Portfolio(; prices = prices, network_adj = SDP(; A = A),
+                          cluster_adj = SDP(; A = A))
+    portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
+                          cluster_adj = IP(; A = A))
+    portfolio = Portfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
+                          short_fees = fill(3, N), bl_bench_weights = 2 * (1:N),
+                          rebalance = TR(; val = 3, w = fill(inv(N), N)),
+                          turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
+                          tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
+                          network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
+                          a_eq = fill(inv(5 * N), N)', a_ineq = a_ineq, risk_budget = 1:N,
+                          f_risk_budget = 1:5, L_2 = L_2, S_2 = S_2, skew = skew,
+                          sskew = sskew, f_mu = fill(inv(M), M), f_cov = f_cov,
+                          fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
+                          bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
+                          blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
+                          cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
+                          d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
     @test portfolio.long_fees == fill(1, N)
     @test portfolio.short_fees == fill(3, N)
@@ -120,14 +119,13 @@ l = 2.0
     M = size(portfolio_copy.returns, 1)
     kurt = rand(N^2, N^2)
     skurt = rand(N^2, N^2)
-    portfolio = OmniPortfolio(; prices = prices, f_prices = factors, kurt = kurt,
-                              skurt = skurt, rebalance = TR(; val = fill(inv(N), N)),
-                              turnover = TR(; val = fill(inv(2 * N), N)),
-                              w_min = 0.01:0.01:0.2, w_max = 0.02:0.01:0.21,
-                              risk_budget = collect(1.0:N),
-                              bl_bench_weights = collect(2 * (1:N)),
-                              f_risk_budget = collect(1.0:5),
-                              tracking = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
+    portfolio = Portfolio(; prices = prices, f_prices = factors, kurt = kurt, skurt = skurt,
+                          rebalance = TR(; val = fill(inv(N), N)),
+                          turnover = TR(; val = fill(inv(2 * N), N)), w_min = 0.01:0.01:0.2,
+                          w_max = 0.02:0.01:0.21, risk_budget = collect(1.0:N),
+                          bl_bench_weights = collect(2 * (1:N)),
+                          f_risk_budget = collect(1.0:5),
+                          tracking = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
     @test portfolio.w_min == 0.01:0.01:0.2
     @test portfolio.w_max == 0.02:0.01:0.21
     @test portfolio.rebalance.val == fill(inv(N), N)
@@ -140,8 +138,7 @@ l = 2.0
     @test portfolio.kurt == kurt
     @test portfolio.skurt == skurt
 
-    @test_throws AssertionError OmniPortfolio(; prices = prices,
-                                              rebalance = TR(; val = -eps()))
+    @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
 
     A = [0 1 0;
          1 0 0;

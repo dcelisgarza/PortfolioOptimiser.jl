@@ -10,7 +10,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Loadings Matrix" begin
-    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     pval = PVal()
@@ -534,7 +534,7 @@ l = 2.0
 end
 
 @testset "Factor statistics" begin
-    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     nms = ["tickers", "const", "MTUM", "QUAL", "VLUE", "SIZE", "USMV"]
 
     factor_statistics!(portfolio; cov_type = PortCovCor(; posdef = NoPosdef()))
@@ -1298,7 +1298,7 @@ end
     @test isapprox(cov_fmt, portfolio.fm_cov)
     @test isapprox(mu_fmt, portfolio.fm_mu)
 
-    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     factor_type = FactorType()
     mu_type = MuJS()
     @time factor_statistics!(portfolio; factor_type = factor_type, mu_type = mu_type)

@@ -120,8 +120,8 @@ Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optim
 
       + if `true`: compute and set the elliptical uncertainty sets and parameters, `port.cov_mu`, `port.cov_sigma`, `port.k_mu`, `port.k_sigma`.
 """
-function wc_statistics!(port::OmniPortfolio; wc_type::WCType = WCType(),
-                        set_box::Bool = true, set_ellipse::Bool = true)
+function wc_statistics!(port::Portfolio; wc_type::WCType = WCType(), set_box::Bool = true,
+                        set_ellipse::Bool = true)
     returns = port.returns
     cov_type = wc_type.cov_type
     mu_type = wc_type.mu_type

@@ -7,12 +7,12 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Variance" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Variance()
@@ -61,12 +61,12 @@ l = 2.0
 end
 
 @testset "MAD" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = MAD()
@@ -102,12 +102,12 @@ end
 end
 
 @testset "SSD" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SSD()
@@ -143,12 +143,12 @@ end
 end
 
 @testset "FLPM" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = FLPM()
@@ -184,12 +184,12 @@ end
 end
 
 @testset "SLPM" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SLPM()
@@ -225,12 +225,12 @@ end
 end
 
 @testset "WR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = WR()
@@ -266,12 +266,12 @@ end
 end
 
 @testset "RG" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RG()
@@ -307,12 +307,12 @@ end
 end
 
 @testset "CVaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CVaR()
@@ -348,12 +348,12 @@ end
 end
 
 @testset "CVaRRG" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CVaRRG()
@@ -389,12 +389,12 @@ end
 end
 
 @testset "EVaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = EVaR()
@@ -430,12 +430,12 @@ end
 end
 
 @testset "RLVaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RLVaR()
@@ -472,12 +472,12 @@ end
 end
 
 @testset "EVaR < RLVaR < WR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RLVaR(; kappa = 5e-3)
@@ -496,12 +496,12 @@ end
 end
 
 @testset "MDD" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = MDD()
@@ -538,12 +538,12 @@ end
 end
 
 @testset "ADD" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = ADD()
@@ -579,12 +579,12 @@ end
 end
 
 @testset "UCI" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = UCI()
@@ -620,12 +620,12 @@ end
 end
 
 @testset "CDaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = CDaR()
@@ -661,12 +661,12 @@ end
 end
 
 @testset "EDaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = EDaR()
@@ -702,12 +702,12 @@ end
 end
 
 @testset "RLDaR" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = RLDaR()
@@ -743,13 +743,13 @@ end
 end
 
 @testset "EDaR < RLDaR < MDD" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 300))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 300))))
     asset_statistics!(portfolio)
 
     rm = RLDaR(; kappa = 5e-3)
@@ -768,12 +768,12 @@ end
 end
 
 @testset "Full Kurt" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Kurt()
@@ -809,12 +809,12 @@ end
 end
 
 @testset "Reduced Kurt" begin
-    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Kurt()
@@ -850,12 +850,12 @@ end
 end
 
 @testset "Full SKurt" begin
-    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SKurt()
@@ -890,12 +890,12 @@ end
 end
 
 @testset "Reduced SKurt" begin
-    portfolio = OmniPortfolio(; prices = prices, max_num_assets_kurt = 1,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices, max_num_assets_kurt = 1,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SKurt()
@@ -930,12 +930,12 @@ end
 end
 
 @testset "Skew" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = Skew()
@@ -971,12 +971,12 @@ end
 end
 
 @testset "SSkew" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = SSkew()
@@ -1012,12 +1012,12 @@ end
 end
 
 @testset "DVaR" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 50):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices[(end - 50):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = BDVariance()
@@ -1053,12 +1053,12 @@ end
 end
 
 @testset "GMD" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.7))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
 
     rm = GMD(; owa = OWASettings(; approx = false))
@@ -1125,12 +1125,12 @@ end
 end
 
 @testset "TG" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 125):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices[(end - 125):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = TG(; owa = OWASettings(; approx = false))
@@ -1198,12 +1198,12 @@ end
 end
 
 @testset "TGRG" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.85))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.85))))
     asset_statistics!(portfolio)
 
     rm = TGRG(;)
@@ -1239,12 +1239,12 @@ end
 end
 
 @testset "OWA" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.7))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
 
     rm = OWA(; owa = OWASettings(; approx = false))

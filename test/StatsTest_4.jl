@@ -1,5 +1,5 @@
 @testset "NoPosdef" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     c1 = PortCovCor(; ce = CorGerber0(; posdef = NoPosdef()), posdef = NoPosdef())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1)
@@ -9,7 +9,7 @@ end
 @testset "Kurt and SKurt" begin
     cols = [:FB, :BBY, :AMD, :AMZN]
     N2 = length(cols)^2
-    portfolio = OmniPortfolio(; prices = prices[cols])
+    portfolio = Portfolio(; prices = prices[cols])
 
     k1 = KurtFull(;)
     sk1 = KurtSemi(;)
@@ -195,7 +195,7 @@ end
 end
 
 @testset "Denoise" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; denoise = DenoiseFixed())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -1805,7 +1805,7 @@ end
 end
 
 @testset "LoGo" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; logo = LoGo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -2756,7 +2756,7 @@ end
 end
 
 @testset "Transposes and edge cases" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CovDistance(), CorLTD(),
            CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
            CorGerberSB1(), PortCovCor()]

@@ -5,10 +5,10 @@ path = joinpath(@__DIR__, "assets/stock_prices.csv")
 prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "Plotting" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = Variance()
     w = optimise!(portfolio, RP())

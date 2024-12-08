@@ -646,7 +646,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                    13.0, 2.0, 3.0, 2.0, 2.0, 3.0, 4.0, 6.0, 7.0, 4.0, 11.0, 2.0, 2.0, 3.0,
                    4.0, 6.0, 19.0, 30.0], :, 4)
 
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio)
 
     A, tri, separators, cliques, cliqueTree = PMFG_T2s(portfolio.cor, 5)

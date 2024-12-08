@@ -1,12 +1,12 @@
 @testset "GMD" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 100,
-                                                                               "equilibrate_max_iter" => 20))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 100,
+                                                                           "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
     rm = GMD(; owa = OWASettings(; approx = false))
 
@@ -479,14 +479,14 @@
 end
 
 @testset "TG" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 100,
-                                                                               "equilibrate_max_iter" => 20))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 100,
+                                                                           "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
     rm = TG(; owa = OWASettings(; approx = false))
 
@@ -957,14 +957,14 @@ end
 end
 
 @testset "TGRG" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 150,
-                                                                               "equilibrate_max_iter" => 20))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 150,
+                                                                           "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
     rm = TGRG(; owa = OWASettings(; approx = false))
 
@@ -1449,14 +1449,14 @@ end
 end
 
 @testset "OWA" begin
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 100,
-                                                                               "equilibrate_max_iter" => 20))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 100,
+                                                                           "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
     rm = OWA(; owa = OWASettings(; approx = false))
 
@@ -1927,14 +1927,14 @@ end
     w40 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w40.weights) >= ret8
 
-    portfolio = OmniPortfolio(; prices = prices[(end - 200):end],
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 100,
-                                                                               "equilibrate_max_iter" => 20))))
+    portfolio = Portfolio(; prices = prices[(end - 200):end],
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 100,
+                                                                           "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
     rm = OWA(; w = owa_tg(200), owa = OWASettings(; approx = false))
 
@@ -2407,12 +2407,12 @@ end
 @testset "All negative expected returns" begin
     path = joinpath(@__DIR__, "assets/stock_prices3.csv")
     prices = TimeArray(CSV.File(path); timestamp = :date)
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
                       set_sskew = false)

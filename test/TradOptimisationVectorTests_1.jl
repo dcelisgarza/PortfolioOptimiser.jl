@@ -1,9 +1,9 @@
 @testset "SD vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -210,11 +210,11 @@
 end
 
 @testset "MAD vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -371,11 +371,11 @@ end
 end
 
 @testset "SSD vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -532,11 +532,11 @@ end
 end
 
 @testset "FLPM vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -693,11 +693,11 @@ end
 end
 
 @testset "SLPM vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -854,11 +854,11 @@ end
 end
 
 @testset "WR settings" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -952,11 +952,11 @@ end
 end
 
 @testset "RG settings" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1051,11 +1051,11 @@ end
 end
 
 @testset "CVaR vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1257,11 +1257,11 @@ end
 end
 
 @testset "CVaRRG vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1463,13 +1463,13 @@ end
 end
 
 @testset "EVaR vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75,
-                                                                               "max_iter" => 500))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75,
+                                                                           "max_iter" => 500))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1671,12 +1671,12 @@ end
 end
 
 @testset "RLVaR vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1876,11 +1876,11 @@ end
 end
 
 @testset "CDaR vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -2083,12 +2083,12 @@ end
 end
 
 @testset "EDaR vec" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                               :check_sol => (allow_local = true,
-                                                                              allow_almost = true),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     obj = MinRisk()

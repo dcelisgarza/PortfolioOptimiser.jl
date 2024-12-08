@@ -1,4 +1,4 @@
-function optimise!(port::OmniPortfolio, type::Trad)
+function optimise!(port::Portfolio, type::Trad)
     (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
@@ -33,7 +33,7 @@ function optimise!(port::OmniPortfolio, type::Trad)
     set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
-function optimise!(port::OmniPortfolio, type::RP)
+function optimise!(port::Portfolio, type::RP)
     (; rm, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
@@ -66,7 +66,7 @@ function optimise!(port::OmniPortfolio, type::RP)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, nothing, type, class)
 end
-function optimise!(port::OmniPortfolio, type::RRP)
+function optimise!(port::Portfolio, type::RRP)
     (; version, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
@@ -99,7 +99,7 @@ function optimise!(port::OmniPortfolio, type::RRP)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, nothing, type, class)
 end
-function optimise!(port::OmniPortfolio, type::NOC)
+function optimise!(port::Portfolio, type::NOC)
     (; flag, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
     empty!(port.fail)
     risk0, ret0 = noc_risk_ret(port, type)
@@ -151,7 +151,7 @@ function optimise!(port::OmniPortfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
-function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
+function frontier_limits!(port::Portfolio, type::Union{Trad, NOC} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
     old_obj = type.obj
@@ -176,7 +176,7 @@ function frontier_limits!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
 
     return port.limits[rmsym]
 end
-function efficient_frontier!(port::OmniPortfolio, type::Union{Trad, NOC} = Trad();
+function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
                              points::Integer = 20, rf::Real = 0.0)

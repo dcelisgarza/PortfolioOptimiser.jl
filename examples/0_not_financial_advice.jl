@@ -69,7 +69,7 @@ function filter_best(assets, rms, best, cov_type, cor_type)
     q = percentile_after_n(best, length(rms))
     ## Loop over all risk measures.
     for rm ∈ rms
-        hp = OmniPortfolio(; prices = prices[Symbol.(assets_best)])
+        hp = Portfolio(; prices = prices[Symbol.(assets_best)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
@@ -109,17 +109,17 @@ assets_best
 
 # We can now use fancier optimisations and statistics with the smaller stock universe.
 
-hp = OmniPortfolio(; prices = prices[Symbol.(assets_best)],
-                   ## Continuous optimiser.
-                   solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
-                                                     :check_sol => (allow_local = true,
-                                                                    allow_almost = true),
-                                                     :params => Dict("verbose" => false))),
-                   ## MIP optimiser for the discrete allocation.
-                   alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                       :check_sol => (allow_local = true,
-                                                                      allow_almost = true),
-                                                       :params => Dict("log_to_console" => false))))
+hp = Portfolio(; prices = prices[Symbol.(assets_best)],
+               ## Continuous optimiser.
+               solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                 :check_sol => (allow_local = true,
+                                                                allow_almost = true),
+                                                 :params => Dict("verbose" => false))),
+               ## MIP optimiser for the discrete allocation.
+               alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                                   :check_sol => (allow_local = true,
+                                                                  allow_almost = true),
+                                                   :params => Dict("log_to_console" => false))))
 
 covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
@@ -149,7 +149,7 @@ function filter_worst(assets, rms, best, cov_type, cor_type)
     q = percentile_after_n(best, length(rms))
     ## Loop over all risk measures.
     for rm ∈ rms
-        hp = OmniPortfolio(; prices = prices[Symbol.(assets_worst)])
+        hp = Portfolio(; prices = prices[Symbol.(assets_worst)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
@@ -192,17 +192,17 @@ assets_best_worst = union(assets_best, assets_worst)
 
 # This time we'll make a market neutral portfolio using the NCO optimisation type.
 
-hp = OmniPortfolio(; prices = prices[Symbol.(assets_best_worst)],
-                   ## Continuous optimiser.
-                   solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
-                                                     :check_sol => (allow_local = true,
-                                                                    allow_almost = true),
-                                                     :params => Dict("verbose" => false))),
-                   ## MIP optimiser for the discrete allocation.
-                   alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                       :check_sol => (allow_local = true,
-                                                                      allow_almost = true),
-                                                       :params => Dict("log_to_console" => false))))
+hp = Portfolio(; prices = prices[Symbol.(assets_best_worst)],
+               ## Continuous optimiser.
+               solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                 :check_sol => (allow_local = true,
+                                                                allow_almost = true),
+                                                 :params => Dict("verbose" => false))),
+               ## MIP optimiser for the discrete allocation.
+               alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
+                                                   :check_sol => (allow_local = true,
+                                                                  allow_almost = true),
+                                                   :params => Dict("log_to_console" => false))))
 
 covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()

@@ -77,7 +77,7 @@ function naive_portfolio_variance(sigma::AbstractMatrix)
     w ./= sum(w)
     return dot(w, sigma, w)
 end
-function schur_optimise(port::OmniPortfolio, params, sigma::AbstractMatrix)
+function schur_optimise(port::Portfolio, params, sigma::AbstractMatrix)
     N = size(port.returns, 2)
     items = [port.clusters.order]
 

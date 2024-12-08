@@ -10,9 +10,9 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Portfolio Trad classes" begin
-    portfolio = OmniPortfolio(; prices = prices,
-                              solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                               :params => Dict("verbose" => false))))
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                           :params => Dict("verbose" => false))))
 
     asset_statistics!(portfolio)
 
@@ -88,10 +88,10 @@ l = 2.0
 end
 
 @testset "Portfolio RP classes" begin
-    portfolio = OmniPortfolio(; prices = prices, f_prices = factors,
-                              solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                               :params => Dict("verbose" => false,
-                                                                               "max_step_fraction" => 0.75))))
+    portfolio = Portfolio(; prices = prices, f_prices = factors,
+                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
     factor_statistics!(portfolio;

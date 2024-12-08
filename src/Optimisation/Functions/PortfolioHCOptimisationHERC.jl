@@ -7,8 +7,7 @@ function naive_risk(port, sigma, returns, cluster, rm)
     _unset_hc_rm_skew(rm, old_V, old_skew)
     return crisk
 end
-function herc_optimise(port::OmniPortfolio,
-                       rm_i::Union{AbstractVector, <:AbstractRiskMeasure},
+function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRiskMeasure},
                        rm_o::Union{AbstractVector, <:AbstractRiskMeasure},
                        sigma_i::AbstractMatrix, sigma_o::AbstractMatrix,
                        returns_i::AbstractMatrix, returns_o::AbstractMatrix)

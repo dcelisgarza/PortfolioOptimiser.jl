@@ -3,7 +3,7 @@
 
 This example follows from [Example 1](https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/0_basic_use.ipynb). If something in the preamble is confusing, it is explained there.
 
-This example focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`HCPortfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`HCPortfolio`](@ref) instance. Every case will perform validation checks.
+This example focuses on the computation of asset statistics. This is one of the most important functions in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl). It can be used for computing any and all statistics needed to optimise [`Portfolio`](@ref) and [`Portfolio`](@ref). It is also possible to define any and all statistics at variable instantiation, or by changing the relevant property in the [`Portfolio`](@ref) or [`Portfolio`](@ref) instance. Every case will perform validation checks.
 
 ## 2.1 Downloading the data
 =#
@@ -142,7 +142,7 @@ function MyScaledMean(; scale::Union{<:AbstractVector{<:Real}, Real} = 1, w = no
 end
 
 ## We have to turn this into a vec so we can scale by a vector.
-function StatsBase.mean(me::MyScaledMean, X::AbstractArray; dims::Int = 1)
+function StatsBase.mean(me::MyScaledMean, X::AbstractMatrix; dims::Int = 1)
     return me.scale .*
            vec((isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims)))
 end

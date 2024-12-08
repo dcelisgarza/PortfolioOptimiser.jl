@@ -123,7 +123,7 @@ end
 """
 ```
 related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-               type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
+               type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
                cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                dist_type::DistMethod = DistCanonical(),
                clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())

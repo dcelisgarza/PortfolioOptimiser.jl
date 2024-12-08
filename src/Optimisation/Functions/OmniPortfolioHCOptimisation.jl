@@ -1,8 +1,0 @@
-include("./OmniPortfolioHCOptimisationSetup.jl")
-include("./OmniPortfolioHCOptimisationRisk.jl")
-include("./OmniPortfolioHCOptimisationHRP.jl")
-include("./OmniPortfolioHCOOptimisationHRPSchur.jl")
-include("./OmniPortfolioHCOptimisationHERC.jl")
-include("./OmniPortfolioHCOptimisationNCO.jl")
-include("./OmniPortfolioHCOptimisationFinalisation.jl")
-include("./OmniPortfolioHCOptimisationOptimise.jl")

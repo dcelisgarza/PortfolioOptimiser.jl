@@ -10,7 +10,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Asset constraints" begin
-    portfolio = OmniPortfolio(; prices = prices_assets)
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -366,7 +366,7 @@ l = 2.0
 end
 
 @testset "Asset views" begin
-    portfolio = OmniPortfolio(; prices = prices_assets)
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -477,7 +477,7 @@ end
 end
 
 @testset "Factor constraints" begin
-    portfolio = OmniPortfolio(; prices = prices_assets, f_prices = prices_factors)
+    portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
     loadings = loadings_matrix(DataFrame(portfolio.f_returns, portfolio.f_assets),
                                DataFrame(portfolio.returns, portfolio.assets), BReg())
 
@@ -676,7 +676,7 @@ end
 end
 
 @testset "HRP constraints" begin
-    portfolio = OmniPortfolio(; prices = prices_assets)
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -712,7 +712,7 @@ end
 end
 
 @testset "Turnover constraints" begin
-    portfolio = OmniPortfolio(; prices = prices_assets)
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],
@@ -740,7 +740,7 @@ end
 end
 
 @testset "RP constraints" begin
-    portfolio = OmniPortfolio(; prices = prices_assets)
+    portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
                                        3, 1],

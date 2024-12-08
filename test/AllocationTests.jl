@@ -15,8 +15,8 @@ l = 2.0
                                         :check_sol => (allow_local = true,
                                                        allow_almost = true),
                                         :params => Dict("log_to_console" => false)))
-    portfolio = OmniPortfolio(; prices = prices, solvers = solvers,
-                              alloc_solvers = alloc_solvers)
+    portfolio = Portfolio(; prices = prices, solvers = solvers,
+                          alloc_solvers = alloc_solvers)
     asset_statistics!(portfolio)
     w0 = optimise!(portfolio, Trad())
 

@@ -1,4 +1,4 @@
-function noc_constraints(port::OmniPortfolio, risk0, ret0)
+function noc_constraints(port::Portfolio, risk0, ret0)
     model = port.model
     w = model[:w]
     constr_scale = model[:constr_scale]
@@ -55,7 +55,7 @@ function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk1, risk2, risk3
 end
-function noc_risk_ret(port::OmniPortfolio, type)
+function noc_risk_ret(port::Portfolio, type)
     (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, rm, obj, kelly, class, w_ini) = type
 
     mu, sigma, returns = mu_sigma_returns_class(port, class)

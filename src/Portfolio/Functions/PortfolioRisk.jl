@@ -1,7 +1,7 @@
 """
 ```
 calc_risk(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-          type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
+          type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
           rm::AbstractRiskMeasure = SD())
 ```
 
@@ -32,7 +32,7 @@ end
 """
 ```
 risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                  type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
+                  type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
                   rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6,
                   marginal::Bool = false)
 ```
@@ -72,7 +72,7 @@ end
 ```
 factor_risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                          F::AbstractMatrix = port.f_returns,
-                         type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
+                         type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
                          rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6)
 ```
 
@@ -110,7 +110,7 @@ end
 ```
 sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
              mu::AbstractVector = port.mu,
-             type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP,
+             type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
              rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6, rf::Real = 0.0,
              kelly::Bool = false)
 ```
@@ -151,7 +151,7 @@ end
 
 """
 ```
-number_effective_assets(port; type::Symbol = isa(port, Portfolio) || isa(port, OmniPortfolio) ? :Trad : :HRP)
+number_effective_assets(port; type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP)
 ```
 
 Compute the number of effective assets.

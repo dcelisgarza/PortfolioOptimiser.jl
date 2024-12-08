@@ -1,4 +1,4 @@
-function w_limits(port::OmniPortfolio, type::NCO)
+function w_limits(port::Portfolio, type::NCO)
     datatype = eltype(port.returns)
     (; internal, external) = type
     port_kwargs = internal.port_kwargs

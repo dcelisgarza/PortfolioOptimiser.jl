@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "HC Portfolio Asset Clustering" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -87,7 +87,7 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -159,7 +159,7 @@ l = 2.0
 end
 
 @testset "Portfolio Asset Clustering" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_mu = false)
 
@@ -214,7 +214,7 @@ end
 end
 
 @testset "Non-monotonic clustering" begin
-    portfolio = OmniPortfolio(; prices = prices2)
+    portfolio = Portfolio(; prices = prices2)
     asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CorGerberSB1()),
                       cor_type = PortCovCor(; ce = CorGerberSB1()),
                       dist_type = DistDistMLP(), set_kurt = false, set_skurt = false,

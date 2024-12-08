@@ -1,5 +1,5 @@
 @testset "Mean Estimation Weighted" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
@@ -120,7 +120,7 @@
 end
 
 @testset "Covariance Estimation" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     rf = 0.0329 / 252
     c0 = StatsBase.SimpleCovariance(; corrected = true)
     c1 = PortCovCor(; ce = CovFull(; ce = c0))
@@ -2217,7 +2217,7 @@ end
 end
 
 @testset "Covariance Estimation Weighted" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     rf = 0.0329 / 252
     w = eweights(size(portfolio.returns, 1), 1 / size(portfolio.returns, 1); scale = true)
     c0 = StatsBase.SimpleCovariance(; corrected = false)
@@ -4398,7 +4398,7 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; ce = CorMutualInfo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -4412,7 +4412,7 @@ end
 end
 
 @testset "Shrunken Cov and Cor Unweighted" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     c1 = PortCovCor(; ce = CovFull(; ce = AnalyticalNonlinearShrinkage()))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)

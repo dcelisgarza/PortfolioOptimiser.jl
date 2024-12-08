@@ -37,7 +37,7 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
                  end)
     return nothing
 end
-function rrp_constraints(port::OmniPortfolio, version, sigma)
+function rrp_constraints(port::Portfolio, version, sigma)
     model = port.model
     constr_scale = model[:constr_scale]
     w = model[:w]

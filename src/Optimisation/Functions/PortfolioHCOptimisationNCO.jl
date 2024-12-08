@@ -572,31 +572,29 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
         rebalance = NoTR()
     end
 
-    intra_port = OmniPortfolio(; assets = assets, ret = returns, f_assets = f_assets,
-                               f_ret = f_returns, loadings = loadings,
-                               regression_type = regression_type, mu_l = mu_l, mu = mu,
-                               cov = cov, cor = cor, dist = dist, k = k,
-                               max_num_assets_kurt = max_num_assets_kurt,
-                               max_num_assets_kurt_scale = max_num_assets_kurt_scale,
-                               kurt = kurt, skurt = skurt, L_2 = L_2, S_2 = S_2,
-                               skew = skew, V = V, sskew = sskew, SV = SV, f_mu = f_mu,
-                               f_cov = f_cov, fm_returns = fm_returns, fm_mu = fm_mu,
-                               fm_cov = fm_cov, bl_bench_weights = bl_bench_weights,
-                               bl_mu = bl_mu, bl_cov = bl_cov, blfm_mu = blfm_mu,
-                               blfm_cov = blfm_cov, cov_l = cov_l, cov_u = cov_u,
-                               cov_mu = cov_mu, cov_sigma = cov_sigma, d_mu = d_mu,
-                               k_mu = k_mu, k_sigma = k_sigma, w_min = w_min, w_max = w_max,
-                               risk_budget = risk_budget, f_risk_budget = f_risk_budget,
-                               short = short, long_l = long_l, long_u = long_u,
-                               short_l = short_l, short_u = short_u,
-                               min_budget = min_budget, budget = budget,
-                               max_budget = max_budget, min_short_budget = min_short_budget,
-                               short_budget = short_budget,
-                               max_short_budget = max_short_budget, card_scale = card_scale,
-                               card = card, nea = nea, tracking = tracking,
-                               turnover = turnover, l1 = l1, l2 = l2, long_fees = long_fees,
-                               short_fees = short_fees, rebalance = rebalance,
-                               solvers = solvers, port_kwargs...)
+    intra_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
+                           f_ret = f_returns, loadings = loadings,
+                           regression_type = regression_type, mu_l = mu_l, mu = mu,
+                           cov = cov, cor = cor, dist = dist, k = k,
+                           max_num_assets_kurt = max_num_assets_kurt,
+                           max_num_assets_kurt_scale = max_num_assets_kurt_scale,
+                           kurt = kurt, skurt = skurt, L_2 = L_2, S_2 = S_2, skew = skew,
+                           V = V, sskew = sskew, SV = SV, f_mu = f_mu, f_cov = f_cov,
+                           fm_returns = fm_returns, fm_mu = fm_mu, fm_cov = fm_cov,
+                           bl_bench_weights = bl_bench_weights, bl_mu = bl_mu,
+                           bl_cov = bl_cov, blfm_mu = blfm_mu, blfm_cov = blfm_cov,
+                           cov_l = cov_l, cov_u = cov_u, cov_mu = cov_mu,
+                           cov_sigma = cov_sigma, d_mu = d_mu, k_mu = k_mu,
+                           k_sigma = k_sigma, w_min = w_min, w_max = w_max,
+                           risk_budget = risk_budget, f_risk_budget = f_risk_budget,
+                           short = short, long_l = long_l, long_u = long_u,
+                           short_l = short_l, short_u = short_u, min_budget = min_budget,
+                           budget = budget, max_budget = max_budget,
+                           min_short_budget = min_short_budget, short_budget = short_budget,
+                           max_short_budget = max_short_budget, card_scale = card_scale,
+                           card = card, nea = nea, tracking = tracking, turnover = turnover,
+                           l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
+                           rebalance = rebalance, solvers = solvers, port_kwargs...)
 
     if !isempty(stats_kwargs)
         asset_statistics!(intra_port; stats_kwargs...)
@@ -620,10 +618,10 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
 
     return w, intra_port.fail
 end
-function set_rm_stats(::OmniPortfolio, ::Nothing, args...)
+function set_rm_stats(::Portfolio, ::Nothing, args...)
     return nothing
 end
-function set_rm_stats(port::OmniPortfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
+function set_rm_stats(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
 
     cov_flag = !isempty(cov_idx)
@@ -663,7 +661,7 @@ function set_rm_stats(port::OmniPortfolio, rm, cluster, cidx, idx_sq, Nc, specia
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms)
 end
-function calc_intra_weights(port::OmniPortfolio, internal_args)
+function calc_intra_weights(port::Portfolio, internal_args)
     k = port.k
     idx = cutree(port.clusters; k = k)
     w = zeros(eltype(port.returns), size(port.returns, 2), k)
@@ -952,26 +950,25 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         rebalance = NoTR()
     end
 
-    inter_port = OmniPortfolio(; assets = assets, ret = returns, f_assets = f_assets,
-                               f_ret = f_returns, loadings = loadings,
-                               regression_type = regression_type, mu_l = mu_l, mu = mu,
-                               cov = cov, k = k, max_num_assets_kurt = max_num_assets_kurt,
-                               max_num_assets_kurt_scale = max_num_assets_kurt_scale,
-                               f_mu = f_mu, f_cov = f_cov, fm_returns = fm_returns,
-                               fm_mu = fm_mu, fm_cov = fm_cov,
-                               bl_bench_weights = bl_bench_weights, bl_mu = bl_mu,
-                               bl_cov = bl_cov, blfm_mu = blfm_mu, blfm_cov = blfm_cov,
-                               w_min = w_min, w_max = w_max, risk_budget = risk_budget,
-                               f_risk_budget = f_risk_budget, short = short,
-                               long_l = long_l, long_u = long_u, short_l = short_l,
-                               short_u = short_u, min_budget = min_budget, budget = budget,
-                               max_budget = max_budget, min_short_budget = min_short_budget,
-                               short_budget = short_budget,
-                               max_short_budget = max_short_budget, card_scale = card_scale,
-                               card = card, nea = nea, tracking = tracking,
-                               turnover = turnover, l1 = l1, l2 = l2, long_fees = long_fees,
-                               short_fees = short_fees, rebalance = rebalance,
-                               solvers = solvers, port_kwargs...)
+    inter_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
+                           f_ret = f_returns, loadings = loadings,
+                           regression_type = regression_type, mu_l = mu_l, mu = mu,
+                           cov = cov, k = k, max_num_assets_kurt = max_num_assets_kurt,
+                           max_num_assets_kurt_scale = max_num_assets_kurt_scale,
+                           f_mu = f_mu, f_cov = f_cov, fm_returns = fm_returns,
+                           fm_mu = fm_mu, fm_cov = fm_cov,
+                           bl_bench_weights = bl_bench_weights, bl_mu = bl_mu,
+                           bl_cov = bl_cov, blfm_mu = blfm_mu, blfm_cov = blfm_cov,
+                           w_min = w_min, w_max = w_max, risk_budget = risk_budget,
+                           f_risk_budget = f_risk_budget, short = short, long_l = long_l,
+                           long_u = long_u, short_l = short_l, short_u = short_u,
+                           min_budget = min_budget, budget = budget,
+                           max_budget = max_budget, min_short_budget = min_short_budget,
+                           short_budget = short_budget, max_short_budget = max_short_budget,
+                           card_scale = card_scale, card = card, nea = nea,
+                           tracking = tracking, turnover = turnover, l1 = l1, l2 = l2,
+                           long_fees = long_fees, short_fees = short_fees,
+                           rebalance = rebalance, solvers = solvers, port_kwargs...)
 
     asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = hc_flag,
                       set_dist = hc_flag, set_kurt = kurt_flag, set_skurt = skurt_flag,
@@ -995,7 +992,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
 
     return w, inter_port.fail
 end
-function calc_inter_weights(port::OmniPortfolio, wi, external_args)
+function calc_inter_weights(port::Portfolio, wi, external_args)
     rm = external_args.type.rm
 
     special_rm_idx = find_special_rm(rm)

@@ -1,5 +1,5 @@
 @testset "Correlation and Distance Estimation Unweighted" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     de = DistDistCanonical()
 
     c1 = PortCovCor(; ce = CovDistance())

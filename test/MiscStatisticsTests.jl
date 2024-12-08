@@ -8,7 +8,7 @@ rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Misc Statistics" begin
-    portfolio = OmniPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     asset_statistics!(portfolio)
 
     simret1 = PortfolioOptimiser.cov_returns(portfolio.cov; iters = 5, len = 100,
