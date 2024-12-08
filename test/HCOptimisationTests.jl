@@ -311,10 +311,6 @@ end
     portfolio.w_min = -Inf
     portfolio.w_max = Inf
     portfolio.short = true
-    portfolio.short_budget = -10
-    portfolio.short_u = -10
-    portfolio.budget = 1
-    portfolio.long_u = 10
 
     w4 = optimise!(portfolio,
                    NCO(;

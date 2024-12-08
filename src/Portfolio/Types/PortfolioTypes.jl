@@ -33,9 +33,8 @@ mutable struct Portfolio{
                          T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_long_fees,
                          T_short_fees, T_rebalance, T_constraint_scale, T_obj_scale,
                          T_model, T_solvers, T_optimal, T_fail, T_limits, T_frontier,
-                         T_walking, T_alloc_model, T_alloc_solvers, T_alloc_optimal,
-                         T_alloc_leftover, T_alloc_fail, T_alloc_walking} <:
-               AbstractPortfolio
+                         T_alloc_model, T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
+                         T_alloc_fail} <: AbstractPortfolio
     # Assets and factors
     assets::T_assets
     timestamps::T_timestamps
@@ -138,13 +137,11 @@ mutable struct Portfolio{
     fail::T_fail
     limits::T_limits
     frontier::T_frontier
-    walking::T_walking
     alloc_model::T_alloc_model
     alloc_solvers::T_alloc_solvers
     alloc_optimal::T_alloc_optimal
     alloc_leftover::T_alloc_leftover
     alloc_fail::T_alloc_fail
-    alloc_walking::T_alloc_walking
 end
 function setup_returns_assets_timestamps(returns, assets, timestamps, ret)
     if !isempty(returns)
@@ -438,11 +435,11 @@ function Portfolio(;
                    model::JuMP.Model = JuMP.Model(), solvers::AbstractDict = Dict(),
                    optimal::AbstractDict = Dict(), fail::AbstractDict = Dict(),
                    limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
-                   walking::AbstractDict = Dict(), alloc_model::JuMP.Model = JuMP.Model(),
+                   alloc_model::JuMP.Model = JuMP.Model(),
                    alloc_solvers::AbstractDict = Dict(),
                    alloc_optimal::AbstractDict = Dict(),
-                   alloc_leftover::AbstractDict = Dict(), alloc_fail::AbstractDict = Dict(),
-                   alloc_walking::AbstractDict = Dict())
+                   alloc_leftover::AbstractDict = Dict(),
+                   alloc_fail::AbstractDict = Dict(),)
     # Assets and factors
     if !isempty(prices)
         returns = dropmissing!(DataFrame(percentchange(prices, ret_type)))
@@ -606,69 +603,115 @@ function Portfolio(;
                      # Solution
                      typeof(constr_scale), typeof(obj_scale), typeof(model),
                      typeof(solvers), typeof(optimal), typeof(fail), typeof(limits),
-                     typeof(frontier), typeof(walking), typeof(alloc_model),
-                     typeof(alloc_solvers), typeof(alloc_optimal), typeof(alloc_leftover),
-                     typeof(alloc_fail), typeof(alloc_walking)}(
-                                                                # Assets and factors
-                                                                assets, timestamps, returns,
-                                                                latest_prices, f_assets,
-                                                                f_timestamps, f_returns,
-                                                                loadings, regression_type,
-                                                                # Statistics
-                                                                mu_l, mu, cov, cor, dist,
-                                                                clusters, k,
-                                                                min_cluster_size,
-                                                                max_num_assets_kurt,
-                                                                max_num_assets_kurt_scale,
-                                                                kurt, skurt, L_2, S_2, skew,
-                                                                V, sskew, SV, f_mu, f_cov,
-                                                                fm_returns, fm_mu, fm_cov,
-                                                                bl_bench_weights, bl_mu,
-                                                                bl_cov, blfm_mu, blfm_cov,
-                                                                cov_l, cov_u, cov_mu,
-                                                                cov_sigma, d_mu, k_mu,
-                                                                k_sigma,
-                                                                # Min and max weights
-                                                                w_min, w_max,
-                                                                # Risk budgetting
-                                                                risk_budget, f_risk_budget,
-                                                                # Budget and shorting
-                                                                short, long_l, long_u,
-                                                                short_l, short_u,
-                                                                min_budget, budget,
-                                                                max_budget,
-                                                                min_short_budget,
-                                                                short_budget,
-                                                                max_short_budget,
-                                                                # Cardinality
-                                                                card_scale, card,
-                                                                a_card_ineq, b_card_ineq,
-                                                                a_card_eq, b_card_eq,
-                                                                # Effective assets
-                                                                nea,
-                                                                # Linear constraints
-                                                                a_ineq, b_ineq, a_eq, b_eq,
-                                                                # Tracking
-                                                                tracking,
-                                                                # Turnover
-                                                                turnover,
-                                                                # Adjacency
-                                                                network_adj, cluster_adj,
-                                                                # Regularisation
-                                                                l1, l2,
-                                                                # Fees
-                                                                long_fees, short_fees,
-                                                                # Rebalance cost
-                                                                rebalance,
-                                                                # Solution
-                                                                constr_scale, obj_scale,
-                                                                model, solvers, optimal,
-                                                                fail, limits, frontier,
-                                                                walking, alloc_model,
-                                                                alloc_solvers,
-                                                                alloc_optimal,
-                                                                alloc_leftover, alloc_fail,
-                                                                alloc_walking)
+                     typeof(frontier), typeof(alloc_model), typeof(alloc_solvers),
+                     typeof(alloc_optimal), typeof(alloc_leftover), typeof(alloc_fail)}(
+                                                                                        # Assets and factors
+                                                                                        assets,
+                                                                                        timestamps,
+                                                                                        returns,
+                                                                                        latest_prices,
+                                                                                        f_assets,
+                                                                                        f_timestamps,
+                                                                                        f_returns,
+                                                                                        loadings,
+                                                                                        regression_type,
+                                                                                        # Statistics
+                                                                                        mu_l,
+                                                                                        mu,
+                                                                                        cov,
+                                                                                        cor,
+                                                                                        dist,
+                                                                                        clusters,
+                                                                                        k,
+                                                                                        min_cluster_size,
+                                                                                        max_num_assets_kurt,
+                                                                                        max_num_assets_kurt_scale,
+                                                                                        kurt,
+                                                                                        skurt,
+                                                                                        L_2,
+                                                                                        S_2,
+                                                                                        skew,
+                                                                                        V,
+                                                                                        sskew,
+                                                                                        SV,
+                                                                                        f_mu,
+                                                                                        f_cov,
+                                                                                        fm_returns,
+                                                                                        fm_mu,
+                                                                                        fm_cov,
+                                                                                        bl_bench_weights,
+                                                                                        bl_mu,
+                                                                                        bl_cov,
+                                                                                        blfm_mu,
+                                                                                        blfm_cov,
+                                                                                        cov_l,
+                                                                                        cov_u,
+                                                                                        cov_mu,
+                                                                                        cov_sigma,
+                                                                                        d_mu,
+                                                                                        k_mu,
+                                                                                        k_sigma,
+                                                                                        # Min and max weights
+                                                                                        w_min,
+                                                                                        w_max,
+                                                                                        # Risk budgetting
+                                                                                        risk_budget,
+                                                                                        f_risk_budget,
+                                                                                        # Budget and shorting
+                                                                                        short,
+                                                                                        long_l,
+                                                                                        long_u,
+                                                                                        short_l,
+                                                                                        short_u,
+                                                                                        min_budget,
+                                                                                        budget,
+                                                                                        max_budget,
+                                                                                        min_short_budget,
+                                                                                        short_budget,
+                                                                                        max_short_budget,
+                                                                                        # Cardinality
+                                                                                        card_scale,
+                                                                                        card,
+                                                                                        a_card_ineq,
+                                                                                        b_card_ineq,
+                                                                                        a_card_eq,
+                                                                                        b_card_eq,
+                                                                                        # Effective assets
+                                                                                        nea,
+                                                                                        # Linear constraints
+                                                                                        a_ineq,
+                                                                                        b_ineq,
+                                                                                        a_eq,
+                                                                                        b_eq,
+                                                                                        # Tracking
+                                                                                        tracking,
+                                                                                        # Turnover
+                                                                                        turnover,
+                                                                                        # Adjacency
+                                                                                        network_adj,
+                                                                                        cluster_adj,
+                                                                                        # Regularisation
+                                                                                        l1,
+                                                                                        l2,
+                                                                                        # Fees
+                                                                                        long_fees,
+                                                                                        short_fees,
+                                                                                        # Rebalance cost
+                                                                                        rebalance,
+                                                                                        # Solution
+                                                                                        constr_scale,
+                                                                                        obj_scale,
+                                                                                        model,
+                                                                                        solvers,
+                                                                                        optimal,
+                                                                                        fail,
+                                                                                        limits,
+                                                                                        frontier,
+                                                                                        alloc_model,
+                                                                                        alloc_solvers,
+                                                                                        alloc_optimal,
+                                                                                        alloc_leftover,
+                                                                                        alloc_fail)
 end
 function Base.setproperty!(port::Portfolio, sym::Symbol, val)
     if sym ∈ (:latest_prices, :mu, :fm_mu, :bl_bench_weights, :bl_mu, :blfm_mu, :d_mu)
@@ -933,119 +976,116 @@ function Base.deepcopy(port::Portfolio)
                      # Solution
                      typeof(port.constr_scale), typeof(port.obj_scale), typeof(port.model),
                      typeof(port.solvers), typeof(port.optimal), typeof(port.fail),
-                     typeof(port.limits), typeof(port.frontier), typeof(port.walking),
-                     typeof(port.alloc_model), typeof(port.alloc_solvers),
-                     typeof(port.alloc_optimal), typeof(port.alloc_leftover),
-                     typeof(port.alloc_fail), typeof(port.alloc_walking)}(
-                                                                          # Assets and factors
-                                                                          deepcopy(port.assets),
-                                                                          deepcopy(port.timestamps),
-                                                                          deepcopy(port.returns),
-                                                                          deepcopy(port.latest_prices),
-                                                                          deepcopy(port.f_assets),
-                                                                          deepcopy(port.f_timestamps),
-                                                                          deepcopy(port.f_returns),
-                                                                          deepcopy(port.loadings),
-                                                                          deepcopy(port.regression_type),
-                                                                          # Statistics
-                                                                          deepcopy(port.mu_l),
-                                                                          deepcopy(port.mu),
-                                                                          deepcopy(port.cov),
-                                                                          deepcopy(port.cor),
-                                                                          deepcopy(port.dist),
-                                                                          deepcopy(port.clusters),
-                                                                          deepcopy(port.k),
-                                                                          deepcopy(port.min_cluster_size),
-                                                                          deepcopy(port.max_num_assets_kurt),
-                                                                          deepcopy(port.max_num_assets_kurt_scale),
-                                                                          deepcopy(port.kurt),
-                                                                          deepcopy(port.skurt),
-                                                                          deepcopy(port.L_2),
-                                                                          deepcopy(port.S_2),
-                                                                          deepcopy(port.skew),
-                                                                          deepcopy(port.V),
-                                                                          deepcopy(port.sskew),
-                                                                          deepcopy(port.SV),
-                                                                          deepcopy(port.f_mu),
-                                                                          deepcopy(port.f_cov),
-                                                                          deepcopy(port.fm_returns),
-                                                                          deepcopy(port.fm_mu),
-                                                                          deepcopy(port.fm_cov),
-                                                                          deepcopy(port.bl_bench_weights),
-                                                                          deepcopy(port.bl_mu),
-                                                                          deepcopy(port.bl_cov),
-                                                                          deepcopy(port.blfm_mu),
-                                                                          deepcopy(port.blfm_cov),
-                                                                          deepcopy(port.cov_l),
-                                                                          deepcopy(port.cov_u),
-                                                                          deepcopy(port.cov_mu),
-                                                                          deepcopy(port.cov_sigma),
-                                                                          deepcopy(port.d_mu),
-                                                                          deepcopy(port.k_mu),
-                                                                          deepcopy(port.k_sigma),
-                                                                          # Min and max weights
-                                                                          deepcopy(port.w_min),
-                                                                          deepcopy(port.w_max),
-                                                                          # Risk budgetting
-                                                                          deepcopy(port.risk_budget),
-                                                                          deepcopy(port.f_risk_budget),
-                                                                          # Budget and shorting
-                                                                          deepcopy(port.short),
-                                                                          deepcopy(port.long_l),
-                                                                          deepcopy(port.long_u),
-                                                                          deepcopy(port.short_l),
-                                                                          deepcopy(port.short_u),
-                                                                          deepcopy(port.min_budget),
-                                                                          deepcopy(port.budget),
-                                                                          deepcopy(port.max_budget),
-                                                                          deepcopy(port.min_short_budget),
-                                                                          deepcopy(port.short_budget),
-                                                                          deepcopy(port.max_short_budget),
-                                                                          # Cardinality
-                                                                          deepcopy(port.card_scale),
-                                                                          deepcopy(port.card),
-                                                                          deepcopy(port.a_card_ineq),
-                                                                          deepcopy(port.b_card_ineq),
-                                                                          deepcopy(port.a_card_eq),
-                                                                          deepcopy(port.b_card_eq),
-                                                                          # Effective assets
-                                                                          deepcopy(port.nea),
-                                                                          # Linear constraints
-                                                                          deepcopy(port.a_ineq),
-                                                                          deepcopy(port.b_ineq),
-                                                                          deepcopy(port.a_eq),
-                                                                          deepcopy(port.b_eq),
-                                                                          # Tracking
-                                                                          deepcopy(port.tracking),
-                                                                          # Turnover
-                                                                          deepcopy(port.turnover),
-                                                                          # Adjacency
-                                                                          deepcopy(port.network_adj),
-                                                                          deepcopy(port.cluster_adj),
-                                                                          # Regularisation
-                                                                          deepcopy(port.l1),
-                                                                          deepcopy(port.l2),
-                                                                          # Fees
-                                                                          deepcopy(port.long_fees),
-                                                                          deepcopy(port.short_fees),
-                                                                          # Rebalance cost
-                                                                          deepcopy(port.rebalance),
-                                                                          # Solution
-                                                                          deepcopy(port.constr_scale),
-                                                                          deepcopy(port.obj_scale),
-                                                                          copy(port.model),
-                                                                          deepcopy(port.solvers),
-                                                                          deepcopy(port.optimal),
-                                                                          deepcopy(port.fail),
-                                                                          deepcopy(port.limits),
-                                                                          deepcopy(port.frontier),
-                                                                          deepcopy(port.walking),
-                                                                          copy(port.alloc_model),
-                                                                          deepcopy(port.alloc_solvers),
-                                                                          deepcopy(port.alloc_optimal),
-                                                                          deepcopy(port.alloc_leftover),
-                                                                          deepcopy(port.alloc_fail),
-                                                                          deepcopy(port.alloc_walking))
+                     typeof(port.limits), typeof(port.frontier), typeof(port.alloc_model),
+                     typeof(port.alloc_solvers), typeof(port.alloc_optimal),
+                     typeof(port.alloc_leftover), typeof(port.alloc_fail)}(
+                                                                           # Assets and factors
+                                                                           deepcopy(port.assets),
+                                                                           deepcopy(port.timestamps),
+                                                                           deepcopy(port.returns),
+                                                                           deepcopy(port.latest_prices),
+                                                                           deepcopy(port.f_assets),
+                                                                           deepcopy(port.f_timestamps),
+                                                                           deepcopy(port.f_returns),
+                                                                           deepcopy(port.loadings),
+                                                                           deepcopy(port.regression_type),
+                                                                           # Statistics
+                                                                           deepcopy(port.mu_l),
+                                                                           deepcopy(port.mu),
+                                                                           deepcopy(port.cov),
+                                                                           deepcopy(port.cor),
+                                                                           deepcopy(port.dist),
+                                                                           deepcopy(port.clusters),
+                                                                           deepcopy(port.k),
+                                                                           deepcopy(port.min_cluster_size),
+                                                                           deepcopy(port.max_num_assets_kurt),
+                                                                           deepcopy(port.max_num_assets_kurt_scale),
+                                                                           deepcopy(port.kurt),
+                                                                           deepcopy(port.skurt),
+                                                                           deepcopy(port.L_2),
+                                                                           deepcopy(port.S_2),
+                                                                           deepcopy(port.skew),
+                                                                           deepcopy(port.V),
+                                                                           deepcopy(port.sskew),
+                                                                           deepcopy(port.SV),
+                                                                           deepcopy(port.f_mu),
+                                                                           deepcopy(port.f_cov),
+                                                                           deepcopy(port.fm_returns),
+                                                                           deepcopy(port.fm_mu),
+                                                                           deepcopy(port.fm_cov),
+                                                                           deepcopy(port.bl_bench_weights),
+                                                                           deepcopy(port.bl_mu),
+                                                                           deepcopy(port.bl_cov),
+                                                                           deepcopy(port.blfm_mu),
+                                                                           deepcopy(port.blfm_cov),
+                                                                           deepcopy(port.cov_l),
+                                                                           deepcopy(port.cov_u),
+                                                                           deepcopy(port.cov_mu),
+                                                                           deepcopy(port.cov_sigma),
+                                                                           deepcopy(port.d_mu),
+                                                                           deepcopy(port.k_mu),
+                                                                           deepcopy(port.k_sigma),
+                                                                           # Min and max weights
+                                                                           deepcopy(port.w_min),
+                                                                           deepcopy(port.w_max),
+                                                                           # Risk budgetting
+                                                                           deepcopy(port.risk_budget),
+                                                                           deepcopy(port.f_risk_budget),
+                                                                           # Budget and shorting
+                                                                           deepcopy(port.short),
+                                                                           deepcopy(port.long_l),
+                                                                           deepcopy(port.long_u),
+                                                                           deepcopy(port.short_l),
+                                                                           deepcopy(port.short_u),
+                                                                           deepcopy(port.min_budget),
+                                                                           deepcopy(port.budget),
+                                                                           deepcopy(port.max_budget),
+                                                                           deepcopy(port.min_short_budget),
+                                                                           deepcopy(port.short_budget),
+                                                                           deepcopy(port.max_short_budget),
+                                                                           # Cardinality
+                                                                           deepcopy(port.card_scale),
+                                                                           deepcopy(port.card),
+                                                                           deepcopy(port.a_card_ineq),
+                                                                           deepcopy(port.b_card_ineq),
+                                                                           deepcopy(port.a_card_eq),
+                                                                           deepcopy(port.b_card_eq),
+                                                                           # Effective assets
+                                                                           deepcopy(port.nea),
+                                                                           # Linear constraints
+                                                                           deepcopy(port.a_ineq),
+                                                                           deepcopy(port.b_ineq),
+                                                                           deepcopy(port.a_eq),
+                                                                           deepcopy(port.b_eq),
+                                                                           # Tracking
+                                                                           deepcopy(port.tracking),
+                                                                           # Turnover
+                                                                           deepcopy(port.turnover),
+                                                                           # Adjacency
+                                                                           deepcopy(port.network_adj),
+                                                                           deepcopy(port.cluster_adj),
+                                                                           # Regularisation
+                                                                           deepcopy(port.l1),
+                                                                           deepcopy(port.l2),
+                                                                           # Fees
+                                                                           deepcopy(port.long_fees),
+                                                                           deepcopy(port.short_fees),
+                                                                           # Rebalance cost
+                                                                           deepcopy(port.rebalance),
+                                                                           # Solution
+                                                                           deepcopy(port.constr_scale),
+                                                                           deepcopy(port.obj_scale),
+                                                                           copy(port.model),
+                                                                           deepcopy(port.solvers),
+                                                                           deepcopy(port.optimal),
+                                                                           deepcopy(port.fail),
+                                                                           deepcopy(port.limits),
+                                                                           deepcopy(port.frontier),
+                                                                           copy(port.alloc_model),
+                                                                           deepcopy(port.alloc_solvers),
+                                                                           deepcopy(port.alloc_optimal),
+                                                                           deepcopy(port.alloc_leftover),
+                                                                           deepcopy(port.alloc_fail))
 end
 
 export Portfolio

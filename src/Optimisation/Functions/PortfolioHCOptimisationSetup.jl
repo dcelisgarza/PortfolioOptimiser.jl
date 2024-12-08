@@ -8,8 +8,10 @@ function w_limits(port::Portfolio, type::NCO)
     port_short_i = haskey(port_kwargs, :short) && port_kwargs.short
     port_short_o = haskey(port_kwargs_o, :short) && port_kwargs_o.short
     port_short = port.short
+    short_flag = port_short_i || port_short_o || port_short
+    fc_flag = isa(class, FC) || isa(class_o, FC)
 
-    lo, hi = if port_short_i || port_short_o || port_short
+    lo, hi = if short_flag && !fc_flag
         la = nothing
         ha = nothing
         lb = nothing
@@ -73,7 +75,7 @@ function w_limits(port::Portfolio, type::NCO)
         end
 
         min(la, lb), max(ha, hb)
-    elseif isa(class, Union{FM, FC}) || isa(class_o, Union{FM, FC})
+    elseif fc_flag
         -Inf, Inf
     else
         zero(datatype), one(datatype)
