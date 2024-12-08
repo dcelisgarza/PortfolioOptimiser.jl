@@ -11,7 +11,7 @@ function bootstrap_generator(method::ArchWC, X)
     return _bootstrap_func(method.bootstrap, method.block_size, Py(X).to_numpy(),
                            method.seed)
 end
-function _sigma_mu(X::AbstractArray, cov_type::PortfolioOptimiserCovCor,
+function _sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator)
     sigma = Matrix(cov(cov_type, X))
     old_sigma = set_mean_sigma(mu_type, sigma)

@@ -1,6 +1,7 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "WC Stats" begin
     portfolio = Portfolio(; prices = prices)

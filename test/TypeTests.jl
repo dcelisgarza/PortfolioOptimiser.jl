@@ -1,15 +1,16 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser, JuMP, Clustering, SparseArrays
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
-
+prices_path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(prices_path); timestamp = :date)
+factors_path = joinpath(@__DIR__, "assets/factor_prices.csv")
+factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Portfolio" begin
-    portfolio = Portfolio(; prices = prices, short = true, budget = 3.0, short_budget = 0.5,
-                          long_u = 1.0, short_u = 0.3,
+    portfolio = Portfolio(; prices = prices, short = true, budget = 3.0,
+                          short_budget = -0.5, long_u = 1.0, short_u = -0.3,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
                                                                           allow_almost = true),
@@ -37,7 +38,7 @@ l = 2.0
     for property ∈ propertynames(portfolio)
         port2_prop = getproperty(portfolio_copy, property)
         port_prop = getproperty(portfolio, property)
-        if isa(port_prop, JuMP.Model)
+        if isa(port_prop, JuMP.Model) || isa(port_prop, Clustering.Hclust)
             continue
         end
         @test isequal(port_prop, port2_prop)
@@ -46,7 +47,7 @@ l = 2.0
     N = size(prices, 2)
     M = size(factors, 2)
     A = rand(N, N)
-    a_mtx_ineq = rand(3, N)
+    a_ineq = rand(3, N)
     skew = rand(N, N^2)
     sskew = rand(N, N^2)
     f_cov = rand(M, M)
@@ -66,35 +67,35 @@ l = 2.0
                           cluster_adj = SDP(; A = A))
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
                           cluster_adj = IP(; A = A))
-    portfolio = Portfolio(; prices = prices, f_prices = factors, fees = fill(1, N),
+    portfolio = Portfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
                           short_fees = fill(3, N), bl_bench_weights = 2 * (1:N),
                           rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
-                          tracking_err = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
+                          tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
                           network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
-                          a_vec_cent = fill(inv(5 * N), N), a_mtx_ineq = a_mtx_ineq,
-                          risk_budget = 1:N, f_risk_budget = 1:div(N, 2), L_2 = L_2,
-                          S_2 = S_2, skew = skew, sskew = sskew, f_mu = fill(inv(M), M),
-                          f_cov = f_cov, fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
+                          a_eq = fill(inv(5 * N), N)', a_ineq = a_ineq, risk_budget = 1:N,
+                          f_risk_budget = 1:5, L_2 = L_2, S_2 = S_2, skew = skew,
+                          sskew = sskew, f_mu = fill(inv(M), M), f_cov = f_cov,
+                          fm_mu = fill(inv(6 * N), N), fm_cov = fm_cov,
                           bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
                           blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov, cov_l = cov_l,
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
                           d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
-    @test portfolio.fees == fill(1, N)
+    @test portfolio.long_fees == fill(1, N)
     @test portfolio.short_fees == fill(3, N)
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
     @test portfolio.turnover.w == fill(inv(2 * N), N)
-    @test portfolio.tracking_err.err == 11
-    @test portfolio.tracking_err.w == fill(inv(3 * N), N)
+    @test portfolio.tracking.err == 11
+    @test portfolio.tracking.w == fill(inv(3 * N), N)
     @test portfolio.network_adj.A == A
-    @test portfolio.a_vec_cent == fill(inv(5 * N), N)
-    @test portfolio.a_mtx_ineq == a_mtx_ineq
-    @test portfolio.risk_budget == collect(1:N) / sum(1:N)
+    @test portfolio.a_eq == fill(inv(5 * N), N)'
+    @test portfolio.a_ineq == a_ineq
+    @test portfolio.risk_budget == collect(1:N)
     @test portfolio.bl_bench_weights == 2 * (1:N)
-    @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
+    @test portfolio.f_risk_budget == collect(1:5)
     @test portfolio.L_2 == L_2
     @test portfolio.S_2 == S_2
     @test portfolio.skew == skew
@@ -120,18 +121,20 @@ l = 2.0
     skurt = rand(N^2, N^2)
     portfolio = Portfolio(; prices = prices, f_prices = factors, kurt = kurt, skurt = skurt,
                           rebalance = TR(; val = fill(inv(N), N)),
-                          turnover = TR(; val = fill(inv(2 * N), N)),
-                          risk_budget = collect(1.0:N),
+                          turnover = TR(; val = fill(inv(2 * N), N)), w_min = 0.01:0.01:0.2,
+                          w_max = 0.02:0.01:0.21, risk_budget = collect(1.0:N),
                           bl_bench_weights = collect(2 * (1:N)),
-                          f_risk_budget = collect(1.0:div(N, 2)),
-                          tracking_err = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
+                          f_risk_budget = collect(1.0:5),
+                          tracking = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
+    @test portfolio.w_min == 0.01:0.01:0.2
+    @test portfolio.w_max == 0.02:0.01:0.21
     @test portfolio.rebalance.val == fill(inv(N), N)
     @test portfolio.turnover.val == fill(inv(2 * N), N)
-    @test portfolio.risk_budget == collect(1:N) / sum(1:N)
+    @test portfolio.risk_budget == collect(1:N)
     @test portfolio.bl_bench_weights == collect(2 * (1:N))
-    @test portfolio.f_risk_budget == collect(1:div(N, 2)) / sum(1:div(N, 2))
-    @test portfolio.tracking_err.err == 11
-    @test portfolio.tracking_err.w == fill(inv(100 * M), M)
+    @test portfolio.f_risk_budget == collect(1:5)
+    @test portfolio.tracking.err == 11
+    @test portfolio.tracking.w == fill(inv(100 * M), M)
     @test portfolio.kurt == kurt
     @test portfolio.skurt == skurt
 
@@ -170,109 +173,9 @@ l = 2.0
     portfolio.short = false
     portfolio.budget = 1.5
     portfolio.long_u = 1.5
-    portfolio.short_budget = 0.5
-    portfolio.short_u = 0.5
-end
+    portfolio.short_budget = -0.5
+    portfolio.short_u = -0.5
 
-@testset "HC Portfolio" begin
-    portfolio = HCPortfolio(; prices = prices,
-                            solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                             :check_sol => (allow_local = true,
-                                                                            allow_almost = true),
-                                                             :params => Dict("verbose" => false,
-                                                                             "max_step_fraction" => 0.75))))
-    asset_statistics!(portfolio)
-    cluster_assets!(portfolio)
-
-    portfolio.bl_bench_weights = 1:20
-    @test portfolio.bl_bench_weights == collect(Float64, 1:20)
-    portfolio.bl_bench_weights = []
-    @test isempty(portfolio.bl_bench_weights)
-
-    portfolio_copy = deepcopy(portfolio)
-    for property ∈ propertynames(portfolio)
-        port2_prop = getproperty(portfolio_copy, property)
-        port_prop = getproperty(portfolio, property)
-        if isa(port_prop, JuMP.Model) ||
-           isa(port_prop, PortfolioOptimiser.PortfolioOptimiserCovCor) ||
-           isa(port_prop, Clustering.Hclust)
-            continue
-        end
-        @test isequal(port_prop, port2_prop)
-    end
-    @test portfolio_copy.clusters.merges == portfolio.clusters.merges
-    @test portfolio_copy.clusters.heights == portfolio.clusters.heights
-    @test portfolio_copy.clusters.order == portfolio.clusters.order
-
-    @test_throws AssertionError portfolio.w_min = 1:(size(portfolio.returns, 2) + 1)
-    @test_throws AssertionError portfolio.w_max = 1:(size(portfolio.returns, 2) + 1)
-
-    returns = dropmissing!(DataFrame(percentchange(prices)))
-    N = length(names(returns)) - 1
-
-    sigma = rand(N, N)
-    kurt = rand(N^2, N^2)
-    skurt = rand(N^2, N^2)
-    skew = rand(N, N^2)
-    sskew = rand(N, N^2)
-    V = rand(N, N)
-    SV = rand(N, N)
-    rho = rand(N, N)
-    delta = rand(N, N)
-    L_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
-    S_2 = sprand(Float16, Int(N * (N + 1) / 2), N^2, 0.2)
-    bl_cov = rand(N, N)
-    blfm_cov = rand(N, N)
-
-    portfolio = HCPortfolio(; assets = setdiff(names(returns), ("timestamp",)),
-                            bl_bench_weights = 2 * (1:N),
-                            ret = Matrix(returns[!,
-                                                 setdiff(names(returns), ("timestamp",))]),
-                            mu = fill(inv(N), N), cov = sigma, kurt = kurt, skurt = skurt,
-                            L_2 = L_2, S_2 = S_2, skew = skew, sskew = sskew, V = V,
-                            SV = SV, w_min = 0.2, w_max = 0.8, cor = rho, dist = delta,
-                            bl_mu = fill(inv(7 * N), N), bl_cov = bl_cov,
-                            blfm_mu = fill(inv(8 * N), N), blfm_cov = blfm_cov,)
-    @test portfolio.assets == setdiff(names(returns), ("timestamp",))
-    @test portfolio.returns == Matrix(returns[!, setdiff(names(returns), ("timestamp",))])
-    @test portfolio.mu == fill(inv(N), N)
-    @test portfolio.cov == sigma
-    @test portfolio.bl_bench_weights == 2 * (1:N)
-    @test portfolio.kurt == kurt
-    @test portfolio.skurt == skurt
-    @test portfolio.L_2 == L_2
-    @test portfolio.S_2 == S_2
-    @test portfolio.skew == skew
-    @test portfolio.sskew == sskew
-    @test portfolio.V == V
-    @test portfolio.SV == SV
-    @test portfolio.cor == rho
-    @test portfolio.dist == delta
-    @test portfolio.bl_mu == fill(inv(7 * N), N)
-    @test portfolio.bl_cov == bl_cov
-    @test portfolio.blfm_mu == fill(inv(8 * N), N)
-    @test portfolio.blfm_cov == blfm_cov
-
-    portfolio = HCPortfolio(; prices = prices, w_min = 0.01:0.01:0.2,
-                            bl_bench_weights = collect(2 * (1:N)), w_max = 0.02:0.01:0.21,)
-    @test portfolio.w_min == 0.01:0.01:0.2
-    @test portfolio.w_max == 0.02:0.01:0.21
-    @test portfolio.bl_bench_weights == collect(2 * (1:N))
-
-    portfolio = HCPortfolio(; prices = prices, w_min = 1, w_max = 1:20)
-    @test portfolio.w_min == 1
-    @test portfolio.w_max == 1:20
-
-    portfolio = HCPortfolio(; prices = prices, w_max = 21, w_min = 1:20)
-    @test portfolio.w_min == 1:20
-    @test portfolio.w_max == 21
-
-    portfolio = HCPortfolio(; prices = prices, w_min = 1, w_max = 1:20)
-    @test portfolio.w_min == 1
-    @test portfolio.w_max == 1:20
-
-    portfolio.w_min = 1:20
-    portfolio.w_max = 21
-    @test portfolio.w_min == 1:20
-    @test portfolio.w_max == 21
+    @test_throws AssertionError portfolio.w_min = 1:21
+    @test_throws AssertionError portfolio.w_max = 1:21
 end

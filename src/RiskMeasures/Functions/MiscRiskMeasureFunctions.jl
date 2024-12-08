@@ -93,6 +93,9 @@ end
 function _set_rm_sskew(args...)
     return false
 end
+function _set_rm_wc_var(args...)
+    return false
+end
 """
 ```
 set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,

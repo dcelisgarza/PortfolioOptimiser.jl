@@ -1,7 +1,8 @@
 using CSV, TimeSeries, CovarianceEstimation, StatsBase, Statistics,
       NearestCorrelationMatrix, LinearAlgebra, Test, PortfolioOptimiser, Distances
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 include("StatsTest_1.jl")
 include("StatsTest_2.jl")

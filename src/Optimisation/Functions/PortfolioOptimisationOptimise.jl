@@ -1,67 +1,193 @@
-"""
-```
-optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-          type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
-          kelly::RetType = NoKelly(), class::PortClass = Classic(),
-          w_ini::AbstractVector = Vector{Float64}(undef, 0),
-          str_names::Bool = false)
-```
-"""
-function optimise!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                   type::OptimType = Trad(), obj::ObjectiveFunction = MinRisk(),
-                   kelly::RetType = NoKelly(), class::PortClass = Classic(),
-                   w_ini::AbstractVector = Vector{Float64}(undef, 0),
-                   c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty, Nothing} = nothing,
-                   str_names::Bool = false)
+function optimise!(port::Portfolio, type::Trad)
+    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
     empty!(port.fail)
-    return _optimise!(type, port, rm, obj, kelly, class, w_ini, c_const_obj_pen, str_names)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    set_obj_constr_scales(port)
+    optimal_homogenisation_factor(port, mu, obj, ohf)
+    initial_w(port, w_ini)
+    set_k(port, obj)
+    # Weight constraints
+    weight_constraints(port)
+    MIP_constraints(port)
+    SDP_network_cluster_constraints(port, type)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    # Returns
+    expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, obj, type, kelly, custom_obj)
+    return convex_optimisation(port, obj, type, class)
 end
-
-function frontier_limits!(port::Portfolio; rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                          kelly::RetType = NoKelly(), class::PortClass = Classic(),
+function optimise!(port::Portfolio, type::RP)
+    (; rm, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
+    empty!(port.fail)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    set_obj_constr_scales(port)
+    rp_constraints(port, class, w_ini)
+    # Weight constraints
+    weight_constraints(port, false)
+    MIP_constraints(port, false)
+    SDP_network_cluster_constraints(port, nothing)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    # Returns
+    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, type, custom_obj)
+    return convex_optimisation(port, nothing, type, class)
+end
+function optimise!(port::Portfolio, type::RRP)
+    (; version, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
+    empty!(port.fail)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    set_obj_constr_scales(port)
+    # Weight constraints
+    initial_w(port, w_ini)
+    set_k(port, nothing)
+    weight_constraints(port, false)
+    MIP_constraints(port, false)
+    SDP_network_cluster_constraints(port, nothing)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    rrp_constraints(port, version, sigma)
+    # Returns
+    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, nothing)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, type, custom_obj)
+    return convex_optimisation(port, nothing, type, class)
+end
+function optimise!(port::Portfolio, type::NOC)
+    (; flag, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
+    empty!(port.fail)
+    risk0, ret0 = noc_risk_ret(port, type)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    set_obj_constr_scales(port)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    optimal_homogenisation_factor(port, mu, obj, ohf)
+    initial_w(port, w_ini)
+    set_k(port, nothing)
+    # Weight constraints
+    weight_constraints(port, false)
+    if flag
+        MIP_constraints(port, false)
+        SDP_network_cluster_constraints(port, nothing)
+        # Tracking
+        tracking_error_constraints(port, returns)
+        turnover_constraints(port)
+    else
+        old_ntwk_adj = port.network_adj
+        old_clst_adj = port.cluster_adj
+        port.network_adj = NoAdj()
+        port.cluster_adj = NoAdj()
+        custom_constr = NoCustomConstraint()
+        custom_obj = NoCustomObjective()
+    end
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
+    # Returns
+    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    if flag
+        # Objective function penalties
+        L1_regularisation(port)
+        L2_regularisation(port)
+        SDP_network_cluster_penalty(port)
+    else
+        port.network_adj = old_ntwk_adj
+        port.cluster_adj = old_clst_adj
+    end
+    # NOC constraints
+    noc_constraints(port, risk0, ret0)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, type, custom_obj)
+    return convex_optimisation(port, obj, type, class)
+end
+function frontier_limits!(port::Portfolio, type::Union{Trad, NOC} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                          c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty,
-                                                 Nothing} = nothing)
-    w_min = optimise!(port; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                      w_ini = w_min_ini, c_const_obj_pen = c_const_obj_pen)
-    w_max = optimise!(port; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
-                      w_ini = w_max_ini, c_const_obj_pen = c_const_obj_pen)
+                          w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
+    old_obj = type.obj
+    old_w_ini = type.w_ini
+
+    type.obj = MinRisk()
+    type.w_ini = w_min_ini
+    w_min = optimise!(port, type)
+
+    type.obj = MaxRet()
+    type.w_ini = w_max_ini
+    w_max = optimise!(port, type)
+
+    type.obj = old_obj
+    type.w_ini = old_w_ini
 
     limits = hcat(w_min, DataFrame(; x1 = w_max[!, 2]))
     DataFrames.rename!(limits, :weights => :w_min, :x1 => :w_max)
 
-    rmsym = get_rm_symbol(rm)
+    rmsym = get_rm_symbol(type.rm)
     port.limits[rmsym] = limits
 
     return port.limits[rmsym]
 end
-
-"""
-```
-efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
-                             rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                             kelly::RetType = NoKelly(), class::PortClass = Classic(),
+function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                             points::Integer = 20, rf::Real = 0.0)
-```
-"""
-function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
-                             rm::Union{AbstractVector, <:RiskMeasure} = SD(),
-                             kelly::RetType = NoKelly(), class::PortClass = Classic(),
-                             w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
-                             w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                             c_const_obj_pen::Union{<:CustomConstraintObjectivePenalty,
-                                                    Nothing} = nothing,
                              points::Integer = 20, rf::Real = 0.0)
     optimal1 = deepcopy(port.optimal)
     fail1 = deepcopy(port.fail)
+
+    (; class, kelly, rm) = type
+
     mu, sigma, returns = mu_sigma_returns_class(port, class)
 
-    fl = frontier_limits!(port; rm = rm, kelly = kelly, class = class,
-                          w_min_ini = w_min_ini, w_max_ini = w_max_ini,
-                          c_const_obj_pen = c_const_obj_pen)
+    fl = frontier_limits!(port, type; w_min_ini = w_min_ini, w_max_ini = w_max_ini)
     w1 = fl.w_min
     w2 = fl.w_max
 
@@ -74,6 +200,7 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     end
 
     rm_i = get_first_rm(rm)
+    old_ub = rm_i.settings.ub
     rm_i.settings.ub = Inf
 
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm_i, port.solvers,
@@ -88,12 +215,14 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
     optim_risk = Vector{typeof(risk1)}(undef, 0)
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
+    old_obj = type.obj
+    old_w_ini = type.w_ini
+
     i = 0
     for (j, (r, m)) ∈ enumerate(zip(risks, mus)) #! Do not change this enumerate to pairs.
         if i == 0
-            w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
-                          class = class, w_ini = w_min_ini,
-                          c_const_obj_pen = c_const_obj_pen)
+            type.obj = MinRisk()
+            w = optimise!(port, type)
         else
             if !isempty(w)
                 w_ini = w.weights
@@ -103,15 +232,14 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
             else
                 rm_i.settings.ub = Inf
             end
-            w = optimise!(port; rm = rm, type = type, obj = MaxRet(), kelly = kelly,
-                          class = class, w_ini = w_ini, c_const_obj_pen = c_const_obj_pen)
+            type.obj = MaxRet()
+            w = optimise!(port, type)
             # Fallback in case :Max_Ret with maximum risk bounds fails.
             if isempty(w)
                 rm_i.settings.ub = Inf
                 port.mu_l = m
-                w = optimise!(port; rm = rm, type = type, obj = MinRisk(), kelly = kelly,
-                              class = class, w_ini = w_ini,
-                              c_const_obj_pen = c_const_obj_pen)
+                type.obj = MinRisk()
+                w = optimise!(port, type)
                 port.mu_l = Inf
             end
         end
@@ -124,8 +252,8 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
         i += 1
     end
     rm_i.settings.ub = Inf
-    w = optimise!(port; rm = rm, type = type, obj = Sharpe(; rf = rf), kelly = kelly,
-                  class = class, w_ini = w_min_ini, c_const_obj_pen = c_const_obj_pen)
+    type.obj = Sharpe(; rf = rf)
+    w = optimise!(port, type)
     sharpe = false
     if !isempty(w)
         rk = calc_risk(rm_i, w.weights; X = returns)
@@ -141,6 +269,9 @@ function efficient_frontier!(port::Portfolio; type::Union{Trad, NOC} = Trad(),
                                 :risks => optim_risk, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
+    type.obj = old_obj
+    type.w_ini = old_w_ini
+    rm_i.settings.ub = old_ub
     unset_set_rm_properties!(rm_i, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return port.frontier[rmsym]
 end

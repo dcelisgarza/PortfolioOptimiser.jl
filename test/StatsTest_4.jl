@@ -195,7 +195,7 @@ end
 end
 
 @testset "Denoise" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; denoise = DenoiseFixed())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -1805,7 +1805,7 @@ end
 end
 
 @testset "LoGo" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; logo = LoGo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,

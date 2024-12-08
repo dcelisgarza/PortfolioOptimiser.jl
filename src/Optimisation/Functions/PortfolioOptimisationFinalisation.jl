@@ -11,7 +11,7 @@ function _cleanup_weights(port, ::Sharpe, ::Union{Trad, WC}, ::Any)
     end
     return weights
 end
-function _cleanup_weights(port, ::Any, ::Union{Trad, WC}, ::Any)
+function _cleanup_weights(port, ::Any, ::Union{Trad, WC, DRCVaR}, ::Any)
     weights = value.(port.model[:w])
     short = port.short
     budget = port.budget

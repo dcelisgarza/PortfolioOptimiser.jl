@@ -122,7 +122,7 @@ We will only look at a vanilla optimisation in this tutorial.
 There are quite a few risk measures, some require statistics we have not computed, others don't require any precomputed statistics at all. You can see the risk measure has a few internal parameters, they all do. We'll only show the classic mean variance risk measure, but you can uncomment each of the next few lines in turn and try some of the others.
 =#
 
-rm = SD() # Variance
+rm = Variance() # Variance
 ## rm = MAD() # Mean absolute deviation
 ## rm = SSD() # Semi variance
 ## rm = CVaR() # Critical Value at Risk
@@ -135,7 +135,7 @@ obj = MinRisk()
 ## obj = Utility(; l = 2) # Maximises the utility = return - l * risk
 ## obj = Sharpe(; rf = 3.5/100/254) # Maximises the sharpe ratio = (mu - rf)/risk, where mu is the expected return.
 
-w1 = optimise!(portfolio; rm = rm, obj = obj)
+w1 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
 pretty_table(w1; formatters = fmt1)
 
 #=
@@ -233,7 +233,7 @@ The idea is to first compute the minimum risk and maximum return portfolios. Fro
 
 ## Compute 50 points in the efficient frontier.
 points = 50
-frontier = efficient_frontier!(portfolio; rm = rm, points = points)
+frontier = efficient_frontier!(portfolio, Trad(; rm = rm); points = points)
 
 # Plot the efficient frontier.
 #nb display(plot_frontier(portfolio; rm = rm))
@@ -250,26 +250,24 @@ As the last demo we will display a heatmap of the portfolio composition of the e
 =#
 
 ## Check if the sharpe ratio is found in the frontier.
-if portfolio.frontier[:SD][:sharpe]
-    risks = portfolio.frontier[:SD][:risks]
-    weights = DataFrames.rename(portfolio.frontier[:SD][:weights],
-                                Symbol.(1:length(risks)) .=>
-                                    Symbol.(round.(risks * 100, digits = 2)))
-    idx = sortperm(portfolio.frontier[:SD][:risks])
-    weights = weights[!, [1; idx .+ 1]]
+if portfolio.frontier[:Variance][:sharpe]
+    risks = portfolio.frontier[:Variance][:risks]
+    wghts = portfolio.frontier[:Variance][:weights]
+    idx = sortperm(portfolio.frontier[:Variance][:risks])
+    wghts = wghts[!, [1; idx .+ 1]]
     risks = risks[idx]
 else
-    weights = Matrix(portfolio.frontier[:SD][:weights])
-    risks = portfolio.frontier[:SD][:risks]
+    wghts = Matrix(portfolio.frontier[:Variance][:weights])
+    risks = portfolio.frontier[:Variance][:risks]
 end
 
-#nb display(plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
+#nb display(plot(Matrix(wghts[!, 2:end]); st = :heatmap, clim = (0, 1),
 #nb              yticks = (1:N, portfolio.assets), yflip = true,
 #nb              xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
 #nb              xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",
 #nb              color = cgrad(:Spectral), size = (600, 600), 
 #nb              colorbar_title = "\nAsset Weight"))
-#md plot(Matrix(weights[!, 2:end]); st = :heatmap, clim = (0, 1),
+#md plot(Matrix(wghts[!, 2:end]); st = :heatmap, clim = (0, 1),
 #md              yticks = (1:N, portfolio.assets), yflip = true,
 #md              xticks = (1:3:length(risks), round.(risks * sqrt(252), digits = 2)[1:3:end]),
 #md              xrotation = 60, xtickfontsize = 10, xlabel = "Expected Anualised Risk (SD)",

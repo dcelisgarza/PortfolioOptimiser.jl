@@ -183,6 +183,8 @@ end
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
+abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
+
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
@@ -283,13 +285,13 @@ function HCRMSettings(; scale::Real = 1.0)
 end
 
 """
-    abstract type SDFormulation end
+    abstract type VarianceFormulation end
 
 # Description
 
 Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in [`Portfolio`](@ref) optimisation, each offering different computational and numerical properties.
 
-See also: [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Type Hierarchy
 
@@ -310,10 +312,10 @@ Direct subtypes:
 
   - No effect.
 """
-abstract type SDFormulation end
+abstract type VarianceFormulation end
 
 """
-    abstract type SDSquaredFormulation <: SDFormulation end
+    abstract type SDSquaredFormulation <: VarianceFormulation end
 
 # Description
 
@@ -333,14 +335,14 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma^2`` is the portfolio variance.
 
-See also: [`SDFormulation`](@ref), [`QuadSD`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Type Hierarchy
 
 Direct subtypes:
 
-  - [`QuadSD`](@ref): explicit quadratic formulation of the portfolio variance.
-  - [`SOCSD`](@ref): second-Order Cone (SOC) formulation of the portfolio variance.
+  - [`Quad`](@ref): explicit quadratic formulation of the portfolio variance.
+  - [`SOC`](@ref): second-Order Cone (SOC) formulation of the portfolio variance.
 
 # Behaviour
 
@@ -349,10 +351,10 @@ Direct subtypes:
   - May have different numerical stability properties compared to direct SD formulations.
   - Risk is expressed in terms of the variance (squared standard deviation).
 """
-abstract type SDSquaredFormulation <: SDFormulation end
+abstract type SDSquaredFormulation <: VarianceFormulation end
 
 """
-    struct QuadSD <: SDSquaredFormulation end
+    struct Quad <: SDSquaredFormulation end
 
 # Description
 
@@ -373,7 +375,7 @@ Where:
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
   - ``\\sigma^2`` is the portfolio variance.
 
-See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -387,18 +389,17 @@ See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@re
 
 ```@example
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = QuadSD())
+sd_risk = SD(; formulation = Quad())
 
 # Custom configuration with specific covariance matrix
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = QuadSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = Quad(), sigma = my_sigma)
 ```
 """
-struct QuadSD <: SDSquaredFormulation end
+struct Quad <: SDSquaredFormulation end
 
 """
-    struct SOCSD <: SDSquaredFormulation end
+    struct SOC <: SDSquaredFormulation end
 
 # Description
 
@@ -420,7 +421,7 @@ Where:
   - ``\\sigma^2`` is the portfolio variance.
   - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
-See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -439,19 +440,18 @@ See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@r
 ```@example
 # Custom configuration with specific covariance matrix
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = SOCSD())
+sd_risk = SD(; formulation = SOC())
 
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOC(), sigma = my_sigma)
 ```
 
-See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref).
+See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref).
 """
-struct SOCSD <: SDSquaredFormulation end
+struct SOC <: SDSquaredFormulation end
 
 """
-    struct SimpleSD <: SDFormulation end
+    struct SimpleSD <: VarianceFormulation end
 
 # Description
 
@@ -473,7 +473,7 @@ Where:
   - ``\\sigma`` is the portfolio standard deviation.
   - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
-See also: [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -498,7 +498,7 @@ sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SimpleSD(),
              sigma = my_sigma)
 ```
 """
-struct SimpleSD <: SDFormulation end
+struct SimpleSD <: VarianceFormulation end
 
 """
     mutable struct SD <: RiskMeasure
@@ -507,7 +507,7 @@ struct SimpleSD <: SDFormulation end
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SDFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOCSD`](@ref), [`QuadSD`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
 
 ## [`Portfolio`](@ref)
 
@@ -520,7 +520,6 @@ Implements portfolio Standard Deviation risk.
 # Fields
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-  - `formulation::SDFormulation = SOCSD()`: strategy for standard deviation/variance calculation. Only affects [`Portfolio`](@ref) optimisations.
   - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
 
 # Behaviour
@@ -540,8 +539,8 @@ Implements portfolio Standard Deviation risk.
 
 ## Formulation Impact on [`Portfolio`](@ref) Optimisation
 
-  - [`QuadSD`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - [`SOCSD`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`Quad`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - [`SOC`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - [`SimpleSD`](@ref): Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr). Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
 
 # Examples
@@ -552,11 +551,10 @@ sd_risk = SD()
 
 # Custom configuration with specific covariance matrix
 my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOCSD(),
-             sigma = my_sigma)
+sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOC(), sigma = my_sigma)
 
 # Using portfolio's built-in covariance
-sd_risk = SD(; formulation = QuadSD(), sigma = nothing)
+sd_risk = SD(; formulation = Quad(), sigma = nothing)
 
 # For an NOC optimisation
 sd_risk = SD(; formulation = SimpleSD())
@@ -564,15 +562,14 @@ sd_risk = SD(; formulation = SimpleSD())
 """
 mutable struct SD <: RiskMeasure
     settings::RMSettings
-    formulation::SDFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
 end
-function SD(; settings::RMSettings = RMSettings(), formulation = SOCSD(),
+function SD(; settings::RMSettings = RMSettings(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return SD(settings, formulation, sigma)
+    return SD(settings, sigma)
 end
 function Base.setproperty!(obj::SD, sym::Symbol, val)
     if sym == :sigma
@@ -713,10 +710,14 @@ flpm = FLPM(; target = 0.01)  # 1 % minimum return threshold
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
+    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
+    w::Union{AbstractWeights, Nothing}
 end
-function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
-    return FLPM{typeof(target)}(settings, target)
+function FLPM(; settings::RMSettings = RMSettings(),
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return FLPM{typeof(target)}(settings, ret_target, target, w)
 end
 
 """
@@ -747,10 +748,14 @@ slpm = SLPM(; settings = RMSettings(; scale = 2.0), target = 0.005)
 """
 mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
+    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
+    w::Union{AbstractWeights, Nothing}
 end
-function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0)
-    return SLPM{typeof(target)}(settings, target)
+function SLPM(; settings::RMSettings = RMSettings(),
+              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return SLPM{typeof(target)}(settings, ret_target, target, w)
 end
 
 """
@@ -828,6 +833,24 @@ function CVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05)
     return CVaR{typeof(alpha)}(settings, alpha)
 end
 function Base.setproperty!(obj::CVaR, sym::Symbol, val)
+    if sym == :alpha
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+
+mutable struct DRCVaR{T1, T2, T3} <: RiskMeasure
+    settings::RMSettings
+    l::T1
+    alpha::T2
+    r::T3
+end
+function DRCVaR(; settings::RMSettings = RMSettings(), l::Real = 1.0, alpha::Real = 0.05,
+                r::Real = 0.02)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    return DRCVaR{typeof(l), typeof(alpha), typeof(r)}(settings, l, alpha, r)
+end
+function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
     if sym == :alpha
         @smart_assert(zero(val) < val < one(val))
     end
@@ -1020,9 +1043,11 @@ add = ADD(; settings = RMSettings(; scale = 1.5))
 """
 struct ADD <: RiskMeasure
     settings::RMSettings
+    w::Union{<:AbstractWeights, Nothing}
 end
-function ADD(; settings::RMSettings = RMSettings())
-    return ADD(settings)
+function ADD(; settings::RMSettings = RMSettings(),
+             w::Union{<:AbstractWeights, Nothing} = nothing)
+    return ADD(settings, w)
 end
 
 """
@@ -1690,6 +1715,9 @@ function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
     return OWA(settings, owa, w)
 end
 
+abstract type BDVarianceFormulation end
+struct BDVAbsVal <: BDVarianceFormulation end
+struct BDVIneq <: BDVarianceFormulation end
 """
     struct BDVariance <: RiskMeasure
 
@@ -1717,9 +1745,11 @@ dvar = BDVariance(; settings = RMSettings(; ub = 0.5))
 """
 struct BDVariance <: RiskMeasure
     settings::RMSettings
+    formulation::BDVarianceFormulation
 end
-function BDVariance(; settings::RMSettings = RMSettings())
-    return BDVariance(settings)
+function BDVariance(; settings::RMSettings = RMSettings(),
+                    formulation::BDVarianceFormulation = BDVAbsVal())
+    return BDVariance(settings, formulation)
 end
 
 """
@@ -1893,7 +1923,7 @@ function Base.setproperty!(obj::SSkew, sym::Symbol, val)
 end
 
 """
-    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: HCRiskMeasure
+    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasure
 
 # Description
 
@@ -1922,19 +1952,21 @@ See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`
 variance = Variance()
 
 # Custom settings
-variance = Variance(; settings = HCRMSettings(; scale = 3))
+variance = Variance(; settings = RMSettings(; scale = 3))
 ```
 """
-mutable struct Variance <: HCRiskMeasure
-    settings::HCRMSettings
+mutable struct Variance <: RiskMeasure
+    settings::RMSettings
+    formulation::VarianceFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
 end
-function Variance(; settings::HCRMSettings = HCRMSettings(),
+function Variance(; settings::RMSettings = RMSettings(),
+                  formulation::VarianceFormulation = SOC(),
                   sigma::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance(settings, sigma)
+    return Variance(settings, formulation, sigma)
 end
 function Base.setproperty!(obj::Variance, sym::Symbol, val)
     if sym == :sigma
@@ -1946,7 +1978,7 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
 end
 
 """
-    mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
+    mutable struct SVariance{T1 <: Real} <: RiskMeasure
 
 # Description
 
@@ -1976,15 +2008,97 @@ svariance = SVariance(; target = 0.02,  # 2 % return target
                       settings = HCRMSettings(; scale = 2.0), w = w)
 ```
 """
-mutable struct SVariance{T1 <: Real} <: HCRiskMeasure
-    settings::HCRMSettings
+mutable struct SVariance{T1 <: Real} <: RiskMeasure
+    settings::RMSettings
+    formulation::VarianceFormulation
     target::T1
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector, Nothing}
 end
-function SVariance(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+function SVariance(; settings::RMSettings = RMSettings(),
+                   formulation::VarianceFormulation = SOC(), target::Real = 0.0,
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SVariance{typeof(target)}(settings, target, w)
+    return SVariance{typeof(target)}(settings, formulation, target, w, mu)
+end
+
+"""
+```
+abstract type WorstCaseSet end
+```
+
+Abstract type for subtyping worst case mean variance set types.
+"""
+abstract type WorstCaseSet end
+abstract type WCSetMuSigma <: WorstCaseSet end
+abstract type WCSetMu <: WorstCaseSet end
+
+"""
+```
+struct Box <: WCSetMuSigma end
+```
+
+Box sets for worst case mean variance optimisation.
+"""
+struct Box <: WCSetMuSigma end
+
+"""
+```
+struct Ellipse <: WCSetMuSigma end
+```
+
+Elliptical sets for worst case mean variance optimisation.
+"""
+struct Ellipse <: WCSetMuSigma end
+
+"""
+```
+@kwdef mutable struct NoWC <: WorstCaseSet
+    formulation::SDSquaredFormulation = SOC()
+end
+```
+
+Use no set for worst case mean variance optimisation.
+
+# Parameters
+
+  - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`SDSquaredFormulation`](@ref).
+"""
+mutable struct NoWC <: WCSetMu
+    formulation::SDSquaredFormulation
+end
+function NoWC(; formulation::SDSquaredFormulation = SOC())
+    return NoWC(formulation)
+end
+
+mutable struct WCVariance{T1} <: RiskMeasure
+    settings::RMSettings
+    wc_set::WCSetMuSigma
+    sigma::Union{<:AbstractMatrix, Nothing}
+    cov_l::Union{AbstractMatrix{<:Real}, Nothing}
+    cov_u::Union{AbstractMatrix{<:Real}, Nothing}
+    cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}
+    k_sigma::T1
+end
+function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WCSetMuSigma = Box(),
+                    sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_l::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_u::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    k_sigma::Real = Inf)
+    if !isnothing(sigma)
+        @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_sigma,
+                                       k_sigma)
+end
+function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
+    if sym ∈ (:sigma, :cov_l, :cov_u, :cov_mu, :cov_sigma)
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
@@ -2432,42 +2546,105 @@ function Equal(; settings::HCRMSettings = HCRMSettings())
     return Equal(settings)
 end
 
-for (op, name) ∈
-    zip((SD, Variance, MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, EVaR, RLVaR, DaR,
-         MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
-         RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-         Equal),
-        ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
-         "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
-         "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
-         "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal"))
-    eval(quote
-             Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
-             function Base.String(s::$op)
-                 return $name
-             end
-             function Base.Symbol(::$op)
-                 return Symbol($name)
-             end
-             function Base.length(::$op)
-                 return 1
-             end
-             function Base.getindex(S::$op, ::Any)
-                 return S
-             end
-             function Base.view(S::$op, ::Any)
-                 return S
-             end
-         end)
+mutable struct TCM <: NoOptRiskMeasure
+    settings::HCRMSettings
+    w::Union{AbstractWeights, Nothing}
+end
+function TCM(; settings::HCRMSettings = HCRMSettings(;),
+             w::Union{AbstractWeights, Nothing} = nothing)
+    return TCM(settings, w)
+end
+
+mutable struct TLPM{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    w::Union{AbstractWeights, Nothing}
+end
+function TLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return TLPM{typeof(target)}(settings, target, w)
+end
+
+mutable struct FTCM <: HCRiskMeasure
+    settings::HCRMSettings
+    w::Union{AbstractWeights, Nothing}
+end
+function FTCM(; settings::HCRMSettings = HCRMSettings(;),
+              w::Union{AbstractWeights, Nothing} = nothing)
+    return FTCM(settings, w)
+end
+
+mutable struct FTLPM{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    w::Union{AbstractWeights, Nothing}
+end
+function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
+               w::Union{AbstractWeights, Nothing} = nothing)
+    return FTLPM{typeof(target)}(settings, target, w)
+end
+
+mutable struct Skewness <: NoOptRiskMeasure
+    settings::HCRMSettings
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function Skewness(; settings::HCRMSettings = HCRMSettings(),
+                  mean_w::Union{AbstractWeights, Nothing} = nothing,
+                  ve::CovarianceEstimator = SimpleVariance(),
+                  std_w::Union{AbstractWeights, Nothing} = nothing)
+    return Skewness(settings, mean_w, ve, std_w)
+end
+
+mutable struct SSkewness{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function SSkewness(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+                   mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    return SSkewness{typeof(target)}(settings, target, mean_w, ve, std_w)
+end
+
+mutable struct Kurtosis <: HCRiskMeasure
+    settings::HCRMSettings
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function Kurtosis(; settings::HCRMSettings = HCRMSettings(),
+                  mean_w::Union{AbstractWeights, Nothing} = nothing,
+                  ve::CovarianceEstimator = SimpleVariance(),
+                  std_w::Union{AbstractWeights, Nothing} = nothing)
+    return Kurtosis(settings, mean_w, ve, std_w)
+end
+
+mutable struct SKurtosis{T1} <: HCRiskMeasure
+    settings::HCRMSettings
+    target::T1
+    mean_w::Union{AbstractWeights, Nothing}
+    ve::CovarianceEstimator
+    std_w::Union{AbstractWeights, Nothing}
+end
+function SKurtosis(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0,
+                   mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    return SKurtosis{typeof(target)}(settings, target, mean_w, ve, std_w)
 end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
-const RMSigma = Union{SD, Variance}
+const RMSigma = Union{SD, Variance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 
-export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, QuadSD, SOCSD, SimpleSD, SD,
-       MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
+export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD, SD, MAD,
+       SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
        SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
        Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal
+       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR

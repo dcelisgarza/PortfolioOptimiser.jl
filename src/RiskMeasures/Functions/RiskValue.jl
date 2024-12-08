@@ -285,8 +285,14 @@ flpm1 = _FLPM(returns)
 flpm2 = _FLPM(returns, 0.01)
 ```
 """
-function _FLPM(x::AbstractVector, target::Real = 0.0)
+function _FLPM(x::AbstractVector, target::Real = 0.0,
+               w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
     val = x .- target
     return -sum(val[val .<= zero(target)]) / T
 end
@@ -328,8 +334,14 @@ slpm1 = _SLPM(returns)
 slpm2 = _SLPM(returns, 0.01)
 ```
 """
-function _SLPM(x::AbstractVector, target::Real = 0.0)
+function _SLPM(x::AbstractVector, target::Real = 0.0,
+               w::Union{AbstractWeights, Nothing} = nothing)
     T = length(x)
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
     val = x .- target
     val = val[val .<= zero(target)]
     return sqrt(dot(val, val) / (T - 1))
@@ -2245,6 +2257,99 @@ function _BDVariance(x::AbstractVector)
     return iT2 * (dot(D, D) + iT2 * sum(D)^2)
 end
 
+function _TCM(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sum(val .^ 3) / T
+end
+
+function _TLPM(x::AbstractVector, target::Real = 0.0,
+               w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    return -sum(val[val .<= zero(target)] .^ 3) / T
+end
+
+function _Skewness(x::AbstractVector, mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    dev = isnothing(std_w) ? std(ve, x; mean = mu) : std(ve, x, std_w; mean = mu)
+    val = x .- mu
+    return sum(val .^ 3) / T / dev^3
+end
+
+function _SSkewness(x::AbstractVector, target::Real = 0.0,
+                    mean_w::Union{AbstractWeights, Nothing} = nothing,
+                    ce::CovarianceEstimator = SimpleVariance(),
+                    std_w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    dev = isnothing(std_w) ? std(ce, x; mean = mu) : std(ce, x, std_w; mean = mu)
+    val = x .- mu
+    return -sum(val[val .<= target] .^ 3) / T / dev^3
+end
+
+function _FTCM(x::AbstractVector, w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sum(val .^ 4) / T
+end
+
+function _FTLPM(x::AbstractVector, target::Real = 0.0,
+                w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    return sum(val[val .<= zero(target)] .^ 4) / T
+end
+
+function _Kurtosis(x::AbstractVector, mean_w::Union{AbstractWeights, Nothing} = nothing,
+                   ve::CovarianceEstimator = SimpleVariance(),
+                   std_w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    dev = isnothing(std_w) ? std(ve, x; mean = mu) : std(ve, x, std_w; mean = mu)
+    val = x .- mu
+    return sum(val .^ 4) / T / dev^4
+end
+
+function _SKurtosis(x::AbstractVector, target::Real = 0.0,
+                    mean_w::Union{AbstractWeights, Nothing} = nothing,
+                    ce::CovarianceEstimator = SimpleVariance(),
+                    std_w::Union{AbstractWeights, Nothing} = nothing)
+    T = length(x)
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    dev = isnothing(std_w) ? std(ce, x; mean = mu) : std(ce, x, std_w; mean = mu)
+    val = x .- mu
+    return sum(val[val .<= target] .^ 4) / T / dev^4
+end
+
+function cumulative_returns(x::AbstractVector, compound::Bool = false)
+    return !compound ? cumsum(x) : cumprod(one(eltype(x)) .+ x)
+end
+
+function drawdown(x::AbstractVector, compound::Bool = false)
+    x = cumulative_returns(x, compound)
+    return if !compound
+        x ./ accumulate(max, x) .- one(eltype(x))
+    else
+        x .- accumulate(max, x)
+    end
+end
+
 """
     calc_risk(sd::SD, w::AbstractVector; kwargs...)
 
@@ -2540,7 +2645,7 @@ flpm_risk2 = calc_risk(flpm_rm2, w; X = returns)
 ```
 """
 function calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _FLPM(X * w, flpm.target)
+    return _FLPM(X * w, flpm.target, flpm.w)
 end
 
 """
@@ -2590,7 +2695,7 @@ slpm_risk2 = calc_risk(slpm_rm2, w; X = returns)
 ```
 """
 function calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _SLPM(X * w, slpm.target)
+    return _SLPM(X * w, slpm.target, slpm.w)
 end
 
 """
@@ -4053,4 +4158,4 @@ function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return inv(length(w)) + delta
 end
 
-export calc_risk
+export calc_risk, cumulative_returns, drawdown

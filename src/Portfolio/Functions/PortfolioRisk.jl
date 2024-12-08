@@ -1,7 +1,7 @@
 """
 ```
 calc_risk(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-          type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+          type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
           rm::AbstractRiskMeasure = SD())
 ```
 
@@ -19,8 +19,7 @@ Compute the risk for an [`AbstractRiskMeasure`](@ref) for a portfolio.
   - `r`: risk.
 """
 function calc_risk(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                   type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                   rm::AbstractRiskMeasure = SD())
+                   type::Symbol = :Trad, rm::AbstractRiskMeasure = Variance())
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
@@ -33,7 +32,7 @@ end
 """
 ```
 risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                  type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+                  type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
                   rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6,
                   marginal::Bool = false)
 ```
@@ -58,9 +57,8 @@ Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) for a p
   - `rc`: `Na×1` vector of risk contribution per asset.
 """
 function risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                           type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                           rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6,
-                           marginal::Bool = false)
+                           type::Symbol = :Trad, rm::AbstractRiskMeasure = Variance(),
+                           delta::Real = 1e-6, marginal::Bool = false)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
@@ -74,7 +72,7 @@ end
 ```
 factor_risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
                          F::AbstractMatrix = port.f_returns,
-                         type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+                         type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
                          rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6)
 ```
 
@@ -95,9 +93,8 @@ Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref) for a 
   - `rc_f`: `Nf×1` vector of risk contribution per factor.
 """
 function factor_risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                                  F::AbstractMatrix = port.f_returns,
-                                  type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                                  rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6)
+                                  F::AbstractMatrix = port.f_returns, type::Symbol = :Trad,
+                                  rm::AbstractRiskMeasure = Variance(), delta::Real = 1e-6)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
@@ -113,7 +110,7 @@ end
 ```
 sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
              mu::AbstractVector = port.mu,
-             type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
+             type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
              rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6, rf::Real = 0.0,
              kelly::Bool = false)
 ```
@@ -140,10 +137,9 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) for 
   - `sr`: risk adjusted return ratio.
 """
 function sharpe_ratio(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                      mu::AbstractVector = port.mu,
-                      type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                      rm::AbstractRiskMeasure = SD(), delta::Real = 1e-6, rf::Real = 0.0,
-                      kelly::Bool = false)
+                      mu::AbstractVector = port.mu, type::Symbol = :Trad,
+                      rm::AbstractRiskMeasure = Variance(), delta::Real = 1e-6,
+                      rf::Real = 0.0, kelly::Bool = false)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
@@ -155,11 +151,11 @@ end
 
 """
 ```
-number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
+number_effective_assets(port; type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP)
 ```
 
 Compute the number of effective assets.
 """
-function number_effective_assets(port; type::Symbol = isa(port, Portfolio) ? :Trad : :HRP)
+function number_effective_assets(port::AbstractPortfolio; type::Symbol = :Trad)
     return number_effective_assets(port.optimal[type].weights)
 end

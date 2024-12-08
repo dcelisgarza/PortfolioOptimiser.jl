@@ -1,6 +1,6 @@
 """
 ```
-_clusterise(ca::HAC, port::HCPortfolio, clust_opt::ClustOpt = ClustOpt())
+_clusterise(ca::HAC, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
 Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust) to hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
@@ -16,7 +16,7 @@ Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.htm
   - `clustering`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of the portfolio assets.
   - `k`: optimum number of clusters.
 """
-function _clusterise(ca::HAC, port::HCPortfolio, clust_opt::ClustOpt = ClustOpt())
+function _clusterise(ca::HAC, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
     clustering = hclust(port.dist; linkage = ca.linkage,
                         branchorder = clust_opt.branchorder)
     k = calc_k_clusters(clust_opt, port.dist, clustering)
@@ -25,7 +25,7 @@ end
 
 """
 ```
-_clusterise(ca::DBHT, port::HCPortfolio, clust_opt::ClustOpt = ClustOpt())
+_clusterise(ca::DBHT, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
 Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
@@ -41,7 +41,7 @@ Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portf
   - `clustering`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of the portfolio assets.
   - `k`: optimum number of clusters.
 """
-function _clusterise(ca::DBHT, port::HCPortfolio, clust_opt::ClustOpt = ClustOpt())
+function _clusterise(ca::DBHT, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
     S = port.cor
     D = port.dist
     S = dbht_similarity(ca.similarity, S, D)
@@ -52,7 +52,7 @@ end
 
 """
 ```
-cluster_assets(port::HCPortfolio; clust_alg::ClustAlg = HAC(),
+cluster_assets(port::Union{HCPortfolio, Portfolio}; clust_alg::ClustAlg = HAC(),
                clust_opt::ClustOpt = ClustOpt())
 ```
 
@@ -70,7 +70,7 @@ Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@r
   - `clustering`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of the portfolio assets.
   - `k`: optimum number of clusters.
 """
-function cluster_assets(port::HCPortfolio; clust_alg::ClustAlg = HAC(),
+function cluster_assets(port::Portfolio; clust_alg::ClustAlg = HAC(),
                         clust_opt::ClustOpt = ClustOpt())
     clustering, k = _clusterise(clust_alg, port, clust_opt)
     idx = cutree(clustering; k = k)
@@ -79,7 +79,7 @@ end
 
 """
 ```
-cluster_assets!(port::HCPortfolio; clust_alg::ClustAlg = HAC(),
+cluster_assets!(port::Union{HCPortfolio, Portfolio}; clust_alg::ClustAlg = HAC(),
                 clust_opt::ClustOpt = ClustOpt())
 ```
 
@@ -91,7 +91,7 @@ Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@r
   - `clust_alg`: hierarchical clustering algorithm [`ClustAlg`](@ref).
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 """
-function cluster_assets!(port::HCPortfolio; clust_alg::ClustAlg = HAC(),
+function cluster_assets!(port::Portfolio; clust_alg::ClustAlg = HAC(),
                          clust_opt::ClustOpt = ClustOpt())
     clustering, k = _clusterise(clust_alg, port, clust_opt)
     port.clusters = clustering
@@ -99,6 +99,7 @@ function cluster_assets!(port::HCPortfolio; clust_alg::ClustAlg = HAC(),
     return nothing
 end
 
+#=
 """
 ```
 cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
@@ -124,11 +125,6 @@ Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@r
   - `S`: `N×N` asset correlation matrix.
   - `D`: `N×N` asset distance matrix.
 """
-function cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistMethod = DistCanonical(),
-                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
-    return cluster_assets(port.returns; cor_type = cor_type, dist_type = dist_type,
-                          clust_alg = clust_alg, clust_opt = clust_opt)
-end
+=#
 
 export cluster_assets!

@@ -1,7 +1,8 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "Risk measures" begin
     portfolio = Portfolio(; prices = prices,
@@ -10,7 +11,7 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
                                                                           allow_almost = true),
                                                            :params => Dict("verbose" => false))))
     asset_statistics!(portfolio)
-    optimise!(portfolio; obj = Sharpe())
+    optimise!(portfolio, Trad(; obj = Sharpe()))
 
     risks = [0.012732818438689692, 0.009054428305486948, 0.008974573704221727,
              0.0038588790457400107, 0.008278637116930432, 0.04767699262536566,
@@ -31,7 +32,8 @@ prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
            DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        @test isapprox(risk, calc_risk(portfolio; type = :Trad, rm = rm), rtol = 5e-7)
+        r = calc_risk(portfolio; type = :Trad, rm = rm)
+        @test isapprox(risk, r, rtol = 5e-7)
         @test length(rm) == 1
         @test rm[rand(Int)] == rm
     end

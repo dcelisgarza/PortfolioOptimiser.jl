@@ -69,12 +69,12 @@ function filter_best(assets, rms, best, cov_type, cor_type)
     q = percentile_after_n(best, length(rms))
     ## Loop over all risk measures.
     for rm ∈ rms
-        hp = HCPortfolio(; prices = prices[Symbol.(assets_best)])
+        hp = Portfolio(; prices = prices[Symbol.(assets_best)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
         cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
-        w = optimise!(hp; type = HERC(), rm = rm)
+        w = optimise!(hp, HERC(; rm = rm))
 
         if isempty(w)
             continue
@@ -109,17 +109,17 @@ assets_best
 
 # We can now use fancier optimisations and statistics with the smaller stock universe.
 
-hp = HCPortfolio(; prices = prices[Symbol.(assets_best)],
-                 ## Continuous optimiser.
-                 solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+hp = Portfolio(; prices = prices[Symbol.(assets_best)],
+               ## Continuous optimiser.
+               solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                 :check_sol => (allow_local = true,
+                                                                allow_almost = true),
+                                                 :params => Dict("verbose" => false))),
+               ## MIP optimiser for the discrete allocation.
+               alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                    :check_sol => (allow_local = true,
                                                                   allow_almost = true),
-                                                   :params => Dict("verbose" => false))),
-                 ## MIP optimiser for the discrete allocation.
-                 alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                     :check_sol => (allow_local = true,
-                                                                    allow_almost = true),
-                                                     :params => Dict("log_to_console" => false))))
+                                                   :params => Dict("log_to_console" => false))))
 
 covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
@@ -128,10 +128,12 @@ asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type, mu_type = 
 cluster_assets!(hp; clust_opt = ClustOpt(; k_method = TwoDiff()))
 
 # We'll use the nested clustering optimisation. We will also use the maximum risk adjusted return ratio objective function. We will also allocate the portfolio according to our availabe cash and the latest prices.
-w = optimise!(hp; rm = RLDaR(),
-              type = NCO(;
-                         ## Risk adjusted return ratio objective function.
-                         opt_kwargs = (; obj = Sharpe(; rf = 3.5 / 100 / 252))))
+
+w = optimise!(hp,
+              NCO(;
+                  internal = NCOArgs(;
+                                     type = Trad(; rm = RLDaR(),
+                                                 obj = Sharpe(; rf = 3.5 / 100 / 252)))))
 
 ## Say we have 3000 dollars at our disposal to allocate the portfolio
 wa = allocate!(hp; type = :NCO, investment = 3000)
@@ -147,12 +149,12 @@ function filter_worst(assets, rms, best, cov_type, cor_type)
     q = percentile_after_n(best, length(rms))
     ## Loop over all risk measures.
     for rm ∈ rms
-        hp = HCPortfolio(; prices = prices[Symbol.(assets_worst)])
+        hp = Portfolio(; prices = prices[Symbol.(assets_worst)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
                           set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
         cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
-        w = optimise!(hp; type = HERC(), rm = rm)
+        w = optimise!(hp, HERC(; rm = rm))
 
         if isempty(w)
             continue
@@ -190,17 +192,17 @@ assets_best_worst = union(assets_best, assets_worst)
 
 # This time we'll make a market neutral portfolio using the NCO optimisation type.
 
-hp = HCPortfolio(; prices = prices[Symbol.(assets_best_worst)],
-                 ## Continuous optimiser.
-                 solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+hp = Portfolio(; prices = prices[Symbol.(assets_best_worst)],
+               ## Continuous optimiser.
+               solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
+                                                 :check_sol => (allow_local = true,
+                                                                allow_almost = true),
+                                                 :params => Dict("verbose" => false))),
+               ## MIP optimiser for the discrete allocation.
+               alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
                                                    :check_sol => (allow_local = true,
                                                                   allow_almost = true),
-                                                   :params => Dict("verbose" => false))),
-                 ## MIP optimiser for the discrete allocation.
-                 alloc_solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                                     :check_sol => (allow_local = true,
-                                                                    allow_almost = true),
-                                                     :params => Dict("log_to_console" => false))))
+                                                   :params => Dict("log_to_console" => false))))
 
 covcor_type = PortCovCor(; ce = CorGerber1())
 mu_type = MuBOP()
@@ -218,30 +220,22 @@ hp.w_max = 1
 short = true
 
 ## Absolute value of the sum of the short weights.
-short_budget = 1
+short_budget = -1
 
 ## Sum of all the portfolio weights.
 budget = 0
 
 ## Upper bound for the value of each short weight.
-short_u = 1
+short_u = -1
 
 ## Upper bound for the value of each long weight.
 long_u = 1
-
-w = optimise!(hp; rm = RLDaR(),
-              type = NCO(;
-                         ## Allow shorting in the sub portfolios, as well as the synthetic portfolio optimised by NCO. 
-                         ## We also set the the values of `short_u` and `long_u` to be equal to 1.
-                         port_kwargs = (; short = short, budget = budget,
-                                        short_budget = short_budget, long_u = long_u,
-                                        short_u = short_u),
-                         ## Max return objective.
-                         opt_kwargs = (; obj = MaxRet())
-                         ##
-                         )
-              ##
-              )
+w = optimise!(hp,
+              NCO(;
+                  internal = NCOArgs(; type = Trad(; rm = RLDaR(), obj = MaxRet()),
+                                     port_kwargs = (; short = short, budget = budget,
+                                                    short_budget = short_budget,
+                                                    long_u = long_u, short_u = short_u))))
 
 wa = allocate!(hp; type = :NCO, investment = 3000, short = short, budget = budget,
                short_budget = short_budget)

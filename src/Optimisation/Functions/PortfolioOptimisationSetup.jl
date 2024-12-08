@@ -6,8 +6,18 @@ function set_w_ini(w, w_ini)
     return nothing
 end
 function initial_w(port, w_ini)
-    @variable(port.model, w[1:size(port.returns, 2)])
+    model = port.model
+    N = size(port.returns, 2)
+    @variable(model, w[1:N])
     set_w_ini(w, w_ini)
+    return nothing
+end
+function set_obj_constr_scales(port)
+    model = port.model
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
+    @expression(model, constr_scale, constr_scale)
+    @expression(model, obj_scale, obj_scale)
     return nothing
 end
 function mu_sigma_returns_class(port, ::Union{Classic, FC})
@@ -48,54 +58,28 @@ function mu_sigma_returns_class(port, class::BLFM)
     end
     return mu, sigma, returns
 end
-# sharpe ratio/RP k
-function set_sr_k(::Sharpe, model)
+function optimal_homogenisation_factor(port, mu, ::Sharpe, ohf)
+    if iszero(ohf)
+        if !isempty(mu)
+            ohf = min(1e3, max(1e-3, mean(abs.(mu))))
+        else
+            ohf = one(eltype(port.returns))
+        end
+    end
+    model = port.model
+    @expression(model, ohf, ohf)
+    return nothing
+end
+function optimal_homogenisation_factor(args...)
+    return nothing
+end
+function set_k(port, ::Sharpe)
+    model = port.model
     @variable(model, k >= 0)
     return nothing
 end
-function set_sr_k(::Any, ::Any)
-    return nothing
-end
-# SDP setup
-function _sdp_m2(::Sharpe, model)
-    w = model[:w]
-    k = model[:k]
-    @expression(model, M2, vcat(w, k))
-    return nothing
-end
-function _sdp_m2(::Any, model)
-    w = model[:w]
-    @expression(model, M2, vcat(w, 1))
-    return nothing
-end
-function _sdp(port, obj)
+function set_k(port, ::Any)
     model = port.model
-    if !haskey(model, :W)
-        N = size(port.returns, 2)
-        @variable(model, W[1:N, 1:N], Symmetric)
-        w = model[:w]
-        @expression(model, M1, vcat(W, transpose(w)))
-        _sdp_m2(obj, model)
-        M2 = model[:M2]
-        @expression(model, M3, hcat(M1, M2))
-        @constraint(model, M3 ∈ PSDCone())
-    end
-    return nothing
-end
-function _sdp(::SDP, port, obj)
-    model = port.model
-    if !haskey(model, :W)
-        N = size(port.returns, 2)
-        @variable(model, W[1:N, 1:N], Symmetric)
-        w = model[:w]
-        @expression(model, M1, vcat(W, transpose(w)))
-        _sdp_m2(obj, model)
-        M2 = model[:M2]
-        @expression(model, M3, hcat(M1, M2))
-        @constraint(model, M3 ∈ PSDCone())
-    end
-    return nothing
-end
-function _sdp(::Any, ::Any, ::Any)
+    @expression(model, k, 1)
     return nothing
 end

@@ -22,6 +22,8 @@ include("./Constraints/Types/ConstraintTypes.jl")
 include("./Optimisation/Types/OptimisationTypes.jl")
 ## Portfolio
 include("./Portfolio/Types/PortfolioTypes.jl")
+## Type utility functions
+include("./Utils/Utils.jl")
 
 # Functions
 ## Risk measures

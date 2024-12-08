@@ -80,10 +80,10 @@ First we will optimise the portfolio without shorting and plot the weights and t
 =#
 
 portfolio.short = false
-portfolio.optimal[:ns] = optimise!(portfolio; rm = rm, obj = obj)
+portfolio.optimal[:ns] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
 #nb display(plot_bar(portfolio; type = :ns))
 #md plot_bar(portfolio; type = :ns)
-portfolio.frontier[:ns] = efficient_frontier!(portfolio; rm = rm, points = 30)
+portfolio.frontier[:ns] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
 #nb display(plot_frontier(portfolio; type = :ns))
 #md plot_frontier(portfolio; type = :ns)
 
@@ -114,13 +114,13 @@ println("Sum of weights = $(sum(portfolio.optimal[:ns].weights[long_optimal_idx]
 # LP allocated portfolio
 long_LP_idx = portfolio.optimal[:nsal].weights .>= 0
 short_LP_idx = .!long_LP_idx
-println("Allocation investment = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:nsal].shares[long_LP_idx]))")
+println("LP Allocation investment = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:nsal].shares[long_LP_idx]))")
 println("Sum of weights = $(sum(portfolio.optimal[:nsal].weights[long_LP_idx]))")
 
 # Greedy allocated portfolio
 long_Greedy_idx = portfolio.optimal[:nsag].weights .>= 0
 short_Greedy_idx = .!long_Greedy_idx
-println("Allocation investment = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:nsag].shares[long_Greedy_idx]))")
+println("Greedy Allocation investment = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:nsag].shares[long_Greedy_idx]))")
 println("Sum of weights = $(sum(portfolio.optimal[:nsag].weights[long_Greedy_idx]))")
 
 #=
@@ -167,12 +167,12 @@ Lets short the market whithout reinvesting the earnings, meaning we'll have a ca
 We will use the default values.
 =#
 
-## The absolute value of the sum of the short weights is equal to `0.2`.
-portfolio.short_budget = 0.2
+## The sum of the short weights is equal to `-0.2`.
+portfolio.short_budget = -0.2
 ## The portfolio weights will add up to 0.8, meaning the portfolio will be underleveraged.
 portfolio.budget = 0.8;
 ## Each short position can have a maximum value of -0.2.
-portfolio.short_u = 0.2
+portfolio.short_u = -0.2
 ## Each long position can have a maximum value of 1.
 portfolio.long_u = 1.0
 
@@ -189,10 +189,10 @@ Here the portfolio is under-leveraged.
 =#
 
 # Lets optimise the short-long portfolio.
-portfolio.optimal[:s] = optimise!(portfolio; rm = rm, obj = obj)
+portfolio.optimal[:s] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
 #nb display(plot_bar(portfolio; type = :s))
 #md plot_bar(portfolio; type = :s)
-portfolio.frontier[:s] = efficient_frontier!(portfolio; rm = rm, points = 30)
+portfolio.frontier[:s] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
 #nb display(plot_frontier(portfolio; type = :s))
 #md plot_frontier(portfolio; type = :s)
 
@@ -216,29 +216,35 @@ short_optimal_idx = .!long_optimal_idx
 println("Optimal investment")
 println("long = $(sum(investment * portfolio.optimal[:s].weights[long_optimal_idx]))")
 println("short = $(sum(investment * portfolio.optimal[:s].weights[short_optimal_idx]))")
+println("total ≈ long + short = $(sum(investment * portfolio.optimal[:s].weights[long_optimal_idx]) + sum(investment * portfolio.optimal[:s].weights[short_optimal_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:s].weights[long_optimal_idx]))")
 println("short = $(sum(portfolio.optimal[:s].weights[short_optimal_idx]))")
+println("budget ≈ long + short = $(sum(portfolio.optimal[:s].weights[long_optimal_idx])+sum(portfolio.optimal[:s].weights[short_optimal_idx]))")
 
 # LP allocated portfolio
 long_LP_idx = portfolio.optimal[:sal].weights .>= 0
 short_LP_idx = .!long_LP_idx
-println("Allocation investment")
+println("LP Allocation investment")
 println("long = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:sal].shares[long_LP_idx]))")
 println("short = $(dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sal].shares[short_LP_idx]))")
+println("total ≈ long + short = $(dot(portfolio.latest_prices[long_LP_idx], portfolio.optimal[:sal].shares[long_LP_idx]) + dot(portfolio.latest_prices[short_LP_idx], portfolio.optimal[:sal].shares[short_LP_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:sal].weights[long_LP_idx]))")
 println("short = $(sum(portfolio.optimal[:sal].weights[short_LP_idx]))")
+println("budget ≈ long + short = $(sum(portfolio.optimal[:sal].weights[long_LP_idx]) + sum(portfolio.optimal[:sal].weights[short_LP_idx]))")
 
 # Greedy allocated portfolio
 long_Greedy_idx = portfolio.optimal[:sag].weights .>= 0
 short_Greedy_idx = .!long_Greedy_idx
-println("Allocation investment")
+println("Greedy Allocation investment")
 println("long = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:sag].shares[long_Greedy_idx]))")
 println("short = $(dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:sag].shares[short_Greedy_idx]))")
+println("total ≈ long + short = $(dot(portfolio.latest_prices[long_Greedy_idx], portfolio.optimal[:sag].shares[long_Greedy_idx]) + dot(portfolio.latest_prices[short_Greedy_idx], portfolio.optimal[:sag].shares[short_Greedy_idx]))")
 println("Sum of weights")
 println("long = $(sum(portfolio.optimal[:sag].weights[long_Greedy_idx]))")
 println("short = $(sum(portfolio.optimal[:sag].weights[short_Greedy_idx]))")
+println("budget ≈ long + short = $(sum(portfolio.optimal[:sag].weights[long_Greedy_idx]) + sum(portfolio.optimal[:sag].weights[short_Greedy_idx]))")
 
 #=
 Here's what the short-long portfolio looks like. See how this differs from the long-only portfolio.
@@ -268,15 +274,15 @@ In this section we'll reinvest the money made from short selling, this can be ac
 
 portfolio.short = true
 
-## The absolute value of the sum of the short weights is equal to `0.2`.
-portfolio.short_budget = 0.2
+## The sum of the short weights is equal to `-0.2`.
+portfolio.short_budget = -0.2
 ## Reinvest the earnings from short selling.
 portfolio.budget = 1
 
-portfolio.optimal[:sr] = optimise!(portfolio; rm = rm, obj = obj)
+portfolio.optimal[:sr] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
 #nb display(plot_bar(portfolio; type = :sr))
 #md plot_bar(portfolio; type = :sr)
-portfolio.frontier[:sr] = efficient_frontier!(portfolio; rm = rm, points = 30)
+portfolio.frontier[:sr] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
 #nb display(plot_frontier(portfolio; type = :sr))
 #md plot_frontier(portfolio; type = :sr)
 

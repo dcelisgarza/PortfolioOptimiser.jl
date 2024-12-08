@@ -4398,7 +4398,7 @@ end
                     0.0001504967210740102], (20, 20))
     @test isapprox(portfolio.cov, covt)
 
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; ce = CorMutualInfo())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
@@ -4412,7 +4412,7 @@ end
 end
 
 @testset "Shrunken Cov and Cor Unweighted" begin
-    portfolio = HCPortfolio(; prices = prices)
+    portfolio = Portfolio(; prices = prices)
     c1 = PortCovCor(; ce = CovFull(; ce = AnalyticalNonlinearShrinkage()))
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, cov_type = c1, cor_type = c1)

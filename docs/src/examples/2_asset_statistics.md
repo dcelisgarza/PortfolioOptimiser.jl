@@ -157,7 +157,7 @@ function MyScaledMean(; scale::Union{<:AbstractVector{<:Real}, Real} = 1, w = no
 end
 
 # We have to turn this into a vec so we can scale by a vector.
-function StatsBase.mean(me::MyScaledMean, X::AbstractArray; dims::Int = 1)
+function StatsBase.mean(me::MyScaledMean, X::AbstractMatrix; dims::Int = 1)
     return me.scale .*
            vec((isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims)))
 end

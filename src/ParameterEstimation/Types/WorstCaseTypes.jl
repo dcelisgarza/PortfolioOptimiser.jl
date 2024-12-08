@@ -1,52 +1,5 @@
 """
 ```
-abstract type WorstCaseSet end
-```
-
-Abstract type for subtyping worst case mean variance set types.
-"""
-abstract type WorstCaseSet end
-
-"""
-```
-struct Box <: WorstCaseSet end
-```
-
-Box sets for worst case mean variance optimisation.
-"""
-struct Box <: WorstCaseSet end
-
-"""
-```
-struct Ellipse <: WorstCaseSet end
-```
-
-Elliptical sets for worst case mean variance optimisation.
-"""
-struct Ellipse <: WorstCaseSet end
-
-"""
-```
-@kwdef mutable struct NoWC <: WorstCaseSet
-    formulation::SDSquaredFormulation = SOCSD()
-end
-```
-
-Use no set for worst case mean variance optimisation.
-
-# Parameters
-
-  - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`SDSquaredFormulation`](@ref).
-"""
-mutable struct NoWC <: WorstCaseSet
-    formulation::SDSquaredFormulation
-end
-function NoWC(; formulation::SDSquaredFormulation = SOCSD())
-    return NoWC(formulation)
-end
-
-"""
-```
 abstract type WorstCaseMethod end
 ```
 

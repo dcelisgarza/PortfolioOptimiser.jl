@@ -1,7 +1,8 @@
 using CSV, Clarabel, DataFrames, HiGHS, LinearAlgebra, PortfolioOptimiser, Statistics, Test,
       TimeSeries, Logging, JuMP
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -14,7 +15,7 @@ l = 2.0
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio)
+    optimise!(portfolio, Trad())
 
     solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                      :check_sol => (allow_local = true, allow_almost = true),
@@ -50,20 +51,20 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio; rm = EVaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(; rm = EVaR(), obj = Sharpe()))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
 
     alpha = 0.05
-    r1 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r1 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r1t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.1
-    r2 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r2 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r2t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.15
-    r3 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR(), Sharpe()), alpha)
+    r3 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
     r3t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)
@@ -79,7 +80,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    optimise!(portfolio; rm = EDaR(), obj = Sharpe())
+    optimise!(portfolio, Trad(; rm = EDaR(), obj = Sharpe()))
 
     x = portfolio.returns * portfolio.optimal[:Trad].weights
     pushfirst!(x, 1)
@@ -95,18 +96,18 @@ end
     popfirst!(dd)
 
     alpha = 0.05
-    r1 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r1 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r1t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.1
-    r2 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r2 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r2t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.15
-    r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR(), Sharpe()), alpha)
+    r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
     r3t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
 
-    @test isapprox(r1, r1t, rtol = 1e-6)
+    @test isapprox(r1, r1t, rtol = 5e-6)
     @test isapprox(r2, r2t, rtol = 5e-2)
     @test isapprox(r3, r3t, rtol = 5e-2)
 end

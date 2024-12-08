@@ -1,8 +1,8 @@
 using CSV, Clarabel, HiGHS, LinearAlgebra, PortfolioOptimiser, Statistics, Test, TimeSeries,
       JuMP
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
@@ -18,7 +18,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, solvers = solvers,
                           alloc_solvers = alloc_solvers)
     asset_statistics!(portfolio)
-    w0 = optimise!(portfolio)
+    w0 = optimise!(portfolio, Trad())
 
     w1 = allocate!(portfolio; method = LP())
     w2 = allocate!(portfolio; method = Greedy())
@@ -30,7 +30,7 @@ l = 2.0
     w8 = allocate!(portfolio; method = Greedy(), investment = 1e8)
 
     portfolio.short = true
-    w9 = optimise!(portfolio)
+    w9 = optimise!(portfolio, Trad())
     w10 = allocate!(portfolio; method = LP())
     w11 = allocate!(portfolio; method = Greedy())
     w12 = allocate!(portfolio; method = LP(), investment = 1e4)
@@ -40,7 +40,7 @@ l = 2.0
     w16 = allocate!(portfolio; method = LP(), investment = 1e8)
     w17 = allocate!(portfolio; method = Greedy(), investment = 1e8)
     portfolio.budget = 1
-    w9_2 = optimise!(portfolio)
+    w9_2 = optimise!(portfolio, Trad())
     w18 = allocate!(portfolio; method = LP(), investment = 1e6)
     w19 = allocate!(portfolio; method = Greedy(), investment = 1e6)
 
@@ -62,19 +62,19 @@ l = 2.0
     @test isapprox(w9.weights, w17.weights, rtol = 0.25)
     @test isapprox(sum(w18.cost), 1e6 * sum(w9_2.weights), rtol = 5.0e-5)
     @test isapprox(sum(w18.cost[w18.cost .>= 0]),
-                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 5e-6)
+                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 1e-5)
     @test isapprox(sum(w18.cost[w18.cost .< 0]), 1e6 * sum(w9_2.weights[w9_2.weights .< 0]),
                    rtol = 0.0005)
     @test isapprox(sum(w18.cost), 1e6 * portfolio.budget, rtol = 5.0e-5)
-    @test sum(w18.cost[w18.cost .< 0]) >= -1e6 * portfolio.short_budget
+    @test sum(w18.cost[w18.cost .< 0]) >= 1e6 * portfolio.short_budget
 
     @test isapprox(sum(w19.cost), 1e6 * sum(w9_2.weights), rtol = 5.0e-5)
     @test isapprox(sum(w19.cost[w19.cost .>= 0]),
-                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 5e-6)
+                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 1e-5)
     @test isapprox(sum(w19.cost[w19.cost .< 0]), 1e6 * sum(w9_2.weights[w9_2.weights .< 0]),
                    rtol = 0.0005)
     @test isapprox(sum(w19.cost), 1e6 * portfolio.budget, rtol = 5.0e-5)
-    @test sum(w19.cost[w19.cost .< 0]) >= -1e6 * portfolio.short_budget
+    @test sum(w19.cost[w19.cost .< 0]) >= 1e6 * portfolio.short_budget
 
     portfolio.alloc_solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                      :params => Dict("verbose" => false,

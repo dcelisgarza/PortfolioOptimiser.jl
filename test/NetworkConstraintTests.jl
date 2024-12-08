@@ -1,7 +1,8 @@
 using CSV, TimeSeries, StatsBase, Statistics, LinearAlgebra, Test, Clarabel,
       PortfolioOptimiser
 
-prices = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
+path = joinpath(@__DIR__, "assets/stock_prices.csv")
+prices = TimeArray(CSV.File(path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
@@ -206,7 +207,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    w1 = optimise!(portfolio)
+    w1 = optimise!(portfolio, Trad())
 
     network_type = MST(; steps = 1,
                        centrality = DegreeCentrality(; kwargs = (; normalize = false)))
@@ -311,7 +312,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    w = optimise!(portfolio)
+    w = optimise!(portfolio, Trad())
 
     network_type = MST(; steps = 1)
     C = connected_assets(portfolio; network_type = network_type)

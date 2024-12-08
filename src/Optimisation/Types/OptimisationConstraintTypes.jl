@@ -190,23 +190,23 @@ struct NoKelly <: RetType end
 ```
 """
 mutable struct NoKelly <: RetType
-    mu::WorstCaseSet
+    wc_set::WorstCaseSet
 end
-function NoKelly(; mu::WorstCaseSet = NoWC())
-    return NoKelly(mu)
+function NoKelly(; wc_set::WorstCaseSet = NoWC())
+    return NoKelly(wc_set)
 end
 
 """
 ```
 @kwdef mutable struct AKelly <: RetType
-    formulation::SDSquaredFormulation = SOCSD()
+    formulation::SDSquaredFormulation = SOC()
 end
 ```
 """
 mutable struct AKelly <: RetType
     formulation::SDSquaredFormulation
 end
-function AKelly(; formulation::SDSquaredFormulation = SOCSD())
+function AKelly(; formulation::SDSquaredFormulation = SOC())
     return AKelly(formulation)
 end
 
@@ -301,6 +301,7 @@ function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
     return TR{typeof(val), typeof(w)}(val, w)
 end
 
-abstract type CustomConstraintObjectivePenalty end
+abstract type CustomConstraint end
+struct NoCustomConstraint <: CustomConstraint end
 
 export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR

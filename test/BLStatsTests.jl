@@ -1,15 +1,16 @@
 using CSV, TimeSeries, DataFrames, StatsBase, Statistics, LinearAlgebra, Test,
       PortfolioOptimiser
 
-prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+assets_path = joinpath(@__DIR__, "assets/stock_prices.csv")
+factors_path = joinpath(@__DIR__, "assets/factor_prices.csv")
+prices_assets = TimeArray(CSV.File(assets_path); timestamp = :date)
+prices_factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
 @testset "Black Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-    hcportfolio = HCPortfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -67,9 +68,6 @@ l = 2.0
     bl_type = BLType(; delta = nothing)
     asset_statistics!(portfolio)
     black_litterman_statistics!(portfolio; P = P, Q = Q, bl_type = bl_type)
-
-    asset_statistics!(hcportfolio)
-    black_litterman_statistics!(hcportfolio; P = P, Q = Q, bl_type = bl_type)
 
     bl_mut = [0.8315340191495042, 0.4945628236835609, 1.7159629401277585,
               1.0416894456593815, 0.6314667966703715, -0.20757822771896367,
@@ -215,14 +213,10 @@ l = 2.0
                        7.09112084692389e-5, 0.0001579623438172991], (20, 20))
     @test isapprox(bl_mut, portfolio.bl_mu)
     @test isapprox(bl_covt, portfolio.bl_cov)
-
-    @test isapprox(bl_mut, hcportfolio.bl_mu)
-    @test isapprox(bl_covt, hcportfolio.bl_cov)
 end
 
 @testset "Bayesian Black Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-    hcportfolio = HCPortfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -360,10 +354,6 @@ end
     asset_statistics!(portfolio)
     bl_type = BBLType(; delta = nothing)
     black_litterman_factor_statistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
-                                       bl_type = bl_type)
-
-    asset_statistics!(hcportfolio)
-    black_litterman_factor_statistics!(hcportfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
                                        bl_type = bl_type)
 
     blfm_mut = [0.0005447777320220783, 0.0009009255450430647, 0.001037774539033381,
@@ -547,14 +537,10 @@ end
                          0.00015789205484314828], (20, 20))
     @test isapprox(blfm_mut, portfolio.blfm_mu)
     @test isapprox(blfm_covt, portfolio.blfm_cov)
-
-    @test isapprox(blfm_mut, hcportfolio.blfm_mu)
-    @test isapprox(blfm_covt, hcportfolio.blfm_cov)
 end
 
 @testset "Augmented Black Litterman" begin
     portfolio = Portfolio(; prices = prices_assets, f_prices = prices_factors)
-    hcportfolio = HCPortfolio(; prices = prices_assets, f_prices = prices_factors)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -697,13 +683,6 @@ end
                                                                    w = fill(inv(20), 20))
 
     black_litterman_factor_statistics!(portfolio; P = P, Q = Q, bl_type = bl_type)
-
-    asset_statistics!(hcportfolio)
-    @test_throws AssertionError PortfolioOptimiser.black_litterman(bl_type,
-                                                                   hcportfolio.returns;
-                                                                   w = fill(inv(20), 20))
-
-    black_litterman_factor_statistics!(hcportfolio; P = P, Q = Q, bl_type = bl_type)
 
     blfm_mut = [0.0033999924007108817, 0.0020577491946595027, 0.0069096286018665515,
                 0.004207555076029281, 0.0026142257950789397, -0.0007527699772210183,
@@ -869,9 +848,6 @@ end
                          7.09112084692389e-5, 0.0001579623438172991], (20, 20))
     @test isapprox(blfm_mut, portfolio.blfm_mu)
     @test isapprox(blfm_covt, portfolio.blfm_cov)
-
-    @test isapprox(blfm_mut, hcportfolio.blfm_mu)
-    @test isapprox(blfm_covt, hcportfolio.blfm_cov)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,

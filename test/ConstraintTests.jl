@@ -1,8 +1,10 @@
 using CSV, DataFrames, LinearAlgebra, PortfolioOptimiser, Statistics, StatsBase, Test,
       TimeSeries, Clarabel, Graphs, Distances
 
-prices_assets = TimeArray(CSV.File("./assets/stock_prices.csv"); timestamp = :date)
-prices_factors = TimeArray(CSV.File("./assets/factor_prices.csv"); timestamp = :date)
+assets_path = joinpath(@__DIR__, "assets/stock_prices.csv")
+factors_path = joinpath(@__DIR__, "assets/factor_prices.csv")
+prices_assets = TimeArray(CSV.File(assets_path); timestamp = :date)
+prices_factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
