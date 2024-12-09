@@ -9,6 +9,153 @@ factors = TimeArray(CSV.File(f_path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Schur HRP" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+
+    w1 = optimise!(portfolio, SchurHRP(; params = SchurParams(; gamma = 0, prop_coef = 0)))
+    w2 = optimise!(portfolio,
+                   SchurHRP(; params = [SchurParams(; gamma = 0, prop_coef = 0)]))
+    w3 = optimise!(portfolio,
+                   SchurHRP(; params = SchurParams(; gamma = 0, prop_coef = 0.5)))
+    w4 = optimise!(portfolio,
+                   SchurHRP(; params = [SchurParams(; gamma = 0, prop_coef = 0.5)]))
+    w5 = optimise!(portfolio, SchurHRP(; params = SchurParams(; gamma = 0, prop_coef = 1)))
+    w6 = optimise!(portfolio,
+                   SchurHRP(; params = [SchurParams(; gamma = 0, prop_coef = 1)]))
+    wt = [0.03360421525593201, 0.053460257098811775, 0.027429766590708997,
+          0.04363053745921338, 0.05279180956461212, 0.07434468966041922,
+          0.012386194792256387, 0.06206960160806503, 0.025502890164538234,
+          0.0542097204834031, 0.12168116639250848, 0.023275086688903004,
+          0.009124639465879256, 0.08924750757276853, 0.017850423121104797,
+          0.032541204698588386, 0.07175228284814082, 0.08318399209117079,
+          0.03809545426566615, 0.07381856017730955]
+    @test isapprox(wt, w1.weights)
+    @test isapprox(w1.weights, w2.weights)
+    @test isapprox(w1.weights, w3.weights)
+    @test isapprox(w1.weights, w4.weights)
+    @test isapprox(w1.weights, w5.weights)
+    @test isapprox(w1.weights, w6.weights)
+
+    w7 = optimise!(portfolio,
+                   SchurHRP(; params = SchurParams(; gamma = 0.5, prop_coef = 0)))
+    w8 = optimise!(portfolio,
+                   SchurHRP(; params = [SchurParams(; gamma = 0.5, prop_coef = 0)]))
+    wt = [0.04817241487998945, 0.0766365072042637, 0.039321200813807244,
+          0.059715527896678174, 0.07225422743688918, 0.07869738002561813,
+          0.0021336961067667005, 0.06570361713930474, 0.022599942168831988,
+          0.048039125762185546, 0.11832529232461884, 0.02201138591116128,
+          0.0015718473696351143, 0.08678612915927499, 0.0030749862210669495,
+          0.030774408027284685, 0.05045796814141483, 0.08805420087901901,
+          0.0337591174076653, 0.05191102512452411]
+    @test isapprox(w7.weights, wt)
+
+    w9 = optimise!(portfolio,
+                   SchurHRP(; params = SchurParams(; gamma = 0.5, prop_coef = 0.5)))
+    w10 = optimise!(portfolio,
+                    SchurHRP(; params = [SchurParams(; gamma = 0.5, prop_coef = 0.5)]))
+    wt = [0.03112165095243884, 0.1128077064846914, 0.02644397619176801, 0.03788942838988588,
+          0.09057698759305942, 0.09706490207066822, 0.004698829761509681,
+          0.04805914732787866, 0.018715161800093114, 0.048525116568153, 0.0797586054385343,
+          0.032309215223349605, 0.0037641760733464298, 0.15393849110819147,
+          0.0038323324937069407, 0.04620574903573764, 0.05497269088562942,
+          0.043731272288269195, 0.02644293794408931, 0.039141622368999415]
+    @test isapprox(w9.weights, wt)
+
+    w11 = optimise!(portfolio,
+                    SchurHRP(; params = SchurParams(; gamma = 0.5, prop_coef = 1)))
+    w12 = optimise!(portfolio,
+                    SchurHRP(; params = [SchurParams(; gamma = 0.5, prop_coef = 1)]))
+    wt = [0.026934099434388202, 0.09457804872676835, 0.02706522286326548,
+          0.02986436181624784, 0.03085880861935407, 0.15782233995032932,
+          0.034380987584464756, 0.060060821427826136, 0.022339882221851893,
+          0.05463528645648568, 0.10102027723890357, 0.026581383263657554,
+          0.026618650389921793, 0.06847489832446459, 0.014426158044887356,
+          0.044911132499694084, 0.053249856068170794, 0.03228032642407734,
+          0.026624250997674282, 0.06727320764756689]
+    @test isapprox(w11.weights, wt)
+
+    @test isapprox(w7.weights, w8.weights)
+    @test isapprox(w9.weights, w10.weights)
+    @test isapprox(w11.weights, w12.weights)
+    @test !isapprox(w1.weights, w7.weights)
+    @test !isapprox(w1.weights, w9.weights)
+    @test !isapprox(w1.weights, w11.weights)
+    @test !isapprox(w7.weights, w9.weights)
+    @test !isapprox(w7.weights, w11.weights)
+    @test !isapprox(w9.weights, w11.weights)
+
+    w13 = optimise!(portfolio, SchurHRP(; params = SchurParams(; gamma = 1, prop_coef = 0)))
+    w14 = optimise!(portfolio,
+                    SchurHRP(; params = [SchurParams(; gamma = 1, prop_coef = 0)]))
+    wt = [0.04817241487998945, 0.0766365072042637, 0.039321200813807244,
+          0.059715527896678174, 0.07225422743688918, 0.07869738002561813,
+          0.0021336961067667005, 0.06570361713930474, 0.022599942168831988,
+          0.048039125762185546, 0.11832529232461884, 0.02201138591116128,
+          0.0015718473696351143, 0.08678612915927499, 0.0030749862210669495,
+          0.030774408027284685, 0.05045796814141483, 0.08805420087901901,
+          0.0337591174076653, 0.05191102512452411]
+    @test isapprox(w13.weights, wt)
+
+    w15 = optimise!(portfolio,
+                    SchurHRP(; params = SchurParams(; gamma = 1, prop_coef = 0.5)))
+    w16 = optimise!(portfolio,
+                    SchurHRP(; params = [SchurParams(; gamma = 1, prop_coef = 0.5)]))
+    wt = [0.03112165095243884, 0.1128077064846914, 0.02644397619176801, 0.03788942838988588,
+          0.09057698759305942, 0.09706490207066822, 0.004698829761509681,
+          0.04805914732787866, 0.018715161800093114, 0.048525116568153, 0.0797586054385343,
+          0.032309215223349605, 0.0037641760733464298, 0.15393849110819147,
+          0.0038323324937069407, 0.04620574903573764, 0.05497269088562942,
+          0.043731272288269195, 0.02644293794408931, 0.039141622368999415]
+    @test isapprox(w15.weights, wt)
+
+    w17 = optimise!(portfolio, SchurHRP(; params = SchurParams(; gamma = 1, prop_coef = 1)))
+    w18 = optimise!(portfolio,
+                    SchurHRP(; params = [SchurParams(; gamma = 1, prop_coef = 1)]))
+    wt = [0.026934099434388202, 0.09457804872676835, 0.02706522286326548,
+          0.02986436181624784, 0.03085880861935407, 0.15782233995032932,
+          0.034380987584464756, 0.060060821427826136, 0.022339882221851893,
+          0.05463528645648568, 0.10102027723890357, 0.026581383263657554,
+          0.026618650389921793, 0.06847489832446459, 0.014426158044887356,
+          0.044911132499694084, 0.053249856068170794, 0.03228032642407734,
+          0.026624250997674282, 0.06727320764756689]
+    @test isapprox(w17.weights, wt)
+
+    @test isapprox(w13.weights, w14.weights)
+    @test isapprox(w15.weights, w16.weights)
+    @test isapprox(w17.weights, w18.weights)
+
+    @test !isapprox(w1.weights, w13.weights)
+    @test !isapprox(w1.weights, w15.weights)
+    @test !isapprox(w1.weights, w17.weights)
+    @test isapprox(w7.weights, w13.weights)
+    @test !isapprox(w7.weights, w15.weights)
+    @test !isapprox(w7.weights, w17.weights)
+    @test !isapprox(w9.weights, w13.weights)
+    @test isapprox(w9.weights, w15.weights)
+    @test !isapprox(w9.weights, w17.weights)
+    @test !isapprox(w11.weights, w13.weights)
+    @test !isapprox(w11.weights, w15.weights)
+    @test isapprox(w11.weights, w17.weights)
+
+    wh = optimise!(portfolio, HRP())
+    wt = optimise!(portfolio, Trad())
+
+    @test isapprox(wh.weights, w1.weights)
+    @test rmsd(wh.weights, w1.weights) <=
+          rmsd(wh.weights, w7.weights) <=
+          rmsd(wh.weights, w13.weights) <=
+          rmsd(wh.weights, w17.weights) <=
+          rmsd(wh.weights, w11.weights) <=
+          rmsd(wh.weights, w9.weights) <=
+          rmsd(wh.weights, w15.weights)
+end
+
 @testset "Weight bounds" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,

@@ -280,11 +280,22 @@ end
 function SchurParams(; rm::RMSigma = Variance(;), gamma::Real = 0.5, prop_coef::Real = 0.5,
                      tol::Real = 1e-2, max_iter::Integer = 10)
     @smart_assert(zero(gamma) <= gamma <= one(gamma))
+    @smart_assert(zero(prop_coef) <= prop_coef <= one(prop_coef))
+    @smart_assert(zero(tol) < tol)
+    @smart_assert(zero(max_iter) < max_iter)
     return SchurParams{typeof(gamma), typeof(prop_coef), typeof(tol), typeof(max_iter)}(rm,
                                                                                         gamma,
                                                                                         prop_coef,
                                                                                         tol,
                                                                                         max_iter)
+end
+function Base.setproperty!(obj::SchurParams, sym::Symbol, val)
+    if sym ∈ (:gamma, :prop_coef)
+        @smart_assert(zero(val) <= val <= one(val))
+    elseif sym ∈ (:tol, :max_iter)
+        @smart_assert(zero(val) < val)
+    end
+    return setfield!(obj, sym, val)
 end
 mutable struct SchurHRP <: HCOptimType
     params::Union{AbstractVector, <:SchurParams}
