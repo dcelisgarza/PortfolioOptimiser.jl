@@ -396,6 +396,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RP, NOC};
     model = port.model
     constr_scale = model[:constr_scale]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
@@ -405,7 +406,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RP, NOC};
     @variable(model, svariance[1:T])
     _semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
     @constraints(model, begin
-                     constr_scale * svariance .>= constr_scale * target
+                     constr_scale * svariance .>= constr_scale * target * k
                      constr_scale * mar * w .>= constr_scale * -svariance
                  end)
     svariance_risk = model[:svariance_risk]
@@ -420,6 +421,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     model = port.model
     constr_scale = model[:constr_scale]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     iTm1 = inv(T - 1)
     count = length(rms)
@@ -433,7 +435,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
         target = rm.target
         @constraints(model,
                      begin
-                         constr_scale * view(svariance, :, i) .>= constr_scale * target
+                         constr_scale * view(svariance, :, i) .>= constr_scale * target * k
                          constr_scale * mar * w .>= constr_scale * -view(svariance, :, i)
                      end)
         _semi_variance_risk(rm.formulation, model, view(svariance, :, i), svariance_risk[i],
@@ -448,6 +450,7 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP, NOC};
     model = port.model
     constr_scale = model[:constr_scale]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
@@ -460,7 +463,7 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP, NOC};
                end)
     @expression(model, sdev_risk, sdev / sqrt(T - 1))
     @constraints(model, begin
-                     constr_scale * ssd .>= constr_scale * target
+                     constr_scale * ssd .>= constr_scale * target * k
                      constr_scale * mar * w .>= constr_scale * -ssd
                      [constr_scale * sdev; constr_scale * ssd] ∈ SecondOrderCone()
                  end)
@@ -474,6 +477,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     model = port.model
     constr_scale = model[:constr_scale]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     iTm1 = inv(sqrt(T - 1))
     count = length(rms)
@@ -488,7 +492,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
         target = rm.target
         @constraints(model,
                      begin
-                         constr_scale * view(ssd, :, i) .>= constr_scale * target
+                         constr_scale * view(ssd, :, i) .>= constr_scale * target * k
                          constr_scale * mar * w .>= constr_scale * -view(ssd, :, i)
                          [constr_scale * sdev[i]; constr_scale * view(ssd, :, i)] ∈
                          SecondOrderCone()
