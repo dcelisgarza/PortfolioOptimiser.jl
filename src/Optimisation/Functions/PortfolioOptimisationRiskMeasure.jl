@@ -511,6 +511,9 @@ function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RP, NOC};
     k = model[:k]
     T = size(returns, 1)
     ret_target = rm.ret_target
+    if isinf(ret_target)
+        ret_target = port.mu
+    end
     target = rm.target
     mar = returns .- transpose(ret_target)
     @variable(model, flpm[1:T] .>= 0)
@@ -535,6 +538,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     @expression(model, flpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         ret_target = rm.ret_target
+        if isinf(ret_target)
+            ret_target = port.mu
+        end
         target = rm.target
         mar = returns .- transpose(ret_target)
         add_to_expression!(flpm_risk[i], iT, sum(view(flpm, :, i)))
@@ -556,6 +562,9 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RP, NOC};
     k = model[:k]
     T = size(returns, 1)
     ret_target = rm.ret_target
+    if isinf(ret_target)
+        ret_target = port.mu
+    end
     target = rm.target
     mar = returns .- transpose(ret_target)
     @variables(model, begin
@@ -587,6 +596,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
     @expression(model, slpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         ret_target = rm.ret_target
+        if isinf(ret_target)
+            ret_target = port.mu
+        end
         target = rm.target
         mar = returns .- transpose(ret_target)
         add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
