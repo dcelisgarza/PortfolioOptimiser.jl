@@ -56,14 +56,14 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
 
         for (cidx, cluster) ∈ pairs(clusters)
             if issubset(cluster, ln)
-                push!(ln, cidx)
+                push!(lc, cidx)
             elseif issubset(cluster, rn)
-                push!(rn, cidx)
+                push!(rc, cidx)
             end
         end
 
-        lrisk = sum(crisk[ln])
-        rrisk = sum(crisk[rn])
+        lrisk = sum(crisk[lc])
+        rrisk = sum(crisk[rc])
         
         risk = lrisk + rrisk
         # Allocate weight to clusters.
