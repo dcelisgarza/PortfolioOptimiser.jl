@@ -54,7 +54,7 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
         lc = Int[]
         rc = Int[]
 
-        for (cidx, clusters) ∈ pairs(clusters)
+        for (cidx, cluster) ∈ pairs(clusters)
             if issubset(cluster, ln)
                 push!(ln, cidx)
             elseif issubset(cluster, rn)
