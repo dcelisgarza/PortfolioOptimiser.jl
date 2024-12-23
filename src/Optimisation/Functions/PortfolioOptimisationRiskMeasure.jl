@@ -785,10 +785,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
         @constraints(model,
                      begin
                          constr_scale *
-                         (b1 * tau[j] .+ a1 * X .+ vec(sum((view(u, :, :, j) .* RP1, dims = 2))) .<=
+                         (b1 * tau[j] .+ a1 * X .+ vec(sum(view(u, :, :, j) .* RP1, dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          constr_scale *
-                         (b2 * tau[j] .+ a2 * X .+ vec(sum((view(v, :, :, j) .* RP1, dims = 2))) .<=
+                         (b2 * tau[j] .+ a2 * X .+ vec(sum(view(v, :, :, j) .* RP1, dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          [i = 1:T],
                          [constr_scale * tu_drcvar[i, j];
