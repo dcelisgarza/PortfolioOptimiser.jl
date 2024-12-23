@@ -716,7 +716,6 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
     a1 = -one(alpha)
     a2 = -one(alpha) - b1 * inv(alpha)
     b2 = b1 * (one(alpha) - inv(alpha))
-    ovec = range(; start = one(alpha), stop = one(alpha), length = N)
 
     @variables(model, begin
                    lb
@@ -729,9 +728,9 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
-                     constr_scale * (b1 * tau .+ a1 * X .+ (u .* RP1) * ovec) .<=
+                     constr_scale * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1, dims = 2))) .<=
                      constr_scale * s
-                     constr_scale * (b2 * tau .+ a2 * X .+ (v .* RP1) * ovec) .<=
+                     constr_scale * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1, dims = 2))) .<=
                      constr_scale * s
                      [i = 1:T],
                      [constr_scale * tu_drcvar[i];
@@ -782,15 +781,14 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
         a1 = -one(alpha)
         a2 = a1 - b1 * inv(alpha)
         b2 = b1 * (one(alpha) - inv(alpha))
-        ovec = range(; start = one(alpha), stop = one(alpha), length = N)
 
         @constraints(model,
                      begin
                          constr_scale *
-                         (b1 * tau[j] .+ a1 * X .+ (view(u, :, :, j) .* RP1) * ovec) .<=
+                         (b1 * tau[j] .+ a1 * X .+ vec(sum(view(u, :, :, j) .* RP1, dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          constr_scale *
-                         (b2 * tau[j] .+ a2 * X .+ (view(v, :, :, j) .* RP1) * ovec) .<=
+                         (b2 * tau[j] .+ a2 * X .+ vec(sum(view(v, :, :, j) .* RP1, dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          [i = 1:T],
                          [constr_scale * tu_drcvar[i, j];

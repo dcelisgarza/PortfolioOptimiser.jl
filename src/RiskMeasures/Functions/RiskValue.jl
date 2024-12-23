@@ -2252,8 +2252,10 @@ bdvar = _BDVariance(returns)
 function _BDVariance(x::AbstractVector)
     T = length(x)
     iT2 = inv(T^2)
-    ovec = range(1; stop = 1, length = T)
-    D = abs.(x * transpose(ovec) - ovec * transpose(x))
+    D = Matrix{eltype(x)}(undef, T, T)
+    D .= x
+    D .-= transpose(x)
+    D .= abs.(D)
     return iT2 * (dot(D, D) + iT2 * sum(D)^2)
 end
 
