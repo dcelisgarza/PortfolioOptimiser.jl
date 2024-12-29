@@ -1,19 +1,32 @@
 # Risk expression
 function _set_risk_expression(model, rm_risk, scale, flag::Bool)
-    if flag
-        if !haskey(model, :risk_vec)
-            @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
-        else
-            risk_vec = model[:risk_vec]
-            push!(risk_vec, scale * rm_risk)
-        end
+    if !flag
+        return nothing
     end
+    
+    if !haskey(model, :risk_vec)
+         @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
+    else
+        risk_vec = model[:risk_vec]
+        push!(risk_vec, scale * rm_risk)
+    end
+    
     return nothing
 end
 function scalarise_risk_expression(port, ::ScalarSum)
     model = port.model
     risk_vec = model[:risk_vec]
-    @expression(model, risk, sum(risk_vec))
+
+    if any(isa.(risk_vec, QuadExpr))
+        @expression(model, risk, zero(QuadExpr))
+    else
+        @expression(model, risk, zero(AffExpr))
+    end
+
+    for rm_risk in risk_vec
+        add_to_expression!(risk, rm_risk)
+    end
+
     return nothing
 end
 function _get_ntwk_clust_method(port)
@@ -28,11 +41,14 @@ function _set_rm_risk_upper_bound(args...)
     return nothing
 end
 function _set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub)
-    if isfinite(ub)
-        k = model[:k]
-        constr_scale = model[:constr_scale]
-        @constraint(model, constr_scale * rm_risk .<= constr_scale * ub * k)
+    if isinf(ub)
+        return nothing
     end
+    
+    k = model[:k]
+    constr_scale = model[:constr_scale]
+    @constraint(model, constr_scale * rm_risk .<= constr_scale * ub * k)
+    
     return nothing
 end
 function _variance_risk(::SDP, ::Any, model, sigma)
