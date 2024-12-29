@@ -19,6 +19,9 @@ abstract type HCOptimType <: AbstractOptimType end
 """
 abstract type HCOptimType <: AbstractOptimType end
 
+abstract type AbstractScalarisation end
+struct ScalarSum <: AbstractScalarisation end
+
 """
 ```
 struct Trad <: OptimType end
