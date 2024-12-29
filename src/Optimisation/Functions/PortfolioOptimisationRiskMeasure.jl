@@ -10,7 +10,7 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     end
     return nothing
 end
-function scalarise_risk_expression(::ScalarSum, port)
+function scalarise_risk_expression(port, ::ScalarSum)
     model = port.model
     risk_vec = model[:risk_vec]
     @expression(model, risk, sum(risk_vec))
