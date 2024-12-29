@@ -6,10 +6,10 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     
     if !haskey(model, :risk_vec)
          @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
-    else
-        risk_vec = model[:risk_vec]
-        push!(risk_vec, scale * rm_risk)
     end
+    
+    risk_vec = model[:risk_vec]
+    push!(risk_vec, scale * rm_risk)
     
     return nothing
 end
