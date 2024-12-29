@@ -1,19 +1,11 @@
 # Risk expression
 function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     if flag
-        if !haskey(model, :risk)
-            @expression(model, risk, scale * rm_risk)
+        if !haskey(model, :risk_vec)
+            @expression(model, risk_vec, Vector{Union{AffExpr, QuadExpr}}(undef, 0))
         else
-            try
-                risk = model[:risk]
-                add_to_expression!(risk, scale, rm_risk)
-            catch
-                risk = model[:risk]
-                @expression(model, tmp, risk + scale * rm_risk)
-                unregister(model, :risk)
-                @expression(model, risk, tmp)
-                unregister(model, :tmp)
-            end
+            risk_vec = model[:risk_vec]
+            push!(risk_vec, scale * rm_risk)
         end
     end
     return nothing
