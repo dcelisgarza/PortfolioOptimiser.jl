@@ -21,6 +21,19 @@ abstract type HCOptimType <: AbstractOptimType end
 
 abstract type AbstractScalarisation end
 struct ScalarSum <: AbstractScalarisation end
+mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation
+    gamma::T1
+end
+function ScalarLogSumExp(; gamma::Real = 1.0)
+    @smart_assert(zero(gamma) <= gamma)
+    return ScalarLogSumExp{typeof(gamma)}(gamma)
+end
+function Base.setproperty!(obj::ScalarLogSumExp, sym::Symbol, val)
+    if sym == :gamma
+         @smart_assert(zero(val) <= val)
+    end
+    return setfield!(obj, sym, val)
+end
 
 """
 ```
@@ -36,6 +49,7 @@ mutable struct Trad{T1, T2} <: OptimType
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
     ohf::T2
+    scalarisation::AbstractScalarisation
     str_names::Bool
 end
 function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
@@ -44,9 +58,9 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
               w_ini::AbstractVector = Vector{Float64}(undef, 0),
               custom_constr::CustomConstraint = NoCustomConstraint(),
               custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
-              str_names::Bool = false)
+              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
     return Trad{typeof(w_ini), typeof(ohf)}(rm, obj, kelly, class, w_ini, custom_constr,
-                                            custom_obj, ohf, str_names)
+                                            custom_obj, ohf, scalarisation, str_names)
 end
 #=
 mutable struct DRCVaR{T1, T2, T3, T4} <: OptimType
@@ -89,14 +103,17 @@ mutable struct RP{T1} <: OptimType
     w_ini::T1
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
+    scalarisation::AbstractScalarisation
     str_names::Bool
 end
 function RP(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
             kelly::RetType = NoKelly(), class::PortClass = Classic(),
             w_ini::AbstractVector = Vector{Float64}(undef, 0),
             custom_constr::CustomConstraint = NoCustomConstraint(),
-            custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false)
-    return RP{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj, str_names)
+            custom_obj::CustomObjective = NoCustomObjective(),
+            scalarisation::AbstractScalarisation = ScalarSum(), 
+            str_names::Bool = false)
+    return RP{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names)
 end
 
 """
@@ -214,6 +231,7 @@ mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
     ohf::T8
+    scalarisation::AbstractScalarisation
     str_names::Bool
 end
 function NOC(; flag::Bool = true, bins::Real = 20.0,
@@ -228,13 +246,13 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              w_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
              custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
-             str_names::Bool = false)
+             scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
     return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_min_ini),
                typeof(w_max_ini), typeof(w_ini), typeof(ohf)}(flag, bins, w_opt, w_min,
                                                               w_max, w_min_ini, w_max_ini,
                                                               rm, obj, kelly, class, w_ini,
                                                               custom_constr, custom_obj,
-                                                              ohf, str_names)
+                                                              ohf, scalarisation, str_names)
 end
 
 abstract type HCOptWeightFinaliser end
