@@ -35,7 +35,7 @@ function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
     N = length(risk_vec)
     gamma = scalarisation.gamma
 
-    @variable(model risk)
+    @variable(model, risk)
     @variable(model, ulse_risk[1:N])
     @constraint(model, sum(ulse_risk) <= 1)
     @constraint(model, [i = 1:N], [risk_vec[i] - risk, gamma, ulse_risk[i]] in MOI.ExponentialCone())
