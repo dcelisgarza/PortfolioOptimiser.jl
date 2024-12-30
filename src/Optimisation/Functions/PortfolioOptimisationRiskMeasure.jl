@@ -29,6 +29,19 @@ function scalarise_risk_expression(port, ::ScalarSum)
 
     return nothing
 end
+function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
+    model = port.model
+    risk_vec = model[:risk_vec]
+    N = length(risk_vec)
+    gamma = scalarisation.gamma
+
+    @variable(model risk)
+    @variable(model, ulse_risk[1:N])
+    @constraint(model, sum(ulse_risk) <= 1)
+    @constraint(model, [i = 1:N], [risk_vec[i] - risk, gamma, ulse_risk[i]] in MOI.ExponentialCone())
+
+    return nothing
+end
 function _get_ntwk_clust_method(port)
     model = port.model
     return if haskey(model, :c_ntwk_sdp) || haskey(model, :c_clst_sdp)
