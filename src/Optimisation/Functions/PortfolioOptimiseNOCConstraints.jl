@@ -56,7 +56,7 @@ function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     return risk1, risk2, risk3
 end
 function noc_risk_ret(port::Portfolio, type)
-    (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, rm, obj, kelly, class, w_ini) = type
+    (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, rm, obj, kelly, class, w_ini, ohf, scalarisation) = type
 
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     w1 = if isempty(w_min)
@@ -80,7 +80,7 @@ function noc_risk_ret(port::Portfolio, type)
     w3 = if isempty(w_opt)
         _w_opt = optimise!(port,
                            Trad(; rm = rm, obj = obj, kelly = kelly, class = class,
-                                w_ini = w_ini))
+                                w_ini = w_ini, ohf = ohf, scalarisation = scalarisation))
         !isempty(_w_opt) ? _w_opt.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_opt
