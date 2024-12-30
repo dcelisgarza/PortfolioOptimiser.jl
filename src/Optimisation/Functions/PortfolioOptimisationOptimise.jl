@@ -1,5 +1,5 @@
 function optimise!(port::Portfolio, type::Trad)
-    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
+    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, scalarisation, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
@@ -21,7 +21,7 @@ function optimise!(port::Portfolio, type::Trad)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
-    scalarise_risk_expression(port, ScalarSum())
+    scalarise_risk_expression(port, scalarisation)
     # Returns
     expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     # Objective function penalties
@@ -35,7 +35,7 @@ function optimise!(port::Portfolio, type::Trad)
     return convex_optimisation(port, obj, type, class)
 end
 function optimise!(port::Portfolio, type::RP)
-    (; rm, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
+    (; rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
@@ -55,7 +55,7 @@ function optimise!(port::Portfolio, type::RP)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
-    scalarise_risk_expression(port, ScalarSum())
+    scalarise_risk_expression(port, scalarisation)
     # Returns
     expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
     # Objective function penalties
@@ -102,7 +102,7 @@ function optimise!(port::Portfolio, type::RRP)
     return convex_optimisation(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::NOC)
-    (; flag, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, str_names) = type
+    (; flag, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, scalarisation, str_names) = type
     empty!(port.fail)
     risk0, ret0 = noc_risk_ret(port, type)
     port.model = JuMP.Model()
@@ -130,7 +130,7 @@ function optimise!(port::Portfolio, type::NOC)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
-    scalarise_risk_expression(port, ScalarSum())
+    scalarise_risk_expression(port, scalarisation)
     # Returns
     expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
     if flag
