@@ -26,11 +26,11 @@ function noc_constraints(port::Portfolio, risk0, ret0)
                  end)
     return nothing
 end
-function _noc_risks(rm::AbstractVector, port, returns, sigma, w1, w2, w3)
+function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
     rm = reduce(vcat, rm)
-    risk1 = 0.0
-    risk2 = 0.0
-    risk3 = 0.0
+    risk1 = zero(eltype(returns))
+    risk2 = zero(eltype(returns))
+    risk3 = zero(eltype(returns))
     for r ∈ rm
         scale = r.settings.scale
         solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(r, port.solvers,
@@ -41,18 +41,6 @@ function _noc_risks(rm::AbstractVector, port, returns, sigma, w1, w2, w3)
         risk3 += calc_risk(r, w3; X = returns) * scale
         unset_set_rm_properties!(r, solver_flag, sigma_flag, skew_flag, sskew_flag)
     end
-    return risk1, risk2, risk3
-end
-function _noc_risks(rm, port, returns, sigma, w1, w2, w3)
-    rm = reduce(vcat, rm)
-    scale = rm.settings.scale
-    solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
-                                                                        sigma, port.V,
-                                                                        port.SV)
-    risk1 = calc_risk(rm, w1; X = returns) * scale
-    risk2 = calc_risk(rm, w2; X = returns) * scale
-    risk3 = calc_risk(rm, w3; X = returns) * scale
-    unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk1, risk2, risk3
 end
 function noc_risk_ret(port::Portfolio, type)
