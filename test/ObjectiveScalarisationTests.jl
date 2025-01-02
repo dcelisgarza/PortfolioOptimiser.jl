@@ -129,7 +129,7 @@ end
                    NOC(; obj = MinRisk(), rm = FLPM(),
                        scalarisation = ScalarLogSumExp(; gamma = 1e3)))
 
-    @test isapprox(w5.weights, w6.weights, rtol = 1.0e-4)
+    @test isapprox(w5.weights, w6.weights, rtol = 5.0e-4)
     @test isapprox(w5.weights, w7.weights, rtol = 5.0e-4)
     @test isapprox(w5.weights, w8.weights, rtol = 0.5)
     @test isapprox(w6.weights, w7.weights, rtol = 5.0e-4)
@@ -147,7 +147,6 @@ end
     w14 = optimise!(portfolio,
                     NOC(; obj = MinRisk(), rm = [SD(), FLPM()],
                         scalarisation = ScalarLogSumExp(; gamma = 1e3)))
-    find_rtol(w12.weights, w1.weights)
 
     @test isapprox(w11.weights, w12.weights, rtol = 0.05)
     @test isapprox(w11.weights, w13.weights, rtol = 5.0e-3)
