@@ -3,14 +3,14 @@ function _set_risk_expression(model, rm_risk, scale, flag::Bool)
     if !flag
         return nothing
     end
-    
+
     if !haskey(model, :risk_vec)
-         @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
+        @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
     end
-    
+
     risk_vec = model[:risk_vec]
     push!(risk_vec, scale * rm_risk)
-    
+
     return nothing
 end
 function scalarise_risk_expression(port, ::ScalarSum)
@@ -23,7 +23,7 @@ function scalarise_risk_expression(port, ::ScalarSum)
         @expression(model, risk, zero(AffExpr))
     end
 
-    for rm_risk in risk_vec
+    for rm_risk ∈ risk_vec
         add_to_expression!(risk, rm_risk)
     end
 
@@ -38,7 +38,8 @@ function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
     @variable(model, risk)
     @variable(model, ulse_risk[1:N])
     @constraint(model, sum(ulse_risk) <= 1)
-    @constraint(model, [i = 1:N], [risk_vec[i] - risk, gamma, ulse_risk[i]] in MOI.ExponentialCone())
+    @constraint(model, [i = 1:N],
+                [risk_vec[i] - risk, gamma, ulse_risk[i]] in MOI.ExponentialCone())
 
     return nothing
 end
@@ -57,11 +58,11 @@ function _set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub)
     if isinf(ub)
         return nothing
     end
-    
+
     k = model[:k]
     constr_scale = model[:constr_scale]
     @constraint(model, constr_scale * rm_risk .<= constr_scale * ub * k)
-    
+
     return nothing
 end
 function _variance_risk(::SDP, ::Any, model, sigma)
@@ -755,9 +756,9 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
-                     constr_scale * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1, dims = 2))) .<=
+                     constr_scale * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1; dims = 2))) .<=
                      constr_scale * s
-                     constr_scale * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1, dims = 2))) .<=
+                     constr_scale * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1; dims = 2))) .<=
                      constr_scale * s
                      [i = 1:T],
                      [constr_scale * tu_drcvar[i];
@@ -811,11 +812,11 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
 
         @constraints(model,
                      begin
-                         constr_scale *
-                         (b1 * tau[j] .+ a1 * X .+ vec(sum(view(u, :, :, j) .* RP1, dims = 2))) .<=
+                         constr_scale * (b1 * tau[j] .+ a1 * X .+
+                                         vec(sum(view(u, :, :, j) .* RP1; dims = 2))) .<=
                          constr_scale * view(s, :, j)
-                         constr_scale *
-                         (b2 * tau[j] .+ a2 * X .+ vec(sum(view(v, :, :, j) .* RP1, dims = 2))) .<=
+                         constr_scale * (b2 * tau[j] .+ a2 * X .+
+                                         vec(sum(view(v, :, :, j) .* RP1; dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          [i = 1:T],
                          [constr_scale * tu_drcvar[i, j];

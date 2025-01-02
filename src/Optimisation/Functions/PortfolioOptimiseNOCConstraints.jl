@@ -71,8 +71,8 @@ function noc_risk_ret(port::Portfolio, type)
     w1 = if isempty(w_min)
         _w_min = optimise!(port,
                            Trad(; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
-                                w_ini = w_min_ini, custom_constr = custom_constr, custom_obj = custom_obj,
-                                scalarisation = scalarisation))
+                                w_ini = w_min_ini, custom_constr = custom_constr,
+                                custom_obj = custom_obj, scalarisation = scalarisation))
         !isempty(_w_min) ? _w_min.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_min
@@ -81,8 +81,8 @@ function noc_risk_ret(port::Portfolio, type)
     w2 = if isempty(w_max)
         _w_max = optimise!(port,
                            Trad(; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
-                                w_ini = w_max_ini, custom_constr = custom_constr, custom_obj = custom_obj,
-                                scalarisation = scalarisation))
+                                w_ini = w_max_ini, custom_constr = custom_constr,
+                                custom_obj = custom_obj, scalarisation = scalarisation))
         !isempty(_w_max) ? _w_max.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_max
@@ -91,8 +91,9 @@ function noc_risk_ret(port::Portfolio, type)
     w3 = if isempty(w_opt)
         _w_opt = optimise!(port,
                            Trad(; rm = rm, obj = obj, kelly = kelly, class = class,
-                                w_ini = w_ini, custom_constr = custom_constr, custom_obj = custom_obj,
-                                ohf = ohf, scalarisation = scalarisation))
+                                w_ini = w_ini, custom_constr = custom_constr,
+                                custom_obj = custom_obj, ohf = ohf,
+                                scalarisation = scalarisation))
         !isempty(_w_opt) ? _w_opt.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_opt

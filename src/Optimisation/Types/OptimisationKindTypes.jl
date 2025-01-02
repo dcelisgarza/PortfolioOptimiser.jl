@@ -30,7 +30,7 @@ function ScalarLogSumExp(; gamma::Real = 1.0)
 end
 function Base.setproperty!(obj::ScalarLogSumExp, sym::Symbol, val)
     if sym == :gamma
-         @smart_assert(zero(val) <= val)
+        @smart_assert(zero(val) <= val)
     end
     return setfield!(obj, sym, val)
 end
@@ -111,9 +111,9 @@ function RP(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
             w_ini::AbstractVector = Vector{Float64}(undef, 0),
             custom_constr::CustomConstraint = NoCustomConstraint(),
             custom_obj::CustomObjective = NoCustomObjective(),
-            scalarisation::AbstractScalarisation = ScalarSum(), 
-            str_names::Bool = false)
-    return RP{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names)
+            scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
+    return RP{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj,
+                             scalarisation, str_names)
 end
 
 """
