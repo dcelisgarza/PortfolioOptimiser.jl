@@ -54,15 +54,6 @@ function scalarise_risk_expression(port, ::ScalarMax)
 
     return nothing
 end
-function scalarise_risk_expression(port, ::ScalarMin)
-    model = port.model
-    risk_vec = model[:risk_vec]
-
-    @variable(model, risk)
-    @constraint(model, risk .<= risk_vec)
-
-    return nothing
-end
 function _get_ntwk_clust_method(port)
     model = port.model
     return if haskey(model, :c_ntwk_sdp) || haskey(model, :c_clst_sdp)

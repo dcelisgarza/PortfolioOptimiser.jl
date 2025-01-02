@@ -417,4 +417,4 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
 end
 
 export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs,
-       SchurHRP, SchurParams, HWF, JWF
+       SchurHRP, SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp

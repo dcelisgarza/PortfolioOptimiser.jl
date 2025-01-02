@@ -90,32 +90,6 @@ function _noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3)
     end
     return risk1, risk2, risk3
 end
-function _noc_risks(::ScalarMin, rm, port, returns, sigma, w1, w2, w3)
-    rm = reduce(vcat, rm)
-    risk1 = Inf
-    risk2 = Inf
-    risk3 = Inf
-    for r ∈ rm
-        scale = r.settings.scale
-        solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(r, port.solvers,
-                                                                            sigma, port.V,
-                                                                            port.SV)
-        risk1_i = calc_risk(r, w1; X = returns) * scale
-        risk2_i = calc_risk(r, w2; X = returns) * scale
-        risk3_i = calc_risk(r, w3; X = returns) * scale
-        if risk1_i <= risk1
-            risk1 = risk1_i
-        end
-        if risk2_i <= risk2
-            risk2 = risk2_i
-        end
-        if risk3_i <= risk3
-            risk3 = risk3_i
-        end
-        unset_set_rm_properties!(r, solver_flag, sigma_flag, skew_flag, sskew_flag)
-    end
-    return risk1, risk2, risk3
-end
 function noc_risk_ret(port::Portfolio, type)
     (; bins, w_min, w_max, w_min_ini, w_max_ini, w_opt, rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, scalarisation) = type
 
