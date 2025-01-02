@@ -30,7 +30,8 @@ function StatsBase.mean(me::MuJS, X::AbstractMatrix; dims::Int = 1)
     sigma = me.sigma
     b = target_mean(me.target, mu, sigma, nothing, T, N)
     evals = eigvals(sigma)
-    alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mu - b, mu - b) / T
+    mb = mu - b
+    alpha = (N * mean(evals) - 2 * maximum(evals)) / dot(mb, mb) / T
     return (1 - alpha) * mu + alpha * b
 end
 function StatsBase.mean(me::MuBS, X::AbstractMatrix; dims::Int = 1)
@@ -40,7 +41,8 @@ function StatsBase.mean(me::MuBS, X::AbstractMatrix; dims::Int = 1)
     sigma = me.sigma
     inv_sigma = sigma \ I
     b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
-    alpha = (N + 2) / ((N + 2) + T * dot(mu - b, inv_sigma, mu - b))
+    mb = mu - b
+    alpha = (N + 2) / ((N + 2) + T * dot(mb, inv_sigma, mb))
     return (1 - alpha) * mu + alpha * b
 end
 function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
@@ -50,10 +52,12 @@ function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
     sigma = me.sigma
     inv_sigma = sigma \ I
     b = target_mean(me.target, mu, sigma, inv_sigma, T, N)
-    alpha = (dot(mu, inv_sigma, mu) - N / (T - N)) * dot(b, inv_sigma, b) -
-            dot(mu, inv_sigma, b)^2
-    alpha /= dot(mu, inv_sigma, mu) * dot(b, inv_sigma, b) - dot(mu, inv_sigma, b)^2
-    beta = (1 - alpha) * dot(mu, inv_sigma, b) / dot(mu, inv_sigma, mu)
+    u = dot(mu, inv_sigma, mu)
+    v = dot(b, inv_sigma, b)
+    w = dot(mu, inv_sigma, b)
+    alpha = (u - N / (T - N)) * v - w^2
+    alpha /= u * v - w^2
+    beta = (1 - alpha) * w / u
     return alpha * mu + beta * b
 end
 

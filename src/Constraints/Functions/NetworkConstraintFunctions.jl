@@ -105,8 +105,8 @@ end
 function con_rel_assets(A::AbstractMatrix, w::AbstractVector)
     ovec = range(; start = 1, stop = 1, length = size(A, 1))
     aw = abs.(w * transpose(w))
-    C_a = transpose(ovec) * (A .* aw) * ovec
-    C_a /= transpose(ovec) * aw * ovec
+    C_a = sum(A .* aw)
+    C_a /= sum(aw)
     return C_a
 end
 function connected_assets(returns::AbstractMatrix, w::AbstractVector;

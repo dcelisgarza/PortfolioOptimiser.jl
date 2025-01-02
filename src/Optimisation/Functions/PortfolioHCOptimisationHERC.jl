@@ -16,17 +16,33 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
     nodes = nodes[sortperm(heights; rev = true)]
 
     weights = ones(eltype(returns_o), size(returns_o, 2))
+    k = port.k
+    idx = cutree(port.clusters; k = k)
 
-    idx = cutree(port.clusters; k = port.k)
-
-    clusters = Vector{Vector{Int}}(undef, length(minimum(idx):maximum(idx)))
+    clusters = Vector{Vector{Int}}(undef, k)
+    crisk = zeros(eltype(returns_o), k)
+    risk = zeros(eltype(returns_i), size(returns_i, 2))
     for i ∈ eachindex(clusters)
-        clusters[i] = findall(idx .== i)
+        cidx = idx .== i
+        clusters[i] = findall(cidx)
+        for r ∈ rm_o
+            solver_flag = _set_rm_solvers!(r, port.solvers)
+            scale = r.settings.scale
+            crisk[i] += cluster_risk(port, sigma_o, returns_o, clusters[i], r) * scale
+            _unset_rm_solvers!(r, solver_flag)
+        end
+        for r ∈ rm_i
+            solver_flag = _set_rm_solvers!(r, port.solvers)
+            scale = r.settings.scale
+            risk[cidx] .+= naive_risk(port, sigma_i, returns_i, clusters[i], r) * scale
+            _unset_rm_solvers!(r, solver_flag)
+        end
+        weights[cidx] .*= risk[cidx]
     end
 
     # Treat each cluster as its own portfolio and optimise each one individually.
     # Calculate the weight of each cluster relative to the other clusters.
-    for i ∈ nodes[1:(port.k - 1)]
+    for i ∈ nodes[1:(k - 1)]
         if is_leaf(i)
             continue
         end
@@ -35,26 +51,20 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
         ln = pre_order(i.left)
         rn = pre_order(i.right)
 
-        lrisk = 0.0
-        rrisk = 0.0
-
         lc = Int[]
         rc = Int[]
-        for r ∈ rm_o
-            solver_flag = _set_rm_solvers!(r, port.solvers)
-            scale = r.settings.scale
-            for cluster ∈ clusters
-                if issubset(cluster, ln)
-                    lrisk += cluster_risk(port, sigma_o, returns_o, cluster, r) * scale
-                    append!(lc, cluster)
-                elseif issubset(cluster, rn)
-                    rrisk += cluster_risk(port, sigma_o, returns_o, cluster, r) * scale
-                    append!(rc, cluster)
-                end
+
+        for (cidx, cluster) ∈ pairs(clusters)
+            if issubset(cluster, ln)
+                push!(lc, cidx)
+            elseif issubset(cluster, rn)
+                push!(rc, cidx)
             end
-            _unset_rm_solvers!(r, solver_flag)
         end
 
+        lrisk = sum(crisk[lc])
+        rrisk = sum(crisk[rc])
+        
         risk = lrisk + rrisk
         # Allocate weight to clusters.
         alpha_1 = one(lrisk) - lrisk / risk
@@ -63,18 +73,6 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
         weights[rn] *= 1 - alpha_1
     end
 
-    risk = zeros(eltype(returns_i), size(returns_i, 2))
-    for i ∈ 1:(port.k)
-        cidx = idx .== i
-        clusters = findall(cidx)
-        for r ∈ rm_i
-            solver_flag = _set_rm_solvers!(r, port.solvers)
-            scale = r.settings.scale
-            risk[cidx] .+= naive_risk(port, sigma_i, returns_i, clusters, r) * scale
-            _unset_rm_solvers!(r, solver_flag)
-        end
-        weights[cidx] .*= risk[cidx]
-    end
     weights ./= sum(weights)
 
     return weights
