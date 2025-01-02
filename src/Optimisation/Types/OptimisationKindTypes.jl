@@ -21,6 +21,8 @@ abstract type HCOptimType <: AbstractOptimType end
 
 abstract type AbstractScalarisation end
 struct ScalarSum <: AbstractScalarisation end
+struct ScalarMax <: AbstractScalarisation end
+struct ScalarMin <: AbstractScalarisation end
 mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation
     gamma::T1
 end

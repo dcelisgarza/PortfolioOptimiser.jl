@@ -32,14 +32,34 @@ end
 function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
     model = port.model
     risk_vec = model[:risk_vec]
+    constr_scale = model[:constr_scale]
     N = length(risk_vec)
-    gamma = scalarisation.gamma
+    gamma = inv(scalarisation.gamma)
 
     @variable(model, risk)
     @variable(model, ulse_risk[1:N])
-    @constraint(model, sum(ulse_risk) <= 1)
+    @constraint(model, constr_scale * sum(ulse_risk) <= constr_scale * 1)
     @constraint(model, [i = 1:N],
-                [risk_vec[i] - risk, gamma, ulse_risk[i]] in MOI.ExponentialCone())
+                [constr_scale * (risk_vec[i] - risk), constr_scale * gamma,
+                 constr_scale * ulse_risk[i]] in MOI.ExponentialCone())
+
+    return nothing
+end
+function scalarise_risk_expression(port, ::ScalarMax)
+    model = port.model
+    risk_vec = model[:risk_vec]
+
+    @variable(model, risk)
+    @constraint(model, risk .>= risk_vec)
+
+    return nothing
+end
+function scalarise_risk_expression(port, ::ScalarMin)
+    model = port.model
+    risk_vec = model[:risk_vec]
+
+    @variable(model, risk)
+    @constraint(model, risk .<= risk_vec)
 
     return nothing
 end
