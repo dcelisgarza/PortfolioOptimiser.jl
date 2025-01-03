@@ -60,5 +60,13 @@ function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * w / u
     return alpha * mu + beta * b
 end
+function StatsBase.mean(me::MuEquil, ::Any; kwargs...)
+    l = me.l
+    sigma = me.sigma
+    N = size(sigma, 1)
+    w = isnothing(me.w) ? fill(inv(N), N) : me.w
+
+    return l * sigma * w
+end
 
 export target_mean
