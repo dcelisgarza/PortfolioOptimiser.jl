@@ -64,7 +64,7 @@ function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRi
 
         lrisk = sum(crisk[lc])
         rrisk = sum(crisk[rc])
-        
+
         risk = lrisk + rrisk
         # Allocate weight to clusters.
         alpha_1 = one(lrisk) - lrisk / risk

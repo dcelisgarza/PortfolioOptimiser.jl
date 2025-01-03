@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Objective scalarisation tests" begin
+    include("ObjectiveScalarisationTests.jl")
+end
+
 @safetestset "Allocation tests" begin
     include("AllocationTests.jl")
 end

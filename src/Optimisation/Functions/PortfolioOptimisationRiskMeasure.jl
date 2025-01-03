@@ -1,21 +1,57 @@
 # Risk expression
 function _set_risk_expression(model, rm_risk, scale, flag::Bool)
-    if flag
-        if !haskey(model, :risk)
-            @expression(model, risk, scale * rm_risk)
-        else
-            try
-                risk = model[:risk]
-                add_to_expression!(risk, scale, rm_risk)
-            catch
-                risk = model[:risk]
-                @expression(model, tmp, risk + scale * rm_risk)
-                unregister(model, :risk)
-                @expression(model, risk, tmp)
-                unregister(model, :tmp)
-            end
-        end
+    if !flag
+        return nothing
     end
+
+    if !haskey(model, :risk_vec)
+        @expression(model, risk_vec, Union{AffExpr, QuadExpr}[])
+    end
+
+    risk_vec = model[:risk_vec]
+    push!(risk_vec, scale * rm_risk)
+
+    return nothing
+end
+function scalarise_risk_expression(port, ::ScalarSum)
+    model = port.model
+    risk_vec = model[:risk_vec]
+
+    if any(isa.(risk_vec, QuadExpr))
+        @expression(model, risk, zero(QuadExpr))
+    else
+        @expression(model, risk, zero(AffExpr))
+    end
+
+    for rm_risk ∈ risk_vec
+        add_to_expression!(risk, rm_risk)
+    end
+
+    return nothing
+end
+function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
+    model = port.model
+    risk_vec = model[:risk_vec]
+    constr_scale = model[:constr_scale]
+    N = length(risk_vec)
+    gamma = inv(scalarisation.gamma)
+
+    @variable(model, risk)
+    @variable(model, ulse_risk[1:N])
+    @constraint(model, constr_scale * sum(ulse_risk) <= constr_scale * 1)
+    @constraint(model, [i = 1:N],
+                [constr_scale * (risk_vec[i] - risk), constr_scale * gamma,
+                 constr_scale * ulse_risk[i]] in MOI.ExponentialCone())
+
+    return nothing
+end
+function scalarise_risk_expression(port, ::ScalarMax)
+    model = port.model
+    risk_vec = model[:risk_vec]
+
+    @variable(model, risk)
+    @constraint(model, risk .>= risk_vec)
+
     return nothing
 end
 function _get_ntwk_clust_method(port)
@@ -30,11 +66,14 @@ function _set_rm_risk_upper_bound(args...)
     return nothing
 end
 function _set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub)
-    if isfinite(ub)
-        k = model[:k]
-        constr_scale = model[:constr_scale]
-        @constraint(model, constr_scale * rm_risk .<= constr_scale * ub * k)
+    if isinf(ub)
+        return nothing
     end
+
+    k = model[:k]
+    constr_scale = model[:constr_scale]
+    @constraint(model, constr_scale * rm_risk .<= constr_scale * ub * k)
+
     return nothing
 end
 function _variance_risk(::SDP, ::Any, model, sigma)
@@ -728,9 +767,9 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
-                     constr_scale * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1, dims = 2))) .<=
+                     constr_scale * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1; dims = 2))) .<=
                      constr_scale * s
-                     constr_scale * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1, dims = 2))) .<=
+                     constr_scale * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1; dims = 2))) .<=
                      constr_scale * s
                      [i = 1:T],
                      [constr_scale * tu_drcvar[i];
@@ -784,11 +823,11 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
 
         @constraints(model,
                      begin
-                         constr_scale *
-                         (b1 * tau[j] .+ a1 * X .+ vec(sum(view(u, :, :, j) .* RP1, dims = 2))) .<=
+                         constr_scale * (b1 * tau[j] .+ a1 * X .+
+                                         vec(sum(view(u, :, :, j) .* RP1; dims = 2))) .<=
                          constr_scale * view(s, :, j)
-                         constr_scale *
-                         (b2 * tau[j] .+ a2 * X .+ vec(sum(view(v, :, :, j) .* RP1, dims = 2))) .<=
+                         constr_scale * (b2 * tau[j] .+ a2 * X .+
+                                         vec(sum(view(v, :, :, j) .* RP1; dims = 2))) .<=
                          constr_scale * view(s, :, j)
                          [i = 1:T],
                          [constr_scale * tu_drcvar[i, j];
