@@ -42,10 +42,27 @@ Where:
       + if `true`: the correlation being used is absolute.
 """
 mutable struct DistMLP <: DistMethod
+    overwrite::Bool
     absolute::Bool
 end
-function DistMLP(; absolute::Bool = false)
-    return DistMLP(absolute)
+function DistMLP(; overwrite::Bool = true, absolute::Bool = false)
+    return DistMLP(overwrite, absolute)
+end
+
+mutable struct GenDistMLP{T1} <: DistMethod
+    overwrite::Bool
+    absolute::Bool
+    power::T1
+end
+function GenDistMLP(; overwrite::Bool = true, absolute::Bool = false, power::Integer = 1)
+    @smart_assert(power > zero(power))
+    return GenDistMLP(overwrite, absolute, power)
+end
+function Base.setproperty!(obj::GenDistMLP, sym::Symbol, val)
+    if sym == :power
+        @smart_assert(val > zero(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
@@ -87,17 +104,40 @@ Where:
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
 mutable struct DistDistMLP <: DistMethod
+    overwrite::Bool
     absolute::Bool
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
-function DistDistMLP(; absolute::Bool = false,
+function DistDistMLP(; overwrite::Bool = true, absolute::Bool = false,
                      distance::Distances.Metric = Distances.Euclidean(), args::Tuple = (),
                      kwargs::NamedTuple = (;))
-    return DistDistMLP(absolute, distance, args, kwargs)
+    return DistDistMLP(overwrite, absolute, distance, args, kwargs)
 end
-const AbsoluteDist = Union{DistMLP, DistDistMLP}
+mutable struct GenDistDistMLP{T1} <: DistMethod
+    overwrite::Bool
+    absolute::Bool
+    power::T1
+    distance::Distances.Metric
+    args::Tuple
+    kwargs::NamedTuple
+end
+function GenDistDistMLP(; overwrite::Bool = true, absolute::Bool = false,
+                        power::Integer = 1,
+                        distance::Distances.Metric = Distances.Euclidean(),
+                        args::Tuple = (), kwargs::NamedTuple = (;))
+    @smart_assert(power > zero(power))
+    return GenDistDistMLP(overwrite, absolute, power, distance, args, kwargs)
+end
+function Base.setproperty!(obj::GenDistDistMLP, sym::Symbol, val)
+    if sym == :power
+        @smart_assert(val > zero(val))
+    end
+    return setfield!(obj, sym, val)
+end
+
+const AbsoluteDist = Union{DistMLP, GenDistMLP, DistDistMLP, GenDistDistMLP}
 
 """
 ```
@@ -378,4 +418,5 @@ function DistDistCanonical(; distance::Distances.Metric = Distances.Euclidean(),
 end
 
 export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, Knuth, Freedman, Scott,
-       HGR, DistVarInfo, DistDistVarInfo, DistCanonical, DistDistCanonical
+       HGR, DistVarInfo, DistDistVarInfo, DistCanonical, DistDistCanonical, GenDistMLP,
+       GenDistDistMLP

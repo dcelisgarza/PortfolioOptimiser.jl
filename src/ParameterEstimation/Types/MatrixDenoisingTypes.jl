@@ -19,8 +19,6 @@ struct NoDenoise <: Denoise end
 """
 ```
 @kwdef mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
-    detone::Bool = false
-    mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
     m::Integer = 10
     n::Integer = 1000
@@ -48,23 +46,16 @@ Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; C
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
-    detone::Bool
-    mkt_comp::T1
-    kernel::T2
-    m::T3
-    n::T4
+mutable struct DenoiseFixed{T1, T2, T3} <: Denoise
+    kernel::T1
+    m::T2
+    n::T3
     args::Tuple
     kwargs::NamedTuple
 end
-function DenoiseFixed(; detone::Bool = false, mkt_comp::Integer = 1,
-                      kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
+function DenoiseFixed(; kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
                       n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
-    return DenoiseFixed{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                mkt_comp,
-                                                                                kernel, m,
-                                                                                n, args,
-                                                                                kwargs)
+    return DenoiseFixed{typeof(kernel), typeof(m), typeof(n)}(kernel, m, n, args, kwargs)
 end
 
 """
@@ -99,25 +90,17 @@ Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
-    detone::Bool
-    mkt_comp::T1
-    kernel::T2
-    m::T3
-    n::T4
+mutable struct DenoiseSpectral{T1, T2, T3} <: Denoise
+    kernel::T1
+    m::T2
+    n::T3
     args::Tuple
     kwargs::NamedTuple
 end
-function DenoiseSpectral(; detone::Bool = false, mkt_comp::Integer = 1,
-                         kernel = AverageShiftedHistograms.Kernels.gaussian,
+function DenoiseSpectral(; kernel = AverageShiftedHistograms.Kernels.gaussian,
                          m::Integer = 10, n::Integer = 1000, args::Tuple = (),
                          kwargs::NamedTuple = (;))
-    return DenoiseSpectral{typeof(mkt_comp), typeof(kernel), typeof(m), typeof(n)}(detone,
-                                                                                   mkt_comp,
-                                                                                   kernel,
-                                                                                   m, n,
-                                                                                   args,
-                                                                                   kwargs)
+    return DenoiseSpectral{typeof(kernel), typeof(m), typeof(n)}(kernel, m, n, args, kwargs)
 end
 
 """
@@ -173,22 +156,21 @@ Where:
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
+mutable struct DenoiseShrink{T1, T2, T3, T4} <: Denoise
     alpha::T1
-    detone::Bool
-    mkt_comp::T2
-    kernel::T3
-    m::T4
-    n::T5
+    kernel::T2
+    m::T3
+    n::T4
     args::Tuple
     kwargs::NamedTuple
 end
-function DenoiseShrink(; alpha::Real = 0.0, detone::Bool = false, mkt_comp::Integer = 1,
+function DenoiseShrink(; alpha::Real = 0.0,
                        kernel = AverageShiftedHistograms.Kernels.gaussian, m::Integer = 10,
                        n::Integer = 1000, args::Tuple = (), kwargs::NamedTuple = (;))
     @smart_assert(zero(alpha) <= alpha <= one(alpha))
-    return DenoiseShrink{typeof(alpha), typeof(mkt_comp), typeof(kernel), typeof(m),
-                         typeof(n)}(alpha, detone, mkt_comp, kernel, m, n, args, kwargs)
+    return DenoiseShrink{typeof(alpha), typeof(kernel), typeof(m), typeof(n)}(alpha, kernel,
+                                                                              m, n, args,
+                                                                              kwargs)
 end
 
 export NoDenoise, DenoiseFixed, DenoiseSpectral, DenoiseShrink

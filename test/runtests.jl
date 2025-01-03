@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
 @safetestset "Objective scalarisation tests" begin
     include("ObjectiveScalarisationTests.jl")
 end
@@ -42,10 +46,6 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
 end
 
 @safetestset "RRP optimisation" begin

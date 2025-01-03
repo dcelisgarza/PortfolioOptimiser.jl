@@ -1,6 +1,7 @@
 include("./ParameterEstimationMiscFunctions.jl")
 include("./PosdefFixFunctions.jl")
 include("./MatrixDenoisingFunctions.jl")
+include("./DetoneMatrixFunctions.jl")
 include("./DistanceMatrixFunctions.jl")
 include("./ClusteringFunctions.jl")
 include("./CovCorKurtSkewFunctions.jl")

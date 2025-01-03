@@ -1,5 +1,6 @@
 include("./PosdefFixTypes.jl")
 include("./MatrixDenoisingTypes.jl")
+include("./DetoneMatrixTypes.jl")
 include("./DistanceMatrixTypes.jl")
 include("./ClusteringTypes.jl")
 include("./CovCorKurtSkewTypes.jl")

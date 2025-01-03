@@ -161,6 +161,16 @@ function MuBOP(; target::MeanTarget = GM(), w::Union{<:AbstractWeights, Nothing}
     return MuBOP(target, w, sigma)
 end
 
+mutable struct MuEquil{T1} <: MeanSigmaEstimator
+    l::T1
+    w::Union{<:AbstractVector, Nothing}
+    sigma::Union{<:AbstractMatrix, Nothing}
+end
+function MuEquiv(; l::Real = 1.0, w::Union{<:AbstractVector, Nothing} = nothing,
+                 sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+    return MuEquiv{typeof(l)}(l, w, sigma)
+end
+
 function set_mean_sigma(mu_type::MeanSigmaEstimator, sigma)
     old_sigma = mu_type.sigma
     if isnothing(mu_type.sigma) || isempty(mu_type.sigma)

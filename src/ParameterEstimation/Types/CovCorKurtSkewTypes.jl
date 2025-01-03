@@ -926,12 +926,13 @@ mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator
     posdef::PosdefFix
     denoise::Denoise
+    detone::AbstractDetone
     logo::AbstractLoGo
 end
 function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
                     posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
-                    logo::AbstractLoGo = NoLoGo(;))
-    return PortCovCor(ce, posdef, denoise, logo)
+                    detone::AbstractDetone = NoDetone(), logo::AbstractLoGo = NoLoGo(;))
+    return PortCovCor(ce, posdef, denoise, detone, logo)
 end
 
 """

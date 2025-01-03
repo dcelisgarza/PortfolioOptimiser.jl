@@ -76,15 +76,6 @@ function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
 
     _denoise!(ce, X, vals, vecs, num_factors)
 
-    mkt_comp = ce.mkt_comp
-    if ce.detone
-        @smart_assert(one(size(X, 1)) <= mkt_comp <= size(X, 1))
-        mkt_comp -= 1
-        _vals = Diagonal(vals)[(end - mkt_comp):end, (end - mkt_comp):end]
-        _vecs = vecs[:, (end - mkt_comp):end]
-        X .-= _vecs * _vals * transpose(_vecs)
-    end
-
     posdef_fix!(posdef, X)
 
     if iscov

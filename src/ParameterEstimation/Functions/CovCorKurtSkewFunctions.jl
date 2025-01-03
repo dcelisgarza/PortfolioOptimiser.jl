@@ -1255,6 +1255,7 @@ function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     sigma = Matrix(cov(ce.ce, X))
     posdef_fix!(ce.posdef, sigma)
     denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
+    detone!(ce.detone, ce.posdef, sigma)
     logo!(ce.logo, ce.posdef, sigma)
 
     return Symmetric(sigma)
@@ -1271,6 +1272,7 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     end
     posdef_fix!(ce.posdef, rho)
     denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
+    detone!(ce.detone, ce.posdef, rho)
     logo!(ce.logo, ce.posdef, rho)
 
     return Symmetric(rho)

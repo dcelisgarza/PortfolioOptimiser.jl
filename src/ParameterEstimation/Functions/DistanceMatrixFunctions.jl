@@ -1,3 +1,29 @@
+function _dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
+    return Symmetric(sqrt.(if !de.absolute
+                               power = de.power
+                               scaler = isodd(power) ? 0.5 : 1.0
+                               clamp!((one(eltype(X)) .- X .^ power) * scaler,
+                                      zero(eltype(X)), one(eltype(X)))
+                           else
+                               power = de.power
+                               clamp!(one(eltype(X)) .- abs.(X) .^ power, zero(eltype(X)),
+                                      one(eltype(X)))
+                           end))
+end
+function _dist(de::GenDistDistMLP, X::AbstractMatrix, ::Any)
+    _X = Symmetric(sqrt.(if !de.absolute
+                             power = de.power
+                             scaler = isodd(power) ? 0.5 : 1.0
+                             clamp!((one(eltype(X)) .- X .^ power) * scaler,
+                                    zero(eltype(X)), one(eltype(X)))
+                         else
+                             power = de.power
+                             clamp!(one(eltype(X)) .- abs.(X) .^ power, zero(eltype(X)),
+                                    one(eltype(X)))
+                         end))
+
+    return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
+end
 function _dist(de::DistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
@@ -48,7 +74,10 @@ function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::PortCovCor)
     return _set_absolute_dist!(dist_type, cor_type.ce)
 end
 function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::AbsoluteCovCor)
-    dist_type.absolute = cor_type.absolute
+    overwrite = dist_type.overwrite
+    if overwrite
+        dist_type.absolute = cor_type.absolute
+    end
     return nothing
 end
 function _set_absolute_dist!(args...)
