@@ -22,10 +22,10 @@ l = 2.0
     C = cluster_matrix(portfolio)
 
     portfolio.short = true
-    portfolio.short_u = -0.13
+    portfolio.short_lb = -0.13
     portfolio.short_budget = -0.13
-    portfolio.long_u = 1
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.long_ub = 1
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     rm = CDaR()
     obj = MinRisk()
@@ -167,10 +167,10 @@ l = 2.0
     C = cluster_matrix(portfolio; clust_alg = clust_alg)
 
     portfolio.short = true
-    portfolio.short_u = -0.18
+    portfolio.short_lb = -0.18
     portfolio.short_budget = -0.18
-    portfolio.long_u = 0.95
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.long_ub = 0.95
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     w11 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.06455652837124166, 0.0, 0.17806945118716286, -0.1534166903019555,
@@ -858,9 +858,9 @@ end
 
     portfolio.short = true
     portfolio.short_budget = -0.22
-    portfolio.short_u = -0.22
-    portfolio.long_u = 0.88
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.22
+    portfolio.long_ub = 0.88
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -1005,9 +1005,9 @@ end
 
     portfolio.short = true
     portfolio.short_budget = -0.27
-    portfolio.short_u = -0.27
-    portfolio.long_u = 0.81
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.27
+    portfolio.long_ub = 0.81
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     obj = Sharpe(; rf = rf)
     network_type = TMFG()
@@ -1700,9 +1700,9 @@ end
 
     portfolio.short = true
     portfolio.short_budget = -0.22
-    portfolio.short_u = -0.22
-    portfolio.long_u = 0.88
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.22
+    portfolio.long_ub = 0.88
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     A = centrality_vector(portfolio)
     B = connection_matrix(portfolio)
@@ -1875,9 +1875,9 @@ end
 
     portfolio.short = true
     portfolio.short_budget = -0.27
-    portfolio.short_u = -0.27
-    portfolio.long_u = 0.81
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.27
+    portfolio.long_ub = 0.81
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     obj = Sharpe(; rf = rf)
 
@@ -2864,10 +2864,10 @@ end
     C = cluster_matrix(portfolio)
 
     portfolio.short = true
-    portfolio.short_u = -0.13
+    portfolio.short_lb = -0.13
     portfolio.short_budget = -0.13
-    portfolio.long_u = 1
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.long_ub = 1
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     rm = CDaR()
     obj = MinRisk()
@@ -3022,10 +3022,10 @@ end
     C = cluster_matrix(portfolio; clust_alg = DBHT())
 
     portfolio.short = true
-    portfolio.short_u = -0.18
+    portfolio.short_lb = -0.18
     portfolio.short_budget = -0.18
-    portfolio.long_u = 0.95
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.long_ub = 0.95
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     w11 = optimise!(portfolio, Trad(; obj = obj, rm = rm))
     wt = [0.0, 0.0, 0.06455652837124166, 0.0, 0.17806945118716286, -0.1534166903019555,
@@ -3449,9 +3449,9 @@ end
     portfolio.nea = 0
     portfolio.short = true
     portfolio.short_budget = -0.2
-    portfolio.short_u = -0.2
-    portfolio.long_u = 0.8
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.2
+    portfolio.long_ub = 0.8
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     w5 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test isapprox(sum(w5.weights), portfolio.budget)
@@ -3507,9 +3507,9 @@ end
     portfolio.card = 0
     portfolio.short = true
     portfolio.short_budget = -0.2
-    portfolio.short_u = -0.2
-    portfolio.long_u = 0.8
-    portfolio.budget = portfolio.long_u + portfolio.short_u
+    portfolio.short_lb = -0.2
+    portfolio.long_ub = 0.8
+    portfolio.budget = portfolio.long_ub + portfolio.short_lb
 
     w13 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test isapprox(sum(w13.weights), portfolio.budget)
