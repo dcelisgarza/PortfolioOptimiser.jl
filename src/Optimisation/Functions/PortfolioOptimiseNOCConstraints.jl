@@ -13,14 +13,16 @@ function noc_constraints(port::Portfolio, risk0, ret0)
                end)
     @constraints(model,
                  begin
+                     constr_log_risk,
                      [scale_constr * log_risk, scale_constr * 1,
                       scale_constr * (risk0 - risk)] in MOI.ExponentialCone()
+                     constr_log_ret,
                      [scale_constr * log_ret, scale_constr * 1,
                       scale_constr * (ret - ret0)] in MOI.ExponentialCone()
-                     [i = 1:N],
+                     constr_log_w[i = 1:N],
                      [scale_constr * log_w[i], scale_constr * 1, scale_constr * w[i]] ∈
                      MOI.ExponentialCone()
-                     [i = 1:N],
+                     constr_log_1mw[i = 1:N],
                      [scale_constr * log_1mw[i], scale_constr * 1,
                       scale_constr * (1 - w[i])] ∈ MOI.ExponentialCone()
                  end)
