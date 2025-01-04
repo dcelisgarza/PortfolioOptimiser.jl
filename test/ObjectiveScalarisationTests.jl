@@ -12,7 +12,7 @@ l = 2.0
                                                            :check_sol => (allow_local = true,
                                                                           allow_almost = true),
                                                            :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                                                                           "max_step_fraction" => 0.85))))
 
     asset_statistics!(portfolio)
 
@@ -31,12 +31,12 @@ l = 2.0
                         scalarisation = ScalarLogSumExp(; gamma = 1e3)))
 
     @test isapprox(w1.weights, w2.weights, rtol = 5.0e-7)
-    @test isapprox(w1.weights, w3.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.005)
     @test isapprox(w1.weights, w4.weights, rtol = 1.0e-5)
-    @test isapprox(w1.weights, w5.weights, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w3.weights, rtol = 0.25)
+    @test isapprox(w1.weights, w5.weights, rtol = 5.0e-6)
+    @test isapprox(w2.weights, w3.weights, rtol = 0.005)
     @test isapprox(w2.weights, w4.weights, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w5.weights, rtol = 1.0e-5)
+    @test isapprox(w2.weights, w5.weights, rtol = 5.0e-6)
 
     w6 = optimise!(portfolio,
                    Trad(; obj = MinRisk(), rm = SVariance(), scalarisation = ScalarSum()))
@@ -53,42 +53,39 @@ l = 2.0
                          scalarisation = ScalarLogSumExp(; gamma = 1e3)))
 
     @test isapprox(w6.weights, w7.weights, rtol = 5.0e-5)
-    @test isapprox(w6.weights, w8.weights, rtol = 0.5)
+    @test isapprox(w6.weights, w8.weights, rtol = 0.005)
     @test isapprox(w6.weights, w9.weights, rtol = 1.0e-4)
-    @test isapprox(w6.weights, w10.weights, rtol = 1.0e-4)
-    @test isapprox(w7.weights, w8.weights, rtol = 0.5)
+    @test isapprox(w6.weights, w10.weights, rtol = 5.0e-5)
+    @test isapprox(w7.weights, w8.weights, rtol = 0.005)
     @test isapprox(w7.weights, w9.weights, rtol = 5.0e-5)
-    @test isapprox(w7.weights, w10.weights, rtol = 5.0e-5)
+    @test isapprox(w7.weights, w10.weights, rtol = 1.0e-4)
 
     w11 = optimise!(portfolio,
                     Trad(; obj = MinRisk(),
-                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 50))],
+                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 100))],
                          scalarisation = ScalarSum()))
     w12 = optimise!(portfolio,
                     Trad(; obj = MinRisk(),
-                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 50))],
+                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 100))],
                          scalarisation = ScalarMax()))
     w13 = optimise!(portfolio,
                     Trad(; obj = MinRisk(),
-                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 50))],
-                         scalarisation = ScalarLogSumExp(; gamma = 5e-1)))
+                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 100))],
+                         scalarisation = ScalarLogSumExp(; gamma = 1e-6)))
     w14 = optimise!(portfolio,
                     Trad(; obj = MinRisk(),
-                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 50))],
+                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 100))],
                          scalarisation = ScalarLogSumExp(; gamma = 1e0)))
     w15 = optimise!(portfolio,
                     Trad(; obj = MinRisk(),
-                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 50))],
-                         scalarisation = ScalarLogSumExp(; gamma = 1e3)))
+                         rm = [SD(), SVariance(; settings = RMSettings(; scale = 100))],
+                         scalarisation = ScalarLogSumExp(; gamma = 2.5e0)))
 
-    @test isapprox(w11.weights, w12.weights, rtol = 0.05)
-    @test isapprox(w11.weights, w13.weights, rtol = 1.0e-4)
-    @test isapprox(w11.weights, w14.weights, rtol = 5.0e-4)
-    @test isapprox(w11.weights, w15.weights, rtol = 0.05)
-    @test isapprox(w12.weights, w1.weights, rtol = 5.0e-6)
-    @test isapprox(w12.weights, w13.weights, rtol = 0.05)
-    @test isapprox(w12.weights, w14.weights, rtol = 0.05)
-    @test isapprox(w12.weights, w15.weights, rtol = 5.0e-4)
+    @test isapprox(w12.weights, w1.weights, rtol = 1.0e-5)
+    @test isapprox(w12.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w11.weights, w13.weights, rtol = 0.05)
+    @test isapprox(w12.weights, w14.weights, rtol = 0.1)
+    @test isapprox(w12.weights, w15.weights, rtol = 0.1)
 end
 
 @testset "Objective scalarisation NOC" begin
@@ -107,33 +104,43 @@ end
                    NOC(; obj = MinRisk(), rm = SD(), scalarisation = ScalarMax()))
     w3 = optimise!(portfolio,
                    NOC(; obj = MinRisk(), rm = SD(),
-                       scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+                       scalarisation = ScalarLogSumExp(; gamma = 1e-3)))
     w4 = optimise!(portfolio,
+                   NOC(; obj = MinRisk(), rm = SD(),
+                       scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+    w5 = optimise!(portfolio,
                    NOC(; obj = MinRisk(), rm = SD(),
                        scalarisation = ScalarLogSumExp(; gamma = 1e3)))
 
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-4)
-    @test isapprox(w1.weights, w3.weights, rtol = 5.0e-4)
-    @test isapprox(w1.weights, w4.weights, rtol = 0.5)
-    @test isapprox(w2.weights, w3.weights, rtol = 5.0e-4)
-    @test isapprox(w2.weights, w4.weights, rtol = 0.5)
+    @test isapprox(w1.weights, w2.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w3.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w4.weights, rtol = 0.0005)
+    @test isapprox(w1.weights, w5.weights, rtol = 0.0005)
+    @test isapprox(w2.weights, w3.weights, rtol = 0.0005)
+    @test isapprox(w2.weights, w4.weights, rtol = 0.0005)
+    @test isapprox(w2.weights, w5.weights, rtol = 0.0001)
 
-    w5 = optimise!(portfolio,
-                   NOC(; obj = MinRisk(), rm = FLPM(), scalarisation = ScalarSum()))
     w6 = optimise!(portfolio,
-                   NOC(; obj = MinRisk(), rm = FLPM(), scalarisation = ScalarMax()))
+                   NOC(; obj = MinRisk(), rm = FLPM(), scalarisation = ScalarSum()))
     w7 = optimise!(portfolio,
-                   NOC(; obj = MinRisk(), rm = FLPM(),
-                       scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+                   NOC(; obj = MinRisk(), rm = FLPM(), scalarisation = ScalarMax()))
     w8 = optimise!(portfolio,
                    NOC(; obj = MinRisk(), rm = FLPM(),
-                       scalarisation = ScalarLogSumExp(; gamma = 1e3)))
+                       scalarisation = ScalarLogSumExp(; gamma = 1e-3)))
+    w9 = optimise!(portfolio,
+                   NOC(; obj = MinRisk(), rm = FLPM(),
+                       scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+    w10 = optimise!(portfolio,
+                    NOC(; obj = MinRisk(), rm = FLPM(),
+                        scalarisation = ScalarLogSumExp(; gamma = 8e1)))
 
-    @test isapprox(w5.weights, w6.weights, rtol = 5.0e-4)
-    @test isapprox(w5.weights, w7.weights, rtol = 5.0e-4)
-    @test isapprox(w5.weights, w8.weights, rtol = 0.5)
-    @test isapprox(w6.weights, w7.weights, rtol = 5.0e-4)
-    @test isapprox(w6.weights, w8.weights, rtol = 0.5)
+    @test isapprox(w6.weights, w7.weights, rtol = 0.0005)
+    @test isapprox(w6.weights, w8.weights, rtol = 0.0005)
+    @test isapprox(w6.weights, w9.weights, rtol = 0.0005)
+    @test isapprox(w6.weights, w10.weights, rtol = 0.0001)
+    @test isapprox(w7.weights, w8.weights, rtol = 0.0005)
+    @test isapprox(w7.weights, w9.weights, rtol = 0.0005)
+    @test isapprox(w7.weights, w10.weights, rtol = 0.0005)
 
     w11 = optimise!(portfolio,
                     NOC(; obj = MinRisk(), rm = [SD(), FLPM()],
@@ -143,15 +150,16 @@ end
                         scalarisation = ScalarMax()))
     w13 = optimise!(portfolio,
                     NOC(; obj = MinRisk(), rm = [SD(), FLPM()],
-                        scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+                        scalarisation = ScalarLogSumExp(; gamma = 1e-3)))
     w14 = optimise!(portfolio,
                     NOC(; obj = MinRisk(), rm = [SD(), FLPM()],
-                        scalarisation = ScalarLogSumExp(; gamma = 1e3)))
-
-    @test isapprox(w11.weights, w12.weights, rtol = 0.05)
-    @test isapprox(w11.weights, w13.weights, rtol = 5.0e-3)
-    @test isapprox(w11.weights, w14.weights, rtol = 0.5)
-    @test isapprox(w12.weights, w1.weights, rtol = 5.0e-4)
-    @test isapprox(w12.weights, w13.weights, rtol = 0.05)
-    @test isapprox(w12.weights, w14.weights, rtol = 0.5)
+                        scalarisation = ScalarLogSumExp(; gamma = 1e0)))
+    w15 = optimise!(portfolio,
+                    NOC(; obj = MinRisk(), rm = [SD(), FLPM()],
+                        scalarisation = ScalarLogSumExp(; gamma = 9e1)))
+    @test isapprox(w12.weights, w1.weights, rtol = 0.0005)
+    @test isapprox(w12.weights, w6.weights, rtol = 0.25)
+    @test isapprox(w11.weights, w13.weights, rtol = 0.005)
+    @test isapprox(w12.weights, w14.weights, rtol = 0.05)
+    @test isapprox(w12.weights, w15.weights, rtol = 0.1)
 end

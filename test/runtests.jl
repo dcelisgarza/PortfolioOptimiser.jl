@@ -1,19 +1,47 @@
 using SafeTestsets
 
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vector" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "RRP optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
 end
 
 @safetestset "Objective scalarisation tests" begin
     include("ObjectiveScalarisationTests.jl")
 end
 
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
 end
 
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
 end
 
 @safetestset "Portfolio classes" begin
@@ -36,10 +64,6 @@ end
     include("DBHTClusteringTests.jl")
 end
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
 @safetestset "Network constraint tests" begin
     include("NetworkConstraintTests.jl")
 end
@@ -48,40 +72,16 @@ end
     include("BLStatsTests.jl")
 end
 
-@safetestset "RRP optimisation" begin
-    include("RRPOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
-end
-
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
 end
 
 @safetestset "Type tests" begin
     include("TypeTests.jl")
 end
 
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
 @safetestset "WC optimisation" begin
     include("WCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vector" begin
-    include("TradOptimisationVectorTests.jl")
 end
 
 @safetestset "OWA Weights" begin

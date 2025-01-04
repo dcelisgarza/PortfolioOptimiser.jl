@@ -60,11 +60,20 @@ function StatsBase.mean(me::MuBOP, X::AbstractMatrix; dims::Int = 1)
     beta = (1 - alpha) * w / u
     return alpha * mu + beta * b
 end
-function StatsBase.mean(me::MuEquil, ::AbstractArray; kwargs...)
+function StatsBase.mean(me::MuEquil, X::AbstractMatrix; kwargs...)
     l = me.l
+    w = me.w
     sigma = me.sigma
-    N = size(sigma, 1)
-    w = isnothing(me.w) ? fill(inv(N), N) : me.w
+    if isnothing(sigma)
+        sigma = X
+    end
+    N, M = size(sigma)
+    @smart_assert(N == M)
+    if isnothing(me.w)
+        w = fill(inv(N), N)
+    end
+    @smart_assert(length(w) == N)
+
     return l * sigma * w
 end
 

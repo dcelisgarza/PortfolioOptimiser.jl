@@ -226,16 +226,16 @@ short_budget = -1
 budget = 0
 
 ## Upper bound for the value of each short weight.
-short_u = -1
+short_lb = -1
 
 ## Upper bound for the value of each long weight.
-long_u = 1
+long_ub = 1
 w = optimise!(hp,
               NCO(;
                   internal = NCOArgs(; type = Trad(; rm = RLDaR(), obj = MaxRet()),
                                      port_kwargs = (; short = short, budget = budget,
                                                     short_budget = short_budget,
-                                                    long_u = long_u, short_u = short_u))))
+                                                    long_ub = long_ub, short_lb = short_lb))))
 
 wa = allocate!(hp; type = :NCO, investment = 3000, short = short, budget = budget,
                short_budget = short_budget)

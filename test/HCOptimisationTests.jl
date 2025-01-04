@@ -3406,7 +3406,7 @@ end
                        internal = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true,
                                                          short_budget = -0.3,
-                                                         short_u = -0.3, long_u = 0.6,
+                                                         short_lb = -0.3, long_ub = 0.6,
                                                          budget = 0.6 - 0.3))))
     wt = [-0.016918125661751243, 0.0017126889827391004, 0.0031512295564527604,
           0.00087743545602701, 0.02890363413289535, -0.0319389435912711,
@@ -3426,7 +3426,7 @@ end
                        external = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true,
                                                          short_budget = -0.6,
-                                                         short_u = -0.6, long_u = 0.4,
+                                                         short_lb = -0.6, long_ub = 0.4,
                                                          budget = 0.4 - 0.6))))
     wt = [1.0339757656912842e-25, 4.9630836753181646e-24, 8.271806125530274e-25,
           8.271806125530274e-25, 5.551115123125781e-17, -1.0339757656912842e-25,
@@ -3446,7 +3446,7 @@ end
                        internal = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true,
                                                          short_budget = -0.3,
-                                                         short_u = -0.3, long_u = 0.6,
+                                                         short_lb = -0.3, long_ub = 0.6,
                                                          budget = 0.6 - 0.3)),
                        external = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true, budget = 1 - 0.2))))
@@ -3468,7 +3468,7 @@ end
                        external = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true,
                                                          short_budget = -0.6,
-                                                         short_u = -0.6, long_u = 0.4,
+                                                         short_lb = -0.6, long_ub = 0.4,
                                                          budget = 0.4 - 0.6)),
                        internal = NCOArgs(; type = Trad(; obj = Sharpe()),
                                           port_kwargs = (; short = true, budget = 1 - 0.2))))

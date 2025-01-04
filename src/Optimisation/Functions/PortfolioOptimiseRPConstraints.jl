@@ -30,7 +30,7 @@ function rp_constraints(port::Portfolio, ::Any, w_ini)
     initial_w(port, w_ini)
     model = port.model
     w = model[:w]
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     @variables(model, begin
                    k
                    log_w[1:N]
@@ -38,16 +38,17 @@ function rp_constraints(port::Portfolio, ::Any, w_ini)
                end)
     @constraints(model,
                  begin
-                     [i = 1:N],
-                     [constr_scale * log_w[i], constr_scale * 1, constr_scale * w[i]] ∈
+                     constr_log_w[i = 1:N],
+                     [scale_constr * log_w[i], scale_constr * 1, scale_constr * w[i]] ∈
                      MOI.ExponentialCone()
-                     constr_scale * dot(risk_budget, log_w) >= constr_scale * c
+                     constr_risk_budget,
+                     scale_constr * dot(risk_budget, log_w) >= scale_constr * c
                  end)
     return nothing
 end
 function rp_constraints(port::Portfolio, class::FC, w_ini)
     model = port.model
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     f_returns = port.f_returns
     loadings = port.loadings
     regression_type = port.regression_type
@@ -80,10 +81,11 @@ function rp_constraints(port::Portfolio, class::FC, w_ini)
                end)
     @constraints(model,
                  begin
-                     [i = 1:N_f],
-                     [constr_scale * log_w[i], constr_scale * 1, constr_scale * w1[i]] ∈
+                     constr_factor_log_w[i = 1:N_f],
+                     [scale_constr * log_w[i], scale_constr * 1, scale_constr * w1[i]] ∈
                      MOI.ExponentialCone()
-                     constr_scale * dot(f_risk_budget, log_w) >= constr_scale * c
+                     constr_factor_risk_budget,
+                     scale_constr * dot(f_risk_budget, log_w) >= scale_constr * c
                  end)
     return nothing
 end

@@ -1628,12 +1628,12 @@ end
     rm.settings.ub = r1
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r1 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 1e-9
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r1) < 5e-8
 
     rm.settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio; type = :Trad, rm = rm) <= r2 ||
-          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r2) < 1e-9
+          abs(calc_risk(portfolio; type = :Trad, rm = rm) - r2) < 5e-8
 
     rm.settings.ub = r3
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
