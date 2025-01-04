@@ -65,8 +65,8 @@ function weight_constraints(port, allow_shorting::Bool = true)
     long_ub = port.long_ub
     if !short
         @constraints(model, begin
-                         constr_scale * w .<= constr_scale * long_ub * k
-                         w .>= 0
+                         constr_scale * w <= constr_scale * long_ub * k
+                         w >= 0
                      end)
         @expression(model, long_w, w)
     elseif short && allow_shorting
@@ -79,15 +79,15 @@ function weight_constraints(port, allow_shorting::Bool = true)
         short_budget_lb = port.short_budget_lb
 
         @variables(model, begin
-                       long_w[1:N] .>= 0
-                       short_w[1:N] .<= 0
+                       long_w[1:N] >= 0
+                       short_w[1:N] <= 0
                    end)
 
         @constraints(model, begin
-                         constr_scale * w .<= constr_scale * long_ub * k
-                         constr_scale * w .>= constr_scale * short_lb * k
-                         constr_scale * w .<= constr_scale * long_w
-                         constr_scale * w .>= constr_scale * short_w
+                         constr_scale * w <= constr_scale * long_ub * k
+                         constr_scale * w >= constr_scale * short_lb * k
+                         constr_scale * w <= constr_scale * long_w
+                         constr_scale * w >= constr_scale * short_w
                      end)
 
         #=
@@ -140,12 +140,12 @@ function weight_constraints(port, allow_shorting::Bool = true)
     A = port.a_ineq
     B = port.b_ineq
     if !(isempty(A) || isempty(B))
-        @constraint(model, constr_scale * A * w .>= constr_scale * B * k)
+        @constraint(model, constr_scale * A * w >= constr_scale * B * k)
     end
     A = port.a_eq
     B = port.b_eq
     if !(isempty(A) || isempty(B))
-        @constraint(model, constr_scale * A * w .== constr_scale * B * k)
+        @constraint(model, constr_scale * A * w == constr_scale * B * k)
     end
 
     return nothing
@@ -219,18 +219,18 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          end)
         else
             @variables(model, begin
-                           is_invested_long_float[1:N] .>= 0
-                           is_invested_short_float[1:N] .>= 0
+                           is_invested_long_float[1:N] >= 0
+                           is_invested_short_float[1:N] >= 0
                        end)
             @constraints(model,
                          begin
-                             is_invested_long_float .<= k
-                             is_invested_short_float .<= k
-                             is_invested_long_float .<= scale * is_invested_long_bool
-                             is_invested_short_float .<= scale * is_invested_short_bool
-                             is_invested_long_float .>=
+                             is_invested_long_float <= k
+                             is_invested_short_float <= k
+                             is_invested_long_float <= scale * is_invested_long_bool
+                             is_invested_short_float <= scale * is_invested_short_bool
+                             is_invested_long_float >=
                              k .- scale * (1 .- is_invested_long_bool)
-                             is_invested_short_float .>=
+                             is_invested_short_float >=
                              k .- scale * (1 .- is_invested_short_bool)
                          end)
 
@@ -241,13 +241,13 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraints(model,
                      begin
-                         is_invested .<= 1
-                         constr_scale * w .<= constr_scale * is_invested_long .* long_ub
-                         constr_scale * w .>= constr_scale * is_invested_short .* short_lb
-                         constr_scale * w .>=
+                         is_invested <= 1
+                         constr_scale * w <= constr_scale * is_invested_long .* long_ub
+                         constr_scale * w >= constr_scale * is_invested_short .* short_lb
+                         constr_scale * w >=
                          constr_scale *
                          (is_invested_long .* long_l - scale * (1 - is_invested_long_bool))
-                         constr_scale * w .<=
+                         constr_scale * w <=
                          constr_scale * (is_invested_short .* short_l +
                                          scale * (1 - is_invested_short_bool))
                      end)
@@ -256,23 +256,23 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         if isa(k, Real)
             @expression(model, is_invested, is_invested_bool)
         else
-            @variable(model, is_invested_float[1:N] .>= 0)
+            @variable(model, is_invested_float[1:N] >= 0)
             scale = port.card_scale
             @constraints(model,
                          begin
-                             is_invested_float .<= k
-                             is_invested_float .<= scale * is_invested_bool
-                             is_invested_float .>= k .- scale * (1 .- is_invested_bool)
+                             is_invested_float <= k
+                             is_invested_float <= scale * is_invested_bool
+                             is_invested_float >= k .- scale * (1 .- is_invested_bool)
                          end)
             @expression(model, is_invested, is_invested_float)
         end
-        @constraint(model, constr_scale * w .<= constr_scale * is_invested .* long_ub)
+        @constraint(model, constr_scale * w <= constr_scale * is_invested .* long_ub)
         if (isa(long_l, Real) && !iszero(long_l) ||
             isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
-            @constraint(model, constr_scale * w .>= constr_scale * is_invested .* long_l)
+            @constraint(model, constr_scale * w >= constr_scale * is_invested .* long_l)
         end
         if short && allow_shorting
-            @constraint(model, constr_scale * w .>= constr_scale * is_invested .* short_lb)
+            @constraint(model, constr_scale * w >= constr_scale * is_invested .* short_lb)
         end
     end
 
@@ -287,10 +287,10 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     ## Group cardinality
     =#
     if gcard_ineq_flag
-        @constraint(model, a_card_ineq * is_invested_bool .>= b_card_ineq)
+        @constraint(model, a_card_ineq * is_invested_bool >= b_card_ineq)
     end
     if gcard_eq_flag
-        @constraint(model, a_card_eq * is_invested_bool .== b_card_eq)
+        @constraint(model, a_card_eq * is_invested_bool == b_card_eq)
     end
 
     #=
@@ -299,7 +299,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     if ntwk_flag
         ntwk_A = network_adj.A
         ntwk_k = network_adj.k
-        @constraint(model, ntwk_A * is_invested_bool .<= ntwk_k)
+        @constraint(model, ntwk_A * is_invested_bool <= ntwk_k)
     end
 
     #=
@@ -308,7 +308,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     if clst_flag
         clst_A = cluster_adj.A
         clst_k = cluster_adj.k
-        @constraint(model, clst_A * is_invested_bool .<= clst_k)
+        @constraint(model, clst_A * is_invested_bool <= clst_k)
     end
 
     return nothing
@@ -373,7 +373,7 @@ function turnover_constraints(port)
                      [i = 1:N],
                      [constr_scale * t_turnover[i]; constr_scale * turnover[i]] ∈
                      MOI.NormOneCone(2)
-                     constr_scale * t_turnover .<= constr_scale * val * k
+                     constr_scale * t_turnover <= constr_scale * val * k
                  end)
 
     return nothing
@@ -508,12 +508,12 @@ function SDP_network_cluster_constraints(port, type)
 
     if ntwk_flag
         A = network_adj.A
-        @constraint(model, c_ntwk_sdp, constr_scale * A .* W .== 0)
+        @constraint(model, c_ntwk_sdp, constr_scale * A .* W == 0)
     end
 
     if clst_flag
         A = cluster_adj.A
-        @constraint(model, c_clst_sdp, constr_scale * A .* W .== 0)
+        @constraint(model, c_clst_sdp, constr_scale * A .* W == 0)
     end
 
     return nothing
