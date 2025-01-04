@@ -8,6 +8,18 @@ end
     include("HCOptimisationTests.jl")
 end
 
+@safetestset "RRP optimisation" begin
+    include("RRPOptimisationTests.jl")
+end
+
+@safetestset "RP optimisation" begin
+    include("RPOptimisationTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
@@ -52,10 +64,6 @@ end
     include("BLStatsTests.jl")
 end
 
-@safetestset "RRP optimisation" begin
-    include("RRPOptimisationTests.jl")
-end
-
 @safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
 end
@@ -64,16 +72,8 @@ end
     include("RiskMeasureTests.jl")
 end
 
-@safetestset "RP optimisation" begin
-    include("RPOptimisationTests.jl")
-end
-
 @safetestset "Type tests" begin
     include("TypeTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
 end
 
 @safetestset "WC optimisation" begin

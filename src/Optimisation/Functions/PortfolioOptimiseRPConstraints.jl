@@ -38,9 +38,10 @@ function rp_constraints(port::Portfolio, ::Any, w_ini)
                end)
     @constraints(model,
                  begin
-                     [i = 1:N],
+                     constr_log_w[i = 1:N],
                      [scale_constr * log_w[i], scale_constr * 1, scale_constr * w[i]] ∈
                      MOI.ExponentialCone()
+                     constr_risk_budget,
                      scale_constr * dot(risk_budget, log_w) >= scale_constr * c
                  end)
     return nothing
@@ -80,9 +81,10 @@ function rp_constraints(port::Portfolio, class::FC, w_ini)
                end)
     @constraints(model,
                  begin
-                     [i = 1:N_f],
+                     constr_factor_log_w[i = 1:N_f],
                      [scale_constr * log_w[i], scale_constr * 1, scale_constr * w1[i]] ∈
                      MOI.ExponentialCone()
+                     constr_factor_risk_budget,
                      scale_constr * dot(f_risk_budget, log_w) >= scale_constr * c
                  end)
     return nothing

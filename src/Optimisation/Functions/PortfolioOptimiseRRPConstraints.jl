@@ -3,7 +3,8 @@ function _rrp_ver_constraints(::BasicRRP, model, sigma)
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
-    @constraint(model, [scale_constr * psi; scale_constr * G * w] ∈ SecondOrderCone())
+    @constraint(model, constr_basic_rrp,
+                [scale_constr * psi; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function _rrp_ver_constraints(::RegRRP, model, sigma)
@@ -14,8 +15,10 @@ function _rrp_ver_constraints(::RegRRP, model, sigma)
     @variable(model, rho >= 0)
     @constraints(model,
                  begin
+                     constr_reg_rrp_soc_1,
                      [scale_constr * 2 * psi; scale_constr * 2 * G * w;
                       scale_constr * -2 * rho] ∈ SecondOrderCone()
+                     constr_reg_rrp_soc_2,
                      [scale_constr * rho; scale_constr * G * w] ∈ SecondOrderCone()
                  end)
     return nothing
@@ -30,10 +33,12 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
     @variable(model, rho >= 0)
     @constraints(model,
                  begin
+                     constr_reg_pen_rrp_soc_1,
                      [scale_constr * 2 * psi; scale_constr * 2 * G * w;
                       scale_constr * -2 * rho] ∈ SecondOrderCone()
-                     [scale_constr * rho; scale_constr * sqrt(penalty) * theta * w] ∈
-                     SecondOrderCone()
+                     constr_reg_pen_rrp_soc_2,
+                     [scale_constr * rho;
+                      scale_constr * sqrt(penalty) * theta * w] ∈ SecondOrderCone()
                  end)
     return nothing
 end
@@ -57,8 +62,8 @@ function rrp_constraints(port::Portfolio, version, sigma)
     # RRP constraints.
     @constraints(model,
                  begin
-                     scale_constr * zeta .== scale_constr * sigma * w
-                     [i = 1:N],
+                     constr_rrp, scale_constr * zeta .== scale_constr * sigma * w
+                     constr_rrp_soc[i = 1:N],
                      [scale_constr * (w[i] + zeta[i])
                       scale_constr * (2 * gamma * sqrt(risk_budget[i]))
                       scale_constr * (w[i] - zeta[i])] ∈ SecondOrderCone()
