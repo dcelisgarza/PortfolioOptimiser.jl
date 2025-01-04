@@ -1390,8 +1390,8 @@ function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RP, NOC};
     @expression(model, edar_risk, t_edar - z_edar * log(at))
     @constraints(model,
                  begin
-                     scale_constr * sum(u_edar) <= scale_constr * z_edar
-                     [i = 1:T],
+                     constr_edar, scale_constr * sum(u_edar) <= scale_constr * z_edar
+                     constr_edar_exp_cone[i = 1:T],
                      [scale_constr * (dd[i + 1] - t_edar), scale_constr * z_edar,
                       scale_constr * u_edar[i]] ∈ MOI.ExponentialCone()
                  end)
@@ -1415,13 +1415,26 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
     @expression(model, edar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
-        @constraints(model,
-                     begin
-                         scale_constr * sum(view(u_edar, :, j)) <= scale_constr * z_edar[j]
-                         [i = 1:T],
-                         [scale_constr * (dd[i + 1] - t_edar[j]), scale_constr * z_edar[j],
-                          scale_constr * u_edar[i, j]] ∈ MOI.ExponentialCone()
-                     end)
+
+        model[Symbol("constr_edar_$(j)")], model[Symbol("constr_edar_exp_cone_$(j)")] = @constraints(model,
+                                                                                                     begin
+                                                                                                         scale_constr *
+                                                                                                         sum(view(u_edar,
+                                                                                                                  :,
+                                                                                                                  j)) <=
+                                                                                                         scale_constr *
+                                                                                                         z_edar[j]
+                                                                                                         [i = 1:T],
+                                                                                                         [scale_constr *
+                                                                                                          (dd[i + 1] -
+                                                                                                           t_edar[j]),
+                                                                                                          scale_constr *
+                                                                                                          z_edar[j],
+                                                                                                          scale_constr *
+                                                                                                          u_edar[i,
+                                                                                                                 j]] ∈
+                                                                                                         MOI.ExponentialCone()
+                                                                                                     end)
         add_to_expression!(edar_risk[j], t_edar[j])
         add_to_expression!(edar_risk[j], -log(at), z_edar[j])
         _set_rm_risk_upper_bound(type, model, edar_risk[j], rm.settings.ub,
@@ -1456,14 +1469,15 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP, NOC};
     @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
     @constraints(model,
                  begin
-                     [i = 1:T],
+                     constr_rdar_pcone_a[i = 1:T],
                      [scale_constr * z_rdar * opk * ik2,
                       scale_constr * psi_rdar[i] * opk * ik,
                       scale_constr * epsilon_rdar[i]] ∈ MOI.PowerCone(iopk)
-                     [i = 1:T],
+                     constr_rdar_pcone_b[i = 1:T],
                      [scale_constr * omega_rdar[i] * iomk,
                       scale_constr * theta_rdar[i] * ik, scale_constr * -z_rdar * ik2] ∈
                      MOI.PowerCone(omk)
+                     constr_rdar,
                      scale_constr *
                      (view(dd, 2:(T + 1)) .- t_rdar .+ epsilon_rdar .+ omega_rdar) .<= 0
                  end)
@@ -1497,20 +1511,47 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
         ik = inv(rm.kappa)
         iopk = inv(opk)
         iomk = inv(omk)
-        @constraints(model,
-                     begin
-                         [i = 1:T],
-                         [scale_constr * z_rdar[j] * opk * ik2,
-                          scale_constr * psi_rdar[i, j] * opk * ik,
-                          scale_constr * epsilon_rdar[i, j]] ∈ MOI.PowerCone(iopk)
-                         [i = 1:T],
-                         [scale_constr * omega_rdar[i, j] * iomk,
-                          scale_constr * theta_rdar[i, j] * ik,
-                          scale_constr * -z_rdar[j] * ik2] ∈ MOI.PowerCone(omk)
-                         scale_constr *
-                         (view(dd, 2:(T + 1)) .- t_rdar[j] .+ view(epsilon_rdar, :, j) .+
-                          view(omega_rdar, :, j)) .<= 0
-                     end)
+        model[Symbol("constr_rdar_pcone_a_$(j)")], model[Symbol("constr_rdar_pcone_b_$(j)")], model[Symbol("constr_rdar_$(j)")] = @constraints(model,
+                                                                                                                                               begin
+                                                                                                                                                   [i = 1:T],
+                                                                                                                                                   [scale_constr *
+                                                                                                                                                    z_rdar[j] *
+                                                                                                                                                    opk *
+                                                                                                                                                    ik2,
+                                                                                                                                                    scale_constr *
+                                                                                                                                                    psi_rdar[i,
+                                                                                                                                                             j] *
+                                                                                                                                                    opk *
+                                                                                                                                                    ik,
+                                                                                                                                                    scale_constr *
+                                                                                                                                                    epsilon_rdar[i,
+                                                                                                                                                                 j]] ∈
+                                                                                                                                                   MOI.PowerCone(iopk)
+                                                                                                                                                   [i = 1:T],
+                                                                                                                                                   [scale_constr *
+                                                                                                                                                    omega_rdar[i,
+                                                                                                                                                               j] *
+                                                                                                                                                    iomk,
+                                                                                                                                                    scale_constr *
+                                                                                                                                                    theta_rdar[i,
+                                                                                                                                                               j] *
+                                                                                                                                                    ik,
+                                                                                                                                                    scale_constr *
+                                                                                                                                                    -z_rdar[j] *
+                                                                                                                                                    ik2] ∈
+                                                                                                                                                   MOI.PowerCone(omk)
+                                                                                                                                                   scale_constr *
+                                                                                                                                                   (view(dd,
+                                                                                                                                                         2:(T + 1)) .-
+                                                                                                                                                    t_rdar[j] .+
+                                                                                                                                                    view(epsilon_rdar,
+                                                                                                                                                         :,
+                                                                                                                                                         j) .+
+                                                                                                                                                    view(omega_rdar,
+                                                                                                                                                         :,
+                                                                                                                                                         j)) .<=
+                                                                                                                                                   0
+                                                                                                                                               end)
         add_to_expression!(rdar_risk[j], t_rdar[j])
         add_to_expression!(rdar_risk[j], lnk, z_rdar[j])
         add_to_expression!(rdar_risk[j],
@@ -1550,9 +1591,10 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP, NOC}; kwargs...
         end
         @constraints(model,
                      begin
+                         constr_approx_kurt_soc,
                          [scale_constr * kurt_risk; scale_constr * x_kurt] ∈
                          SecondOrderCone()
-                         [i = 1:Nf],
+                         constr_approx_kurt[i = 1:Nf],
                          scale_constr * x_kurt[i] == scale_constr * tr(Bi[i] * W)
                      end)
     else
@@ -1560,7 +1602,7 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP, NOC}; kwargs...
         S_2 = port.S_2
         sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
         @expression(model, zkurt, L_2 * vec(W))
-        @constraint(model,
+        @constraint(model, constr_kurt_soc,
                     [scale_constr * kurt_risk; scale_constr * sqrt_sigma_4 * zkurt] ∈
                     SecondOrderCone())
     end
@@ -1599,13 +1641,23 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
                                  view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
-            @constraints(model,
-                         begin
-                             [scale_constr * kurt_risk[idx];
-                              scale_constr * view(x_kurt, :, idx)] ∈ SecondOrderCone()
-                             [i = 1:Nf],
-                             scale_constr * x_kurt[i, idx] == scale_constr * tr(Bi[i] * W)
-                         end)
+            model[Symbol("constr_approx_kurt_soc_$(idx)")], model[Symbol("constr_approx_kurt_$(idx)")] = @constraints(model,
+                                                                                                                      begin
+                                                                                                                          [scale_constr *
+                                                                                                                           kurt_risk[idx]
+                                                                                                                           scale_constr *
+                                                                                                                           view(x_kurt,
+                                                                                                                                :,
+                                                                                                                                idx)] ∈
+                                                                                                                          SecondOrderCone()
+                                                                                                                          [i = 1:Nf],
+                                                                                                                          scale_constr *
+                                                                                                                          x_kurt[i,
+                                                                                                                                 idx] ==
+                                                                                                                          scale_constr *
+                                                                                                                          tr(Bi[i] *
+                                                                                                                             W)
+                                                                                                                      end)
             _set_rm_risk_upper_bound(type, model, kurt_risk[idx], rm.settings.ub,
                                      "kurt_risk_$(idx)")
             _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
@@ -1622,10 +1674,13 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
             end
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
             add_to_expression!.(view(zkurt, :, idx), L_2 * vec(W))
-            @constraint(model,
-                        [scale_constr * kurt_risk[idx];
-                         scale_constr * sqrt_sigma_4 * view(zkurt, :, idx)] ∈
-                        SecondOrderCone())
+            model[Symbol("constr_kurt_soc_$(idx)")] = @constraint(model,
+                                                                  [scale_constr *
+                                                                   kurt_risk[idx]
+                                                                   scale_constr *
+                                                                   sqrt_sigma_4 *
+                                                                   view(zkurt, :, idx)] ∈
+                                                                  SecondOrderCone())
             _set_rm_risk_upper_bound(type, model, kurt_risk[idx], rm.settings.ub,
                                      "kurt_risk_$(idx)")
             _set_risk_expression(model, kurt_risk[idx], rm.settings.scale, rm.settings.flag)
@@ -1663,9 +1718,10 @@ function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RP, NOC}; kwargs..
         end
         @constraints(model,
                      begin
+                         constr_approx_skurt_soc,
                          [scale_constr * skurt_risk; scale_constr * x_skurt] ∈
                          SecondOrderCone()
-                         [i = 1:Nf],
+                         constr_approx_skurt[i = 1:Nf],
                          scale_constr * x_skurt[i] == scale_constr * tr(Bi[i] * W)
                      end)
     else
@@ -1673,7 +1729,7 @@ function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RP, NOC}; kwargs..
         S_2 = port.S_2
         sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
         @expression(model, zskurt, L_2 * vec(W))
-        @constraint(model,
+        @constraint(model, constr_skurt_soc,
                     [scale_constr * skurt_risk; scale_constr * sqrt_sigma_4 * zskurt] ∈
                     SecondOrderCone())
     end
@@ -1712,13 +1768,23 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
                                  view(vecs_A, :, N_eig - j)), N, N)
                 Bi[i] = B
             end
-            @constraints(model,
-                         begin
-                             [scale_constr * skurt_risk[idx];
-                              scale_constr * view(x_skurt, :, idx)] ∈ SecondOrderCone()
-                             [i = 1:Nf],
-                             scale_constr * x_skurt[i, idx] == scale_constr * tr(Bi[i] * W)
-                         end)
+            model[Symbol("constr_approx_skurt_soc_$(idx)")], model[Symbol("constr_approx_skurt_$(idx)")] = @constraints(model,
+                                                                                                                        begin
+                                                                                                                            [scale_constr *
+                                                                                                                             skurt_risk[idx]
+                                                                                                                             scale_constr *
+                                                                                                                             view(x_skurt,
+                                                                                                                                  :,
+                                                                                                                                  idx)] ∈
+                                                                                                                            SecondOrderCone()
+                                                                                                                            [i = 1:Nf],
+                                                                                                                            scale_constr *
+                                                                                                                            x_skurt[i,
+                                                                                                                                    idx] ==
+                                                                                                                            scale_constr *
+                                                                                                                            tr(Bi[i] *
+                                                                                                                               W)
+                                                                                                                        end)
             _set_rm_risk_upper_bound(type, model, skurt_risk[idx], rm.settings.ub,
                                      "skurt_risk_$(idx)")
             _set_risk_expression(model, skurt_risk[idx], rm.settings.scale,
@@ -1736,10 +1802,13 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
             end
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
             add_to_expression!.(view(zskurt, :, idx), L_2 * vec(W))
-            @constraint(model,
-                        [scale_constr * skurt_risk[idx];
-                         scale_constr * sqrt_sigma_4 * view(zskurt, :, idx)] ∈
-                        SecondOrderCone())
+            model[Symbol("constr_skurt_soc_$(idx)")] = @constraint(model,
+                                                                   [scale_constr *
+                                                                    skurt_risk[idx];
+                                                                    scale_constr *
+                                                                    sqrt_sigma_4 *
+                                                                    view(zskurt, :, idx)] ∈
+                                                                   SecondOrderCone())
             _set_rm_risk_upper_bound(type, model, skurt_risk[idx], rm.settings.ub,
                                      "skurt_risk_$(idx)")
             _set_risk_expression(model, skurt_risk[idx], rm.settings.scale,
