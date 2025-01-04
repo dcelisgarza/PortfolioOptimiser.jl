@@ -24,9 +24,9 @@ mutable struct Portfolio{
                          # Risk budgetting
                          T_risk_budget, T_f_risk_budget,
                          # Budget and shorting
-                         T_short, T_long_l, T_long_u, T_short_l, T_short_u, T_min_budget,
+                         T_short, T_long_l, T_long_ub, T_short_l, T_short_lb, T_budget_lb,
                          T_budget, T_max_budget, T_min_short_budget, T_short_budget,
-                         T_max_short_budget,
+                         T_short_budget_lb,
                          # Cardinality
                          T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_a_card_eq,
                          T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq, T_b_eq, T_tracking,
@@ -90,15 +90,15 @@ mutable struct Portfolio{
     # Budget and shorting
     short::T_short
     long_l::T_long_l
-    long_u::T_long_u
+    long_ub::T_long_ub
     short_l::T_short_l
-    short_u::T_short_u
-    min_budget::T_min_budget
+    short_lb::T_short_lb
+    budget_lb::T_budget_lb
     budget::T_budget
     max_budget::T_max_budget
     min_short_budget::T_min_short_budget
     short_budget::T_short_budget
-    max_short_budget::T_max_short_budget
+    short_budget_lb::T_short_budget_lb
     # Cardinality
     card_scale::T_card_scale
     card::T_card
@@ -207,34 +207,34 @@ function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Inte
     end
     return nothing
 end
-function set_default_budget(budget, val, min_budget_flag, budget_flag, max_budget_flag)
-    if !min_budget_flag && !budget_flag && !max_budget_flag
+function set_default_budget(budget, val, budget_lb_flag, budget_flag, max_budget_flag)
+    if !budget_lb_flag && !budget_flag && !max_budget_flag
         budget = val
         budget_flag = true
     end
     return budget, budget_flag
 end
-function short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                             budget, max_budget, short_budget, long_u, short_u, name = "")
+function short_budget_assert(budget_flag, budget_lb_flag, max_budget_flag, budget_lb,
+                             budget, max_budget, short_budget, long_ub, short_lb, name = "")
     if budget_flag
-        @smart_assert(all(short_budget .<= short_u .<= 0), "all($name .<= short_u .<= 0)")
-        @smart_assert(all(budget .- short_budget .>= long_u .>= 0),
-                      "all(budget .- $name .>= long_u .>= 0")
+        @smart_assert(all(short_budget .<= short_lb .<= 0), "all($name .<= short_lb .<= 0)")
+        @smart_assert(all(budget .- short_budget .>= long_ub .>= 0),
+                      "all(budget .- $name .>= long_ub .>= 0")
     else
-        if min_budget_flag
-            @smart_assert(all(short_budget .<= short_u .<= 0),
-                          "all($name .<= short_u .<= 0)")
-            @smart_assert(all(min_budget .- short_budget .>= long_u .>= 0),
-                          "all(min_budget .- $name .>= long_u .>= 0)")
+        if budget_lb_flag
+            @smart_assert(all(short_budget .<= short_lb .<= 0),
+                          "all($name .<= short_lb .<= 0)")
+            @smart_assert(all(budget_lb .- short_budget .>= long_ub .>= 0),
+                          "all(budget_lb .- $name .>= long_ub .>= 0)")
         end
         if max_budget_flag
-            @smart_assert(all(short_budget .<= short_u .<= 0),
-                          "all($name .<= short_u .<= 0)")
-            @smart_assert(all(max_budget .- short_budget .>= long_u .>= 0),
-                          "all(max_budget .- $name .>= long_u .>= 0)")
+            @smart_assert(all(short_budget .<= short_lb .<= 0),
+                          "all($name .<= short_lb .<= 0)")
+            @smart_assert(all(max_budget .- short_budget .>= long_ub .>= 0),
+                          "all(max_budget .- $name .>= long_ub .>= 0)")
         end
-        if min_budget_flag && max_budget_flag
-            @smart_assert(max_budget >= min_budget)
+        if budget_lb_flag && max_budget_flag
+            @smart_assert(max_budget >= budget_lb)
         end
     end
     return nothing
@@ -282,60 +282,60 @@ function adj_assert(adj, n::Integer)
         end
     end
 end
-function long_short_budget_assert(N, long_l, long_u, min_budget, budget, max_budget, short,
-                                  short_l, short_u, min_short_budget, short_budget,
-                                  max_short_budget)
+function long_short_budget_assert(N, long_l, long_ub, budget_lb, budget, max_budget, short,
+                                  short_l, short_lb, min_short_budget, short_budget,
+                                  short_budget_lb)
     real_or_vector_assert(long_l, N, :long_l, >=, 0)
-    real_or_vector_assert(long_u, N, :long_u, >=, 0)
-    @smart_assert(all(long_l .<= long_u))
-    min_budget_flag = isfinite(min_budget)
+    real_or_vector_assert(long_ub, N, :long_ub, >=, 0)
+    @smart_assert(all(long_l .<= long_ub))
+    budget_lb_flag = isfinite(budget_lb)
     budget_flag = isfinite(budget)
     max_budget_flag = isfinite(max_budget)
-    budget, budget_flag = set_default_budget(budget, 1.0, min_budget_flag, budget_flag,
+    budget, budget_flag = set_default_budget(budget, 1.0, budget_lb_flag, budget_flag,
                                              max_budget_flag)
 
     if short
         real_or_vector_assert(short_l, N, :short_l, <=, 0)
-        real_or_vector_assert(short_u, N, :short_u, <=, 0)
-        @smart_assert(short_u <= short_l)
+        real_or_vector_assert(short_lb, N, :short_lb, <=, 0)
+        @smart_assert(short_lb <= short_l)
         min_short_budget_flag = isfinite(min_short_budget)
         short_budget_flag = isfinite(short_budget)
-        max_short_budget_flag = isfinite(max_short_budget)
+        short_budget_lb_flag = isfinite(short_budget_lb)
 
         short_budget, short_budget_flag = set_default_budget(short_budget, -0.2,
-                                                             min_budget_flag, budget_flag,
+                                                             budget_lb_flag, budget_flag,
                                                              max_budget_flag)
         if short_budget_flag
-            short_budget_assert(budget_flag, min_budget_flag, max_budget_flag, min_budget,
-                                budget, max_budget, short_budget, long_u, short_u,
+            short_budget_assert(budget_flag, budget_lb_flag, max_budget_flag, budget_lb,
+                                budget, max_budget, short_budget, long_ub, short_lb,
                                 :short_budget)
         else
             if min_short_budget_flag
-                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
-                                    min_budget, budget, max_budget, min_short_budget,
-                                    long_u, short_u, :min_short_budget)
+                short_budget_assert(budget_flag, budget_lb_flag, max_budget_flag, budget_lb,
+                                    budget, max_budget, min_short_budget, long_ub, short_lb,
+                                    :min_short_budget)
             end
-            if max_short_budget_flag
-                short_budget_assert(budget_flag, min_budget_flag, max_budget_flag,
-                                    min_budget, budget, max_budget, max_short_budget,
-                                    long_u, short_u, :max_short_budget)
+            if short_budget_lb_flag
+                short_budget_assert(budget_flag, budget_lb_flag, max_budget_flag, budget_lb,
+                                    budget, max_budget, short_budget_lb, long_ub, short_lb,
+                                    :short_budget_lb)
             end
-            if min_short_budget_flag && max_short_budget_flag
-                @smart_assert(max_short_budget <= min_short_budget)
+            if min_short_budget_flag && short_budget_lb_flag
+                @smart_assert(short_budget_lb <= min_short_budget)
             end
         end
     else
         if budget_flag
-            @smart_assert(all(budget .>= long_u .>= 0))
+            @smart_assert(all(budget .>= long_ub .>= 0))
         else
-            if min_budget_flag
-                @smart_assert(all(min_budget .>= long_u .>= 0))
+            if budget_lb_flag
+                @smart_assert(all(budget_lb .>= long_ub .>= 0))
             end
             if max_budget_flag
-                @smart_assert(all(max_budget .>= long_u .>= 0))
+                @smart_assert(all(max_budget .>= long_ub .>= 0))
             end
-            if min_budget_flag && max_budget_flag
-                @smart_assert(max_budget >= min_budget)
+            if budget_lb_flag && max_budget_flag
+                @smart_assert(max_budget >= budget_lb)
             end
         end
     end
@@ -398,12 +398,12 @@ function Portfolio(;
                    # Budget and shorting
                    short::Bool = false,
                    long_l::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                   long_u::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
+                   long_ub::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
                    short_l::Union{<:Real, <:AbstractVector{<:Real}} = -0.0,
-                   short_u::Union{<:Real, <:AbstractVector{<:Real}} = -0.2,
-                   min_budget::Real = Inf, budget::Real = 1.0, max_budget::Real = Inf,
+                   short_lb::Union{<:Real, <:AbstractVector{<:Real}} = -0.2,
+                   budget_lb::Real = Inf, budget::Real = 1.0, max_budget::Real = Inf,
                    min_short_budget::Real = -Inf, short_budget::Real = -0.2,
-                   max_short_budget::Real = -Inf,
+                   short_budget_lb::Real = -Inf,
                    # Cardinality
                    card_scale::Real = 1e6, card::Integer = 0,
                    a_card_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -521,10 +521,10 @@ function Portfolio(;
     risk_budget = risk_budget_assert(risk_budget, N, :risk_budget)
     f_risk_budget = factor_risk_budget_assert(f_risk_budget, Nf, :f_risk_budget)
     # Budget and shorting
-    budget, short_budget = long_short_budget_assert(N, long_l, long_u, min_budget, budget,
-                                                    max_budget, short, short_l, short_u,
+    budget, short_budget = long_short_budget_assert(N, long_l, long_ub, budget_lb, budget,
+                                                    max_budget, short, short_l, short_lb,
                                                     min_short_budget, short_budget,
-                                                    max_short_budget)
+                                                    short_budget_lb)
     # Cardinality
     @smart_assert(card >= zero(card))
     linear_constraint_assert(a_card_ineq, b_card_ineq, N, "card_ineq")
@@ -577,9 +577,9 @@ function Portfolio(;
                      typeof(short), Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(min_budget),
+                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(budget_lb),
                      typeof(budget), typeof(max_budget), typeof(min_short_budget),
-                     typeof(short_budget), typeof(max_short_budget),
+                     typeof(short_budget), typeof(short_budget_lb),
                      # Cardinality
                      typeof(card_scale), typeof(card), typeof(a_card_ineq),
                      typeof(b_card_ineq), typeof(a_card_eq), typeof(b_card_eq),
@@ -660,15 +660,15 @@ function Portfolio(;
                                                                                         # Budget and shorting
                                                                                         short,
                                                                                         long_l,
-                                                                                        long_u,
+                                                                                        long_ub,
                                                                                         short_l,
-                                                                                        short_u,
-                                                                                        min_budget,
+                                                                                        short_lb,
+                                                                                        budget_lb,
                                                                                         budget,
                                                                                         max_budget,
                                                                                         min_short_budget,
                                                                                         short_budget,
-                                                                                        max_short_budget,
+                                                                                        short_budget_lb,
                                                                                         # Cardinality
                                                                                         card_scale,
                                                                                         card,
@@ -797,63 +797,63 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :long_l
         N = size(port.returns, 2)
-        long_short_budget_assert(N, val, port.long_u, port.min_budget, port.budget,
-                                 port.max_budget, port.short, port.short_l, port.short_u,
+        long_short_budget_assert(N, val, port.long_ub, port.budget_lb, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_lb,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
-    elseif sym == :long_u
+                                 port.short_budget_lb)
+    elseif sym == :long_ub
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, val, port.min_budget, port.budget,
-                                 port.max_budget, port.short, port.short_l, port.short_u,
+        long_short_budget_assert(N, port.long_l, val, port.budget_lb, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_lb,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
-    elseif sym == :min_budget
+                                 port.short_budget_lb)
+    elseif sym == :budget_lb
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, val, port.budget,
-                                 port.max_budget, port.short, port.short_l, port.short_u,
+        long_short_budget_assert(N, port.long_l, port.long_ub, val, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_lb,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
+                                 port.short_budget_lb)
     elseif sym == :budget
         N = size(port.returns, 2)
-        val = long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, val,
+        val = long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, val,
                                        port.max_budget, port.short, port.short_l,
-                                       port.short_u, port.min_short_budget,
-                                       port.short_budget, port.max_short_budget)[1]
+                                       port.short_lb, port.min_short_budget,
+                                       port.short_budget, port.short_budget_lb)[1]
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :max_budget
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
-                                 val, port.short, port.short_l, port.short_u,
+        long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, port.budget,
+                                 val, port.short, port.short_l, port.short_lb,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
+                                 port.short_budget_lb)
     elseif sym == :short_l
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
-                                 port.max_budget, port.short, val, port.short_u,
+        long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, port.budget,
+                                 port.max_budget, port.short, val, port.short_lb,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
-    elseif sym == :short_u
+                                 port.short_budget_lb)
+    elseif sym == :short_lb
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
+        long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, port.budget,
                                  port.max_budget, port.short, port.short_l, val,
                                  port.min_short_budget, port.short_budget,
-                                 port.max_short_budget)
+                                 port.short_budget_lb)
     elseif sym == :min_short_budget
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
-                                 port.max_budget, port.short, port.short_l, port.short_u,
-                                 val, port.short_budget, port.max_short_budget)
+        long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_lb,
+                                 val, port.short_budget, port.short_budget_lb)
     elseif sym == :short_budget
         N = size(port.returns, 2)
-        val = long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget,
+        val = long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb,
                                        port.budget, port.max_budget, port.short,
-                                       port.short_l, port.short_u, port.min_short_budget,
-                                       val, port.max_short_budget)[2]
+                                       port.short_l, port.short_lb, port.min_short_budget,
+                                       val, port.short_budget_lb)[2]
         val = convert(typeof(getfield(port, sym)), val)
-    elseif sym == :max_short_budget
+    elseif sym == :short_budget_lb
         N = size(port.returns, 2)
-        long_short_budget_assert(N, port.long_l, port.long_u, port.min_budget, port.budget,
-                                 port.max_budget, port.short, port.short_l, port.short_u,
+        long_short_budget_assert(N, port.long_l, port.long_ub, port.budget_lb, port.budget,
+                                 port.max_budget, port.short, port.short_l, port.short_lb,
                                  port.min_short_budget, port.short_budget, val)
     elseif sym == :a_card_ineq
         N = size(port.returns, 2)
@@ -947,10 +947,10 @@ function Base.deepcopy(port::Portfolio)
                      typeof(port.short), Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(port.min_budget),
+                     Union{<:Real, <:AbstractVector{<:Real}}, typeof(port.budget_lb),
                      typeof(port.budget), typeof(port.max_budget),
                      typeof(port.min_short_budget), typeof(port.short_budget),
-                     typeof(port.max_short_budget),
+                     typeof(port.short_budget_lb),
                      # Cardinality
                      typeof(port.card_scale), typeof(port.card), typeof(port.a_card_ineq),
                      typeof(port.b_card_ineq), typeof(port.a_card_eq),
@@ -1034,15 +1034,15 @@ function Base.deepcopy(port::Portfolio)
                                                                            # Budget and shorting
                                                                            deepcopy(port.short),
                                                                            deepcopy(port.long_l),
-                                                                           deepcopy(port.long_u),
+                                                                           deepcopy(port.long_ub),
                                                                            deepcopy(port.short_l),
-                                                                           deepcopy(port.short_u),
-                                                                           deepcopy(port.min_budget),
+                                                                           deepcopy(port.short_lb),
+                                                                           deepcopy(port.budget_lb),
                                                                            deepcopy(port.budget),
                                                                            deepcopy(port.max_budget),
                                                                            deepcopy(port.min_short_budget),
                                                                            deepcopy(port.short_budget),
-                                                                           deepcopy(port.max_short_budget),
+                                                                           deepcopy(port.short_budget_lb),
                                                                            # Cardinality
                                                                            deepcopy(port.card_scale),
                                                                            deepcopy(port.card),
@@ -1108,8 +1108,8 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, 
     loadings::l
     regression_type::lo
     short::s
-    short_u::us
-    long_u::ul
+    short_lb::us
+    long_ub::ul
     num_assets_l::nal
     num_assets_u::nau
     num_assets_u_scale::naus
@@ -1185,8 +1185,8 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
       + if `true`: shorting is enabled.
       + else: long-only portfolio.
-  - `short_u`: upper bound for the absolute value of the sum of the negative weights.
-  - `long_u`: upper bound for the sum of the positive weights.
+  - `short_lb`: upper bound for the absolute value of the sum of the negative weights.
+  - `long_ub`: upper bound for the sum of the positive weights.
   - `num_assets_l`: lower bound for the minimum number of significant assets.
 
       + if `> 0`: applies the constraint.
@@ -1386,8 +1386,8 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, lb, sb, ul, u
     short::s
     budget::lb
     short_budget::sb
-    long_u::ul
-    short_u::us
+    long_ub::ul
+    short_lb::us
     fees::tfee
     short_fees::tsfee
     num_assets_l::nal
@@ -1468,7 +1468,7 @@ Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
             f_assets::AbstractVector = Vector{String}(undef, 0),
             loadings::DataFrame = DataFrame(),
             regression_type::Union{<:RegressionType, Nothing} = nothing,
-            short::Bool = false, short_u::Real = 0.2, long_u::Real = 1.0,
+            short::Bool = false, short_lb::Real = 0.2, long_ub::Real = 1.0,
             num_assets_l::Integer = 0, num_assets_u::Integer = 0,
             num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
             max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),

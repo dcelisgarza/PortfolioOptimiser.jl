@@ -416,7 +416,7 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, cor, dist, k, max_num_assets_kurt, max_num_assets_kurt_scale, kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_u, short_l, short_u, min_budget, budget, max_budget, min_short_budget, short_budget, max_short_budget, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
+    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, cor, dist, k, max_num_assets_kurt, max_num_assets_kurt_scale, kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_ub, short_l, short_lb, budget_lb, budget, max_budget, min_short_budget, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
 
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
@@ -552,9 +552,9 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
 
     if cvx_flag
         long_l = get_cluster_real_or_vector(long_l, cidx)
-        long_u = get_cluster_real_or_vector(long_u, cidx)
+        long_ub = get_cluster_real_or_vector(long_ub, cidx)
         short_l = get_cluster_real_or_vector(short_l, cidx)
-        short_u = get_cluster_real_or_vector(short_u, cidx)
+        short_lb = get_cluster_real_or_vector(short_lb, cidx)
         tracking = get_cluster_tracking(tracking, cidx)
         turnover = get_cluster_tr(turnover, cidx)
         long_fees = get_cluster_real_or_vector(long_fees, cidx)
@@ -562,9 +562,9 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
         rebalance = get_cluster_tr(rebalance, cidx)
     else
         long_l = 0.0
-        long_u = 1.0
+        long_ub = 1.0
         short_l = -0.0
-        short_u = -0.2
+        short_lb = -0.2
         tracking = NoTracking()
         turnover = NoTR()
         long_fees = 0.0
@@ -587,11 +587,11 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                            cov_sigma = cov_sigma, d_mu = d_mu, k_mu = k_mu,
                            k_sigma = k_sigma, w_min = w_min, w_max = w_max,
                            risk_budget = risk_budget, f_risk_budget = f_risk_budget,
-                           short = short, long_l = long_l, long_u = long_u,
-                           short_l = short_l, short_u = short_u, min_budget = min_budget,
+                           short = short, long_l = long_l, long_ub = long_ub,
+                           short_l = short_l, short_lb = short_lb, budget_lb = budget_lb,
                            budget = budget, max_budget = max_budget,
                            min_short_budget = min_short_budget, short_budget = short_budget,
-                           max_short_budget = max_short_budget, card_scale = card_scale,
+                           short_budget_lb = short_budget_lb, card_scale = card_scale,
                            card = card, nea = nea, tracking = tracking, turnover = turnover,
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
@@ -851,7 +851,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_u, short_l, short_u, min_budget, budget, max_budget, min_short_budget, short_budget, max_short_budget, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
+    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_l, long_ub, short_l, short_lb, budget_lb, budget, max_budget, min_short_budget, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, long_fees, short_fees, rebalance, solvers) = port
 
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
@@ -930,9 +930,9 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
 
     if cvx_flag
         long_l = get_external_real_or_vector(long_l, wi)
-        long_u = get_external_real_or_vector(long_u, wi)
+        long_ub = get_external_real_or_vector(long_ub, wi)
         short_l = get_external_real_or_vector(short_l, wi)
-        short_u = get_external_real_or_vector(short_u, wi)
+        short_lb = get_external_real_or_vector(short_lb, wi)
         tracking = get_external_cluster_tracking(tracking, wi)
         turnover = get_external_tr(turnover, wi)
         long_fees = get_external_real_or_vector(long_fees, wi)
@@ -940,9 +940,9 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         rebalance = get_external_tr(rebalance, wi)
     else
         long_l = 0.0
-        long_u = 1.0
+        long_ub = 1.0
         short_l = -0.0
-        short_u = -0.2
+        short_lb = -0.2
         tracking = NoTracking()
         turnover = NoTR()
         long_fees = 0.0
@@ -961,10 +961,10 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
                            bl_cov = bl_cov, blfm_mu = blfm_mu, blfm_cov = blfm_cov,
                            w_min = w_min, w_max = w_max, risk_budget = risk_budget,
                            f_risk_budget = f_risk_budget, short = short, long_l = long_l,
-                           long_u = long_u, short_l = short_l, short_u = short_u,
+                           long_ub = long_ub, short_l = short_l, short_lb = short_lb,
                            min_budget = min_budget, budget = budget,
                            max_budget = max_budget, min_short_budget = min_short_budget,
-                           short_budget = short_budget, max_short_budget = max_short_budget,
+                           short_budget = short_budget, short_budget_lb = short_budget_lb,
                            card_scale = card_scale, card = card, nea = nea,
                            tracking = tracking, turnover = turnover, l1 = l1, l2 = l2,
                            long_fees = long_fees, short_fees = short_fees,
