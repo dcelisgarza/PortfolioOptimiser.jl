@@ -1,27 +1,27 @@
 function _rrp_ver_constraints(::BasicRRP, model, sigma)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
-    @constraint(model, [constr_scale * psi; constr_scale * G * w] ∈ SecondOrderCone())
+    @constraint(model, [scale_constr * psi; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function _rrp_ver_constraints(::RegRRP, model, sigma)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
     @variable(model, rho >= 0)
     @constraints(model,
                  begin
-                     [constr_scale * 2 * psi; constr_scale * 2 * G * w;
-                      constr_scale * -2 * rho] ∈ SecondOrderCone()
-                     [constr_scale * rho; constr_scale * G * w] ∈ SecondOrderCone()
+                     [scale_constr * 2 * psi; scale_constr * 2 * G * w;
+                      scale_constr * -2 * rho] ∈ SecondOrderCone()
+                     [scale_constr * rho; scale_constr * G * w] ∈ SecondOrderCone()
                  end)
     return nothing
 end
 function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
     G = sqrt(sigma)
@@ -30,16 +30,16 @@ function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
     @variable(model, rho >= 0)
     @constraints(model,
                  begin
-                     [constr_scale * 2 * psi; constr_scale * 2 * G * w;
-                      constr_scale * -2 * rho] ∈ SecondOrderCone()
-                     [constr_scale * rho; constr_scale * sqrt(penalty) * theta * w] ∈
+                     [scale_constr * 2 * psi; scale_constr * 2 * G * w;
+                      scale_constr * -2 * rho] ∈ SecondOrderCone()
+                     [scale_constr * rho; scale_constr * sqrt(penalty) * theta * w] ∈
                      SecondOrderCone()
                  end)
     return nothing
 end
 function rrp_constraints(port::Portfolio, version, sigma)
     model = port.model
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     N = length(w)
 
@@ -57,11 +57,11 @@ function rrp_constraints(port::Portfolio, version, sigma)
     # RRP constraints.
     @constraints(model,
                  begin
-                     constr_scale * zeta .== constr_scale * sigma * w
+                     scale_constr * zeta .== scale_constr * sigma * w
                      [i = 1:N],
-                     [constr_scale * (w[i] + zeta[i])
-                      constr_scale * (2 * gamma * sqrt(risk_budget[i]))
-                      constr_scale * (w[i] - zeta[i])] ∈ SecondOrderCone()
+                     [scale_constr * (w[i] + zeta[i])
+                      scale_constr * (2 * gamma * sqrt(risk_budget[i]))
+                      scale_constr * (w[i] - zeta[i])] ∈ SecondOrderCone()
                  end)
     _rrp_ver_constraints(version, model, sigma)
     return nothing

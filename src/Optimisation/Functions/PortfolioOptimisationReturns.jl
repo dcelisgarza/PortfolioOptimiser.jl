@@ -5,16 +5,16 @@ function _return_bounds(port)
     end
 
     model = port.model
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     k = model[:k]
     ret = model[:ret]
-    @constraint(model, constr_scale * ret >= constr_scale * mu_l * k)
+    @constraint(model, scale_constr * ret >= scale_constr * mu_l * k)
 
     return nothing
 end
 function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     model = port.model
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     k = model[:k]
     ohf = model[:ohf]
     ret = model[:ret]
@@ -22,9 +22,9 @@ function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     if all(mu .<= zero(eltype(mu))) || haskey(model, :abs_w) || haskey(model, :t_gw)
         risk = model[:risk]
         add_to_expression!(ret, -rf, k)
-        @constraint(model, alt_sr, constr_scale * risk <= constr_scale * ohf)
+        @constraint(model, alt_sr, scale_constr * risk <= scale_constr * ohf)
     else
-        @constraint(model, constr_scale * (ret - rf * k) == constr_scale * ohf)
+        @constraint(model, scale_constr * (ret - rf * k) == scale_constr * ohf)
     end
     return nothing
 end
@@ -34,27 +34,27 @@ end
 function _wc_return_constraints(port, mu, ::Box)
     model = port.model
     get_fees(model)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     fees = model[:fees]
     N = length(mu)
     @variable(model, abs_w[1:N])
     @constraint(model, [i = 1:N],
-                [constr_scale * abs_w[i]; constr_scale * w[i]] ∈ MOI.NormOneCone(2))
+                [scale_constr * abs_w[i]; scale_constr * w[i]] ∈ MOI.NormOneCone(2))
     @expression(model, ret, dot(mu, w) - fees - dot(port.d_mu, abs_w))
     return nothing
 end
 function _wc_return_constraints(port, mu, ::Ellipse)
     model = port.model
     get_fees(model)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     fees = model[:fees]
     G = sqrt(port.cov_mu)
     k_mu = port.k_mu
     @expression(model, x_gw, G * w)
     @variable(model, t_gw)
-    @constraint(model, [constr_scale * t_gw; constr_scale * x_gw] ∈ SecondOrderCone())
+    @constraint(model, [scale_constr * t_gw; scale_constr * x_gw] ∈ SecondOrderCone())
     @expression(model, ret, dot(mu, w) - fees - k_mu * t_gw)
     return nothing
 end
@@ -119,7 +119,7 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
 
     model = port.model
     get_fees(model)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     k = model[:k]
     fees = model[:fees]
@@ -127,7 +127,7 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
     risk = model[:risk]
     rf = obj.rf
     @variable(model, tapprox_kelly)
-    @constraint(model, constr_scale * risk <= constr_scale * ohf)
+    @constraint(model, scale_constr * risk <= scale_constr * ohf)
     @expression(model, ret, dot(mu, w) - fees - 0.5 * tapprox_kelly - k * rf)
     if isnothing(kelly_approx_idx) ||
        isempty(kelly_approx_idx) ||
@@ -137,15 +137,15 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
         end
         dev = model[:dev]
         @constraint(model,
-                    [constr_scale * (k + tapprox_kelly)
-                     constr_scale * 2 * dev
-                     constr_scale * (k - tapprox_kelly)] ∈ SecondOrderCone())
+                    [scale_constr * (k + tapprox_kelly)
+                     scale_constr * 2 * dev
+                     scale_constr * (k - tapprox_kelly)] ∈ SecondOrderCone())
     else
         dev = model[:dev]
         @constraint(model,
-                    [constr_scale * (k + tapprox_kelly)
-                     constr_scale * 2 * dev[kelly_approx_idx[1]]
-                     constr_scale * (k - tapprox_kelly)] ∈ SecondOrderCone())
+                    [scale_constr * (k + tapprox_kelly)
+                     scale_constr * 2 * dev[kelly_approx_idx[1]]
+                     scale_constr * (k - tapprox_kelly)] ∈ SecondOrderCone())
     end
     _return_bounds(port)
 
@@ -157,12 +157,12 @@ function _return_sharpe_akelly_constraints(port, obj::Sharpe, ::AKelly, ::SDP, :
     return nothing
 end
 function _sharpe_ekelly_constraints(ret, model, obj::Sharpe, k)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     ohf = model[:ohf]
     risk = model[:risk]
     rf = obj.rf
     add_to_expression!(ret, -k, rf)
-    @constraint(model, constr_scale * risk <= constr_scale * ohf)
+    @constraint(model, scale_constr * risk <= scale_constr * ohf)
     return nothing
 end
 function _sharpe_ekelly_constraints(args...)
@@ -171,7 +171,7 @@ end
 function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     model = port.model
     get_fees(model)
-    constr_scale = model[:constr_scale]
+    scale_constr = model[:scale_constr]
     w = model[:w]
     k = model[:k]
     fees = model[:fees]
@@ -181,7 +181,7 @@ function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     _sharpe_ekelly_constraints(ret, model, obj, k)
     @expression(model, kret, k .+ returns * w)
     @constraint(model, [i = 1:T],
-                [constr_scale * texact_kelly[i], constr_scale * k, constr_scale * kret[i]] ∈
+                [scale_constr * texact_kelly[i], scale_constr * k, scale_constr * kret[i]] ∈
                 MOI.ExponentialCone())
     _return_bounds(port)
 
