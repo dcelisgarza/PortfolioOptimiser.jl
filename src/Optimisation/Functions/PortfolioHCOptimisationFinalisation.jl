@@ -1,24 +1,24 @@
-function _finaliser_type_constraint(type, model, weights, scale_constr)
+function _finaliser_type_constraint(type, model, weights, constr_scale)
     N = length(weights)
     w = model[:w]
     t = model[:t]
     if type == 1
         weights[iszero.(weights)] .= eps(eltype(weights))
         @constraint(model,
-                    [scale_constr * t; scale_constr * (w ./ weights .- 1)] in
+                    [constr_scale * t; constr_scale * (w ./ weights .- 1)] in
                     MOI.NormOneCone(N + 1))
     elseif type == 2
         weights[iszero.(weights)] .= eps(eltype(weights))
         @constraint(model,
-                    [scale_constr * t; scale_constr * (w ./ weights .- 1)] in
+                    [constr_scale * t; constr_scale * (w ./ weights .- 1)] in
                     SecondOrderCone())
     elseif type == 3
         @constraint(model,
-                    [scale_constr * t; scale_constr * (w .- weights)] in
+                    [constr_scale * t; constr_scale * (w .- weights)] in
                     MOI.NormOneCone(N + 1))
     else
         @constraint(model,
-                    [scale_constr * t; scale_constr * (w .- weights)] in SecondOrderCone())
+                    [constr_scale * t; constr_scale * (w .- weights)] in SecondOrderCone())
     end
     return nothing
 end
@@ -26,8 +26,8 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
     if !(any(w_max .< weights) || any(w_min .> weights))
         return weights
     end
-    scale_constr = port.scale_constr
-    scale_obj = port.scale_obj
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
     solvers = port.solvers
     type = finaliser.type
 
@@ -40,9 +40,9 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
     @constraint(model, sum(w) == budget)
     if all(weights .>= 0)
         @constraints(model, begin
-                         scale_constr * w .>= 0
-                         scale_constr * w .>= scale_constr * w_min
-                         scale_constr * w .<= scale_constr * w_max
+                         constr_scale * w .>= 0
+                         constr_scale * w .>= constr_scale * w_min
+                         constr_scale * w .<= constr_scale * w_max
                      end)
     else
         short_budget = sum(weights[weights .< zero(eltype(weights))])
@@ -54,18 +54,18 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
 
         @constraints(model,
                      begin
-                         scale_constr * long_w .<= scale_constr * w_max
-                         scale_constr * short_w .>= scale_constr * w_min
-                         scale_constr * w .<= scale_constr * long_w
-                         scale_constr * w .>= scale_constr * short_w
-                         scale_constr * sum(short_w) == scale_constr * short_budget
-                         scale_constr * sum(long_w) ==
-                         scale_constr * (budget - short_budget)
+                         constr_scale * long_w .<= constr_scale * w_max
+                         constr_scale * short_w .>= constr_scale * w_min
+                         constr_scale * w .<= constr_scale * long_w
+                         constr_scale * w .>= constr_scale * short_w
+                         constr_scale * sum(short_w) == constr_scale * short_budget
+                         constr_scale * sum(long_w) ==
+                         constr_scale * (budget - short_budget)
                      end)
     end
     @variable(model, t)
-    _finaliser_type_constraint(type, model, weights, scale_constr)
-    @objective(model, Min, scale_obj * t)
+    _finaliser_type_constraint(type, model, weights, constr_scale)
+    @objective(model, Min, obj_scale * t)
 
     success, solvers_tried = _optimise_JuMP_model(model, solvers)
 

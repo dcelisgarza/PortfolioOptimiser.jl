@@ -31,7 +31,7 @@ mutable struct Portfolio{
                          T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_a_card_eq,
                          T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq, T_b_eq, T_tracking,
                          T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_long_fees,
-                         T_short_fees, T_rebalance, T_constraint_scale, T_scale_obj,
+                         T_short_fees, T_rebalance, T_constraint_scale, T_obj_scale,
                          T_model, T_solvers, T_optimal, T_fail, T_limits, T_frontier,
                          T_alloc_model, T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
                          T_alloc_fail} <: AbstractPortfolio
@@ -129,8 +129,8 @@ mutable struct Portfolio{
     # Rebalance cost
     rebalance::T_rebalance
     # Solution
-    scale_constr::T_constraint_scale
-    scale_obj::T_scale_obj
+    constr_scale::T_constraint_scale
+    obj_scale::T_obj_scale
     model::T_model
     solvers::T_solvers
     optimal::T_optimal
@@ -431,7 +431,7 @@ function Portfolio(;
                    short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                    rebalance::AbstractTR = NoTR(),
                    # Solution
-                   scale_constr::Real = 1.0, scale_obj::Real = 1.0,
+                   constr_scale::Real = 1.0, obj_scale::Real = 1.0,
                    model::JuMP.Model = JuMP.Model(), solvers::AbstractDict = Dict(),
                    optimal::AbstractDict = Dict(), fail::AbstractDict = Dict(),
                    limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
@@ -549,8 +549,8 @@ function Portfolio(;
     real_or_vector_assert(short_fees, N, :short_fees, >=, 0)
     tr_assert(rebalance, N)
     # Constraint and objective scales
-    @smart_assert(scale_constr > zero(scale_constr))
-    @smart_assert(scale_obj > zero(scale_obj))
+    @smart_assert(constr_scale > zero(constr_scale))
+    @smart_assert(obj_scale > zero(obj_scale))
 
     return Portfolio{
                      # Assets and factors
@@ -601,7 +601,7 @@ function Portfolio(;
                      # Rebalance cost
                      AbstractTR,
                      # Solution
-                     typeof(scale_constr), typeof(scale_obj), typeof(model),
+                     typeof(constr_scale), typeof(obj_scale), typeof(model),
                      typeof(solvers), typeof(optimal), typeof(fail), typeof(limits),
                      typeof(frontier), typeof(alloc_model), typeof(alloc_solvers),
                      typeof(alloc_optimal), typeof(alloc_leftover), typeof(alloc_fail)}(
@@ -699,8 +699,8 @@ function Portfolio(;
                                                                                         # Rebalance cost
                                                                                         rebalance,
                                                                                         # Solution
-                                                                                        scale_constr,
-                                                                                        scale_obj,
+                                                                                        constr_scale,
+                                                                                        obj_scale,
                                                                                         model,
                                                                                         solvers,
                                                                                         optimal,
@@ -908,7 +908,7 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                 @smart_assert(length(val.w) == size(port.returns, 2))
             end
         end
-    elseif sym ∈ (:scale_constr, :scale_obj)
+    elseif sym ∈ (:constr_scale, :obj_scale)
         @smart_assert(val > zero(val))
     else
         if (isa(getfield(port, sym), AbstractArray) && isa(val, AbstractArray)) ||
@@ -974,7 +974,7 @@ function Base.deepcopy(port::Portfolio)
                      # Rebalance cost
                      AbstractTR,
                      # Solution
-                     typeof(port.scale_constr), typeof(port.scale_obj), typeof(port.model),
+                     typeof(port.constr_scale), typeof(port.obj_scale), typeof(port.model),
                      typeof(port.solvers), typeof(port.optimal), typeof(port.fail),
                      typeof(port.limits), typeof(port.frontier), typeof(port.alloc_model),
                      typeof(port.alloc_solvers), typeof(port.alloc_optimal),
@@ -1073,8 +1073,8 @@ function Base.deepcopy(port::Portfolio)
                                                                            # Rebalance cost
                                                                            deepcopy(port.rebalance),
                                                                            # Solution
-                                                                           deepcopy(port.scale_constr),
-                                                                           deepcopy(port.scale_obj),
+                                                                           deepcopy(port.constr_scale),
+                                                                           deepcopy(port.obj_scale),
                                                                            copy(port.model),
                                                                            deepcopy(port.solvers),
                                                                            deepcopy(port.optimal),
@@ -1445,7 +1445,7 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, lb, sb, ul, u
     frontier::tfront
     solvers::tsolv
     fail::tf
-    scale_obj::tos
+    obj_scale::tos
     model::tmod
     latest_prices::tlp
     alloc_optimal::taopt

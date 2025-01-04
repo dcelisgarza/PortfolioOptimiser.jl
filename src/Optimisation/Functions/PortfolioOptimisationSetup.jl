@@ -12,12 +12,12 @@ function initial_w(port, w_ini)
     set_w_ini(w, w_ini)
     return nothing
 end
-function set_scale_obj_constrs(port)
+function set_obj_constr_scales(port)
     model = port.model
-    scale_constr = port.scale_constr
-    scale_obj = port.scale_obj
-    @expression(model, scale_constr, scale_constr)
-    @expression(model, scale_obj, scale_obj)
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
+    @expression(model, constr_scale, constr_scale)
+    @expression(model, obj_scale, obj_scale)
     return nothing
 end
 function mu_sigma_returns_class(port, ::Union{Classic, FC})

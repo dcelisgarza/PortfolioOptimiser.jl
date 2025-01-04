@@ -81,8 +81,8 @@ function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, inves
                Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices))
     end
-    scale_constr = port.scale_constr
-    scale_obj = port.scale_obj
+    constr_scale = port.constr_scale
+    obj_scale = port.obj_scale
 
     model = port.alloc_model = JuMP.Model()
     set_string_names_on_creation(model, string_names)
@@ -106,11 +106,11 @@ function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, inves
                  end)
 
     @constraints(model, begin
-                     scale_constr * r >= 0
-                     [scale_constr * u; scale_constr * eta] ∈ MOI.NormOneCone(N + 1)
+                     constr_scale * r >= 0
+                     [constr_scale * u; constr_scale * eta] ∈ MOI.NormOneCone(N + 1)
                  end)
 
-    @objective(model, Min, scale_obj * (u + r))
+    @objective(model, Min, obj_scale * (u + r))
 
     shares, cost, allocated_weights, available_funds = _optimise_allocation(port, label,
                                                                             tickers,
