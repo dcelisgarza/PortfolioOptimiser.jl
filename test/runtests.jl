@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
 end
@@ -10,10 +18,6 @@ end
 
 @safetestset "Allocation tests" begin
     include("AllocationTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
 end
 
 @safetestset "Portfolio classes" begin
@@ -34,10 +38,6 @@ end
 
 @safetestset "DBHT Clustering" begin
     include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
 end
 
 @safetestset "Network constraint tests" begin
