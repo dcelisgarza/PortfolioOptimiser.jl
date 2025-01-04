@@ -252,7 +252,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraints(model,
                      begin
-                         is_invested .<= 1
+                         is_invested_bool <= 1
                          scale_constr * w .<= scale_constr * is_invested_long .* long_ub
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
                          scale_constr * w .>=
