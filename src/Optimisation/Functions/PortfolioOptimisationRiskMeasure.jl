@@ -567,30 +567,30 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
         end
         mar = returns .- transpose(mu)
         target = rm.target
-        model["constr_ssd_target_$(i)"], model["constr_ssd_mar_$(i)"], model["constr_sdev_soc_$(i)"] = @constraints(model,
-                                                                                                                    begin
-                                                                                                                        scale_constr *
-                                                                                                                        view(ssd,
-                                                                                                                             :,
-                                                                                                                             i) .>=
-                                                                                                                        scale_constr *
-                                                                                                                        target *
-                                                                                                                        k
-                                                                                                                        scale_constr *
-                                                                                                                        mar *
-                                                                                                                        w .>=
-                                                                                                                        scale_constr *
-                                                                                                                        -view(ssd,
-                                                                                                                              :,
-                                                                                                                              i)
-                                                                                                                        [scale_constr *
-                                                                                                                         sdev[i]
-                                                                                                                         scale_constr *
-                                                                                                                         view(ssd,
-                                                                                                                              :,
-                                                                                                                              i)] ∈
-                                                                                                                        SecondOrderCone()
-                                                                                                                    end)
+        model[Symbol("constr_ssd_target_$(i)")], model[Symbol("constr_ssd_mar_$(i)")], model[Symbol("constr_sdev_soc_$(i)")] = @constraints(model,
+                                                                                                                                            begin
+                                                                                                                                                scale_constr *
+                                                                                                                                                view(ssd,
+                                                                                                                                                     :,
+                                                                                                                                                     i) .>=
+                                                                                                                                                scale_constr *
+                                                                                                                                                target *
+                                                                                                                                                k
+                                                                                                                                                scale_constr *
+                                                                                                                                                mar *
+                                                                                                                                                w .>=
+                                                                                                                                                scale_constr *
+                                                                                                                                                -view(ssd,
+                                                                                                                                                      :,
+                                                                                                                                                      i)
+                                                                                                                                                [scale_constr *
+                                                                                                                                                 sdev[i]
+                                                                                                                                                 scale_constr *
+                                                                                                                                                 view(ssd,
+                                                                                                                                                      :,
+                                                                                                                                                      i)] ∈
+                                                                                                                                                SecondOrderCone()
+                                                                                                                                            end)
         add_to_expression!(sdev_risk[i], iTm1, sdev[i])
         _set_rm_risk_upper_bound(type, model, sdev_risk[i], rm.settings.ub,
                                  "sdev_risk_$(i)")
@@ -989,8 +989,11 @@ function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RP, NOC};
                      cvar_risk_h, var_h + sum(z_var_h) * ibt
                      rcvar_risk, cvar_risk_l - cvar_risk_h
                  end)
-    @constraints(model, begin
+    @constraints(model,
+                 begin
+                     constr_cvar_l,
                      scale_constr * z_var_l .>= scale_constr * (-net_X .- var_l)
+                     constr_cvar_h,
                      scale_constr * z_var_h .<= scale_constr * (-net_X .- var_h)
                  end)
 
@@ -1020,13 +1023,24 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         ibt = inv(rm.beta * T)
-        @constraints(model,
-                     begin
-                         scale_constr * view(z_var_l, :, i) .>=
-                         scale_constr * (-net_X .- var_l[i])
-                         scale_constr * view(z_var_h, :, i) .<=
-                         scale_constr * (-net_X .- var_h[i])
-                     end)
+
+        model[Symbol("constr_cvar_l_$(i)")], model[Symbol("constr_cvar_h_$(i)")] = @constraints(model,
+                                                                                                begin
+                                                                                                    scale_constr *
+                                                                                                    view(z_var_l,
+                                                                                                         :,
+                                                                                                         i) .>=
+                                                                                                    scale_constr *
+                                                                                                    (-net_X .-
+                                                                                                     var_l[i])
+                                                                                                    scale_constr *
+                                                                                                    view(z_var_h,
+                                                                                                         :,
+                                                                                                         i) .<=
+                                                                                                    scale_constr *
+                                                                                                    (-net_X .-
+                                                                                                     var_h[i])
+                                                                                                end)
         add_to_expression!(cvar_risk_l[i], var_l[i])
         add_to_expression!(cvar_risk_l[i], iat, sum(view(z_var_l, :, i)))
         add_to_expression!(cvar_risk_h[i], var_h[i])
@@ -1055,8 +1069,8 @@ function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP, NOC};
     @expression(model, evar_risk, t_evar - z_evar * log(at))
     @constraints(model,
                  begin
-                     scale_constr * sum(u_evar) <= scale_constr * z_evar
-                     [i = 1:T],
+                     constr_evar, scale_constr * sum(u_evar) <= scale_constr * z_evar
+                     constr_evar_exp_cone[i = 1:T],
                      [scale_constr * (-net_X[i] - t_evar), scale_constr * z_evar,
                       scale_constr * u_evar[i]] ∈ MOI.ExponentialCone()
                  end)
@@ -1081,13 +1095,25 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, 
     @expression(model, evar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
         at = rm.alpha * T
-        @constraints(model,
-                     begin
-                         scale_constr * sum(view(u_evar, :, j)) <= scale_constr * z_evar[j]
-                         [i = 1:T],
-                         [scale_constr * (-net_X[i] - t_evar[j]), scale_constr * z_evar[j],
-                          scale_constr * u_evar[i, j]] ∈ MOI.ExponentialCone()
-                     end)
+        model[Symbol("constr_evar_$(j)")], model[Symbol("constr_evar_exp_cone_$(j)")] = @constraints(model,
+                                                                                                     begin
+                                                                                                         scale_constr *
+                                                                                                         sum(view(u_evar,
+                                                                                                                  :,
+                                                                                                                  j)) <=
+                                                                                                         scale_constr *
+                                                                                                         z_evar[j]
+                                                                                                         [i = 1:T],
+                                                                                                         [scale_constr *
+                                                                                                          (-net_X[i] -
+                                                                                                           t_evar[j]),
+                                                                                                          scale_constr *
+                                                                                                          z_evar[j],
+                                                                                                          scale_constr *
+                                                                                                          u_evar[i,
+                                                                                                                 j]] ∈
+                                                                                                         MOI.ExponentialCone()
+                                                                                                     end)
         add_to_expression!(evar_risk[j], t_evar[j])
         add_to_expression!(evar_risk[j], -log(at), z_evar[j])
         _set_rm_risk_upper_bound(type, model, evar_risk[j], rm.settings.ub,
