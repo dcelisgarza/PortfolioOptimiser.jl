@@ -38,8 +38,9 @@ function scalarise_risk_expression(port, scalarisation::ScalarLogSumExp)
 
     @variable(model, risk)
     @variable(model, ulse_risk[1:N])
-    @constraint(model, scale_constr * sum(ulse_risk) <= scale_constr * 1)
-    @constraint(model, [i = 1:N],
+    @constraint(model, constr_scalar_risk_log_sum_exp_u,
+                scale_constr * sum(ulse_risk) <= scale_constr * 1)
+    @constraint(model, constr_scalar_risk_log_sum_exp[i = 1:N],
                 [scale_constr * gamma * (risk_vec[i] - risk), scale_constr * 1,
                  scale_constr * ulse_risk[i]] in MOI.ExponentialCone())
 
@@ -50,7 +51,7 @@ function scalarise_risk_expression(port, ::ScalarMax)
     risk_vec = model[:risk_vec]
 
     @variable(model, risk)
-    @constraint(model, risk .>= risk_vec)
+    @constraint(model, constr_scalar_risk_max, risk .>= risk_vec)
 
     return nothing
 end
@@ -241,9 +242,8 @@ function _wc_variance_risk_variables(::Box, model)
                    Au[1:N, 1:N] .>= 0, Symmetric
                    Al[1:N, 1:N] .>= 0, Symmetric
                end)
-    @constraints(model, begin
-                     scale_constr * (Au .- Al) .== scale_constr * W
-                 end)
+    @constraint(model, constr_box_wc_variance_set,
+                scale_constr * (Au .- Al) .== scale_constr * W)
     return nothing
 end
 function _wc_variance_risk_variables(::Ellipse, model)
@@ -255,7 +255,7 @@ function _wc_variance_risk_variables(::Ellipse, model)
     N = size(W, 1)
     @variable(model, E[1:N, 1:N], Symmetric)
     @expression(model, WpE, W .+ E)
-    @constraint(model, scale_constr * E ∈ PSDCone())
+    @constraint(model, constr_ellipse_wc_variance_set, scale_constr * E ∈ PSDCone())
     return nothing
 end
 function _wc_variance_risk(::Box, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)

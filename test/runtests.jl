@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vector" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -64,10 +72,6 @@ end
     include("BLStatsTests.jl")
 end
 
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
 end
@@ -78,10 +82,6 @@ end
 
 @safetestset "WC optimisation" begin
     include("WCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vector" begin
-    include("TradOptimisationVectorTests.jl")
 end
 
 @safetestset "OWA Weights" begin
