@@ -249,18 +249,18 @@ short_budget = 1
 budget = 0
 
 # Upper bound for the value of each short weight.
-short_lb = 1
+short_u = 1
 
 # Upper bound for the value of each long weight.
-long_ub = 1
+long_u = 1
 
 w = optimise!(hp; rm = RLDaR(),
               type = NCO(;
                          # Allow shorting in the sub portfolios, as well as the synthetic portfolio optimised by NCO.
-                         # We also set the the values of `short_lb` and `long_ub` to be equal to 1.
+                         # We also set the the values of `short_u` and `long_u` to be equal to 1.
                          port_kwargs = (; short = short, budget = budget,
-                                        short_budget = short_budget, long_ub = long_ub,
-                                        short_lb = short_lb),
+                                        short_budget = short_budget, long_u = long_u,
+                                        short_u = short_u),
                          # Max return objective.
                          opt_kwargs = (; obj = MaxRet())
                          #

@@ -10,7 +10,7 @@ l = 2.0
 
 @testset "Portfolio" begin
     portfolio = Portfolio(; prices = prices, short = true, budget = 3.0,
-                          short_budget = -0.5, long_ub = 1.0, short_lb = -0.3,
+                          short_budget = -0.5, long_u = 1.0, short_u = -0.3,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,
                                                                           allow_almost = true),
@@ -172,9 +172,9 @@ l = 2.0
 
     portfolio.short = false
     portfolio.budget = 1.5
-    portfolio.long_ub = 1.5
+    portfolio.long_u = 1.5
     portfolio.short_budget = -0.5
-    portfolio.short_lb = -0.5
+    portfolio.short_u = -0.5
 
     @test_throws AssertionError portfolio.w_min = 1:21
     @test_throws AssertionError portfolio.w_max = 1:21

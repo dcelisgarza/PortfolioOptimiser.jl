@@ -20,26 +20,26 @@ function w_limits(port::Portfolio, type::NCO)
         hc = nothing
 
         if port_short_i
-            if haskey(port_kwargs, :short_lb)
-                la = port_kwargs.short_lb
+            if haskey(port_kwargs, :short_u)
+                la = port_kwargs.short_u
             end
-            if haskey(port_kwargs, :long_ub)
-                ha = port_kwargs.long_ub
+            if haskey(port_kwargs, :long_u)
+                ha = port_kwargs.long_u
             end
         end
 
         if port_short_o
-            if haskey(port_kwargs_o, :short_lb)
-                lb = port_kwargs_o.short_lb
+            if haskey(port_kwargs_o, :short_u)
+                lb = port_kwargs_o.short_u
             end
-            if haskey(port_kwargs_o, :long_ub)
-                hb = port_kwargs_o.long_ub
+            if haskey(port_kwargs_o, :long_u)
+                hb = port_kwargs_o.long_u
             end
         end
 
         if port_short
-            lc = port.short_lb
-            hc = port.long_ub
+            lc = port.short_u
+            hc = port.long_u
         end
 
         if isnothing(la) && isnothing(lb) && isnothing(lc)

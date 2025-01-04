@@ -173,16 +173,16 @@ portfolio.short = true;
 nothing #hide
 ````
 
-How short- or long-heavy we want to be is mediated by the `short_lb`, `long_ub`, `short_budget` and `budget` properties. They set the upper bound for the absolute value of the sum of the short and long weights respectively.
+How short- or long-heavy we want to be is mediated by the `short_u`, `long_u`, `short_budget` and `budget` properties. They set the upper bound for the absolute value of the sum of the short and long weights respectively.
 
   - `budget`: the sum of all the weights will be equal to this value.
   - `short_budget`: upper bound for the absolute value of the sum of the short weights.
-  - `long_ub`: upper bound of each of the long weights.
-  - `short_lb`: upper bound of the absolute value of each of the short weights.
+  - `long_u`: upper bound of each of the long weights.
+  - `short_u`: upper bound of the absolute value of each of the short weights.
 
-These values multiply the cash at our disposal when we allocate the portfolio. So when [`allocate!`](@ref) is called, the long investment will be `investment * long_ub`. And if shorting is enabled, the short investment (the amount shorted) will be `short_lb * investment`.
+These values multiply the cash at our disposal when we allocate the portfolio. So when [`allocate!`](@ref) is called, the long investment will be `investment * long_u`. And if shorting is enabled, the short investment (the amount shorted) will be `short_u * investment`.
 
-Lets short the market whithout reinvesting the earnings, meaning we'll have a cash reserve in our balance that is equal to the short sale value. You can change this by increasing `long_ub`, if you set it to `1 + short_lb` it means the profits from short selling will be reinvested into the portfolio.
+Lets short the market whithout reinvesting the earnings, meaning we'll have a cash reserve in our balance that is equal to the short sale value. You can change this by increasing `long_u`, if you set it to `1 + short_u` it means the profits from short selling will be reinvested into the portfolio.
 
 We will use the default values.
 
@@ -192,9 +192,9 @@ portfolio.short_budget = 0.2
 # The portfolio weights will add up to 0.8, meaning the portfolio will be underleveraged.
 portfolio.budget = 0.8;
 # Each short position can have a maximum value of -0.2.
-portfolio.short_lb = 0.2
+portfolio.short_u = 0.2
 # Each long position can have a maximum value of 1.
-portfolio.long_ub = 1.0
+portfolio.long_u = 1.0
 ````
 
 The portfolio `budget` gives us the leverage characteristics of the portfolio. This is a property that is automatically computed and cannot be cahnged. There are verious scenarios that `budget` describes.
@@ -289,7 +289,7 @@ pretty_table(DataFrame(; tickers = portfolio.assets,
 
 ## 3.3.3 Shorting with reinvestment
 
-In this section we'll reinvest the money made from short selling, this can be acomplished by setting the value of `long_ub = 1 + short_lb`.
+In this section we'll reinvest the money made from short selling, this can be acomplished by setting the value of `long_u = 1 + short_u`.
 
 ````@example 3_shorting_portfolios
 portfolio.short = true
