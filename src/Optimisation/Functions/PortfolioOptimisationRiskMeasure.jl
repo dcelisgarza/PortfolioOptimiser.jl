@@ -666,8 +666,11 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RP, NOC};
                    tslpm
                end)
     @expression(model, slpm_risk, tslpm / sqrt(T - 1))
-    @constraints(model, begin
+    @constraints(model,
+                 begin
+                     constr_slpm,
                      scale_constr * slpm .>= scale_constr * (target * k .- mar * w)
+                     constr_slpm_soc,
                      [scale_constr * tslpm; scale_constr * slpm] ∈ SecondOrderCone()
                  end)
     _set_rm_risk_upper_bound(type, model, slpm_risk, rm.settings.ub, "slpm_risk")
@@ -696,13 +699,25 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
         target = rm.target
         mar = returns .- transpose(ret_target)
         add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
-        @constraints(model,
-                     begin
-                         scale_constr * view(slpm, :, i) .>=
-                         scale_constr * (target * k .- mar * w)
-                         [scale_constr * tslpm[i]; scale_constr * view(slpm, :, i)] ∈
-                         SecondOrderCone()
-                     end)
+        model[Symbol("constr_slpm_$(i)")], model[Symbol("constr_slpm_soc_$(i)")] = @constraints(model,
+                                                                                                begin
+                                                                                                    scale_constr *
+                                                                                                    view(slpm,
+                                                                                                         :,
+                                                                                                         i) .>=
+                                                                                                    scale_constr *
+                                                                                                    (target *
+                                                                                                     k .-
+                                                                                                     mar *
+                                                                                                     w)
+                                                                                                    [scale_constr *
+                                                                                                     tslpm[i]
+                                                                                                     scale_constr *
+                                                                                                     view(slpm,
+                                                                                                          :,
+                                                                                                          i)] ∈
+                                                                                                    SecondOrderCone()
+                                                                                                end)
         _set_rm_risk_upper_bound(type, model, slpm_risk[i], rm.settings.ub,
                                  "slpm_risk_$(i)")
         _set_risk_expression(model, slpm_risk[i], rm.settings.scale, rm.settings.flag)
@@ -718,7 +733,7 @@ function _wr_risk(model, returns)
     net_X = model[:net_X]
     @variable(model, wr)
     @expression(model, wr_risk, wr)
-    @constraint(model, scale_constr * -net_X .<= scale_constr * wr)
+    @constraint(model, constr_wr, scale_constr * -net_X .<= scale_constr * wr)
 
     return nothing
 end
@@ -740,7 +755,7 @@ function set_rm(port::Portfolio, rm::RG, type::Union{Trad, RP, NOC};
     net_X = model[:net_X]
     @variable(model, br)
     @expression(model, rg_risk, wr_risk - br)
-    @constraint(model, scale_constr * -net_X .>= scale_constr * br)
+    @constraint(model, constr_br, scale_constr * -net_X .>= scale_constr * br)
     _set_rm_risk_upper_bound(type, model, rg_risk, rm.settings.ub, "rg_risk")
     _set_risk_expression(model, rg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -758,9 +773,7 @@ function set_rm(port::Portfolio, rm::CVaR, type::Union{Trad, RP, NOC};
                    z_var[1:T] .>= 0
                end)
     @expression(model, cvar_risk, var + sum(z_var) * iat)
-    @constraints(model, begin
-                     scale_constr * z_var .>= scale_constr * (-net_X .- var)
-                 end)
+    @constraint(model, constr_cvar, scale_constr * z_var .>= scale_constr * (-net_X .- var))
     _set_rm_risk_upper_bound(type, model, cvar_risk, rm.settings.ub, "cvar_risk")
     _set_risk_expression(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -782,18 +795,15 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, 
         iat = inv(rm.alpha * T)
         add_to_expression!(cvar_risk[i], var[i])
         add_to_expression!(cvar_risk[i], iat, sum(view(z_var, :, i)))
-        @constraints(model,
-                     begin
-                         scale_constr * view(z_var, :, i) .>=
-                         scale_constr * (-net_X .- var[i])
-                     end)
+        model[Symbol("constr_cvar_$(i)")] = @constraint(model,
+                                                        scale_constr * view(z_var, :, i) .>=
+                                                        scale_constr * (-net_X .- var[i]))
         _set_rm_risk_upper_bound(type, model, cvar_risk[i], rm.settings.ub,
                                  "cvar_risk_$(i)")
         _set_risk_expression(model, cvar_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-######
 function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
@@ -824,20 +834,22 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                end)
     @constraints(model,
                  begin
+                     constr_u_drcvar,
                      scale_constr * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1; dims = 2))) .<=
                      scale_constr * s
+                     constr_v_drcvar,
                      scale_constr * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1; dims = 2))) .<=
                      scale_constr * s
-                     [i = 1:T],
+                     constr_u_drcvar_infnorm[i = 1:T],
                      [scale_constr * tu_drcvar[i];
                       scale_constr * (-view(u, i, :) .- a1 * w)] in
                      MOI.NormInfinityCone(1 + N)
-                     [i = 1:T],
+                     constr_v_drcvar_infnorm[i = 1:T],
                      [scale_constr * tv_drcvar[i];
                       scale_constr * (-view(v, i, :) .- a2 * w)] in
                      MOI.NormInfinityCone(1 + N)
-                     scale_constr * tu_drcvar .<= scale_constr * lb
-                     scale_constr * tv_drcvar .<= scale_constr * lb
+                     constr_u_drcvar_lb, scale_constr * tu_drcvar .<= scale_constr * lb
+                     constr_u_drcvar_lb, scale_constr * tv_drcvar .<= scale_constr * lb
                  end)
 
     @expression(model, drcvar_risk, radius * lb + sum(s) * inv(T))
@@ -878,25 +890,77 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
         a2 = a1 - b1 * inv(alpha)
         b2 = b1 * (one(alpha) - inv(alpha))
 
-        @constraints(model,
-                     begin
-                         scale_constr * (b1 * tau[j] .+ a1 * X .+
-                                         vec(sum(view(u, :, :, j) .* RP1; dims = 2))) .<=
-                         scale_constr * view(s, :, j)
-                         scale_constr * (b2 * tau[j] .+ a2 * X .+
-                                         vec(sum(view(v, :, :, j) .* RP1; dims = 2))) .<=
-                         scale_constr * view(s, :, j)
-                         [i = 1:T],
-                         [scale_constr * tu_drcvar[i, j];
-                          scale_constr * (-view(u, i, :, j) .- a1 * w)] in
-                         MOI.NormInfinityCone(1 + N)
-                         [i = 1:T],
-                         [scale_constr * tv_drcvar[i, j];
-                          scale_constr * (-view(v, i, :, j) .- a2 * w)] in
-                         MOI.NormInfinityCone(1 + N)
-                         scale_constr * view(tu_drcvar, :, j) .<= scale_constr * lb[j]
-                         scale_constr * view(tv_drcvar, :, j) .<= scale_constr * lb[j]
-                     end)
+        model[Symbol("constr_u_drcvar_$(j)")], model[Symbol("constr_v_drcvar_$(j)")], model[Symbol("constr_u_drcvar_infnorm_$(j)")], model[Symbol("constr_v_drcvar_infnorm_$(j)")], model[Symbol("constr_u_drcvar_lb_$(j)")], model[Symbol("constr_u_drcvar_lb_$(j)")] = @constraints(model,
+                                                                                                                                                                                                                                                                                      begin
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          (b1 *
+                                                                                                                                                                                                                                                                                           tau[j] .+
+                                                                                                                                                                                                                                                                                           a1 *
+                                                                                                                                                                                                                                                                                           X .+
+                                                                                                                                                                                                                                                                                           vec(sum(view(u,
+                                                                                                                                                                                                                                                                                                        :,
+                                                                                                                                                                                                                                                                                                        :,
+                                                                                                                                                                                                                                                                                                        j) .*
+                                                                                                                                                                                                                                                                                                   RP1;
+                                                                                                                                                                                                                                                                                                   dims = 2))) .<=
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          view(s,
+                                                                                                                                                                                                                                                                                               :,
+                                                                                                                                                                                                                                                                                               j)
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          (b2 *
+                                                                                                                                                                                                                                                                                           tau[j] .+
+                                                                                                                                                                                                                                                                                           a2 *
+                                                                                                                                                                                                                                                                                           X .+
+                                                                                                                                                                                                                                                                                           vec(sum(view(v,
+                                                                                                                                                                                                                                                                                                        :,
+                                                                                                                                                                                                                                                                                                        :,
+                                                                                                                                                                                                                                                                                                        j) .*
+                                                                                                                                                                                                                                                                                                   RP1;
+                                                                                                                                                                                                                                                                                                   dims = 2))) .<=
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          view(s,
+                                                                                                                                                                                                                                                                                               :,
+                                                                                                                                                                                                                                                                                               j)
+                                                                                                                                                                                                                                                                                          [i = 1:T],
+                                                                                                                                                                                                                                                                                          [scale_constr *
+                                                                                                                                                                                                                                                                                           tu_drcvar[i,
+                                                                                                                                                                                                                                                                                                     j]
+                                                                                                                                                                                                                                                                                           scale_constr *
+                                                                                                                                                                                                                                                                                           (-view(u,
+                                                                                                                                                                                                                                                                                                  i,
+                                                                                                                                                                                                                                                                                                  :,
+                                                                                                                                                                                                                                                                                                  j) .-
+                                                                                                                                                                                                                                                                                            a1 *
+                                                                                                                                                                                                                                                                                            w)] in
+                                                                                                                                                                                                                                                                                          MOI.NormInfinityCone(1 +
+                                                                                                                                                                                                                                                                                                               N)
+                                                                                                                                                                                                                                                                                          [i = 1:T],
+                                                                                                                                                                                                                                                                                          [scale_constr *
+                                                                                                                                                                                                                                                                                           tv_drcvar[i,
+                                                                                                                                                                                                                                                                                                     j]
+                                                                                                                                                                                                                                                                                           scale_constr *
+                                                                                                                                                                                                                                                                                           (-view(v,
+                                                                                                                                                                                                                                                                                                  i,
+                                                                                                                                                                                                                                                                                                  :,
+                                                                                                                                                                                                                                                                                                  j) .-
+                                                                                                                                                                                                                                                                                            a2 *
+                                                                                                                                                                                                                                                                                            w)] in
+                                                                                                                                                                                                                                                                                          MOI.NormInfinityCone(1 +
+                                                                                                                                                                                                                                                                                                               N)
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          view(tu_drcvar,
+                                                                                                                                                                                                                                                                                               :,
+                                                                                                                                                                                                                                                                                               j) .<=
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          lb[j]
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          view(tv_drcvar,
+                                                                                                                                                                                                                                                                                               :,
+                                                                                                                                                                                                                                                                                               j) .<=
+                                                                                                                                                                                                                                                                                          scale_constr *
+                                                                                                                                                                                                                                                                                          lb[j]
+                                                                                                                                                                                                                                                                                      end)
         add_to_expression!(drcvar_risk[j], radius, lb[j])
         add_to_expression!(drcvar_risk[j], iT, sum(view(s, :, j)))
         _set_rm_risk_upper_bound(type, model, drcvar_risk[j], rm.settings.ub,
