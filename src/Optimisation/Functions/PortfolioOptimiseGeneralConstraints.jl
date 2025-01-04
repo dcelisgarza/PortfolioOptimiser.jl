@@ -241,12 +241,17 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                        end)
             @constraints(model,
                          begin
-                             is_invested_long_float .<= k
+                             constr_is_invested_long_float_ub, is_invested_long_float .<= k
+                             constr_is_invested_short_float_ub,
                              is_invested_short_float .<= k
+                             constr_is_invested_long_float_decision_ub,
                              is_invested_long_float .<= scale * is_invested_long_bool
+                             constr_is_invested_short_float_decision_ub,
                              is_invested_short_float .<= scale * is_invested_short_bool
+                             constr_is_invested_long_float_decision_lb,
                              is_invested_long_float .>=
                              k .- scale * (1 .- is_invested_long_bool)
+                             constr_is_invested_short_float_decision_lb,
                              is_invested_short_float .>=
                              k .- scale * (1 .- is_invested_short_bool)
                          end)
@@ -258,12 +263,16 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraints(model,
                      begin
-                         is_invested_bool .<= 1
+                         constr_is_invested_bool_ub, is_invested_bool .<= 1
+                         constr_w_mip_ub,
                          scale_constr * w .<= scale_constr * is_invested_long .* long_ub
+                         constr_w_mip_lb,
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
+                         constr_long_w_mip_lb,
                          scale_constr * w .>=
                          scale_constr *
                          (is_invested_long .* long_l - scale * (1 - is_invested_long_bool))
+                         constr_short_w_mip_ub,
                          scale_constr * w .<=
                          scale_constr * (is_invested_short .* short_l +
                                          scale * (1 - is_invested_short_bool))
@@ -277,19 +286,24 @@ function MIP_constraints(port, allow_shorting::Bool = true)
             scale = port.card_scale
             @constraints(model,
                          begin
-                             is_invested_float .<= k
+                             constr_is_invested_float_ub, is_invested_float .<= k
+                             constr_is_invested_float_decision_ub,
                              is_invested_float .<= scale * is_invested_bool
+                             constr_is_invested_float_decision_lb,
                              is_invested_float .>= k .- scale * (1 .- is_invested_bool)
                          end)
             @expression(model, is_invested, is_invested_float)
         end
-        @constraint(model, scale_constr * w .<= scale_constr * is_invested .* long_ub)
+        @constraint(model, constr_w_mip_ub,
+                    scale_constr * w .<= scale_constr * is_invested .* long_ub)
         if (isa(long_l, Real) && !iszero(long_l) ||
             isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
-            @constraint(model, scale_constr * w .>= scale_constr * is_invested .* long_l)
+            @constraint(model, constr_long_w_mip_lb,
+                        scale_constr * w .>= scale_constr * is_invested .* long_l)
         end
         if short && allow_shorting
-            @constraint(model, scale_constr * w .>= scale_constr * is_invested .* short_lb)
+            @constraint(model, constr_w_mip_lb,
+                        scale_constr * w .>= scale_constr * is_invested .* short_lb)
         end
     end
 
@@ -297,17 +311,17 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     ## Portfolio cardinality
     =#
     if card_flag
-        @constraint(model, sum(is_invested_bool) <= card)
+        @constraint(model, constr_card, sum(is_invested_bool) <= card)
     end
 
     #=
     ## Group cardinality
     =#
     if gcard_ineq_flag
-        @constraint(model, a_card_ineq * is_invested_bool .>= b_card_ineq)
+        @constraint(model, constr_card_ineq, a_card_ineq * is_invested_bool .>= b_card_ineq)
     end
     if gcard_eq_flag
-        @constraint(model, a_card_eq * is_invested_bool .== b_card_eq)
+        @constraint(model, constr_card_eq, a_card_eq * is_invested_bool .== b_card_eq)
     end
 
     #=
@@ -316,7 +330,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     if ntwk_flag
         ntwk_A = network_adj.A
         ntwk_k = network_adj.k
-        @constraint(model, ntwk_A * is_invested_bool .<= ntwk_k)
+        @constraint(model, constr_ntwk_card, ntwk_A * is_invested_bool .<= ntwk_k)
     end
 
     #=
@@ -325,7 +339,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     if clst_flag
         clst_A = cluster_adj.A
         clst_k = cluster_adj.k
-        @constraint(model, clst_A * is_invested_bool .<= clst_k)
+        @constraint(model, constr_clst_card, clst_A * is_invested_bool .<= clst_k)
     end
 
     return nothing
