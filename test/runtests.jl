@@ -1,11 +1,11 @@
 using SafeTestsets
 
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
 end
 
 @safetestset "Stats tests" begin

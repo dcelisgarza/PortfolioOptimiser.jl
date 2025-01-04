@@ -58,16 +58,13 @@ function weight_constraints(port, allow_shorting::Bool = true)
     budget_flag = isfinite(budget)
     budget_ub_flag = isfinite(budget_ub)
     if budget_flag
-        @constraint(model, constr_budget,
-                    scale_constr * sum(w) == scale_constr * budget * k)
+        @constraint(model, scale_constr * sum(w) == scale_constr * budget * k)
     else
         if budget_lb_flag
-            @constraint(model, constr_budget_lb,
-                        scale_constr * sum(w) >= scale_constr * budget_lb * k)
+            @constraint(model, scale_constr * sum(w) >= scale_constr * budget_lb * k)
         end
         if budget_ub_flag
-            @constraint(model, constr_budget_ub,
-                        scale_constr * sum(w) <= scale_constr * budget_ub * k)
+            @constraint(model, scale_constr * sum(w) <= scale_constr * budget_ub * k)
         end
     end
 
@@ -78,8 +75,8 @@ function weight_constraints(port, allow_shorting::Bool = true)
     long_ub = port.long_ub
     if !short
         @constraints(model, begin
-                         constr_w_ub, scale_constr * w <= scale_constr * long_ub * k
-                         constr_w_lb, w >= 0
+                         scale_constr * w <= scale_constr * long_ub * k
+                         w >= 0
                      end)
         @expression(model, long_w, w)
     elseif short && allow_shorting
@@ -96,12 +93,11 @@ function weight_constraints(port, allow_shorting::Bool = true)
                        short_w[1:N] <= 0
                    end)
 
-        @constraints(model,
-                     begin
-                         constr_w_ub, scale_constr * w <= scale_constr * long_ub * k
-                         constr_w_lb, scale_constr * w >= scale_constr * short_lb * k
-                         constr_long_w_ub, scale_constr * w <= scale_constr * long_w
-                         constr_short_w_lb, scale_constr * w >= scale_constr * short_w
+        @constraints(model, begin
+                         scale_constr * w <= scale_constr * long_ub * k
+                         scale_constr * w >= scale_constr * short_lb * k
+                         scale_constr * w <= scale_constr * long_w
+                         scale_constr * w >= scale_constr * short_w
                      end)
 
         #=
@@ -114,14 +110,14 @@ function weight_constraints(port, allow_shorting::Bool = true)
             _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
                            budget_ub, short_budget, model, k, long_w, scale_constr,
                            "short_budget")
-            @constraint(model, constr_short_budget,
+            @constraint(model,
                         scale_constr * sum(short_w) == scale_constr * short_budget * k)
         else
             if short_budget_ub_flag
                 _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
                                budget, budget_ub, short_budget_ub, model, k, long_w,
                                scale_constr, "short_budget_ub")
-                @constraint(model, constr_short_budget_ub,
+                @constraint(model,
                             scale_constr * sum(short_w) <=
                             scale_constr * short_budget_ub * k)
             end
@@ -129,7 +125,7 @@ function weight_constraints(port, allow_shorting::Bool = true)
                 _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
                                budget, budget_ub, short_budget_lb, model, k, long_w,
                                scale_constr, "short_budget_lb")
-                @constraint(model, constr_short_budget_lb,
+                @constraint(model,
                             scale_constr * sum(short_w) >=
                             scale_constr * short_budget_lb * k)
             end
@@ -144,9 +140,8 @@ function weight_constraints(port, allow_shorting::Bool = true)
         @variable(model, nea_var)
         @constraints(model,
                      begin
-                         constr_nea_soc,
                          [scale_constr * nea_var; scale_constr * w] ∈ SecondOrderCone()
-                         constr_nea, scale_constr * nea_var * sqrt(nea) <= scale_constr * k
+                         scale_constr * nea_var * sqrt(nea) <= scale_constr * k
                      end)
     end
 
@@ -156,12 +151,12 @@ function weight_constraints(port, allow_shorting::Bool = true)
     A = port.a_ineq
     B = port.b_ineq
     if !(isempty(A) || isempty(B))
-        @constraint(model, constr_ineq, scale_constr * A * w >= scale_constr * B * k)
+        @constraint(model, scale_constr * A * w >= scale_constr * B * k)
     end
     A = port.a_eq
     B = port.b_eq
     if !(isempty(A) || isempty(B))
-        @constraint(model, constr_eq, scale_constr * A * w == scale_constr * B * k)
+        @constraint(model, scale_constr * A * w .== scale_constr * B * k)
     end
 
     return nothing
@@ -257,7 +252,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraints(model,
                      begin
-                         is_invested_bool <= 1
+                         is_invested <= 1
                          scale_constr * w <= scale_constr * is_invested_long .* long_ub
                          scale_constr * w >= scale_constr * is_invested_short .* short_lb
                          scale_constr * w >=
@@ -306,7 +301,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         @constraint(model, a_card_ineq * is_invested_bool >= b_card_ineq)
     end
     if gcard_eq_flag
-        @constraint(model, a_card_eq * is_invested_bool == b_card_eq)
+        @constraint(model, a_card_eq * is_invested_bool .== b_card_eq)
     end
 
     #=
@@ -524,12 +519,12 @@ function SDP_network_cluster_constraints(port, type)
 
     if ntwk_flag
         A = network_adj.A
-        @constraint(model, c_ntwk_sdp, scale_constr * A .* W == 0)
+        @constraint(model, c_ntwk_sdp, scale_constr * A .* W .== 0)
     end
 
     if clst_flag
         A = cluster_adj.A
-        @constraint(model, c_clst_sdp, scale_constr * A .* W == 0)
+        @constraint(model, c_clst_sdp, scale_constr * A .* W .== 0)
     end
 
     return nothing
