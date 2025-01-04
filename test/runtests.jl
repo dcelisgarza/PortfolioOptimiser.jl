@@ -20,16 +20,16 @@ end
     include("NOCOptimisationTests.jl")
 end
 
+@safetestset "Objective scalarisation tests" begin
+    include("ObjectiveScalarisationTests.jl")
+end
+
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
 end
 
 @safetestset "Stats tests" begin
     include("StatsTest.jl")
-end
-
-@safetestset "Objective scalarisation tests" begin
-    include("ObjectiveScalarisationTests.jl")
 end
 
 @safetestset "Allocation tests" begin
