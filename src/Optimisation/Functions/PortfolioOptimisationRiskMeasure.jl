@@ -56,7 +56,7 @@ function scalarise_risk_expression(port, ::ScalarMax)
 end
 function _get_ntwk_clust_method(port)
     model = port.model
-    return if haskey(model, :c_ntwk_sdp) || haskey(model, :c_clst_sdp)
+    return if haskey(model, :constr_ntwk_sdp) || haskey(model, :constr_clst_sdp)
         SDP()
     else
         NoAdj()

@@ -370,8 +370,10 @@ function tracking_error_constraints(port, returns)
     @expression(model, tracking_error, X .- benchmark * k)
     @constraints(model,
                  begin
+                     constr_tracking_soc,
                      [scale_constr * t_tracking_error; scale_constr * tracking_error] ∈
                      SecondOrderCone()
+                     constr_tracking,
                      scale_constr * t_tracking_error <=
                      scale_constr * err * k * sqrt(T - 1)
                  end)
@@ -401,10 +403,10 @@ function turnover_constraints(port)
     @expression(model, turnover, w .- benchmark * k)
     @constraints(model,
                  begin
-                     [i = 1:N],
+                     constr_turnover_soc[i = 1:N],
                      [scale_constr * t_turnover[i]; scale_constr * turnover[i]] ∈
                      MOI.NormOneCone(2)
-                     scale_constr * t_turnover .<= scale_constr * val * k
+                     constr_turnover, scale_constr * t_turnover .<= scale_constr * val * k
                  end)
 
     return nothing
@@ -454,7 +456,7 @@ function rebalance_fee(port)
                      rebalance, w .- benchmark * k
                      rebalance_fee, sum(val .* t_rebalance)
                  end)
-    @constraint(model, [i = 1:N],
+    @constraint(model, constr_rebalance[i = 1:N],
                 [scale_constr * t_rebalance[i]; scale_constr * rebalance[i]] ∈
                 MOI.NormOneCone(2))
 
@@ -505,7 +507,7 @@ function _SDP_constraints(model, ::Trad)
 
     @variable(model, W[1:N, 1:N], Symmetric)
     @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, k)))
-    @constraint(model, scale_constr * M ∈ PSDCone())
+    @constraint(model, constr_M_PSD, scale_constr * M ∈ PSDCone())
 
     return nothing
 end
@@ -519,7 +521,7 @@ function _SDP_constraints(model, ::Any)
 
     @variable(model, W[1:N, 1:N], Symmetric)
     @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, 1)))
-    @constraint(model, scale_constr * M ∈ PSDCone())
+    @constraint(model, constr_M_PSD, scale_constr * M ∈ PSDCone())
 
     return nothing
 end
@@ -539,20 +541,20 @@ function SDP_network_cluster_constraints(port, type)
 
     if ntwk_flag
         A = network_adj.A
-        @constraint(model, c_ntwk_sdp, scale_constr * A .* W .== 0)
+        @constraint(model, constr_ntwk_sdp, scale_constr * A .* W .== 0)
     end
 
     if clst_flag
         A = cluster_adj.A
-        @constraint(model, c_clst_sdp, scale_constr * A .* W .== 0)
+        @constraint(model, constr_clst_sdp, scale_constr * A .* W .== 0)
     end
 
     return nothing
 end
 function SDP_network_cluster_penalty(port)
     model = port.model
-    ntwk_flag = haskey(model, :c_ntwk_sdp)
-    clst_flag = haskey(model, :c_clst_sdp)
+    ntwk_flag = haskey(model, :constr_ntwk_sdp)
+    clst_flag = haskey(model, :constr_clst_sdp)
     if !(ntwk_flag || clst_flag)
         return nothing
     end
@@ -587,7 +589,7 @@ function L1_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l1)
-    @constraint(model,
+    @constraint(model, constr_l1_soc,
                 [scale_constr * t_l1; scale_constr * w] in MOI.NormOneCone(1 + length(w)))
     @expression(model, l1_reg, l1 * t_l1)
 
@@ -604,7 +606,8 @@ function L2_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l2)
-    @constraint(model, [scale_constr * t_l2; scale_constr * w] in SecondOrderCone())
+    @constraint(model, constr_l2_soc,
+                [scale_constr * t_l2; scale_constr * w] in SecondOrderCone())
     @expression(model, l2_reg, l2 * t_l2)
 
     return nothing
