@@ -2842,7 +2842,8 @@ cvar_rm2 = CVaR(; alpha = 0.5)
 cvar_risk2 = calc_risk(cvar_rm2, w; X = returns)
 ```
 """
-function calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+function calc_risk(cvar::Union{CVaR, DRCVaR}, w::AbstractVector; X::AbstractMatrix,
+                   kwargs...)
     return _CVaR(X * w, cvar.alpha)
 end
 

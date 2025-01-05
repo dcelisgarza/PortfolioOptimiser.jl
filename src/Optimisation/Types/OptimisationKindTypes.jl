@@ -64,34 +64,6 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
     return Trad{typeof(w_ini), typeof(ohf)}(rm, obj, kelly, class, w_ini, custom_constr,
                                             custom_obj, ohf, scalarisation, str_names)
 end
-#=
-mutable struct DRCVaR{T1, T2, T3, T4} <: OptimType
-    l::T1
-    alpha::T2
-    r::T3
-    class::PortClass
-    w_ini::T4
-    custom_constr::CustomConstraint
-    custom_obj::CustomObjective
-    str_names::Bool
-end
-function DRCVaR(; l::Real = 1.0, alpha::Real = 0.05, r::Real = 0.02,
-                class::PortClass = Classic(),
-                w_ini::AbstractVector = Vector{Float64}(undef, 0),
-                custom_constr::CustomConstraint = NoCustomConstraint(),
-                custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false)
-    @smart_assert(zero(alpha) < alpha < one(alpha))
-    return DRCVaR{typeof(l), typeof(alpha), typeof(r), typeof(w_ini)}(l, alpha, r, class,
-                                                                      w_ini, custom_constr,
-                                                                      custom_obj, str_names)
-end
-function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
-    if sym == :alpha
-        @smart_assert(zero(val) < val < one(val))
-    end
-    return setfield!(obj, sym, val)
-end
-=#
 
 """
 ```
@@ -187,27 +159,11 @@ end
 
 """
 ```
-@kwdef mutable struct WC <: OptimType
-    mu::WorstCaseSet = Box()
-    cov::WorstCaseSet = Box()
-end
-```
-"""
-mutable struct WC <: OptimType
-    mu::WorstCaseSet
-    cov::WorstCaseSet
-end
-function WC(; mu::WorstCaseSet = Box(), cov::WorstCaseSet = Box())
-    return WC(mu, cov)
-end
-
-"""
-```
 @kwdef mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real},
                           T3 <: AbstractVector{<:Real}, T4 <: AbstractVector{<:Real},
                           T5 <: AbstractVector{<:Real}, T6 <: AbstractVector{<:Real}} <:
                       OptimType
-    type::Union{WC, Trad} = Trad()
+    type::Trad = Trad()
     bins::T1 = 20.0
     w_opt::T2 = Vector{Float64}(undef, 0)
     w_min::T3 = Vector{Float64}(undef, 0)
@@ -413,8 +369,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
-                     ("Trad", "RP", "RRP", "WC", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
+for (op, name) ∈ zip((Trad, RP, RRP, NOC, HRP, HERC, NCO, SchurHRP),
+                     ("Trad", "RP", "RRP", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -425,5 +381,5 @@ for (op, name) ∈ zip((Trad, RP, RRP, WC, NOC, HRP, HERC, NCO, SchurHRP),
          end)
 end
 
-export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, WC, NOC, HRP, HERC, NCO, NCOArgs,
-       SchurHRP, SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp
+export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
+       SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp

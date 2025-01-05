@@ -849,7 +849,7 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
                       scale_constr * (-view(v, i, :) .- a2 * w)] in
                      MOI.NormInfinityCone(1 + N)
                      constr_u_drcvar_lb, scale_constr * tu_drcvar .<= scale_constr * lb
-                     constr_u_drcvar_lb, scale_constr * tv_drcvar .<= scale_constr * lb
+                     constr_v_drcvar_lb, scale_constr * tv_drcvar .<= scale_constr * lb
                  end)
 
     @expression(model, drcvar_risk, radius * lb + sum(s) * inv(T))
@@ -890,7 +890,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
         a2 = a1 - b1 * inv(alpha)
         b2 = b1 * (one(alpha) - inv(alpha))
 
-        model[Symbol("constr_u_drcvar_$(j)")], model[Symbol("constr_v_drcvar_$(j)")], model[Symbol("constr_u_drcvar_infnorm_$(j)")], model[Symbol("constr_v_drcvar_infnorm_$(j)")], model[Symbol("constr_u_drcvar_lb_$(j)")], model[Symbol("constr_u_drcvar_lb_$(j)")] = @constraints(model,
+        model[Symbol("constr_u_drcvar_$(j)")], model[Symbol("constr_v_drcvar_$(j)")], model[Symbol("constr_u_drcvar_infnorm_$(j)")], model[Symbol("constr_v_drcvar_infnorm_$(j)")], model[Symbol("constr_u_drcvar_lb_$(j)")], model[Symbol("constr_v_drcvar_lb_$(j)")] = @constraints(model,
                                                                                                                                                                                                                                                                                       begin
                                                                                                                                                                                                                                                                                           scale_constr *
                                                                                                                                                                                                                                                                                           (b1 *

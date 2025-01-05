@@ -7,6 +7,283 @@ Abstract type for subtyping portfolios.
 """
 abstract type AbstractPortfolio end
 
+"""
+```
+mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
+                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
+                         ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
+                         tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
+                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
+                         tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
+               AbstractPortfolio
+    assets::ast
+    timestamps::dat
+    returns::r
+    f_assets::tfa
+    f_timestamps::tfdat
+    f_returns::tretf
+    loadings::l
+    regression_type::lo
+    short::s
+    short_lb::us
+    long_ub::ul
+    num_assets_l::nal
+    num_assets_u::nau
+    num_assets_u_scale::naus
+    max_num_assets_kurt::mnak
+    max_num_assets_kurt_scale::mnaks
+    rebalance::rb
+    turnover::to
+    tracking_err::kte
+    bl_bench_weights::blbw
+    a_mtx_ineq::ami
+    b_vec_ineq::bvi
+    risk_budget::rbv
+    f_risk_budget::frbv
+    network_adj::nm
+    a_vec_cent::amc
+    b_cent::bvc
+    mu_l::ler
+    mu::tmu
+    cov::tcov
+    kurt::tkurt
+    skurt::tskurt
+    L_2::tl2
+    S_2::ts2
+    skew::tskew
+    V::tv
+    sskew::tsskew
+    SV::tsv
+    f_mu::tmuf
+    f_cov::tcovf
+    fm_returns::trfm
+    fm_mu::tmufm
+    fm_cov::tcovfm
+    bl_mu::tmubl
+    bl_cov::tcovbl
+    blfm_mu::tmublf
+    blfm_cov::tcovblf
+    cov_l::tcovl
+    cov_u::tcovu
+    cov_mu::tcovmu
+    cov_sigma::tcovs
+    d_mu::tdmu
+    k_mu::tkmu
+    k_sigma::tks
+    optimal::topt
+    limits::tlim
+    frontier::tfront
+    solvers::tsolv
+    fail::tf
+    model::tmod
+    latest_prices::tlp
+    alloc_optimal::taopt
+    alloc_leftover::talo
+    alloc_solvers::tasolv
+    alloc_fail::taf
+    alloc_model::tamod
+end
+```
+
+Structure for defining a traditional portfolio. `Na` is the number of assets, and `Nf` is the number of factors. For details on how some of these parameters are computed see [`asset_statistics!`](@ref), [`wc_statistics!`](@ref), [`factor_statistics!`](@ref), [`black_litterman_statistics!`](@ref), and [`black_litterman_factor_statistics!`](@ref).
+
+# Parameters
+
+  - `assets`: `Na×1` vector of asset names.
+
+  - `timestamps`: `T×1` vector of asset returns timestamps.
+  - `returns`: `T×Na` matrix of asset returns.
+  - `f_assets`: `Nf×1` vector of factor names.
+  - `f_timestamps`: `T×1` vector of factor returns timestamps.
+  - `f_returns`: `T×Nf` matrix of asset returns.
+  - `loadings`: loadings matrix for working with factor models.
+  - `regression_type`: [`RegressionType`](@ref) used for computing the loadings matrix.
+  - `short`:
+
+      + if `true`: shorting is enabled.
+      + else: long-only portfolio.
+  - `short_lb`: upper bound for the absolute value of the sum of the negative weights.
+  - `long_ub`: upper bound for the sum of the positive weights.
+  - `num_assets_l`: lower bound for the minimum number of significant assets.
+
+      + if `> 0`: applies the constraint.
+  - `num_assets_u`: upper bound for the maximum number of significant assets.
+
+      + if `> 0`: applies the constraint.
+  - `num_assets_u_scale`: scaling factor for the decision variable used for applying the `num_assets_u` constraint when optimising the [`Sharpe`](@ref) objective function.
+  - `max_num_assets_kurt`: maximum number of assets to use the complete kurtosis model.
+
+      + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
+  - `max_num_assets_kurt_scale`: multipies `Na` to find the number of eigenvalues when computing the approximate kurtosis model, must be `∈ [1, Na]`.
+  - `rebalance`: [`AbstractTR`](@ref) for defining the portfolio rebalancing penalty.
+
+    ```math
+    \\begin{align}
+    p_{r} &= \\sum\\limits_{i=1}^{N} r_{i} \\lvert w_{i} - b_{i} \\rvert\\,.
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``p_{r}`` is the portfolio rebalancing penalty.
+      + ``N`` is the number of assets.
+      + ``r_{i}`` is the rebalancing penalty for the ``i``-th asset.
+      + ``w_{i}`` is the weight of the ``i``-th asset.
+      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
+  - `turnover`: [`AbstractTR`](@ref) for defining the asset turnover constraint.
+
+    ```math
+    \\begin{align}
+    \\lvert w_{i} - b_{i} &\\rvert \\leq t_{i}\\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``t_{i}`` is the turnover constraint for the ``i``-th asset.
+      + ``w_{i}`` is the weight of the ``i``-th asset.
+      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
+      + ``N`` is the number of assets.
+  - `tracking_err`: [`TrackingErr`](@ref) for defining the tracking error constraint.
+
+    ```math
+    \\begin{align}
+    \\left\\lVert \\dfrac{\\mathbf{X} \\bm{w} - \\bm{b}}{T - 1} \\right\\rVert_{2} &\\leq \\epsilon
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\lVert \\cdot \\rVert_{2}`` is the L2 norm.
+      + ``\\mathbf{X}`` is the ``T \\times N`` matrix of asset returns.
+      + ``T`` is the number of returns observations.
+      + ``N`` is the number of assets.
+      + ``\\bm{w}`` is the ``N \\times 1`` vector of asset weights.
+      + ``\\bm{b}`` is the ``T \\times 1`` vector of benchmark returns.
+      + ``\\epsilon`` is the tracking error.
+  - `bl_bench_weights`: benchmark weights for Black-Litterman models [`BlackLittermanClass`](@ref).
+  - `a_mtx_ineq`: `C×N` matrix of asset weight linear constraints.
+
+      + if `isempty`: the constraint is not set.
+  - `b_vec_ineq`: `C×1` vector of asset weight linear constraints.
+
+      + if `isempty`: the constraint is not set.
+  - The linear weight constraint is defined as.
+
+    ```math
+    \\begin{align}
+    \\mathbf{A} \\bm{w} &\\geq \\bm{b}\\,.
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\mathbf{A}`` is the ``C×N`` matrix of asset weight linear constraints.
+
+      + ``\\bm{b}`` is the ``C×1`` vector of asset weight linear constraints.
+      + ``C`` is the number of constraints.
+      + ``N`` is the number of assets.
+  - `risk_budget`: `Na×1` vector of asset risk budgets.
+  - `f_risk_budget`: `Nf×1` vector of factor risk budgets.
+  - `network_adj`: [`AdjacencyConstraint`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref). See their docs for the constraint definition for each case.
+
+      + if [`NoAdj`](@ref): the constraint is not set.
+  - `a_vec_cent`: centrality vector for defining the centrality constraint.
+
+      + if `isempty`: the constraint is not set.
+  - `b_cent`: average centrality of the assets the portfolio.
+
+      + if `isinf`: the constraint is not set.
+  - The centrality constraint is defined as.
+
+    ```math
+    \\begin{align}
+    \\bm{C} \\cdot \\bm{w} &= \\bar{c}
+    \\end{align}
+    ```
+
+    Where:
+
+      + ``\\bm{w}`` is the ``N\\times 1`` vector of asset weights.
+      + ``\\bm{C}`` is the ``N \\times 1`` centrality vector of the asset adjacency matrix.
+      + ``\\cdot`` is the dot product.
+      + ``\\bar{c}`` is the desired average centrality measure of the portfolio.
+  - `mu_l`: lower bound for the expected return of the portfolio.
+
+      + if is `Inf`: the constraint is not applied.
+  - `mu`: `Na×1` vector of asset expected returns.
+  - `cov`: `Na×Na` asset covariance matrix.
+  - `kurt`: `Na^2×Na^2` cokurtosis matrix.
+  - `skurt`: `Na^2×Na^2` semi cokurtosis matrix.
+  - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix.
+  - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix.
+  - `skew`: `Na×Na^2` coskew matrix.
+  - `V`: `Na×Na` sum of the symmetric negative spectral slices of coskewness.
+  - `sskew`: `Na×Na^2` semi coskew matrix.
+  - `SV`: `Na×Na` sum of the symmetric negative spectral slices of semi coskewness.
+  - `f_mu`: `Nf×1` vector of factor expected returns.
+  - `f_cov`: `Nf×Nf` factor covariance matrix.
+  - `fm_returns`: `T×Na` factor model adjusted returns matrix.
+  - `fm_mu`: `Na×1` factor model adjusted asset expected returns.
+  - `fm_cov`: `Na×Na` factor model adjusted asset covariance matrix.
+  - `bl_mu`: `Na×1` Black Litterman model adjusted asset expected returns.
+  - `bl_cov`: `Na×Na` Black Litterman model adjusted asset covariance matrix.
+  - `blfm_mu`: `Na×1` Black Litterman factor model adjusted asset expected returns.
+  - `blfm_cov`: `Na×Na` Black Litterman factor model adjusted asset covariance matrix.
+  - `cov_l`: `Na×Na` lower bound for the worst case covariance matrix.
+  - `cov_u`: `Na×Na` upper bound for the worst case covariance matrix.
+  - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector set.
+  - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix set.
+  - `d_mu`: absolute deviation of the worst case upper and lower asset expected returns vectors.
+  - `k_mu`: distance parameter of the uncertainty in the asset expected returns vector for the worst case optimisation.
+  - `k_sigma`: distance parameter of the uncertainty in the asset covariance matrix for the worst case optimisation.
+  - `optimal`: collection capable of storing key value pairs for storing optimal portfolios.
+  - `limits`: collection capable of storing key value pairs for storing the minimal and maximal risk portfolios.
+  - `frontier`: collection capable of storing key value pairs for containing points in the efficient frontier.
+  - `solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers. They must have the following structure.
+
+    ```
+    solvers = Dict(
+                   # Key-value pair for the solver, solution acceptance 
+                   # criteria, and solver attributes.
+                   :Clarabel => Dict(
+                                     # Solver we wish to use.
+                                     :solver => Clarabel.Optimizer,
+                                     # (Optional) Solution acceptance criteria.
+                                     :check_sol => (allow_local = true, allow_almost = true),
+                                     # (Optional) Solver-specific attributes.
+                                     :params => Dict("verbose" => false)))
+    ```
+
+    The dictionary contains a key value pair for each solver (plus optional solution acceptance criteria and optional attributes) we want to use.
+
+      + `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
+      + `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
+      + `:params`: (optional) defines solver-specific parameters.
+
+    Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary as in the following snippet.
+
+    ```
+    using JuMP
+    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                     :check_sol => (allow_local = true, allow_almost = true),
+                                     :params => Dict("verbose" => false)),
+                   # Provide solver with pre-attached attributes and no arguments 
+                   # for the `JuMP.is_solved_and_feasible` function.
+                   :COSMO => Dict(:solver => JuMP.optimizer_with_attributes(COSMO.Optimizer,
+                                                                            "maxiter" => 5000)))
+    ```
+
+    [`optimise!`](@ref) will iterate over the solvers until it finds the first one to successfully solve the problem.
+  - `fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
+  - `model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the optimisation model.
+  - `latest_prices`: `Na×1` vector of latest asset prices.
+  - `alloc_optimal`: collection capable of storing key value pairs for storing optimal discretely allocated portfolios.
+  - `alloc_leftover`: collection capable of storing key value pairs for containing points in the leftover investment after allocating.
+  - `alloc_solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers that support Mixed-Integer Programming, only used in the [`LP`](@ref) allocation.
+  - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
+  - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
+"""
 mutable struct Portfolio{
                          # Assets and factors
                          T_assets, T_timestamps, T_returns, T_latest_prices, T_f_assets,
@@ -217,20 +494,21 @@ end
 function short_budget_assert(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
                              budget_ub, short_budget, long_ub, short_lb, name = "")
     if budget_flag
-        @smart_assert(all(short_budget .<= short_lb .<= 0), "all($name .<= short_lb .<= 0)")
-        @smart_assert(all(budget .- short_budget .>= long_ub .>= 0),
+        @smart_assert(all(short_budget .<= short_lb .<= zero(short_budget)),
+                      "all($name .<= short_lb .<= 0)")
+        @smart_assert(all(budget .- short_budget .>= long_ub .>= zero(budget)),
                       "all(budget .- $name .>= long_ub .>= 0")
     else
         if budget_lb_flag
-            @smart_assert(all(short_budget .<= short_lb .<= 0),
+            @smart_assert(all(short_budget .<= short_lb .<= zero(short_budget)),
                           "all($name .<= short_lb .<= 0)")
-            @smart_assert(all(budget_lb .- short_budget .>= long_ub .>= 0),
+            @smart_assert(all(budget_lb .- short_budget .>= long_ub .>= zero(budget_lb)),
                           "all(budget_lb .- $name .>= long_ub .>= 0)")
         end
         if budget_ub_flag
-            @smart_assert(all(short_budget .<= short_lb .<= 0),
+            @smart_assert(all(short_budget .<= short_lb .<= zero(short_budget)),
                           "all($name .<= short_lb .<= 0)")
-            @smart_assert(all(budget_ub .- short_budget .>= long_ub .>= 0),
+            @smart_assert(all(budget_ub .- short_budget .>= long_ub .>= zero(budget_ub)),
                           "all(budget_ub .- $name .>= long_ub .>= 0)")
         end
         if budget_lb_flag && budget_ub_flag
@@ -285,24 +563,25 @@ end
 function long_short_budget_assert(N, long_l, long_ub, budget_lb, budget, budget_ub, short,
                                   short_l, short_lb, short_budget_ub, short_budget,
                                   short_budget_lb)
-    real_or_vector_assert(long_l, N, :long_l, >=, 0)
-    real_or_vector_assert(long_ub, N, :long_ub, >=, 0)
+    real_or_vector_assert(long_l, N, :long_l, >=, zero(eltype(long_l)))
+    real_or_vector_assert(long_ub, N, :long_ub, >=, zero(eltype(long_ub)))
     @smart_assert(all(long_l .<= long_ub))
     budget_lb_flag = isfinite(budget_lb)
     budget_flag = isfinite(budget)
     budget_ub_flag = isfinite(budget_ub)
-    budget, budget_flag = set_default_budget(budget, 1.0, budget_lb_flag, budget_flag,
-                                             budget_ub_flag)
+    budget, budget_flag = set_default_budget(budget, one(budget), budget_lb_flag,
+                                             budget_flag, budget_ub_flag)
 
     if short
-        real_or_vector_assert(short_l, N, :short_l, <=, 0)
-        real_or_vector_assert(short_lb, N, :short_lb, <=, 0)
+        real_or_vector_assert(short_l, N, :short_l, <=, zero(eltype(short_l)))
+        real_or_vector_assert(short_lb, N, :short_lb, <=, zero(eltype(short_lb)))
         @smart_assert(short_lb <= short_l)
         short_budget_ub_flag = isfinite(short_budget_ub)
         short_budget_flag = isfinite(short_budget)
         short_budget_lb_flag = isfinite(short_budget_lb)
 
-        short_budget, short_budget_flag = set_default_budget(short_budget, -0.2,
+        short_budget, short_budget_flag = set_default_budget(short_budget,
+                                                             -0.2 * one(short_budget),
                                                              budget_lb_flag, budget_flag,
                                                              budget_ub_flag)
         if short_budget_flag
@@ -326,13 +605,13 @@ function long_short_budget_assert(N, long_l, long_ub, budget_lb, budget, budget_
         end
     else
         if budget_flag
-            @smart_assert(all(budget .>= long_ub .>= 0))
+            @smart_assert(all(budget .>= long_ub .>= zero(budget)))
         else
             if budget_lb_flag
-                @smart_assert(all(budget_lb .>= long_ub .>= 0))
+                @smart_assert(all(budget_lb .>= long_ub .>= zero(budget_lb)))
             end
             if budget_ub_flag
-                @smart_assert(all(budget_ub .>= long_ub .>= 0))
+                @smart_assert(all(budget_ub .>= long_ub .>= zero(budget_ub)))
             end
             if budget_lb_flag && budget_ub_flag
                 @smart_assert(budget_ub >= budget_lb)
@@ -341,6 +620,95 @@ function long_short_budget_assert(N, long_l, long_ub, budget_lb, budget, budget_
     end
     return budget, short_budget
 end
+
+"""
+```
+Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
+            returns::DataFrame = DataFrame(),
+            ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            timestamps::AbstractVector = Vector{Date}(undef, 0),
+            assets::AbstractVector = Vector{String}(undef, 0),
+            f_prices::TimeArray = TimeArray(TimeType[], []),
+            f_returns::DataFrame = DataFrame(),
+            f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            f_timestamps::AbstractVector = Vector{Date}(undef, 0),
+            f_assets::AbstractVector = Vector{String}(undef, 0),
+            loadings::DataFrame = DataFrame(),
+            regression_type::Union{<:RegressionType, Nothing} = nothing,
+            short::Bool = false, short_lb::Real = 0.2, long_ub::Real = 1.0,
+            num_assets_l::Integer = 0, num_assets_u::Integer = 0,
+            num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
+            max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
+            turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
+            bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            network_adj::AdjacencyConstraint = NoAdj(),
+            a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            b_cent::Real = Inf, mu_l::Real = Inf,
+            mu::AbstractVector = Vector{Float64}(undef, 0),
+            cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            SV::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            f_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            f_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            fm_returns::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            fm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            fm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            bl_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            bl_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            blfm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            blfm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_mu::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
+            d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            k_mu::Real = Inf, k_sigma::Real = Inf, optimal::AbstractDict = Dict(),
+            limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
+            solvers::AbstractDict = Dict(), fail::AbstractDict = Dict(),
+            model::JuMP.Model = JuMP.Model(),
+            latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+            alloc_optimal::AbstractDict = Dict(),
+            alloc_leftover::AbstractDict = Dict(),
+            alloc_solvers::AbstractDict = Dict(), alloc_fail::AbstractDict = Dict(),
+            alloc_model::JuMP.Model = JuMP.Model())
+```
+
+Constructor for [`Portfolio`](@ref). Performs data validation checks and automatically extracts the data from `prices`, `returns`, `f_prices`, and `f_returns` if they are provided.
+
+# Inputs
+
+  - `prices`: `(T+1)×Na` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of asset prices.
+
+      + If provided: will take precedence over `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` because they will be automatically computed from `prices`.
+
+  - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
+
+      + If provided: will take precedence over `ret`, `timestamps`, and `assets` because they will be automatically computed from `returns`.
+  - `ret`: set the `returns` matrix directly.
+  - `timestamps`: set `timestamps`.
+  - `assets`: set `assets`.
+  - `f_prices`: `(T+1)×Nf` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of factor prices.
+
+      + If provided: will take precedence over `f_returns`, `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `f_prices`.
+  - `f_returns`: `T×Nf` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of factor returns.
+
+      + If provided: will take precedence over `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `returns`.
+  - `f_ret`: set the `f_returns` matrix directly.
+
+The rest of the inputs directly set their corresponding property.
+
+# Outputs
+
+  - `portfolio`: an instance of [`Portfolio`](@ref).
+"""
 function Portfolio(;
                    # Assets and factors
                    prices::TimeArray = TimeArray(TimeType[], []),
@@ -545,8 +913,8 @@ function Portfolio(;
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
     # Fees
-    real_or_vector_assert(long_fees, N, :long_fees, >=, 0)
-    real_or_vector_assert(short_fees, N, :short_fees, >=, 0)
+    real_or_vector_assert(long_fees, N, :long_fees, >=, zero(eltype(long_fees)))
+    real_or_vector_assert(short_fees, N, :short_fees, >=, zero(eltype(short_fees)))
     tr_assert(rebalance, N)
     # Constraint and objective scales
     @smart_assert(scale_constr > zero(scale_constr))
@@ -1089,671 +1457,3 @@ function Base.deepcopy(port::Portfolio)
 end
 
 export Portfolio
-#=
-"""
-```
-mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, nau, naus,
-                         mnak, mnaks, rb, to, kte, blbw, ami, bvi, rbv, frbv, nm, amc, bvc,
-                         ler, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv,
-                         tmuf, tcovf, trfm, tmufm, tcovfm, tmubl, tcovbl, tmublf, tcovblf,
-                         tcovl, tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront,
-                         tsolv, tf, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
-               AbstractPortfolio
-    assets::ast
-    timestamps::dat
-    returns::r
-    f_assets::tfa
-    f_timestamps::tfdat
-    f_returns::tretf
-    loadings::l
-    regression_type::lo
-    short::s
-    short_lb::us
-    long_ub::ul
-    num_assets_l::nal
-    num_assets_u::nau
-    num_assets_u_scale::naus
-    max_num_assets_kurt::mnak
-    max_num_assets_kurt_scale::mnaks
-    rebalance::rb
-    turnover::to
-    tracking_err::kte
-    bl_bench_weights::blbw
-    a_mtx_ineq::ami
-    b_vec_ineq::bvi
-    risk_budget::rbv
-    f_risk_budget::frbv
-    network_adj::nm
-    a_vec_cent::amc
-    b_cent::bvc
-    mu_l::ler
-    mu::tmu
-    cov::tcov
-    kurt::tkurt
-    skurt::tskurt
-    L_2::tl2
-    S_2::ts2
-    skew::tskew
-    V::tv
-    sskew::tsskew
-    SV::tsv
-    f_mu::tmuf
-    f_cov::tcovf
-    fm_returns::trfm
-    fm_mu::tmufm
-    fm_cov::tcovfm
-    bl_mu::tmubl
-    bl_cov::tcovbl
-    blfm_mu::tmublf
-    blfm_cov::tcovblf
-    cov_l::tcovl
-    cov_u::tcovu
-    cov_mu::tcovmu
-    cov_sigma::tcovs
-    d_mu::tdmu
-    k_mu::tkmu
-    k_sigma::tks
-    optimal::topt
-    limits::tlim
-    frontier::tfront
-    solvers::tsolv
-    fail::tf
-    model::tmod
-    latest_prices::tlp
-    alloc_optimal::taopt
-    alloc_leftover::talo
-    alloc_solvers::tasolv
-    alloc_fail::taf
-    alloc_model::tamod
-end
-```
-
-Structure for defining a traditional portfolio. `Na` is the number of assets, and `Nf` is the number of factors. For details on how some of these parameters are computed see [`asset_statistics!`](@ref), [`wc_statistics!`](@ref), [`factor_statistics!`](@ref), [`black_litterman_statistics!`](@ref), and [`black_litterman_factor_statistics!`](@ref).
-
-# Parameters
-
-  - `assets`: `Na×1` vector of asset names.
-
-  - `timestamps`: `T×1` vector of asset returns timestamps.
-  - `returns`: `T×Na` matrix of asset returns.
-  - `f_assets`: `Nf×1` vector of factor names.
-  - `f_timestamps`: `T×1` vector of factor returns timestamps.
-  - `f_returns`: `T×Nf` matrix of asset returns.
-  - `loadings`: loadings matrix for working with factor models.
-  - `regression_type`: [`RegressionType`](@ref) used for computing the loadings matrix.
-  - `short`:
-
-      + if `true`: shorting is enabled.
-      + else: long-only portfolio.
-  - `short_lb`: upper bound for the absolute value of the sum of the negative weights.
-  - `long_ub`: upper bound for the sum of the positive weights.
-  - `num_assets_l`: lower bound for the minimum number of significant assets.
-
-      + if `> 0`: applies the constraint.
-  - `num_assets_u`: upper bound for the maximum number of significant assets.
-
-      + if `> 0`: applies the constraint.
-  - `num_assets_u_scale`: scaling factor for the decision variable used for applying the `num_assets_u` constraint when optimising the [`Sharpe`](@ref) objective function.
-  - `max_num_assets_kurt`: maximum number of assets to use the complete kurtosis model.
-
-      + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
-  - `max_num_assets_kurt_scale`: multipies `Na` to find the number of eigenvalues when computing the approximate kurtosis model, must be `∈ [1, Na]`.
-  - `rebalance`: [`AbstractTR`](@ref) for defining the portfolio rebalancing penalty.
-
-    ```math
-    \\begin{align}
-    p_{r} &= \\sum\\limits_{i=1}^{N} r_{i} \\lvert w_{i} - b_{i} \\rvert\\,.
-    \\end{align}
-    ```
-
-    Where:
-
-      + ``p_{r}`` is the portfolio rebalancing penalty.
-      + ``N`` is the number of assets.
-      + ``r_{i}`` is the rebalancing penalty for the ``i``-th asset.
-      + ``w_{i}`` is the weight of the ``i``-th asset.
-      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
-  - `turnover`: [`AbstractTR`](@ref) for defining the asset turnover constraint.
-
-    ```math
-    \\begin{align}
-    \\lvert w_{i} - b_{i} &\\rvert \\leq t_{i}\\quad \\forall i = 1,\\,\\ldots,\\,N\\,.
-    \\end{align}
-    ```
-
-    Where:
-
-      + ``t_{i}`` is the turnover constraint for the ``i``-th asset.
-      + ``w_{i}`` is the weight of the ``i``-th asset.
-      + ``b_{i}`` is the benchmark weight of the ``i``-th asset.
-      + ``N`` is the number of assets.
-  - `tracking_err`: [`TrackingErr`](@ref) for defining the tracking error constraint.
-
-    ```math
-    \\begin{align}
-    \\left\\lVert \\dfrac{\\mathbf{X} \\bm{w} - \\bm{b}}{T - 1} \\right\\rVert_{2} &\\leq \\epsilon
-    \\end{align}
-    ```
-
-    Where:
-
-      + ``\\lVert \\cdot \\rVert_{2}`` is the L2 norm.
-      + ``\\mathbf{X}`` is the ``T \\times N`` matrix of asset returns.
-      + ``T`` is the number of returns observations.
-      + ``N`` is the number of assets.
-      + ``\\bm{w}`` is the ``N \\times 1`` vector of asset weights.
-      + ``\\bm{b}`` is the ``T \\times 1`` vector of benchmark returns.
-      + ``\\epsilon`` is the tracking error.
-  - `bl_bench_weights`: benchmark weights for Black-Litterman models [`BlackLittermanClass`](@ref).
-  - `a_mtx_ineq`: `C×N` matrix of asset weight linear constraints.
-
-      + if `isempty`: the constraint is not set.
-  - `b_vec_ineq`: `C×1` vector of asset weight linear constraints.
-
-      + if `isempty`: the constraint is not set.
-  - The linear weight constraint is defined as.
-
-    ```math
-    \\begin{align}
-    \\mathbf{A} \\bm{w} &\\geq \\bm{b}\\,.
-    \\end{align}
-    ```
-
-    Where:
-
-      + ``\\mathbf{A}`` is the ``C×N`` matrix of asset weight linear constraints.
-
-      + ``\\bm{b}`` is the ``C×1`` vector of asset weight linear constraints.
-      + ``C`` is the number of constraints.
-      + ``N`` is the number of assets.
-  - `risk_budget`: `Na×1` vector of asset risk budgets.
-  - `f_risk_budget`: `Nf×1` vector of factor risk budgets.
-  - `network_adj`: [`AdjacencyConstraint`](@ref) for defining the asset network constraint. This can be defined in two ways, using an exact mixed-integer approach [`IP`](@ref) or an approximate semi-definite one [`SDP`](@ref). See their docs for the constraint definition for each case.
-
-      + if [`NoAdj`](@ref): the constraint is not set.
-  - `a_vec_cent`: centrality vector for defining the centrality constraint.
-
-      + if `isempty`: the constraint is not set.
-  - `b_cent`: average centrality of the assets the portfolio.
-
-      + if `isinf`: the constraint is not set.
-  - The centrality constraint is defined as.
-
-    ```math
-    \\begin{align}
-    \\bm{C} \\cdot \\bm{w} &= \\bar{c}
-    \\end{align}
-    ```
-
-    Where:
-
-      + ``\\bm{w}`` is the ``N\\times 1`` vector of asset weights.
-      + ``\\bm{C}`` is the ``N \\times 1`` centrality vector of the asset adjacency matrix.
-      + ``\\cdot`` is the dot product.
-      + ``\\bar{c}`` is the desired average centrality measure of the portfolio.
-  - `mu_l`: lower bound for the expected return of the portfolio.
-
-      + if is `Inf`: the constraint is not applied.
-  - `mu`: `Na×1` vector of asset expected returns.
-  - `cov`: `Na×Na` asset covariance matrix.
-  - `kurt`: `Na^2×Na^2` cokurtosis matrix.
-  - `skurt`: `Na^2×Na^2` semi cokurtosis matrix.
-  - `L_2`: `(Na^2)×((Na^2 + Na)/2)` elimination matrix.
-  - `S_2`: `((Na^2 + Na)/2)×(Na^2)` summation matrix.
-  - `skew`: `Na×Na^2` coskew matrix.
-  - `V`: `Na×Na` sum of the symmetric negative spectral slices of coskewness.
-  - `sskew`: `Na×Na^2` semi coskew matrix.
-  - `SV`: `Na×Na` sum of the symmetric negative spectral slices of semi coskewness.
-  - `f_mu`: `Nf×1` vector of factor expected returns.
-  - `f_cov`: `Nf×Nf` factor covariance matrix.
-  - `fm_returns`: `T×Na` factor model adjusted returns matrix.
-  - `fm_mu`: `Na×1` factor model adjusted asset expected returns.
-  - `fm_cov`: `Na×Na` factor model adjusted asset covariance matrix.
-  - `bl_mu`: `Na×1` Black Litterman model adjusted asset expected returns.
-  - `bl_cov`: `Na×Na` Black Litterman model adjusted asset covariance matrix.
-  - `blfm_mu`: `Na×1` Black Litterman factor model adjusted asset expected returns.
-  - `blfm_cov`: `Na×Na` Black Litterman factor model adjusted asset covariance matrix.
-  - `cov_l`: `Na×Na` lower bound for the worst case covariance matrix.
-  - `cov_u`: `Na×Na` upper bound for the worst case covariance matrix.
-  - `cov_mu`: `Na×Na` matrix of the estimation errors of the asset expected returns vector set.
-  - `cov_sigma`: `Na×Na` matrix of the estimation errors of the asset covariance matrix set.
-  - `d_mu`: absolute deviation of the worst case upper and lower asset expected returns vectors.
-  - `k_mu`: distance parameter of the uncertainty in the asset expected returns vector for the worst case optimisation.
-  - `k_sigma`: distance parameter of the uncertainty in the asset covariance matrix for the worst case optimisation.
-  - `optimal`: collection capable of storing key value pairs for storing optimal portfolios.
-  - `limits`: collection capable of storing key value pairs for storing the minimal and maximal risk portfolios.
-  - `frontier`: collection capable of storing key value pairs for containing points in the efficient frontier.
-  - `solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers. They must have the following structure.
-
-    ```
-    solvers = Dict(
-                   # Key-value pair for the solver, solution acceptance 
-                   # criteria, and solver attributes.
-                   :Clarabel => Dict(
-                                     # Solver we wish to use.
-                                     :solver => Clarabel.Optimizer,
-                                     # (Optional) Solution acceptance criteria.
-                                     :check_sol => (allow_local = true, allow_almost = true),
-                                     # (Optional) Solver-specific attributes.
-                                     :params => Dict("verbose" => false)))
-    ```
-
-    The dictionary contains a key value pair for each solver (plus optional solution acceptance criteria and optional attributes) we want to use.
-
-      + `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
-      + `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
-      + `:params`: (optional) defines solver-specific parameters.
-
-    Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary as in the following snippet.
-
-    ```
-    using JuMP
-    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                     :check_sol => (allow_local = true, allow_almost = true),
-                                     :params => Dict("verbose" => false)),
-                   # Provide solver with pre-attached attributes and no arguments 
-                   # for the `JuMP.is_solved_and_feasible` function.
-                   :COSMO => Dict(:solver => JuMP.optimizer_with_attributes(COSMO.Optimizer,
-                                                                            "maxiter" => 5000)))
-    ```
-
-    [`optimise!`](@ref) will iterate over the solvers until it finds the first one to successfully solve the problem.
-  - `fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
-  - `model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the optimisation model.
-  - `latest_prices`: `Na×1` vector of latest asset prices.
-  - `alloc_optimal`: collection capable of storing key value pairs for storing optimal discretely allocated portfolios.
-  - `alloc_leftover`: collection capable of storing key value pairs for containing points in the leftover investment after allocating.
-  - `alloc_solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers that support Mixed-Integer Programming, only used in the [`LP`](@ref) allocation.
-  - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
-  - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
-"""
-mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, lb, sb, ul, us, tfee,
-                         tsfee, nal, nau, naus, mnak, mnaks, l1t, l2t, rb, to, kte, asmi,
-                         bsvi, acmi, bcvi, ami, bvi, rbv, frbv, nm, cm, amc, bvc, ler, tmu,
-                         tcov, tkurt, tskurt, tl2, ts2, tskew, tv, tsskew, tsv, tmuf, tcovf,
-                         trfm, tmufm, tcovfm, blbw, tmubl, tcovbl, tmublf, tcovblf, tcovl,
-                         tcovu, tcovmu, tcovs, tdmu, tkmu, tks, topt, tlim, tfront, tsolv,
-                         tf, tos, tmod, tlp, taopt, talo, tasolv, taf, tamod} <:
-               AbstractPortfolio
-    assets::ast
-    timestamps::dat
-    returns::r
-    f_assets::tfa
-    f_timestamps::tfdat
-    f_returns::tretf
-    loadings::l
-    regression_type::lo
-    short::s
-    budget::lb
-    short_budget::sb
-    long_ub::ul
-    short_lb::us
-    fees::tfee
-    short_fees::tsfee
-    num_assets_l::nal
-    num_assets_u::nau
-    num_assets_u_scale::naus
-    max_num_assets_kurt::mnak
-    max_num_assets_kurt_scale::mnaks
-    l1::l1t
-    l2::l2t
-    rebalance::rb
-    turnover::to
-    tracking_err::kte
-    a_smtx_ineq::asmi
-    b_svec_ineq::bsvi
-    a_cmtx_ineq::acmi
-    b_cvec_ineq::bcvi
-    a_mtx_ineq::ami
-    b_vec_ineq::bvi
-    risk_budget::rbv
-    f_risk_budget::frbv
-    network_adj::nm
-    cluster_adj::cm
-    a_vec_cent::amc
-    b_cent::bvc
-    mu_l::ler
-    mu::tmu
-    cov::tcov
-    kurt::tkurt
-    skurt::tskurt
-    L_2::tl2
-    S_2::ts2
-    skew::tskew
-    V::tv
-    sskew::tsskew
-    SV::tsv
-    f_mu::tmuf
-    f_cov::tcovf
-    fm_returns::trfm
-    fm_mu::tmufm
-    fm_cov::tcovfm
-    bl_bench_weights::blbw
-    bl_mu::tmubl
-    bl_cov::tcovbl
-    blfm_mu::tmublf
-    blfm_cov::tcovblf
-    cov_l::tcovl
-    cov_u::tcovu
-    cov_mu::tcovmu
-    cov_sigma::tcovs
-    d_mu::tdmu
-    k_mu::tkmu
-    k_sigma::tks
-    optimal::topt
-    limits::tlim
-    frontier::tfront
-    solvers::tsolv
-    fail::tf
-    scale_obj::tos
-    model::tmod
-    latest_prices::tlp
-    alloc_optimal::taopt
-    alloc_leftover::talo
-    alloc_solvers::tasolv
-    alloc_fail::taf
-    alloc_model::tamod
-end
-"""
-```
-Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
-            returns::DataFrame = DataFrame(),
-            ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            timestamps::AbstractVector = Vector{Date}(undef, 0),
-            assets::AbstractVector = Vector{String}(undef, 0),
-            f_prices::TimeArray = TimeArray(TimeType[], []),
-            f_returns::DataFrame = DataFrame(),
-            f_ret::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            f_timestamps::AbstractVector = Vector{Date}(undef, 0),
-            f_assets::AbstractVector = Vector{String}(undef, 0),
-            loadings::DataFrame = DataFrame(),
-            regression_type::Union{<:RegressionType, Nothing} = nothing,
-            short::Bool = false, short_lb::Real = 0.2, long_ub::Real = 1.0,
-            num_assets_l::Integer = 0, num_assets_u::Integer = 0,
-            num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
-            max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
-            turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
-            bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            b_vec_ineq::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            f_risk_budget::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            network_adj::AdjacencyConstraint = NoAdj(),
-            a_vec_cent::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            b_cent::Real = Inf, mu_l::Real = Inf,
-            mu::AbstractVector = Vector{Float64}(undef, 0),
-            cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            V::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            SV::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            f_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            f_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            fm_returns::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            fm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            fm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            bl_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            bl_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            blfm_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            blfm_cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            cov_l::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            cov_u::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            cov_mu::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            cov_sigma::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-            d_mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            k_mu::Real = Inf, k_sigma::Real = Inf, optimal::AbstractDict = Dict(),
-            limits::AbstractDict = Dict(), frontier::AbstractDict = Dict(),
-            solvers::AbstractDict = Dict(), fail::AbstractDict = Dict(),
-            model::JuMP.Model = JuMP.Model(),
-            latest_prices::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-            alloc_optimal::AbstractDict = Dict(),
-            alloc_leftover::AbstractDict = Dict(),
-            alloc_solvers::AbstractDict = Dict(), alloc_fail::AbstractDict = Dict(),
-            alloc_model::JuMP.Model = JuMP.Model())
-```
-
-Constructor for [`Portfolio`](@ref). Performs data validation checks and automatically extracts the data from `prices`, `returns`, `f_prices`, and `f_returns` if they are provided.
-
-# Inputs
-
-  - `prices`: `(T+1)×Na` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of asset prices.
-
-      + If provided: will take precedence over `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` because they will be automatically computed from `prices`.
-
-  - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
-
-      + If provided: will take precedence over `ret`, `timestamps`, and `assets` because they will be automatically computed from `returns`.
-  - `ret`: set the `returns` matrix directly.
-  - `timestamps`: set `timestamps`.
-  - `assets`: set `assets`.
-  - `f_prices`: `(T+1)×Nf` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of factor prices.
-
-      + If provided: will take precedence over `f_returns`, `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `f_prices`.
-  - `f_returns`: `T×Nf` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of factor returns.
-
-      + If provided: will take precedence over `f_ret`, `f_timestamps`, and `f_assets` because they will be automatically computed from `returns`.
-  - `f_ret`: set the `f_returns` matrix directly.
-
-The rest of the inputs directly set their corresponding property.
-
-# Outputs
-
-  - `portfolio`: an instance of [`Portfolio`](@ref).
-"""
-
-"""
-```
-mutable struct HCPortfolio{ast, dat, r, tmu, tcov, tkurt, tskurt, tl2, ts2, tskew, tv,
-                           tsskew, tsv, wmi, wma, tco, tdist, tcl, tk, topt, tsolv, tf, tlp,
-                           taopt, talo, tasolv, taf, tamod} <: AbstractPortfolio
-    assets::ast
-    timestamps::dat
-    returns::r
-    mu::tmu
-    cov::tcov
-    kurt::tkurt
-    skurt::tskurt
-    L_2::tl2
-    S_2::ts2
-    skew::tskew
-    V::tv
-    sskew::tsskew
-    SV::tsv
-    w_min::wmi
-    w_max::wma
-    cor::tco
-    dist::tdist
-    clusters::tcl
-    k::tk
-    optimal::topt
-    solvers::tsolv
-    fail::tf
-    latest_prices::tlp
-    alloc_optimal::taopt
-    alloc_leftover::talo
-    alloc_solvers::tasolv
-    alloc_fail::taf
-    alloc_model::tamod
-end
-```
-
-Structure for defining a hierarchical clustering portfolio.
-
-# Parameters
-
-  - `assets`: `N×1` vector of asset names.
-
-  - `timestamps`: `T×1` vector of asset returns timestamps.
-  - `returns`: `T×N` matrix of asset returns.
-  - `mu`: `N×1` vector of asset expected returns.
-  - `cov`: `N×N` asset covariance matrix.
-  - `kurt`: `N^2×N^2` cokurtosis matrix.
-  - `skurt`: `N^2×N^2` semi cokurtosis matrix.
-  - `L_2`: `(N^2)×((N^2 + N)/2)` elimination matrix.
-  - `S_2`: `((N^2 + N)/2)×(N^2)` summation matrix.
-  - `skew`: `N×N^2` coskew matrix.
-  - `V`: `N×N` sum of the symmetric negative spectral slices of coskewness.
-  - `sskew`: `N×N^2` semi coskew matrix.
-  - `SV`: `N×N` sum of the symmetric negative spectral slices of semi coskewness.
-  - `w_min`: minimum allowable asset weights.
-
-      + if isa vector: `N×1` vector of minimum allowable weight per asset.
-      + if isa scalar: minimum asset weight for all assets.
-  - `w_max`: maximum allowable asset weights.
-
-      + if isa vector: `N×1` vector of maximum allowable weight per asset.
-      + if isa scalar: maximum asset weight for all assets.
-  - `cor`: `N×N` asset correlation matrix.
-  - `dist`: `N×N` asset distance matrix.
-  - `clusters`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of asset clusters.
-  - `k`: number of asset clusters.
-
-      + if is zero: compute the number of clusters via one of the cluster number methods [`NumClusterMethod`](@ref).
-      + if is not zero: use this value directly.
-  - `optimal`: collection capable of storing key value pairs for storing optimal portfolios.
-  - `solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers. They must have the following structure.
-
-    ```
-    solvers = Dict(
-                   # Key-value pair for the solver, solution acceptance 
-                   # criteria, and solver attributes.
-                   :Clarabel => Dict(
-                                     # Solver we wish to use.
-                                     :solver => Clarabel.Optimizer,
-                                     # (Optional) Solution acceptance criteria.
-                                     :check_sol => (allow_local = true, allow_almost = true),
-                                     # (Optional) Solver-specific attributes.
-                                     :params => Dict("verbose" => false)))
-    ```
-
-    The dictionary contains a key value pair for each solver (plus optional solution acceptance criteria and optional attributes) we want to use.
-
-      + `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
-      + `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
-      + `:params`: (optional) defines solver-specific parameters.
-
-    Users are also able to provide multiple solvers by adding additional key-value pairs to the top-level dictionary as in the following snippet.
-
-    ```
-    using JuMP
-    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                     :check_sol => (allow_local = true, allow_almost = true),
-                                     :params => Dict("verbose" => false)),
-                   # Provide solver with pre-attached attributes and no arguments 
-                   # for the `JuMP.is_solved_and_feasible` function.
-                   :COSMO => Dict(:solver => JuMP.optimizer_with_attributes(COSMO.Optimizer,
-                                                                            "maxiter" => 5000)))
-    ```
-
-    [`optimise!`](@ref) will iterate over the solvers until it finds the first one to successfully solve the problem.
-  - `fail`: collection capable of storing key value pairs for storing failed optimisation attempts.
-  - `latest_prices`: `Na×1` vector of latest asset prices.
-  - `alloc_optimal`: collection capable of storing key value pairs for storing optimal discretely allocated portfolios.
-  - `alloc_leftover`: collection capable of storing key value pairs for containing points in the leftover investment after allocating.
-  - `alloc_solvers`: collection capable of storing key value pairs for storing `JuMP`-supported solvers that support Mixed-Integer Programming, only used in the [`LP`](@ref) allocation.
-  - `alloc_fail`: collection capable of storing key value pairs for storing failed discrete asset allocation attempts.
-  - `alloc_model`: [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model) which defines the discrete asset allocation model.
-"""
-mutable struct HCPortfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, tmu, tcov, tkurt, tskurt,
-                           tl2, ts2, tskew, tv, tsskew, tsv, tmuf, tcovf, trfm, tmufm,
-                           tcovfm, blbw, tmubl, tcovbl, tmublf, tcovblf, wmi, wma, tco,
-                           tdist, tcl, tk, topt, tsolv, tf, tlp, taopt, talo, tasolv, taf,
-                           tamod} <: AbstractPortfolio
-    assets::ast
-    timestamps::dat
-    returns::r
-    f_assets::tfa
-    f_timestamps::tfdat
-    f_returns::tretf
-    loadings::l
-    regression_type::lo
-    mu::tmu
-    cov::tcov
-    kurt::tkurt
-    skurt::tskurt
-    L_2::tl2
-    S_2::ts2
-    skew::tskew
-    V::tv
-    sskew::tsskew
-    SV::tsv
-    f_mu::tmuf
-    f_cov::tcovf
-    fm_returns::trfm
-    fm_mu::tmufm
-    fm_cov::tcovfm
-    bl_bench_weights::blbw
-    bl_mu::tmubl
-    bl_cov::tcovbl
-    blfm_mu::tmublf
-    blfm_cov::tcovblf
-    w_min::wmi
-    w_max::wma
-    cor::tco
-    dist::tdist
-    clusters::tcl
-    k::tk
-    optimal::topt
-    solvers::tsolv
-    fail::tf
-    latest_prices::tlp
-    alloc_optimal::taopt
-    alloc_leftover::talo
-    alloc_solvers::tasolv
-    alloc_fail::taf
-    alloc_model::tamod
-end
-"""
-```
-HCPortfolio(; prices::TimeArray = TimeArray(TimeType[], []),
-              returns::DataFrame = DataFrame(),
-              ret::Matrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              timestamps::Vector{<:Dates.AbstractTime} = Vector{Date}(undef, 0),
-              assets::AbstractVector = Vector{String}(undef, 0),
-              mu::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-              cov::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              kurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              skurt::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              skew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              V = Matrix{eltype(returns)}(undef, 0, 0),
-              sskew::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              SV = Matrix{eltype(returns)}(undef, 0, 0),
-              w_min::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              w_max::Union{<:Real, <:AbstractVector{<:Real}} = 1.0,
-              cor::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              dist::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
-              clusters::Clustering.Hclust = Hclust{Float64}(Matrix{Int64}(undef, 0, 2),
-                                                          Float64[], Int64[],
-                                                          :nothing),
-              k::Integer = 0, optimal::AbstractDict = Dict(),
-              solvers::AbstractDict = Dict(), fail::AbstractDict = Dict(),
-              latest_prices::AbstractVector = Vector{Float64}(undef, 0),
-              alloc_optimal::AbstractDict = Dict(),
-              alloc_leftover::AbstractDict = Dict(),
-              alloc_solvers::AbstractDict = Dict(),
-              alloc_fail::AbstractDict = Dict(),
-              alloc_model::JuMP.Model = JuMP.Model())
-```
-
-Constructor for [`HCPortfolio`](@ref). Performs data validation checks and automatically extracts the data from `prices`, `returns`, `f_prices`, and `f_returns` if they are provided.
-
-# Inputs
-
-  - `prices`: `(T+1)×Na` [`TimeArray`](https://juliastats.org/TimeSeries.jl/stable/timearray/#The-TimeArray-time-series-type) of asset prices.
-
-      + If provided: will take precedence over `returns`, `ret`, `timestamps`, `assets`, and `latest_prices` because they will be automatically computed from `prices`.
-
-  - `returns`: `T×Na` [`DataFrame`](https://dataframes.juliadata.org/stable/lib/types/#DataFrames.DataFrame) of asset returns.
-
-      + If provided: will take precedence over `ret`, `timestamps`, and `assets` because they will be automatically computed from `returns`.
-  - `ret`: set the `returns` matrix directly.
-
-The rest of the inputs directly set their corresponding property.
-
-# Outputs
-
-  - `portfolio`: an instance of [`HCPortfolio`](@ref).
-"""
-=#

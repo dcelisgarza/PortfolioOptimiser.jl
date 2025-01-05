@@ -18,7 +18,14 @@ abstract type AbstractRiskMeasure end
 
 # Description
 
-Defines the interface for risk measures that can be used in both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) optimisation contexts.
+Defines the interface for risk measures that can be used in the following optimisation kinds:
+
+  - [`Trad`](@ref).
+  - [`RP`](@ref).
+  - [`NOC`](@ref).
+  - [`HRP`](@ref).
+  - [`HERC`](@ref).
+  - [`NCO`](@ref).
 
 See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`OptimType`](@ref), [`ObjectiveFunction`](@ref).
 

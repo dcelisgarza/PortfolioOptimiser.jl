@@ -1,4 +1,4 @@
-function _cleanup_weights(port, ::Sharpe, ::Union{Trad, WC}, ::Any)
+function _cleanup_weights(port, ::Sharpe, ::Union{Trad, DRCVaR}, ::Any)
     val_k = value(port.model[:k])
     val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k
@@ -11,7 +11,7 @@ function _cleanup_weights(port, ::Sharpe, ::Union{Trad, WC}, ::Any)
     end
     return weights
 end
-function _cleanup_weights(port, ::Any, ::Union{Trad, WC, DRCVaR}, ::Any)
+function _cleanup_weights(port, ::Any, ::Union{Trad, DRCVaR}, ::Any)
     weights = value.(port.model[:w])
     short = port.short
     budget = port.budget
