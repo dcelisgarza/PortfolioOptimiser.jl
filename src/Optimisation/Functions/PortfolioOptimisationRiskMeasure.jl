@@ -2581,7 +2581,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
 end
 function _BDVariance_constraints(::BDVAbsVal, model, Dt, Dx, T)
     scale_constr = model[:scale_constr]
-    @constraint(model, [i = 1:T, j = i:T],
+    @constraint(model, constr_bdvariance_noc[i = 1:T, j = i:T],
                 [scale_constr * Dt[i, j]; scale_constr * Dx[i, j]] in MOI.NormOneCone(2))
     return nothing
 end
@@ -2589,8 +2589,9 @@ function _BDVariance_constraints(::BDVIneq, model, Dt, Dx, T)
     scale_constr = model[:scale_constr]
     @constraints(model,
                  begin
-                     [i = 1:T, j = i:T], scale_constr * Dt[i, j] >= scale_constr * Dx[i, j]
-                     [i = 1:T, j = i:T],
+                     constr_p_bdvariance[i = 1:T, j = i:T],
+                     scale_constr * Dt[i, j] >= scale_constr * Dx[i, j]
+                     constr_n_bdvariance[i = 1:T, j = i:T],
                      scale_constr * Dt[i, j] >= scale_constr * -Dx[i, j]
                  end)
     return nothing
@@ -2625,7 +2626,8 @@ function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP, NOC}; kwargs...
         rm.V
     end
     G = real(sqrt(V))
-    @constraint(model, [scale_constr * t_skew; scale_constr * G * w] ∈ SecondOrderCone())
+    @constraint(model, constr_skew_soc,
+                [scale_constr * t_skew; scale_constr * G * w] ∈ SecondOrderCone())
     @expression(model, skew_risk, t_skew^2)
     _set_rm_risk_upper_bound(type, model, t_skew, rm.settings.ub, "skew_risk")
     _set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
@@ -2646,8 +2648,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, 
             rm.V
         end
         G = real(sqrt(V))
-        @constraint(model,
-                    [scale_constr * t_skew[idx]; scale_constr * G * w] ∈ SecondOrderCone())
+        model[Symbol("constr_skew_soc_$(idx)")] = @constraint(model,
+                                                              [scale_constr * t_skew[idx];
+                                                               scale_constr * G * w] ∈
+                                                              SecondOrderCone())
         _set_rm_risk_upper_bound(type, model, t_skew[idx], rm.settings.ub,
                                  "skew_risk_$(idx)")
         _set_risk_expression(model, skew_risk[idx], rm.settings.scale, rm.settings.flag)
@@ -2665,7 +2669,8 @@ function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP, NOC}; kwargs..
         rm.V
     end
     G = real(sqrt(SV))
-    @constraint(model, [scale_constr * t_sskew; scale_constr * G * w] ∈ SecondOrderCone())
+    @constraint(model, constr_sskew_soc,
+                [scale_constr * t_sskew; scale_constr * G * w] ∈ SecondOrderCone())
     @expression(model, sskew_risk, t_sskew^2)
     _set_rm_risk_upper_bound(type, model, t_sskew, rm.settings.ub, "sskew_risk")
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
@@ -2686,8 +2691,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad,
             rm.V
         end
         G = real(sqrt(V))
-        @constraint(model,
-                    [scale_constr * t_sskew[idx]; scale_constr * G * w] ∈ SecondOrderCone())
+        model[Symbol("constr_sskew_soc_$(idx)")] = @constraint(model,
+                                                               [scale_constr * t_sskew[idx];
+                                                                scale_constr * G * w] ∈
+                                                               SecondOrderCone())
         _set_rm_risk_upper_bound(type, model, t_sskew[idx], rm.settings.ub,
                                  "sskew_risk_$(idx)")
         _set_risk_expression(model, sskew_risk[idx], rm.settings.scale, rm.settings.flag)
