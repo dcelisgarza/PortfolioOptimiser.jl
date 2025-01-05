@@ -32,7 +32,7 @@ function _objective(::Trad, ::Sharpe, ::Union{AKelly, EKelly}, model, custom_obj
 end
 function _objective(::Trad, ::Sharpe, ::Any, model, custom_obj)
     scale_obj = model[:scale_obj]
-    if !haskey(model, :alt_sr)
+    if !haskey(model, :constr_sr_risk)
         risk = model[:risk]
         @expression(model, obj_func, risk)
         add_objective_penalty(model, obj_func, 1)
