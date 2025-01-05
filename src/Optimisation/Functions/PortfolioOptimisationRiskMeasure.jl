@@ -300,8 +300,8 @@ function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, k_s
     scale_constr = model[:scale_constr]
     WpE = model[:WpE]
     G_sigma = sqrt(cov_sigma)
-    t_ge = @variable(model)
-    x_ge = @expression(model, G_sigma * vec(WpE))
+    model[Symbol("t_ge_$(i)")] = t_ge = @variable(model)
+    model[Symbol("x_ge_$(i)")] = x_ge = @expression(model, G_sigma * vec(WpE))
     add_to_expression!(wc_variance_risk, tr(sigma * WpE))
     add_to_expression!(wc_variance_risk, k_sigma, t_ge)
     model[Symbol("constr_wc_variance_risk_$(i)")] = @constraint(model,
@@ -441,7 +441,7 @@ function _semi_variance_risk(::SOC, model::JuMP.Model, svariance, iTm1)
 end
 function _semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1, i)
     scale_constr = model[:scale_constr]
-    tsvariance = @variable(model)
+    model[Symbol("tsvariance_$(i)")] = tsvariance = @variable(model)
     model[Symbol("constr_svariance_soc_$(i)")] = @constraint(model,
                                                              [scale_constr * tsvariance;
                                                               0.5;
