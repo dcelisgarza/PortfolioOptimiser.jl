@@ -1,11 +1,11 @@
 using SafeTestsets
 
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
 end
 
 @safetestset "Constrained optimisation" begin
