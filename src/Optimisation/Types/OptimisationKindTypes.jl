@@ -286,11 +286,14 @@ struct HRP <: HCOptimType end
 mutable struct HRP <: HCOptimType
     rm::Union{AbstractVector, <:AbstractRiskMeasure}
     class::PortClass
+    scalarisation::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
 end
 function HRP(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
-             class::PortClass = Classic(), finaliser::HCOptWeightFinaliser = HWF())
-    return HRP(rm, class, finaliser)
+             class::PortClass = Classic(),
+             scalarisation::AbstractScalarisation = ScalarSum(),
+             finaliser::HCOptWeightFinaliser = HWF())
+    return HRP(rm, class, scalarisation, finaliser)
 end
 
 mutable struct SchurParams{T1, T2, T3, T4}
@@ -340,13 +343,17 @@ mutable struct HERC <: HCOptimType
     rm_o::Union{AbstractVector, <:AbstractRiskMeasure}
     class::PortClass
     class_o::PortClass
+    scalarisation::AbstractScalarisation
+    scalarisation_o::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
 end
 function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
               rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
               class::PortClass = Classic(), class_o::PortClass = class,
+              scalarisation::AbstractScalarisation = ScalarSum(),
+              scalarisation_o::AbstractScalarisation = scalarisation,
               finaliser::HCOptWeightFinaliser = HWF())
-    return HERC(rm, rm_o, class, class_o, finaliser)
+    return HERC(rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser)
 end
 
 """
@@ -385,12 +392,14 @@ function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
     return NCO(internal, external, finaliser)
 end
 function Base.getproperty(nco::NCO, sym::Symbol)
-    if sym ∈ (:rm, :obj, :kelly, :class, :w_ini, :custom_constr, :custom_obj, :str_names)
+    if sym ∈
+       (:rm, :obj, :kelly, :class, :scalarisation, :w_ini, :custom_constr, :custom_obj,
+        :str_names)
         type = nco.internal.type
         isa(type, NCO) ? getproperty(type, sym) : getfield(type, sym)
     elseif sym ∈
-           (:rm_o, :obj_o, :kelly_o, :class_o, :w_ini_o, :custom_constr_o, :custom_obj_o,
-            :str_names_o)
+           (:rm_o, :obj_o, :kelly_o, :class_o, :scalarisation_o, :w_ini_o, :custom_constr_o,
+            :custom_obj_o, :str_names_o)
         type = nco.external.type
         if isa(type, NCO)
             getproperty(type, sym)

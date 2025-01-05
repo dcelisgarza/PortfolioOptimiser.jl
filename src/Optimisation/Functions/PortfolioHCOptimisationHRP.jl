@@ -1,5 +1,59 @@
+function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarSum)
+    lrisk = zero(eltype(returns))
+    rrisk = zero(eltype(returns))
+    for r ∈ rm
+        solver_flag = _set_rm_solvers!(r, port.solvers)
+        scale = r.settings.scale
+        # Left risk.
+        lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
+        # Right risk.
+        rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
+        _unset_rm_solvers!(r, solver_flag)
+    end
+    return lrisk, rrisk
+end
+function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc,
+                            scalarisation::ScalarLogSumExp)
+    gamma = scalarisation.gamma
+    igamma = inv(gamma)
+    lrisk = zero(eltype(returns))
+    rrisk = zero(eltype(returns))
+    for r ∈ rm
+        solver_flag = _set_rm_solvers!(r, port.solvers)
+        scale = r.settings.scale * gamma
+        # Left risk.
+        lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
+        # Right risk.
+        rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
+        _unset_rm_solvers!(r, solver_flag)
+    end
+    return log(exp(lrisk)) * igamma, log(exp(rrisk)) * igamma
+end
+function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarMax)
+    trisk = -Inf
+    lrisk = zero(eltype(returns))
+    rrisk = zero(eltype(returns))
+    for r ∈ rm
+        solver_flag = _set_rm_solvers!(r, port.solvers)
+        scale = r.settings.scale
+        # Left risk.
+        lrisk_n = cluster_risk(port, sigma, returns, lc, r) * scale
+        # Right risk.
+        rrisk_n = cluster_risk(port, sigma, returns, rc, r) * scale
+        # Total risk.
+        trisk_n = lrisk_n + rrisk_n
+        if trisk_n > trisk
+            trisk = trisk_n
+            lrisk = lrisk_n
+            rrisk = rrisk_n
+        end
+        _unset_rm_solvers!(r, solver_flag)
+    end
+    return lrisk, rrisk
+end
 function hrp_optimise(port::Portfolio, rm::Union{AbstractVector, <:AbstractRiskMeasure},
-                      sigma::AbstractMatrix, returns::AbstractMatrix)
+                      sigma::AbstractMatrix, returns::AbstractMatrix,
+                      scalarisation::AbstractScalarisation)
     N = size(returns, 2)
     weights = ones(eltype(returns), N)
     items = [port.clusters.order]
@@ -12,17 +66,8 @@ function hrp_optimise(port::Portfolio, rm::Union{AbstractVector, <:AbstractRiskM
         for i ∈ 1:2:length(items)
             lc = items[i]
             rc = items[i + 1]
-            lrisk = zero(eltype(weights))
-            rrisk = zero(eltype(weights))
-            for r ∈ rm
-                solver_flag = _set_rm_solvers!(r, port.solvers)
-                scale = r.settings.scale
-                # Left risk.
-                lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
-                # Right risk.
-                rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
-                _unset_rm_solvers!(r, solver_flag)
-            end
+            lrisk, rrisk = hrp_scalarise_risk(port, sigma, returns, rm, lc, rc,
+                                              scalarisation)
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
             # Weight constraints.

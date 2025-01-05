@@ -1,14 +1,14 @@
 function optimise!(port::Portfolio, type::HRP)
-    (; rm, class, finaliser) = type
+    (; rm, class, scalarisation, finaliser) = type
     empty!(port.fail)
     sigma, returns = mu_sigma_returns_class(port, class)[2:3]
     lo, hi = w_limits(type, eltype(returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(returns, 2), lo, hi)
-    w = hrp_optimise(port, rm, sigma, returns)
+    w = hrp_optimise(port, rm, sigma, returns, scalarisation)
     return finalise_weights(type, port, w, w_min, w_max, finaliser)
 end
 function optimise!(port::Portfolio, type::HERC)
-    (; rm, rm_o, class, class_o, finaliser) = type
+    (; rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser) = type
     empty!(port.fail)
     sigma, returns = mu_sigma_returns_class(port, class)[2:3]
     sigma_o, returns_o = if !isequal(class, class_o)
@@ -18,7 +18,8 @@ function optimise!(port::Portfolio, type::HERC)
     end
     lo, hi = w_limits(type, eltype(returns))
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(returns, 2), lo, hi)
-    w = herc_optimise(port, rm, rm_o, sigma, sigma_o, returns, returns_o)
+    w = herc_optimise(port, rm, rm_o, sigma, sigma_o, returns, returns_o, scalarisation,
+                      scalarisation_o)
     return finalise_weights(type, port, w, w_min, w_max, finaliser)
 end
 function optimise!(port::Portfolio, type::NCO)

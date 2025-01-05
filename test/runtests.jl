@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
 end
@@ -10,10 +14,6 @@ end
 
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
 end
 
 @safetestset "RRP optimisation" begin
