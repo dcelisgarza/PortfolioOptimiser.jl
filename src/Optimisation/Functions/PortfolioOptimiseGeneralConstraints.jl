@@ -589,7 +589,7 @@ function L1_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l1)
-    @constraint(model, constr_l1_soc,
+    @constraint(model, constr_l1,
                 [scale_constr * t_l1; scale_constr * w] in MOI.NormOneCone(1 + length(w)))
     @expression(model, l1_reg, l1 * t_l1)
 
@@ -606,7 +606,7 @@ function L2_regularisation(port)
     w = model[:w]
 
     @variable(model, t_l2)
-    @constraint(model, constr_l2_soc,
+    @constraint(model, constr_l2,
                 [scale_constr * t_l2; scale_constr * w] in SecondOrderCone())
     @expression(model, l2_reg, l2 * t_l2)
 
