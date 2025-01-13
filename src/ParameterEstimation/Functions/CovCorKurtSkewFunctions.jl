@@ -533,6 +533,59 @@ function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
+function _cor_gerber_norm(ce::CorGerber3, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
+    T, N = size(X)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    N = Matrix{Bool}(undef, T, N)
+    threshold = ce.threshold
+
+    for i ∈ axes(X, 2)
+        xi = (X[:, i] .- mean_vec[i]) / std_vec[i]
+        ti = threshold
+        U[:, i] .= xi .>= ti
+        D[:, i] .= xi .<= -ti
+        N[:, i] .= .!U[:, i] .& .!D[:, i]
+    end
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    H = transpose(UmD) * (UmD)    
+    rho = H ./ (T .- transpose(N) * N)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+function _cor_gerber(ce::CorGerber3, X::AbstractMatrix, std_vec::AbstractVector)
+    T, N = size(X)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    N = Matrix{Bool}(undef, T, N)
+    threshold = ce.threshold
+
+    for i ∈ axes(X, 2)
+        xi = X[:, i]
+        ti = threshold * std_vec[i]
+        U[:, i] .= xi .>= ti
+        D[:, i] .= xi .<= -ti
+        N[:, i] .= .!U[:, i] .& .!D[:, i]
+    end
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    H = transpose(UmD) * (UmD)
+    rho = H ./ (T .- transpose(N) * N)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
 function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     # Zone of confusion.
     # If the return is not a significant proportion of the standard deviation, we classify it as noise.
