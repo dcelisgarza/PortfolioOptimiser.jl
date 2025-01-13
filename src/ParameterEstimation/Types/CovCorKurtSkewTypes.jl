@@ -464,6 +464,22 @@ function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CorGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
+mutable struct CorGerber3{T1 <: Real} <: CorGerberBasic
+    normalise::Bool
+    threshold::T1
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+function CorGerber3(; normalise::Bool = false, threshold::Real = 0.5,
+                    ve::StatsBase.CovarianceEstimator = SimpleVariance(),
+                    std_w::Union{<:AbstractWeights, Nothing} = nothing,
+                    mean_w::Union{<:AbstractWeights, Nothing} = nothing,
+                    posdef::PosdefFix = PosdefNearest())
+    @smart_assert(zero(threshold) < threshold < one(threshold))
+    return CorGerber3{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+end
 function Base.setproperty!(obj::CorGerberBasic, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(zero(val) < val < one(val))
@@ -945,6 +961,6 @@ Covariance and correlation estimators that support positive definite fixes.
 const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,
-       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,
+       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorGerber3, CorSB0, CorSB1,
        CorGerberSB0, CorGerberSB1, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull, SkewSemi,
        PortCovCor
