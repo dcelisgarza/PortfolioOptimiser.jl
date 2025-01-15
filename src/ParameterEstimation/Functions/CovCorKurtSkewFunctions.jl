@@ -322,32 +322,29 @@ function StatsBase.cov(ce::CorLTD, X::AbstractMatrix; dims::Int = 1)
                   end)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end
+#=
 function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
-    threshold = ce.threshold
+    tij = ce.threshold
+
+    X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
 
     for j ∈ axes(X, 2)
-        muj = mean_vec[j]
-        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
-            mui = mean_vec[i]
-            sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (X[k, i] - mui) / sigmai
-                xj = (X[k, j] - muj) / sigmaj
-                ti = threshold
-                tj = threshold
-                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                xi = X[k, i]
+                xj = X[k, j]
+                if xi >= tij && xj >= tij || xi <= -tij && xj <= -tij
                     pos += 1
-                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                elseif xi >= tij && xj <= -tij || xi <= -tij && xj >= tij
                     neg += 1
                 end
             end
-            den = (pos + neg)
+            den = pos + neg
             rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
@@ -361,6 +358,29 @@ function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractV
 
     return rho
 end
+=#
+function _cor_gerber_norm(ce::CorGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
+    T, N = size(X)
+    ti = ce.threshold
+    X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    U .= X .>= ti
+    D .= X .<= -ti
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    UpD = U + D
+    rho = (transpose(UmD) * UmD) ./ (transpose(UpD) * UpD)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+#=
 function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
@@ -383,7 +403,7 @@ function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
                     neg += 1
                 end
             end
-            den = (pos + neg)
+            den = pos + neg
             rho[i, j] = if !iszero(den)
                 (pos - neg) / den
             else
@@ -397,31 +417,48 @@ function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
+=#
+function _cor_gerber(ce::CorGerber0, X::AbstractMatrix, std_vec::AbstractVector)
+    T, N = size(X)
+    threshold = ce.threshold
+    std_vec = threshold * transpose(std_vec)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    U .= X .>= std_vec
+    D .= X .<= -std_vec
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    UpD = U + D
+    rho = (transpose(UmD) * UmD) ./ (transpose(UpD) * UpD)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+
 function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
-    threshold = ce.threshold
+    tij = ce.threshold
+    X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
 
     for j ∈ axes(X, 2)
-        muj = mean_vec[j]
-        sigmaj = std_vec[j]
         for i ∈ 1:j
             neg = 0
             pos = 0
             nn = 0
-            mui = mean_vec[i]
-            sigmai = std_vec[i]
             for k ∈ 1:T
-                xi = (X[k, i] - mui) / sigmai
-                xj = (X[k, j] - muj) / sigmaj
-                ti = threshold
-                tj = threshold
-                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                xi = X[k, i]
+                xj = X[k, j]
+                if xi >= tij && xj >= tij || xi <= -tij && xj <= -tij
                     pos += 1
-                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                elseif xi >= tij && xj <= -tij || xi <= -tij && xj >= tij
                     neg += 1
-                elseif abs(xi) < ti && abs(xj) < tj
+                elseif abs(xi) < tij && abs(xj) < tij
                     nn += 1
                 end
             end
@@ -439,6 +476,30 @@ function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractV
 
     return rho
 end
+#=
+function _cor_gerber_norm(ce::CorGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
+    T, N = size(X)
+    ti = ce.threshold
+    X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    N = Matrix{Bool}(undef, T, N)
+    U .= X .>= ti
+    D .= X .<= -ti
+    N .= .!U .& .!D
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    rho = transpose(UmD) * (UmD) ./ (T .- transpose(N) * N)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+=#
 function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
@@ -478,19 +539,41 @@ function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
+#=
+# This is an alternative formulation that allocates more memory but can be faster.
+function _cor_gerber(ce::CorGerber1, X::AbstractMatrix, std_vec::AbstractVector)
+    T, N = size(X)
+    threshold = ce.threshold
+    U = Matrix{Bool}(undef, T, N)
+    D = Matrix{Bool}(undef, T, N)
+    N = Matrix{Bool}(undef, T, N)
+
+    std_vec = threshold * transpose(std_vec)
+    U .= X .>= std_vec
+    D .= X .<= -std_vec
+    N .= .!U .& .!D
+
+    # nconc = transpose(U) * U + transpose(D) * D
+    # ndisc = transpose(U) * D + transpose(D) * U
+    # H = nconc - ndisc
+
+    UmD = U - D
+    rho = transpose(UmD) * (UmD) ./ (T .- transpose(N) * N)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+=#
 function _cor_gerber_norm(ce::CorGerber2, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
+    ti = ce.threshold
+    X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
-    threshold = ce.threshold
 
-    for i ∈ axes(X, 2)
-        xi = (X[:, i] .- mean_vec[i]) / std_vec[i]
-        ti = threshold
-        U[:, i] .= xi .>= ti
-        D[:, i] .= xi .<= -ti
-    end
+    U .= X .>= ti
+    D .= X .<= -ti
 
     # nconc = transpose(U) * U + transpose(D) * D
     # ndisc = transpose(U) * D + transpose(D) * U
@@ -508,16 +591,13 @@ function _cor_gerber_norm(ce::CorGerber2, X::AbstractMatrix, mean_vec::AbstractV
 end
 function _cor_gerber(ce::CorGerber2, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
+    threshold = ce.threshold
+    std_vec = threshold * transpose(std_vec)
     U = Matrix{Bool}(undef, T, N)
     D = Matrix{Bool}(undef, T, N)
-    threshold = ce.threshold
 
-    for i ∈ axes(X, 2)
-        xi = X[:, i]
-        ti = threshold * std_vec[i]
-        U[:, i] .= xi .>= ti
-        D[:, i] .= xi .<= -ti
-    end
+    U .= X .>= std_vec
+    D .= X .<= -std_vec
 
     # nconc = transpose(U) * U + transpose(D) * D
     # ndisc = transpose(U) * D + transpose(D) * U
