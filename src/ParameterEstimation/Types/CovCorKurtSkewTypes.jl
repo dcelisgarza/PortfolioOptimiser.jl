@@ -525,8 +525,7 @@ function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                 posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
@@ -591,8 +590,7 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                 posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
@@ -622,8 +620,7 @@ function CorSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                 posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
@@ -688,8 +685,7 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                       posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorGerberSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
@@ -756,8 +752,7 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                       posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
@@ -790,8 +785,7 @@ function CorGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                       posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
-    @smart_assert(zero(c2) < c2 <= one(c2))
-    @smart_assert(c3 > c2)
+    @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
     return CorGerberSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
@@ -806,8 +800,10 @@ end
 function Base.setproperty!(obj::CorSB, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(zero(val) < val < one(val))
-    elseif sym ∈ (:c1, :c2)
-        @smart_assert(zero(val) < val <= one(val) && val < obj.c3)
+    elseif sym == :c1
+        @smart_assert(zero(val) < val <= one(val))
+    elseif sym == :c2
+        @smart_assert(zero(val) < val <= one(val) && obj.c3 > val)
     elseif sym == :c3
         @smart_assert(val > obj.c2)
     end
@@ -1010,6 +1006,6 @@ Covariance and correlation estimators that support positive definite fixes.
 const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,
-       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1,
-       CorGerberSB0, CorGerberSB1, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull, SkewSemi,
-       PortCovCor
+       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorSB2,
+       CorGerberSB0, CorGerberSB1, CorGerberSB2, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull,
+       SkewSemi, PortCovCor
