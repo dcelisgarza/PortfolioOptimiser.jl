@@ -3,12 +3,12 @@
 _clusterise(ca::HAC, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
-Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust) to hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
+Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust) to hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
 
 # Inputs
 
   - `ca`: linkage for [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust).
-  - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
+  - `port`: hierarchical clustering portfolio .
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 
 # Outputs
@@ -28,12 +28,12 @@ end
 _clusterise(ca::DBHT, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
-Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
+Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
 
 # Inputs
 
   - `ca`: [`DBHT`] options for clustering with [`DBHTs`](@ref).
-  - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
+  - `port`: hierarchical clustering portfolio .
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 
 # Outputs
@@ -56,11 +56,11 @@ cluster_assets(port::Union{HCPortfolio, Portfolio}; clust_alg::ClustAlg = HAC(),
                clust_opt::ClustOpt = ClustOpt())
 ```
 
-Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
+Hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
 
 # Inputs
 
-  - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
+  - `port`: hierarchical clustering portfolio .
   - `clust_alg`: hierarchical clustering algorithm [`ClustAlg`](@ref).
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 
@@ -83,11 +83,11 @@ cluster_assets!(port::Union{HCPortfolio, Portfolio}; clust_alg::ClustAlg = HAC()
                 clust_opt::ClustOpt = ClustOpt())
 ```
 
-Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. Save the results in the portfolio. See the arguments types' docs for details.
+Hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. Save the results in the portfolio. See the arguments types' docs for details.
 
 # Inputs
 
-  - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
+  - `port`: hierarchical clustering portfolio .
   - `clust_alg`: hierarchical clustering algorithm [`ClustAlg`](@ref).
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 """
@@ -107,13 +107,13 @@ cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(
                clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
 ```
 
-Hierarchically cluster the assets in a hierarchical portfolio [`HCPortfolio`](@ref) using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
+Hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
 
 # Inputs
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref).
-  - `port`: hierarchical clustering portfolio [`HCPortfolio`](@ref).
+  - `port`: hierarchical clustering portfolio .
   - `clust_alg`: hierarchical clustering algorithm [`ClustAlg`](@ref).
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).
 

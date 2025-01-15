@@ -2,7 +2,7 @@
 
 ## Specifying solvers
 
-Some risk measures require solvers to compute the risk measure via [`calc_risk`](@ref). When using high level functions that take in an instance of [`Portfolio`](@ref)/[`HCPortfolio`](@ref) as an argument, the solvers will be taken from it. However, it is possible to override them by directly providing the solvers to the risk measure instance.
+Some risk measures require solvers to compute the risk measure via [`calc_risk`](@ref). When using high level functions that take in an instance of [`Portfolio`](@ref)/as an argument, the solvers will be taken from it. However, it is possible to override them by directly providing the solvers to the risk measure instance.
 
 The solvers can be specified by any container which implements the [`AbstractDict`](https://docs.julialang.org/en/v1/base/collections/#Base.AbstractDict) interfaces. This dictionary must contain the key-value pairs of any solvers one wishes to use. Where the key can be of any type, but the value must be a dictionary with the following key-value pairs.
 
@@ -73,7 +73,7 @@ OWASettings
 
 ## Risk measures
 
-These risk measures are compatible with both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) optimisations. Different risk measures account for different aspects of the returns.
+These risk measures are compatible with both [`Portfolio`](@ref) and optimisations. Different risk measures account for different aspects of the returns.
 
 ### Dispersion risk measures
 
@@ -147,7 +147,7 @@ OWA
 
 ## Hierarchical risk measures
 
-These risk measures are compatible with [`HCPortfolio`](@ref). Different risk measures account for different aspects of the returns.
+These risk measures are compatible with . Different risk measures account for different aspects of the returns.
 
 ### Dispersion hierarchical risk measures
 

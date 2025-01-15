@@ -160,6 +160,12 @@ end
 function _variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
     return sqrt(ub)
 end
+"""
+```
+set_rm(port, rm::RiskMeasure, type::Union{Trad, RP, NOC}; kwargs...)
+set_rm(port, rm::AbstractVector{<:RiskMeasure}, type::Union{Trad, RP, NOC}; kwargs...)
+```
+"""
 function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)

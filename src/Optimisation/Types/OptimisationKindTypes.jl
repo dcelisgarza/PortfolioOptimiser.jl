@@ -312,18 +312,6 @@ function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
     return HERC(rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser)
 end
 
-"""
-```
-@kwdef mutable struct NCO <: HCOptimType
-    opt_kwargs::NamedTuple = (;)
-    opt_kwargs_o::NamedTuple = opt_kwargs
-    port_kwargs::NamedTuple = (;)
-    port_kwargs_o::NamedTuple = port_kwargs
-    stat_kwargs_o::NamedTuple = (;)
-end
-```
-"""
-
 mutable struct NCOArgs
     type::AbstractOptimType
     port_kwargs::NamedTuple
@@ -338,6 +326,15 @@ function NCOArgs(; type::AbstractOptimType = Trad(), port_kwargs::NamedTuple = (
     return NCOArgs(type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
                    cluster_kwargs)
 end
+"""
+```
+mutable struct NCO <: HCOptimType
+    internal::NCOArgs
+    external::NCOArgs
+    finaliser::HCOptWeightFinaliser
+end
+```
+"""
 mutable struct NCO <: HCOptimType
     internal::NCOArgs
     external::NCOArgs

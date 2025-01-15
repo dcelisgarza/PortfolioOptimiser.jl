@@ -1,3 +1,6 @@
+"""
+    optimise!(port::Portfolio, type::OptimType)
+"""
 function optimise!(port::Portfolio, type::Trad)
     (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, scalarisation, str_names) = type
     empty!(port.fail)
@@ -172,6 +175,14 @@ function frontier_limits!(port::Portfolio, type::Union{Trad, NOC} = Trad();
 
     return port.limits[rmsym]
 end
+"""
+```
+efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
+                             w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
+                             points::Integer = 20, rf::Real = 0.0)
+```
+"""
 function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),

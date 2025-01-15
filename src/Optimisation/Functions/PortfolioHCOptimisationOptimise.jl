@@ -1,3 +1,6 @@
+"""
+    optimise!(port::Portfolio, type::HCOptimType)
+"""
 function optimise!(port::Portfolio, type::HRP)
     (; rm, class, scalarisation, finaliser) = type
     empty!(port.fail)

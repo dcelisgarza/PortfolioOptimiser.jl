@@ -27,13 +27,13 @@ Defines the interface for risk measures that can be used in the following optimi
   - [`HERC`](@ref).
   - [`NCO`](@ref).
 
-See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`OptimType`](@ref), [`ObjectiveFunction`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`OptimType`](@ref), [`ObjectiveFunction`](@ref).
 
 # Type Hierarchy
 
 # Implementation Requirements
 
-To ensure concrete subtypes will handle both [`Portfolio`](@ref) and [`HCPortfolio`](@ref) contexts appropriately, they must implement:
+To ensure concrete subtypes will handle both [`Portfolio`](@ref) contexts appropriately, they must implement:
 
   - Risk calculation method [`calc_risk`](@ref).
 
@@ -124,9 +124,9 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 
 # Description
 
-Defines the interface for risk measures specifically designed for use with [`HCPortfolio`](@ref) optimisation.
+Defines the interface for risk measures specifically designed for use with optimisation.
 
-See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
 
 # Implementation Requirements
 
@@ -199,7 +199,7 @@ abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
 
 Configuration settings for [`RiskMeasure`](@ref) and [`HCRiskMeasure`](@ref).
 
-See also: [`AbstractRiskMeasure`](@ref), [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
 
 # Fields
 
@@ -209,7 +209,7 @@ See also: [`AbstractRiskMeasure`](@ref), [`RiskMeasure`](@ref), [`HCRiskMeasure`
 
 # Behaviour
 
-## [`optimise!(::Portfolio)`](@ref)
+## [`optimise!`](@ref)
 
 With `R(w)` being a risk measure.
 
@@ -217,7 +217,7 @@ With `R(w)` being a risk measure.
   - `scale`: multiplier for this risk term in the risk expression.
   - When `ub < Inf`: adds constraint `R(w) ≤ ub`.
 
-## [`optimise!(::HCPortfolio)`](@ref)
+## [`optimise!`](@ref)
 
   - `flag`: no effect.
   - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
@@ -257,7 +257,7 @@ end
 
 Configuration settings for [`HCRiskMeasure`](@ref).
 
-See also: [`AbstractRiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
 
 # Fields
 
@@ -315,7 +315,7 @@ Direct subtypes:
   - Choice of formulation can significantly impact solver performance and numerical stability.
   - Each formulation may have different solver compatibility requirements.
 
-## [`HCPortfolio`](@ref) Optimisation
+## Optimisation
 
   - No effect.
 """
@@ -514,13 +514,13 @@ struct SimpleSD <: VarianceFormulation end
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref), [`_SD`](@ref).
 
 ## [`Portfolio`](@ref)
 
 Implements portfolio Standard Deviation/Variance risk using configurable `formulation` strategies.
 
-## [`HCPortfolio`](@ref)
+## 
 
 Implements portfolio Standard Deviation risk.
 
@@ -536,7 +536,7 @@ Implements portfolio Standard Deviation risk.
   - If `sigma` is `nothing`:
 
       + With [`Portfolio`](@ref): uses the covariance matrix `cov`, `fm_cov`, `bl_cov` or `blfm_cov`, depending on the `class::`[`PortClass`](@ref) parameter of [`optimise!`](@ref).
-      + With [`HCPortfolio`](@ref): uses the covariance matrix `cov`.
+      + With : uses the covariance matrix `cov`.
 
   - If `sigma` provided: uses custom covariance matrix.
 
@@ -596,7 +596,7 @@ Mean Absolute Deviation risk measure implementation.
 
   - Measures the dispersion in the returns from the mean.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MAD, ::AbstractVector)`](@ref), [`_MAD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MAD, ::AbstractVector)`](@ref), [`_MAD`](@ref).
 
 # Fields
 
@@ -610,7 +610,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio
 
   - If `mu` is `nothing`: use the expected returns vector from the [`Portfolio`](@ref) instance.
 
-## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk(::MAD, ::AbstractVector)`](@ref).
+## Optimisation or in [`calc_risk(::MAD, ::AbstractVector)`](@ref).
 
   - If `w` is `nothing`: computes the unweighted mean portfolio return.
 
@@ -646,7 +646,7 @@ Semi Standard Deviation risk measure implementation.
 
   - Measures the standard deviation equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSD, ::AbstractVector)`](@ref), [`_SSD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSD, ::AbstractVector)`](@ref), [`_SSD`](@ref).
 
 # Fields
 
@@ -661,7 +661,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - If `mu` is `nothing`: use the expected returns vector from the [`Portfolio`](@ref) instance.
 
-## [`HCPortfolio`](@ref) Optimisation or in [`calc_risk(::SSD, ::AbstractVector)`](@ref).
+## Optimisation or in [`calc_risk(::SSD, ::AbstractVector)`](@ref).
 
   - If `w` is `nothing`: computes the unweighted mean portfolio return.
 
@@ -698,7 +698,7 @@ First Lower Partial Moment (Omega ratio) risk measure.
 
   - Measures the dispersion equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::FLPM, ::AbstractVector)`](@ref), [`_FLPM`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::FLPM, ::AbstractVector)`](@ref), [`_FLPM`](@ref).
 
 # Fields
 
@@ -736,7 +736,7 @@ Second Lower Partial Moment (Sortino ratio) risk measure.
 
   - Measures the dispersion equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SLPM, ::AbstractVector)`](@ref), [`_SLPM`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SLPM, ::AbstractVector)`](@ref), [`_SLPM`](@ref).
 
 # Fields
 
@@ -775,7 +775,7 @@ Worst Realization/Return risk measure.
   - Useful for extremely conservative risk assessment.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::WR, ::AbstractVector)`](@ref), [`_WR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::WR, ::AbstractVector)`](@ref), [`_WR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -808,7 +808,7 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
   - Measures expected loss in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref), [`_CVaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref), [`_CVaR`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -874,7 +874,7 @@ Entropic Value at Risk risk measure.
   - It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`_EVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -888,7 +888,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - When computing [`calc_risk(::EVaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -935,7 +935,7 @@ Relativistic Value at Risk risk measure.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`_RLVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`_RLVaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -950,7 +950,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - When computing [`calc_risk(::RLVaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -999,7 +999,7 @@ Maximum Drawdown (Calmar ratio) risk measure for uncompounded cumulative returns
   - Measures the largest peak-to-trough decline.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MDD, ::AbstractVector)`](@ref), [`_MDD`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MDD, ::AbstractVector)`](@ref), [`_MDD`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1032,7 +1032,7 @@ Average Drawdown risk measure for uncompounded cumulative returns.
   - Measures the average of all peak-to-trough declines.
   - Provides a more balanced view than the maximum drawdown [`MDD`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::ADD, ::AbstractVector)`](@ref), [`_ADD`](@ref), [`ADD_r`](@ref), [`MDD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::ADD, ::AbstractVector)`](@ref), [`_ADD`](@ref), [`ADD_r`](@ref), [`MDD`](@ref).
 
 # Fields
 
@@ -1067,7 +1067,7 @@ Conditional Drawdown at Risk risk measure for uncompounded cumulative returns.
   - Measures the expected peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_CDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CDaR, ::AbstractVector)`](@ref), [`_CDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1114,7 +1114,7 @@ Ulcer Index risk measure for uncompounded cumulative returns.
 
   - Penalizes larger drawdowns more than smaller ones.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::UCI, ::AbstractVector)`](@ref), [`_UCI`](@ref), [`UCI_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::UCI, ::AbstractVector)`](@ref), [`_UCI`](@ref), [`UCI_r`](@ref).
 
 # Fields
 
@@ -1147,7 +1147,7 @@ Entropic Drawdown at Risk risk measure for uncompounded cumulative returns.
   - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`_EDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1161,7 +1161,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - When computing [`calc_risk(::EDaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -1208,7 +1208,7 @@ Relativistic Drawdown at Risk risk measure for uncompounded cumulative returns.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`_RLDaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -1223,7 +1223,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - When computing [`calc_risk(::RLDaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -1269,7 +1269,7 @@ end
 
 Square Root Kurtosis risk measure implementation for portfolio optimisation.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Kurt, ::AbstractVector)`](@ref), [`_Kurt`](@ref), [`SKurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Kurt, ::AbstractVector)`](@ref), [`_Kurt`](@ref), [`SKurt`](@ref).
 
 # Fields
 
@@ -1279,7 +1279,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
 # Behaviour
 
-  - If `kt` is `nothing`: uses the semi cokurtosis matrix `skurt` from the [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `kt` is `nothing`: uses the semi cokurtosis matrix `skurt` from the [`Portfolio`](@ref)/object.
   - If `kt` provided: uses custom semi cokurtosis matrix.
 
 ## Validation
@@ -1323,7 +1323,7 @@ Square Root Semi Kurtosis risk measure implementation for portfolio optimisation
 
   - Measures the kurtosis equal to or below the `target` return threshold.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SKurt, ::AbstractVector)`](@ref), [`_SKurt`](@ref), [`Kurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SKurt, ::AbstractVector)`](@ref), [`_SKurt`](@ref), [`Kurt`](@ref).
 
 # Fields
 
@@ -1334,7 +1334,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
 # Behaviour
 
-  - If `kt` is `nothing`: uses the cokurtosis from matrix `skurt` from the [`Portfolio`](@ref)/[`HCPortfolio`](@ref) object.
+  - If `kt` is `nothing`: uses the cokurtosis from matrix `skurt` from the [`Portfolio`](@ref)/object.
   - If `kt` provided: uses custom cokurtosis matrix.
 
 ## Validation
@@ -1379,7 +1379,7 @@ Defines the Range risk measure.
 
   - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RG, ::AbstractVector)`](@ref), [`_RG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RG, ::AbstractVector)`](@ref), [`_RG`](@ref).
 
 # Fields
 
@@ -1411,7 +1411,7 @@ Defines the Conditional Value at Risk Range risk measure.
 
   - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaRRG, ::AbstractVector)`](@ref), [`_TGRG`](@ref), [`CVaR`](@ref), [`RG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaRRG, ::AbstractVector)`](@ref), [`_TGRG`](@ref), [`CVaR`](@ref), [`RG`](@ref).
 
 # Fields
 
@@ -1463,7 +1463,7 @@ end
 
 Defines the settings for Ordered Weight Array (OWA) risk measures.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Fields
 
@@ -1503,7 +1503,7 @@ end
 
 Defines the Gini Mean Difference risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref), [`_GMD`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref), [`_GMD`](@ref).
 
 # Fields
 
@@ -1539,7 +1539,7 @@ end
 
 Defines the Tail Gini Difference risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref), [`_TG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref), [`_TG`](@ref).
 
 # Fields
 
@@ -1605,7 +1605,7 @@ Defines the Tail Gini Difference Range risk measure.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`_TGRG`](@ref), [`TG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`_TGRG`](@ref), [`TG`](@ref).
 
 # Fields
 
@@ -1689,7 +1689,7 @@ Defines the generic Ordered Weight Array risk measure.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`_OWA`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`_OWA`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
 # Fields
 
@@ -1734,7 +1734,7 @@ Define the Brownian Distance Variance risk measure.
 
   - Measures linear and non-linear relationships between variables.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref), [`_BDVariance`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref), [`_BDVariance`](@ref).
 
 # Fields
 
@@ -1766,7 +1766,7 @@ end
 
 Define the Quadratic Skewness risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref), [`_Skew`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref), [`_Skew`](@ref).
 
 # Fields
 
@@ -1781,24 +1781,24 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - If `skew` is `nothing`:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With [`HCPortfolio`](@ref): uses the portfolio coskewness matrix `skew` to generate the `V` matrix.
+      + With : uses the portfolio coskewness matrix `skew` to generate the `V` matrix.
 
   - If `skew` provided:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With [`HCPortfolio`](@ref): uses the custom coskew matrix to generate the `V` matrix.
+      + With : uses the custom coskew matrix to generate the `V` matrix.
 
 ## `V` matrix
 
   - If `V` is `nothing`:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `V` matrix.
-      + With [`HCPortfolio`](@ref): no effect.
+      + With : no effect.
 
   - If `V` provided:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
-      + With [`HCPortfolio`](@ref): no effect.
+      + With : no effect.
 
 ## Validation
 
@@ -1851,7 +1851,7 @@ end
 
 Define the Quadratic Semi Skewness risk measure.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref), [`_Skew`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref), [`_Skew`](@ref).
 
 # Fields
 
@@ -1866,24 +1866,24 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - If `skew` is `nothing`:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With [`HCPortfolio`](@ref): uses the portfolio semi coskewness matrix `sskew` to generate the `V` matrix.
+      + With : uses the portfolio semi coskewness matrix `sskew` to generate the `V` matrix.
 
   - If `skew` provided:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With [`HCPortfolio`](@ref): uses the custom semi coskew matrix to generate the `V` matrix.
+      + With : uses the custom semi coskew matrix to generate the `V` matrix.
 
 ## `V` matrix
 
   - If `V` is `nothing`:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `SV` matrix.
-      + With [`HCPortfolio`](@ref): no effect.
+      + With : no effect.
 
   - If `V` provided:
 
       + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
-      + With [`HCPortfolio`](@ref): no effect.
+      + With : no effect.
 
 ## Validation
 
@@ -1936,7 +1936,7 @@ end
 
 Defines the Variance risk measure.
 
-See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::Variance, ::AbstractVector)`](@ref), [`_Variance`](@ref).
+See also: [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::Variance, ::AbstractVector)`](@ref), [`_Variance`](@ref).
 
 # Fields
 
@@ -1945,7 +1945,7 @@ See also: [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`
 
 # Behaviour
 
-  - If `sigma` is `nothing`: uses the covariance matrix `cov` from the [`HCPortfolio`](@ref) (or [`Portfolio`] when used in [`calc_risk`](@ref)) instance.
+  - If `sigma` is `nothing`: uses the covariance matrix `cov` from the (or [`Portfolio`] when used in [`calc_risk`](@ref)) instance.
   - If `sigma` provided: uses custom covariance matrix.
 
 ## Validation
@@ -1991,7 +1991,7 @@ end
 
 Defines the Semi Variance risk measure.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::SVariance, ::AbstractVector)`](@ref), [`_SVariance`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::SVariance, ::AbstractVector)`](@ref), [`_SVariance`](@ref).
 
 # Fields
 
@@ -2118,7 +2118,7 @@ Defines the Value at Risk risk measure.
   - Measures lower bound of the losses in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`_VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`_VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2166,7 +2166,7 @@ Defines the Drawdown at Risk for uncompounded cumulative returns risk measure.
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`_DaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`_DaR`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2214,7 +2214,7 @@ Defines the Drawdown at Risk for compounded cumulative returns risk measure.
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`_DaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`_DaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2262,7 +2262,7 @@ Maximum Drawdown (Calmar ratio) risk measure for compounded cumulative returns.
   - Measures the largest peak-to-trough decline.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref), [`_MDD_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref), [`_MDD_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
 
 # Fields
 
@@ -2295,7 +2295,7 @@ Average Drawdown risk measure for uncompounded cumulative returns.
   - Measures the average of all peak-to-trough declines.
   - Provides a more balanced view than the maximum drawdown [`MDD_r`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref), [`_ADD_r`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref), [`_ADD_r`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2328,7 +2328,7 @@ Conditional Drawdown at Risk risk measure for compounded cumulative returns.
   - Measures the expected peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`_CDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`_CDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2375,7 +2375,7 @@ Ulcer Index risk measure for compounded cumulative returns.
 
   - Penalizes larger drawdowns more than smaller ones.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref), [`_UCI_r`](@ref), [`UCI`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref), [`_UCI_r`](@ref), [`UCI`](@ref).
 
 # Fields
 
@@ -2408,7 +2408,7 @@ Entropic Drawdown at Risk risk measure for compounded cumulative returns.
   - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`_EDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`_EDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2422,7 +2422,7 @@ See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), 
 
   - When computing [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -2469,7 +2469,7 @@ Relativistic Drawdown at Risk risk measure for compounded cumulative returns.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD_{r}}(\\bm{X})``
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HCPortfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`_RLDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`_RLDaR_r`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Fields
 
@@ -2484,7 +2484,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`HC
 
   - When computing [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/[`HCPortfolio`](@ref).
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
 
 ## Validation

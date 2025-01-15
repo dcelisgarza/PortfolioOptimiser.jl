@@ -34,7 +34,7 @@ The `set_*` variables are flags for deciding whether or not to set the statistic
   - `sskew_type`: semi coskew estimator [`SkewSemi`](@ref).
   - `set_sskew`: set `port.skew` and `port.SV`.
 
-## Only relevant for [`HCPortfolio`](@ref).
+## Only relevant for .
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `set_cor`: flag for setting `port.cor`.
@@ -106,7 +106,7 @@ wc_statistics!(port::Portfolio; wc_type::WCType = WCType(), set_box::Bool = true
                         set_ellipse::Bool = true)
 ```
 
-Compute the worst case mean-variance statistics. Only used in [`WC`](@ref) optimisations. The `set_*` variables are used to compute and set the relevant statistics. See the argument types' docs for details.
+Compute the worst case mean-variance statistics. Only used in  optimisations. The `set_*` variables are used to compute and set the relevant statistics. See the argument types' docs for details.
 
 # Inputs
 
