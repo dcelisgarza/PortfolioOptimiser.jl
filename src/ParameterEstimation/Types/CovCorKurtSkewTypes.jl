@@ -602,6 +602,37 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     mean_w,
                                                                                     posdef)
 end
+mutable struct CorSB2{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+function CorSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+                c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
+                ve::StatsBase.CovarianceEstimator = SimpleVariance(),
+                std_w::Union{<:AbstractWeights, Nothing} = nothing,
+                mean_w::Union{<:AbstractWeights, Nothing} = nothing,
+                posdef::PosdefFix = PosdefNearest())
+    @smart_assert(zero(threshold) < threshold < one(threshold))
+    @smart_assert(zero(c1) < c1 <= one(c1))
+    @smart_assert(zero(c2) < c2 <= one(c2))
+    @smart_assert(c3 > c2)
+    return CorSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+                                                                                    threshold,
+                                                                                    c1, c2,
+                                                                                    c3, n,
+                                                                                    ve,
+                                                                                    std_w,
+                                                                                    mean_w,
+                                                                                    posdef)
+end
 
 """
 ```
@@ -728,6 +759,40 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(c2) < c2 <= one(c2))
     @smart_assert(c3 > c2)
     return CorGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+                                                                                          threshold,
+                                                                                          c1,
+                                                                                          c2,
+                                                                                          c3,
+                                                                                          n,
+                                                                                          ve,
+                                                                                          std_w,
+                                                                                          mean_w,
+                                                                                          posdef)
+end
+
+mutable struct CorGerberSB2{T1, T2, T3, T4, T5} <: CorSB
+    normalise::Bool
+    threshold::T1
+    c1::T2
+    c2::T3
+    c3::T4
+    n::T5
+    ve::StatsBase.CovarianceEstimator
+    std_w::Union{<:AbstractWeights, Nothing}
+    mean_w::Union{<:AbstractWeights, Nothing}
+    posdef::PosdefFix
+end
+function CorGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+                      c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
+                      ve::StatsBase.CovarianceEstimator = SimpleVariance(),
+                      std_w::Union{<:AbstractWeights, Nothing} = nothing,
+                      mean_w::Union{<:AbstractWeights, Nothing} = nothing,
+                      posdef::PosdefFix = PosdefNearest())
+    @smart_assert(zero(threshold) < threshold < one(threshold))
+    @smart_assert(zero(c1) < c1 <= one(c1))
+    @smart_assert(zero(c2) < c2 <= one(c2))
+    @smart_assert(c3 > c2)
+    return CorGerberSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
                                                                                           c2,

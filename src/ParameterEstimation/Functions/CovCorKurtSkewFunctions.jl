@@ -817,6 +817,87 @@ function _cor_gerber(ce::CorSB1, X::AbstractMatrix, mean_vec::AbstractVector,
 
     return rho
 end
+function _cor_gerber_norm(ce::CorSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
+    T, N = size(X)
+    rho = Matrix{eltype(X)}(undef, N, N)
+    threshold = ce.threshold
+    c1 = ce.c1
+    c2 = ce.c2
+    c3 = ce.c3
+    n = ce.n
+
+    for j ∈ axes(X, 2)
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
+        for i ∈ 1:j
+            neg = zero(eltype(X))
+            pos = zero(eltype(X))
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
+            for k ∈ 1:T
+                xi = (X[k, i] - mui) / sigmai
+                xj = (X[k, j] - muj) / sigmaj
+                ti = threshold
+                tj = threshold
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                end
+            end
+            rho[i, j] = pos - neg
+        end
+    end
+
+    h = sqrt.(diag(rho))
+    rho .= Symmetric(rho ./ (h * transpose(h)), :U)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+function _cor_gerber(ce::CorSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
+    T, N = size(X)
+    rho = Matrix{eltype(X)}(undef, N, N)
+    threshold = ce.threshold
+    c1 = ce.c1
+    c2 = ce.c2
+    c3 = ce.c3
+    n = ce.n
+
+    for j ∈ axes(X, 2)
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
+        for i ∈ 1:j
+            neg = zero(eltype(X))
+            pos = zero(eltype(X))
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
+            for k ∈ 1:T
+                xi = X[k, i]
+                xj = X[k, j]
+                ti = threshold * sigmai
+                tj = threshold * sigmaj
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                end
+            end
+
+            rho[i, j] = pos - neg
+        end
+    end
+
+    h = sqrt.(diag(rho))
+    rho .= Symmetric(rho ./ (h * transpose(h)), :U)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
 function _cor_gerber_norm(ce::CorGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
@@ -1026,6 +1107,95 @@ function _cor_gerber(ce::CorGerberSB1, X::AbstractMatrix, mean_vec::AbstractVect
     end
 
     rho .= Symmetric(rho, :U)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+function _cor_gerber_norm(ce::CorGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
+    T, N = size(X)
+    rho = Matrix{eltype(X)}(undef, N, N)
+    threshold = ce.threshold
+    c1 = ce.c1
+    c2 = ce.c2
+    c3 = ce.c3
+    n = ce.n
+
+    for j ∈ axes(X, 2)
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
+        for i ∈ 1:j
+            neg = zero(eltype(X))
+            pos = zero(eltype(X))
+            cneg = 0
+            cpos = 0
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
+            for k ∈ 1:T
+                xi = (X[k, i] - mui) / sigmai
+                xj = (X[k, j] - muj) / sigmaj
+                ti = threshold
+                tj = threshold
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    cpos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    cneg += 1
+                end
+            end
+            rho[i, j] = pos * cpos - neg * cneg
+        end
+    end
+
+    h = sqrt.(diag(rho))
+    rho .= Symmetric(rho ./ (h * transpose(h)), :U)
+    posdef_fix!(ce.posdef, rho)
+
+    return rho
+end
+function _cor_gerber(ce::CorGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
+    T, N = size(X)
+    rho = Matrix{eltype(X)}(undef, N, N)
+    threshold = ce.threshold
+    c1 = ce.c1
+    c2 = ce.c2
+    c3 = ce.c3
+    n = ce.n
+
+    for j ∈ axes(X, 2)
+        muj = mean_vec[j]
+        sigmaj = std_vec[j]
+        for i ∈ 1:j
+            neg = zero(eltype(X))
+            pos = zero(eltype(X))
+            cneg = 0
+            cpos = 0
+            mui = mean_vec[i]
+            sigmai = std_vec[i]
+            for k ∈ 1:T
+                xi = X[k, i]
+                xj = X[k, j]
+                ti = threshold * sigmai
+                tj = threshold * sigmaj
+                if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cpos += 1
+                elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    cneg += 1
+                end
+            end
+
+            rho[i, j] = pos * cpos - neg * cneg
+        end
+    end
+
+    h = sqrt.(diag(rho))
+    rho .= Symmetric(rho ./ (h * transpose(h)), :U)
     posdef_fix!(ce.posdef, rho)
 
     return rho
