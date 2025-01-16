@@ -408,10 +408,17 @@ function get_external_tr(x::TR, w)
     return TR(; val = get_external_real_or_vector(x.val, w),
               w = get_external_vector(x.w, w))
 end
-
+function pre_modify_intra_port!(::NoNCOModify, internal_args, cluster, cidx, idx_sq, Nc,
+                                special_rm_idx)
+    return nothing
+end
+function post_modify_intra_port!(::NoNCOModify, internal_args, cluster, cidx, idx_sq, Nc,
+                                 special_rm_idx)
+    return nothing
+end
 function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                                special_rm_idx)
-    (; type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
+    (; type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
 
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
@@ -596,6 +603,9 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
 
+    pre_modify_intra_port!(pre_modify, internal_args, cluster, cidx, idx_sq, Nc,
+                           special_rm_idx)
+
     if !isempty(stats_kwargs)
         asset_statistics!(intra_port; stats_kwargs...)
     end
@@ -608,6 +618,9 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
     if hc_flag
         cluster_assets!(intra_port; cluster_kwargs...)
     end
+
+    post_modify_intra_port!(post_modify, internal_args, cluster, cidx, idx_sq, Nc,
+                            special_rm_idx)
 
     w = optimise!(intra_port, type)
     if !isempty(w)
@@ -845,8 +858,16 @@ function set_rm_stats(port, rm, wi, special_rm_idx)
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms)
 end
+function pre_modify_inter_port!(::NoNCOModify, inter_port, wi, external_args,
+                                special_rm_idx)
+    return nothing
+end
+function post_modify_inter_port!(::NoNCOModify, inter_port, wi, external_args,
+                                 special_rm_idx)
+    return nothing
+end
 function get_external_portfolio(port, wi, external_args, special_rm_idx)
-    (; type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = external_args
+    (; type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = external_args
 
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
@@ -969,6 +990,8 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
 
+    pre_modify_inter_port!(pre_modify, inter_port, wi, external_args, special_rm_idx)
+
     asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = hc_flag,
                       set_dist = hc_flag, set_kurt = kurt_flag, set_skurt = skurt_flag,
                       set_skew = skew_flag, set_sskew = sskew_flag, stats_kwargs...)
@@ -981,6 +1004,8 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     if hc_flag
         cluster_assets!(inter_port; cluster_kwargs...)
     end
+
+    post_modify_inter_port!(post_modify, inter_port, wi, external_args, special_rm_idx)
 
     w = optimise!(inter_port, type)
     if !isempty(w)

@@ -312,19 +312,27 @@ function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
     return HERC(rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser)
 end
 
+abstract type AbstractNCOModify end
+struct NoNCOModify <: AbstractNCOModify end
+
 mutable struct NCOArgs
     type::AbstractOptimType
+    pre_modify::AbstractNCOModify
+    post_modify::AbstractNCOModify
     port_kwargs::NamedTuple
     stats_kwargs::NamedTuple
     wc_kwargs::NamedTuple
     factor_kwargs::NamedTuple
     cluster_kwargs::NamedTuple
 end
-function NCOArgs(; type::AbstractOptimType = Trad(), port_kwargs::NamedTuple = (;),
-                 stats_kwargs::NamedTuple = (;), wc_kwargs::NamedTuple = (;),
-                 factor_kwargs::NamedTuple = (;), cluster_kwargs::NamedTuple = (;))
-    return NCOArgs(type, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs,
-                   cluster_kwargs)
+function NCOArgs(; type::AbstractOptimType = Trad(),
+                 pre_modify::AbstractNCOModify = NoNCOModify(),
+                 post_modify::AbstractNCOModify = NoNCOModify(),
+                 port_kwargs::NamedTuple = (;), stats_kwargs::NamedTuple = (;),
+                 wc_kwargs::NamedTuple = (;), factor_kwargs::NamedTuple = (;),
+                 cluster_kwargs::NamedTuple = (;))
+    return NCOArgs(type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs,
+                   factor_kwargs, cluster_kwargs)
 end
 """
 ```
