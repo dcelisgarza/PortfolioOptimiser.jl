@@ -61,7 +61,7 @@ calc_risk(::WR, ::AbstractVector)
 PortfolioOptimiser._WR
 calc_risk(::VaR, ::AbstractVector)
 PortfolioOptimiser._VaR
-calc_risk(::CVaR, ::AbstractVector)
+calc_risk(::Union{CVaR, DRCVaR}, ::AbstractVector)
 PortfolioOptimiser._CVaR
 PortfolioOptimiser.ERM
 calc_risk(::EVaR, ::AbstractVector)

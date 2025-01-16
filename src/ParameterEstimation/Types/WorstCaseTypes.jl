@@ -160,5 +160,5 @@ function WCType(; cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
     return WCType(cov_type, mu_type, box, ellipse, k_sigma, k_mu, posdef, diagonal)
 end
 
-export Box, Ellipse, NoWC, StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC,
-       KNormalWC, KGeneralWC, WCType
+export StationaryBS, CircularBS, MovingBS, ArchWC, NormalWC, DeltaWC, KNormalWC, KGeneralWC,
+       WCType

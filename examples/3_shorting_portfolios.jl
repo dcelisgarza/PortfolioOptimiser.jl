@@ -3,7 +3,7 @@
 
 This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 
-This example focuses on using the shorting constraints available to [`Trad`](@ref) and [`WC`](@ref) optimisations of [`Portfolio`](@ref).
+This example focuses on using the shorting constraints available to [`Trad`](@ref) and  optimisations of [`Portfolio`](@ref).
 
 ## 3.1 Downloading the data
 =#

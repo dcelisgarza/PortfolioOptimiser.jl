@@ -3,7 +3,7 @@
 
 This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 
-This example focuses on the [`wc_statistics!`](@ref) used in the [`WC`](@ref) optimisation type of [`Portfolio`](@ref).
+This example focuses on the [`wc_statistics!`](@ref) used in the  optimisation type of [`Portfolio`](@ref).
 
 ## 7.1 Downloading the data
 =#

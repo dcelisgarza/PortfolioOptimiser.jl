@@ -3,7 +3,7 @@
 
 This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 
-This example focuses on the [`WC`](@ref) optimisation type of [`Portfolio`](@ref).
+This example focuses on the  optimisation type of [`Portfolio`](@ref).
 
 ## 6.1 Downloading the data
 =#
@@ -78,7 +78,7 @@ wc_statistics!(portfolio)
 #=
 ## 6.4 Optimising the portfolio
 
-Having computed our worst case statistics, we can optimise the portfolio. The [`WC`](@ref) struct defines which set types to use in the worst case mean variance optimisation. [`WC`](@ref) defaults to using [`Box`](@ref) constraints for both the expected returns vector and covariance matrix.
+Having computed our worst case statistics, we can optimise the portfolio. The  struct defines which set types to use in the worst case mean variance optimisation.  defaults to using [`Box`](@ref) constraints for both the expected returns vector and covariance matrix.
 
 User-provided risk measures have no effect on this type of optimisation will only perform a mean variance optimisation with uncertainty sets.
 

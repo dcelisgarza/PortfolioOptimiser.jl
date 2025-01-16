@@ -112,6 +112,15 @@ SKurt
 SSkew
 ```
 
+#### Worst case variance
+
+```@docs
+PortfolioOptimiser.WorstCaseSet
+Box
+Ellipse
+NoWC
+```
+
 ### Downside risk measures
 
 These measure different aspects of the tail (negative side) of the returns distribution.

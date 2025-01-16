@@ -2797,7 +2797,8 @@ function calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
 end
 
 """
-    calc_risk(cvar::CVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    calc_risk(cvar::Union{CVaR, DRCVaR}, w::AbstractVector; X::AbstractMatrix,
+                   kwargs...)
 
 # Description
 

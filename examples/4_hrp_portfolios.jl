@@ -3,7 +3,7 @@
 
 This example follows from previous ones. If something in the preamble is confusing, it is explained there.
 
-This example focuses on the [`HRP`](@ref) optimisation type of [`HCPortfolio`](@ref).
+This example focuses on the [`HRP`](@ref) optimisation type of .
 
 ## 4.1 Downloading the data
 =#
@@ -44,7 +44,7 @@ prices = prices[cidx]
 TimeSeries.rename!(prices, Symbol.(assets));
 
 #=
-## 4.2 Instantiating an instance of [`HCPortfolio`](@ref).
+## 4.2 Instantiating an instance of .
 
 Since we're going to be performing [`HRP`](@ref) optimisations, we only need `solvers` for entropic and relativistic risk measures. Others don't make use of a solver, they can be computed from the asset statistics.
 =#
@@ -76,7 +76,7 @@ asset_statistics!(portfolio; cov_type = cov_type, cor_type = cor_type,
 
 ## 4.3.1 Hierarchical clustering
 
-All [`HCPortfolio`]s use the assets' correlation structure to optimise the portfolios based on their correlation structure. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with two clustering methods.
+All s use the assets' correlation structure to optimise the portfolios based on their correlation structure. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) comes with two clustering methods.
 
 - Hierarchical clustering using [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
 - [`Direct Bubble Hierarchy Trees`](https://uk.mathworks.com/matlabcentral/fileexchange/46750-dbht).

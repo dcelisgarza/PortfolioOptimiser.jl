@@ -6,7 +6,7 @@
 Modules = [PortfolioOptimiser]
 Public = true
 Private = false
-Pages = ["Optimisation/Functions/PortfolioOptimisationGetZ.jl"]
+Pages = ["Optimisation/Functions/PortfolioOptimisationUtils.jl"]
 ```
 
 ## Private
@@ -15,5 +15,5 @@ Pages = ["Optimisation/Functions/PortfolioOptimisationGetZ.jl"]
 Modules = [PortfolioOptimiser]
 Public = false
 Private = true
-Pages = ["Optimisation/Functions/PortfolioOptimisationGetZ.jl"]
+Pages = ["Optimisation/Functions/PortfolioOptimisationUtils.jl"]
 ```

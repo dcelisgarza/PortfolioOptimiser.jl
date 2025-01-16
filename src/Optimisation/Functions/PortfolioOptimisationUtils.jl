@@ -1,6 +1,7 @@
 """
 ```
 get_z_from_model(model::JuMP.Model, ::Union{EVaR, EDaR, RLVaR, RLDaR})
+get_z_from_model(model::JuMP.Model, ::Union{AbstractVector{<:EVaR}, EDaRAbstractVecto{<: ,} AbstractVector{<:RLVaR}, AbstractVector{<:RLDaR}})
 ```
 """
 function get_z_from_model(model::JuMP.Model, ::EVaR)

@@ -9,7 +9,7 @@
 
 ## Description
 
-PortfolioOptimiser is a library for portfolio optimisation. It was written with composability and extensibility in mind. It offers a broad range of functionality out of the box. It wraps a lot of external functionality in types for dispatch purposes and to allow easy development and extensibility.
+[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) is a library for portfolio optimisation. It offers a broad range of functionality out of the box, but leverages Julia's type system and multiple dispatch to make it composable and extensible.
 
 ## Parameter estimation
 
@@ -277,7 +277,7 @@ This type of optimisation is the traditional efficient frontier optimisation.
 
   - L-moment ordered weight array, [`OWA`](@ref).
 
-### Worst case mean variance, [`WC`](@ref)
+### Worst case mean variance
 
 This type of optimisation requires worst case sets for the covariance and expected returns. The optimisation uses these sets to perform a mean variance optimisation.
 
@@ -450,7 +450,7 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
 
 ## Hierarchical portfolio optimisation
 
-These types of optimisations act on instances of [`HCPortfolio`](@ref).
+These types of optimisations act on instances of .
 
 ### Hierarchical risk parity, [`HRP`](@ref), and hierarchical equal risk parity, [`HERC`](@ref)
 
@@ -536,7 +536,7 @@ Nested clustered optimisation combines the ideas of hierarchical equal risk pari
 
 #### Sub-types
 
-[`NCO`](@ref) can take keyword arguments that define the supported by optimisations of [`Portfolio`](@ref). Since there are intra- and inter-cluster optimisations, it can take individual arguments for both. This means it can perform any combination of [`Portfolio`](@ref) optimisations, except for [`WC`](@ref).
+[`NCO`](@ref) can take keyword arguments that define the supported by optimisations of [`Portfolio`](@ref). Since there are intra- and inter-cluster optimisations, it can take individual arguments for both. This means it can perform any combination of [`Portfolio`](@ref) optimisations.
 
 #### NCO-Trad, NCO-NOC-Trad
 

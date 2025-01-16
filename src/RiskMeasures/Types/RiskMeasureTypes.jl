@@ -2654,4 +2654,4 @@ export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD
        SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
        SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
        Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR
+       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC
