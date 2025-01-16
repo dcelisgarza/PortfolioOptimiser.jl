@@ -1,28 +1,93 @@
 """
-```
+    abstract type AbstractOptimType end
+
+Abstract type for the different types of optimisations.
+"""
 abstract type AbstractOptimType end
-```
-"""
-abstract type AbstractOptimType end
 
 """
-```
-abstract type OptimType <: AbstractOptimType end
-```
+    abstract type OptimType <: AbstractOptimType end
+
+Abstract type for optimisations that are not hierarchical.
 """
 abstract type OptimType <: AbstractOptimType end
 
 """
-```
-abstract type HCOptimType <: AbstractOptimType end
-```
+    abstract type HCOptimType <: AbstractOptimType end
+
+Abstract type for hierarchical optimisations.
 """
 abstract type HCOptimType <: AbstractOptimType end
 
+"""
+    abstract type AbstractScalarisation end
+
+Abstract type for scalarisation functions used when simultaneously optimising for multiple risk measures.
+"""
 abstract type AbstractScalarisation end
+
+"""
+    struct ScalarSum <: AbstractScalarisation end
+
+Scalarises the risk measures as a weighted sum.
+
+```math
+\\begin{align}
+    r &= \\bm{r} \\cdot \\bm{w}
+\\end{align}
+```
+
+Where:
+
+  - ``r`` is the scalarised risk.
+  - ``\\bm{r}`` is the vector of risk measures.
+  - ``\\bm{w}`` is the corresponding vector of risk measure weights
+  - ``\\cdot`` is the dot product.
+"""
 struct ScalarSum <: AbstractScalarisation end
+
+"""
+    struct ScalarMax <: AbstractScalarisation end
+
+Scalarises the risk measures by taking the maximum of them.
+
+```math
+\\begin{align}
+    r &= \\max \\left( \\bm{r} \\odot \\bm{w} \\right)
+\\end{align}
+```
+
+Where:
+
+  - ``r`` is the scalarised risk.
+  - ``\\bm{r}`` is the vector of risk measures.
+  - ``\\bm{w}`` is the corresponding vector of risk measure weights.
+  - ``\\odot`` is the Hadamard (element-wise) multiplication.
+"""
 struct ScalarMax <: AbstractScalarisation end
-struct ScalarMin <: AbstractScalarisation end
+
+"""
+    mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation end
+
+Scalarises the risk measures as the log_sum_exp of the weighted risk measures.
+
+```math
+\\begin{align}
+    r &= \\frac{1}{\\gamma} \\log \\left( \\sum_{i = 1}^{N} \\exp(\\gamma r_i w_i) \\right)
+\\end{align}
+```
+
+Where:
+
+  - ``r`` is the scalarised risk.
+  - ``r_i`` is the ``i``-th risk measure.
+  - ``w_i`` is the weight of the ``i``-th risk measure.
+  - ``\\gamma`` is a parameter that controls the shape of the scalarisation.
+
+# Parameters
+
+  - `gamma::Real = 1.0`: `gamma > 0`. As `gamma` approches 0, the scalarisation approaches [`ScalarSum`](@ref). As `gamma` approaches infinity, the scalarisation approaches [`ScalarMax`](@ref).
+"""
 mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation
     gamma::T1
 end

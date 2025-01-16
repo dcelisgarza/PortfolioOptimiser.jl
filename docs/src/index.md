@@ -94,6 +94,14 @@ DataFrames.rename!(wd, :weights => :allocated_weights)
 show(wd)
 ```
 
+## Functionality
+
+### Optimisation models
+
+  - Traditional, [`Trad`](@ref).
+  - Risk Budgeting, [`RP`](@ref).
+  - Near Optimal Centering, [`NOC`](@ref).
+
 ## Parameter estimation
 
 ### Matrix processing
