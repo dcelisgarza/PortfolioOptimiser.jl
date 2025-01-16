@@ -2,6 +2,8 @@
     abstract type AbstractOptimType end
 
 Abstract type for the different types of optimisations.
+
+See also: [`OptimType`](@ref) and [`HCOptimType`](@ref).
 """
 abstract type AbstractOptimType end
 
@@ -9,6 +11,8 @@ abstract type AbstractOptimType end
     abstract type OptimType <: AbstractOptimType end
 
 Abstract type for optimisations that are not hierarchical.
+
+See also: [`AbstractOptimType`](@ref), [`HCOptimType`](@ref), [`Trad`](@ref), [`RB`](@ref), [`RRB`](@ref), [`NOC`](@ref).
 """
 abstract type OptimType <: AbstractOptimType end
 
@@ -16,6 +20,8 @@ abstract type OptimType <: AbstractOptimType end
     abstract type HCOptimType <: AbstractOptimType end
 
 Abstract type for hierarchical optimisations.
+
+See also: [`AbstractOptimType`](@ref), [`OptimType`](@ref), [`HRP`](@ref), [`SchurHRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
 """
 abstract type HCOptimType <: AbstractOptimType end
 
@@ -23,6 +29,8 @@ abstract type HCOptimType <: AbstractOptimType end
     abstract type AbstractScalarisation end
 
 Abstract type for scalarisation functions used when simultaneously optimising for multiple risk measures.
+
+See also: [`ScalarSum`](@ref), [`ScalarMax`](@ref), [`ScalarLogSumExp`](@ref).
 """
 abstract type AbstractScalarisation end
 
@@ -30,6 +38,8 @@ abstract type AbstractScalarisation end
     struct ScalarSum <: AbstractScalarisation end
 
 Scalarises the risk measures as a weighted sum.
+
+See also: [`AbstractScalarisation`](@ref).
 
 ```math
 \\begin{align}
@@ -43,6 +53,12 @@ Where:
   - ``\\bm{r}`` is the vector of risk measures.
   - ``\\bm{w}`` is the corresponding vector of risk measure weights
   - ``\\cdot`` is the dot product.
+
+# Examples
+
+```julia
+scalariser = ScalarSum()
+```
 """
 struct ScalarSum <: AbstractScalarisation end
 
@@ -50,6 +66,8 @@ struct ScalarSum <: AbstractScalarisation end
     struct ScalarMax <: AbstractScalarisation end
 
 Scalarises the risk measures by taking the maximum of them.
+
+See also: [`AbstractScalarisation`](@ref).
 
 ```math
 \\begin{align}
@@ -63,6 +81,12 @@ Where:
   - ``\\bm{r}`` is the vector of risk measures.
   - ``\\bm{w}`` is the corresponding vector of risk measure weights.
   - ``\\odot`` is the Hadamard (element-wise) multiplication.
+
+# Examples
+
+```julia
+scalariser = ScalarMax()
+```
 """
 struct ScalarMax <: AbstractScalarisation end
 
@@ -70,6 +94,8 @@ struct ScalarMax <: AbstractScalarisation end
     mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation end
 
 Scalarises the risk measures as the log_sum_exp of the weighted risk measures.
+
+See also: [`AbstractScalarisation`](@ref).
 
 ```math
 \\begin{align}
@@ -84,9 +110,22 @@ Where:
   - ``w_i`` is the weight of the ``i``-th risk measure.
   - ``\\gamma`` is a parameter that controls the shape of the scalarisation.
 
-# Parameters
+# Keyword Parameters
 
-  - `gamma::Real = 1.0`: `gamma > 0`. As `gamma` approches 0, the scalarisation approaches [`ScalarSum`](@ref). As `gamma` approaches infinity, the scalarisation approaches [`ScalarMax`](@ref).
+  - `gamma::Real = 1.0`: `gamma > 0`. As `gamma → 0`, the scalarisation approaches [`ScalarSum`](@ref). As `gamma → Inf`, the scalarisation approaches [`ScalarMax`](@ref).
+
+# Examples
+
+```julia
+# Default constructor.
+scalariser = ScalarLogSumExp()
+
+# Approximate ScalarSum()
+scalariser = ScalarLogSumExp(; gamma = 1e-6)
+
+# Approximate ScalarMax()
+scalariser = ScalarLogSumExp(; gamma = 1e6)
+```
 """
 mutable struct ScalarLogSumExp{T1 <: Real} <: AbstractScalarisation
     gamma::T1
@@ -103,8 +142,60 @@ function Base.setproperty!(obj::ScalarLogSumExp, sym::Symbol, val)
 end
 
 """
-```
-struct Trad <: OptimType end
+    mutable struct Trad{T1, T2} <: OptimType
+
+Traditional optimisation type.
+
+See also: [`OptimType`](@ref), [`RiskMeasure`](@ref), [`ObjectiveFunction`](@ref), [`RetType`](@ref), [`PortClass`](@ref), [`CustomConstraint`](@ref), [`CustomObjective`](@ref), [`AbstractScalarisation`](@ref).
+
+# Keyword Parameters
+
+  - `rm::Union{AbstractVector, <:RiskMeasure} = Variance()`: The risk measure(s) to be used.
+
+      + If multiple instances of the same risk measure are used, they must be grouped in a single vector wrapped in another vector, see examples.
+
+  - `obj::ObjectiveFunction = MinRisk()`: The objective function to be used.
+  - `kelly::RetType = NoKelly()`: The Kelly criterion to be used.
+  - `class::PortClass = Classic()`: The portfolio class to be used.
+  - `w_ini::T1 = Vector{Float64}(undef, 0) where T1 <: AbstractVector`: The initial weights for the optimisation.
+
+      + Irrelevant if the solver does not support them.
+  - `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
+  - `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
+  - `ohf::T2 = 1.0 where T2 <: Real`: The optimal homogenisation factor.
+
+      + Only used when `obj == Sharpe()`, and if `iszero(ohf)`, [`optimise!`](@ref) sets its value in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model by using a heuristic.
+  - `scalarisation::AbstractScalarisation = ScalarSum()`: The scalarisation function to be used.
+
+      + Only relevant when multiple risk measures are used.
+  - `str_names::Bool = false`: Whether to use string names in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+
+# Examples
+
+```julia
+# Default constructor.
+opt_type = Trad()
+
+# Single risk measure.
+opt_type = Trad(; rm = SD())
+
+# Multiple risk measures.
+opt_type = Trad(; rm = [Variance(), CVaR(; alpha = 0.15)])
+
+# Incorrect use of multiple risk measures of the same type.
+# This will produce a JuMP registration error when optimise! is called.
+opt_type = Trad(; rm = [CVaR(), CVaR(; alpha = 0.2)])
+
+# Correct use of multiple risk measures of the same type.
+opt_type = Trad(; rm = [[CVaR(), CVaR(; alpha = 0.2)]])
+
+# Incorrect use of multiple risk measures, some of the same type.
+# This will produce a JuMP registration error regarding the CVaR
+# risk measure when optimise! is called.
+opt_type = Trad(; rm = [MAD(), CVaR(), CVaR(; alpha = 0.2)])
+
+# Correct use of multiple risk measures, some of the same type.
+opt_type = Trad(; rm = [MAD(), [CVaR(), CVaR(; alpha = 0.2)]])
 ```
 """
 mutable struct Trad{T1, T2} <: OptimType
@@ -131,11 +222,11 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
 end
 
 """
-```
-struct RP <: OptimType end
-```
+    mutable struct RB{T1} <: OptimType
+
+Risk budget optimisation type. Allows the user to specify a risk budget vector specifying the maximum risk contribution per asset or factor. The asset weights are then optimised to meet the risk budget per asset/factor as optimally as possible.
 """
-mutable struct RP{T1} <: OptimType
+mutable struct RB{T1} <: OptimType
     rm::Union{AbstractVector, <:RiskMeasure}
     kelly::RetType
     class::PortClass
@@ -145,60 +236,60 @@ mutable struct RP{T1} <: OptimType
     scalarisation::AbstractScalarisation
     str_names::Bool
 end
-function RP(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
+function RB(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
             kelly::RetType = NoKelly(), class::PortClass = Classic(),
             w_ini::AbstractVector = Vector{Float64}(undef, 0),
             custom_constr::CustomConstraint = NoCustomConstraint(),
             custom_obj::CustomObjective = NoCustomObjective(),
             scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
-    return RP{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj,
+    return RB{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj,
                              scalarisation, str_names)
 end
 
 """
 ```
-abstract type RRPVersion end
+abstract type RRBVersion end
 ```
 """
-abstract type RRPVersion end
+abstract type RRBVersion end
 
 """
 ```
-struct BasicRRP <: RRPVersion end
+struct BasicRRB <: RRBVersion end
 ```
 """
-struct BasicRRP <: RRPVersion end
+struct BasicRRB <: RRBVersion end
 
 """
 ```
-struct RegRRP <: RRPVersion end
+struct RegRRB <: RRBVersion end
 ```
 """
-struct RegRRP <: RRPVersion end
+struct RegRRB <: RRBVersion end
 
 """
 ```
-@kwdef mutable struct RegPenRRP{T1 <: Real} <: RRPVersion
+@kwdef mutable struct RegPenRRB{T1 <: Real} <: RRBVersion
     penalty::T1 = 1.0
 end
 ```
 """
-mutable struct RegPenRRP{T1} <: RRPVersion
+mutable struct RegPenRRB{T1} <: RRBVersion
     penalty::T1
 end
-function RegPenRRP(; penalty::Real = 1.0)
-    return RegPenRRP(penalty)
+function RegPenRRB(; penalty::Real = 1.0)
+    return RegPenRRB(penalty)
 end
 
 """
 ```
-@kwdef mutable struct RRP <: OptimType
-    version::RRPVersion = BasicRRP()
+@kwdef mutable struct RRB <: OptimType
+    version::RRBVersion = BasicRRB()
 end
 ```
 """
-mutable struct RRP{T1} <: OptimType
-    version::RRPVersion
+mutable struct RRB{T1} <: OptimType
+    version::RRBVersion
     kelly::RetType
     class::PortClass
     w_ini::T1
@@ -206,15 +297,15 @@ mutable struct RRP{T1} <: OptimType
     custom_obj::CustomObjective
     str_names::Bool
 end
-function RRP(; version::RRPVersion = BasicRRP(), kelly::RetType = NoKelly(),
+function RRB(; version::RRBVersion = BasicRRB(), kelly::RetType = NoKelly(),
              class::PortClass = Classic(),
              w_ini::AbstractVector = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
              custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false,)
-    return RRP{typeof(w_ini)}(version, kelly, class, w_ini, custom_constr, custom_obj,
+    return RRB{typeof(w_ini)}(version, kelly, class, w_ini, custom_constr, custom_obj,
                               str_names)
 end
-function Base.getproperty(obj::RRP, sym::Symbol)
+function Base.getproperty(obj::RRB, sym::Symbol)
     return if sym == :rm
         nothing
     else
@@ -344,6 +435,10 @@ function Base.setproperty!(obj::SchurParams, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+
+"""
+    mutable struct SchurHRP <: HCOptimType
+"""
 mutable struct SchurHRP <: HCOptimType
     params::Union{AbstractVector, <:SchurParams}
     class::PortClass
@@ -439,8 +534,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RP, RRP, NOC, HRP, HERC, NCO, SchurHRP),
-                     ("Trad", "RP", "RRP", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
+for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP),
+                     ("Trad", "RB", "RRB", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
     eval(quote
              function Base.String(::$op)
                  return $name
@@ -451,5 +546,5 @@ for (op, name) ∈ zip((Trad, RP, RRP, NOC, HRP, HERC, NCO, SchurHRP),
          end)
 end
 
-export Trad, RP, BasicRRP, RegRRP, RegPenRRP, RRP, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
+export Trad, RB, BasicRRB, RegRRB, RegPenRRB, RRB, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
        SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp

@@ -436,7 +436,7 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
     bl_flag = isa(class, Union{BL, BLFM})
     blfm_flag = isa(class, BLFM)
     hc_flag = isa(type, HCOptimType)
-    rp_flag = isa(type, Union{RP, RRP})
+    rp_flag = isa(type, Union{RB, RRB})
     cvx_flag = isa(type, OptimType)
 
     assets = get_cluster_vector(assets, cidx)
@@ -885,7 +885,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     bl_flag = isa(class, Union{BL, BLFM})
     blfm_flag = isa(class, BLFM)
     hc_flag = isa(type, HCOptimType)
-    rp_flag = isa(type, Union{RP, RRP})
+    rp_flag = isa(type, Union{RB, RRB})
     cvx_flag = isa(type, OptimType)
 
     assets = 1:size(wi, 2)

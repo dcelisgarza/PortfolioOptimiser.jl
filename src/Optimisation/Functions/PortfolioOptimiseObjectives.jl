@@ -93,7 +93,7 @@ function set_objective_function(port, ::NOC, custom_obj)
     @objective(model, Min, scale_obj * obj_func)
     return nothing
 end
-function set_objective_function(port, ::Union{RP, RRP}, custom_obj)
+function set_objective_function(port, ::Union{RB, RRB}, custom_obj)
     model = port.model
     scale_obj = model[:scale_obj]
     risk = model[:risk]

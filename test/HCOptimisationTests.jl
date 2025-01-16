@@ -484,7 +484,7 @@ end
           1.980131237893785e-8, 0.12956927701980497]
     @test isapprox(w4.weights, wt)
 
-    w5 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = sd))))
+    w5 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = sd))))
     wt = [0.02951361849950664, 0.031104849715876133, 0.02793314036244879,
           0.02656314996044489, 0.02698369883073134, 0.03534642287440858,
           0.01670180592241015, 0.16962120247500095, 0.024968721727516394,
@@ -494,7 +494,7 @@ end
           0.028415495601899526, 0.037406883576782755]
     @test isapprox(w5.weights, wt, rtol = 0.0001)
 
-    w6 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RRP())))
+    w6 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RRB())))
     wt = [0.02951385510830519, 0.031104277103431124, 0.02793205044129874,
           0.02656246758388314, 0.02698306510931954, 0.03534824108098223,
           0.01670179407097666, 0.1696243734884042, 0.024968807965950374,
@@ -570,7 +570,7 @@ end
 
     w3 = optimise!(portfolio,
                    NCO(;
-                       internal = NCOArgs(; type = RP(;),
+                       internal = NCOArgs(; type = RB(;),
                                           port_kwargs = (; f_assets = f_assets,
                                                          f_ret = f_returns))))
 
@@ -580,7 +580,7 @@ end
 
     w4 = optimise!(portfolio,
                    NCO(;
-                       internal = NCOArgs(; type = RP(; class = FC(; flag = false)),
+                       internal = NCOArgs(; type = RB(; class = FC(; flag = false)),
                                           port_kwargs = (; f_assets = f_assets,
                                                          f_ret = f_returns),
                                           factor_kwargs = (; mu_type = MuSimple()))))
@@ -1200,7 +1200,7 @@ end
                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w4 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w5 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w5 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.013937085585839061, 0.04359528939613315, 0.010055244196525516,
            0.018529417015299345, 0.0060008557954075595, 0.06377945741010448,
            8.830053665226257e-7, 0.13066772968460527, 7.275669461246384e-6,
@@ -1254,7 +1254,7 @@ end
                                           type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w9 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w10 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w10 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.04059732452480461, 0.045600642166333714, 0.0008508832264865543,
            0.006437853767255612, 0.0028417982769144107, 0.05930364215554,
            3.9051667245469696e-9, 0.15293341427728768, 0.005759784188884512,
@@ -1309,7 +1309,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w14 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w15 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w15 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [7.121013120801824e-6, 0.061607987382417705, 1.4912756768376158e-9,
            0.009681807066376894, 0.009020659057053952, 0.059478722069370014,
            1.3179217642229542e-9, 0.11544692256445871, 1.5887557238653072e-9,
@@ -1364,7 +1364,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w19 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w20 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w20 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.016087285360179032, 0.03929456125680425, 2.654669650722757e-8,
            0.009017145085378016, 0.04852710668341847, 0.022953259582093585,
            0.00113984978745799, 0.1456189117438582, 0.003637704859085449,
@@ -1419,7 +1419,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w24 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w25 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w25 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [5.889098113924682e-9, 0.06587618283494774, 1.5750531512406229e-9,
            0.008307801198717074, 0.025055535680020887, 0.031007017694062042,
            6.622189397331921e-9, 0.11895069126754958, 5.227655044085646e-10,
@@ -1473,7 +1473,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w29 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w30 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w30 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [1.9747133396600235e-11, 0.28983188049620723, 2.2178320507471025e-11,
            2.3903571001566017e-9, 8.896231855698167e-11, 1.5285685327330832e-10,
            0.15054354915956833, 0.24258042615731373, 3.844939099024774e-20,
@@ -1528,7 +1528,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w34 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w35 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w35 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [3.664859661161272e-10, 0.0762203721651536, 6.441778816535088e-11,
            0.03138093007735649, 0.027626085711376314, 0.02300652225536527,
            5.844065587830882e-11, 0.13924934619748974, 5.805427791614419e-11,
@@ -1583,7 +1583,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w39 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w40 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w40 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [1.3785795089567192e-8, 0.1360835835861814, 9.796765065975505e-9,
            0.03979459018377941, 1.6617234434301553e-8, 0.05740929288219373,
            0.04390484034087705, 0.14120918087952655, 7.207773383460931e-9,
@@ -1643,7 +1643,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w44 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w45 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w45 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [2.529276503881537e-9, 0.21191459984592514, 2.4711225945029506e-9,
            0.09271239767205439, 7.05231706834582e-9, 0.029526571282439483,
            0.09814897392077784, 0.1951501120999505, 7.101329052225676e-10,
@@ -1703,7 +1703,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w49 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w50 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w50 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.09306804224438855, 2.965538175980197e-9, 5.120616924704069e-10,
            0.012498074010119991, 3.7922350595309275e-11, 4.389967746479165e-12,
            1.571554053547651e-10, 0.01890604423249791, 1.3485844134776075e-10,
@@ -1758,7 +1758,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w54 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w55 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w55 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [4.858382022674378e-10, 0.053481853549220186, 0.12301036094781877,
            1.1572606679018196e-10, 0.04087812887359, 0.002519516122229487,
            0.00042880092524383425, 0.13309997405160942, 6.61472699038919e-10,
@@ -1813,7 +1813,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w59 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w60 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w60 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.011004045505975613, 0.028251183077981752, 0.014422806875229753,
            4.958526061344831e-12, 0.009984293676628531, 2.3450739422880165e-11,
            6.031901028176002e-12, 0.09832765390526335, 1.2991801782199283e-10,
@@ -1868,7 +1868,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w64 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w65 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w65 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [6.339221068451245e-10, 0.04651817931744516, 0.11017171572957145,
            2.3217212095726008e-12, 0.033480752472860545, 0.0017843135154844325,
            5.8154031303529526e-11, 0.13022303335424218, 7.373381378336765e-10,
@@ -1923,7 +1923,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w69 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w70 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w70 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.0726312361265007, 0.033384488741601014, 5.103751149075006e-9,
            3.014518528946845e-10, 4.724506670658462e-9, 1.253054866996639e-9,
            2.205095228542095e-10, 0.08141932914872951, 3.6881820699728994e-9,
@@ -1978,7 +1978,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w74 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w75 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w75 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [0.08378986882917888, 0.014222281895084562, 1.4640996523981236e-9,
            7.944954882144362e-11, 9.314212297173224e-10, 9.137860256305013e-11,
            1.8245207791188445e-10, 0.05641447999298819, 4.5648697820494774e-10,
@@ -2045,7 +2045,7 @@ end
                         internal = NCOArgs(;
                                            type = Trad(; rm = [Kurt(; kt = portfolio.kurt)],
                                                        obj = MaxRet()))))
-    w80 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w80 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [2.5964437003610723e-8, 0.05105919106221655, 3.467171217276289e-8,
            0.052000269807801806, 2.0285416272445106e-8, 0.07566811426967662,
            0.0033034082607419535, 0.10667421688825035, 8.976013131180923e-8,
@@ -2118,7 +2118,7 @@ end
                                            port_kwargs = (; max_num_assets_kurt = 1))))
     w85 = optimise!(portfolio,
                     NCO(;
-                        internal = NCOArgs(; type = RP(; rm = rm),
+                        internal = NCOArgs(; type = RB(; rm = rm),
                                            port_kwargs = (; max_num_assets_kurt = 1))))
     w1t = [4.727734278507026e-7, 0.006370060826488009, 5.590615606579003e-7,
            0.022998554451883063, 4.441627320343446e-7, 0.013284150263804119,
@@ -2185,7 +2185,7 @@ end
                                                        rm = [SKurt(; kt = portfolio.skurt)],
                                                        obj = MaxRet())),
                         external = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w90 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w90 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [7.551916314181692e-9, 0.08663346505996936, 4.136135363410196e-9,
            0.005142916560864078, 4.818370239459004e-9, 0.08295324360196754,
            3.871908480663506e-9, 0.10161306822488796, 2.29356993539279e-8,
@@ -2260,7 +2260,7 @@ end
                                            port_kwargs = (; max_num_assets_kurt = 1))))
     w95 = optimise!(portfolio,
                     NCO(;
-                        internal = NCOArgs(; type = RP(; rm = rm),
+                        internal = NCOArgs(; type = RB(; rm = rm),
                                            port_kwargs = (; max_num_assets_kurt = 1))))
     w1t = [1.152779741425078e-6, 0.08722539114523502, 6.854407426076873e-7,
            3.068918009983621e-5, 7.947208980494585e-7, 0.07717690266402272,
@@ -2316,7 +2316,7 @@ end
                                            type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w99 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w100 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w100 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [9.512843515038461e-7, 0.02679372963723403, 7.481688741710024e-8,
            8.677981868535554e-8, 0.00024374710251416658, 1.6424163064416956e-10,
            9.925303140364328e-8, 0.018337706834624035, 4.199681081018799e-10,
@@ -2371,7 +2371,7 @@ end
                                             type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w104 = optimise!(portfolio,
                      NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w105 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w105 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [1.0892430594871065e-6, 0.031681259608003894, 6.385841396167424e-7,
            1.0208999440372263e-6, 3.6209703749382284e-6, 9.63334977859699e-6,
            5.195032617345709e-6, 0.16790560775238103, 1.6957722439003348e-6,
@@ -2436,7 +2436,7 @@ end
                                             type = Trad(; rm = rm, obj = Sharpe(; rf = rf)))))
     w109 = optimise!(portfolio,
                      NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MaxRet()))))
-    w110 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RP(; rm = rm))))
+    w110 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = RB(; rm = rm))))
     w1t = [6.834840718346733e-15, 2.12661660856925e-13, 1.593754486266787e-8,
            3.127395868133335e-15, 2.712330218049574e-15, 1.4202097663079517e-7,
            0.011911258450762945, 0.08622274106594424, 6.220288317998889e-15,

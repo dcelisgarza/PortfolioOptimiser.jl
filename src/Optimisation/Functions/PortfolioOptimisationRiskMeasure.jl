@@ -162,11 +162,11 @@ function _variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
 end
 """
 ```
-set_rm(port, rm::RiskMeasure, type::Union{Trad, RP, NOC}; kwargs...)
-set_rm(port, rm::AbstractVector{<:RiskMeasure}, type::Union{Trad, RP, NOC}; kwargs...)
+set_rm(port, rm::RiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
+set_rm(port, rm::AbstractVector{<:RiskMeasure}, type::Union{Trad, RB, NOC}; kwargs...)
 ```
 """
-function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
+function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
@@ -188,7 +188,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, model[:variance_risk], rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RP, NOC};
+function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
@@ -316,7 +316,7 @@ function _wc_variance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, k_s
                                                                 SecondOrderCone())
     return nothing
 end
-function set_rm(port, rm::WCVariance, type::Union{Trad, RP, NOC};
+function set_rm(port, rm::WCVariance, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _SDP_constraints(model, type)
@@ -329,7 +329,7 @@ function set_rm(port, rm::WCVariance, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, wc_variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP, NOC};
+function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _SDP_constraints(model, type)
@@ -348,7 +348,7 @@ function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RP, N
     end
     return nothing
 end
-function set_rm(port, rm::SD, type::Union{Trad, RP, NOC}; sigma::AbstractMatrix{<:Real},
+function set_rm(port, rm::SD, type::Union{Trad, RB, NOC}; sigma::AbstractMatrix{<:Real},
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -365,7 +365,7 @@ function set_rm(port, rm::SD, type::Union{Trad, RP, NOC}; sigma::AbstractMatrix{
     _set_risk_expression(model, sd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP, NOC};
+function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -387,7 +387,7 @@ function set_rm(port, rms::AbstractVector{<:SD}, type::Union{Trad, RP, NOC};
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -404,7 +404,7 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, RB, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -456,7 +456,7 @@ function _semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1, i)
     add_to_expression!(svariance_risk, iTm1, tsvariance)
     return nothing
 end
-function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -484,7 +484,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RP, NOC};
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
-                type::Union{Trad, RP, NOC}; mu::AbstractVector{<:Real},
+                type::Union{Trad, RB, NOC}; mu::AbstractVector{<:Real},
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -526,7 +526,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -555,7 +555,7 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RP, NOC};
 
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, RB, NOC};
                 mu::AbstractVector{<:Real}, returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -604,7 +604,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -625,7 +625,7 @@ function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, flpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -654,7 +654,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -683,7 +683,7 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, slpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -743,7 +743,7 @@ function _wr_risk(model, returns)
 
     return nothing
 end
-function set_rm(port::Portfolio, rm::WR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::WR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     _wr_risk(model, returns)
@@ -752,7 +752,7 @@ function set_rm(port::Portfolio, rm::WR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, wr_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::RG, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::RG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -766,7 +766,7 @@ function set_rm(port::Portfolio, rm::RG, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, rg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::CVaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::CVaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -784,7 +784,7 @@ function set_rm(port::Portfolio, rm::CVaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -810,7 +810,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -818,7 +818,7 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
     get_one_plus_returns(model, returns)
     w = model[:w]
     X = model[:X]
-    RP1 = model[:RP1]
+    ret_p_1 = model[:ret_p_1]
     T, N = size(returns)
 
     b1 = rm.l
@@ -841,10 +841,12 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
     @constraints(model,
                  begin
                      constr_u_drcvar,
-                     scale_constr * (b1 * tau .+ a1 * X .+ vec(sum(u .* RP1; dims = 2))) .<=
+                     scale_constr *
+                     (b1 * tau .+ a1 * X .+ vec(sum(u .* ret_p_1; dims = 2))) .<=
                      scale_constr * s
                      constr_v_drcvar,
-                     scale_constr * (b2 * tau .+ a2 * X .+ vec(sum(v .* RP1; dims = 2))) .<=
+                     scale_constr *
+                     (b2 * tau .+ a2 * X .+ vec(sum(v .* ret_p_1; dims = 2))) .<=
                      scale_constr * s
                      constr_u_drcvar_infnorm[i = 1:T],
                      [scale_constr * tu_drcvar[i];
@@ -863,7 +865,7 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, drcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -871,7 +873,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
     get_one_plus_returns(model, returns)
     w = model[:w]
     X = model[:X]
-    RP1 = model[:RP1]
+    ret_p_1 = model[:ret_p_1]
     T, N = size(returns)
 
     iT = inv(T)
@@ -907,7 +909,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         j) .*
-                                                                                                                                                                                                                                                                                                   RP1;
+                                                                                                                                                                                                                                                                                                   ret_p_1;
                                                                                                                                                                                                                                                                                                    dims = 2))) .<=
                                                                                                                                                                                                                                                                                           scale_constr *
                                                                                                                                                                                                                                                                                           view(s,
@@ -922,7 +924,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         j) .*
-                                                                                                                                                                                                                                                                                                   RP1;
+                                                                                                                                                                                                                                                                                                   ret_p_1;
                                                                                                                                                                                                                                                                                                    dims = 2))) .<=
                                                                                                                                                                                                                                                                                           scale_constr *
                                                                                                                                                                                                                                                                                           view(s,
@@ -975,7 +977,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1007,7 +1009,7 @@ function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1059,7 +1061,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1085,7 +1087,7 @@ function set_rm(port::Portfolio, rm::EVaR, type::Union{Trad, RP, NOC};
 
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1128,7 +1130,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1169,7 +1171,7 @@ function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1266,7 +1268,7 @@ function _DD_constraints(model, returns)
 
     return nothing
 end
-function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1281,7 +1283,7 @@ function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, mdd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -1297,7 +1299,7 @@ function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, add_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     _DD_constraints(model, returns)
@@ -1317,7 +1319,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, R
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1333,7 +1335,7 @@ function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, uci_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1352,7 +1354,7 @@ function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, cdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1380,7 +1382,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1405,7 +1407,7 @@ function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, edar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1449,7 +1451,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1491,7 +1493,7 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1568,7 +1570,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     _SDP_constraints(model, type)
@@ -1616,7 +1618,7 @@ function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RP, NOC}; kwargs...
     _set_risk_expression(model, kurt_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1695,7 +1697,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
 
     return nothing
 end
-function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RP, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     _SDP_constraints(model, type)
@@ -1743,7 +1745,7 @@ function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RP, NOC}; kwargs..
     _set_risk_expression(model, skurt_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1837,7 +1839,7 @@ function _OWA_constraints(model, returns)
 
     return nothing
 end
-function set_rm(port::Portfolio, rm::GMD, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::GMD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1900,7 +1902,7 @@ function set_rm(port::Portfolio, rm::GMD, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, gmd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -1964,7 +1966,7 @@ function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RP, NOC};
 
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2085,7 +2087,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RP
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2192,7 +2194,7 @@ function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2399,7 +2401,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::OWA, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::OWA, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2462,7 +2464,7 @@ function set_rm(port::Portfolio, rm::OWA, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2602,7 +2604,7 @@ function _BDVariance_constraints(::BDVIneq, model, Dt, Dx, T)
                  end)
     return nothing
 end
-function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     get_portfolio_returns(model, returns)
@@ -2621,7 +2623,7 @@ function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RP, NOC};
     _set_risk_expression(model, bd_variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
@@ -2639,7 +2641,7 @@ function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RP, NOC}; kwargs...
     _set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2664,7 +2666,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, 
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
@@ -2682,7 +2684,7 @@ function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RP, NOC}; kwargs..
     _set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad, RP, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
@@ -2707,7 +2709,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad,
     end
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RP, NOC},
+function risk_constraints(port, type::Union{Trad, RB, NOC},
                           rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
                           kelly_approx_idx = nothing)
     for rm ∈ rms

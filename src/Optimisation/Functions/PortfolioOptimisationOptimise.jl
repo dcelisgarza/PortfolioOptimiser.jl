@@ -37,7 +37,7 @@ function optimise!(port::Portfolio, type::Trad)
     set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
-function optimise!(port::Portfolio, type::RP)
+function optimise!(port::Portfolio, type::RB)
     (; rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
@@ -71,7 +71,7 @@ function optimise!(port::Portfolio, type::RP)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, nothing, type, class)
 end
-function optimise!(port::Portfolio, type::RRP)
+function optimise!(port::Portfolio, type::RRB)
     (; version, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()

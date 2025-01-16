@@ -53,7 +53,13 @@ struct MaxRet <: ObjectiveFunction end
 """
 struct MaxRet <: ObjectiveFunction end
 
+"""
+    abstract type CustomObjective end
+"""
 abstract type CustomObjective end
+"""
+    struct NoCustomObjective <: CustomObjective end
+"""
 struct NoCustomObjective <: CustomObjective end
 
 export MinRisk, Utility, Sharpe, MaxRet

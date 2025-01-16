@@ -1336,11 +1336,11 @@ end
 
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = NoAdj()
-    w21 = optimise!(portfolio, RP(; rm = rm))
+    w21 = optimise!(portfolio, RB(; rm = rm))
 
     portfolio.network_adj = SDP(; A = B)
     portfolio.cluster_adj = SDP(; A = C)
-    w22 = optimise!(portfolio, RP(; rm = rm))
+    w22 = optimise!(portfolio, RB(; rm = rm))
 
     @test !isapprox(w21.weights, w22.weights)
 end
@@ -2551,12 +2551,12 @@ end
     @test isapprox(w19.weights, w19_2.weights)
     @test isapprox(w20.weights, w20_2.weights)
 
-    w21 = optimise!(portfolio, RP(; rm = rm))
+    w21 = optimise!(portfolio, RB(; rm = rm))
     portfolio.network_adj = SDP(; A = B)
-    w22 = optimise!(portfolio, RP(; rm = rm))
+    w22 = optimise!(portfolio, RB(; rm = rm))
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = SDP(; A = B)
-    w23 = optimise!(portfolio, RP(; rm = rm))
+    w23 = optimise!(portfolio, RB(; rm = rm))
     @test isapprox(w21.weights, w22.weights, rtol = 5e-5)
     @test isapprox(w21.weights, w23.weights, rtol = 5e-5)
     @test isapprox(w22.weights, w23.weights)

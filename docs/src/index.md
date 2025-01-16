@@ -99,7 +99,7 @@ show(wd)
 ### Optimisation models
 
   - Traditional, [`Trad`](@ref).
-  - Risk Budgeting, [`RP`](@ref).
+  - Risk Budgeting, [`RB`](@ref).
   - Near Optimal Centering, [`NOC`](@ref).
 
 ## Parameter estimation
@@ -386,7 +386,7 @@ This type of optimisation requires worst case sets for the covariance and expect
   - Turnover constraint.
   - Rebalancing penalty.
 
-### Risk parity, [`RP`](@ref)
+### Risk parity, [`RB`](@ref)
 
 This type of optimisation requires a risk budget per asset or factor. The optimisation attempts to minimise the difference between the risk budget and risk contribution of the asset or factor in the optimised portfolio.
 
@@ -446,7 +446,7 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
 
   - L-moment ordered weight array, [`OWA`](@ref).
 
-### Relaxed risk parity mean variance, [`RRP`](@ref)
+### Relaxed risk parity mean variance, [`RRB`](@ref)
 
 This type of optimisation requires a risk budget per asset. The optimisation attempts to minimise the difference between the risk budget and relaxed formulation of the standard deviation risk measure.
 
@@ -646,7 +646,7 @@ When applied to the intra-cluster optimisation the same constraint will be appli
   - Minimum expected return constraint.
   - Leverage constraints.
 
-#### NCO-RP, NCO-RRP, NCO-NOC-RP, NCO-NOC-RRP
+#### NCO-RB, NCO-RRB, NCO-NOC-RB, NCO-NOC-RRB
 
 ##### Constraints
 

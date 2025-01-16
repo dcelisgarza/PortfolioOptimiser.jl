@@ -739,7 +739,7 @@ end
     @test isapprox(to, tot)
 end
 
-@testset "RP constraints" begin
+@testset "RB constraints" begin
     portfolio = Portfolio(; prices = prices_assets)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,

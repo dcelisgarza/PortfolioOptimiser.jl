@@ -21,7 +21,7 @@ abstract type AbstractRiskMeasure end
 Defines the interface for risk measures that can be used in the following optimisation kinds:
 
   - [`Trad`](@ref).
-  - [`RP`](@ref).
+  - [`RB`](@ref).
   - [`NOC`](@ref).
   - [`HRP`](@ref).
   - [`HERC`](@ref).

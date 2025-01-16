@@ -87,7 +87,7 @@ l = 2.0
     @test isapprox(w17.weights, w20.weights)
 end
 
-@testset "Portfolio RP classes" begin
+@testset "Portfolio RB classes" begin
     portfolio = Portfolio(; prices = prices, f_prices = factors,
                           solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
                                                            :params => Dict("verbose" => false,
@@ -102,8 +102,8 @@ end
                                                                                              pratio = 0.95)))))
 
     portfolio.short = true
-    w1 = optimise!(portfolio, RP(; class = FC()))
-    frc1 = factor_risk_contribution(portfolio; type = :RP)
+    w1 = optimise!(portfolio, RB(; class = FC()))
+    frc1 = factor_risk_contribution(portfolio; type = :RB)
     frc1_l, frc1_h = extrema(frc1[1:3])
     wt = [-0.21775727135097175, 0.267838585540792, 0.22580781962994076, 0.13008899739167523,
           -0.27877115882781617, -0.33139043626001263, -0.05165584583737949,
@@ -118,8 +118,8 @@ end
     @test isapprox(frc1_h / frc1_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:3
-    w2 = optimise!(portfolio, RP(; class = FC()))
-    frc2 = factor_risk_contribution(portfolio; type = :RP)
+    w2 = optimise!(portfolio, RB(; class = FC()))
+    frc2 = factor_risk_contribution(portfolio; type = :RB)
     frc2_l, frc2_h = extrema(frc2[1:3])
     wt = [-0.060386739304374173, 0.2023298205406452, 0.27318569546482635,
           0.14622836290146649, -0.303835220037279, -0.3214072601122666,
@@ -134,8 +134,8 @@ end
     @test isapprox(frc2_h / frc2_l, 3, rtol = 0.0001)
 
     portfolio.f_risk_budget = []
-    w3 = optimise!(portfolio, RP(; class = FC(false)))
-    frc3 = factor_risk_contribution(portfolio; type = :RP)
+    w3 = optimise!(portfolio, RB(; class = FC(false)))
+    frc3 = factor_risk_contribution(portfolio; type = :RB)
     frc3_l, frc3_h = extrema(frc3[1:3])
     wt = [0.08170925623690223, 0.10455256562057738, 0.12404101030136445,
           0.14432452511356408, 0.04731376886051586, -0.0076143489186165534,
@@ -151,8 +151,8 @@ end
     @test isapprox(frc3_h / frc3_l, 1, rtol = 1.0e-4)
 
     portfolio.f_risk_budget = 1:3
-    w4 = optimise!(portfolio, RP(; class = FC(false)))
-    frc4 = factor_risk_contribution(portfolio; type = :RP)
+    w4 = optimise!(portfolio, RB(; class = FC(false)))
+    frc4 = factor_risk_contribution(portfolio; type = :RB)
     frc4_l, frc4_h = extrema(frc4[1:3])
     wt = [0.1290819501060403, 0.09077164796746803, 0.1620757594996783, 0.1688745651621904,
           0.04946219709713012, -0.00918736247644377, 0.05732417003612202,
@@ -168,8 +168,8 @@ end
     @test isapprox(frc4_h / frc4_l, 3, rtol = 5.0e-4)
 
     factor_statistics!(portfolio; factor_type = FactorType(; method = BReg()))
-    w5 = optimise!(portfolio, RP(; class = FC()))
-    frc5 = factor_risk_contribution(portfolio; type = :RP)
+    w5 = optimise!(portfolio, RB(; class = FC()))
+    frc5 = factor_risk_contribution(portfolio; type = :RB)
     frc5_l, frc5_h = extrema(frc5[1:5])
     wt = [-2.3015557979838155, 1.015632612233884, 1.4947894574786151, -0.5829581771148582,
           -0.46358313943370977, -0.07532758341121848, -0.5191395483112032,
@@ -184,8 +184,8 @@ end
     @test isapprox(frc5_h / frc5_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:5
-    w6 = optimise!(portfolio, RP(; class = FC()))
-    frc6 = factor_risk_contribution(portfolio; type = :RP)
+    w6 = optimise!(portfolio, RB(; class = FC()))
+    frc6 = factor_risk_contribution(portfolio; type = :RB)
     frc6_l, frc6_h = extrema(frc6[1:5])
     wt = [-2.2578187217827628, 0.9179169624221084, 1.203465037545498, -0.36341097260129385,
           -0.43200523630742893, -0.5355634581626013, -0.4610505223031706, 1.089644973934692,
@@ -199,8 +199,8 @@ end
     @test isapprox(frc6_h / frc6_l, 5, rtol = 0.0005)
 
     portfolio.f_risk_budget = []
-    w7 = optimise!(portfolio, RP(; class = FC(false)))
-    frc7 = factor_risk_contribution(portfolio; type = :RP)
+    w7 = optimise!(portfolio, RB(; class = FC(false)))
+    frc7 = factor_risk_contribution(portfolio; type = :RB)
     frc7_l, frc7_h = extrema(frc7[1:5])
     wt = [-0.3004127266568237, 0.4837127843439659, 0.15400712675524886, 0.37928131658434344,
           -0.11093636742715317, -0.019227147416553236, -0.7239019664321605,
@@ -215,8 +215,8 @@ end
     @test isapprox(frc7_h / frc7_l, 1, rtol = 0.0005)
 
     portfolio.f_risk_budget = 1:5
-    w8 = optimise!(portfolio, RP(; class = FC(false)))
-    frc8 = factor_risk_contribution(portfolio; type = :RP)
+    w8 = optimise!(portfolio, RB(; class = FC(false)))
+    frc8 = factor_risk_contribution(portfolio; type = :RB)
     frc8_l, frc8_h = extrema(frc8[1:5])
     wt = [-0.17748034020963993, 0.28804865930885837, 0.07839868288225765,
           0.23226186278725133, -0.04543783296007117, -0.14449206629982284,
@@ -233,13 +233,13 @@ end
     portfolio.f_risk_budget = [0.2, 0.2, 0.2, 0.2, 0.2]
     portfolio.f_risk_budget[1] = 20
     portfolio.f_risk_budget /= sum(portfolio.f_risk_budget)
-    w9 = optimise!(portfolio, RP(; class = FC()))
-    rc9 = factor_risk_contribution(portfolio; type = :RP)
+    w9 = optimise!(portfolio, RB(; class = FC()))
+    rc9 = factor_risk_contribution(portfolio; type = :RB)
     lrc9, hrc9 = extrema(rc9[1:4])
     @test isapprox(hrc9 / lrc9, 100, rtol = 0.001)
     @test isapprox(sum(portfolio.f_risk_budget), 1)
 
     portfolio.loadings = DataFrame()
-    rc10 = factor_risk_contribution(portfolio; type = :RP)
+    rc10 = factor_risk_contribution(portfolio; type = :RB)
     @test isapprox(rc9, rc10)
 end

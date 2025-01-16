@@ -22,21 +22,21 @@ function _cleanup_weights(port, ::Any, ::Union{Trad, DRCVaR}, ::Any)
     end
     return weights
 end
-function _cleanup_weights(port, ::Any, ::RP, ::FC)
+function _cleanup_weights(port, ::Any, ::RB, ::FC)
     weights = value.(port.model[:w])
     sum_w = value(port.model[:k])
     sum_w = abs(sum_w) > eps() ? sum_w : 1
     weights .= weights / sum_w
     return weights
 end
-function _cleanup_weights(port, ::Any, ::Union{RP, NOC}, ::Any)
+function _cleanup_weights(port, ::Any, ::Union{RB, NOC}, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
     weights .= abs.(weights) / sum_w
     return weights
 end
-function _cleanup_weights(port, ::Any, ::RRP, ::Any)
+function _cleanup_weights(port, ::Any, ::RRB, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1

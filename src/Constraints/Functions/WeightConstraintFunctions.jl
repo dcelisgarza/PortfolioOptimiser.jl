@@ -417,7 +417,7 @@ rp_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
                class_col::Union{String, Symbol, Nothing} = nothing)
 ```
 
-Constructs risk contribution constraint vector for the risk parity optimisation (`:RP` and `:RRP` types of [`PortTypes`]()).
+Constructs risk contribution constraint vector for the risk parity optimisation (`:RB` and `:RRB` types of [`PortTypes`]()).
 
 # Inputs
 

@@ -1,4 +1,4 @@
-function _rrp_ver_constraints(::BasicRRP, model, sigma)
+function _rrp_ver_constraints(::BasicRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -7,7 +7,7 @@ function _rrp_ver_constraints(::BasicRRP, model, sigma)
                 [scale_constr * psi; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
-function _rrp_ver_constraints(::RegRRP, model, sigma)
+function _rrp_ver_constraints(::RegRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -23,7 +23,7 @@ function _rrp_ver_constraints(::RegRRP, model, sigma)
                  end)
     return nothing
 end
-function _rrp_ver_constraints(version::RegPenRRP, model, sigma)
+function _rrp_ver_constraints(version::RegPenRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -59,7 +59,7 @@ function rrp_constraints(port::Portfolio, version, sigma)
                    zeta[1:N] .>= 0
                end)
     @expression(model, risk, psi - gamma)
-    # RRP constraints.
+    # RRB constraints.
     @constraints(model,
                  begin
                      constr_rrp, scale_constr * zeta .== scale_constr * sigma * w

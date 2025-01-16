@@ -55,10 +55,10 @@ pf = plot_frontier(portfolio; kelly = EKelly(), rm = rm)
 # fw2 = efficient_frontier!(portfolio2; points = 5)
 # prc = plot_frontier_area(fw2)
 
-# w = optimise!(portfolio2, OptimiseOpt(; type = :RP, rm = rm, obj = obj);
+# w = optimise!(portfolio2, OptimiseOpt(; type = :RB, rm = rm, obj = obj);
 #               save_opt_params = true)
-# plt1 = plot_risk_contribution(portfolio2; type = :RP, rm = rm, percentage = false)
+# plt1 = plot_risk_contribution(portfolio2; type = :RB, rm = rm, percentage = false)
 # prp = plot_returns(portfolio)
 # pra = plot_returns(portfolio; per_asset = true)
 # pb = plot_bar(portfolio)
-# prc = plot_risk_contribution(portfolio, :RP; rm = rm, percentage = true)
+# prc = plot_risk_contribution(portfolio, :RB; rm = rm, percentage = true)
