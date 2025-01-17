@@ -169,7 +169,7 @@ const AbsoluteCovCor = Union{CovFull, CovSemi, CorSpearman, CorKendall}
 
 """
 ```
-@kwdef mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
+@kwdef mutable struct CovMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins} = HGR()
     normalise::Bool = true
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
@@ -194,22 +194,22 @@ Mutual information correlation matrix estimator.
       + `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
       + `w`: optional `T×1` vector of weights for computing the variance.
 """
-mutable struct CorMutualInfo <: PortfolioOptimiserCovCor
+mutable struct CovMutualInfo <: PortfolioOptimiserCovCor
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
     ve::StatsBase.CovarianceEstimator
     w::Union{<:AbstractWeights, Nothing}
 end
-function CorMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
+function CovMutualInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
                        normalise::Bool = true,
                        ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                        w::Union{<:AbstractWeights, Nothing} = nothing)
     if isa(bins, Integer)
         @smart_assert(bins > zero(bins))
     end
-    return CorMutualInfo(bins, normalise, ve, w)
+    return CovMutualInfo(bins, normalise, ve, w)
 end
-function Base.setproperty!(obj::CorMutualInfo, sym::Symbol, val)
+function Base.setproperty!(obj::CovMutualInfo, sym::Symbol, val)
     if sym == :bins
         if isa(val, Integer)
             @smart_assert(val > zero(val))
@@ -259,7 +259,7 @@ end
 
 """
 ```
-mutable struct CorLTD <: PortfolioOptimiserCovCor
+mutable struct CovLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
     w::Union{<:AbstractWeights, Nothing}
@@ -277,17 +277,17 @@ Lower tail dependence correlation and covariance matrix estimator.
       + `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
       + `w`: optional `T×1` vector of weights for computing the variance.
 """
-mutable struct CorLTD <: PortfolioOptimiserCovCor
+mutable struct CovLTD <: PortfolioOptimiserCovCor
     alpha::Real
     ve::StatsBase.CovarianceEstimator
     w::Union{<:AbstractWeights, Nothing}
 end
-function CorLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
+function CovLTD(; alpha::Real = 0.05, ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 w::Union{<:AbstractWeights, Nothing} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
-    return CorLTD(alpha, ve, w)
+    return CovLTD(alpha, ve, w)
 end
-function Base.setproperty!(obj::CorLTD, sym::Symbol, val)
+function Base.setproperty!(obj::CovLTD, sym::Symbol, val)
     if sym == :alpha
         @smart_assert(zero(val) <= val <= one(val))
     end
@@ -296,43 +296,43 @@ end
 
 """
 ```
-abstract type CorGerber <: PortfolioOptimiserCovCor end
+abstract type CovGerber <: PortfolioOptimiserCovCor end
 ```
 
 Abstract type for subtyping Gerber type covariance and correlation estimators.
 """
-abstract type CorGerber <: PortfolioOptimiserCovCor end
+abstract type CovGerber <: PortfolioOptimiserCovCor end
 
 """
 ```
-abstract type CorGerberBasic <: CorGerber end
+abstract type CovGerberBasic <: CovGerber end
 ```
 
 Abstract type for subtyping the original Gerber type covariance and correlation estimators.
 """
-abstract type CorGerberBasic <: CorGerber end
+abstract type CovGerberBasic <: CovGerber end
 
 """
 ```
-abstract type CorSB <: CorGerber end
+abstract type CovSB <: CovGerber end
 ```
 
 Abstract type for subtyping the Smyth-Broby modifications of Gerber type covariance and correlation estimators.
 """
-abstract type CorSB <: CorGerber end
+abstract type CovSB <: CovGerber end
 
 """
 ```
-abstract type CorSB <: CorGerber end
+abstract type CovSB <: CovGerber end
 ```
 
 Abstract type for subtyping the Smyth-Broby modifications with vote counting of Gerber type covariance and correlation estimators.
 """
-abstract type CorGerberSB <: CorGerber end
+abstract type CovGerberSB <: CovGerber end
 
 """
 ```
-@kwdef mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
+@kwdef mutable struct CovGerber0{T1 <: Real} <: CovGerberBasic
     normalise::Bool = false
     threshold::T1 = 0.5
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
@@ -358,7 +358,7 @@ Gerber type 0 covariance and correlation matrices.
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
+mutable struct CovGerber0{T1 <: Real} <: CovGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
@@ -366,18 +366,18 @@ mutable struct CorGerber0{T1 <: Real} <: CorGerberBasic
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerber0(; normalise::Bool = false, threshold::Real = 0.5,
+function CovGerber0(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CovGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
 
 """
 ```
-@kwdef mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
+@kwdef mutable struct CovGerber1{T1 <: Real} <: CovGerberBasic
     normalise::Bool = false
     threshold::T1 = 0.5
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
@@ -403,7 +403,7 @@ Gerber type 1 covariance and correlation matrices.
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
+mutable struct CovGerber1{T1 <: Real} <: CovGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
@@ -411,18 +411,18 @@ mutable struct CorGerber1{T1 <: Real} <: CorGerberBasic
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerber1(; normalise::Bool = false, threshold::Real = 0.5,
+function CovGerber1(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CovGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
 
 """
 ```
-@kwdef mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
+@kwdef mutable struct CovGerber2{T1 <: Real} <: CovGerberBasic
     normalise::Bool = false
     threshold::T1 = 0.5
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
@@ -448,7 +448,7 @@ Gerber type 2 covariance and correlation matrices.
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Gerber type 2 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
+mutable struct CovGerber2{T1 <: Real} <: CovGerberBasic
     normalise::Bool
     threshold::T1
     ve::StatsBase.CovarianceEstimator
@@ -456,15 +456,15 @@ mutable struct CorGerber2{T1 <: Real} <: CorGerberBasic
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerber2(; normalise::Bool = false, threshold::Real = 0.5,
+function CovGerber2(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
                     posdef::PosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
-    return CorGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
+    return CovGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
-function Base.setproperty!(obj::CorGerberBasic, sym::Symbol, val)
+function Base.setproperty!(obj::CovGerberBasic, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(zero(val) < val < one(val))
     end
@@ -473,7 +473,7 @@ end
 
 """
 ```
-@kwdef mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
+@kwdef mutable struct CovSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool = false
     threshold::T1 = 0.5
     c1::T2 = 0.5
@@ -505,7 +505,7 @@ Smyth-Broby modification of the Gerber type 0 covariance and correlation matrice
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
+mutable struct CovSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -517,7 +517,7 @@ mutable struct CorSB0{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -526,7 +526,7 @@ function CorSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
                                                                                     c3, n,
@@ -538,7 +538,7 @@ end
 
 """
 ```
-@kwdef mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
+@kwdef mutable struct CovSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool = false
     threshold::T1 = 0.5
     c1::T2 = 0.5
@@ -570,7 +570,7 @@ Smyth-Broby modification of the Gerber type 1 covariance and correlation matrice
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
+mutable struct CovSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -582,7 +582,7 @@ mutable struct CorSB1{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -591,7 +591,7 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
                                                                                     c3, n,
@@ -600,7 +600,11 @@ function CorSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
                                                                                     mean_w,
                                                                                     posdef)
 end
-mutable struct CorSB2{T1, T2, T3, T4, T5} <: CorSB
+
+"""
+    CovSB2{T1, T2, T3, T4, T5} <: CovSB
+"""
+mutable struct CovSB2{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -612,7 +616,7 @@ mutable struct CorSB2{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -621,7 +625,7 @@ function CorSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                     threshold,
                                                                                     c1, c2,
                                                                                     c3, n,
@@ -633,7 +637,7 @@ end
 
 """
 ```
-@kwdef mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
+@kwdef mutable struct CovGerberSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool = false
     threshold::T1 = 0.5
     c1::T2 = 0.5
@@ -665,7 +669,7 @@ Smyth-Broby modification with vote counting of the Gerber type 0 covariance and 
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
+mutable struct CovGerberSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -677,7 +681,7 @@ mutable struct CorGerberSB0{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -686,7 +690,7 @@ function CorGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorGerberSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovGerberSB0{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
                                                                                           c2,
@@ -700,7 +704,7 @@ end
 
 """
 ```
-@kwdef mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
+@kwdef mutable struct CovGerberSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool = false
     threshold::T1 = 0.5
     c1::T2 = 0.5
@@ -732,7 +736,7 @@ Smyth-Broby modification with vote counting of the Gerber type 1 covariance and 
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
   - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
 """
-mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
+mutable struct CovGerberSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -744,7 +748,7 @@ mutable struct CorGerberSB1{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -753,7 +757,7 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovGerberSB1{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
                                                                                           c2,
@@ -765,7 +769,10 @@ function CorGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           posdef)
 end
 
-mutable struct CorGerberSB2{T1, T2, T3, T4, T5} <: CorSB
+"""
+    mutable struct CovGerberSB2{T1, T2, T3, T4, T5} <: CovSB
+"""
+mutable struct CovGerberSB2{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
     threshold::T1
     c1::T2
@@ -777,7 +784,7 @@ mutable struct CorGerberSB2{T1, T2, T3, T4, T5} <: CorSB
     mean_w::Union{<:AbstractWeights, Nothing}
     posdef::PosdefFix
 end
-function CorGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
+function CovGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
@@ -786,7 +793,7 @@ function CorGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
-    return CorGerberSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
+    return CovGerberSB2{typeof(threshold), typeof(c1), typeof(c2), typeof(c3), typeof(n)}(normalise,
                                                                                           threshold,
                                                                                           c1,
                                                                                           c2,
@@ -797,7 +804,7 @@ function CorGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real
                                                                                           mean_w,
                                                                                           posdef)
 end
-function Base.setproperty!(obj::CorSB, sym::Symbol, val)
+function Base.setproperty!(obj::CovSB, sym::Symbol, val)
     if sym == :threshold
         @smart_assert(zero(val) < val < one(val))
     elseif sym == :c1
@@ -998,14 +1005,14 @@ end
 
 """
 ```
-const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
+const PosdefFixCovCor = Union{<:CovGerber, PortCovCor}
 ```
 
 Covariance and correlation estimators that support positive definite fixes.
 """
-const PosdefFixCovCor = Union{<:CorGerber, PortCovCor}
+const PosdefFixCovCor = Union{<:CovGerber, PortCovCor}
 
-export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CorMutualInfo,
-       CovDistance, CorLTD, CorGerber0, CorGerber1, CorGerber2, CorSB0, CorSB1, CorSB2,
-       CorGerberSB0, CorGerberSB1, CorGerberSB2, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull,
+export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CovMutualInfo,
+       CovDistance, CovLTD, CovGerber0, CovGerber1, CovGerber2, CovSB0, CovSB1, CovSB2,
+       CovGerberSB0, CovGerberSB1, CovGerberSB2, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull,
        SkewSemi, PortCovCor

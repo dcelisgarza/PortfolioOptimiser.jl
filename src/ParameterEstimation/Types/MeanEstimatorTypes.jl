@@ -161,6 +161,9 @@ function MuBOP(; target::MeanTarget = GM(), w::Union{<:AbstractWeights, Nothing}
     return MuBOP(target, w, sigma)
 end
 
+"""
+    mutable struct MuEquil{T1} <: MeanSigmaEstimator
+"""
 mutable struct MuEquil{T1} <: MeanSigmaEstimator
     l::T1
     w::Union{<:AbstractVector, Nothing}

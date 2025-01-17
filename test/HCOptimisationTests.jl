@@ -434,7 +434,7 @@ end
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
 
-    asset_statistics!(portfolio; cor_type = PortCovCor(; ce = CorLTD()))
+    asset_statistics!(portfolio; cor_type = PortCovCor(; ce = CovLTD()))
     cluster_assets!(portfolio)
     sd = SD()
 

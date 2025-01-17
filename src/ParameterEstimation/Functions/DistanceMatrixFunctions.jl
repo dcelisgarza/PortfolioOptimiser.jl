@@ -1,4 +1,7 @@
-function _dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
+"""
+    dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
+"""
+function dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                power = de.power
                                scaler = isodd(power) ? 0.5 : 1.0
@@ -10,7 +13,7 @@ function _dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
                                       one(eltype(X)))
                            end))
 end
-function _dist(de::GenDistDistMLP, X::AbstractMatrix, ::Any)
+function dist(de::GenDistDistMLP, X::AbstractMatrix, ::Any)
     _X = Symmetric(sqrt.(if !de.absolute
                              power = de.power
                              scaler = isodd(power) ? 0.5 : 1.0
@@ -24,7 +27,7 @@ function _dist(de::GenDistDistMLP, X::AbstractMatrix, ::Any)
 
     return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
 end
-function _dist(de::DistMLP, X::AbstractMatrix, ::Any)
+function dist(de::DistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)),
                                       one(eltype(X)))
@@ -32,7 +35,7 @@ function _dist(de::DistMLP, X::AbstractMatrix, ::Any)
                                clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
                            end))
 end
-function _dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
+function dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
     _X = sqrt.(if !de.absolute
                    clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
                else
@@ -41,97 +44,83 @@ function _dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
 
     return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
 end
-function _dist(::DistLog, X::AbstractMatrix, ::Any)
+function dist(::DistLog, X::AbstractMatrix, ::Any)
     return Symmetric(-log.(X))
 end
-function _dist(de::DistDistLog, X::AbstractMatrix, ::Any)
-    D = _dist(DistLog(), X, nothing)
+function dist(de::DistDistLog, X::AbstractMatrix, ::Any)
+    D = dist(DistLog(), X, nothing)
     return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
-function _dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
+function dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, de.bins, de.normalise)
 end
-function _dist(de::DistDistVarInfo, ::Any, Y::AbstractMatrix)
-    D = _dist(de.de, nothing, Y)
+function dist(de::DistDistVarInfo, ::Any, Y::AbstractMatrix)
+    D = dist(de.de, nothing, Y)
     return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
-function _dist(::DistCor, X::AbstractMatrix, ::Any)
+function dist(::DistCor, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))))
 end
-function _dist(de::DistDistCor, X::AbstractMatrix, ::Any)
-    D = _dist(DistCor(), X, nothing)
+function dist(de::DistDistCor, X::AbstractMatrix, ::Any)
+    D = dist(DistCor(), X, nothing)
     return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
-"""
-```
-dist(de::DistMethod, X, Y)
-```
-"""
-function dist(de::DistMethod, X, Y)
-    return _dist(de, X, Y)
+function set_absolute_dist!(dist_type::AbsoluteDist, cor_type::PortCovCor)
+    return set_absolute_dist!(dist_type, cor_type.ce)
 end
-function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::PortCovCor)
-    return _set_absolute_dist!(dist_type, cor_type.ce)
-end
-function _set_absolute_dist!(dist_type::AbsoluteDist, cor_type::AbsoluteCovCor)
+function set_absolute_dist!(dist_type::AbsoluteDist, cor_type::AbsoluteCovCor)
     overwrite = dist_type.overwrite
     if overwrite
         dist_type.absolute = cor_type.absolute
     end
     return nothing
 end
-function _set_absolute_dist!(args...)
+function set_absolute_dist!(args...)
     return nothing
 end
-function _get_default_dist(dist_type::DistCanonical, cor_type::PortCovCor)
-    return _get_default_dist(dist_type, cor_type.ce)
+"""
+    default_dist(dist_type::DistCanonical, cor_type::PortCovCor)
+"""
+function default_dist(dist_type::DistCanonical, cor_type::PortCovCor)
+    return default_dist(dist_type, cor_type.ce)
 end
-function _get_default_dist(::DistCanonical, cor_type::CorMutualInfo)
+function default_dist(::DistCanonical, cor_type::CovMutualInfo)
     return DistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise)
 end
-function _get_default_dist(::DistCanonical, ::CorLTD)
+function default_dist(::DistCanonical, ::CovLTD)
     return DistLog()
 end
-function _get_default_dist(::DistCanonical, ::CovDistance)
+function default_dist(::DistCanonical, ::CovDistance)
     return DistCor()
 end
-function _get_default_dist(::DistCanonical, ::Any)
-    return DistMLP()
+function default_dist(::DistCanonical, cor_type::PortfolioOptimiserCovCor)
+    dist_type = DistMLP()
+    set_absolute_dist!(dist_type, cor_type)
+    return dist_type
 end
-function _get_default_dist(dist_type::DistDistCanonical, cor_type::PortCovCor)
-    return _get_default_dist(dist_type, cor_type.ce)
+function default_dist(dist_type::DistDistCanonical, cor_type::PortCovCor)
+    return default_dist(dist_type, cor_type.ce)
 end
-function _get_default_dist(dist::DistDistCanonical, cor_type::CorMutualInfo)
+function default_dist(dist::DistDistCanonical, cor_type::CovMutualInfo)
     return DistDistVarInfo(;
                            de = DistVarInfo(; bins = cor_type.bins,
                                             normalise = cor_type.normalise),
                            distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(dist::DistDistCanonical, ::CorLTD)
+function default_dist(dist::DistDistCanonical, ::CovLTD)
     return DistDistLog(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(dist::DistDistCanonical, ::CovDistance)
+function default_dist(dist::DistDistCanonical, ::CovDistance)
     return DistDistCor(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
-function _get_default_dist(dist::DistDistCanonical, ::Any)
-    return DistDistMLP(; distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
-end
-function _get_default_dist(dist_type::Any, ::Any)
+function default_dist(dist::DistDistCanonical, cor_type::PortfolioOptimiserCovCor)
+    dist_type = DistDistMLP(; distance = dist.distance, args = dist.args,
+                            kwargs = dist.kwargs)
+    set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end
-"""
-```
-get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
-```
-
-# Inputs
-
-  - if `isa(cor_type, PortCovCor)`: operates on the internal correlation estimator `cor_type.ce`.
-  - else: directly operates on the correlation estimator `cor_type`.
-"""
-function get_default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
-    dist_type = _get_default_dist(dist_type, cor_type)
-    _set_absolute_dist!(dist_type, cor_type)
+function default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
+    set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end
 function _bin_width_func(::Knuth)

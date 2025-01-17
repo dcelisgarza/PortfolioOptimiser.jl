@@ -254,7 +254,7 @@ end
 abstract type AbstractBins end
 ```
 
-Abstract type for defining the bin width estimation functions when computing [`DistVarInfo`](@ref) and [`CorMutualInfo`](@ref) distance and correlation matrices respectively.
+Abstract type for defining the bin width estimation functions when computing [`DistVarInfo`](@ref) and [`CovMutualInfo`](@ref) distance and correlation matrices respectively.
 """
 abstract type AbstractBins end
 
@@ -382,12 +382,12 @@ end
 struct DistCanonical <: DistMethod end
 ```
 
-Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
+Struct for computing the canonical distance for a given correlation estimator in [`default_dist`](@ref).
 
 | Correlation estimator   | Canonical distance    |
 |:----------------------- | ---------------------:|
-| [`CorMutualInfo`](@ref) | [`DistVarInfo`](@ref) |
-| [`CorLTD`](@ref)        | [`DistLog`](@ref)     |
+| [`CovMutualInfo`](@ref) | [`DistVarInfo`](@ref) |
+| [`CovLTD`](@ref)        | [`DistLog`](@ref)     |
 | [`CovDistance`](@ref)   | [`DistCor`](@ref)     |
 | Any other estimator     | [`DistMLP`](@ref)     |
 """
@@ -398,12 +398,12 @@ struct DistCanonical <: DistMethod end
 struct DistDistCanonical <: DistMethod end
 ```
 
-Struct for computing the canonical distance for a given correlation estimator in [`get_default_dist`](@ref).
+Struct for computing the canonical distance for a given correlation estimator in [`default_dist`](@ref).
 
 | Correlation estimator   | Canonical distance        |
 |:----------------------- | -------------------------:|
-| [`CorMutualInfo`](@ref) | [`DistDistVarInfo`](@ref) |
-| [`CorLTD`](@ref)        | [`DistDistLog`](@ref)     |
+| [`CovMutualInfo`](@ref) | [`DistDistVarInfo`](@ref) |
+| [`CovLTD`](@ref)        | [`DistDistLog`](@ref)     |
 | [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
 | Any other estimator     | [`DistDistMLP`](@ref)     |
 """

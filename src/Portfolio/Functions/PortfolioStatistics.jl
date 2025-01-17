@@ -38,7 +38,7 @@ The `set_*` variables are flags for deciding whether or not to set the statistic
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
   - `set_cor`: flag for setting `port.cor`.
-  - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref). [`asset_statistics!`](@ref) uses [`get_default_dist`](@ref) to ensure the computed distance is consistent with `dist_type` and either `cor_type.ce` or `cor_type` whichever is applicable.
+  - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref). [`asset_statistics!`](@ref) uses [`default_dist`](@ref) to ensure the computed distance is consistent with `dist_type` and either `cor_type.ce` or `cor_type` whichever is applicable.
   - `set_dist`: flag for setting `port.dist`.
 """
 function asset_statistics!(port::AbstractPortfolio;
@@ -93,7 +93,7 @@ function asset_statistics!(port::AbstractPortfolio;
         end
     end
     if set_dist
-        dist_type = get_default_dist(dist_type, cor_type)
+        dist_type = default_dist(dist_type, cor_type)
         port.dist = dist(dist_type, rho, returns)
     end
 

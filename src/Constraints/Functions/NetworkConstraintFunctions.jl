@@ -44,7 +44,7 @@ end
 function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
                          cor_type::PortfolioOptimiserCovCor, dist_type::DistMethod)
     S = cor(cor_type, X)
-    dist_type = get_default_dist(dist_type, cor_type)
+    dist_type = default_dist(dist_type, cor_type)
     D = dist(dist_type, S, X)
     return _calc_adjacency(nt, S, D)
 end

@@ -1,6 +1,6 @@
 @testset "NoPosdef" begin
     portfolio = Portfolio(; prices = prices)
-    c1 = PortCovCor(; ce = CorGerber0(; posdef = NoPosdef()), posdef = NoPosdef())
+    c1 = PortCovCor(; ce = CovGerber0(; posdef = NoPosdef()), posdef = NoPosdef())
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
                       set_skew = false, set_sskew = false, set_cov = true, cov_type = c1)
     @test !isposdef(portfolio.cov)
@@ -2606,134 +2606,134 @@ end
     ce.bins = 7
     @test ce.bins == 7
 
-    ce = CorMutualInfo()
-    @test_throws AssertionError CorMutualInfo(; bins = 0)
+    ce = CovMutualInfo()
+    @test_throws AssertionError CovMutualInfo(; bins = 0)
     @test_throws AssertionError ce.bins = 0
     ce.bins = 5
     @test ce.bins == 5
 
-    ce = CorLTD()
-    @test_throws AssertionError CorLTD(alpha = -1)
-    @test_throws AssertionError CorLTD(alpha = 2)
+    ce = CovLTD()
+    @test_throws AssertionError CovLTD(alpha = -1)
+    @test_throws AssertionError CovLTD(alpha = 2)
     @test_throws AssertionError ce.alpha = -1
     @test_throws AssertionError ce.alpha = 2
     ce.alpha = 0.5
     @test ce.alpha == 0.5
 
-    ce = CorGerber0()
-    @test_throws AssertionError CorGerber0(threshold = 0)
-    @test_throws AssertionError CorGerber0(threshold = 1)
+    ce = CovGerber0()
+    @test_throws AssertionError CovGerber0(threshold = 0)
+    @test_throws AssertionError CovGerber0(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.35
     @test ce.threshold == 0.35
 
-    ce = CorGerber1()
-    @test_throws AssertionError CorGerber1(threshold = 0)
-    @test_throws AssertionError CorGerber1(threshold = 1)
+    ce = CovGerber1()
+    @test_throws AssertionError CovGerber1(threshold = 0)
+    @test_throws AssertionError CovGerber1(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.25
     @test ce.threshold == 0.25
 
-    ce = CorGerber2()
-    @test_throws AssertionError CorGerber2(threshold = 0)
-    @test_throws AssertionError CorGerber2(threshold = 1)
+    ce = CovGerber2()
+    @test_throws AssertionError CovGerber2(threshold = 0)
+    @test_throws AssertionError CovGerber2(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.75
     @test ce.threshold == 0.75
 
-    ce = CorSB0()
-    @test_throws AssertionError CorSB0(threshold = 0)
-    @test_throws AssertionError CorSB0(threshold = 1)
+    ce = CovSB0()
+    @test_throws AssertionError CovSB0(threshold = 0)
+    @test_throws AssertionError CovSB0(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.25
     @test ce.threshold == 0.25
 
-    ce = CorSB0()
-    @test_throws AssertionError CorSB0(c1 = 0)
-    @test_throws AssertionError CorSB0(c1 = 2)
+    ce = CovSB0()
+    @test_throws AssertionError CovSB0(c1 = 0)
+    @test_throws AssertionError CovSB0(c1 = 2)
     @test_throws AssertionError ce.c1 = 0
     @test_throws AssertionError ce.c1 = 2
     ce.c1 = 0.25
     @test ce.c1 == 0.25
 
-    ce = CorSB0()
-    @test_throws AssertionError CorSB0(c3 = 0.5)
+    ce = CovSB0()
+    @test_throws AssertionError CovSB0(c3 = 0.5)
     @test_throws AssertionError ce.c3 = ce.c2
     @test_throws AssertionError ce.c3 = 0.25
     ce.c3 = 0.6
     @test_throws AssertionError ce.c2 = 0.6
     @test ce.c3 == 0.6
 
-    ce = CorSB1()
-    @test_throws AssertionError CorSB1(threshold = 0)
-    @test_throws AssertionError CorSB1(threshold = 1)
+    ce = CovSB1()
+    @test_throws AssertionError CovSB1(threshold = 0)
+    @test_throws AssertionError CovSB1(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.25
     @test ce.threshold == 0.25
 
-    ce = CorSB1()
-    @test_throws AssertionError CorSB1(c1 = 0)
-    @test_throws AssertionError CorSB1(c1 = 2)
+    ce = CovSB1()
+    @test_throws AssertionError CovSB1(c1 = 0)
+    @test_throws AssertionError CovSB1(c1 = 2)
     @test_throws AssertionError ce.c1 = 0
     @test_throws AssertionError ce.c1 = 2
     ce.c1 = 0.25
     @test ce.c1 == 0.25
 
-    ce = CorSB1()
-    @test_throws AssertionError CorSB1(c3 = 0.5)
+    ce = CovSB1()
+    @test_throws AssertionError CovSB1(c3 = 0.5)
     @test_throws AssertionError ce.c3 = ce.c2
     @test_throws AssertionError ce.c3 = 0.25
     ce.c3 = 0.6
     @test_throws AssertionError ce.c2 = 0.6
     @test ce.c3 == 0.6
 
-    ce = CorGerberSB0()
-    @test_throws AssertionError CorGerberSB0(threshold = 0)
-    @test_throws AssertionError CorGerberSB0(threshold = 1)
+    ce = CovGerberSB0()
+    @test_throws AssertionError CovGerberSB0(threshold = 0)
+    @test_throws AssertionError CovGerberSB0(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.25
     @test ce.threshold == 0.25
 
-    ce = CorGerberSB0()
-    @test_throws AssertionError CorGerberSB0(c1 = 0)
-    @test_throws AssertionError CorGerberSB0(c1 = 2)
+    ce = CovGerberSB0()
+    @test_throws AssertionError CovGerberSB0(c1 = 0)
+    @test_throws AssertionError CovGerberSB0(c1 = 2)
     @test_throws AssertionError ce.c1 = 0
     @test_throws AssertionError ce.c1 = 2
     ce.c1 = 0.25
     @test ce.c1 == 0.25
 
-    ce = CorGerberSB0()
-    @test_throws AssertionError CorGerberSB0(c3 = 0.5)
+    ce = CovGerberSB0()
+    @test_throws AssertionError CovGerberSB0(c3 = 0.5)
     @test_throws AssertionError ce.c3 = ce.c2
     @test_throws AssertionError ce.c3 = 0.25
     ce.c3 = 0.6
     @test_throws AssertionError ce.c2 = 0.6
     @test ce.c3 == 0.6
 
-    ce = CorGerberSB1()
-    @test_throws AssertionError CorGerberSB1(threshold = 0)
-    @test_throws AssertionError CorGerberSB1(threshold = 1)
+    ce = CovGerberSB1()
+    @test_throws AssertionError CovGerberSB1(threshold = 0)
+    @test_throws AssertionError CovGerberSB1(threshold = 1)
     @test_throws AssertionError ce.threshold = -1
     @test_throws AssertionError ce.threshold = 2
     ce.threshold = 0.25
     @test ce.threshold == 0.25
 
-    ce = CorGerberSB1()
-    @test_throws AssertionError CorGerberSB1(c1 = 0)
-    @test_throws AssertionError CorGerberSB1(c1 = 2)
+    ce = CovGerberSB1()
+    @test_throws AssertionError CovGerberSB1(c1 = 0)
+    @test_throws AssertionError CovGerberSB1(c1 = 2)
     @test_throws AssertionError ce.c1 = 0
     @test_throws AssertionError ce.c1 = 2
     ce.c1 = 0.25
     @test ce.c1 == 0.25
 
-    ce = CorGerberSB1()
-    @test_throws AssertionError CorGerberSB1(c3 = 0.5)
+    ce = CovGerberSB1()
+    @test_throws AssertionError CovGerberSB1(c3 = 0.5)
     @test_throws AssertionError ce.c3 = ce.c2
     @test_throws AssertionError ce.c3 = 0.25
     ce.c3 = 0.6
@@ -2743,9 +2743,9 @@ end
 
 @testset "Transposes and edge cases" begin
     portfolio = Portfolio(; prices = prices)
-    ces = [CovSemi(), CorSpearman(), CorKendall(), CorMutualInfo(), CovDistance(), CorLTD(),
-           CorGerber0(), CorGerber1(), CorGerber2(), CorSB0(), CorSB1(), CorGerberSB0(),
-           CorGerberSB1(), PortCovCor()]
+    ces = [CovSemi(), CorSpearman(), CorKendall(), CovMutualInfo(), CovDistance(), CovLTD(),
+           CovGerber0(), CovGerber1(), CovGerber2(), CovSB0(), CovSB1(), CovGerberSB0(),
+           CovGerberSB1(), PortCovCor()]
     for ce ∈ ces
         @test isapprox(cor(ce, portfolio.returns; dims = 1),
                        cor(ce, transpose(portfolio.returns); dims = 2))

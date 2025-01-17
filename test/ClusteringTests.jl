@@ -215,8 +215,8 @@ end
 
 @testset "Non-monotonic clustering" begin
     portfolio = Portfolio(; prices = prices2)
-    asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CorGerberSB1()),
-                      cor_type = PortCovCor(; ce = CorGerberSB1()),
+    asset_statistics!(portfolio; cov_type = PortCovCor(; ce = CovGerberSB1()),
+                      cor_type = PortCovCor(; ce = CovGerberSB1()),
                       dist_type = DistDistMLP(), set_kurt = false, set_skurt = false,
                       set_skew = false, set_sskew = false)
 

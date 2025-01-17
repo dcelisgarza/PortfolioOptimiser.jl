@@ -110,6 +110,38 @@ show(wd)
   - Hierarchical Equal Risk Parity, [`HERC`](@ref).
   - Nested Clustered Optimisation, [`NCO`](@ref).
 
+## Expected returns estimators
+
+  - Arithmetic (weighted and unweighted), [`MuSimple`](@ref).
+  - Equilibrium, [`MuEquil`](@ref).
+  - Shringage, [`MuJS`](@ref), [`MuBS`](@ref), [`MuBOP`](@ref).
+
+## Covariance estimators
+
+These utilise [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#Scatter-Matrix-and-Covariance)'s API to define covariance estimators. Which means [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) is compatible with [`CovarianceEstimation`](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+
+  - Full, [`CovFull`](@ref).
+  - Semi, [`CovSemi`](@ref).
+  - Mutual Information, [`CovMutualInfo`](@ref).
+  - Distance, [`CovDistance`](@ref).
+  - Lower Tail Dependence, [`CovLTD`](@ref).
+  - Gerber, [`CovGerber0`](@ref), [`CovGerber1`](@ref), [`CovGerber2`](@ref).
+  - Smyth-Broby, [`CovSB0`](@ref), [`CovSB1`](@ref), [`CovSB2`](@ref).
+  - Smyth-Broby-Gerber, [`CovGerberSB0`](@ref), [`CovGerberSB1`](@ref), [`CovGerberSB2`](@ref).
+
+## Correlation estimators
+
+These utilise [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#Scatter-Matrix-and-Covariance)'s API to define covariance estimators. Which means [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) is compatible with [`CovarianceEstimation`](https://github.com/mateuszbaran/CovarianceEstimation.jl).
+
+  - All covariance estimators.
+  - Spearman, [`CorSpearman`](@ref).
+  - Kendall, [`CorKendall`](@ref).
+  
+## Distance estimators
+
+- Canonical distance, [`DistCanonical`](@ref).
+- Canonical distance of distances, [`DistDistCanonical`](@ref).
+
 ## Parameter estimation
 
 ### Matrix processing
@@ -147,16 +179,16 @@ The JS, BS and BOP estimators also use a target for correcting their estimates.
 
   - Full, [`CovFull`](@ref).
   - Semi, [`CovSemi`](@ref).
-  - Mutual information, [`CorMutualInfo`](@ref).
+  - Mutual information, [`CovMutualInfo`](@ref).
   - Brownian distance, [`CovDistance`](@ref).
-  - Lower tail dependence, [`CorLTD`](@ref).
-  - Gerber type 0, [`CorGerber0`](@ref).
-  - Gerber type 1, [`CorGerber1`](@ref).
-  - Gerber type 2, [`CorGerber2`](@ref).
-  - Smyth-Broby modification of Gerber type 0, [`CorSB0`](@ref).
-  - Smyth-Broby modification of Gerber type 1, [`CorSB1`](@ref).
-  - Smyth-Broby modification with vote counting of Gerber type 0, [`CorGerberSB0`](@ref).
-  - Smyth-Broby modification with vote counting of Gerber type 1, [`CorGerberSB1`](@ref).
+  - Lower tail dependence, [`CovLTD`](@ref).
+  - Gerber type 0, [`CovGerber0`](@ref).
+  - Gerber type 1, [`CovGerber1`](@ref).
+  - Gerber type 2, [`CovGerber2`](@ref).
+  - Smyth-Broby modification of Gerber type 0, [`CovSB0`](@ref).
+  - Smyth-Broby modification of Gerber type 1, [`CovSB1`](@ref).
+  - Smyth-Broby modification with vote counting of Gerber type 0, [`CovGerberSB0`](@ref).
+  - Smyth-Broby modification with vote counting of Gerber type 1, [`CovGerberSB1`](@ref).
 
 ### Correlation estimators
 
