@@ -351,6 +351,24 @@ end
 
 """
     mutable struct RRB{T1} <: OptimType
+
+The relaxed risk budget optimisation only applies to the variance risk measure.
+
+See also: [`OptimType`](@ref), [`RRBVersion`](@ref), [`RetType`](@ref), [`PortClass`](@ref), [`CustomConstraint`](@ref), [`CustomObjective`](@ref), [`AbstractScalarisation`](@ref).
+
+# Keyword Parameters
+
+  - `version::RRBVersion = BasicRRB()`: Relaxed risk budget optimisation version.
+
+  - `kelly::RetType = NoKelly()`: The Kelly criterion to be used.
+  - `class::PortClass = Classic()`: The portfolio class to be used.
+  - `w_ini::T1 = Vector{Float64}(undef, 0) where T1 <: AbstractVector`: The initial weights for the optimisation.
+
+      + Irrelevant if the solver does not support them.
+
+      + `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
+      + `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
+  - `str_names::Bool = false`: Whether to use string names in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
 """
 mutable struct RRB{T1} <: OptimType
     version::RRBVersion
@@ -379,23 +397,62 @@ end
 
 """
     mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
+
+Near optimal centering optimisation type. This type of optimisation defines a near-optimal convex region around a point in the efficient frontier, and finds the portfolio which best fits the analytic centre of the region.
+
+See also: [`OptimType`](@ref), [`RiskMeasure`](@ref), [`RetType`](@ref), [`PortClass`](@ref), [`CustomConstraint`](@ref), [`CustomObjective`](@ref), [`AbstractScalarisation`](@ref).
+
+# Keyword Parameters
+
+  - `flag::Bool = true`:
+
+  - `bins::T1 = 20.0 where T1 <: Real`:
+  - `w_opt::T2 = Vector{Float64}(undef, 0) where T2 <: AbstractVector{<:Real}`: Vector of weights of the efficient frontier portfolio.
+  - `w_min::T3 = Vector{Float64}(undef, 0) where T3 <: AbstractVector{<:Real}`: Vector of weights of the minimal risk portfolio.
+  - `w_max::T4 = Vector{Float64}(undef, 0) where T4 <: AbstractVector{<:Real}`: Vector of weights of the maxumal return portfolio.
+  - `w_opt_ini::T6 = Vector{Float64}(undef, 0) where T6 <: AbstractVector{<:Real}`: The initial weights of the efficient frontier portfolio optimisation.
+
+      + Irrelevant if the solver does not support them.
+  - `w_min_ini::T6 = Vector{Float64}(undef, 0) where T6 <: AbstractVector{<:Real}`: The initial weights of the minimum risk optimisation.
+
+      + Irrelevant if the solver does not support them.
+  - `w_max_ini::T7 = Vector{Float64}(undef, 0) where T7 <: AbstractVector{<:Real}`: The initial weights of the maximum return optimisation.
+
+      + Irrelevant if the solver does not support them.
+  - `rm::Union{AbstractVector, <:RiskMeasure} = Variance()`: The risk measure(s) to be used.
+
+      + If multiple instances of the same risk measure are used, they must be grouped in a single vector wrapped in another vector, see examples.
+  - `obj::ObjectiveFunction = MinRisk()`:
+  - `kelly::RetType = NoKelly()`:
+  - `class::PortClass = Classic()`:
+  - `w_ini::T8 = Vector{Float64}(undef, 0) where T8 <: AbstractVector{<:Real}`: The initial weights for the optimisation of the near optimal centering portfolio.
+
+      + Irrelevant if the solver does not support them.
+  - `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
+  - `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
+  - `ohf::T9 = 1.0 where T9 <: Real`:
+  - `scalarisation::AbstractScalarisation = ScalarSum()`: The scalarisation function to be used.
+
+      + Only relevant when multiple risk measures are used.
+  - `str_names::Bool = false`: Whether to use string names in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
 """
-mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
+mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8, T9} <: OptimType
     flag::Bool
     bins::T1
     w_opt::T2
     w_min::T3
     w_max::T4
-    w_min_ini::T5
-    w_max_ini::T6
+    w_opt_ini::T5
+    w_min_ini::T6
+    w_max_ini::T7
     rm::Union{AbstractVector, <:RiskMeasure}
     obj::ObjectiveFunction
     kelly::RetType
     class::PortClass
-    w_ini::T7
+    w_ini::T8
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
-    ohf::T8
+    ohf::T9
     scalarisation::AbstractScalarisation
     str_names::Bool
 end
@@ -403,6 +460,7 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              w_opt::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_min::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_max::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+             w_opt_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_min_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              w_max_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
@@ -412,12 +470,23 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              custom_constr::CustomConstraint = NoCustomConstraint(),
              custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
-    return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_min_ini),
-               typeof(w_max_ini), typeof(w_ini), typeof(ohf)}(flag, bins, w_opt, w_min,
-                                                              w_max, w_min_ini, w_max_ini,
-                                                              rm, obj, kelly, class, w_ini,
-                                                              custom_constr, custom_obj,
-                                                              ohf, scalarisation, str_names)
+    return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_opt_ini),
+               typeof(w_min_ini), typeof(w_max_ini), typeof(w_ini), typeof(ohf)}(flag, bins,
+                                                                                 w_opt,
+                                                                                 w_min,
+                                                                                 w_max,
+                                                                                 w_opt_ini,
+                                                                                 w_min_ini,
+                                                                                 w_max_ini,
+                                                                                 rm, obj,
+                                                                                 kelly,
+                                                                                 class,
+                                                                                 w_ini,
+                                                                                 custom_constr,
+                                                                                 custom_obj,
+                                                                                 ohf,
+                                                                                 scalarisation,
+                                                                                 str_names)
 end
 
 abstract type HCOptWeightFinaliser end
