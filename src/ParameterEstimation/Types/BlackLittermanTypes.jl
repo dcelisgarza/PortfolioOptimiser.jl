@@ -15,8 +15,8 @@ abstract type BlackLittermanFactor <: BlackLitterman end
     eq::Bool = true
     delta::Union{<:Real, Nothing} = 1.0
     rf::T1 = 0.0
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
+    posdef::AbstractPosdefFix = PosdefNearest()
+    denoise::AbstractDenoise = NoDenoise()
     logo::AbstractLoGo = NoLoGo()
 end
 ```
@@ -66,21 +66,21 @@ Where:
 
   - `delta`: risk aversion factor.
   - `rf`: risk free rate.
-  - `posdef`: method for fixing non positive Black-Litterman matrices [`PosdefFix`](@ref).
-  - `denoise` method for denoising the Black-Litterman covariance matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing non positive Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` method for denoising the Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct BLType{T1 <: Real} <: BlackLitterman
     eq::Bool
     delta::Union{<:Real, Nothing}
     rf::T1
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
     logo::AbstractLoGo
 end
 function BLType(; eq::Bool = true, delta::Union{<:Real, Nothing} = 1.0, rf::Real = 0.0,
-                posdef::PosdefFix = PosdefNearest(), denoise::Denoise = NoDenoise(),
-                logo::AbstractLoGo = NoLoGo())
+                posdef::AbstractPosdefFix = PosdefNearest(),
+                denoise::AbstractDenoise = NoDenoise(), logo::AbstractLoGo = NoLoGo())
     return BLType{typeof(rf)}(eq, delta, rf, posdef, denoise, logo)
 end
 
@@ -91,8 +91,8 @@ end
     eq::Bool = true
     delta::Union{<:Real, Nothing} = 1.0
     rf::T1 = 0.0
-    posdef::PosdefFix = PosdefNearest()
-    denoise::Denoise = NoDenoise()
+    posdef::AbstractPosdefFix = PosdefNearest()
+    denoise::AbstractDenoise = NoDenoise()
     logo::AbstractLoGo = NoLoGo()
 end
 ```
@@ -171,8 +171,8 @@ Where:
 
   - `delta`: risk aversion factor.
   - `rf`: risk free rate.
-  - `posdef`: method for fixing non positive Augmented Black-Litterman matrices [`PosdefFix`](@ref).
-  - `denoise` method for denoising the Augmented Black-Litterman covariance matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing non positive Augmented Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` method for denoising the Augmented Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo Augmented Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
@@ -180,14 +180,14 @@ mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
     eq::Bool
     delta::Union{<:Real, Nothing}
     rf::T1
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
     logo::AbstractLoGo
 end
 function ABLType(; constant::Bool = true, eq::Bool = true,
                  delta::Union{<:Real, Nothing} = 1.0, rf::Real = 0.0,
-                 posdef::PosdefFix = PosdefNearest(), denoise::Denoise = NoDenoise(),
-                 logo::AbstractLoGo = NoLoGo())
+                 posdef::AbstractPosdefFix = PosdefNearest(),
+                 denoise::AbstractDenoise = NoDenoise(), logo::AbstractLoGo = NoLoGo())
     return ABLType{typeof(rf)}(constant, eq, delta, rf, posdef, denoise, logo)
 end
 
@@ -200,8 +200,8 @@ mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
     rf::T1
     ve::StatsBase.CovarianceEstimator
     var_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
     logo::AbstractLoGo
 end
 ```
@@ -266,8 +266,8 @@ Where:
   - `rf`: risk free rate.
   - `ve`: [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) for computing the errors covariance.
   - `var_w`: optional weights for computing the errors covariance.
-  - `posdef`: method for fixing non positive Bayesian Black-Litterman matrices [`PosdefFix`](@ref).
-  - `denoise` method for denoising the Bayesian Black-Litterman covariance matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing non positive Bayesian Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` method for denoising the Bayesian Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo Bayesian Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
@@ -277,16 +277,16 @@ mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
     rf::T1
     ve::StatsBase.CovarianceEstimator
     var_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
     logo::AbstractLoGo
 end
 function BBLType(; constant::Bool = true, error::Bool = true,
                  delta::Union{<:Real, Nothing} = 1.0, rf::Real = 0.0,
                  ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                  var_w::Union{<:AbstractWeights, Nothing} = nothing,
-                 posdef::PosdefFix = PosdefNearest(), denoise::Denoise = NoDenoise(),
-                 logo::AbstractLoGo = NoLoGo())
+                 posdef::AbstractPosdefFix = PosdefNearest(),
+                 denoise::AbstractDenoise = NoDenoise(), logo::AbstractLoGo = NoLoGo())
     return BBLType{typeof(rf)}(constant, error, delta, rf, ve, var_w, posdef, denoise, logo)
 end
 

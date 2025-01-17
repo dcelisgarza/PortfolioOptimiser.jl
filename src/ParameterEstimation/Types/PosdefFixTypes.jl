@@ -1,24 +1,24 @@
 """
 ```
-abstract type PosdefFix end
+abstract type AbstractPosdefFix end
 ```
 
 Abstract type for subtyping methods for fixing non positive definite matrices in [`posdef_fix!`](@ref).
 """
-abstract type PosdefFix end
+abstract type AbstractPosdefFix end
 
 """
 ```
-struct NoPosdef <: PosdefFix end
+struct NoPosdef <: AbstractPosdefFix end
 ```
 
 Non positive definite matrices will not be fixed in [`posdef_fix!`](@ref).
 """
-struct NoPosdef <: PosdefFix end
+struct NoPosdef <: AbstractPosdefFix end
 
 """
 ```
-@kwdef mutable struct PosdefNearest <: PosdefFix
+@kwdef mutable struct PosdefNearest <: AbstractPosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm = NearestCorrelationMatrix.Newton(;
                                                                                     tau = 1e-12)
 end
@@ -26,7 +26,7 @@ end
 
 Defines which method from [`NearestCorrelationMatrix`](https://github.com/adknudson/NearestCorrelationMatrix.jl) to use in [`posdef_fix!`](@ref).
 """
-mutable struct PosdefNearest <: PosdefFix
+mutable struct PosdefNearest <: AbstractPosdefFix
     method::NearestCorrelationMatrix.NCMAlgorithm
 end
 function PosdefNearest(;

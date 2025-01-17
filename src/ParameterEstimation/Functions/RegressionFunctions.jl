@@ -341,24 +341,24 @@ loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
 function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
     return regression(method, x, y)
 end
-function _set_noposdef(::NoPosdef, ::Any)
+function set_noposdef(::NoPosdef, ::Any)
     return nothing
 end
-function _set_noposdef(::Any, cov_type)
+function set_noposdef(::Any, cov_type)
     old_posdef = cov_type.posdef
     cov_type.posdef = NoPosdef()
     return old_posdef
 end
-function _set_factor_posdef_cov_type(cov_type::PosdefFixCovCor)
-    return _set_noposdef(cov_type.posdef, cov_type)
+function set_factor_posdef_cov_type(cov_type::PosdefFixCovCor)
+    return set_noposdef(cov_type.posdef, cov_type)
 end
-function _set_factor_posdef_cov_type(::Any)
+function set_factor_posdef_cov_type(::Any)
     return nothing
 end
-function _reset_posdef_cov_type(cov_type::PosdefFixCovCor, sigma)
+function reset_posdef_cov_type(cov_type::PosdefFixCovCor, sigma)
     return posdef_fix!(cov_type.posdef, sigma)
 end
-function _reset_posdef_cov_type(args...)
+function reset_posdef_cov_type(args...)
     return nothing
 end
 function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = FactorType(),
@@ -372,7 +372,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     namesB = names(B)
     old_posdef = nothing
     x1 = if "const" ∈ namesB
-        old_posdef = _set_factor_posdef_cov_type(cov_type)
+        old_posdef = set_factor_posdef_cov_type(cov_type)
         [ones(nrow(y)) Matrix(x)]
     else
         Matrix(x)
@@ -403,7 +403,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
         B_mtx * f_cov * transpose(B_mtx)
     end
 
-    _reset_posdef_cov_type(cov_type, sigma)
+    reset_posdef_cov_type(cov_type, sigma)
 
     return mu, sigma, returns, B
 end

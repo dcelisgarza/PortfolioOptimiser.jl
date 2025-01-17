@@ -1,5 +1,12 @@
 abstract type AbstractDetone end
+"""
+    struct NoDetone <: AbstractDetone end
+"""
 struct NoDetone <: AbstractDetone end
+
+"""
+    mutable struct Detone{T1} <: AbstractDetone
+"""
 mutable struct Detone{T1} <: AbstractDetone
     mkt_comp::T1
 end

@@ -14,10 +14,10 @@ function posdef_fix!(::NoPosdef, ::AbstractMatrix)
 end
 """
 ```
-posdef_fix!(method::PosdefFix, X::AbstractMatrix)
+posdef_fix!(method::AbstractPosdefFix, X::AbstractMatrix)
 ```
 """
-function posdef_fix!(method::PosdefFix, X::AbstractMatrix)
+function posdef_fix!(method::AbstractPosdefFix, X::AbstractMatrix)
     if isposdef(X)
         return nothing
     end

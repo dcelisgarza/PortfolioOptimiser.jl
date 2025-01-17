@@ -194,7 +194,7 @@ end
     @test isapprox(portfolio.skurt, skurtt)
 end
 
-@testset "Denoise" begin
+@testset "AbstractDenoise" begin
     portfolio = Portfolio(; prices = prices)
 
     c1 = PortCovCor(; denoise = DenoiseFixed())

@@ -338,7 +338,7 @@ abstract type CovGerberSB <: CovGerber end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -356,7 +356,7 @@ Gerber type 0 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber0{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -364,13 +364,13 @@ mutable struct CovGerber0{T1 <: Real} <: CovGerberBasic
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerber0(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
+                    posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CovGerber0{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -383,7 +383,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -401,7 +401,7 @@ Gerber type 1 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber1{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -409,13 +409,13 @@ mutable struct CovGerber1{T1 <: Real} <: CovGerberBasic
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerber1(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
+                    posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CovGerber1{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -428,7 +428,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -446,7 +446,7 @@ Gerber type 2 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 2 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Gerber type 2 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber2{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -454,13 +454,13 @@ mutable struct CovGerber2{T1 <: Real} <: CovGerberBasic
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerber2(; normalise::Bool = false, threshold::Real = 0.5,
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                     std_w::Union{<:AbstractWeights, Nothing} = nothing,
                     mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                    posdef::PosdefFix = PosdefNearest())
+                    posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     return CovGerber2{typeof(threshold)}(normalise, threshold, ve, std_w, mean_w, posdef)
 end
@@ -483,7 +483,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -503,7 +503,7 @@ Smyth-Broby modification of the Gerber type 0 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -515,14 +515,14 @@ mutable struct CovSB0{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest())
+                posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -548,7 +548,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -568,7 +568,7 @@ Smyth-Broby modification of the Gerber type 1 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -580,14 +580,14 @@ mutable struct CovSB1{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest())
+                posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -614,14 +614,14 @@ mutable struct CovSB2{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                 c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                 ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                 std_w::Union{<:AbstractWeights, Nothing} = nothing,
                 mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                posdef::PosdefFix = PosdefNearest())
+                posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -647,7 +647,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -667,7 +667,7 @@ Smyth-Broby modification with vote counting of the Gerber type 0 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerberSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -679,14 +679,14 @@ mutable struct CovGerberSB0{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerberSB0(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest())
+                      posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -714,7 +714,7 @@ end
     ve::StatsBase.CovarianceEstimator = SimpleVariance()
     std_w::Union{<:AbstractWeights, Nothing} = nothing
     mean_w::Union{<:AbstractWeights, Nothing} = nothing
-    posdef::PosdefFix = PosdefNearest()
+    posdef::AbstractPosdefFix = PosdefNearest()
 end
 ```
 
@@ -734,7 +734,7 @@ Smyth-Broby modification with vote counting of the Gerber type 1 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`PosdefFix`](@ref).
+  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerberSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -746,14 +746,14 @@ mutable struct CovGerberSB1{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerberSB1(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest())
+                      posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -782,14 +782,14 @@ mutable struct CovGerberSB2{T1, T2, T3, T4, T5} <: CovSB
     ve::StatsBase.CovarianceEstimator
     std_w::Union{<:AbstractWeights, Nothing}
     mean_w::Union{<:AbstractWeights, Nothing}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
 end
 function CovGerberSB2(; normalise::Bool = false, threshold::Real = 0.5, c1::Real = 0.5,
                       c2::Real = 0.5, c3::Real = 4.0, n::Real = 2.0,
                       ve::StatsBase.CovarianceEstimator = SimpleVariance(),
                       std_w::Union{<:AbstractWeights, Nothing} = nothing,
                       mean_w::Union{<:AbstractWeights, Nothing} = nothing,
-                      posdef::PosdefFix = PosdefNearest())
+                      posdef::AbstractPosdefFix = PosdefNearest())
     @smart_assert(zero(threshold) < threshold < one(threshold))
     @smart_assert(zero(c1) < c1 <= one(c1))
     @smart_assert(zero(c2) < c2 <= one(c2) && c3 > c2)
@@ -819,48 +819,6 @@ end
 
 """
 ```
-abstract type AbstractLoGo end
-```
-
-Abstract type for subtyping LoGo covariance and correlation matrix estimators.
-"""
-abstract type AbstractLoGo end
-
-"""
-```
-struct NoLoGo <: AbstractLoGo end
-```
-
-Leave the matrix as is.
-"""
-struct NoLoGo <: AbstractLoGo end
-
-"""
-```
-@kwdef mutable struct LoGo <: AbstractLoGo
-    distance::DistMethod = DistMLP()
-    similarity::DBHTSimilarity = DBHTMaxDist()
-end
-```
-
-Compute the LoGo covariance and correlation matrix estimator.
-
-# Parameters
-
-  - `distance`: method for computing the distance (disimilarity) matrix from the correlation matrix if the distance matrix is not provided to [`logo!`](@ref).
-  - `similarity`: method for computing the similarity matrix from the correlation and distance matrices. The distance matrix is used to compute sparsity pattern of the inverse of the LoGo covariance and correlation matrices.
-"""
-mutable struct LoGo <: AbstractLoGo
-    distance::DistMethod
-    similarity::DBHTSimilarity
-end
-function LoGo(; distance::DistMethod = DistMLP(),
-              similarity::DBHTSimilarity = DBHTMaxDist())
-    return LoGo(distance, similarity)
-end
-
-"""
-```
 abstract type KurtEstimator end
 ```
 
@@ -871,8 +829,8 @@ abstract type KurtEstimator end
 """
 ```
 @kwdef mutable struct KurtFull <: KurtEstimator
-    posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise(;)
+    posdef::AbstractPosdefFix = PosdefNearest(;)
+    denoise::AbstractDenoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
@@ -881,26 +839,28 @@ Full cokurtosis estimator.
 
 # Parameters
 
-  - `posdef`: method for fixing non a positive definite cokurtosis matrix [`PosdefFix`](@ref).
-  - `denoise`: method for denoising the cokurtosis matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing non a positive definite cokurtosis matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: method for denoising the cokurtosis matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtFull <: KurtEstimator
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
+    detone::AbstractDetone
     logo::AbstractLoGo
 end
-function KurtFull(; posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
-                  logo::AbstractLoGo = NoLoGo(;))
-    return KurtFull(posdef, denoise, logo)
+function KurtFull(; posdef::AbstractPosdefFix = PosdefNearest(;),
+                  denoise::AbstractDenoise = NoDenoise(;),
+                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;))
+    return KurtFull(posdef, denoise, detone, logo)
 end
 
 """
 ```
 @kwdef mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}} = 0.0
-    posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise(;)
+    posdef::AbstractPosdefFix = PosdefNearest(;)
+    denoise::AbstractDenoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
@@ -914,20 +874,22 @@ Semi cokurtosis estimator.
       + if `isa(target, Real)`: apply the same target to all assets.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
 
-  - `posdef`: method for fixing non a positive definite semi cokurtosis matrix [`PosdefFix`](@ref).
-  - `denoise`: method for denoising the semi cokurtosis matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing non a positive definite semi cokurtosis matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: method for denoising the semi cokurtosis matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo semi cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}}
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
+    detone::AbstractDetone
     logo::AbstractLoGo
 end
 function KurtSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                  posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
-                  logo::AbstractLoGo = NoLoGo(;))
-    return KurtSemi(target, posdef, denoise, logo)
+                  posdef::AbstractPosdefFix = PosdefNearest(;),
+                  denoise::AbstractDenoise = NoDenoise(;),
+                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;))
+    return KurtSemi(target, posdef, denoise, detone, logo)
 end
 
 """
@@ -975,8 +937,8 @@ end
 ```
 @kwdef mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator = CovFull(;)
-    posdef::PosdefFix = PosdefNearest(;)
-    denoise::Denoise = NoDenoise(;)
+    posdef::AbstractPosdefFix = PosdefNearest(;)
+    denoise::AbstractDenoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
 end
 ```
@@ -986,19 +948,20 @@ PortfolioOptimiser covariance and correlation estimator.
 # Parameters
 
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `posdef`: method for fixing the portfolio covariance or correlation matrix [`PosdefFix`](@ref).
-  - `denoise`: method for denoising the portfolio covariance or correlation matrix [`Denoise`](@ref).
+  - `posdef`: method for fixing the portfolio covariance or correlation matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: method for denoising the portfolio covariance or correlation matrix [`AbstractDenoise`](@ref).
   - `logo`: method for computing the LoGo portfolio covariance or correlation matrix [`AbstractLoGo`](@ref).
 """
 mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator
-    posdef::PosdefFix
-    denoise::Denoise
+    posdef::AbstractPosdefFix
+    denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
 end
 function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
-                    posdef::PosdefFix = PosdefNearest(;), denoise::Denoise = NoDenoise(;),
+                    posdef::AbstractPosdefFix = PosdefNearest(;),
+                    denoise::AbstractDenoise = NoDenoise(;),
                     detone::AbstractDetone = NoDetone(), logo::AbstractLoGo = NoLoGo(;))
     return PortCovCor(ce, posdef, denoise, detone, logo)
 end
@@ -1014,5 +977,5 @@ const PosdefFixCovCor = Union{<:CovGerber, PortCovCor}
 
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CovMutualInfo,
        CovDistance, CovLTD, CovGerber0, CovGerber1, CovGerber2, CovSB0, CovSB1, CovSB2,
-       CovGerberSB0, CovGerberSB1, CovGerberSB2, NoLoGo, LoGo, KurtFull, KurtSemi, SkewFull,
-       SkewSemi, PortCovCor
+       CovGerberSB0, CovGerberSB1, CovGerberSB2, KurtFull, KurtSemi, SkewFull, SkewSemi,
+       PortCovCor

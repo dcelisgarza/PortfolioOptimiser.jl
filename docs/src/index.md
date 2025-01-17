@@ -120,6 +120,7 @@ show(wd)
 
 These utilise [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#Scatter-Matrix-and-Covariance)'s API to define covariance estimators. Which means [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) is compatible with [`CovarianceEstimation`](https://github.com/mateuszbaran/CovarianceEstimation.jl).
 
+  - PortfolioOptimiser, [`PortCovCor`](@ref).
   - Full, [`CovFull`](@ref).
   - Semi, [`CovSemi`](@ref).
   - Mutual Information, [`CovMutualInfo`](@ref).
@@ -136,11 +137,34 @@ These utilise [`StatsBase`](https://juliastats.org/StatsBase.jl/stable/cov/#Scat
   - All covariance estimators.
   - Spearman, [`CorSpearman`](@ref).
   - Kendall, [`CorKendall`](@ref).
-  
+
 ## Distance estimators
 
-- Canonical distance, [`DistCanonical`](@ref).
-- Canonical distance of distances, [`DistDistCanonical`](@ref).
+We provide distance and distance of distances estimators. Distance estimators have the prefix `Dist`, distance of distances have the prefix `DistDist`.
+
+  - Canonical, [`DistCanonical`](@ref), [`DistDistCanonical`](@ref).
+  - Marcos López de Prado, [`DistMLP`](@ref), [`DistDistMLP`](@ref).
+  - Generalised Marcos López de Prado, [`GenDistMLP`](@ref), [`GenDistDistMLP`](@ref).
+  - Log, [`DistLog`](@ref), [`DistDistLog`](@ref).
+  - Distance correlation, [`DistCor`](@ref), [`DistDistCor`](@ref).
+  - Variation of information, [`DistVarInfo`](@ref), [`DistDistVarInfo`](@ref).
+
+## Cokurtosis
+
+  - Full, [`KurtFull`](@ref).
+  - Semi, [`KurtSemi`](@ref).
+
+## Coskewness
+
+  - Full, [`SkewFull`](@ref).
+  - Semi, [`SkewSemi`](@ref).
+
+## Square matrix post-processing
+
+  - Fixing non-positive definite matrices, [`NoPosdef`](@ref), [`PosdefNearest`](@ref).
+  - Matrix denoising, [`NoDenoise`](@ref), [`DenoiseFixed`](@ref), [`DenoiseSpectral`](@ref), [`DenoiseShrink`](@ref).
+  - Matrix detoning, [`NoDetone`](@ref), [`Detone`](@ref).
+  - Local-global sparsification of the matrix inverse, [`NoLoGo`](@ref), [`LoGo`](@ref).
 
 ## Parameter estimation
 

@@ -136,7 +136,7 @@ struct KGeneralWC <: WorstCaseKMethod end
     ellipse::WorstCaseMethod = NormalWC(;)
     k_sigma::Union{<:Real, WorstCaseKMethod} = KNormalWC(;)
     k_mu::Union{<:Real, WorstCaseKMethod} = KNormalWC(;)
-    posdef::PosdefFix = PosdefNearest(;)
+    posdef::AbstractPosdefFix = PosdefNearest(;)
     diagonal::Bool = false
 end
 ```
@@ -148,7 +148,7 @@ mutable struct WCType
     ellipse::WorstCaseMethod
     k_sigma::Union{<:Real, WorstCaseKMethod}
     k_mu::Union{<:Real, WorstCaseKMethod}
-    posdef::PosdefFix
+    posdef::AbstractPosdefFix
     diagonal::Bool
 end
 function WCType(; cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
@@ -156,7 +156,7 @@ function WCType(; cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
                 ellipse::WorstCaseMethod = NormalWC(;),
                 k_sigma::Union{<:Real, WorstCaseKMethod} = KNormalWC(;),
                 k_mu::Union{<:Real, WorstCaseKMethod} = KNormalWC(;),
-                posdef::PosdefFix = PosdefNearest(;), diagonal::Bool = false)
+                posdef::AbstractPosdefFix = PosdefNearest(;), diagonal::Bool = false)
     return WCType(cov_type, mu_type, box, ellipse, k_sigma, k_mu, posdef, diagonal)
 end
 

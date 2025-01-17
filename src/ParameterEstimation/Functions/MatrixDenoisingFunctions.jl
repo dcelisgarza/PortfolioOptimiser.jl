@@ -51,15 +51,16 @@ function find_max_eval(vals, q; kernel = AverageShiftedHistograms.Kernels.gaussi
 
     return e_max, x
 end
-function denoise!(::NoDenoise, ::PosdefFix, X::AbstractMatrix, q::Real)
+function denoise!(::NoDenoise, ::AbstractPosdefFix, X::AbstractMatrix, q::Real)
     return nothing
 end
 """
 ```
-denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
+denoise!(ce::AbstractDenoise, posdef::AbstractPosdefFix, X::AbstractMatrix, q::Real)
 ```
 """
-function denoise!(ce::Denoise, posdef::PosdefFix, X::AbstractMatrix, q::Real)
+function denoise!(ce::AbstractDenoise, posdef::AbstractPosdefFix, X::AbstractMatrix,
+                  q::Real)
     s = diag(X)
     iscov = any(.!isone.(s))
     if iscov

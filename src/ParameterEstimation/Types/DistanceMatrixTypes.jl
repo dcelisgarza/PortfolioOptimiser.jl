@@ -49,6 +49,9 @@ function DistMLP(; overwrite::Bool = true, absolute::Bool = false)
     return DistMLP(overwrite, absolute)
 end
 
+"""
+    mutable struct GenDistMLP{T1} <: DistMethod
+"""
 mutable struct GenDistMLP{T1} <: DistMethod
     overwrite::Bool
     absolute::Bool
@@ -115,6 +118,10 @@ function DistDistMLP(; overwrite::Bool = true, absolute::Bool = false,
                      kwargs::NamedTuple = (;))
     return DistDistMLP(overwrite, absolute, distance, args, kwargs)
 end
+
+"""
+    mutable struct GenDistDistMLP{T1} <: DistMethod
+"""
 mutable struct GenDistDistMLP{T1} <: DistMethod
     overwrite::Bool
     absolute::Bool
@@ -417,6 +424,6 @@ function DistDistCanonical(; distance::Distances.Metric = Distances.Euclidean(),
     return DistDistCanonical(distance, args, kwargs)
 end
 
-export DistMLP, DistDistMLP, DistLog, DistDistLog, DistCor, DistCor, Knuth, Freedman, Scott,
-       HGR, DistVarInfo, DistDistVarInfo, DistCanonical, DistDistCanonical, GenDistMLP,
-       GenDistDistMLP
+export DistMLP, DistDistMLP, GenDistMLP, GenDistDistMLP, DistLog, DistDistLog, DistCor,
+       DistDistCor, Knuth, Freedman, Scott, HGR, DistVarInfo, DistDistVarInfo,
+       DistCanonical, DistDistCanonical

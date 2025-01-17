@@ -74,6 +74,8 @@ makedocs(;
                                                 "RiskMeasures/MiscRiskMeasureFunctions.md"],
                             "Parameter Estimation" => ["ParameterEstimation/PosdefFix.md",
                                                        "ParameterEstimation/MatrixDenoising.md",
+                                                       "ParameterEstimation/DetoneMatrix.md",
+                                                       "ParameterEstimation/LoGoMatrix.md",
                                                        "ParameterEstimation/DistanceMatrices.md",
                                                        "ParameterEstimation/Clustering.md",
                                                        "ParameterEstimation/CovCorKurtSkew.md",

@@ -1381,40 +1381,6 @@ function dup_elim_sum_matrices(n::Int)
 
     return d, l, s
 end
-"""
-```
-logo!(::NoLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
-```
-"""
-function logo!(::NoLoGo, ::PosdefFix, ::AbstractMatrix, D = nothing)
-    return nothing
-end
-"""
-```
-logo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
-```
-"""
-function logo!(je::LoGo, posdef::PosdefFix, X::AbstractMatrix, D = nothing)
-    if isnothing(D)
-        s = diag(X)
-        iscov = any(.!isone.(s))
-        S = if iscov
-            s .= sqrt.(s)
-            StatsBase.cov2cor(X, s)
-        else
-            X
-        end
-        D = dist(je.distance, S, nothing)
-    end
-
-    S = dbht_similarity(je.similarity, S, D)
-    separators, cliques = PMFG_T2s(S, 4)[3:4]
-    X .= J_LoGo(X, separators, cliques) \ I
-
-    posdef_fix!(posdef, X)
-
-    return nothing
-end
 function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
     y = X .- transpose(mu)
@@ -1424,6 +1390,7 @@ function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
 
     posdef_fix!(ke.posdef, cokurt)
     denoise!(ke.denoise, ke.posdef, cokurt, T / N)
+    detone!(ke.detone, ke.posdef, cokurt)
     logo!(ke.logo, ke.posdef, cokurt)
 
     return cokurt
@@ -1438,6 +1405,7 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
 
     posdef_fix!(ke.posdef, scokurt)
     denoise!(ke.denoise, ke.posdef, scokurt, T / N)
+    detone!(ke.detone, ke.posdef, scokurt)
     logo!(ke.logo, ke.posdef, scokurt)
 
     return scokurt
@@ -1530,4 +1498,4 @@ end
 
 export mutual_info, cor_distance, cov_distance, lower_tail_dependence, cov_gerber,
        cor_gerber, duplication_matrix, elimination_matrix, summation_matrix,
-       dup_elim_sum_matrices, logo!, cokurt, coskew
+       dup_elim_sum_matrices, cokurt, coskew

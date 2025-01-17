@@ -1,7 +1,7 @@
 function detone!(ce::NoDetone, ::Any, X::AbstractMatrix)
     return nothing
 end
-function detone!(ce::Detone, posdef::PosdefFix, X::AbstractMatrix)
+function detone!(ce::Detone, posdef::AbstractPosdefFix, X::AbstractMatrix)
     mkt_comp = ce.mkt_comp
     @smart_assert(one(size(X, 1)) <= mkt_comp <= size(X, 1))
     mkt_comp -= 1

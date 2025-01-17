@@ -1,24 +1,24 @@
 """
 ```
-abstract type Denoise end
+abstract type AbstractDenoise end
 ```
 
 Abstract type for subtyping denoising methods.
 """
-abstract type Denoise end
+abstract type AbstractDenoise end
 
 """
 ```
-struct NoDenoise <: Denoise end
+struct NoDenoise <: AbstractDenoise end
 ```
 
 Apply no denoising in [`denoise!`](@ref).
 """
-struct NoDenoise <: Denoise end
+struct NoDenoise <: AbstractDenoise end
 
 """
 ```
-@kwdef mutable struct DenoiseFixed{T1, T2, T3, T4} <: Denoise
+@kwdef mutable struct DenoiseFixed{T1, T2, T3, T4} <: AbstractDenoise
     kernel = AverageShiftedHistograms.Kernels.gaussian
     m::Integer = 10
     n::Integer = 1000
@@ -46,7 +46,7 @@ Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; C
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseFixed{T1, T2, T3} <: Denoise
+mutable struct DenoiseFixed{T1, T2, T3} <: AbstractDenoise
     kernel::T1
     m::T2
     n::T3
@@ -60,7 +60,7 @@ end
 
 """
 ```
-@kwdef mutable struct DenoiseSpectral{T1, T2, T3, T4} <: Denoise
+@kwdef mutable struct DenoiseSpectral{T1, T2, T3, T4} <: AbstractDenoise
     detone::Bool = false
     mkt_comp::Integer = 1
     kernel = AverageShiftedHistograms.Kernels.gaussian
@@ -90,7 +90,7 @@ Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseSpectral{T1, T2, T3} <: Denoise
+mutable struct DenoiseSpectral{T1, T2, T3} <: AbstractDenoise
     kernel::T1
     m::T2
     n::T3
@@ -105,7 +105,7 @@ end
 
 """
 ```
-@kwdef mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: Denoise
+@kwdef mutable struct DenoiseShrink{T1, T2, T3, T4, T5} <: AbstractDenoise
     alpha::Real = 0.0
     detone::Bool = false
     mkt_comp::Integer = 1
@@ -156,7 +156,7 @@ Where:
   - `args`: arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
   - `kwargs`: keyword arguments for [`Optim.optimize`](https://julianlsolvers.github.io/Optim.jl/stable/user/config/)
 """
-mutable struct DenoiseShrink{T1, T2, T3, T4} <: Denoise
+mutable struct DenoiseShrink{T1, T2, T3, T4} <: AbstractDenoise
     alpha::T1
     kernel::T2
     m::T3
