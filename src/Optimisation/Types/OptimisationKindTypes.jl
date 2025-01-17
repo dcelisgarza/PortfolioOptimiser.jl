@@ -225,6 +225,54 @@ end
     mutable struct RB{T1} <: OptimType
 
 Risk budget optimisation type. Allows the user to specify a risk budget vector specifying the maximum risk contribution per asset or factor. The asset weights are then optimised to meet the risk budget per asset/factor as optimally as possible.
+
+See also: [`OptimType`](@ref), [`RiskMeasure`](@ref), [`RetType`](@ref), [`PortClass`](@ref), [`CustomConstraint`](@ref), [`CustomObjective`](@ref), [`AbstractScalarisation`](@ref).
+
+# Keyword Parameters
+
+  - `rm::Union{AbstractVector, <:RiskMeasure} = Variance()`: The risk measure(s) to be used.
+
+      + If multiple instances of the same risk measure are used, they must be grouped in a single vector wrapped in another vector, see examples.
+
+  - `kelly::RetType = NoKelly()`: The Kelly criterion to be used.
+  - `class::PortClass = Classic()`: The portfolio class to be used.
+  - `w_ini::T1 = Vector{Float64}(undef, 0) where T1 <: AbstractVector`: The initial weights for the optimisation.
+
+      + Irrelevant if the solver does not support them.
+  - `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
+  - `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
+  - `scalarisation::AbstractScalarisation = ScalarSum()`: The scalarisation function to be used.
+
+      + Only relevant when multiple risk measures are used.
+  - `str_names::Bool = false`: Whether to use string names in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+
+# Examples
+
+```julia
+# Default constructor.
+opt_type = RB()
+
+# Single risk measure.
+opt_type = RB(; rm = SD())
+
+# Multiple risk measures.
+opt_type = RB(; rm = [Variance(), CVaR(; alpha = 0.15)])
+
+# Incorrect use of multiple risk measures of the same type.
+# This will produce a JuMP registration error when optimise! is called.
+opt_type = RB(; rm = [CVaR(), CVaR(; alpha = 0.2)])
+
+# Correct use of multiple risk measures of the same type.
+opt_type = RB(; rm = [[CVaR(), CVaR(; alpha = 0.2)]])
+
+# Incorrect use of multiple risk measures, some of the same type.
+# This will produce a JuMP registration error regarding the CVaR
+# risk measure when optimise! is called.
+opt_type = RB(; rm = [MAD(), CVaR(), CVaR(; alpha = 0.2)])
+
+# Correct use of multiple risk measures, some of the same type.
+opt_type = RB(; rm = [MAD(), [CVaR(), CVaR(; alpha = 0.2)]])
+```
 """
 mutable struct RB{T1} <: OptimType
     rm::Union{AbstractVector, <:RiskMeasure}
@@ -247,31 +295,51 @@ function RB(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
 end
 
 """
-```
-abstract type RRBVersion end
-```
+    abstract type RRBVersion end
+
+Abstract type for the different versions of the relaxed risk budget optimisation.
+
+See also: [`RRB`](@ref), [`BasicRRB`](@ref), [`RegRRB`](@ref), [`RegPenRRB`](@ref).
 """
 abstract type RRBVersion end
 
-"""
-```
-struct BasicRRB <: RRBVersion end
-```
 """
 struct BasicRRB <: RRBVersion end
 
+Basic relaxed risk budget optimisation version.
+
+See also: [`RRBVersion`](@ref), [`RRB`](@ref).
 """
-```
-struct RegRRB <: RRBVersion end
-```
+struct BasicRRB <: RRBVersion end
+
+"""
+    struct RegRRB <: RRBVersion end
+
+Relaxed risk budget optimisation version with regularisation.
+
+See also: [`RRBVersion`](@ref), [`RRB`](@ref).
 """
 struct RegRRB <: RRBVersion end
 
 """
-```
-@kwdef mutable struct RegPenRRB{T1 <: Real} <: RRBVersion
-    penalty::T1 = 1.0
-end
+    mutable struct RegPenRRB{T1} <: RRBVersion
+
+Relaxed risk budget optimisation version with regularisation and penalty.
+
+See also: [`RRBVersion`](@ref), [`RRB`](@ref).
+
+# Keyword Parameters
+
+  - `penalty::Real = 1.0`: The penalty to be used.
+
+# Examples
+
+```julia
+# Default constructor.
+rrb_ver = RegPenRRB()
+
+# Custom penalty.
+rrb_ver = RegPenRRB(; penalty = 0.5)
 ```
 """
 mutable struct RegPenRRB{T1} <: RRBVersion
@@ -282,11 +350,7 @@ function RegPenRRB(; penalty::Real = 1.0)
 end
 
 """
-```
-@kwdef mutable struct RRB <: OptimType
-    version::RRBVersion = BasicRRB()
-end
-```
+    mutable struct RRB{T1} <: OptimType
 """
 mutable struct RRB{T1} <: OptimType
     version::RRBVersion
@@ -314,20 +378,7 @@ function Base.getproperty(obj::RRB, sym::Symbol)
 end
 
 """
-```
-@kwdef mutable struct NOC{T1 <: Real, T2 <: AbstractVector{<:Real},
-                          T3 <: AbstractVector{<:Real}, T4 <: AbstractVector{<:Real},
-                          T5 <: AbstractVector{<:Real}, T6 <: AbstractVector{<:Real}} <:
-                      OptimType
-    type::Trad = Trad()
-    bins::T1 = 20.0
-    w_opt::T2 = Vector{Float64}(undef, 0)
-    w_min::T3 = Vector{Float64}(undef, 0)
-    w_max::T4 = Vector{Float64}(undef, 0)
-    w_min_ini::T5 = Vector{Float64}(undef, 0)
-    w_max_ini::T6 = Vector{Float64}(undef, 0)
-end
-```
+    mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
 """
 mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
     flag::Bool

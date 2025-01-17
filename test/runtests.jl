@@ -1,11 +1,11 @@
 using SafeTestsets
 
 @safetestset "RRB optimisation" begin
-    include("RRPOptimisationTests.jl")
+    include("RRBOptimisationTests.jl")
 end
 
 @safetestset "RB optimisation" begin
-    include("RPOptimisationTests.jl")
+    include("RBOptimisationTests.jl")
 end
 
 @safetestset "Stats tests" begin

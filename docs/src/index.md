@@ -96,11 +96,19 @@ show(wd)
 
 ## Functionality
 
-### Optimisation models
+### Non-hierarchical optimisation models
 
   - Traditional, [`Trad`](@ref).
   - Risk Budgeting, [`RB`](@ref).
+  - Relaxed Risk Budgetting (Variance only), [`RRB`](@ref).
   - Near Optimal Centering, [`NOC`](@ref).
+
+### Hierarchical optimisation models
+
+  - Hierarchical Risk Parity, [`HRP`](@ref).
+  - Hierarchical Risk Parity Schur Complement (Variance only), [`SchurHRP`](@ref).
+  - Hierarchical Equal Risk Parity, [`HERC`](@ref).
+  - Nested Clustered Optimisation, [`NCO`](@ref).
 
 ## Parameter estimation
 
