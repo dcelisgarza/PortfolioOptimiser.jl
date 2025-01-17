@@ -142,7 +142,7 @@ function Base.setproperty!(obj::ScalarLogSumExp, sym::Symbol, val)
 end
 
 """
-    mutable struct Trad{T1, T2} <: OptimType
+    mutable struct Trad{T1} <: OptimType
 
 Traditional optimisation type.
 
@@ -162,9 +162,6 @@ See also: [`OptimType`](@ref), [`RiskMeasure`](@ref), [`ObjectiveFunction`](@ref
       + Irrelevant if the solver does not support them.
   - `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
   - `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
-  - `ohf::T2 = 1.0 where T2 <: Real`: The optimal homogenisation factor.
-
-      + Only used when `obj == Sharpe()`, and if `iszero(ohf)`, [`optimise!`](@ref) sets its value in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model by using a heuristic.
   - `scalarisation::AbstractScalarisation = ScalarSum()`: The scalarisation function to be used.
 
       + Only relevant when multiple risk measures are used.
@@ -198,7 +195,7 @@ opt_type = Trad(; rm = [MAD(), CVaR(), CVaR(; alpha = 0.2)])
 opt_type = Trad(; rm = [MAD(), [CVaR(), CVaR(; alpha = 0.2)]])
 ```
 """
-mutable struct Trad{T1, T2} <: OptimType
+mutable struct Trad{T1} <: OptimType
     rm::Union{AbstractVector, <:RiskMeasure}
     obj::ObjectiveFunction
     kelly::RetType
@@ -206,7 +203,6 @@ mutable struct Trad{T1, T2} <: OptimType
     w_ini::T1
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
-    ohf::T2
     scalarisation::AbstractScalarisation
     str_names::Bool
 end
@@ -215,10 +211,10 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
               class::PortClass = Classic(),
               w_ini::AbstractVector = Vector{Float64}(undef, 0),
               custom_constr::CustomConstraint = NoCustomConstraint(),
-              custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
+              custom_obj::CustomObjective = NoCustomObjective(),
               scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
-    return Trad{typeof(w_ini), typeof(ohf)}(rm, obj, kelly, class, w_ini, custom_constr,
-                                            custom_obj, ohf, scalarisation, str_names)
+    return Trad{typeof(w_ini)}(rm, obj, kelly, class, w_ini, custom_constr, custom_obj,
+                               scalarisation, str_names)
 end
 
 """
@@ -430,13 +426,12 @@ See also: [`OptimType`](@ref), [`RiskMeasure`](@ref), [`RetType`](@ref), [`PortC
       + Irrelevant if the solver does not support them.
   - `custom_constr::CustomConstraint = NoCustomConstraint()`: Add custom constraints to the optimisation problem.
   - `custom_obj::CustomObjective = NoCustomObjective()`: Add custom terms to the objective function.
-  - `ohf::T9 = 1.0 where T9 <: Real`:
   - `scalarisation::AbstractScalarisation = ScalarSum()`: The scalarisation function to be used.
 
       + Only relevant when multiple risk measures are used.
   - `str_names::Bool = false`: Whether to use string names in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
 """
-mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8, T9} <: OptimType
+mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
     flag::Bool
     bins::T1
     w_opt::T2
@@ -452,7 +447,6 @@ mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8, T9} <: OptimType
     w_ini::T8
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
-    ohf::T9
     scalarisation::AbstractScalarisation
     str_names::Bool
 end
@@ -468,25 +462,17 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              class::PortClass = Classic(),
              w_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
-             custom_obj::CustomObjective = NoCustomObjective(), ohf::Real = 1.0,
+             custom_obj::CustomObjective = NoCustomObjective(),
              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
     return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_opt_ini),
-               typeof(w_min_ini), typeof(w_max_ini), typeof(w_ini), typeof(ohf)}(flag, bins,
-                                                                                 w_opt,
-                                                                                 w_min,
-                                                                                 w_max,
-                                                                                 w_opt_ini,
-                                                                                 w_min_ini,
-                                                                                 w_max_ini,
-                                                                                 rm, obj,
-                                                                                 kelly,
-                                                                                 class,
-                                                                                 w_ini,
-                                                                                 custom_constr,
-                                                                                 custom_obj,
-                                                                                 ohf,
-                                                                                 scalarisation,
-                                                                                 str_names)
+               typeof(w_min_ini), typeof(w_max_ini), typeof(w_ini)}(flag, bins, w_opt,
+                                                                    w_min, w_max, w_opt_ini,
+                                                                    w_min_ini, w_max_ini,
+                                                                    rm, obj, kelly, class,
+                                                                    w_ini, custom_constr,
+                                                                    custom_obj,
+                                                                    scalarisation,
+                                                                    str_names)
 end
 
 abstract type HCOptWeightFinaliser end

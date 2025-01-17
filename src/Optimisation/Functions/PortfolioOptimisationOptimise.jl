@@ -2,13 +2,13 @@
     optimise!(port::Portfolio, type::OptimType)
 """
 function optimise!(port::Portfolio, type::Trad)
-    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, ohf, scalarisation, str_names) = type
+    (; rm, obj, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     set_scale_obj_constrs(port)
-    optimal_homogenisation_factor(port, mu, obj, ohf)
+    optimal_homogenisation_factor(port, mu, obj)
     initial_w(port, w_ini)
     set_k(port, obj)
     # Weight constraints
@@ -105,14 +105,14 @@ function optimise!(port::Portfolio, type::RRB)
     return convex_optimisation(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::NOC)
-    (; flag, rm, obj, kelly, class, custom_constr, custom_obj, ohf, scalarisation, str_names) = type
+    (; flag, rm, obj, kelly, class, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
     w0, risk0, ret0 = noc_risk_ret(port, type)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     set_scale_obj_constrs(port)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-    optimal_homogenisation_factor(port, mu, obj, ohf)
+    optimal_homogenisation_factor(port, mu, obj)
     initial_w(port, w0)
     set_k(port, nothing)
     # Weight constraints

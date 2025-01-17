@@ -58,12 +58,13 @@ function mu_sigma_returns_class(port, class::BLFM)
     end
     return mu, sigma, returns
 end
-function optimal_homogenisation_factor(port, mu, ::Sharpe, ohf)
+function optimal_homogenisation_factor(port, mu, obj::Sharpe)
+    ohf = obj.ohf
     if iszero(ohf)
-        if !isempty(mu)
-            ohf = min(1e3, max(1e-3, mean(abs.(mu))))
+        ohf = if !isempty(mu)
+            min(1e3, max(1e-3, mean(abs.(mu))))
         else
-            ohf = one(eltype(port.returns))
+            one(eltype(port.returns))
         end
     end
     model = port.model
