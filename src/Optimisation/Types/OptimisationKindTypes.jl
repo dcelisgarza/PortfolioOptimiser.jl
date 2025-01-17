@@ -482,12 +482,17 @@ end
 function HWF(; max_iter::Integer = 100)
     return HWF{typeof(max_iter)}(max_iter)
 end
-mutable struct JWF{T1 <: Integer} <: HCOptWeightFinaliser
-    type::T1
+
+abstract type JWFVersion end
+struct RelNOCJWF <: JWFVersion end
+struct AbsNOCJWF <: JWFVersion end
+struct RelSOCJWF <: JWFVersion end
+struct AbsSOCJWF <: JWFVersion end
+mutable struct JWF <: HCOptWeightFinaliser
+    type::JWFVersion
 end
-function JWF(; type::Integer = 1)
-    @smart_assert(type ∈ (1, 2, 3, 4))
-    return JWF{typeof(type)}(type)
+function JWF(; type::JWFVersion = RelNOCJWF())
+    return JWF(type)
 end
 function Base.setproperty!(obj::JWF, sym::Symbol, val)
     if sym == :type
