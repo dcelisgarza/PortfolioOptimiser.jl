@@ -3,13 +3,13 @@ for (op, name) ∈
          MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
          RLDaR_r, Kurt, SKurt, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, Skew, SSkew,
          Equal, WCVariance, TCM, TLPM, FTCM, FTLPM, Skewness, SSkewness, Kurtosis,
-         SKurtosis, SchurParams, DRCVaR),
+         SKurtosis, SchurParams, DRCVaR, NCOArgs),
         ("SD", "Variance", "MAD", "SSD", "SVariance", "FLPM", "SLPM", "WR", "VaR", "CVaR",
          "EVaR", "RLVaR", "DaR", "MDD", "ADD", "CDaR", "UCI", "EDaR", "RLDaR", "DaR_r",
          "MDD_r", "ADD_r", "CDaR_r", "UCI_r", "EDaR_r", "RLDaR_r", "Kurt", "SKurt", "GMD",
          "RG", "CVaRRG", "TG", "TGRG", "OWA", "BDVariance", "Skew", "SSkew", "Equal",
          "WCVariance", "TCM", "TLPM", "FTCM", "FTLPM", "Skewness", "SSkewness", "Kurtosis",
-         "SKurtosis", "SchurParams", "DRCVaR"))
+         "SKurtosis", "SchurParams", "DRCVaR", "NCOArgs"))
     eval(quote
              Base.iterate(S::$op, state = 1) = state > 1 ? nothing : (S, state + 1)
              function Base.String(s::$op)

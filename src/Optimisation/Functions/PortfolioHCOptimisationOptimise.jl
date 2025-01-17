@@ -23,6 +23,9 @@ function optimise!(port::Portfolio, type::HERC)
     return finalise_weights(type, port, w, w_min, w_max, finaliser)
 end
 function optimise!(port::Portfolio, type::NCO)
+    if isa(type.external, AbstractVector)
+        @smart_assert(length(type.external) == port.k)
+    end
     empty!(port.fail)
     lo, hi = w_limits(port, type)
     w_min, w_max = set_hc_weights(port.w_min, port.w_max, size(port.returns, 2), lo, hi)

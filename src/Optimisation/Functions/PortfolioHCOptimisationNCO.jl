@@ -408,17 +408,17 @@ function get_external_tr(x::TR, w)
     return TR(; val = get_external_real_or_vector(x.val, w),
               w = get_external_vector(x.w, w))
 end
-function pre_modify_intra_port!(::NoNCOModify, internal_args, cluster, cidx, idx_sq, Nc,
-                                special_rm_idx)
+function pre_modify_intra_port!(::NoNCOModify, intra_port, internal_args, i, cluster, cidx,
+                                idx_sq, Nc, special_rm_idx)
     return nothing
 end
-function post_modify_intra_port!(::NoNCOModify, internal_args, cluster, cidx, idx_sq, Nc,
-                                 special_rm_idx)
+function post_modify_intra_port!(::NoNCOModify, intra_port, internal_args, i, cluster, cidx,
+                                 idx_sq, Nc, special_rm_idx)
     return nothing
 end
-function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
+function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                special_rm_idx)
-    (; type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args
+    (; type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args[i]
 
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
@@ -603,8 +603,8 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
 
-    pre_modify_intra_port!(pre_modify, internal_args, cluster, cidx, idx_sq, Nc,
-                           special_rm_idx)
+    pre_modify_intra_port!(pre_modify, intra_port, internal_args, i, cluster, cidx, idx_sq,
+                           Nc, special_rm_idx)
 
     if !isempty(stats_kwargs)
         asset_statistics!(intra_port; stats_kwargs...)
@@ -619,8 +619,8 @@ function get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
         cluster_assets!(intra_port; cluster_kwargs...)
     end
 
-    post_modify_intra_port!(post_modify, internal_args, cluster, cidx, idx_sq, Nc,
-                            special_rm_idx)
+    post_modify_intra_port!(post_modify, intra_port, internal_args, i, cluster, cidx,
+                            idx_sq, Nc, special_rm_idx)
 
     w = optimise!(intra_port, type)
     if !isempty(w)
@@ -709,7 +709,7 @@ function calc_intra_weights(port::Portfolio, internal_args)
         end
 
         old_stats = set_rm_stats(port, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
-        cw, cfail = get_cluster_portfolio(port, internal_args, cluster, cidx, idx_sq, Nc,
+        cw, cfail = get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                           special_rm_idx)
         reset_special_rms(rm, special_rm_idx, old_stats)
 
@@ -1018,7 +1018,6 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
 end
 function calc_inter_weights(port::Portfolio, wi, external_args)
     rm = external_args.type.rm
-
     special_rm_idx = find_special_rm(rm)
     old_stats = set_rm_stats(port, rm, wi, special_rm_idx)
     cw, cfail = get_external_portfolio(port, wi, external_args, special_rm_idx)
