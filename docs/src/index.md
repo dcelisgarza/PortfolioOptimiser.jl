@@ -36,8 +36,8 @@ assets = sort!(["SOUN", "RIVN", "GME", "AMC", "SOFI", "ENVX", "ANVS", "LUNR", "E
                 "NVAX", "NKLA", "ACHR", "RKLB", "MARA"])
 
 # Prices date range.
-Date_0 = Dates.today() - Dates.Year(1)
-Date_1 = Dates.today()
+Date_0 = "2024-01-01"
+Date_1 = "2025-01-01"
 
 # Download the price data using YFinance.
 prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
