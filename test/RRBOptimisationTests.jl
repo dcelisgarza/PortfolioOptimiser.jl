@@ -17,13 +17,13 @@ l = 2.0
 
     type = RRB(; version = BasicRRB())
     w1 = optimise!(portfolio, type)
-    rc1 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc1 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc1, hrc1 = extrema(rc1)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     portfolio.risk_budget /= sum(portfolio.risk_budget)
     w2 = optimise!(portfolio, type)
-    rc2 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc2 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc2, hrc2 = extrema(rc2)
 
     w1t = [0.05063226719737215, 0.05124795346377443, 0.046905309681765, 0.04369001060019904,
@@ -48,13 +48,13 @@ l = 2.0
     type = RRB(; version = RegRRB())
     portfolio.risk_budget = []
     w3 = optimise!(portfolio, type)
-    rc3 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc3 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc3, hrc3 = extrema(rc3)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     portfolio.risk_budget /= sum(portfolio.risk_budget)
     w4 = optimise!(portfolio, type)
-    rc4 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc4 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc4, hrc4 = extrema(rc4)
 
     w3t = [0.05063226265208921, 0.051247949474025334, 0.04690530448046275,
@@ -79,13 +79,13 @@ l = 2.0
     type = RRB(; version = RegPenRRB(; penalty = 1))
     portfolio.risk_budget = []
     w5 = optimise!(portfolio, type)
-    rc5 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc5 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc5, hrc5 = extrema(rc5)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     portfolio.risk_budget /= sum(portfolio.risk_budget)
     w6 = optimise!(portfolio, type)
-    rc6 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc6 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc6, hrc6 = extrema(rc6)
 
     w5t = [0.05063225921797402, 0.05124794743224515, 0.04690529686433053,
@@ -110,13 +110,13 @@ l = 2.0
     type = RRB(; version = RegPenRRB(; penalty = 5))
     portfolio.risk_budget = []
     w7 = optimise!(portfolio, type)
-    rc7 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc7 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc7, hrc7 = extrema(rc7)
 
     portfolio.risk_budget = 1:size(portfolio.returns, 2)
     portfolio.risk_budget /= sum(portfolio.risk_budget)
     w8 = optimise!(portfolio, type)
-    rc8 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc8 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc8, hrc8 = extrema(rc8)
 
     w7t = [0.0506322603507147, 0.05124794887677536, 0.046905298286355805,
@@ -142,7 +142,7 @@ l = 2.0
     portfolio.risk_budget[1] = 5
     portfolio.risk_budget /= sum(portfolio.risk_budget)
     w9 = optimise!(portfolio, type)
-    rc9 = risk_contribution(portfolio; type = :RRB, rm = SD())
+    rc9 = risk_contribution(portfolio, :RRB; rm = SD())
     lrc9, hrc9 = extrema(rc9)
     @test isapprox(hrc9 / lrc9, 100, rtol = 0.1)
     @test isapprox(sum(portfolio.risk_budget), 1)

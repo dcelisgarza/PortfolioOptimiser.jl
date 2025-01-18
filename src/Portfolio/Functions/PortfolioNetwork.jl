@@ -111,12 +111,12 @@ Compute the percentage of the portfolio comprised of connected assets [`connecte
 
   - `c`: percentage of the portfolio comprised of assets connected via a connection-based adjacency matrix.
 """
-function connected_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                          type::Symbol = :Trad,
+function connected_assets(port::AbstractPortfolio, key = :Trad;
+                          X::AbstractMatrix = port.returns,
                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                           dist_type::DistMethod = DistCanonical(),
                           network_type::NetworkType = MST())
-    return connected_assets(X, port.optimal[type].weights; cor_type = cor_type,
+    return connected_assets(X, port.optimal[key].weights; cor_type = cor_type,
                             dist_type = dist_type, network_type = network_type)
 end
 
@@ -144,21 +144,21 @@ Compute the percentage of the portfolio comprised of related assets  [`related_a
 
   - `c`: percentage of the portfolio comprised of related assets via a connection-based adjacency matrix.
 """
-function related_assets(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                        type::Symbol = :Trad,
+function related_assets(port::AbstractPortfolio, key = :Trad;
+                        X::AbstractMatrix = port.returns,
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistMethod = DistCanonical(),
                         clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
-    return related_assets(X, port.optimal[type].weights; cor_type = cor_type,
+    return related_assets(X, port.optimal[key].weights; cor_type = cor_type,
                           dist_type = dist_type, clust_alg = clust_alg,
                           clust_opt = clust_opt)
 end
 
-function average_centrality(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
-                            type::Symbol = :Trad,
+function average_centrality(port::AbstractPortfolio, key = :Trad;
+                            X::AbstractMatrix = port.returns,
                             cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                             dist_type::DistMethod = DistCanonical(),
                             network_type::NetworkType = MST())
-    return average_centrality(X, port.optimal[type].weights; cor_type = cor_type,
+    return average_centrality(X, port.optimal[key].weights; cor_type = cor_type,
                               dist_type = dist_type, network_type = network_type)
 end

@@ -215,7 +215,7 @@ end
     At = [4.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0, 2.0,
           5.0, 1.0, 7.0, 1.0]
     @test isapprox(A, At)
-    @test isapprox(average_centrality(portfolio; type = :Trad, network_type = network_type),
+    @test isapprox(average_centrality(portfolio, :Trad; network_type = network_type),
                    dot(A, w1.weights))
 
     network_type = MST(; tree = PrimTree(), steps = 1,
@@ -319,34 +319,34 @@ end
     @test isapprox(C, 0.15341826288065405)
 
     network_type = MST(; steps = 2)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.26913944576609394)
 
     network_type = MST(; steps = 5)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.8136084159385178)
 
     network_type = MST(; steps = 10)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     network_type = TMFG(; steps = 1)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.2086544834780483)
 
     network_type = TMFG(; steps = 2)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.793855216107267)
 
     network_type = TMFG(; steps = 5)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     network_type = TMFG(; steps = 10)
-    C = connected_assets(portfolio; type = :Trad, network_type = network_type)
+    C = connected_assets(portfolio, :Trad; network_type = network_type)
     @test isapprox(C, 0.827667431214267)
 
     clust_alg = DBHT()
-    C = related_assets(portfolio; type = :Trad, clust_alg = clust_alg)
+    C = related_assets(portfolio, :Trad; clust_alg = clust_alg)
     @test isapprox(C, 0.3171332022604018)
 end

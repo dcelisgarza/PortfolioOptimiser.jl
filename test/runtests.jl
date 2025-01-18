@@ -1,17 +1,5 @@
 using SafeTestsets
 
-@safetestset "RRB optimisation" begin
-    include("RRBOptimisationTests.jl")
-end
-
-@safetestset "RB optimisation" begin
-    include("RBOptimisationTests.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
-end
-
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -38,10 +26,6 @@ end
 
 @safetestset "Constraint Functions" begin
     include("ConstraintTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
 end
 
 @safetestset "Portfolio classes" begin
@@ -88,10 +72,6 @@ end
     include("OWAWeightsTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
 end
@@ -102,4 +82,24 @@ end
 
 @safetestset "Misc Statistics" begin
     include("MiscStatisticsTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "RRB optimisation" begin
+    include("RRBOptimisationTests.jl")
+end
+
+@safetestset "RB optimisation" begin
+    include("RBOptimisationTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
 end

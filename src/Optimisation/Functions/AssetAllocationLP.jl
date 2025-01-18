@@ -144,11 +144,11 @@ function _combine_allocations!(port, key, long_tickers, short_tickers, long_shar
 
     return nothing
 end
-function _lp_allocation!(port, port_type, latest_prices, investment, short, budget,
+function _lp_allocation!(port, port_key, latest_prices, investment, short, budget,
                          short_budget, string_names)
-    key = Symbol("LP_" * string(port_type))
+    key = Symbol("LP_" * string(port_key))
 
-    weights = port.optimal[port_type].weights
+    weights = port.optimal[port_key].weights
     tickers = port.assets
 
     long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
@@ -187,8 +187,10 @@ function _lp_allocation!(port, port_type, latest_prices, investment, short, budg
 
     return port.alloc_optimal[key]
 end
-function _allocate!(::LP, port, type, latest_prices, investment, short, budget,
-                    short_budget, string_names)
-    return _lp_allocation!(port, type, latest_prices, investment, short, budget,
+function allocate!(port::AbstractPortfolio, ::LP; key::Symbol = :Trad,
+                   latest_prices = port.latest_prices, investment::Real = 1e6,
+                   short = port.short, budget = port.budget,
+                   short_budget = port.short_budget, string_names::Bool = false)
+    return _lp_allocation!(port, key, latest_prices, investment, short, budget,
                            short_budget, string_names)
 end

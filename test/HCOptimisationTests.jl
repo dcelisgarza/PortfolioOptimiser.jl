@@ -383,13 +383,13 @@ end
     wt = optimise!(portfolio, Trad())
 
     @test isapprox(wh.weights, w1.weights)
-    @test rmsd(wh.weights, w1.weights) <=
-          rmsd(wh.weights, w7.weights) <=
-          rmsd(wh.weights, w13.weights) <=
-          rmsd(wh.weights, w17.weights) <=
-          rmsd(wh.weights, w11.weights) <=
-          rmsd(wh.weights, w9.weights) <=
-          rmsd(wh.weights, w15.weights)
+    @test StatsBase.rmsd(wh.weights, w1.weights) <=
+          StatsBase.rmsd(wh.weights, w7.weights) <=
+          StatsBase.rmsd(wh.weights, w13.weights) <=
+          StatsBase.rmsd(wh.weights, w17.weights) <=
+          StatsBase.rmsd(wh.weights, w11.weights) <=
+          StatsBase.rmsd(wh.weights, w9.weights) <=
+          StatsBase.rmsd(wh.weights, w15.weights)
 end
 
 @testset "Test failures" begin
