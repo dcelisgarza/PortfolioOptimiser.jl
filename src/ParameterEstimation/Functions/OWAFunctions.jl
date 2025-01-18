@@ -356,7 +356,8 @@ function _owa_model_setup(type, T, weights)
     @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
     return model
 end
-function _owa_model_solve(model, weights, solvers, k)
+function _owa_model_solve(model, weights, type, k)
+    solvers = type.solvers
     success, solvers_tried = _optimise_JuMP_model(model, solvers)
     return if success
         phi = model[:phi]
@@ -365,7 +366,7 @@ function _owa_model_solve(model, weights, solvers, k)
         w = weights * phis
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nSolvers: $solvers_tried.\nReverting to crra type.")
+        @warn("$funcname: model could not be optimised satisfactorily.\nType: $(String(type))\nSolvers: $solvers_tried.\nReverting to crra type.")
         w = _crra_type(weights, k, 0.5)
     end
 end
@@ -378,7 +379,7 @@ function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
     theta = model[:theta]
     @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
     @objective(model, Max, -t)
-    return _owa_model_solve(model, weights, type.solvers, k)
+    return _owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
     model = _owa_model_setup(type, T, weights)
@@ -386,7 +387,7 @@ function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
     theta = model[:theta]
     @constraint(model, [t; theta] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, type.solvers, k)
+    return _owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
     model = _owa_model_setup(type, T, weights)
@@ -395,7 +396,7 @@ function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
     @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
     @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, type.solvers, k)
+    return _owa_model_solve(model, weights, type, k)
 end
 """
 ```julia
