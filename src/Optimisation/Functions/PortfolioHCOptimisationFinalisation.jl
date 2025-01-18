@@ -1,38 +1,25 @@
-function finaliser_type_const_obj(::RelNOCJWF, model, weights, scale_constr, scale_obj)
+function _finaliser_type_constraint(type, model, weights, scale_constr)
     N = length(weights)
     w = model[:w]
-    @variable(model, t)
-    weights[iszero.(weights)] .= eps(eltype(weights))
-    @constraint(model,
-                [scale_constr * t; scale_constr * (w ./ weights .- 1)] in
-                MOI.NormOneCone(N + 1))
-    @objective(model, Min, scale_obj * t)
-    return nothing
-end
-function finaliser_type_const_obj(::RelSOCJWF, model, weights, scale_constr, scale_obj)
-    w = model[:w]
-    @variable(model, t)
-    weights[iszero.(weights)] .= eps(eltype(weights))
-    @constraint(model,
-                [scale_constr * t; scale_constr * (w ./ weights .- 1)] in SecondOrderCone())
-    @objective(model, Min, scale_obj * t)
-    return nothing
-end
-function finaliser_type_const_obj(::AbsNOCJWF, model, weights, scale_constr, scale_obj)
-    N = length(weights)
-    w = model[:w]
-    @variable(model, t)
-    @constraint(model,
-                [scale_constr * t; scale_constr * (w .- weights)] in MOI.NormOneCone(N + 1))
-    @objective(model, Min, scale_obj * t)
-    return nothing
-end
-function finaliser_type_const_obj(::AbsSOCJWF, model, weights, scale_constr, scale_obj)
-    w = model[:w]
-    @variable(model, t)
-    @constraint(model,
-                [scale_constr * t; scale_constr * (w .- weights)] in SecondOrderCone())
-    @objective(model, Min, scale_obj * t)
+    t = model[:t]
+    if type == 1
+        weights[iszero.(weights)] .= eps(eltype(weights))
+        @constraint(model,
+                    [scale_constr * t; scale_constr * (w ./ weights .- 1)] in
+                    MOI.NormOneCone(N + 1))
+    elseif type == 2
+        weights[iszero.(weights)] .= eps(eltype(weights))
+        @constraint(model,
+                    [scale_constr * t; scale_constr * (w ./ weights .- 1)] in
+                    SecondOrderCone())
+    elseif type == 3
+        @constraint(model,
+                    [scale_constr * t; scale_constr * (w .- weights)] in
+                    MOI.NormOneCone(N + 1))
+    else
+        @constraint(model,
+                    [scale_constr * t; scale_constr * (w .- weights)] in SecondOrderCone())
+    end
     return nothing
 end
 function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
@@ -76,8 +63,9 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
                          scale_constr * (budget - short_budget)
                      end)
     end
-
-    finaliser_type_const_obj(type, model, weights, scale_constr, scale_obj)
+    @variable(model, t)
+    _finaliser_type_constraint(type, model, weights, scale_constr)
+    @objective(model, Min, scale_obj * t)
 
     success, solvers_tried = _optimise_JuMP_model(model, solvers)
 

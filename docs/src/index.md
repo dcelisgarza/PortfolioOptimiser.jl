@@ -149,12 +149,12 @@ We provide distance and distance of distances estimators. Distance estimators ha
   - Distance correlation, [`DistCor`](@ref), [`DistDistCor`](@ref).
   - Variation of information, [`DistVarInfo`](@ref), [`DistDistVarInfo`](@ref).
 
-## Cokurtosis estimators
+## Cokurtosis
 
   - Full, [`KurtFull`](@ref).
   - Semi, [`KurtSemi`](@ref).
 
-## Coskewness estimators
+## Coskewness
 
   - Full, [`SkewFull`](@ref).
   - Semi, [`SkewSemi`](@ref).
@@ -165,15 +165,6 @@ We provide distance and distance of distances estimators. Distance estimators ha
   - Matrix denoising, [`NoDenoise`](@ref), [`DenoiseFixed`](@ref), [`DenoiseSpectral`](@ref), [`DenoiseShrink`](@ref).
   - Matrix detoning, [`NoDetone`](@ref), [`Detone`](@ref).
   - Local-global sparsification of the matrix inverse, [`NoLoGo`](@ref), [`LoGo`](@ref).
-
-## Prior estimators
-
-- Empirical, [`asset_statistics!`](@ref).
-- Worst-case mean and covariance sets, [`wc_statistics!`](@ref).
-  - Box
-- Factor models, [`factor_statistics!`](@ref).
-- Black Litterman, [`black_litterman_statistics!`](@ref).
-- Black Litterman Factor models, [`black_litterman_factor_statistics!`](@ref).
 
 ## Parameter estimation
 
