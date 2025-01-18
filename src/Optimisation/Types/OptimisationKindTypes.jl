@@ -484,18 +484,18 @@ function HWF(; max_iter::Integer = 100)
 end
 
 abstract type JWFVersion end
-struct RelNOCJWF <: JWFVersion end
-struct AbsNOCJWF <: JWFVersion end
-struct RelSOCJWF <: JWFVersion end
-struct AbsSOCJWF <: JWFVersion end
+struct RNF <: JWFVersion end
+struct ANF <: JWFVersion end
+struct RSF <: JWFVersion end
+struct ASF <: JWFVersion end
 mutable struct JWF <: HCOptWeightFinaliser
-    type::JWFVersion
+    version::JWFVersion
 end
-function JWF(; type::JWFVersion = RelNOCJWF())
-    return JWF(type)
+function JWF(; version::JWFVersion = RNF())
+    return JWF(version)
 end
 function Base.setproperty!(obj::JWF, sym::Symbol, val)
-    if sym == :type
+    if sym == :version
         @smart_assert(val ∈ (1, 2, 3, 4))
     end
     return setfield!(obj, sym, val)
@@ -658,4 +658,4 @@ for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP),
 end
 
 export Trad, RB, BasicRRB, RegRRB, RegPenRRB, RRB, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
-       SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp
+       SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp, RNF, ANF, RSF, ASF

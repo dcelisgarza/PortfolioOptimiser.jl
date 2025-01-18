@@ -1,4 +1,4 @@
-function finaliser_type_const_obj(::RelNOCJWF, model, weights, scale_constr, scale_obj)
+function finaliser_type_const_obj(::RNF, model, weights, scale_constr, scale_obj)
     N = length(weights)
     w = model[:w]
     @variable(model, t)
@@ -9,7 +9,7 @@ function finaliser_type_const_obj(::RelNOCJWF, model, weights, scale_constr, sca
     @objective(model, Min, scale_obj * t)
     return nothing
 end
-function finaliser_type_const_obj(::RelSOCJWF, model, weights, scale_constr, scale_obj)
+function finaliser_type_const_obj(::RSF, model, weights, scale_constr, scale_obj)
     w = model[:w]
     @variable(model, t)
     weights[iszero.(weights)] .= eps(eltype(weights))
@@ -18,7 +18,7 @@ function finaliser_type_const_obj(::RelSOCJWF, model, weights, scale_constr, sca
     @objective(model, Min, scale_obj * t)
     return nothing
 end
-function finaliser_type_const_obj(::AbsNOCJWF, model, weights, scale_constr, scale_obj)
+function finaliser_type_const_obj(::ANF, model, weights, scale_constr, scale_obj)
     N = length(weights)
     w = model[:w]
     @variable(model, t)
@@ -27,7 +27,7 @@ function finaliser_type_const_obj(::AbsNOCJWF, model, weights, scale_constr, sca
     @objective(model, Min, scale_obj * t)
     return nothing
 end
-function finaliser_type_const_obj(::AbsSOCJWF, model, weights, scale_constr, scale_obj)
+function finaliser_type_const_obj(::ASF, model, weights, scale_constr, scale_obj)
     w = model[:w]
     @variable(model, t)
     @constraint(model,
@@ -42,7 +42,7 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
     scale_constr = port.scale_constr
     scale_obj = port.scale_obj
     solvers = port.solvers
-    type = finaliser.type
+    version = finaliser.version
 
     model = JuMP.Model()
 
@@ -77,7 +77,7 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
                      end)
     end
 
-    finaliser_type_const_obj(type, model, weights, scale_constr, scale_obj)
+    finaliser_type_const_obj(version, model, weights, scale_constr, scale_obj)
 
     success, solvers_tried = _optimise_JuMP_model(model, solvers)
 
