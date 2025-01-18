@@ -35,7 +35,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     @test plt10.n == 4
 
     cluster_assets!(portfolio; clust_alg = HAC(),
-                    clust_opt = ClustOpt(; k_method = StdSilhouette()))
+                    clust_opt = ClustOpt(; k_type = StdSilhouette()))
     w = optimise!(portfolio, HRP())
 
     plt11 = plot_clusters(portfolio; cluster = false)

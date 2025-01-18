@@ -1,15 +1,15 @@
 """
 ```
-abstract type OWAMethods end
+abstract type OWATypes end
 ```
 
-Abstract type for subtyping Ordered Weight Array (OWA) methods for computing the weights used to combine L-moments higher than 2 [OWAL](@cite) in [`owa_l_moment_crm`](@ref).
+Abstract type for subtyping Ordered Weight Array (OWA) types for computing the weights used to combine L-moments higher than 2 [OWAL](@cite) in [`owa_l_moment_crm`](@ref).
 """
-abstract type OWAMethods end
+abstract type OWATypes end
 
 """
 ```
-@kwdef mutable struct CRRA{T1 <: Real} <: OWAMethods
+@kwdef mutable struct CRRA{T1 <: Real} <: OWATypes
     g::T1 = 0.5
 end
 ```
@@ -20,7 +20,7 @@ Normalised Constant Relative Risk Aversion Coefficients.
 
   - `g`: Risk aversion coefficient.
 """
-mutable struct CRRA{T1 <: Real} <: OWAMethods
+mutable struct CRRA{T1 <: Real} <: OWATypes
     g::T1
 end
 function CRRA(; g::Real = 0.5)
@@ -30,7 +30,7 @@ end
 
 """
 ```
-@kwdef mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
+@kwdef mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWATypes
     max_phi::T1 = 0.5
     solvers::T2 = Dict()
 end
@@ -42,7 +42,7 @@ Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneC
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
+mutable struct MaxEntropy{T1 <: Real, T2 <: AbstractDict} <: OWATypes
     max_phi::T1
     solvers::T2
 end
@@ -53,7 +53,7 @@ end
 
 """
 ```
-@kwdef mutable struct MinSumSq{T1 <: Real} <: OWAMethods
+@kwdef mutable struct MinSumSq{T1 <: Real} <: OWATypes
     max_phi::T1 = 0.5
 end
 ```
@@ -64,7 +64,7 @@ Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSumSq{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
+mutable struct MinSumSq{T1 <: Real, T2 <: AbstractDict} <: OWATypes
     max_phi::T1
     solvers::T2
 end
@@ -75,7 +75,7 @@ end
 
 """
 ```
-@kwdef mutable struct MinSqDist{T1 <: Real} <: OWAMethods
+@kwdef mutable struct MinSqDist{T1 <: Real} <: OWATypes
     max_phi::T1 = 0.5
 end
 ```
@@ -86,7 +86,7 @@ Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSqDist{T1 <: Real, T2 <: AbstractDict} <: OWAMethods
+mutable struct MinSqDist{T1 <: Real, T2 <: AbstractDict} <: OWATypes
     max_phi::T1
     solvers::T2
 end

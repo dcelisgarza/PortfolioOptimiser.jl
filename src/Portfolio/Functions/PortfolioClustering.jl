@@ -45,7 +45,7 @@ function _clusterise(ca::DBHT, port::Portfolio, clust_opt::ClustOpt = ClustOpt()
     S = port.cor
     D = port.dist
     S = dbht_similarity(ca.similarity, S, D)
-    clustering = DBHTs(D, S; branchorder = clust_opt.branchorder, method = ca.root_method)[end]
+    clustering = DBHTs(D, S; branchorder = clust_opt.branchorder, type = ca.root_type)[end]
     k = calc_k_clusters(clust_opt, D, clustering)
     return clustering, k
 end
@@ -103,7 +103,7 @@ end
 """
 ```
 cluster_assets(port::Portfolio; cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-               dist_type::DistMethod = DistCanonical(),
+               dist_type::DistType = DistCanonical(),
                clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
 ```
 
@@ -112,7 +112,7 @@ Hierarchically cluster the assets in a hierarchical portfolio using the covarian
 # Inputs
 
   - `cor_type`: correlation matrix estimator [`PortfolioOptimiserCovCor`](@ref).
-  - `dist_type`: method for computing the distance matrix [`DistMethod`](@ref).
+  - `dist_type`: type for computing the distance matrix [`DistType`](@ref).
   - `port`: hierarchical clustering portfolio .
   - `clust_alg`: hierarchical clustering algorithm [`ClustAlg`](@ref).
   - `clust_opt`: options for determining the number of clusters [`ClustOpt`](@ref).

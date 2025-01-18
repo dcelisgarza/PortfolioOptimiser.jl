@@ -19,7 +19,7 @@ struct NoLoGo <: AbstractLoGo end
 """
 ```
 @kwdef mutable struct LoGo <: AbstractLoGo
-    distance::DistMethod = DistMLP()
+    distance::DistType = DistMLP()
     similarity::DBHTSimilarity = DBHTMaxDist()
 end
 ```
@@ -28,15 +28,14 @@ Compute the LoGo covariance and correlation matrix estimator.
 
 # Parameters
 
-  - `distance`: method for computing the distance (disimilarity) matrix from the correlation matrix if the distance matrix is not provided to [`logo!`](@ref).
-  - `similarity`: method for computing the similarity matrix from the correlation and distance matrices. The distance matrix is used to compute sparsity pattern of the inverse of the LoGo covariance and correlation matrices.
+  - `distance`: type for computing the distance (disimilarity) matrix from the correlation matrix if the distance matrix is not provided to [`logo!`](@ref).
+  - `similarity`: type for computing the similarity matrix from the correlation and distance matrices. The distance matrix is used to compute sparsity pattern of the inverse of the LoGo covariance and correlation matrices.
 """
 mutable struct LoGo <: AbstractLoGo
-    distance::DistMethod
+    distance::DistType
     similarity::DBHTSimilarity
 end
-function LoGo(; distance::DistMethod = DistMLP(),
-              similarity::DBHTSimilarity = DBHTMaxDist())
+function LoGo(; distance::DistType = DistMLP(), similarity::DBHTSimilarity = DBHTMaxDist())
     return LoGo(distance, similarity)
 end
 

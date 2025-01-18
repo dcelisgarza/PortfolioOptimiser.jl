@@ -96,10 +96,10 @@ end
     asset_statistics!(portfolio)
     factor_statistics!(portfolio;
                        factor_type = FactorType(;
-                                                method = PCAReg(;
-                                                                target = PCATarget(;
-                                                                                   kwargs = (;
-                                                                                             pratio = 0.95)))))
+                                                type = PCAReg(;
+                                                              target = PCATarget(;
+                                                                                 kwargs = (;
+                                                                                           pratio = 0.95)))))
 
     portfolio.short = true
     w1 = optimise!(portfolio, RB(; class = FC()))
@@ -167,7 +167,7 @@ end
     @test isapprox(frc4, frct, rtol = 0.0001)
     @test isapprox(frc4_h / frc4_l, 3, rtol = 5.0e-4)
 
-    factor_statistics!(portfolio; factor_type = FactorType(; method = BReg()))
+    factor_statistics!(portfolio; factor_type = FactorType(; type = BReg()))
     w5 = optimise!(portfolio, RB(; class = FC()))
     frc5 = factor_risk_contribution(portfolio, :RB)
     frc5_l, frc5_h = extrema(frc5[1:5])

@@ -275,7 +275,7 @@ end
 
 """
 ```julia
-_crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+_crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
 
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
@@ -290,7 +290,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 
   - `w`: `T×1` ordered weight vector of the combined L-moments.
 """
-function _crra_method(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+function _crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
     e = 1
     for i ∈ eachindex(phis)
@@ -341,13 +341,13 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     return w
 end
 
-function _owa_l_moment_crm(method::CRRA, ::Any, k, weights)
-    return _crra_method(weights, k, method.g)
+function _owa_l_moment_crm(type::CRRA, ::Any, k, weights)
+    return _crra_type(weights, k, type.g)
 end
-function _owa_model_setup(method, T, weights)
+function _owa_model_setup(type, T, weights)
     n = size(weights, 2)
     model = JuMP.Model()
-    max_phi = method.max_phi
+    max_phi = type.max_phi
     @variable(model, theta[1:T])
     @variable(model, 0 .<= phi[1:n] .<= max_phi)
     @constraint(model, sum(phi) == 1)
@@ -365,12 +365,12 @@ function _owa_model_solve(model, weights, solvers, k)
         w = weights * phis
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nMethod: $method\nSolvers: $solvers_tried.\nReverting to crra method.")
-        w = _crra_method(weights, k, 0.5)
+        @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nSolvers: $solvers_tried.\nReverting to crra type.")
+        w = _crra_type(weights, k, 0.5)
     end
 end
-function _owa_l_moment_crm(method::MaxEntropy, T, k, weights)
-    model = _owa_model_setup(method, T, weights)
+function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
+    model = _owa_model_setup(type, T, weights)
     @variable(model, t)
     @variable(model, x[1:T])
     @constraint(model, sum(x) == 1)
@@ -378,28 +378,28 @@ function _owa_l_moment_crm(method::MaxEntropy, T, k, weights)
     theta = model[:theta]
     @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
     @objective(model, Max, -t)
-    return _owa_model_solve(model, weights, method.solvers, k)
+    return _owa_model_solve(model, weights, type.solvers, k)
 end
-function _owa_l_moment_crm(method::MinSumSq, T, k, weights)
-    model = _owa_model_setup(method, T, weights)
+function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
+    model = _owa_model_setup(type, T, weights)
     @variable(model, t)
     theta = model[:theta]
     @constraint(model, [t; theta] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, method.solvers, k)
+    return _owa_model_solve(model, weights, type.solvers, k)
 end
-function _owa_l_moment_crm(method::MinSqDist, T, k, weights)
-    model = _owa_model_setup(method, T, weights)
+function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
+    model = _owa_model_setup(type, T, weights)
     @variable(model, t)
     theta = model[:theta]
     @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
     @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
     @objective(model, Min, t)
-    return _owa_model_solve(model, weights, method.solvers, k)
+    return _owa_model_solve(model, weights, type.solvers, k)
 end
 """
 ```julia
-owa_l_moment_crm(T::Integer; k::Integer = 2, method::Symbol = :SD, g::Real = 0.5,
+owa_l_moment_crm(T::Integer; k::Integer = 2, type::Symbol = :SD, g::Real = 0.5,
                  max_phi::Real = 0.5, solvers = Dict())
 ```
 
@@ -409,7 +409,7 @@ Compute the OWA weights for the convex risk measure considering higher order L-m
 
   - `k`: order of the L-moment, `k ≥ 2`.
 
-  - `method`: method for computing the weights used to combine L-moments higher than 2, used in [`OWAMethods`](@ref).
+  - `type`: type for computing the weights used to combine L-moments higher than 2, used in [`OWATypes`](@ref).
 
       + `:CRRA:` Normalised Constant Relative Risk Aversion Coefficients.
       + `:E`: Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneCone`.
@@ -420,7 +420,7 @@ Compute the OWA weights for the convex risk measure considering higher order L-m
 
 # Outputs
 """
-function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = CRRA())
+function owa_l_moment_crm(T::Integer; k::Integer = 2, type::OWATypes = CRRA())
     @smart_assert(k >= 2)
     rg = 2:k
     weights = Matrix{typeof(inv(T * k))}(undef, T, length(rg))
@@ -428,7 +428,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, method::OWAMethods = CRRA(
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end
-    return _owa_l_moment_crm(method, T, k, weights)
+    return _owa_l_moment_crm(type, T, k, weights)
 end
 
 export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,

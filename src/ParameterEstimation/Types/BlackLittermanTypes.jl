@@ -66,9 +66,9 @@ Where:
 
   - `delta`: risk aversion factor.
   - `rf`: risk free rate.
-  - `posdef`: method for fixing non positive Black-Litterman matrices [`AbstractPosdefFix`](@ref).
-  - `denoise` method for denoising the Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing non positive Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` type for denoising the Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct BLType{T1 <: Real} <: BlackLitterman
     eq::Bool
@@ -171,9 +171,9 @@ Where:
 
   - `delta`: risk aversion factor.
   - `rf`: risk free rate.
-  - `posdef`: method for fixing non positive Augmented Black-Litterman matrices [`AbstractPosdefFix`](@ref).
-  - `denoise` method for denoising the Augmented Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo Augmented Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing non positive Augmented Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` type for denoising the Augmented Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo Augmented Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct ABLType{T1 <: Real} <: BlackLittermanFactor
     constant::Bool
@@ -266,9 +266,9 @@ Where:
   - `rf`: risk free rate.
   - `ve`: [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator) for computing the errors covariance.
   - `var_w`: optional weights for computing the errors covariance.
-  - `posdef`: method for fixing non positive Bayesian Black-Litterman matrices [`AbstractPosdefFix`](@ref).
-  - `denoise` method for denoising the Bayesian Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo Bayesian Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing non positive Bayesian Black-Litterman matrices [`AbstractPosdefFix`](@ref).
+  - `denoise` type for denoising the Bayesian Black-Litterman covariance matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo Bayesian Black-Litterman covariance matrix [`AbstractLoGo`](@ref).
 """
 mutable struct BBLType{T1 <: Real} <: BlackLittermanFactor
     constant::Bool

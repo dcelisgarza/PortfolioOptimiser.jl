@@ -3200,7 +3200,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    clust_alg = DBHT(; root_method = EqualDBHT())
+    clust_alg = DBHT(; root_type = EqualDBHT())
     clust_opt = ClustOpt()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 

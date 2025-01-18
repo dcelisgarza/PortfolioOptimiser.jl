@@ -5,7 +5,7 @@ include("./AssetAllocationGreedy.jl")
 ```
 allocate!(port::AbstractPortfolio;
                    type::Symbol = isa(port, Portfolio) ? :Trad : :HRP,
-                   method::AllocationType = LP(), latest_prices = port.latest_prices,
+                   type::AllocationType = LP(), latest_prices = port.latest_prices,
                    investment::Real = 1e6, 
                    string_names::Bool = false)
 ```

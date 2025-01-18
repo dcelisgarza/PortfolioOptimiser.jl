@@ -356,7 +356,7 @@ Gerber type 0 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber0{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -401,7 +401,7 @@ Gerber type 1 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber1{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -446,7 +446,7 @@ Gerber type 2 covariance and correlation matrices.
   - Only used when `normalise == true`:
 
       + `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Gerber type 2 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Gerber type 2 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerber2{T1 <: Real} <: CovGerberBasic
     normalise::Bool
@@ -503,7 +503,7 @@ Smyth-Broby modification of the Gerber type 0 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Smyth-Broby modification of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -568,7 +568,7 @@ Smyth-Broby modification of the Gerber type 1 covariance and correlation matrice
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Smyth-Broby modification of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -667,7 +667,7 @@ Smyth-Broby modification with vote counting of the Gerber type 0 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Smyth-Broby modification with vote counting of the Gerber type 0 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerberSB0{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -734,7 +734,7 @@ Smyth-Broby modification with vote counting of the Gerber type 1 covariance and 
   - `ve`: variance estimator [`StatsBase.CovarianceEstimator`](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
   - `std_w`: optional `T×1` vector of weights for computing the variance.
   - `mean_w`: optional `T×1` vector of weights for computing the mean.
-  - `posdef`: method for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
+  - `posdef`: type for fixing the Smyth-Broby modification with vote counting of the Gerber type 1 correaltion matrix [`AbstractPosdefFix`](@ref).
 """
 mutable struct CovGerberSB1{T1, T2, T3, T4, T5} <: CovSB
     normalise::Bool
@@ -839,9 +839,9 @@ Full cokurtosis estimator.
 
 # Parameters
 
-  - `posdef`: method for fixing non a positive definite cokurtosis matrix [`AbstractPosdefFix`](@ref).
-  - `denoise`: method for denoising the cokurtosis matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo cokurtosis matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing non a positive definite cokurtosis matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: type for denoising the cokurtosis matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtFull <: KurtEstimator
     posdef::AbstractPosdefFix
@@ -874,9 +874,9 @@ Semi cokurtosis estimator.
       + if `isa(target, Real)`: apply the same target to all assets.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
 
-  - `posdef`: method for fixing non a positive definite semi cokurtosis matrix [`AbstractPosdefFix`](@ref).
-  - `denoise`: method for denoising the semi cokurtosis matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo semi cokurtosis matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing non a positive definite semi cokurtosis matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: type for denoising the semi cokurtosis matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo semi cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtSemi <: KurtEstimator
     target::Union{<:Real, AbstractVector{<:Real}}
@@ -948,9 +948,9 @@ PortfolioOptimiser covariance and correlation estimator.
 # Parameters
 
   - `ce`: [covariance estimator](https://juliastats.org/StatsBase.jl/stable/cov/#StatsBase.CovarianceEstimator).
-  - `posdef`: method for fixing the portfolio covariance or correlation matrix [`AbstractPosdefFix`](@ref).
-  - `denoise`: method for denoising the portfolio covariance or correlation matrix [`AbstractDenoise`](@ref).
-  - `logo`: method for computing the LoGo portfolio covariance or correlation matrix [`AbstractLoGo`](@ref).
+  - `posdef`: type for fixing the portfolio covariance or correlation matrix [`AbstractPosdefFix`](@ref).
+  - `denoise`: type for denoising the portfolio covariance or correlation matrix [`AbstractDenoise`](@ref).
+  - `logo`: type for computing the LoGo portfolio covariance or correlation matrix [`AbstractLoGo`](@ref).
 """
 mutable struct PortCovCor <: PortfolioOptimiserCovCor
     ce::CovarianceEstimator

@@ -3,7 +3,7 @@
 abstract type ClustAlg end
 ```
 
-Abstract type for subtyping hierarchical clustering methods.
+Abstract type for subtyping hierarchical clustering types.
 """
 abstract type ClustAlg end
 
@@ -32,7 +32,7 @@ end
 abstract type DBHTSimilarity end
 ```
 
-Abstract type for subtyping methods for defining functions for computing similarity matrices from used in DBHT clustering [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
+Abstract type for subtyping types for defining functions for computing similarity matrices from used in DBHT clustering [`PMFG_T2s`](@ref) [DBHTs, PMFG](@cite).
 """
 abstract type DBHTSimilarity end
 
@@ -82,37 +82,37 @@ struct DBHTMaxDist <: DBHTSimilarity end
 
 """
 ```
-abstract type DBHTRootMethod end
+abstract type DBHTRootType end
 ```
 
-Abstract type for subtyping methods creating roots of cliques in [`CliqueRoot`](@ref) [NHPG](@cite).
+Abstract type for subtyping types creating roots of cliques in [`CliqueRoot`](@ref) [NHPG](@cite).
 """
-abstract type DBHTRootMethod end
+abstract type DBHTRootType end
 
 """
 ```
-struct UniqueDBHT <: DBHTRootMethod end
+struct UniqueDBHT <: DBHTRootType end
 ```
 
 Create a unique root for a clique in [`CliqueRoot`](@ref) [NHPG](@cite).
 """
-struct UniqueDBHT <: DBHTRootMethod end
+struct UniqueDBHT <: DBHTRootType end
 
 """
 ```
-struct EqualDBHT <: DBHTRootMethod end
+struct EqualDBHT <: DBHTRootType end
 ```
 
 Create a clique's root from its adjacency tree in [`CliqueRoot`](@ref).
 """
-struct EqualDBHT <: DBHTRootMethod end
+struct EqualDBHT <: DBHTRootType end
 
 """
 ```
 mutable struct DBHT <: ClustAlg
-    distance::DistMethod
+    distance::DistType
     similarity::DBHTSimilarity
-    root_method::DBHTRootMethod
+    root_type::DBHTRootType
 end
 ```
 
@@ -120,42 +120,41 @@ Defines the parameters for computing [`DBHTs`](@ref) [DBHTs](@cite).
 
 # Parameters
 
-  - `distance`: method for computing the distance matrix from correlation ones [`DistMethod`](@ref).
-  - `similarity`: method for computing the similarity matrix from the correlation and/or distance ones [`DBHTSimilarity`](@ref), [`dbht_similarity`](@ref).
-  - `root_method`: method for choosing clique roots [`DBHTRootMethod`](@ref).
+  - `distance`: type for computing the distance matrix from correlation ones [`DistType`](@ref).
+  - `similarity`: type for computing the similarity matrix from the correlation and/or distance ones [`DBHTSimilarity`](@ref), [`dbht_similarity`](@ref).
+  - `root_type`: type for choosing clique roots [`DBHTRootType`](@ref).
 """
 mutable struct DBHT <: ClustAlg
-    distance::DistMethod
+    distance::DistType
     similarity::DBHTSimilarity
-    root_method::DBHTRootMethod
+    root_type::DBHTRootType
 end
-function DBHT(; distance::DistMethod = DistMLP(),
-              similarity::DBHTSimilarity = DBHTMaxDist(),
-              root_method::DBHTRootMethod = UniqueDBHT())
-    return DBHT(distance, similarity, root_method)
+function DBHT(; distance::DistType = DistMLP(), similarity::DBHTSimilarity = DBHTMaxDist(),
+              root_type::DBHTRootType = UniqueDBHT())
+    return DBHT(distance, similarity, root_type)
 end
 
 """
 ```
-abstract type NumClusterMethod end
+abstract type NumClusterType end
 ```
 
-Abstract type for subtyping methods for determining the number of clusters in a [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) when calling [`calc_k_clusters`](@ref).
+Abstract type for subtyping types for determining the number of clusters in a [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) when calling [`calc_k_clusters`](@ref).
 """
-abstract type NumClusterMethod end
+abstract type NumClusterType end
 
 """
 ```
-struct TwoDiff <: NumClusterMethod end
+struct TwoDiff <: NumClusterType end
 ```
 
 Use the two difference gap statistic for computing the number of clusters in [`calc_k_clusters`](@ref).
 """
-struct TwoDiff <: NumClusterMethod end
+struct TwoDiff <: NumClusterType end
 
 """
 ```
-@kwdef mutable struct StdSilhouette <: NumClusterMethod
+@kwdef mutable struct StdSilhouette <: NumClusterType
     metric::Union{Distances.SemiMetric, Nothing} = nothing
 end
 ```
@@ -166,7 +165,7 @@ Use the standardised silhouette score for computing the number of clusters in [`
 
   - `metric`: metric for computing the [`silhouettes`](https://juliastats.org/Clustering.jl/stable/validate.html#silhouettes_index).
 """
-mutable struct StdSilhouette <: NumClusterMethod
+mutable struct StdSilhouette <: NumClusterType
     metric::Union{Distances.SemiMetric, Nothing}
 end
 function StdSilhouette(; metric::Union{Distances.SemiMetric, Nothing} = nothing)
@@ -177,7 +176,7 @@ end
 ```
 @kwdef mutable struct ClustOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol = :optimal
-    k_method::NumClusterMethod = TwoDiff()
+    k_type::NumClusterType = TwoDiff()
     k::T1 = 0
     max_k::T2 = 0
 end
@@ -189,10 +188,10 @@ Defines the options for processing clustering results in an instance of [`Cluste
 
   - `branchorder`: parameter for ordering a dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
 
-  - `k_method`: method subtyping [`NumClusterMethod`](@ref) for computing the number of clusters.
+  - `k_type`: type subtyping [`NumClusterType`](@ref) for computing the number of clusters.
   - `k`:
 
-      + if `iszero(k)`: use `k_method` for computing the number of clusters.
+      + if `iszero(k)`: use `k_type` for computing the number of clusters.
       + else: directly provide the number of clusters.
   - `max_k`: maximum number of clusters, capped to `⌈sqrt(N)⌉`.
 
@@ -200,13 +199,13 @@ Defines the options for processing clustering results in an instance of [`Cluste
 """
 mutable struct ClustOpt{T1 <: Integer, T2 <: Integer}
     branchorder::Symbol
-    k_method::NumClusterMethod
+    k_type::NumClusterType
     k::T1
     max_k::T2
 end
-function ClustOpt(; branchorder::Symbol = :optimal, k_method::NumClusterMethod = TwoDiff(),
+function ClustOpt(; branchorder::Symbol = :optimal, k_type::NumClusterType = TwoDiff(),
                   k::Integer = 0, max_k::Integer = 0)
-    return ClustOpt{typeof(k), typeof(max_k)}(branchorder, k_method, k, max_k)
+    return ClustOpt{typeof(k), typeof(max_k)}(branchorder, k_type, k, max_k)
 end
 
 """

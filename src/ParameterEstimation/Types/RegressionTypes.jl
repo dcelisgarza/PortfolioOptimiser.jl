@@ -3,7 +3,7 @@
 abstract type RegressionType end
 ```
 
-Abstract type for subtyping regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
+Abstract type for subtyping regression types for computing the loadings matrix in [`loadings_matrix`](@ref).
 """
 abstract type RegressionType end
 
@@ -12,7 +12,7 @@ abstract type RegressionType end
 abstract type StepwiseRegression <: RegressionType end
 ```
 
-Abstract type for subtyping stepwise regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
+Abstract type for subtyping stepwise regression types for computing the loadings matrix in [`loadings_matrix`](@ref).
 """
 abstract type StepwiseRegression <: RegressionType end
 
@@ -21,7 +21,7 @@ abstract type StepwiseRegression <: RegressionType end
 abstract type DimensionReductionRegression <: RegressionType end
 ```
 
-Abstract type for subtyping dimensionality reduction regression methods for computing the loadings matrix in [`loadings_matrix`](@ref).
+Abstract type for subtyping dimensionality reduction regression types for computing the loadings matrix in [`loadings_matrix`](@ref).
 """
 abstract type DimensionReductionRegression <: RegressionType end
 
@@ -30,7 +30,7 @@ abstract type DimensionReductionRegression <: RegressionType end
 abstract type StepwiseRegressionCriteria end
 ```
 
-Abstract type for subtyping selection criteria for selecting significant features when using [`StepwiseRegression`](@ref) methods.
+Abstract type for subtyping selection criteria for selecting significant features when using [`StepwiseRegression`](@ref) types.
 """
 abstract type StepwiseRegressionCriteria end
 
@@ -57,7 +57,7 @@ abstract type MaxValStepwiseRegressionCriteria <: StepwiseRegressionCriteria end
 struct AIC <: MinValStepwiseRegressionCriteria end
 ```
 
-[Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+[Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Types-applied-to-fitted-models).
 """
 struct AIC <: MinValStepwiseRegressionCriteria end
 
@@ -66,7 +66,7 @@ struct AIC <: MinValStepwiseRegressionCriteria end
 struct AICC <: MinValStepwiseRegressionCriteria end
 ```
 
-[Corrected Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+[Corrected Akaike's Information Criterion](https://juliastats.org/GLM.jl/stable/#Types-applied-to-fitted-models).
 """
 struct AICC <: MinValStepwiseRegressionCriteria end
 
@@ -75,7 +75,7 @@ struct AICC <: MinValStepwiseRegressionCriteria end
 struct BIC <: MinValStepwiseRegressionCriteria end
 ```
 
-[Bayesian Information Criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+[Bayesian Information Criterion](https://juliastats.org/GLM.jl/stable/#Types-applied-to-fitted-models).
 """
 struct BIC <: MinValStepwiseRegressionCriteria end
 
@@ -84,7 +84,7 @@ struct BIC <: MinValStepwiseRegressionCriteria end
 struct RSq <: MaxValStepwiseRegressionCriteria end
 ```
 
-[R² of a linear model criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+[R² of a linear model criterion](https://juliastats.org/GLM.jl/stable/#Types-applied-to-fitted-models).
 """
 struct RSq <: MaxValStepwiseRegressionCriteria end
 
@@ -93,7 +93,7 @@ struct RSq <: MaxValStepwiseRegressionCriteria end
 struct AdjRSq <: MaxValStepwiseRegressionCriteria end
 ```
 
-[Adjusted R² for a linear model criterion](https://juliastats.org/GLM.jl/stable/#Methods-applied-to-fitted-models).
+[Adjusted R² for a linear model criterion](https://juliastats.org/GLM.jl/stable/#Types-applied-to-fitted-models).
 """
 struct AdjRSq <: MaxValStepwiseRegressionCriteria end
 
@@ -231,7 +231,7 @@ end
 @kwdef mutable struct FactorType
     error::Bool = true
     B::Union{Nothing, DataFrame} = nothing
-    method::RegressionType = FReg(;)
+    type::RegressionType = FReg(;)
     ve::StatsBase.CovarianceEstimator = SimpleVariance(;)
     var_w::Union{<:AbstractWeights, Nothing} = nothing
 end
@@ -240,15 +240,15 @@ end
 mutable struct FactorType
     error::Bool
     B::Union{Nothing, DataFrame}
-    method::RegressionType
+    type::RegressionType
     ve::StatsBase.CovarianceEstimator
     var_w::Union{<:AbstractWeights, Nothing}
 end
 function FactorType(; error::Bool = true, B::Union{Nothing, DataFrame} = nothing,
-                    method::RegressionType = FReg(;),
+                    type::RegressionType = FReg(;),
                     ve::StatsBase.CovarianceEstimator = SimpleVariance(;),
                     var_w::Union{<:AbstractWeights, Nothing} = nothing)
-    return FactorType(error, B, method, ve, var_w)
+    return FactorType(error, B, type, ve, var_w)
 end
 
 export AIC, AICC, BIC, RSq, AdjRSq, PVal, PCATarget, PPCATarget, FReg, BReg, PCAReg,

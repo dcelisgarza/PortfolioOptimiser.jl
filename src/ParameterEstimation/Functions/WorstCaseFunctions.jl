@@ -7,9 +7,8 @@ end
 function _bootstrap_func(::MovingBS, block_size, X, seed)
     return pyimport("arch.bootstrap").MovingBlockBootstrap(block_size, X; seed = seed)
 end
-function bootstrap_generator(method::ArchWC, X)
-    return _bootstrap_func(method.bootstrap, method.block_size, Py(X).to_numpy(),
-                           method.seed)
+function bootstrap_generator(type::ArchWC, X)
+    return _bootstrap_func(type.bootstrap, type.block_size, Py(X).to_numpy(), type.seed)
 end
 function _sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator)
@@ -20,15 +19,15 @@ function _sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
 
     return sigma, mu
 end
-function gen_bootstrap(method::ArchWC, cov_type::PortfolioOptimiserCovCor,
+function gen_bootstrap(type::ArchWC, cov_type::PortfolioOptimiserCovCor,
                        mu_type::MeanEstimator, X::AbstractMatrix)
     covs = Vector{Matrix{eltype(X)}}(undef, 0)
-    sizehint!(covs, method.n_sim)
+    sizehint!(covs, type.n_sim)
     mus = Vector{Vector{eltype(X)}}(undef, 0)
-    sizehint!(mus, method.n_sim)
+    sizehint!(mus, type.n_sim)
 
-    gen = bootstrap_generator(method, X)
-    for data ∈ gen.bootstrap(method.n_sim)
+    gen = bootstrap_generator(type, X)
+    for data ∈ gen.bootstrap(type.n_sim)
         A = pyconvert(Array, data)[1][1]
         sigma, mu = _sigma_mu(A, cov_type, mu_type)
         push!(covs, sigma)
@@ -40,12 +39,12 @@ end
 function vec_of_vecs_to_mtx(x::AbstractVector{<:AbstractArray})
     return vcat(transpose.(x)...)
 end
-function calc_sets(::Box, method::ArchWC, cov_type::PortfolioOptimiserCovCor,
+function calc_sets(::Box, type::ArchWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, ::Any, ::Any)
-    q = method.q
+    q = type.q
     N = size(X, 2)
 
-    covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
+    covs, mus = gen_bootstrap(type, cov_type, mu_type, X)
 
     cov_s = vec_of_vecs_to_mtx(vec.(covs))
     cov_l = reshape([quantile(cov_s[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
@@ -58,10 +57,10 @@ function calc_sets(::Box, method::ArchWC, cov_type::PortfolioOptimiserCovCor,
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
-function calc_sets(::Ellipse, method::ArchWC, cov_type::PortfolioOptimiserCovCor,
+function calc_sets(::Ellipse, type::ArchWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
                    mu::AbstractVector, ::Any, ::Any)
-    covs, mus = gen_bootstrap(method, cov_type, mu_type, X)
+    covs, mus = gen_bootstrap(type, cov_type, mu_type, X)
 
     A_sigma = vec_of_vecs_to_mtx([vec(cov_s) .- vec(sigma) for cov_s ∈ covs])
     cov_sigma = Matrix(cov(cov_type, A_sigma))
@@ -71,15 +70,15 @@ function calc_sets(::Ellipse, method::ArchWC, cov_type::PortfolioOptimiserCovCor
 
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::Box, method::NormalWC, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::Box, type::NormalWC, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, ::Any)
-    Random.seed!(method.rng, method.seed)
-    q = method.q
+    Random.seed!(type.rng, type.seed)
+    q = type.q
     T, N = size(X)
 
     cov_mu = sigma / T
 
-    covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), method.n_sim)))
+    covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), type.n_sim)))
     cov_l = reshape([quantile(covs[:, i], q / 2) for i ∈ 1:(N * N)], N, N)
     cov_u = reshape([quantile(covs[:, i], 1 - q / 2) for i ∈ 1:(N * N)], N, N)
 
@@ -96,17 +95,17 @@ function commutation_matrix(x::AbstractMatrix)
     com = sparse(row, col, data, mn, mn)
     return com
 end
-function calc_sets(::Ellipse, method::NormalWC, cov_type::PortfolioOptimiserCovCor,
+function calc_sets(::Ellipse, type::NormalWC, cov_type::PortfolioOptimiserCovCor,
                    mu_type::MeanEstimator, X::AbstractMatrix, sigma::AbstractMatrix,
                    mu::AbstractVector, covs::Union{AbstractMatrix, Nothing},
                    cov_mu::Union{AbstractMatrix, Nothing})
-    Random.seed!(method.rng, method.seed)
+    Random.seed!(type.rng, type.seed)
     T = size(X, 1)
 
-    A_mu = transpose(rand(MvNormal(mu, sigma), method.n_sim))
+    A_mu = transpose(rand(MvNormal(mu, sigma), type.n_sim))
     if isnothing(covs) || isnothing(cov_mu)
         cov_mu = sigma / T
-        covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), method.n_sim)))
+        covs = vec_of_vecs_to_mtx(vec.(rand(Wishart(T, cov_mu), type.n_sim)))
     end
     A_sigma = covs .- transpose(vec(sigma))
 
@@ -114,11 +113,11 @@ function calc_sets(::Ellipse, method::NormalWC, cov_type::PortfolioOptimiserCovC
     cov_sigma = T * (I + K) * kron(cov_mu, cov_mu)
     return cov_sigma, cov_mu, A_sigma, A_mu
 end
-function calc_sets(::Box, method::DeltaWC, ::Any, ::Any, X::AbstractMatrix,
+function calc_sets(::Box, type::DeltaWC, ::Any, ::Any, X::AbstractMatrix,
                    sigma::AbstractMatrix, mu::AbstractVector)
-    d_mu = method.dmu * abs.(mu)
-    cov_l = sigma - method.dcov * abs.(sigma)
-    cov_u = sigma + method.dcov * abs.(sigma)
+    d_mu = type.dmu * abs.(mu)
+    cov_l = sigma - type.dcov * abs.(sigma)
+    cov_u = sigma + type.dcov * abs.(sigma)
 
     return cov_l, cov_u, d_mu, nothing, nothing
 end
@@ -129,8 +128,8 @@ end
 function calc_k_wc(::KGeneralWC, q::Real, args...)
     return sqrt((1 - q) / q)
 end
-function calc_k_wc(method::Real, args...)
-    return method
+function calc_k_wc(type::Real, args...)
+    return type
 end
 
 export gen_bootstrap, vec_of_vecs_to_mtx, calc_sets, commutation_matrix, calc_k_wc

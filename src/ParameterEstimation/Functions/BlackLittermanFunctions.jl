@@ -273,7 +273,7 @@ function black_litterman_factor_statistics(assets, X, mu, sigma, f_assets, F;
     end
 
     if isnothing(B) || isempty(B)
-        B = regression(factor_type.method, DataFrame(F, f_assets), DataFrame(X, assets))
+        B = regression(factor_type.type, DataFrame(F, f_assets), DataFrame(X, assets))
     end
 
     namesB = names(B)

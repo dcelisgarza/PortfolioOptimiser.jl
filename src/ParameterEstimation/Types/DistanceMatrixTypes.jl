@@ -1,15 +1,15 @@
 """
 ```
-abstract type DistMethod end
+abstract type DistType end
 ```
 
-Abstract type for subtyping methods for computing distance matrices from correlation ones.
+Abstract type for subtyping types for computing distance matrices from correlation ones.
 """
-abstract type DistMethod end
+abstract type DistType end
 
 """
 ```
-@kwdef mutable struct DistMLP <: DistMethod
+@kwdef mutable struct DistMLP <: DistType
     absolute::Bool = false
 end
 ```
@@ -41,7 +41,7 @@ Where:
 
       + if `true`: the correlation being used is absolute.
 """
-mutable struct DistMLP <: DistMethod
+mutable struct DistMLP <: DistType
     overwrite::Bool
     absolute::Bool
 end
@@ -50,9 +50,9 @@ function DistMLP(; overwrite::Bool = true, absolute::Bool = false)
 end
 
 """
-    mutable struct GenDistMLP{T1} <: DistMethod
+    mutable struct GenDistMLP{T1} <: DistType
 """
-mutable struct GenDistMLP{T1} <: DistMethod
+mutable struct GenDistMLP{T1} <: DistType
     overwrite::Bool
     absolute::Bool
     power::T1
@@ -70,7 +70,7 @@ end
 
 """
 ```
-@kwdef mutable struct DistDistMLP <: DistMethod
+@kwdef mutable struct DistDistMLP <: DistType
     absolute::Bool = false
     distance::Distances.Metric = Distances.Euclidean()
     args::Tuple = ()
@@ -106,7 +106,7 @@ Where:
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
-mutable struct DistDistMLP <: DistMethod
+mutable struct DistDistMLP <: DistType
     overwrite::Bool
     absolute::Bool
     distance::Distances.Metric
@@ -120,9 +120,9 @@ function DistDistMLP(; overwrite::Bool = true, absolute::Bool = false,
 end
 
 """
-    mutable struct GenDistDistMLP{T1} <: DistMethod
+    mutable struct GenDistDistMLP{T1} <: DistType
 """
-mutable struct GenDistDistMLP{T1} <: DistMethod
+mutable struct GenDistDistMLP{T1} <: DistType
     overwrite::Bool
     absolute::Bool
     power::T1
@@ -148,7 +148,7 @@ const AbsoluteDist = Union{DistMLP, GenDistMLP, DistDistMLP, GenDistDistMLP}
 
 """
 ```
-struct DistLog <: DistMethod end
+struct DistLog <: DistType end
 ```
 
 Defines the log-distance matrix from the correlation matrix.
@@ -164,11 +164,11 @@ Where:
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` log-distance matrix.
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of an absolute correlation matrix.
 """
-struct DistLog <: DistMethod end
+struct DistLog <: DistType end
 
 """
 ```
-@kwdef mutable struct DistDistLog <: DistMethod
+@kwdef mutable struct DistDistLog <: DistType
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
@@ -198,7 +198,7 @@ Where:
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
-mutable struct DistDistLog <: DistMethod
+mutable struct DistDistLog <: DistType
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
@@ -210,7 +210,7 @@ end
 
 """
 ```
-struct DistCor <: DistMethod end
+struct DistCor <: DistType end
 ```
 
 Defines the distance matrix from the correlation matrix.
@@ -226,11 +226,11 @@ Where:
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix.
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of a distance correlation matrix.
 """
-struct DistCor <: DistMethod end
+struct DistCor <: DistType end
 
 """
 ```
-struct DistdistCor <: DistMethod end
+struct DistdistCor <: DistType end
 ```
 
 Defines the distance of distances matrix from the correlation matrix.
@@ -246,7 +246,7 @@ Where:
   - ``D_{i,\\,j}``: is the ``(i,\\,j)``-th entry of the `N×N` distance matrix.
   - ``C_{i,\\,j}``: is the  ``(i,\\,j)``-th entry of a distance correlation matrix.
 """
-struct DistDistCor <: DistMethod
+struct DistDistCor <: DistType
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
@@ -312,7 +312,7 @@ struct HGR <: AbstractBins end
 
 """
 ```
-@kwdef mutable struct DistVarInfo <: DistMethod
+@kwdef mutable struct DistVarInfo <: DistType
     bins::Union{<:Integer, <:AbstractBins} = HGR()
     normalise::Bool = true
 end
@@ -331,7 +331,7 @@ Defines the variation of information distance matrix.
 
       + if `true`: normalise the mutual information.
 """
-mutable struct DistVarInfo <: DistMethod
+mutable struct DistVarInfo <: DistType
     bins::Union{<:Integer, <:AbstractBins}
     normalise::Bool
 end
@@ -353,7 +353,7 @@ end
 
 """
 ```
-@kwdef mutable struct DistDistVarInfo <: DistMethod
+@kwdef mutable struct DistDistVarInfo <: DistType
     bins::Union{<:Integer, <:AbstractBins} = HGR()
     normalise::Bool = true
 end
@@ -372,7 +372,7 @@ Defines the variation of information distance of distances matrix.
 
       + if `true`: normalise the mutual information.
 """
-mutable struct DistDistVarInfo <: DistMethod
+mutable struct DistDistVarInfo <: DistType
     de::DistVarInfo
     distance::Distances.Metric
     args::Tuple
@@ -386,7 +386,7 @@ end
 
 """
 ```
-struct DistCanonical <: DistMethod end
+struct DistCanonical <: DistType end
 ```
 
 Struct for computing the canonical distance for a given correlation estimator in [`default_dist`](@ref).
@@ -398,11 +398,11 @@ Struct for computing the canonical distance for a given correlation estimator in
 | [`CovDistance`](@ref)   | [`DistCor`](@ref)     |
 | Any other estimator     | [`DistMLP`](@ref)     |
 """
-struct DistCanonical <: DistMethod end
+struct DistCanonical <: DistType end
 
 """
 ```
-struct DistDistCanonical <: DistMethod end
+struct DistDistCanonical <: DistType end
 ```
 
 Struct for computing the canonical distance for a given correlation estimator in [`default_dist`](@ref).
@@ -414,7 +414,7 @@ Struct for computing the canonical distance for a given correlation estimator in
 | [`CovDistance`](@ref)   | [`DistDistCor`](@ref)     |
 | Any other estimator     | [`DistDistMLP`](@ref)     |
 """
-mutable struct DistDistCanonical <: DistMethod
+mutable struct DistDistCanonical <: DistType
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple

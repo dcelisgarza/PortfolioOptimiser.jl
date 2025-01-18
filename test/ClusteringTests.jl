@@ -65,7 +65,7 @@ l = 2.0
     @test isequal(clustering.order, ordert)
     @test isequal(k, kt)
 
-    ct = ClustOpt(; k_method = StdSilhouette())
+    ct = ClustOpt(; k_type = StdSilhouette())
     idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1]
@@ -109,7 +109,7 @@ l = 2.0
 
     kt = 4
 
-    ct = ClustOpt(; k_method = StdSilhouette())
+    ct = ClustOpt(; k_type = StdSilhouette())
     idx, clustering, k = cluster_assets(portfolio; clust_alg = ca, clust_opt = ct)
 
     idxt = [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2, 1]
@@ -221,11 +221,11 @@ end
                       set_skew = false, set_sskew = false)
 
     cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    clust_opt = ClustOpt(; k_method = StdSilhouette()))
+                    clust_opt = ClustOpt(; k_type = StdSilhouette()))
     @test portfolio.k == 3
 
     cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
-                    clust_opt = ClustOpt(; k_method = TwoDiff()))
+                    clust_opt = ClustOpt(; k_type = TwoDiff()))
     @test portfolio.k == 3
 
     cluster_assets!(portfolio; clust_alg = DBHT(; similarity = DBHTMaxDist()),
