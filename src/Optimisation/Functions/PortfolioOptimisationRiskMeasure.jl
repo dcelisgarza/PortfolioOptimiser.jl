@@ -55,7 +55,7 @@ function scalarise_risk_expression(port, ::ScalarMax)
 
     return nothing
 end
-function _get_ntwk_clust_method(port)
+function _get_ntwk_clust_type(port)
     model = port.model
     return if haskey(model, :constr_ntwk_sdp) || haskey(model, :constr_clst_sdp)
         SDP()
@@ -179,7 +179,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
     if !use_portfolio_sigma
         sigma = rm.sigma
     end
-    adjacency_constraint = _get_ntwk_clust_method(port)
+    adjacency_constraint = _get_ntwk_clust_type(port)
     _variance_risk(adjacency_constraint, rm.formulation, model, sigma)
     variance_risk = model[:variance_risk]
     var_bound_expr, var_bound_key = _variance_risk_bounds_expr(adjacency_constraint, model)
@@ -192,7 +192,7 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
                 sigma::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
-    adjacency_constraint = _get_ntwk_clust_method(port)
+    adjacency_constraint = _get_ntwk_clust_type(port)
     count = length(rms)
     _variance_risk(adjacency_constraint, model, sigma, count)
     variance_risk = model[:variance_risk]

@@ -2370,7 +2370,7 @@ See also: [`SD`](@ref), [`_SD`](@ref).
 
 ## Named
 
-  - `kwargs`: used for other methods.
+  - `kwargs`: used for other types.
 
 # Outputs
 
@@ -2419,7 +2419,7 @@ See also: [`Variance`](@ref), [`_Variance`](@ref).
 
 ## Named
 
-  - `kwargs`: used for other methods.
+  - `kwargs`: used for other types.
 
 # Outputs
 

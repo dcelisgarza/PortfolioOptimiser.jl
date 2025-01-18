@@ -119,7 +119,7 @@ function default_dist(dist::DistDistCanonical, cor_type::PortfolioOptimiserCovCo
     set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end
-function default_dist(dist_type::DistMethod, cor_type::PortfolioOptimiserCovCor)
+function default_dist(dist_type::DistType, cor_type::PortfolioOptimiserCovCor)
     set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end

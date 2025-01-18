@@ -32,7 +32,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
            DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
-        r = calc_risk(portfolio; type = :Trad, rm = rm)
+        r = calc_risk(portfolio, :Trad; rm = rm)
         @test isapprox(risk, r, rtol = 5e-7)
         @test length(rm) == 1
         @test rm[rand(Int)] == rm

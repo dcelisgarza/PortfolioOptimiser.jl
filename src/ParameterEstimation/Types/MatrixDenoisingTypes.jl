@@ -3,7 +3,7 @@
 abstract type AbstractDenoise end
 ```
 
-Abstract type for subtyping denoising methods.
+Abstract type for subtyping denoising types.
 """
 abstract type AbstractDenoise end
 
@@ -27,7 +27,7 @@ struct NoDenoise <: AbstractDenoise end
 end
 ```
 
-Defines the parameters for using the fixed method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to their average, and reconstructs the correlation matrix using the modified values.
+Defines the parameters for using the fixed type in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This type performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to their average, and reconstructs the correlation matrix using the modified values.
 
 # Parameters
 
@@ -71,7 +71,7 @@ end
 end
 ```
 
-Defines the parameters for using the spectral method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to zero, and reconstructs the correlation matrix using the modified values.
+Defines the parameters for using the spectral type in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This type performs an eigendecomposition of the original correlation matrix, sets the eigenvalues that are below the noise significance threshold to zero, and reconstructs the correlation matrix using the modified values.
 
 # Parameters
 
@@ -117,7 +117,7 @@ end
 end
 ```
 
-Defines the parameters for using the shrink method in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This method shrinks the covariance to a target of unequal variance of the matrix reconstructed with the eigenvalues that are below the noise significance value. The degree of shrinkage is parametrised by `alpha`.
+Defines the parameters for using the shrink type in [`denoise!`](@ref) [MLAM; Chapter 2](@cite). This type shrinks the covariance to a target of unequal variance of the matrix reconstructed with the eigenvalues that are below the noise significance value. The degree of shrinkage is parametrised by `alpha`.
 
 ```math
 \\begin{align}

@@ -1,35 +1,35 @@
-function calc_centrality(method::BetweennessCentrality, G)
-    return Graphs.betweenness_centrality(G, method.args...; method.kwargs...)
+function calc_centrality(type::BetweennessCentrality, G)
+    return Graphs.betweenness_centrality(G, type.args...; type.kwargs...)
 end
-function calc_centrality(method::ClosenessCentrality, G)
-    return Graphs.closeness_centrality(G, method.args...; method.kwargs...)
+function calc_centrality(type::ClosenessCentrality, G)
+    return Graphs.closeness_centrality(G, type.args...; type.kwargs...)
 end
-function calc_centrality(method::DegreeCentrality, G)
-    return Graphs._degree_centrality(G, method.type; method.kwargs...)
+function calc_centrality(type::DegreeCentrality, G)
+    return Graphs._degree_centrality(G, type.type; type.kwargs...)
 end
 function calc_centrality(::EigenvectorCentrality, G)
     return Graphs.eigenvector_centrality(G)
 end
-function calc_centrality(method::KatzCentrality, G)
-    return Graphs.katz_centrality(G, method.alpha)
+function calc_centrality(type::KatzCentrality, G)
+    return Graphs.katz_centrality(G, type.alpha)
 end
-function calc_centrality(method::Pagerank, G)
-    return Graphs.pagerank(G, method.alpha, method.n, method.epsilon)
+function calc_centrality(type::Pagerank, G)
+    return Graphs.pagerank(G, type.alpha, type.n, type.epsilon)
 end
 function calc_centrality(::RadialityCentrality, G)
     return Graphs.radiality_centrality(G)
 end
-function calc_centrality(method::StressCentrality, G)
-    return Graphs.stress_centrality(G, method.args...; method.kwargs...)
+function calc_centrality(type::StressCentrality, G)
+    return Graphs.stress_centrality(G, type.args...; type.kwargs...)
 end
-function clac_mst(method::KruskalTree, G)
-    return Graphs.kruskal_mst(G, method.args...; method.kwargs...)
+function clac_mst(type::KruskalTree, G)
+    return Graphs.kruskal_mst(G, type.args...; type.kwargs...)
 end
-function clac_mst(method::BoruvkaTree, G)
-    return Graphs.boruvka_mst(G, method.args...; method.kwargs...)[1]
+function clac_mst(type::BoruvkaTree, G)
+    return Graphs.boruvka_mst(G, type.args...; type.kwargs...)[1]
 end
-function clac_mst(method::PrimTree, G)
-    return Graphs.prim_mst(G, method.args...; method.kwargs...)
+function clac_mst(type::PrimTree, G)
+    return Graphs.prim_mst(G, type.args...; type.kwargs...)
 end
 function _calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
     S = dbht_similarity(nt.similarity, rho, delta)
@@ -42,7 +42,7 @@ function _calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
     return adjacency_matrix(SimpleGraph(G[tree]))
 end
 function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
-                         cor_type::PortfolioOptimiserCovCor, dist_type::DistMethod)
+                         cor_type::PortfolioOptimiserCovCor, dist_type::DistType)
     S = cor(cor_type, X)
     dist_type = default_dist(dist_type, cor_type)
     D = dist(dist_type, S, X)
@@ -50,7 +50,7 @@ function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
 end
 function connection_matrix(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistMethod = DistCanonical(),
+                           dist_type::DistType = DistCanonical(),
                            network_type::NetworkType = MST())
     A = _calc_adjacency(network_type, X, cor_type, dist_type)
 
@@ -66,7 +66,7 @@ function connection_matrix(X::AbstractMatrix;
 end
 function centrality_vector(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                           dist_type::DistMethod = DistCanonical(),
+                           dist_type::DistType = DistCanonical(),
                            network_type::NetworkType = MST())
     Adj = connection_matrix(X; cor_type = cor_type, dist_type = dist_type,
                             network_type = network_type)
@@ -76,15 +76,15 @@ function centrality_vector(X::AbstractMatrix;
 end
 function average_centrality(X::AbstractMatrix, w::AbstractVector;
                             cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                            dist_type::DistMethod = DistCanonical(),
+                            dist_type::DistType = DistCanonical(),
                             network_type::NetworkType = MST())
     return dot(centrality_vector(X; cor_type = cor_type, dist_type = dist_type,
                                  network_type = network_type), w)
 end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistMethod = DistCanonical(),
-                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
+                        dist_type::DistType = DistCanonical(), clust_alg::ClustAlg = HAC(),
+                        clust_opt::ClustOpt = ClustOpt())
     clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
                               clust_alg = clust_alg, clust_opt = clust_opt)[1]
 
@@ -111,7 +111,7 @@ function con_rel_assets(A::AbstractMatrix, w::AbstractVector)
 end
 function connected_assets(returns::AbstractMatrix, w::AbstractVector;
                           cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                          dist_type::DistMethod = DistCanonical(),
+                          dist_type::DistType = DistCanonical(),
                           network_type::NetworkType = MST())
     A_c = connection_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                             network_type = network_type)
@@ -120,8 +120,8 @@ function connected_assets(returns::AbstractMatrix, w::AbstractVector;
 end
 function related_assets(returns::AbstractMatrix, w::AbstractVector;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistMethod = DistCanonical(),
-                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
+                        dist_type::DistType = DistCanonical(), clust_alg::ClustAlg = HAC(),
+                        clust_opt::ClustOpt = ClustOpt())
     A_c = cluster_matrix(returns; cor_type = cor_type, dist_type = dist_type,
                          clust_alg = clust_alg, clust_opt = clust_opt)
     R_a = con_rel_assets(A_c, w)

@@ -224,7 +224,7 @@ fc1 = factor_risk_contribution(cvar_rm, w; X = returns, assets = assets, F = f_r
                                f_assets = f_assets)
 
 # Compute the risk factor contribution by computing the loadings matrix using
-# a different regression method.
+# a different regression type.
 fc2 = factor_risk_contribution(cvar_rm, w; X = returns, assets = assets, F = f_returns,
                                f_assets = f_assets, regression_type = BReg())
 

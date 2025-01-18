@@ -23,7 +23,7 @@ l = 2.0
 
     w1 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = NOC(; rm = rm, obj = MinRisk()))))
-    r1 = calc_risk(portfolio; type = :NCO, rm = rm)
+    r1 = calc_risk(portfolio, :NCO; rm = rm)
     wt = [0.03790461179159279, 0.043161358136428865, 0.037260347201576303,
           0.034058321573411314, 0.039786708000230105, 0.04830524198186707,
           0.022018351649423864, 0.06838696522512083, 0.02901431193405299,
@@ -36,7 +36,7 @@ l = 2.0
     w2 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = NOC(; rm = rm, obj = MinRisk())),
                        external = NCOArgs(; type = NOC(; rm = rm, obj = MinRisk()))))
-    r2 = calc_risk(portfolio; type = :NCO, rm = rm)
+    r2 = calc_risk(portfolio, :NCO; rm = rm)
     wt = [0.03790461179159279, 0.043161358136428865, 0.037260347201576303,
           0.034058321573411314, 0.039786708000230105, 0.04830524198186707,
           0.022018351649423864, 0.06838696522512083, 0.02901431193405299,
@@ -51,7 +51,7 @@ l = 2.0
     w3 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = NOC(; rm = rm, obj = MinRisk())),
                        external = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
-    r3 = calc_risk(portfolio; type = :NCO, rm = rm)
+    r3 = calc_risk(portfolio, :NCO; rm = rm)
     wt = [0.03522659190891925, 0.040111940933897666, 0.03462784561602326,
           0.031652048087599895, 0.03697571508790129, 0.05546990178586086,
           0.020462720798353297, 0.06355531957747439, 0.0333177304850351,
@@ -64,7 +64,7 @@ l = 2.0
     w4 = optimise!(portfolio,
                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk())),
                        external = NCOArgs(; type = NOC(; rm = rm, obj = MinRisk()))))
-    r4 = calc_risk(portfolio; type = :NCO, rm = rm)
+    r4 = calc_risk(portfolio, :NCO; rm = rm)
     wt = [0.01461872888777548, 0.04572847655644966, 0.010546474390906085,
           0.019436203450122144, 0.006292956348233892, 0.04523997280439374,
           5.223619467757096e-8, 0.1370593489066906, 7.343036894502557e-8,

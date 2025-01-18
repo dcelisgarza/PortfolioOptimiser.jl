@@ -81,11 +81,11 @@ First we will optimise the portfolio without shorting and plot the weights and t
 
 portfolio.short = false
 portfolio.optimal[:ns] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
-#nb display(plot_bar(portfolio; type = :ns))
-#md plot_bar(portfolio; type = :ns)
+#nb display(plot_bar(portfolio, :ns))
+#md plot_bar(portfolio, :ns)
 portfolio.frontier[:ns] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
-#nb display(plot_frontier(portfolio; type = :ns))
-#md plot_frontier(portfolio; type = :ns)
+#nb display(plot_frontier(portfolio, :ns))
+#md plot_frontier(portfolio, :ns)
 
 #=
 We'll now allocate the portfolio according to our means. We'll use both allocation methods:
@@ -94,10 +94,8 @@ We'll now allocate the portfolio according to our means. We'll use both allocati
 - Greedy algorithm, can round down to the nearest `integer + N*rounding`, but is not guaranteed to be globally optimal. The rounding also rounds down, as it ensures the investment will not be exceeded.
 =#
 
-portfolio.optimal[:nsal] = allocate!(portfolio; type = :ns, method = LP(),
-                                     investment = investment)
-portfolio.optimal[:nsag] = allocate!(portfolio; type = :ns,
-                                     method = Greedy(; rounding = 0.3),
+portfolio.optimal[:nsal] = allocate!(portfolio, :ns; method = LP(), investment = investment)
+portfolio.optimal[:nsag] = allocate!(portfolio, :ns; method = Greedy(; rounding = 0.3),
                                      investment = investment);
 
 #=
@@ -190,19 +188,19 @@ Here the portfolio is under-leveraged.
 
 # Lets optimise the short-long portfolio.
 portfolio.optimal[:s] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
-#nb display(plot_bar(portfolio; type = :s))
-#md plot_bar(portfolio; type = :s)
+#nb display(plot_bar(portfolio, :s))
+#md plot_bar(portfolio, :s)
 portfolio.frontier[:s] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
-#nb display(plot_frontier(portfolio; type = :s))
-#md plot_frontier(portfolio; type = :s)
+#nb display(plot_frontier(portfolio, :s))
+#md plot_frontier(portfolio, :s)
 
 #=
 Lets allocate the short-long portfolio.
 =#
 
 ## Allocating the short-long portfolio.
-portfolio.optimal[:sal] = allocate!(portfolio; type = :s, investment = investment)
-portfolio.optimal[:sag] = allocate!(portfolio; type = :s, method = Greedy(; rounding = 0.3),
+portfolio.optimal[:sal] = allocate!(portfolio, :s; investment = investment)
+portfolio.optimal[:sag] = allocate!(portfolio, :s; method = Greedy(; rounding = 0.3),
                                     investment = investment);
 
 #=
@@ -280,20 +278,19 @@ portfolio.short_budget = -0.2
 portfolio.budget = 1
 
 portfolio.optimal[:sr] = optimise!(portfolio, Trad(; rm = rm, obj = obj))
-#nb display(plot_bar(portfolio; type = :sr))
-#md plot_bar(portfolio; type = :sr)
+#nb display(plot_bar(portfolio, :sr))
+#md plot_bar(portfolio, :sr)
 portfolio.frontier[:sr] = efficient_frontier!(portfolio, Trad(; rm = rm); points = 30)
-#nb display(plot_frontier(portfolio; type = :sr))
-#md plot_frontier(portfolio; type = :sr)
+#nb display(plot_frontier(portfolio, :sr))
+#md plot_frontier(portfolio, :sr)
 
 #=
 Lets allocate the short-long portfolio.
 =#
 
 ## Allocating the short-long portfolio.
-portfolio.optimal[:sral] = allocate!(portfolio; type = :sr, investment = investment)
-portfolio.optimal[:srag] = allocate!(portfolio; type = :sr,
-                                     method = Greedy(; rounding = 0.3),
+portfolio.optimal[:sral] = allocate!(portfolio, :sr; investment = investment)
+portfolio.optimal[:srag] = allocate!(portfolio, :sr; method = Greedy(; rounding = 0.3),
                                      investment = investment);
 
 #=

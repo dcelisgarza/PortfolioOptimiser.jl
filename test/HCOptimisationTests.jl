@@ -383,13 +383,13 @@ end
     wt = optimise!(portfolio, Trad())
 
     @test isapprox(wh.weights, w1.weights)
-    @test rmsd(wh.weights, w1.weights) <=
-          rmsd(wh.weights, w7.weights) <=
-          rmsd(wh.weights, w13.weights) <=
-          rmsd(wh.weights, w17.weights) <=
-          rmsd(wh.weights, w11.weights) <=
-          rmsd(wh.weights, w9.weights) <=
-          rmsd(wh.weights, w15.weights)
+    @test StatsBase.rmsd(wh.weights, w1.weights) <=
+          StatsBase.rmsd(wh.weights, w7.weights) <=
+          StatsBase.rmsd(wh.weights, w13.weights) <=
+          StatsBase.rmsd(wh.weights, w17.weights) <=
+          StatsBase.rmsd(wh.weights, w11.weights) <=
+          StatsBase.rmsd(wh.weights, w9.weights) <=
+          StatsBase.rmsd(wh.weights, w15.weights)
 end
 
 @testset "Test failures" begin
@@ -3200,7 +3200,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
 
     asset_statistics!(portfolio)
-    clust_alg = DBHT(; root_method = EqualDBHT())
+    clust_alg = DBHT(; root_type = EqualDBHT())
     clust_opt = ClustOpt()
     cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 

@@ -35,7 +35,7 @@ See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@re
 
 To ensure concrete subtypes will handle both [`Portfolio`](@ref) contexts appropriately, they must implement:
 
-  - Risk calculation method [`calc_risk`](@ref).
+  - Risk calculation type [`calc_risk`](@ref).
 
   - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent [`set_rm`](@ref).
   - Include a `settings::RMSettings = RMSettings()` field for configuration purposes.
@@ -55,7 +55,7 @@ struct MyRisk <: RiskMeasure
     # implementation details
 end
 
-# Creating risk calculation method
+# Creating risk calculation type
 function PortfolioOptimiser.calc_risk(risk::MyRisk, w::AbstractVector; kwargs...)
     # implementation details
 end
@@ -84,7 +84,7 @@ struct MySolverRisk <: RiskMeasure
     # implementation details
 end
 
-# Creating risk calculation method
+# Creating risk calculation type
 function PortfolioOptimiser.calc_risk(risk::MySolverRisk, w::AbstractVector; kwargs...)
     # implementation details
 end
@@ -132,7 +132,7 @@ See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@
 
 Concrete subtypes must implement:
 
-  - Risk calculation method [`calc_risk`](@ref).
+  - Risk calculation type [`calc_risk`](@ref).
 
   - Include a `settings::HCRMSettings = HCRMSettings()` field for configuration purposes.
   - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
@@ -151,7 +151,7 @@ struct MyHCRisk <: HCRiskMeasure
     # implementation details
 end
 
-# Creating risk calculation method
+# Creating risk calculation type
 function PortfolioOptimiser.calc_risk(risk::MyHCRisk, w::AbstractVector; kwargs...)
     # implementation details
 end

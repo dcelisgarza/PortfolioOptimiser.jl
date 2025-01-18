@@ -17,8 +17,7 @@ rm = SD()
 w1 = optimise!(portfolio; type = Trad(), rm = rm, kelly = EKelly(), obj = obj)
 
 idx, clustering, k, S, D = cluster_assets(portfolio; clust_alg = HAC(),
-                                          clust_opt = ClustOpt(;
-                                                               k_method = StdSilhouette()))
+                                          clust_opt = ClustOpt(; k_type = StdSilhouette()))
 
 plot_clusters(portfolio.assets, S, idx, clustering, k, (-1, 1), :Spectral, true)
 
@@ -35,10 +34,10 @@ pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
 pfa = plot_frontier_area(fw; rm = rm, t_factor = 252, palette = :Spectral)
 plot_frontier_area(portfolio)
 
-prp = plot_returns(portfolio; type = :Trad)
-pra = plot_returns(portfolio; type = :Trad, per_asset = true)
-pb = plot_bar(portfolio; type = :Trad)
-prc = plot_risk_contribution(portfolio; type = :Trad, rm = rm, percentage = true)
+prp = plot_returns(portfolio, :Trad)
+pra = plot_returns(portfolio, :Trad; per_asset = true)
+pb = plot_bar(portfolio, :Trad)
+prc = plot_risk_contribution(portfolio, :Trad; rm = rm, percentage = true)
 pf = plot_frontier(portfolio; kelly = EKelly(), rm = rm)
 
 # end
@@ -55,9 +54,9 @@ pf = plot_frontier(portfolio; kelly = EKelly(), rm = rm)
 # fw2 = efficient_frontier!(portfolio2; points = 5)
 # prc = plot_frontier_area(fw2)
 
-# w = optimise!(portfolio2, OptimiseOpt(; type = :RB, rm = rm, obj = obj);
+# w = optimise!(portfolio2, OptimiseOpt(,  :RB, rm = rm, obj = obj);
 #               save_opt_params = true)
-# plt1 = plot_risk_contribution(portfolio2; type = :RB, rm = rm, percentage = false)
+# plt1 = plot_risk_contribution(portfolio2,  :RB, rm = rm, percentage = false)
 # prp = plot_returns(portfolio)
 # pra = plot_returns(portfolio; per_asset = true)
 # pb = plot_bar(portfolio)

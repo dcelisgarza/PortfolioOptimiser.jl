@@ -542,7 +542,7 @@ end
 
 """
 ```
-CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, method::Symbol = :Unique)
+CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, type::Symbol = :Unique)
 ```
 
 Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy of the cliques with the definition of "inside" a clique being a subgraph of smaller size when the entire graph is made disjoint by removing the clique [NHPG](@cite).
@@ -551,7 +551,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
 
   - `Apm`: `N×N` adjacency matrix of an MPG.
 
-  - `method`: method for finding the root of the graph [`DBHTRootMethod`](@ref). Uses Voronoi tesselation between tiling triangles.
+  - `type`: type for finding the root of the graph [`DBHTRootType`](@ref). Uses Voronoi tesselation between tiling triangles.
 
       + [`UniqueDBHT()`](@ref): create a unique root.
       + [`EqualDBHT()`](@ref): the root is created from the candidate's adjacency tree.
@@ -564,8 +564,7 @@ Looks for 3-cliques of a Maximal Planar Graph (MPG), then construct a hierarchy 
   - `CliqList`: `Nc×3` matrix. Each row vector lists the three vertices consisting of a 3-clique in the MPG.
   - `Sb`: `Nc×1` vector. `Sb[n] = 1` indicates 3-clique `n` is separating.
 """
-function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
-                             method::DBHTRootMethod = UniqueDBHT())
+function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real}, type::DBHTRootType = UniqueDBHT())
     N = size(Apm, 1)
     A = Apm .!= 0
     K3, E, clique = clique3(A)
@@ -592,7 +591,7 @@ function CliqHierarchyTree2s(Apm::AbstractMatrix{<:Real},
     Pred = BuildHierarchy(M)
     Root = findall(Pred .== 0)
 
-    H = CliqueRoot(method, Root, Pred, Nc, A, CliqList)
+    H = CliqueRoot(type, Root, Pred, Nc, A, CliqList)
 
     if !isempty(H)
         H2, Mb = BubbleHierarchy(Pred, Sb)
@@ -1037,7 +1036,7 @@ end
 """
 ```
 DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real}; branchorder::Symbol = :optimal,
-      method::Symbol = :Unique)
+      type::Symbol = :Unique)
 ```
 
 Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering algorithm [DBHTs](@cite). This version uses a graph-theoretic filtering technique called Triangulated Maximally Filtered Graph (TMFG).
@@ -1054,7 +1053,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 
     Where ``\\mathbf{C}`` is the correlation matrix, ``\\mathbf{D}`` the dissimilarity matrix `D`, and ``\\odot`` the Hadamard (elementwise) operator.
   - `branchorder`: parameter for ordering the final dendrogram's branches accepted by [`Clustering.jl`](https://github.com/JuliaStats/Clustering.jl).
-  - `method`: method for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootMethod`](@ref).
+  - `type`: type for finding the root of a Direct Bubble Hierarchical Clustering Tree in case there is more than one candidate [`DBHTRootType`](@ref).
 
       + `:Unique`: create a unique root.
       + `:Equal`: the root is created from the candidate's adjacency tree.
@@ -1070,7 +1069,7 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
   - `Z_hclust`: Z matrix in [Clustering.Hclust](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) format.
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
-               branchorder::Symbol = :optimal, method::DBHTRootMethod = UniqueDBHT())
+               branchorder::Symbol = :optimal, type::DBHTRootType = UniqueDBHT())
     @assert(issymmetric(D), "Distance matrix should be symmetric.")
     @assert(issymmetric(S), "Similarity matrix should be symmetric.")
 
@@ -1079,7 +1078,7 @@ function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
     Apm[Apm .!= 0] .= D[Apm .!= 0]
     Dpm = distance_wei(Apm)[1]
 
-    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, method)
+    H1, Hb, Mb, CliqList, Sb = CliqHierarchyTree2s(Rpm, type)
 
     Mb = Mb[1:size(CliqList, 1), :]
 

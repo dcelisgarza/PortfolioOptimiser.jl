@@ -20,29 +20,29 @@ l = 2.0
     asset_statistics!(portfolio)
     w0 = optimise!(portfolio, Trad())
 
-    w1 = allocate!(portfolio; method = LP())
-    w2 = allocate!(portfolio; method = Greedy())
-    w3 = allocate!(portfolio; method = LP(), investment = 1e4)
-    w4 = allocate!(portfolio; method = Greedy(), investment = 1e4)
-    w5 = allocate!(portfolio; method = LP(), investment = 1e2)
-    w6 = allocate!(portfolio; method = Greedy(), investment = 1e2)
-    w7 = allocate!(portfolio; method = LP(), investment = 1e8)
-    w8 = allocate!(portfolio; method = Greedy(), investment = 1e8)
+    w1 = allocate!(portfolio; type = LP())
+    w2 = allocate!(portfolio; type = Greedy())
+    w3 = allocate!(portfolio; type = LP(), investment = 1e4)
+    w4 = allocate!(portfolio; type = Greedy(), investment = 1e4)
+    w5 = allocate!(portfolio; type = LP(), investment = 1e2)
+    w6 = allocate!(portfolio; type = Greedy(), investment = 1e2)
+    w7 = allocate!(portfolio; type = LP(), investment = 1e8)
+    w8 = allocate!(portfolio; type = Greedy(), investment = 1e8)
 
     portfolio.short = true
     w9 = optimise!(portfolio, Trad())
-    w10 = allocate!(portfolio; method = LP())
-    w11 = allocate!(portfolio; method = Greedy())
-    w12 = allocate!(portfolio; method = LP(), investment = 1e4)
-    w13 = allocate!(portfolio; method = Greedy(), investment = 1e4)
-    w14 = allocate!(portfolio; method = LP(), investment = 1e2)
-    w15 = allocate!(portfolio; method = Greedy(), investment = 1e2)
-    w16 = allocate!(portfolio; method = LP(), investment = 1e8)
-    w17 = allocate!(portfolio; method = Greedy(), investment = 1e8)
+    w10 = allocate!(portfolio; type = LP())
+    w11 = allocate!(portfolio; type = Greedy())
+    w12 = allocate!(portfolio; type = LP(), investment = 1e4)
+    w13 = allocate!(portfolio; type = Greedy(), investment = 1e4)
+    w14 = allocate!(portfolio; type = LP(), investment = 1e2)
+    w15 = allocate!(portfolio; type = Greedy(), investment = 1e2)
+    w16 = allocate!(portfolio; type = LP(), investment = 1e8)
+    w17 = allocate!(portfolio; type = Greedy(), investment = 1e8)
     portfolio.budget = 1
     w9_2 = optimise!(portfolio, Trad())
-    w18 = allocate!(portfolio; method = LP(), investment = 1e6)
-    w19 = allocate!(portfolio; method = Greedy(), investment = 1e6)
+    w18 = allocate!(portfolio; type = LP(), investment = 1e6)
+    w19 = allocate!(portfolio; type = Greedy(), investment = 1e6)
 
     @test isapprox(w0.weights, w1.weights, rtol = 0.01)
     @test isapprox(w0.weights, w2.weights, rtol = 0.01)
@@ -79,8 +79,8 @@ l = 2.0
     portfolio.alloc_solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                      :params => Dict("verbose" => false,
                                                                      "max_step_fraction" => 0.75)))
-    w20 = allocate!(portfolio; method = LP(), investment = 1e6)
+    w20 = allocate!(portfolio; type = LP(), investment = 1e6)
     @test !is_solved_and_feasible(portfolio.alloc_model)
 
-    w21 = allocate!(portfolio; method = Greedy(), investment = 69)
+    w21 = allocate!(portfolio; type = Greedy(), investment = 69)
 end

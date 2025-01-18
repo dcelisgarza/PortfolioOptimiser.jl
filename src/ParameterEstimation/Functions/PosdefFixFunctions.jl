@@ -1,12 +1,12 @@
 """
 ```
-_posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
+_posdef_fix!(type::PosdefNearest, X::AbstractMatrix)
 ```
 
-Overload this for other posdef fix methods.
+Overload this for other posdef fix types.
 """
-function _posdef_fix!(method::PosdefNearest, X::AbstractMatrix)
-    NearestCorrelationMatrix.nearest_cor!(X, method)
+function _posdef_fix!(type::PosdefNearest, X::AbstractMatrix)
+    NearestCorrelationMatrix.nearest_cor!(X, type)
     return nothing
 end
 function posdef_fix!(::NoPosdef, ::AbstractMatrix)
@@ -14,10 +14,10 @@ function posdef_fix!(::NoPosdef, ::AbstractMatrix)
 end
 """
 ```
-posdef_fix!(method::AbstractPosdefFix, X::AbstractMatrix)
+posdef_fix!(type::AbstractPosdefFix, X::AbstractMatrix)
 ```
 """
-function posdef_fix!(method::AbstractPosdefFix, X::AbstractMatrix)
+function posdef_fix!(type::AbstractPosdefFix, X::AbstractMatrix)
     if isposdef(X)
         return nothing
     end
@@ -31,7 +31,7 @@ function posdef_fix!(method::AbstractPosdefFix, X::AbstractMatrix)
         X
     end
 
-    _posdef_fix!(method, _X)
+    _posdef_fix!(type, _X)
 
     if !isposdef(_X)
         @warn("Matrix could not be made positive definite.")

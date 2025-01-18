@@ -150,7 +150,7 @@ function optimise!(port::Portfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
-function frontier_limits!(port::Portfolio, type::Union{Trad, NOC} = Trad();
+function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
     old_obj = type.obj

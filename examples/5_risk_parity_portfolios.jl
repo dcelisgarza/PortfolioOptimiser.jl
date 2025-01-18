@@ -83,7 +83,7 @@ We can check that the risk budget and risk contribution match.
 ## Risk budget.
 rb = portfolio.risk_budget
 ## Compute the risk contribution, for the [`SD`](@ref) risk measure.
-rc = risk_contribution(portfolio; type = :RP, rm = rm)
+rc = risk_contribution(portfolio, :RP; rm = rm)
 ## Normalise risk contribution so it adds up to 1 a.k.a. 100%.
 rc ./= sum(rc)
 
@@ -95,10 +95,10 @@ As you can see, the weights of each asset in the portfolio are such that the ass
 We can also plot the risk contribution in asbolute and relative terms.
 =#
 
-#nb display(plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false))
-#nb display(plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true))
-#md plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
-#md plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)
+#nb display(plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = false))
+#nb display(plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = true))
+#md plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = false)
+#md plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = true)
 
 #=
 Lets change the risk budget to something a little bit more interesting. The risk budget can be provided from to the [`Portfolio`](@ref) constructor, or after instatiation. Either way, the risk budget will be normalised to add up to 1. If using the latter method, the element type of the vector provided must match that of `risk_budget` because the normalisation is done in-place to avoid unecessary allocations.
@@ -112,30 +112,30 @@ portfolio.risk_budget = sin.(x) .^ 2;
 w1 = optimise!(portfolio; type = type, rm = rm)
 rb = portfolio.risk_budget
 ## Compute the risk contribution, for the [`SD`](@ref) risk measure.
-rc = risk_contribution(portfolio; type = :RP, rm = rm)
+rc = risk_contribution(portfolio, :RP; rm = rm)
 ## Normalise risk contribution so it adds up to 1 a.k.a. 100%.
 rc ./= sum(rc)
 pretty_table(hcat(w1, DataFrame(; budget = rb, contribution = rc)); formatters = fmt1)
 
 # Lets plot the results.
 
-#nb display(plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false))
-#nb display(plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true))
-#md plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = false)
-#md plot_risk_contribution(portfolio; rm = rm, type = :RP, percentage = true)
+#nb display(plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = false))
+#nb display(plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = true))
+#md plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = false)
+#md plot_risk_contribution(portfolio; rm = rm, key = :RP, percentage = true)
 
 #=
 We've used the [`SD`](@ref) risk function for computing the risk parity portfolio, as well as for computing and plotting the risk contribution, but there's nothing stopping us from computing the risk contribution and/or plotting the risk contribution for risk measures other than the one that was optimised.
 =#
 
 ## Compute the risk contribution, for the [`CDaR`](@ref) risk measure.
-rc = risk_contribution(portfolio; type = :RP, rm = CDaR())
+rc = risk_contribution(portfolio, :RP; rm = CDaR())
 ## Normalise risk contribution so it adds up to 1 a.k.a. 100%.
 rc ./= sum(rc)
 pretty_table(hcat(w1, DataFrame(; budget_SD = rb, contribution_CDaR = rc));
              formatters = fmt1)
 
-#nb display(plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = false))
-#nb display(plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = true))
-#md plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = false)
-#md plot_risk_contribution(portfolio; rm = CDaR(), type = :RP, percentage = true)
+#nb display(plot_risk_contribution(portfolio; rm = CDaR(), key = :RP, percentage = false))
+#nb display(plot_risk_contribution(portfolio; rm = CDaR(), key = :RP, percentage = true))
+#md plot_risk_contribution(portfolio; rm = CDaR(), key = :RP, percentage = false)
+#md plot_risk_contribution(portfolio; rm = CDaR(), key = :RP, percentage = true)

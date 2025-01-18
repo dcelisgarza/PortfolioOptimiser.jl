@@ -1,33 +1,33 @@
-function MultivariateStats.fit(method::PCATarget, X::AbstractMatrix)
-    return MultivariateStats.fit(MultivariateStats.PCA, X; method.kwargs...)
+function MultivariateStats.fit(type::PCATarget, X::AbstractMatrix)
+    return MultivariateStats.fit(MultivariateStats.PCA, X; type.kwargs...)
 end
-function MultivariateStats.fit(method::PPCATarget, X::AbstractMatrix)
-    return MultivariateStats.fit(MultivariateStats.PPCA, X; method.kwargs...)
+function MultivariateStats.fit(type::PPCATarget, X::AbstractMatrix)
+    return MultivariateStats.fit(MultivariateStats.PPCA, X; type.kwargs...)
 end
-function prep_dim_red_reg(method::PCAReg, x::DataFrame)
+function prep_dim_red_reg(type::PCAReg, x::DataFrame)
     N = nrow(x)
     X = transpose(Matrix(x))
 
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
 
-    model = fit(method.target, X_std)
+    model = fit(type.target, X_std)
     Xp = transpose(predict(model, X_std))
     Vp = projection(model)
     x1 = [ones(N) Xp]
 
     return X, x1, Vp
 end
-function _regression(method::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
+function _regression(type::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
                      Vp::AbstractMatrix, y::AbstractVector)
-    avg = vec(if isnothing(method.mean_w)
+    avg = vec(if isnothing(type.mean_w)
                   mean(X; dims = 2)
               else
-                  mean(X, method.mean_w; dims = 2)
+                  mean(X, type.mean_w; dims = 2)
               end)
-    sdev = vec(if isnothing(method.std_w)
-                   std(method.ve, X; dims = 2)
+    sdev = vec(if isnothing(type.std_w)
+                   std(type.ve, X; dims = 2)
                else
-                   std(method.ve, X, method.std_w; dims = 2)
+                   std(type.ve, X, type.std_w; dims = 2)
                end)
 
     fit_result = GLM.lm(x1, y)
@@ -40,20 +40,20 @@ function _regression(method::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
     return beta
 end
 """
-    regression(method::PCAReg, x::DataFrame, y::DataFrame)
+    regression(type::PCAReg, x::DataFrame, y::DataFrame)
 
 # Description
 """
-function regression(method::PCAReg, x::DataFrame, y::DataFrame)
+function regression(type::PCAReg, x::DataFrame, y::DataFrame)
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
 
     loadings = zeros(rows, cols)
 
-    X, x1, Vp = prep_dim_red_reg(method, x)
+    X, x1, Vp = prep_dim_red_reg(type, x)
     for i ∈ axes(loadings, 1)
-        beta = _regression(method, X, x1, Vp, y[!, i])
+        beta = _regression(type, X, x1, Vp, y[!, i])
         loadings[i, :] .= beta
     end
 
@@ -304,7 +304,7 @@ function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame
 
     return included
 end
-function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
+function regression(type::StepwiseRegression, x::DataFrame, y::DataFrame)
     features = names(x)
     rows = ncol(y)
     cols = ncol(x) + 1
@@ -315,7 +315,7 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
     loadings = zeros(rows, cols)
 
     for i ∈ axes(loadings, 1)
-        included = _regression(method, method.criterion, x, y[!, i])
+        included = _regression(type, type.criterion, x, y[!, i])
 
         x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 
@@ -335,11 +335,11 @@ function regression(method::StepwiseRegression, x::DataFrame, y::DataFrame)
 end
 """
 ```
-loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
+loadings_matrix(x::DataFrame, y::DataFrame, type::RegressionType = FReg())
 ```
 """
-function loadings_matrix(x::DataFrame, y::DataFrame, method::RegressionType = FReg())
-    return regression(method, x, y)
+function loadings_matrix(x::DataFrame, y::DataFrame, type::RegressionType = FReg())
+    return regression(type, x, y)
 end
 function set_noposdef(::NoPosdef, ::Any)
     return nothing
@@ -367,7 +367,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     B = factor_type.B
 
     if isnothing(B)
-        B = regression(factor_type.method, x, y)
+        B = regression(factor_type.type, x, y)
     end
     namesB = names(B)
     old_posdef = nothing

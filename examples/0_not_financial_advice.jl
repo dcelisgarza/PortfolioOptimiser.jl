@@ -136,7 +136,7 @@ w = optimise!(hp,
                                                  obj = Sharpe(; rf = 3.5 / 100 / 252)))))
 
 ## Say we have 3000 dollars at our disposal to allocate the portfolio
-wa = allocate!(hp; type = :NCO, investment = 3000)
+wa = allocate!(hp, :NCO; investment = 3000)
 
 pretty_table(w; formatters = fmt1)
 pretty_table(wa; formatters = fmt2)
@@ -237,7 +237,7 @@ w = optimise!(hp,
                                                     short_budget = short_budget,
                                                     long_ub = long_ub, short_lb = short_lb))))
 
-wa = allocate!(hp; type = :NCO, investment = 3000, short = short, budget = budget,
+wa = allocate!(hp, :NCO; investment = 3000, short = short, budget = budget,
                short_budget = short_budget)
 
 pretty_table(w; formatters = fmt1)

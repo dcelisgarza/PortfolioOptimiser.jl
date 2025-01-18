@@ -82,11 +82,11 @@ function _greedy_sub_allocation!(tickers, weights, latest_prices, investment, ro
 
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
-function _greedy_allocation!(port, port_type, latest_prices, investment, short, budget,
+function _greedy_allocation!(port, port_key, latest_prices, investment, short, budget,
                              short_budget, rounding)
-    key = Symbol("Greedy_" * string(port_type))
+    key = Symbol("Greedy_" * string(port_key))
 
-    weights = port.optimal[port_type].weights
+    weights = port.optimal[port_key].weights
     tickers = port.assets
 
     long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
@@ -119,8 +119,10 @@ function _greedy_allocation!(port, port_type, latest_prices, investment, short, 
 
     return port.alloc_optimal[key]
 end
-function _allocate!(method::Greedy, port, type, latest_prices, investment, short, budget,
-                    short_budget, ::Any)
-    return _greedy_allocation!(port, type, latest_prices, investment, short, budget,
-                               short_budget, method.rounding)
+function allocate!(port::AbstractPortfolio, type::Greedy; key::Symbol = :Trad,
+                   latest_prices = port.latest_prices, investment::Real = 1e6,
+                   short = port.short, budget = port.budget,
+                   short_budget = port.short_budget, keargs...)
+    return _greedy_allocation!(port, key, latest_prices, investment, short, budget,
+                               short_budget, type.rounding)
 end

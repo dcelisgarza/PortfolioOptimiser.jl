@@ -238,9 +238,9 @@ function _calc_k_clusters(::TwoDiff, max_k::Integer, dist::AbstractMatrix,
 
     return _valid_k_clusters(gaps, clustering)
 end
-function _calc_k_clusters(method::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
+function _calc_k_clusters(type::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
                           clustering::Hclust)
-    metric = method.metric
+    metric = type.metric
     N = size(dist, 1)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -268,13 +268,13 @@ function calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
     return if !iszero(clust_opt.k)
         _calc_k_clusters(clust_opt.k, clust_opt.max_k, clustering)
     else
-        _calc_k_clusters(clust_opt.k_method, clust_opt.max_k, dist, clustering)
+        _calc_k_clusters(clust_opt.k_type, clust_opt.max_k, dist, clustering)
     end
 end
 
 function _clusterise(ca::HAC, X::AbstractMatrix,
                      cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                     dist_type::DistMethod = DistCanonical(),
+                     dist_type::DistType = DistCanonical(),
                      clust_opt::ClustOpt = ClustOpt())
     dist_type = default_dist(dist_type, cor_type)
     set_absolute_dist!(cor_type, dist_type)
@@ -289,7 +289,7 @@ function _clusterise(ca::HAC, X::AbstractMatrix,
 end
 function _clusterise(ca::DBHT, X::AbstractMatrix,
                      cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                     dist_type::DistMethod = DistCanonical(),
+                     dist_type::DistType = DistCanonical(),
                      clust_opt::ClustOpt = ClustOpt())
     dist_type = default_dist(dist_type, cor_type)
     set_absolute_dist!(cor_type, dist_type)
@@ -298,15 +298,15 @@ function _clusterise(ca::DBHT, X::AbstractMatrix,
     D = dist(dist_type, S, X)
     S = dbht_similarity(ca.similarity, S, D)
 
-    clustering = DBHTs(D, S; branchorder = clust_opt.branchorder, method = ca.root_method)[end]
+    clustering = DBHTs(D, S; branchorder = clust_opt.branchorder, type = ca.root_type)[end]
     k = calc_k_clusters(clust_opt, D, clustering)
 
     return clustering, k, S, D
 end
 function cluster_assets(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                        dist_type::DistMethod = DistCanonical(),
-                        clust_alg::ClustAlg = HAC(), clust_opt::ClustOpt = ClustOpt())
+                        dist_type::DistType = DistCanonical(), clust_alg::ClustAlg = HAC(),
+                        clust_opt::ClustOpt = ClustOpt())
     clustering, k, S, D = _clusterise(clust_alg, X, cor_type, dist_type, clust_opt)
     idx = cutree(clustering; k = k)
     return idx, clustering, k, S, D
