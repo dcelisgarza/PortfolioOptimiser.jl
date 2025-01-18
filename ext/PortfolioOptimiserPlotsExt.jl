@@ -737,7 +737,7 @@ end
 
 function PortfolioOptimiser.plot_clusters(port::PortfolioOptimiser.AbstractPortfolio;
                                           cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                          dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
+                                          dist_type::PortfolioOptimiser.DistType = DistCanonical(),
                                           clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
                                           clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                           cluster::Bool = true, show_clusters::Bool = true,
@@ -818,7 +818,7 @@ end
 
 function PortfolioOptimiser.plot_dendrogram(port::PortfolioOptimiser.AbstractPortfolio;
                                             cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                            dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
+                                            dist_type::PortfolioOptimiser.DistType = DistCanonical(),
                                             clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
                                             clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                             cluster::Bool = true, theme = :Spectral,
@@ -882,7 +882,7 @@ end
 function PortfolioOptimiser.plot_network(port::PortfolioOptimiser.AbstractPortfolio,
                                          key = :Trad;
                                          cor_type::PortfolioOptimiser.PortfolioOptimiserCovCor = PortCovCor(),
-                                         dist_type::PortfolioOptimiser.DistMethod = DistCanonical(),
+                                         dist_type::PortfolioOptimiser.DistType = DistCanonical(),
                                          clust_alg::PortfolioOptimiser.ClustAlg = HAC(),
                                          clust_opt::PortfolioOptimiser.ClustOpt = ClustOpt(),
                                          network_type::PortfolioOptimiser.NetworkType = MST(),
