@@ -482,20 +482,18 @@ end
 function HWF(; max_iter::Integer = 100)
     return HWF{typeof(max_iter)}(max_iter)
 end
-mutable struct JWF{T1 <: Integer} <: HCOptWeightFinaliser
-    type::T1
-end
-function JWF(; type::Integer = 1)
-    @smart_assert(type ∈ (1, 2, 3, 4))
-    return JWF{typeof(type)}(type)
-end
-function Base.setproperty!(obj::JWF, sym::Symbol, val)
-    if sym == :type
-        @smart_assert(val ∈ (1, 2, 3, 4))
-    end
-    return setfield!(obj, sym, val)
-end
 
+abstract type JWFVersion end
+struct ROJWF <: JWFVersion end
+struct RSJWF <: JWFVersion end
+struct AOJWF <: JWFVersion end
+struct ASJWF <: JWFVersion end
+mutable struct JWF <: HCOptWeightFinaliser
+    version::JWFVersion
+end
+function JWF(; version::JWFVersion = ROJWF())
+    return JWF(version)
+end
 """
 ```
 struct HRP <: HCOptimType end
@@ -653,4 +651,5 @@ for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP),
 end
 
 export Trad, RB, BasicRRB, RegRRB, RegPenRRB, RRB, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
-       SchurParams, HWF, JWF, ScalarSum, ScalarMax, ScalarLogSumExp
+       SchurParams, HWF, JWF, ROJWF, RSJWF, AOJWF, ASJWF, ScalarSum, ScalarMax,
+       ScalarLogSumExp
