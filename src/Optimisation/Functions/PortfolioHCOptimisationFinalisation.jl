@@ -83,7 +83,7 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
     end
     finaliser_constraint_obj(version, model, weights, scale_constr, scale_obj)
 
-    success, solvers_tried = _optimise_JuMP_model(model, solvers)
+    success, solvers_tried = optimise_JuMP_model(model, solvers)
 
     return if success
         value.(model[:w])

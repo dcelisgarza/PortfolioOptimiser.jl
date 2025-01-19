@@ -1,10 +1,10 @@
 function naive_risk(port, sigma, returns, cluster, rm)
-    sigma_old = _set_hc_rm_sigma(rm, sigma, cluster)
+    sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = _naive_risk(rm, cret)
-    _unset_hc_rm_sigma(rm, sigma_old)
-    _unset_hc_rm_skew(rm, old_V, old_skew)
+    crisk = naive_risk(rm, cret)
+    unset_hc_rm_sigma!(rm, sigma_old)
+    unset_hc_rm_skew!(rm, old_V, old_skew)
     return crisk
 end
 function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarSum)

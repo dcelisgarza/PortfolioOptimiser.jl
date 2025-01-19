@@ -17,8 +17,8 @@ function prep_dim_red_reg(type::PCAReg, x::DataFrame)
 
     return X, x1, Vp
 end
-function _regression(type::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
-                     Vp::AbstractMatrix, y::AbstractVector)
+function regression(type::PCAReg, X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix,
+                    y::AbstractVector)
     avg = vec(if isnothing(type.mean_w)
                   mean(X; dims = 2)
               else
@@ -53,13 +53,13 @@ function regression(type::PCAReg, x::DataFrame, y::DataFrame)
 
     X, x1, Vp = prep_dim_red_reg(type, x)
     for i ∈ axes(loadings, 1)
-        beta = _regression(type, X, x1, Vp, y[!, i])
+        beta = regression(type, X, x1, Vp, y[!, i])
         loadings[i, :] .= beta
     end
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
-function _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+function add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
     if isempty(included)
         excluded = setdiff(namesx, included)
         best_pval = Inf
@@ -86,7 +86,7 @@ function _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
 
     return nothing
 end
-function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -121,11 +121,11 @@ function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         end
     end
 
-    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+    add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
 
     return included
 end
-function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     fit_result = GLM.lm([ovec Matrix(x)], y)
 
@@ -154,42 +154,42 @@ function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         push!(excluded, factors[idx2])
     end
 
-    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+    add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
 
     return included
 end
-function _regression_criterion_func(::AIC)
+function regression_criterion_func(::AIC)
     return GLM.aic
 end
-function _regression_criterion_func(::AICC)
+function regression_criterion_func(::AICC)
     return GLM.aicc
 end
-function _regression_criterion_func(::BIC)
+function regression_criterion_func(::BIC)
     return GLM.bic
 end
-function _regression_criterion_func(::RSq)
+function regression_criterion_func(::RSq)
     return GLM.r2
 end
-function _regression_criterion_func(::AdjRSq)
+function regression_criterion_func(::AdjRSq)
     return GLM.adjr2
 end
-function _regression_threshold(::AIC)
+function regression_threshold(::AIC)
     return Inf
 end
-function _regression_threshold(::AICC)
+function regression_threshold(::AICC)
     return Inf
 end
-function _regression_threshold(::BIC)
+function regression_threshold(::BIC)
     return Inf
 end
-function _regression_threshold(::RSq)
+function regression_threshold(::RSq)
     return -Inf
 end
-function _regression_threshold(::AdjRSq)
+function regression_threshold(::AdjRSq)
     return -Inf
 end
-function _get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, excluded,
-                                     included, threshold)
+function get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, excluded,
+                                    included, threshold)
     val, key = findmin(value)
     idx = findfirst(x -> x == key, excluded)
     if val < threshold
@@ -198,8 +198,8 @@ function _get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, 
     end
     return threshold
 end
-function _get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, excluded,
-                                     included, threshold)
+function get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, excluded,
+                                    included, threshold)
     val, key = findmax(value)
     idx = findfirst(x -> x == key, excluded)
     if val > threshold
@@ -208,13 +208,13 @@ function _get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, 
     end
     return threshold
 end
-function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                    y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
-    criterion_func = _regression_criterion_func(criterion)
-    threshold = _regression_threshold(criterion)
+    criterion_func = regression_criterion_func(criterion)
+    threshold = regression_threshold(criterion)
 
     included = String[]
     excluded = namesx
@@ -236,8 +236,8 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
             break
         end
 
-        threshold = _get_forward_reg_incl_excl!(criterion, value, excluded, included,
-                                                threshold)
+        threshold = get_forward_reg_incl_excl!(criterion, value, excluded, included,
+                                               threshold)
 
         if ni == length(excluded)
             break
@@ -246,8 +246,8 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
 
     return included
 end
-function _get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, included,
-                                 threshold)
+function get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, included,
+                                threshold)
     val, idx = findmin(value)
     if val < threshold
         i = findfirst(x -> x == idx, included)
@@ -256,8 +256,8 @@ function _get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, incl
     end
     return threshold
 end
-function _get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, included,
-                                 threshold)
+function get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, included,
+                                threshold)
     val, idx = findmax(value)
     if val > threshold
         i = findfirst(x -> x == idx, included)
@@ -266,14 +266,14 @@ function _get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, incl
     end
     return threshold
 end
-function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                    y::AbstractVector)
     ovec = ones(length(y))
     fit_result = GLM.lm([ovec Matrix(x)], y)
 
     included = names(x)
 
-    criterion_func = _regression_criterion_func(criterion)
+    criterion_func = regression_criterion_func(criterion)
     threshold = criterion_func(fit_result)
 
     for _ ∈ eachindex(y)
@@ -295,7 +295,7 @@ function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame
             break
         end
 
-        threshold = _get_backward_reg_incl!(criterion, value, included, threshold)
+        threshold = get_backward_reg_incl!(criterion, value, included, threshold)
 
         if ni == length(included)
             break
@@ -315,7 +315,7 @@ function regression(type::StepwiseRegression, x::DataFrame, y::DataFrame)
     loadings = zeros(rows, cols)
 
     for i ∈ axes(loadings, 1)
-        included = _regression(type, type.criterion, x, y[!, i])
+        included = regression(type, type.criterion, x, y[!, i])
 
         x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 
@@ -379,7 +379,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     end
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
-    f_cov, f_mu = _sigma_mu(x1, cov_type, mu_type)
+    f_cov, f_mu = sigma_mu(x1, cov_type, mu_type)
 
     if !isnothing(old_posdef)
         cov_type.posdef = old_posdef
@@ -412,7 +412,7 @@ function factor_statistics(assets, returns, f_assets, f_returns;
                            factor_type::FactorType = FactorType(),
                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                            mu_type::MeanEstimator = MuSimple())
-    f_cov, f_mu = _sigma_mu(f_returns, cov_type, mu_type)
+    f_cov, f_mu = sigma_mu(f_returns, cov_type, mu_type)
 
     fm_mu, fm_cov, fm_returns, loadings = risk_factors(DataFrame(f_returns, f_assets),
                                                        DataFrame(returns,

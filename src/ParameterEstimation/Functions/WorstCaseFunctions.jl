@@ -1,17 +1,17 @@
-function _bootstrap_func(::StationaryBS, block_size, X, seed)
+function bootstrap_func(::StationaryBS, block_size, X, seed)
     return pyimport("arch.bootstrap").StationaryBootstrap(block_size, X; seed = seed)
 end
-function _bootstrap_func(::CircularBS, block_size, X, seed)
+function bootstrap_func(::CircularBS, block_size, X, seed)
     return pyimport("arch.bootstrap").CircularBlockBootstrap(block_size, X; seed = seed)
 end
-function _bootstrap_func(::MovingBS, block_size, X, seed)
+function bootstrap_func(::MovingBS, block_size, X, seed)
     return pyimport("arch.bootstrap").MovingBlockBootstrap(block_size, X; seed = seed)
 end
 function bootstrap_generator(type::ArchWC, X)
-    return _bootstrap_func(type.bootstrap, type.block_size, Py(X).to_numpy(), type.seed)
+    return bootstrap_func(type.bootstrap, type.block_size, Py(X).to_numpy(), type.seed)
 end
-function _sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
-                   mu_type::MeanEstimator)
+function sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
+                  mu_type::MeanEstimator)
     sigma = Matrix(cov(cov_type, X))
     old_sigma = set_mean_sigma(mu_type, sigma)
     mu = vec(mean(mu_type, X))
@@ -29,7 +29,7 @@ function gen_bootstrap(type::ArchWC, cov_type::PortfolioOptimiserCovCor,
     gen = bootstrap_generator(type, X)
     for data ∈ gen.bootstrap(type.n_sim)
         A = pyconvert(Array, data)[1][1]
-        sigma, mu = _sigma_mu(A, cov_type, mu_type)
+        sigma, mu = sigma_mu(A, cov_type, mu_type)
         push!(covs, sigma)
         push!(mus, mu)
     end
