@@ -1,4 +1,4 @@
 include("./PortfolioOptimiseGeneralConstraints.jl")
-include("./PortfolioOptimiseRPConstraints.jl")
-include("./PortfolioOptimiseRRPConstraints.jl")
+include("./PortfolioOptimiseRBConstraints.jl")
+include("./PortfolioOptimiseRRBConstraints.jl")
 include("./PortfolioOptimiseNOCConstraints.jl")

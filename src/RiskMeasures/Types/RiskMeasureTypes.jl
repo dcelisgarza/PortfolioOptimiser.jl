@@ -1,48 +1,185 @@
 """
     abstract type AbstractRiskMeasure end
 
-# Description
-
-Serves as the foundational type for all risk measurement approaches in the library.
+Supertype for all risk measaures.
 
 See also: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref).
-
-# Type Hierarchy
-
-  - Direct subtypes: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref).
 """
 abstract type AbstractRiskMeasure end
 
 """
     abstract type RiskMeasure <: AbstractRiskMeasure end
 
-# Description
+Supertype for all computable risk measures, as well as all optimisations that can take risk measures as parameters.
 
-Defines the interface for risk measures that can be used in the following optimisation kinds:
+See also: [`calc_risk`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
 
-  - [`Trad`](@ref).
-  - [`RB`](@ref).
-  - [`NOC`](@ref).
-  - [`HRP`](@ref).
-  - [`HERC`](@ref).
-  - [`NCO`](@ref).
+# Implementation requirements
 
-See also: [`AbstractRiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`OptimType`](@ref), [`ObjectiveFunction`](@ref).
+## General
 
-# Type Hierarchy
+To ensure a risk measure can be used by the library, it must abide by a few rules. The general rules apply to all risk measures to be used in optimisations.
 
-# Implementation Requirements
+  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
 
-To ensure concrete subtypes will handle both [`Portfolio`](@ref) contexts appropriately, they must implement:
+```julia
+struct MyRiskMeasure <: RiskMeasure
+    # Fields of MyRiskMeasure
+end
 
-  - Risk calculation type [`calc_risk`](@ref).
+function calc_risk(my_risk::MyRiskMeasure, w::AbstractVector; kwargs...)
+    # Risk measure calculation
+end
+```
 
-  - Scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation, if appropriate a vector equivalent [`set_rm`](@ref).
+  - If the risk measure requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
+
+```julia
+struct MyRiskMeasure <: RiskMeasure
+    # Fields of MyRiskMeasure
+    solvers::Union{<:AbstractDict, Nothing}
+end
+
+function set_rm_solvers!(rm::MyRiskMeasure, solvers)
+    flag = false
+    if isnothing(rm.solvers) || isempty(rm.solvers)
+        rm.solvers = solvers
+        flag = true
+    end
+    return flag
+end
+
+function unset_rm_solvers!(rm::MyRiskMeasure, flag)
+    if flag
+        rm.solvers = nothing
+    end
+end
+```
+
+!!! tip
+
+    If you want a risk measure that can only be computed, but not used by any optimisation, subtype [`AbstractRiskMeasure`](@ref) and only implement [`calc_risk`](@ref). There is no need to follow the convention on `solvers` as the implementation details are up to you.
+
+    ```julia
+    abstract type MyAbstractNonOptRiskMeasure <: AbstractRiskMeasure end
+
+    struct MyNonOptRiskMeasure <: MyAbstractNonOptRiskMeasure
+        # Fields of MyNonOptRiskMeasure
+    end
+
+    function calc_risk(my_risk::MyNonOptRiskMeasure, w::AbstractVector; kwargs...)
+        # Risk measure calculation
+    end
+    ```
+
+    If using a single risk measure, this will make the instantiation of the optimisation types, [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), error at instantiation. If optimising a vector of risk measures, this will make [`optimise!`](@ref) error when it comes accross it.
+
+## [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref) optimisations.
+
+To ensure the risk meaasure is compatible with the above optimisation types, it must abide by the following rules.
+
   - Include a `settings::RMSettings = RMSettings()` field for configuration purposes.
+
+```julia
+struct MyRiskMeasure <: RiskMeasure
+    # Fields of MyRiskMeasure
+    settings::RMSettings = RMSettings()
+end
+```
+
+  - A scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation of [`set_rm`](@ref). If appropriate a vector equivalent.
+
+```julia
+# The scalar function.
+function set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
+    # Get optimisation model.
+    model = port.model
+
+    ###
+    # Variables, constraints, expressions, etc.
+    ###
+
+    # Define the risk expression for MyRiskMeasure
+    @expression(model, MyRiskMeasure_risk, ...)
+
+    # Define the key name for the upper bound.
+    ub_key = "MyRiskMeasure_risk"
+
+    # Set the upper bound on MyRiskMeasure_risk. 
+    # If isinf(rm.settings.ub), no upper bound will be set.
+    set_rm_risk_upper_bound(type, model, MyRiskMeasure_risk, rm.settings.ub, ub_key)
+
+    # Add the risk to the risk expression.
+    # If rm.settings.flag == true, MyRiskMeasure_risk will be added to the vector of risks.
+    # This means it will form part of the objective function when the objective function is
+    # MinRisk, Utility or Sharpe.
+    # If rm.settings.flag == false, MyRiskMeasure_risk will only be used as a risk constraint.
+    set_risk_expression(model, MyRiskMeasure_risk, rm.settings.scale, rm.settings.flag)
+
+    return nothing
+end
+
+# Vector equivalent if it's possible to provide multiple instances of MyRiskMeasure.
+function set_rm(port, rms::AbstractVector{<:MyRiskMeasure}, type::Union{Trad, RB, NOC};
+                kwargs...)
+
+    # Get optimisation model.
+    model = port.model
+    count = length(rms)
+
+    ###
+    # Variables, constraints, expressions, that can be initialised beforehand etc.
+    ###
+
+    # Define the risk expression for MyRiskMeasure.
+    # It can also be defined in the iteration using the 
+    # `model[key] = @expression(model, ..., ...) `
+    # construct, then reference the `model[key]` expression.
+    # Or use its anonymous version
+    # `key = @expression(model, ..., ...)` 
+    # and reference the `key` expression.
+    @expression(model, MyRiskMeasure_risk[1:count], ...)
+
+    for (i, rm) ∈ pairs(rms)
+        ###
+        # Variables, constraints, expressions, that must be set during each iteration.
+        # If you want to register them in the model use:
+        # `model[constraint_key] = @constraint(model, ..., ...)`
+        # `model[expression_key] = @expression(model, ..., ...)`
+        # `model[variable_key] = @variable(model, ..., ...)`
+        # If you want them to be anonymous (i.e. not registered in the model) use:
+        # `constraint_key = @constraint(model, ..., ...)`
+        # `expression_key = @expression(model, ..., ...)`
+        # `variable_key = @variable(model, ..., ...)`
+        # If they were defined outside of the loop like MyRiskMeasure_risk 
+        # but need to be modified then use:
+        # `add_to_expression!(MyRiskMeasure_risk[i], ...).`
+        ###
+
+        # Define the key name for the upper bound.
+        ub_key = "MyRiskMeasure_risk_\$(i)"
+
+        # Set the upper bound on MyRiskMeasure_risk[i]. 
+        # If isinf(rm.settings.ub), no upper bound will be set.
+        set_rm_risk_upper_bound(type, model, MyRiskMeasure_risk[i], rm.settings.ub, ub_key)
+
+        # Add the risk to the risk expression.
+        # If rm.settings.flag == true, MyRiskMeasure_risk[i] will be added to the vector of risks.
+        # This means it will form part of the objective function when the objective function is
+        # MinRisk, Utility or Sharpe.
+        # If rm.settings.flag == false, MyRiskMeasure_risk[i] will only be used as a risk constraint.
+        set_risk_expression(model, MyRiskMeasure_risk[i], rm.settings.scale,
+                            rm.settings.flag)
+    end
+
+    return nothing
+end
+```
+
   - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
 
       + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
-      + Implement [`_set_rm_solvers!`](@ref) and [`_unset_rm_solvers!`](@ref).
+      + Implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
 
 # Examples
 
@@ -101,7 +238,7 @@ function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:MySolv
     # implementation details
 end
 
-function PortfolioOptimiser._set_rm_solvers!(rm::MySolverRisk, solvers)
+function PortfolioOptimiser.set_rm_solvers!(rm::MySolverRisk, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -110,7 +247,7 @@ function PortfolioOptimiser._set_rm_solvers!(rm::MySolverRisk, solvers)
     return flag
 end
 
-function PortfolioOptimiser._unset_rm_solvers!(rm::MySolverRisk, flag)
+function PortfolioOptimiser.unset_rm_solvers!(rm::MySolverRisk, flag)
     if flag
         rm.solvers = nothing
     end
@@ -138,7 +275,7 @@ Concrete subtypes must implement:
   - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
 
       + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
-      + Implement [`_set_rm_solvers!`](@ref) and [`_unset_rm_solvers!`](@ref).
+      + Implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
 
 # Examples
 
@@ -172,7 +309,7 @@ function PortfolioOptimiser.calc_risk(risk::MySolverHCRisk, w::AbstractVector; k
     # implementation details
 end
 
-function PortfolioOptimiser._set_rm_solvers!(rm::MySolverHCRisk, solvers)
+function PortfolioOptimiser.set_rm_solvers!(rm::MySolverHCRisk, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -181,7 +318,7 @@ function PortfolioOptimiser._set_rm_solvers!(rm::MySolverHCRisk, solvers)
     return flag
 end
 
-function PortfolioOptimiser._unset_rm_solvers!(rm::MySolverHCRisk, flag)
+function PortfolioOptimiser.unset_rm_solvers!(rm::MySolverHCRisk, flag)
     if flag
         rm.solvers = nothing
     end
