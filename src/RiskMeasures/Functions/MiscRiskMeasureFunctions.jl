@@ -60,7 +60,7 @@ end
 function set_rm_solvers!(args...)
     return false
 end
-function set_rm_sigma(rm::RMSigma, sigma)
+function set_rm_sigma!(rm::RMSigma, sigma)
     flag = false
     if isnothing(rm.sigma) || isempty(rm.sigma)
         rm.sigma = sigma
@@ -68,10 +68,10 @@ function set_rm_sigma(rm::RMSigma, sigma)
     end
     return flag
 end
-function set_rm_sigma(args...)
+function set_rm_sigma!(args...)
     return false
 end
-function set_rm_skew(rm::Skew, V)
+function set_rm_skew!(rm::Skew, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -79,7 +79,7 @@ function set_rm_skew(rm::Skew, V)
     end
     return flag
 end
-function _set_rm_sskew(rm::SSkew, V)
+function set_rm_sskew!(rm::SSkew, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -87,13 +87,10 @@ function _set_rm_sskew(rm::SSkew, V)
     end
     return flag
 end
-function set_rm_skew(args...)
+function set_rm_skew!(args...)
     return false
 end
-function _set_rm_sskew(args...)
-    return false
-end
-function _set_rm_wc_var(args...)
+function set_rm_sskew!(args...)
     return false
 end
 """
@@ -115,9 +112,9 @@ function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
                             V::Union{Nothing, <:AbstractMatrix{<:Real}},
                             SV::Union{Nothing, <:AbstractMatrix{<:Real}})
     solver_flag = set_rm_solvers!(rm, solvers)
-    sigma_flag = set_rm_sigma(rm, sigma)
-    skew_flag = set_rm_skew(rm, V)
-    sskew_flag = _set_rm_sskew(rm, SV)
+    sigma_flag = set_rm_sigma!(rm, sigma)
+    skew_flag = set_rm_skew!(rm, V)
+    sskew_flag = set_rm_sskew!(rm, SV)
     return solver_flag, sigma_flag, skew_flag, sskew_flag
 end
 """

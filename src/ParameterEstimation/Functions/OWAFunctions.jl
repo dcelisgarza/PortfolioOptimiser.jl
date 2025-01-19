@@ -201,7 +201,7 @@ end
 
 """
 ```julia
-_optimise_JuMP_model(model, solvers)
+optimise_JuMP_model(model, solvers)
 ```
 
 Internal function to optimise an OWA JuMP model.
@@ -224,7 +224,7 @@ Internal function to optimise an OWA JuMP model.
 
           * `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
 """
-function _optimise_JuMP_model(model, solvers)
+function optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
     sucess = false
@@ -365,7 +365,7 @@ function _owa_model_setup(type, T, weights)
 end
 function _owa_model_solve(model, weights, type, k)
     solvers = type.solvers
-    success = _optimise_JuMP_model(model, solvers)[1]
+    success = optimise_JuMP_model(model, solvers)[1]
     return if success
         phi = model[:phi]
         phis = value.(phi)
