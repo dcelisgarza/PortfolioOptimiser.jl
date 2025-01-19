@@ -1,4 +1,4 @@
-function _resolve_model(model, latest_prices)
+function resolve_model(model, latest_prices)
     shares = round.(Int, value.(model[:x]))
     cost = latest_prices .* shares
     weights = cost / sum(cost)
@@ -6,7 +6,7 @@ function _resolve_model(model, latest_prices)
 
     return shares, cost, weights, available_funds
 end
-function _optimise_allocation(port, label, tickers, latest_prices)
+function optimise_allocation(port, label, tickers, latest_prices)
     model = port.alloc_model
     solvers = port.alloc_solvers
     term_status = termination_status(model)
@@ -50,7 +50,7 @@ function _optimise_allocation(port, label, tickers, latest_prices)
             term_status = termination_status(model)
         end
 
-        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
+        shares, cost, weights, available_funds = resolve_model(model, latest_prices)
 
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
@@ -64,9 +64,9 @@ function _optimise_allocation(port, label, tickers, latest_prices)
     key = Symbol(string(key) * "_" * string(label))
 
     return if success
-        shares, cost, weights, available_funds = _resolve_model(model, latest_prices)
+        shares, cost, weights, available_funds = resolve_model(model, latest_prices)
     else
-        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser._lp_sub_allocation!))"
+        funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.lp_sub_allocation!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         port.alloc_fail[key] = solvers_tried
 
@@ -74,8 +74,8 @@ function _optimise_allocation(port, label, tickers, latest_prices)
          Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))
     end
 end
-function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, investment,
-                             string_names, total_investment)
+function lp_sub_allocation!(port, label, tickers, weights, latest_prices, investment,
+                            string_names, total_investment)
     if isempty(tickers)
         return String[], Vector{Int}(undef, 0), Vector{eltype(latest_prices)}(undef, 0),
                Vector{eltype(latest_prices)}(undef, 0),
@@ -112,9 +112,9 @@ function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, inves
 
     @objective(model, Min, scale_obj * (u + r))
 
-    shares, cost, allocated_weights, available_funds = _optimise_allocation(port, label,
-                                                                            tickers,
-                                                                            latest_prices)
+    shares, cost, allocated_weights, available_funds = optimise_allocation(port, label,
+                                                                           tickers,
+                                                                           latest_prices)
     if !isempty(shares)
         alpha = dot(latest_prices, shares)
         alpha /= total_investment
@@ -122,10 +122,10 @@ function _lp_sub_allocation!(port, label, tickers, weights, latest_prices, inves
     end
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
-function _combine_allocations!(port, key, long_tickers, short_tickers, long_shares,
-                               short_shares, long_latest_prices, short_latest_prices,
-                               long_cost, short_cost, long_allocated_weights,
-                               short_allocated_weights)
+function combine_allocations!(port, key, long_tickers, short_tickers, long_shares,
+                              short_shares, long_latest_prices, short_latest_prices,
+                              long_cost, short_cost, long_allocated_weights,
+                              short_allocated_weights)
     tickers = [long_tickers; short_tickers]
     shares = [long_shares; -short_shares]
     latest_prices = [long_latest_prices; -short_latest_prices]
@@ -144,8 +144,8 @@ function _combine_allocations!(port, key, long_tickers, short_tickers, long_shar
 
     return nothing
 end
-function _lp_allocation!(port, port_key, latest_prices, investment, short, budget,
-                         short_budget, string_names)
+function lp_allocation!(port, port_key, latest_prices, investment, short, budget,
+                        short_budget, string_names)
     key = Symbol("LP_" * string(port_key))
 
     weights = port.optimal[port_key].weights
@@ -157,27 +157,27 @@ function _lp_allocation!(port, port_key, latest_prices, investment, short, budge
                                                                                 budget,
                                                                                 short_budget)
 
-    long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = _lp_sub_allocation!(port,
-                                                                                                                          :long,
-                                                                                                                          tickers[long_idx],
-                                                                                                                          weights[long_idx],
-                                                                                                                          latest_prices[long_idx],
-                                                                                                                          long_investment,
-                                                                                                                          string_names,
-                                                                                                                          investment)
+    long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = lp_sub_allocation!(port,
+                                                                                                                         :long,
+                                                                                                                         tickers[long_idx],
+                                                                                                                         weights[long_idx],
+                                                                                                                         latest_prices[long_idx],
+                                                                                                                         long_investment,
+                                                                                                                         string_names,
+                                                                                                                         investment)
 
-    short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = _lp_sub_allocation!(port,
-                                                                                                                                :short,
-                                                                                                                                tickers[short_idx],
-                                                                                                                                -weights[short_idx],
-                                                                                                                                latest_prices[short_idx],
-                                                                                                                                short_investment,
-                                                                                                                                string_names,
-                                                                                                                                investment)
+    short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = lp_sub_allocation!(port,
+                                                                                                                               :short,
+                                                                                                                               tickers[short_idx],
+                                                                                                                               -weights[short_idx],
+                                                                                                                               latest_prices[short_idx],
+                                                                                                                               short_investment,
+                                                                                                                               string_names,
+                                                                                                                               investment)
 
-    _combine_allocations!(port, key, long_tickers, short_tickers, long_shares, short_shares,
-                          long_latest_prices, short_latest_prices, long_cost, short_cost,
-                          long_allocated_weights, short_allocated_weights)
+    combine_allocations!(port, key, long_tickers, short_tickers, long_shares, short_shares,
+                         long_latest_prices, short_latest_prices, long_cost, short_cost,
+                         long_allocated_weights, short_allocated_weights)
 
     if !isempty(short_tickers) && !isempty(port.alloc_optimal[key])
         idx = [findfirst(x -> x == t, port.alloc_optimal[key].tickers) for t ∈ tickers]
@@ -191,6 +191,6 @@ function allocate!(port::AbstractPortfolio, ::LP; key::Symbol = :Trad,
                    latest_prices = port.latest_prices, investment::Real = 1e6,
                    short = port.short, budget = port.budget,
                    short_budget = port.short_budget, string_names::Bool = false)
-    return _lp_allocation!(port, key, latest_prices, investment, short, budget,
-                           short_budget, string_names)
+    return lp_allocation!(port, key, latest_prices, investment, short, budget, short_budget,
+                          string_names)
 end
