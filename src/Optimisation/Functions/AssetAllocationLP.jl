@@ -151,11 +151,11 @@ function lp_allocation!(port, port_key, latest_prices, investment, short, budget
     weights = port.optimal[port_key].weights
     tickers = port.assets
 
-    long_idx, short_idx, long_investment, short_investment = _setup_alloc_optim(weights,
-                                                                                investment,
-                                                                                short,
-                                                                                budget,
-                                                                                short_budget)
+    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(weights,
+                                                                               investment,
+                                                                               short,
+                                                                               budget,
+                                                                               short_budget)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = lp_sub_allocation!(port,
                                                                                                                          :long,
