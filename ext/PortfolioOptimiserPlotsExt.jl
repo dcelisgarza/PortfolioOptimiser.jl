@@ -843,7 +843,7 @@ function PortfolioOptimiser.plot_network(assets::AbstractVector, rho::AbstractMa
                                          network_type::PortfolioOptimiser.NetworkType = MST(),
                                          allocation = true, w = nothing, theme = :Spectral,
                                          kwargs = (;))
-    G = PortfolioOptimiser._calc_adjacency(network_type, rho, delta)
+    G = PortfolioOptimiser.calc_adjacency(network_type, rho, delta)
 
     colours = palette(theme, k)
 

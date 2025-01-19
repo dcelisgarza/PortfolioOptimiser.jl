@@ -882,7 +882,7 @@ end
     @test isapprox(w24.weights, w30.weights)
 end
 
-@testset "Kurt and cov via rm vecs" begin
+@testset "Kurt, skew and cov via rm vecs" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
                                                            :check_sol => (allow_local = true,

@@ -31,28 +31,28 @@ end
 function clac_mst(type::PrimTree, G)
     return Graphs.prim_mst(G, type.args...; type.kwargs...)
 end
-function _calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
+function calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
     S = dbht_similarity(nt.similarity, rho, delta)
     Rpm = PMFG_T2s(S)[1]
     return adjacency_matrix(SimpleGraph(Rpm))
 end
-function _calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
+function calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
     G = SimpleWeightedGraph(delta)
     tree = clac_mst(nt.tree, G)
     return adjacency_matrix(SimpleGraph(G[tree]))
 end
-function _calc_adjacency(nt::NetworkType, X::AbstractMatrix,
-                         cor_type::PortfolioOptimiserCovCor, dist_type::DistType)
+function calc_adjacency(nt::NetworkType, X::AbstractMatrix,
+                        cor_type::PortfolioOptimiserCovCor, dist_type::DistType)
     S = cor(cor_type, X)
     dist_type = default_dist(dist_type, cor_type)
     D = dist(dist_type, S, X)
-    return _calc_adjacency(nt, S, D)
+    return calc_adjacency(nt, S, D)
 end
 function connection_matrix(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            dist_type::DistType = DistCanonical(),
                            network_type::NetworkType = MST())
-    A = _calc_adjacency(network_type, X, cor_type, dist_type)
+    A = calc_adjacency(network_type, X, cor_type, dist_type)
 
     A_p = similar(Matrix(A))
     fill!(A_p, zero(eltype(A_p)))

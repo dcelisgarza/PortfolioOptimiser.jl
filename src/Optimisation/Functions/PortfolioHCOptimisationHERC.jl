@@ -1,19 +1,19 @@
 function naive_risk(port, sigma, returns, cluster, rm)
-    sigma_old = _set_hc_rm_sigma(rm, sigma, cluster)
+    sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = _naive_risk(rm, cret)
-    _unset_hc_rm_sigma(rm, sigma_old)
-    _unset_hc_rm_skew(rm, old_V, old_skew)
+    crisk = naive_risk(rm, cret)
+    unset_hc_rm_sigma!(rm, sigma_old)
+    unset_hc_rm_skew!(rm, old_V, old_skew)
     return crisk
 end
 function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarSum)
     crisk = zero(eltype(returns))
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         crisk += cluster_risk(port, sigma, returns, cluster, r) * scale
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return crisk
 end
@@ -22,33 +22,33 @@ function herc_scalarise_risk_o(port, sigma, returns, rm, cluster,
     gamma = scalarisation.gamma
     crisk = zero(eltype(returns))
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         crisk += cluster_risk(port, sigma, returns, cluster, r) * scale
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return log(exp(crisk)) / gamma
 end
 function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarMax)
     crisk = -Inf
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         crisk_n = cluster_risk(port, sigma, returns, cluster, r) * scale
         if crisk_n > crisk
             crisk = crisk_n
         end
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return crisk
 end
 function herc_scalarise_risk_i(port, sigma, returns, rm, cluster, ::ScalarSum)
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         risk .+= naive_risk(port, sigma, returns, cluster, r) * scale
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return risk
 end
@@ -57,10 +57,10 @@ function herc_scalarise_risk_i(port, sigma, returns, rm, cluster,
     gamma = scalarisation.gamma
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale * gamma
         risk .+= naive_risk(port, sigma, returns, cluster, r) * scale
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return log.(exp.(risk)) / gamma
 end
@@ -68,13 +68,13 @@ function herc_scalarise_risk_i(port, sigma, returns, rm, cluster, ::ScalarMax)
     trisk = -Inf
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
-        solver_flag = _set_rm_solvers!(r, port.solvers)
+        solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         risk_n = naive_risk(port, sigma, returns, cluster, r) * scale
         if sum(risk_n) > trisk
             risk .= risk_n
         end
-        _unset_rm_solvers!(r, solver_flag)
+        unset_rm_solvers!(r, solver_flag)
     end
     return risk
 end

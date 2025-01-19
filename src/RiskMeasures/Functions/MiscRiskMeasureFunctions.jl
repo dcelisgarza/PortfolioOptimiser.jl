@@ -46,10 +46,10 @@ end
 
 """
 ```
-_set_rm_solvers!(rm::RMSolvers, solvers)
+set_rm_solvers!(rm::RMSolvers, solvers)
 ```
 """
-function _set_rm_solvers!(rm::RMSolvers, solvers)
+function set_rm_solvers!(rm::RMSolvers, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -57,10 +57,10 @@ function _set_rm_solvers!(rm::RMSolvers, solvers)
     end
     return flag
 end
-function _set_rm_solvers!(args...)
+function set_rm_solvers!(args...)
     return false
 end
-function _set_rm_sigma(rm::RMSigma, sigma)
+function set_rm_sigma!(rm::RMSigma, sigma)
     flag = false
     if isnothing(rm.sigma) || isempty(rm.sigma)
         rm.sigma = sigma
@@ -68,10 +68,10 @@ function _set_rm_sigma(rm::RMSigma, sigma)
     end
     return flag
 end
-function _set_rm_sigma(args...)
+function set_rm_sigma!(args...)
     return false
 end
-function _set_rm_skew(rm::Skew, V)
+function set_rm_skew!(rm::Skew, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -79,7 +79,7 @@ function _set_rm_skew(rm::Skew, V)
     end
     return flag
 end
-function _set_rm_sskew(rm::SSkew, V)
+function set_rm_sskew!(rm::SSkew, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -87,13 +87,10 @@ function _set_rm_sskew(rm::SSkew, V)
     end
     return flag
 end
-function _set_rm_skew(args...)
+function set_rm_skew!(args...)
     return false
 end
-function _set_rm_sskew(args...)
-    return false
-end
-function _set_rm_wc_var(args...)
+function set_rm_sskew!(args...)
     return false
 end
 """
@@ -114,47 +111,47 @@ function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
                             sigma::Union{Nothing, <:AbstractMatrix{<:Real}},
                             V::Union{Nothing, <:AbstractMatrix{<:Real}},
                             SV::Union{Nothing, <:AbstractMatrix{<:Real}})
-    solver_flag = _set_rm_solvers!(rm, solvers)
-    sigma_flag = _set_rm_sigma(rm, sigma)
-    skew_flag = _set_rm_skew(rm, V)
-    sskew_flag = _set_rm_sskew(rm, SV)
+    solver_flag = set_rm_solvers!(rm, solvers)
+    sigma_flag = set_rm_sigma!(rm, sigma)
+    skew_flag = set_rm_skew!(rm, V)
+    sskew_flag = set_rm_sskew!(rm, SV)
     return solver_flag, sigma_flag, skew_flag, sskew_flag
 end
 """
 ```
-_unset_rm_solvers!(rm::RMSolvers, flag)
+unset_rm_solvers!(rm::RMSolvers, flag)
 ```
 """
-function _unset_rm_solvers!(rm::RMSolvers, flag)
+function unset_rm_solvers!(rm::RMSolvers, flag)
     if flag
         rm.solvers = nothing
     end
 end
-function _unset_rm_solvers!(args...)
+function unset_rm_solvers!(args...)
     return nothing
 end
-function _unset_rm_sigma!(rm::RMSigma, flag)
+function unset_rm_sigma!(rm::RMSigma, flag)
     if flag
         rm.sigma = nothing
     end
 end
-function _unset_rm_sigma!(args...)
+function unset_rm_sigma!(args...)
     return nothing
 end
-function _unset_rm_skew!(rm::Skew, flag)
+function unset_rm_skew!(rm::Skew, flag)
     if flag
         rm.V = nothing
     end
 end
-function _unset_rm_sskew!(rm::SSkew, flag)
+function unset_rm_sskew!(rm::SSkew, flag)
     if flag
         rm.V = nothing
     end
 end
-function _unset_rm_skew!(args...)
+function unset_rm_skew!(args...)
     return nothing
 end
-function _unset_rm_sskew!(args...)
+function unset_rm_sskew!(args...)
     return nothing
 end
 """
@@ -172,10 +169,10 @@ Unset properties for risk measures that use solvers or covariance matrices.
 """
 function unset_set_rm_properties!(rm::AbstractRiskMeasure, solver_flag::Bool,
                                   sigma_flag::Bool, skew_flag::Bool, sskew_flag::Bool)
-    _unset_rm_solvers!(rm, solver_flag)
-    _unset_rm_sigma!(rm, sigma_flag)
-    _unset_rm_skew!(rm, skew_flag)
-    _unset_rm_sskew!(rm, sskew_flag)
+    unset_rm_solvers!(rm, solver_flag)
+    unset_rm_sigma!(rm, sigma_flag)
+    unset_rm_skew!(rm, skew_flag)
+    unset_rm_sskew!(rm, sskew_flag)
     return nothing
 end
 function number_effective_assets(w::AbstractVector)
