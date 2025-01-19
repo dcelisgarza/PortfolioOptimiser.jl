@@ -319,7 +319,7 @@ end
 function set_rm(port, rm::WCVariance, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     sigma, cov_l, cov_u, cov_sigma, k_sigma = choose_wc_stats_port_rm(port, rm)
     wc_variance_risk_variables(rm.wc_set, model)
     calc_wc_variance_risk(rm.wc_set, model, sigma, cov_l, cov_u, cov_sigma, k_sigma)
@@ -332,7 +332,7 @@ end
 function set_rm(port, rms::AbstractVector{<:WCVariance}, type::Union{Trad, RB, NOC};
                 sigma::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     count = length(rms)
     @expression(model, wc_variance_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
@@ -726,7 +726,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
     end
     return nothing
 end
-function _wr_risk(model, returns)
+function wr_risk_expression(model, returns)
     if haskey(model, :wr)
         return nothing
     end
@@ -742,7 +742,7 @@ end
 function set_rm(port::Portfolio, rm::WR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    _wr_risk(model, returns)
+    wr_risk_expression(model, returns)
     wr_risk = model[:wr_risk]
     set_rm_risk_upper_bound(type, model, wr_risk, rm.settings.ub, "wr_risk")
     set_risk_expression(model, wr_risk, rm.settings.scale, rm.settings.flag)
@@ -752,7 +752,7 @@ function set_rm(port::Portfolio, rm::RG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _wr_risk(model, returns)
+    wr_risk_expression(model, returns)
     wr_risk = model[:wr_risk]
     net_X = model[:net_X]
     @variable(model, br)
@@ -1563,7 +1563,7 @@ end
 function set_rm(port::Portfolio, rm::Kurt, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     @variable(model, kurt_risk)
@@ -1612,7 +1612,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     count = length(rms)
@@ -1690,7 +1690,7 @@ end
 function set_rm(port::Portfolio, rm::SKurt, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     @variable(model, skurt_risk)
@@ -1739,7 +1739,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     W = model[:W]
     N = size(port.returns, 2)
     count = length(rms)
@@ -2574,13 +2574,13 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
     end
     return nothing
 end
-function _BDVariance_constraints(::BDVAbsVal, model, Dt, Dx, T)
+function BDVariance_constraints(::BDVAbsVal, model, Dt, Dx, T)
     scale_constr = model[:scale_constr]
     @constraint(model, constr_bdvariance_noc[i = 1:T, j = i:T],
                 [scale_constr * Dt[i, j]; scale_constr * Dx[i, j]] in MOI.NormOneCone(2))
     return nothing
 end
-function _BDVariance_constraints(::BDVIneq, model, Dt, Dx, T)
+function BDVariance_constraints(::BDVIneq, model, Dt, Dx, T)
     scale_constr = model[:scale_constr]
     @constraints(model,
                  begin
@@ -2604,7 +2604,7 @@ function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RB, NOC};
                      Dx, X * transpose(ovec) - ovec * transpose(X)
                      bd_variance_risk, iT2 * (dot(Dt, Dt) + iT2 * sum(Dt)^2)
                  end)
-    _BDVariance_constraints(rm.formulation, model, Dt, Dx, T)
+    BDVariance_constraints(rm.formulation, model, Dt, Dx, T)
     set_rm_risk_upper_bound(type, model, bd_variance_risk, rm.settings.ub,
                             "bd_variance_risk")
     set_risk_expression(model, bd_variance_risk, rm.settings.scale, rm.settings.flag)

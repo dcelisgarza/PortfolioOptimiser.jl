@@ -123,16 +123,16 @@ function default_dist(dist_type::DistType, cor_type::PortfolioOptimiserCovCor)
     set_absolute_dist!(dist_type, cor_type)
     return dist_type
 end
-function _bin_width_func(::Knuth)
+function get_bin_width_func(::Knuth)
     return pyimport("astropy.stats").knuth_bin_width
 end
-function _bin_width_func(::Freedman)
+function get_bin_width_func(::Freedman)
     return pyimport("astropy.stats").freedman_bin_width
 end
-function _bin_width_func(::Scott)
+function get_bin_width_func(::Scott)
     return pyimport("astropy.stats").scott_bin_width
 end
-function _bin_width_func(::Union{HGR, <:Integer})
+function get_bin_width_func(::Union{HGR, <:Integer})
     return nothing
 end
 function calc_num_bins(::AstroBins, xj::AbstractVector, xi::AbstractVector, j::Integer,
@@ -189,7 +189,7 @@ function variation_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer
     T, N = size(X)
     var_mtx = Matrix{eltype(X)}(undef, N, N)
 
-    bin_width_func = _bin_width_func(bins)
+    bin_width_func = get_bin_width_func(bins)
 
     for j ∈ axes(X, 2)
         xj = X[:, j]
@@ -221,7 +221,7 @@ function mutual_variation_info(X::AbstractMatrix,
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
     var_mtx = Matrix{eltype(X)}(undef, N, N)
 
-    bin_width_func = _bin_width_func(bins)
+    bin_width_func = get_bin_width_func(bins)
 
     for j ∈ axes(X, 2)
         xj = X[:, j]

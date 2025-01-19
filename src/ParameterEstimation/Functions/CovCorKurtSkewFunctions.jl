@@ -134,7 +134,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
 
-    bin_width_func = _bin_width_func(bins)
+    bin_width_func = get_bin_width_func(bins)
 
     for j ∈ axes(X, 2)
         xj = X[:, j]

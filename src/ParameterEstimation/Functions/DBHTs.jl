@@ -863,7 +863,7 @@ end
 
 """
 ```
-_build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
+build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
                        LabelVec::AbstractVector{<:Real}, LabelVec1::AbstractVector{<:Real},
                        LabelVec2::AbstractVector{<:Real}, V::AbstractVector{<:Real},
                        nc::Real, Z::AbstractMatrix{<:Real})
@@ -885,12 +885,11 @@ Computes iterates over the vertices to construct the linkage matrix iteration by
   - `nc`: updated inverse of the linkage distance.
   - `LabelVec1`: updated `LabelVec1` for the next iteration.
 """
-function _build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
-                                LabelVec::AbstractVector{<:Real},
-                                LabelVec1::AbstractVector{<:Real},
-                                LabelVec2::AbstractVector{<:Real},
-                                V::AbstractVector{<:Real}, nc::Real,
-                                Z::AbstractMatrix{<:Real})
+function build_link_and_dendro(rg::AbstractRange, dpm::AbstractMatrix{<:Real},
+                               LabelVec::AbstractVector{<:Real},
+                               LabelVec1::AbstractVector{<:Real},
+                               LabelVec2::AbstractVector{<:Real}, V::AbstractVector{<:Real},
+                               nc::Real, Z::AbstractMatrix{<:Real})
     for _ ∈ rg
         PairLink, dvu = LinkageFunction(dpm, LabelVec)  # Look for the pair of clusters which produces the best linkage
         LabelVec[LabelVec .== PairLink[1] .|| LabelVec .== PairLink[2]] .= maximum(LabelVec1) +
@@ -944,8 +943,8 @@ function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<
                 dpm = Dpm[V, V] # Retrieve the distance matrix for the vertices in V
                 LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters
                 LabelVec2 = copy(LabelVec1)
-                Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(V) - 1), dpm, LabelVec,
-                                                          LabelVec1, LabelVec2, V, nc, Z)
+                Z, nc, LabelVec1 = build_link_and_dendro(1:(length(V) - 1), dpm, LabelVec,
+                                                         LabelVec1, LabelVec2, V, nc, Z)
             end
         end
 
@@ -955,8 +954,8 @@ function HierarchyConstruct4s(Rpm::AbstractMatrix{<:Real}, Dpm::AbstractMatrix{<
         # Perform linkage merging between the bubbles
         LabelVec = LabelVec1[V] # Initiate the label vector which labels for the clusters.
         LabelVec2 = copy(LabelVec1)
-        Z, nc, LabelVec1 = _build_link_and_dendro(1:(length(Bub) - 1), dpm, LabelVec,
-                                                  LabelVec1, LabelVec2, V, nc, Z)
+        Z, nc, LabelVec1 = build_link_and_dendro(1:(length(Bub) - 1), dpm, LabelVec,
+                                                 LabelVec1, LabelVec2, V, nc, Z)
     end
 
     # Inter-cluster hierarchy construction
@@ -1114,7 +1113,7 @@ function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
     return T8, Rpm, Adjv, Dpm, Mv, Z, Z_hclust
 end
 
-function _jlogo!(jlogo, sigma, source, sign)
+function jlogo!(jlogo, sigma, source, sign)
     tmp = Matrix{eltype(sigma)}(undef, size(source, 2), size(source, 2))
     for i ∈ axes(source, 1)
         v = source[i, :]
@@ -1152,8 +1151,8 @@ Compute the sparse inverse covariance from a clique tree and separators [J_LoGo]
 function J_LoGo(sigma, separators, cliques)
     jlogo = zeros(eltype(sigma), size(sigma))
 
-    _jlogo!(jlogo, sigma, cliques, 1)
-    _jlogo!(jlogo, sigma, separators, -1)
+    jlogo!(jlogo, sigma, cliques, 1)
+    jlogo!(jlogo, sigma, separators, -1)
 
     return jlogo
 end

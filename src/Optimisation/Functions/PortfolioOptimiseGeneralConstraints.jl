@@ -7,8 +7,8 @@ function get_portfolio_returns(model, returns)
 
     return nothing
 end
-function _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
-                        budget_ub, short_budget, model, k, long_w, scale_constr, key)
+function long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
+                       budget_ub, short_budget, model, k, long_w, scale_constr, key)
     if budget_flag
         model[Symbol("constr_budget_$(key)")] = @constraint(model,
                                                             scale_constr * sum(long_w) ==
@@ -112,24 +112,24 @@ function weight_constraints(port, allow_shorting::Bool = true)
         short_budget_flag = isfinite(short_budget)
         short_budget_lb_flag = isfinite(short_budget_lb)
         if short_budget_flag
-            _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
-                           budget_ub, short_budget, model, k, long_w, scale_constr,
-                           "short_budget")
+            long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb, budget,
+                          budget_ub, short_budget, model, k, long_w, scale_constr,
+                          "short_budget")
             @constraint(model, constr_short_budget,
                         scale_constr * sum(short_w) == scale_constr * short_budget * k)
         else
             if short_budget_ub_flag
-                _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
-                               budget, budget_ub, short_budget_ub, model, k, long_w,
-                               scale_constr, "short_budget_ub")
+                long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
+                              budget, budget_ub, short_budget_ub, model, k, long_w,
+                              scale_constr, "short_budget_ub")
                 @constraint(model, constr_short_budget_ub,
                             scale_constr * sum(short_w) <=
                             scale_constr * short_budget_ub * k)
             end
             if short_budget_lb_flag
-                _long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
-                               budget, budget_ub, short_budget_lb, model, k, long_w,
-                               scale_constr, "short_budget_lb")
+                long_w_budget(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
+                              budget, budget_ub, short_budget_lb, model, k, long_w,
+                              scale_constr, "short_budget_lb")
                 @constraint(model, constr_short_budget_lb,
                             scale_constr * sum(short_w) >=
                             scale_constr * short_budget_lb * k)
@@ -496,7 +496,7 @@ function get_net_portfolio_returns(model, returns)
     @expression(model, net_X, X .- fees)
     return nothing
 end
-function _SDP_constraints(model, ::Trad)
+function SDP_constraints(model, ::Trad)
     if haskey(model, :W)
         return nothing
     end
@@ -511,7 +511,7 @@ function _SDP_constraints(model, ::Trad)
 
     return nothing
 end
-function _SDP_constraints(model, ::Any)
+function SDP_constraints(model, ::Any)
     if haskey(model, :W)
         return nothing
     end
@@ -536,7 +536,7 @@ function SDP_network_cluster_constraints(port, type)
 
     model = port.model
     scale_constr = model[:scale_constr]
-    _SDP_constraints(model, type)
+    SDP_constraints(model, type)
     W = model[:W]
 
     if ntwk_flag
