@@ -155,10 +155,10 @@ end
 function variance_risk_bounds_expr(::Union{NoAdj, IP}, model)
     return model[:dev], "dev"
 end
-function _variance_risk_bounds_val(::SDP, ub)
+function variance_risk_bounds_val(::SDP, ub)
     return ub
 end
-function _variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
+function variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
     return sqrt(ub)
 end
 """
@@ -184,7 +184,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
     calc_variance_risk(adjacency_constraint, rm.formulation, model, sigma)
     variance_risk = model[:variance_risk]
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
-    ub = _variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
+    ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
     set_rm_risk_upper_bound(type, model, var_bound_expr, ub, var_bound_key)
     set_risk_expression(model, model[:variance_risk], rm.settings.scale, rm.settings.flag)
     return nothing
@@ -209,7 +209,7 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
             sigma = rm.sigma
         end
         calc_variance_risk(adjacency_constraint, rm.formulation, model, sigma, i)
-        ub = _variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
+        ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
         set_rm_risk_upper_bound(type, model, var_bound_expr[i], ub, "$(var_bound_key)_$(i)")
         set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
     end
@@ -427,15 +427,15 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     end
     return nothing
 end
-function _semi_variance_risk(::Quad, model::JuMP.Model, svariance, iTm1)
+function semi_variance_risk(::Quad, model::JuMP.Model, svariance, iTm1)
     @expression(model, svariance_risk, dot(svariance, svariance) * iTm1)
     return nothing
 end
-function _semi_variance_risk(::Quad, ::Any, svariance, svariance_risk, iTm1)
+function semi_variance_risk(::Quad, ::Any, svariance, svariance_risk, iTm1)
     add_to_expression!(svariance_risk, iTm1, dot(svariance, svariance))
     return nothing
 end
-function _semi_variance_risk(::SOC, model::JuMP.Model, svariance, iTm1)
+function semi_variance_risk(::SOC, model::JuMP.Model, svariance, iTm1)
     scale_constr = model[:scale_constr]
     @variable(model, tsvariance)
     @constraint(model, constr_svariance_soc,
@@ -444,7 +444,7 @@ function _semi_variance_risk(::SOC, model::JuMP.Model, svariance, iTm1)
     @expression(model, svariance_risk, tsvariance * iTm1)
     return nothing
 end
-function _semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1, i)
+function semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1, i)
     scale_constr = model[:scale_constr]
     model[Symbol("tsvariance_$(i)")] = tsvariance = @variable(model)
     model[Symbol("constr_svariance_soc_$(i)")] = @constraint(model,
@@ -468,7 +468,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     mar = returns .- transpose(mu)
     target = rm.target
     @variable(model, svariance[1:T])
-    _semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
+    semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
     @constraints(model,
                  begin
                      constr_svariance_target,
@@ -517,8 +517,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                                                                                                                            :,
                                                                                                                            i)
                                                                                                                  end)
-        _semi_variance_risk(rm.formulation, model, view(svariance, :, i), svariance_risk[i],
-                            iTm1, i)
+        semi_variance_risk(rm.formulation, model, view(svariance, :, i), svariance_risk[i],
+                           iTm1, i)
         set_rm_risk_upper_bound(type, model, svariance_risk[i], rm.settings.ub,
                                 "svariance_risk_$(i)")
         set_risk_expression(model, svariance_risk[i], rm.settings.scale, rm.settings.flag)
@@ -1240,7 +1240,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad,
     end
     return nothing
 end
-function _DD_constraints(model, returns)
+function DD_constraints(model, returns)
     if haskey(model, :dd)
         return nothing
     end
@@ -1265,7 +1265,7 @@ function set_rm(port::Portfolio, rm::MDD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     @variable(model, mdd)
@@ -1279,7 +1279,7 @@ end
 function set_rm(port::Portfolio, rm::ADD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     w = rm.w
@@ -1295,7 +1295,7 @@ end
 function set_rm(port::Portfolio, rms::AbstractVector{<:ADD}, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
@@ -1316,7 +1316,7 @@ function set_rm(port::Portfolio, rm::UCI, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     @variable(model, uci)
@@ -1332,7 +1332,7 @@ function set_rm(port::Portfolio, rm::CDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
@@ -1351,7 +1351,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CDaR}, type::Union{Trad, 
                 returns::AbstractMatrix{<:Real}, kargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
@@ -1378,7 +1378,7 @@ function set_rm(port::Portfolio, rm::EDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     at = rm.alpha * T
@@ -1403,7 +1403,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EDaR}, type::Union{Trad, 
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
@@ -1446,7 +1446,7 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     iat = inv(rm.alpha * T)
@@ -1488,7 +1488,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    _DD_constraints(model, returns)
+    DD_constraints(model, returns)
     dd = model[:dd]
     T = size(returns, 1)
     count = length(rms)
@@ -1814,7 +1814,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
 
     return nothing
 end
-function _OWA_constraints(model, returns)
+function OWA_constraints(model, returns)
     if haskey(model, :owa)
         return nothing
     end
@@ -1834,7 +1834,7 @@ function set_rm(port::Portfolio, rm::GMD, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
 
     if !rm.owa.approx
-        _OWA_constraints(model, returns)
+        OWA_constraints(model, returns)
         owa = model[:owa]
         ovec = range(1; stop = 1, length = T)
         @variables(model, begin
@@ -1899,7 +1899,7 @@ function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RB, NOC};
     a_sim = rm.a_sim
     alpha_i = rm.alpha_i
     if !rm.owa.approx
-        _OWA_constraints(model, returns)
+        OWA_constraints(model, returns)
         owa = model[:owa]
         ovec = range(1; stop = 1, length = T)
         @variables(model, begin
@@ -1968,7 +1968,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RB
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
             if !haskey(model, :tga)
-                _OWA_constraints(model, returns)
+                OWA_constraints(model, returns)
                 @variables(model, begin
                                tga[1:T, 1:count]
                                tgb[1:T, 1:count]
@@ -2086,7 +2086,7 @@ function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RB, NOC};
     b_sim = rm.b_sim
     beta_i = rm.beta_i
     if !rm.owa.approx
-        _OWA_constraints(model, returns)
+        OWA_constraints(model, returns)
         owa = model[:owa]
         ovec = range(1; stop = 1, length = T)
         @variables(model, begin
@@ -2198,7 +2198,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, 
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
             if !haskey(model, :rtga)
-                _OWA_constraints(model, returns)
+                OWA_constraints(model, returns)
                 @variables(model, begin
                                rtga[1:T, 1:count]
                                rtgb[1:T, 1:count]
@@ -2395,7 +2395,7 @@ function set_rm(port::Portfolio, rm::OWA, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
 
     if !rm.owa.approx
-        _OWA_constraints(model, returns)
+        OWA_constraints(model, returns)
         owa = model[:owa]
         ovec = range(1; stop = 1, length = T)
         @variables(model, begin
@@ -2462,7 +2462,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
         if !rm.owa.approx
             ovec = range(1; stop = 1, length = T)
             if !haskey(model, :owa_a)
-                _OWA_constraints(model, returns)
+                OWA_constraints(model, returns)
                 @variables(model, begin
                                owa_a[1:T, 1:count]
                                owa_b[1:T, 1:count]

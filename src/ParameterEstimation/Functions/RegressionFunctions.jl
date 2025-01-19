@@ -59,7 +59,7 @@ function regression(type::PCAReg, x::DataFrame, y::DataFrame)
 
     return hcat(DataFrame(; tickers = names(y)), DataFrame(loadings, ["const"; features]))
 end
-function _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+function add_best_asset_after_failure_pval!(included, namesx, ovec, x, y)
     if isempty(included)
         excluded = setdiff(namesx, included)
         best_pval = Inf
@@ -121,7 +121,7 @@ function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         end
     end
 
-    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+    add_best_asset_after_failure_pval!(included, namesx, ovec, x, y)
 
     return included
 end
@@ -154,7 +154,7 @@ function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
         push!(excluded, factors[idx2])
     end
 
-    _add_best_asset_after_failure_pval(included, namesx, ovec, x, y)
+    add_best_asset_after_failure_pval!(included, namesx, ovec, x, y)
 
     return included
 end
@@ -173,23 +173,23 @@ end
 function regression_criterion_func(::AdjRSq)
     return GLM.adjr2
 end
-function _regression_threshold(::AIC)
+function regression_threshold(::AIC)
     return Inf
 end
-function _regression_threshold(::AICC)
+function regression_threshold(::AICC)
     return Inf
 end
-function _regression_threshold(::BIC)
+function regression_threshold(::BIC)
     return Inf
 end
-function _regression_threshold(::RSq)
+function regression_threshold(::RSq)
     return -Inf
 end
-function _regression_threshold(::AdjRSq)
+function regression_threshold(::AdjRSq)
     return -Inf
 end
-function _get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, excluded,
-                                     included, threshold)
+function get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, excluded,
+                                    included, threshold)
     val, key = findmin(value)
     idx = findfirst(x -> x == key, excluded)
     if val < threshold
@@ -198,8 +198,8 @@ function _get_forward_reg_incl_excl!(::MinValStepwiseRegressionCriteria, value, 
     end
     return threshold
 end
-function _get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, excluded,
-                                     included, threshold)
+function get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, excluded,
+                                    included, threshold)
     val, key = findmax(value)
     idx = findfirst(x -> x == key, excluded)
     if val > threshold
@@ -214,7 +214,7 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
     namesx = names(x)
 
     criterion_func = regression_criterion_func(criterion)
-    threshold = _regression_threshold(criterion)
+    threshold = regression_threshold(criterion)
 
     included = String[]
     excluded = namesx
@@ -236,8 +236,8 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
             break
         end
 
-        threshold = _get_forward_reg_incl_excl!(criterion, value, excluded, included,
-                                                threshold)
+        threshold = get_forward_reg_incl_excl!(criterion, value, excluded, included,
+                                               threshold)
 
         if ni == length(excluded)
             break
@@ -246,8 +246,8 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
 
     return included
 end
-function _get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, included,
-                                 threshold)
+function get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, included,
+                                threshold)
     val, idx = findmin(value)
     if val < threshold
         i = findfirst(x -> x == idx, included)
@@ -256,8 +256,8 @@ function _get_backward_reg_incl!(::MinValStepwiseRegressionCriteria, value, incl
     end
     return threshold
 end
-function _get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, included,
-                                 threshold)
+function get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, included,
+                                threshold)
     val, idx = findmax(value)
     if val > threshold
         i = findfirst(x -> x == idx, included)
@@ -295,7 +295,7 @@ function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame
             break
         end
 
-        threshold = _get_backward_reg_incl!(criterion, value, included, threshold)
+        threshold = get_backward_reg_incl!(criterion, value, included, threshold)
 
         if ni == length(included)
             break

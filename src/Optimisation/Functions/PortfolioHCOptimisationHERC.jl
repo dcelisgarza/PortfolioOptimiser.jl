@@ -2,7 +2,7 @@ function naive_risk(port, sigma, returns, cluster, rm)
     sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = _naive_risk(rm, cret)
+    crisk = naive_risk(rm, cret)
     unset_hc_rm_sigma!(rm, sigma_old)
     unset_hc_rm_skew!(rm, old_V, old_skew)
     return crisk

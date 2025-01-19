@@ -363,7 +363,7 @@ function _owa_model_setup(type, T, weights)
                  end)
     return model
 end
-function _owa_model_solve(model, weights, type, k)
+function owa_model_solve(model, weights, type, k)
     solvers = type.solvers
     success = optimise_JuMP_model(model, solvers)[1]
     return if success
@@ -396,7 +396,7 @@ function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
                      [scale_constr * x[i]; scale_constr * theta[i]] ∈ MOI.NormOneCone(2)
                  end)
     @objective(model, Max, -scale_obj * t)
-    return _owa_model_solve(model, weights, type, k)
+    return owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
     scale_constr = type.scale_constr
@@ -406,7 +406,7 @@ function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
     @variable(model, t)
     @constraint(model, [scale_constr * t; scale_constr * theta] ∈ SecondOrderCone())
     @objective(model, Min, scale_obj * t)
-    return _owa_model_solve(model, weights, type, k)
+    return owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
     scale_constr = type.scale_constr
@@ -418,7 +418,7 @@ function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
                 [scale_constr * t; scale_constr * (theta[2:end] .- theta[1:(end - 1)])] ∈
                 SecondOrderCone())
     @objective(model, Min, scale_obj * t)
-    return _owa_model_solve(model, weights, type, k)
+    return owa_model_solve(model, weights, type, k)
 end
 """
 ```julia
