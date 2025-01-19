@@ -1,6 +1,6 @@
 """
 ```
-_clusterise(ca::HAC, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
+clusterise(ca::HAC, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
 Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.hclust) to hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
@@ -16,7 +16,7 @@ Use [`Clustering.hclust`](https://juliastats.org/Clustering.jl/stable/hclust.htm
   - `clustering`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of the portfolio assets.
   - `k`: optimum number of clusters.
 """
-function _clusterise(ca::HAC, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
+function clusterise(ca::HAC, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
     clustering = hclust(port.dist; linkage = ca.linkage,
                         branchorder = clust_opt.branchorder)
     k = calc_k_clusters(clust_opt, port.dist, clustering)
@@ -25,7 +25,7 @@ end
 
 """
 ```
-_clusterise(ca::DBHT, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
+clusterise(ca::DBHT, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())
 ```
 
 Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portfolio using the covariance and distance matrices stored in the portfolio. See the arguments types' docs for details.
@@ -41,7 +41,7 @@ Use [`DBHTs`](@ref) to hierarchically cluster the assets in a hierarchical portf
   - `clustering`: [`Clustering.Hclust`](https://juliastats.org/Clustering.jl/stable/hclust.html#Clustering.Hclust) of the portfolio assets.
   - `k`: optimum number of clusters.
 """
-function _clusterise(ca::DBHT, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
+function clusterise(ca::DBHT, port::Portfolio, clust_opt::ClustOpt = ClustOpt())
     S = port.cor
     D = port.dist
     S = dbht_similarity(ca.similarity, S, D)
@@ -72,7 +72,7 @@ Hierarchically cluster the assets in a hierarchical portfolio using the covarian
 """
 function cluster_assets(port::Portfolio; clust_alg::ClustAlg = HAC(),
                         clust_opt::ClustOpt = ClustOpt())
-    clustering, k = _clusterise(clust_alg, port, clust_opt)
+    clustering, k = clusterise(clust_alg, port, clust_opt)
     idx = cutree(clustering; k = k)
     return idx, clustering, k
 end
@@ -93,7 +93,7 @@ Hierarchically cluster the assets in a hierarchical portfolio using the covarian
 """
 function cluster_assets!(port::Portfolio; clust_alg::ClustAlg = HAC(),
                          clust_opt::ClustOpt = ClustOpt())
-    clustering, k = _clusterise(clust_alg, port, clust_opt)
+    clustering, k = clusterise(clust_alg, port, clust_opt)
     port.clusters = clustering
     port.k = k
     return nothing

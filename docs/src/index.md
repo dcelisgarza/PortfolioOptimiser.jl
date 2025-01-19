@@ -96,19 +96,19 @@ show(wd)
 
 ## Functionality
 
-### Non-hierarchical optimisation models
+  - Non-hierarchical optimisation models
+    
+      + Traditional, [`Trad`](@ref).
+      + Risk Budgeting, [`RB`](@ref).
+      + Relaxed Risk Budgetting (Variance only), [`RRB`](@ref).
+      + Near Optimal Centering, [`NOC`](@ref).
 
-  - Traditional, [`Trad`](@ref).
-  - Risk Budgeting, [`RB`](@ref).
-  - Relaxed Risk Budgetting (Variance only), [`RRB`](@ref).
-  - Near Optimal Centering, [`NOC`](@ref).
-
-### Hierarchical optimisation models
-
-  - Hierarchical Risk Parity, [`HRP`](@ref).
-  - Hierarchical Risk Parity Schur Complement (Variance only), [`SchurHRP`](@ref).
-  - Hierarchical Equal Risk Parity, [`HERC`](@ref).
-  - Nested Clustered Optimisation, [`NCO`](@ref).
+  - Hierarchical optimisation models
+    
+      + Hierarchical Risk Parity, [`HRP`](@ref).
+      + Hierarchical Risk Parity Schur Complement (Variance only), [`SchurHRP`](@ref).
+      + Hierarchical Equal Risk Parity, [`HERC`](@ref).
+      + Nested Clustered Optimisation, [`NCO`](@ref).
 
 ## Expected returns estimators
 
@@ -149,12 +149,12 @@ We provide distance and distance of distances estimators. Distance estimators ha
   - Distance correlation, [`DistCor`](@ref), [`DistDistCor`](@ref).
   - Variation of information, [`DistVarInfo`](@ref), [`DistDistVarInfo`](@ref).
 
-## Cokurtosis
+## Cokurtosis estimators
 
   - Full, [`KurtFull`](@ref).
   - Semi, [`KurtSemi`](@ref).
 
-## Coskewness
+## Coskewness estimators
 
   - Full, [`SkewFull`](@ref).
   - Semi, [`SkewSemi`](@ref).
@@ -166,144 +166,66 @@ We provide distance and distance of distances estimators. Distance estimators ha
   - Matrix detoning, [`NoDetone`](@ref), [`Detone`](@ref).
   - Local-global sparsification of the matrix inverse, [`NoLoGo`](@ref), [`LoGo`](@ref).
 
-## Parameter estimation
+## Prior estimators
 
-### Matrix processing
+  - Empirical, [`asset_statistics!`](@ref).
+  - Worst-case uncertainty sets, [`wc_statistics!`](@ref).
+  - Factor models, [`factor_statistics!`](@ref).
+  - Black-Litterman, [`black_litterman_statistics!`](@ref).
+  - Black-Litterman factor models, [`black_litterman_factor_statistics!`](@ref).
 
-These only apply to covariance, correlation, and cokurtosis estimators. Dissimilarity and similarity matrices use the results of correlation estimators, so they are indirectly used there.
+## Regression models
 
-#### Sparsification
+  - Forward, [`FReg`](@ref).
+  - Backward, [`BReg`](@ref).
+  - Dimensional Reduction Regression, [`PCAReg`](@ref).
 
-  - Local/Global parsimonious estimator (LoGo), [`LoGo`](@ref).
+## Worst-case uncertainty set estimators
 
-#### Fixing non-positive definite matrices
+These are only for the covariance and expected returns.
 
-  - Nearest correlation matrix, [`PosdefNearest`](@ref).
+  - Box and Elliptical sets, [`Box`](@ref), [`Ellipse`](@ref).
+    
+      + Autoregressive Conditional Heteroskedasticity models, [`ArchWC`](@ref).
+      + Normal, [`NormalWC`](@ref).
 
-#### Denoising methods
+  - Box sets only.
+    
+      + Delta, [`DeltaWC`](@ref).
+  - Elliptical set constraint error size estimation.
+    
+      + Normal, [`KNormalWC`](@ref).
+      + General, [`KGeneralWC`](@ref)
 
-  - Fixed, [`DenoiseFixed`](@ref).
-  - Spectral, [`DenoiseSpectral`](@ref).
-  - Shrink, [`DenoiseShrink`](@ref).
+## Clustering
 
-### Expected mean returns estimators
-
-  - Simple mean, [`MuSimple`](@ref).
-  - James-Stein (JS), [`MuJS`](@ref).
-  - Bayes-Stein (BS), [`MuBS`](@ref).
-  - Bodnar-Okhrin-Parolya (BOP), [`MuBOP`](@ref).
-
-The JS, BS and BOP estimators also use a target for correcting their estimates.
-
-  - Grand mean (GM), [`GM`](@ref).
-  - Volatility-weighted grand mean (VW), [`VW`](@ref).
-  - Mean square error of sample mean (SE), [`SE`](@ref).
-
-### Covariance estimators
-
-  - Full, [`CovFull`](@ref).
-  - Semi, [`CovSemi`](@ref).
-  - Mutual information, [`CovMutualInfo`](@ref).
-  - Brownian distance, [`CovDistance`](@ref).
-  - Lower tail dependence, [`CovLTD`](@ref).
-  - Gerber type 0, [`CovGerber0`](@ref).
-  - Gerber type 1, [`CovGerber1`](@ref).
-  - Gerber type 2, [`CovGerber2`](@ref).
-  - Smyth-Broby modification of Gerber type 0, [`CovSB0`](@ref).
-  - Smyth-Broby modification of Gerber type 1, [`CovSB1`](@ref).
-  - Smyth-Broby modification with vote counting of Gerber type 0, [`CovGerberSB0`](@ref).
-  - Smyth-Broby modification with vote counting of Gerber type 1, [`CovGerberSB1`](@ref).
-
-### Correlation estimators
-
-All covariance estimators can be used for correlation estimation.
-
-  - Spearman rank, [`CorSpearman`](@ref).
-  - Kendall rank, [`CorKendall`](@ref).
-
-### Disimilarity/distance matrix functions
-
-  - Marcos López de Prado, [`DistMLP`](@ref).
-  - Marcos López de Prado distance of distance, [`DistDistMLP`](@ref).
-  - Negative log, [`DistLog`](@ref).
-  - Variation of information, [`DistVarInfo`](@ref).
-
-### Triangulated maximally filtered graph similarity matrix functions
-
-  - Exponential decay, [`DBHTExp`](@ref).
-  - Square distance from maximum, [`DBHTMaxDist`](@ref).
-
-### Bin width estimation functions
-
-  - Knuth, require `PyCall` and `astropy` to be installed, [`Knuth`](@ref).
-  - Freedman, require `PyCall` and `astropy` to be installed, [`Freedman`](@ref).
-  - Scott, require `PyCall` and `astropy` to be installed, [`Scott`](@ref).
-  - Hacine-Gharbi and Ravier, [`HGR`](@ref).
-
-### Cokurtosis estimators
-
-  - Full cokurtosis, [`KurtFull`](@ref).
-  - Semi cokurtosis, [`KurtSemi`](@ref).
-
-### Coskewness estimators
-
-  - Full coskewness, [`SkewFull`](@ref).
-  - Semi coskewness, [`SkewSemi`](@ref).
-
-### Clustering
+  - Direct Bubble Hierarchy Trees, [`DBHT`](@ref).
 
   - Hierarchical clustering, [`HAC`](@ref).
-  - Direct Bubble Hierarchy Trees clustering, [`DBHT`](@ref).
+  - Optimal number of clusters.
+    
+      + Two-difference gap statistic, [`TwoDiff`](@ref).
+      + Standardised silhouette scores, [`StdSilhouette`](@ref).
 
-#### Determining number of clusters
-
-  - Two different gap statistic, [`TwoDiff`](@ref).
-  - Standardised silhouette scores, [`StdSilhouette`](@ref).
-
-### Networks
+## Networks
 
   - Triangular maximally filtered graphs (TMFG), [`TMFG`](@ref).
-  - Minimum spanning tree (MST), [`MST`](@ref).
 
-#### Centrality measures
-
-  - Betweenness, [`BetweennessCentrality`](@ref).
-  - Closeness, [`ClosenessCentrality`](@ref).
-  - Degree, [`DegreeCentrality`](@ref).
-  - Eigenvector, [`EigenvectorCentrality`](@ref).
-  - Katz, [`KatzCentrality`](@ref).
-  - Pagerank, [`Pagerank`](@ref).
-  - Radiality, [`RadialityCentrality`](@ref).
-  - Stress, [`StressCentrality`](@ref).
-
-#### Minimum spanning tree algorithms
-
-  - Kruskal, [`KruskalTree`](@ref).
-  - Boruvka, [`BoruvkaTree`](@ref).
-  - Prim, [`PrimTree`](@ref).
-
-### Worst case expected mean returns sets and covariance
-
-  - Box sets, [`Box`](@ref).
-  - Ellipse, [`Ellipse`](@ref).
-
-#### Bootstrapping methods
-
-  - ARCH methods, require `PyCall` and `ARCH` to be installed, [`ArchWC`](@ref).
+  - Minimum spanning trees (MST), [`MST`](@ref).
     
-      + Stationary bootstrap, [`StationaryBS`](@ref).
-      + Circular bootstrap, [`CircularBS`](@ref).
-      + Moving bootstrap, [`MovingBS`](@ref).
-
-  - Normal, [`NormalWC`](@ref).
-  - Delta, [`DeltaWC`](@ref).
-
-#### Elliptical constraint error size estimation
-
-  - Normal, [`KNormalWC`](@ref).
-  - General, [`KGeneralWC`](@ref)
-
-### Regression methods
+      + Kruskal, [`KruskalTree`](@ref).
+      + Boruvka, [`BoruvkaTree`](@ref).
+      + Prim, [`PrimTree`](@ref).
+  - Centrality measures.
+    
+      + Betweenness, [`BetweennessCentrality`](@ref).
+      + Closeness, [`ClosenessCentrality`](@ref).
+      + Degree, [`DegreeCentrality`](@ref).
+      + Eigenvector, [`EigenvectorCentrality`](@ref).
+      + Katz, [`KatzCentrality`](@ref).
+      + Pagerank, [`Pagerank`](@ref).
+      + Radiality, [`RadialityCentrality`](@ref).
+      + Stress, [`StressCentrality`](@ref).
 
 #### Stepwise methods
 

@@ -272,10 +272,9 @@ function calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
     end
 end
 
-function _clusterise(ca::HAC, X::AbstractMatrix,
-                     cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                     dist_type::DistType = DistCanonical(),
-                     clust_opt::ClustOpt = ClustOpt())
+function clusterise(ca::HAC, X::AbstractMatrix,
+                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                    dist_type::DistType = DistCanonical(), clust_opt::ClustOpt = ClustOpt())
     dist_type = default_dist(dist_type, cor_type)
     set_absolute_dist!(cor_type, dist_type)
 
@@ -287,10 +286,9 @@ function _clusterise(ca::HAC, X::AbstractMatrix,
 
     return clustering, k, S, D
 end
-function _clusterise(ca::DBHT, X::AbstractMatrix,
-                     cor_type::PortfolioOptimiserCovCor = PortCovCor(),
-                     dist_type::DistType = DistCanonical(),
-                     clust_opt::ClustOpt = ClustOpt())
+function clusterise(ca::DBHT, X::AbstractMatrix,
+                    cor_type::PortfolioOptimiserCovCor = PortCovCor(),
+                    dist_type::DistType = DistCanonical(), clust_opt::ClustOpt = ClustOpt())
     dist_type = default_dist(dist_type, cor_type)
     set_absolute_dist!(cor_type, dist_type)
 
@@ -307,7 +305,7 @@ function cluster_assets(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistType = DistCanonical(), clust_alg::ClustAlg = HAC(),
                         clust_opt::ClustOpt = ClustOpt())
-    clustering, k, S, D = _clusterise(clust_alg, X, cor_type, dist_type, clust_opt)
+    clustering, k, S, D = clusterise(clust_alg, X, cor_type, dist_type, clust_opt)
     idx = cutree(clustering; k = k)
     return idx, clustering, k, S, D
 end
