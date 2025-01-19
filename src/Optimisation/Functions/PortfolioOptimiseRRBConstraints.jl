@@ -42,7 +42,7 @@ function rrb_ver_constraints(version::RegPenRRB, model, sigma)
                  end)
     return nothing
 end
-function rrb_constraints(port::Portfolio, version, sigma)
+function rrb_opt_constraints(port::Portfolio, version, sigma)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]

@@ -10,9 +10,9 @@ abstract type AbstractRiskMeasure end
 """
     abstract type RiskMeasure <: AbstractRiskMeasure end
 
-Supertype for all computable risk measures, as well as all optimisations that can take risk measures as parameters.
+Supertype for risk measures compatible with all optimisations that take risk measures as parameters.
 
-See also: [`calc_risk`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
+See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
 
 # Implementation requirements
 
@@ -56,38 +56,16 @@ function unset_rm_solvers!(rm::MyRiskMeasure, flag)
 end
 ```
 
-!!! tip
-
-    If you want a risk measure that can only be computed, but not used by any optimisation, subtype [`AbstractRiskMeasure`](@ref) and only implement [`calc_risk`](@ref). There is no need to follow the convention on `solvers` as the implementation details are up to you.
-
-    ```julia
-    abstract type MyAbstractNonOptRiskMeasure <: AbstractRiskMeasure end
-
-    struct MyNonOptRiskMeasure <: MyAbstractNonOptRiskMeasure
-        # Fields of MyNonOptRiskMeasure
-    end
-
-    function calc_risk(my_risk::MyNonOptRiskMeasure, w::AbstractVector; kwargs...)
-        # Risk measure calculation
-    end
-    ```
-
-    If using a single risk measure, this will make the instantiation of the optimisation types, [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), error at instantiation. If optimising a vector of risk measures, this will make [`optimise!`](@ref) error when it comes accross it.
-
-## [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref) optimisations.
-
-To ensure the risk meaasure is compatible with the above optimisation types, it must abide by the following rules.
-
-  - Include a `settings::RMSettings = RMSettings()` field for configuration purposes.
+  - Include a `settings::RMSettings` field, [`RMSettings`](@ref).
 
 ```julia
 struct MyRiskMeasure <: RiskMeasure
     # Fields of MyRiskMeasure
-    settings::RMSettings = RMSettings()
+    settings::RMSettings
 end
 ```
 
-  - A scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation of [`set_rm`](@ref). If appropriate a vector equivalent.
+  - A scalar [`JuMP`](https://github.com/jump-dev/JuMP.jl) model implementation of [`set_rm`](@ref). If appropriate, a vector equivalent.
 
 ```julia
 # The scalar function.
@@ -111,9 +89,10 @@ function set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
 
     # Add the risk to the risk expression.
     # If rm.settings.flag == true, MyRiskMeasure_risk will be added to the vector of risks.
-    # This means it will form part of the objective function when the objective function is
-    # MinRisk, Utility or Sharpe.
-    # If rm.settings.flag == false, MyRiskMeasure_risk will only be used as a risk constraint.
+    # This means it will form part of the objective function when the objective function 
+    # is MinRisk, Utility or Sharpe.
+    # If rm.settings.flag == false, MyRiskMeasure_risk will only be used as a risk 
+    # constraint.
     set_risk_expression(model, MyRiskMeasure_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
@@ -164,93 +143,16 @@ function set_rm(port, rms::AbstractVector{<:MyRiskMeasure}, type::Union{Trad, RB
         set_rm_risk_upper_bound(type, model, MyRiskMeasure_risk[i], rm.settings.ub, ub_key)
 
         # Add the risk to the risk expression.
-        # If rm.settings.flag == true, MyRiskMeasure_risk[i] will be added to the vector of risks.
-        # This means it will form part of the objective function when the objective function is
-        # MinRisk, Utility or Sharpe.
-        # If rm.settings.flag == false, MyRiskMeasure_risk[i] will only be used as a risk constraint.
+        # If rm.settings.flag == true, MyRiskMeasure_risk[i] will be added to the vector of
+        # risks. This means it will form part of the objective function when the objective 
+        # function is MinRisk, Utility or Sharpe.
+        # If rm.settings.flag == false, MyRiskMeasure_risk[i] will only be used as a risk 
+        # constraint.
         set_risk_expression(model, MyRiskMeasure_risk[i], rm.settings.scale,
                             rm.settings.flag)
     end
 
     return nothing
-end
-```
-
-  - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
-
-      + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
-      + Implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
-
-# Examples
-
-## No solvers
-
-```@example no_solver
-# Creating a concrete risk measure that subtypes RiskMeasure
-struct MyRisk <: RiskMeasure
-    settings::RMSettings
-    # implementation details
-end
-
-# Creating risk calculation type
-function PortfolioOptimiser.calc_risk(risk::MyRisk, w::AbstractVector; kwargs...)
-    # implementation details
-end
-
-# Creating a scalar JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rm::MyRisk, type::OptimType,
-                                   obj::ObjectiveFunction; kwargs...)
-    # implementation details
-end
-
-# Creating a vector JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:MyRisk},
-                                   type::OptimType, obj::ObjectiveFunction; kwargs...)
-    # implementation details
-end
-```
-
-## Solvers
-
-```@example solver
-# Creating a concrete risk measure that subtypes RiskMeasure
-# and uses solvers
-struct MySolverRisk <: RiskMeasure
-    settings::RMSettings
-    solvers::Union{Nothing, <:AbstractDict}
-    # implementation details
-end
-
-# Creating risk calculation type
-function PortfolioOptimiser.calc_risk(risk::MySolverRisk, w::AbstractVector; kwargs...)
-    # implementation details
-end
-
-# Creating a scalar JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rm::MySolverRisk, type::OptimType,
-                                   obj::ObjectiveFunction; kwargs...)
-    # implementation details
-end
-
-# Creating a vector JuMP model implementation
-function PortfolioOptimiser.set_rm(port::Portfolio, rms::AbstractVector{<:MySolverRisk},
-                                   type::OptimType, obj::ObjectiveFunction; kwargs...)
-    # implementation details
-end
-
-function PortfolioOptimiser.set_rm_solvers!(rm::MySolverRisk, solvers)
-    flag = false
-    if isnothing(rm.solvers) || isempty(rm.solvers)
-        rm.solvers = solvers
-        flag = true
-    end
-    return flag
-end
-
-function PortfolioOptimiser.unset_rm_solvers!(rm::MySolverRisk, flag)
-    if flag
-        rm.solvers = nothing
-    end
 end
 ```
 """

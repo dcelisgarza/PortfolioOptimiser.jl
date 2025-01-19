@@ -43,7 +43,7 @@ function cleanup_weights(port, ::Any, ::RRB, ::Any)
     weights .= abs.(weights) / sum_w
     return weights
 end
-function optimise_model(port, obj, type, class)
+function optimise_portfolio_model(port, obj, type, class)
     solvers = port.solvers
     model = port.model
 

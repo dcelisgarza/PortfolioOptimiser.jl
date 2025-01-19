@@ -35,7 +35,7 @@ function optimise!(port::Portfolio, type::Trad)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, obj, kelly, custom_obj)
-    return optimise_model(port, obj, type, class)
+    return optimise_portfolio_model(port, obj, type, class)
 end
 function optimise!(port::Portfolio, type::RB)
     (; rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
@@ -44,7 +44,7 @@ function optimise!(port::Portfolio, type::RB)
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     set_scale_obj_constrs(port)
-    rb_constraints(port, class, w_ini)
+    rb_opt_constraints(port, class, w_ini)
     # Weight constraints
     weight_constraints(port, false)
     MIP_constraints(port, false)
@@ -69,7 +69,7 @@ function optimise!(port::Portfolio, type::RB)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return optimise_model(port, nothing, type, class)
+    return optimise_portfolio_model(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::RRB)
     (; version, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
@@ -91,7 +91,7 @@ function optimise!(port::Portfolio, type::RRB)
     management_fee(port)
     rebalance_fee(port)
     # Risk
-    rrb_constraints(port, version, sigma)
+    rrb_opt_constraints(port, version, sigma)
     # Returns
     expected_return_constraints(port, nothing, kelly, mu, sigma, returns, nothing)
     # Objective function penalties
@@ -102,7 +102,7 @@ function optimise!(port::Portfolio, type::RRB)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return optimise_model(port, nothing, type, class)
+    return optimise_portfolio_model(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::NOC)
     (; flag, rm, obj, kelly, class, custom_constr, custom_obj, scalarisation, str_names) = type
@@ -148,7 +148,7 @@ function optimise!(port::Portfolio, type::NOC)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return optimise_model(port, obj, type, class)
+    return optimise_portfolio_model(port, obj, type, class)
 end
 function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
