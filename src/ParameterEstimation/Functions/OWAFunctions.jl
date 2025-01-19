@@ -345,20 +345,27 @@ function _owa_l_moment_crm(type::CRRA, ::Any, k, weights)
     return _crra_type(weights, k, type.g)
 end
 function _owa_model_setup(type, T, weights)
-    n = size(weights, 2)
+    N = size(weights, 2)
     model = JuMP.Model()
     max_phi = type.max_phi
-    @variable(model, theta[1:T])
-    @variable(model, 0 .<= phi[1:n] .<= max_phi)
-    @constraint(model, sum(phi) == 1)
-    @constraint(model, theta .== weights * phi)
-    @constraint(model, phi[2:end] .<= phi[1:(end - 1)])
-    @constraint(model, theta[2:end] .>= theta[1:(end - 1)])
+    scale_constr = type.scale_constr
+    @variables(model, begin
+                   theta[1:T]
+                   phi[1:N]
+               end)
+    @constraints(model,
+                 begin
+                     scale_constr * 0 .<= scale_constr * phi .<= scale_constr * max_phi
+                     scale_constr * sum(phi) == scale_constr * 1
+                     scale_constr * theta .== scale_constr * weights * phi
+                     scale_constr * phi[2:end] .<= scale_constr * phi[1:(end - 1)]
+                     scale_constr * theta[2:end] .>= scale_constr * theta[1:(end - 1)]
+                 end)
     return model
 end
 function _owa_model_solve(model, weights, type, k)
     solvers = type.solvers
-    success, solvers_tried = _optimise_JuMP_model(model, solvers)
+    success = _optimise_JuMP_model(model, solvers)[1]
     return if success
         phi = model[:phi]
         phis = value.(phi)
@@ -366,36 +373,51 @@ function _owa_model_solve(model, weights, type, k)
         w = weights * phis
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nType: $(String(type))\nSolvers: $solvers_tried.\nReverting to crra type.")
+        @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nReverting to crra type.")
         w = _crra_type(weights, k, 0.5)
     end
 end
 function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
+    scale_constr = type.scale_constr
+    scale_obj = type.scale_obj
+    ovec = range(; start = 1, stop = 1, length = T)
     model = _owa_model_setup(type, T, weights)
-    @variable(model, t)
-    @variable(model, x[1:T])
-    @constraint(model, sum(x) == 1)
-    @constraint(model, [t; ones(T); x] ∈ MOI.RelativeEntropyCone(2 * T + 1))
     theta = model[:theta]
-    @constraint(model, [i = 1:T], [x[i]; theta[i]] ∈ MOI.NormOneCone(2))
-    @objective(model, Max, -t)
+    @variables(model, begin
+                   t
+                   x[1:T]
+               end)
+    @constraints(model,
+                 begin
+                     scale_constr * sum(x) == scale_constr * 1
+                     [scale_constr * t; scale_constr * ovec; scale_constr * x] ∈
+                     MOI.RelativeEntropyCone(2 * T + 1)
+                     [i = 1:T],
+                     [scale_constr * x[i]; scale_constr * theta[i]] ∈ MOI.NormOneCone(2)
+                 end)
+    @objective(model, Max, -scale_obj * t)
     return _owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
+    scale_constr = type.scale_constr
+    scale_obj = type.scale_obj
     model = _owa_model_setup(type, T, weights)
-    @variable(model, t)
     theta = model[:theta]
-    @constraint(model, [t; theta] ∈ SecondOrderCone())
-    @objective(model, Min, t)
+    @variable(model, t)
+    @constraint(model, [scale_constr * t; scale_constr * theta] ∈ SecondOrderCone())
+    @objective(model, Min, scale_obj * t)
     return _owa_model_solve(model, weights, type, k)
 end
 function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
+    scale_constr = type.scale_constr
+    scale_obj = type.scale_obj
     model = _owa_model_setup(type, T, weights)
-    @variable(model, t)
     theta = model[:theta]
-    @expression(model, theta_diff, theta[2:end] .- theta[1:(end - 1)])
-    @constraint(model, [t; theta_diff] ∈ SecondOrderCone())
-    @objective(model, Min, t)
+    @variable(model, t)
+    @constraint(model,
+                [scale_constr * t; scale_constr * (theta[2:end] .- theta[1:(end - 1)])] ∈
+                SecondOrderCone())
+    @objective(model, Min, scale_obj * t)
     return _owa_model_solve(model, weights, type, k)
 end
 """

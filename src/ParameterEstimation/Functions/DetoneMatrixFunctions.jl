@@ -1,4 +1,4 @@
-function detone!(ce::NoDetone, ::Any, X::AbstractMatrix)
+function detone!(::NoDetone, ::Any, X::AbstractMatrix)
     return nothing
 end
 function detone!(ce::Detone, posdef::AbstractPosdefFix, X::AbstractMatrix)
