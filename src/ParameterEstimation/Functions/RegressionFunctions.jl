@@ -17,8 +17,8 @@ function prep_dim_red_reg(type::PCAReg, x::DataFrame)
 
     return X, x1, Vp
 end
-function _regression(type::PCAReg, X::AbstractMatrix, x1::AbstractMatrix,
-                     Vp::AbstractMatrix, y::AbstractVector)
+function regression(type::PCAReg, X::AbstractMatrix, x1::AbstractMatrix, Vp::AbstractMatrix,
+                    y::AbstractVector)
     avg = vec(if isnothing(type.mean_w)
                   mean(X; dims = 2)
               else
@@ -53,7 +53,7 @@ function regression(type::PCAReg, x::DataFrame, y::DataFrame)
 
     X, x1, Vp = prep_dim_red_reg(type, x)
     for i ∈ axes(loadings, 1)
-        beta = _regression(type, X, x1, Vp, y[!, i])
+        beta = regression(type, X, x1, Vp, y[!, i])
         loadings[i, :] .= beta
     end
 
@@ -86,7 +86,7 @@ function add_best_asset_after_failure_pval!(included, namesx, ovec, x, y)
 
     return nothing
 end
-function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -125,7 +125,7 @@ function _regression(::FReg, criterion::PVal, x::DataFrame, y::AbstractVector)
 
     return included
 end
-function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
+function regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
     ovec = ones(length(y))
     fit_result = GLM.lm([ovec Matrix(x)], y)
 
@@ -208,8 +208,8 @@ function get_forward_reg_incl_excl!(::MaxValStepwiseRegressionCriteria, value, e
     end
     return threshold
 end
-function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                    y::AbstractVector)
     ovec = ones(length(y))
     namesx = names(x)
 
@@ -266,8 +266,8 @@ function get_backward_reg_incl!(::MaxValStepwiseRegressionCriteria, value, inclu
     end
     return threshold
 end
-function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
-                     y::AbstractVector)
+function regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame,
+                    y::AbstractVector)
     ovec = ones(length(y))
     fit_result = GLM.lm([ovec Matrix(x)], y)
 
@@ -315,7 +315,7 @@ function regression(type::StepwiseRegression, x::DataFrame, y::DataFrame)
     loadings = zeros(rows, cols)
 
     for i ∈ axes(loadings, 1)
-        included = _regression(type, type.criterion, x, y[!, i])
+        included = regression(type, type.criterion, x, y[!, i])
 
         x1 = !isempty(included) ? [ovec Matrix(x[!, included])] : reshape(ovec, :, 1)
 

@@ -198,7 +198,7 @@ function variation_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer
             nbins = calc_num_bins(bins, xj, xi, j, i, bin_width_func, T)
             ex, ey, hxy = calc_hist_data(xj, xi, nbins)
 
-            mut_ixy = _mutual_info(hxy)
+            mut_ixy = intrinsic_mutual_info(hxy)
             var_ixy = ex + ey - 2 * mut_ixy
             if normalise
                 vxy = ex + ey - mut_ixy
@@ -230,7 +230,7 @@ function mutual_variation_info(X::AbstractMatrix,
             nbins = calc_num_bins(bins, xj, xi, j, i, bin_width_func, T)
             ex, ey, hxy = calc_hist_data(xj, xi, nbins)
 
-            mut_ixy = _mutual_info(hxy)
+            mut_ixy = intrinsic_mutual_info(hxy)
             var_ixy = ex + ey - 2 * mut_ixy
             if normalise
                 vxy = ex + ey - mut_ixy

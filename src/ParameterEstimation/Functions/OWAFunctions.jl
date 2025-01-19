@@ -275,7 +275,7 @@ end
 
 """
 ```julia
-_crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+crra_weights(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
 
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
@@ -290,7 +290,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 
   - `w`: `T×1` ordered weight vector of the combined L-moments.
 """
-function _crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+function crra_weights(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
     e = 1
     for i ∈ eachindex(phis)
@@ -342,7 +342,7 @@ function owa_l_moment(T::Integer, k::Integer = 2)
 end
 
 function owa_l_moment_crm(type::CRRA, ::Any, k, weights)
-    return _crra_type(weights, k, type.g)
+    return crra_weights(weights, k, type.g)
 end
 function owa_model_setup(type, T, weights)
     N = size(weights, 2)
@@ -374,7 +374,7 @@ function owa_model_solve(model, weights, type, k)
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
         @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nReverting to crra type.")
-        w = _crra_type(weights, k, 0.5)
+        w = crra_weights(weights, k, 0.5)
     end
 end
 function owa_l_moment_crm(type::MaxEntropy, T, k, weights)
