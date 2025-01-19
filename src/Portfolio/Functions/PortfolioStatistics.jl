@@ -127,7 +127,7 @@ function wc_statistics!(port::Portfolio; wc_type::WCType = WCType(), set_box::Bo
     mu_type = wc_type.mu_type
     posdef = wc_type.posdef
 
-    sigma, mu = sigma_mu(returns, cov_type, mu_type)
+    sigma, mu = _sigma_mu(returns, cov_type, mu_type)
 
     covs = nothing
     cov_mu = nothing

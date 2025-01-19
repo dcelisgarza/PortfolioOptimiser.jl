@@ -1,4 +1,4 @@
-function rrb_ver_constraints(::BasicRRB, model, sigma)
+function _rrp_ver_constraints(::BasicRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -7,7 +7,7 @@ function rrb_ver_constraints(::BasicRRB, model, sigma)
                 [scale_constr * psi; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
-function rrb_ver_constraints(::RegRRB, model, sigma)
+function _rrp_ver_constraints(::RegRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -23,7 +23,7 @@ function rrb_ver_constraints(::RegRRB, model, sigma)
                  end)
     return nothing
 end
-function rrb_ver_constraints(version::RegPenRRB, model, sigma)
+function _rrp_ver_constraints(version::RegPenRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]
     psi = model[:psi]
@@ -42,7 +42,7 @@ function rrb_ver_constraints(version::RegPenRRB, model, sigma)
                  end)
     return nothing
 end
-function rrb_constraints(port::Portfolio, version, sigma)
+function rrp_constraints(port::Portfolio, version, sigma)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
@@ -68,6 +68,6 @@ function rrb_constraints(port::Portfolio, version, sigma)
                       scale_constr * (2 * gamma * sqrt(risk_budget[i]))
                       scale_constr * (w[i] - zeta[i])] ∈ SecondOrderCone()
                  end)
-    rrb_ver_constraints(version, model, sigma)
+    _rrp_ver_constraints(version, model, sigma)
     return nothing
 end

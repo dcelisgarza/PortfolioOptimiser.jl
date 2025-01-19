@@ -615,7 +615,7 @@ function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
     @expression(model, risk, t - z * log(at))
     @objective(model, Min, risk)
 
-    success, solvers_tried = optimise_JuMP_model(model, solvers)
+    success, solvers_tried = _optimise_JuMP_model(model, solvers)
     return if success
         objective_value(model)
     else
@@ -772,7 +772,7 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
     @expression(model, risk, t + ln_k * z + sum(psi .+ theta))
     @objective(model, Min, risk)
 
-    success, solvers_tried = optimise_JuMP_model(model, solvers)
+    success, solvers_tried = _optimise_JuMP_model(model, solvers)
     return if success
         objective_value(model)
     else
@@ -787,7 +787,7 @@ function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
         @constraint(model, [i = 1:T], [z[i], 1, tau[i]] ∈ MOI.PowerCone(omk))
         @expression(model, risk, -transpose(z) * x)
         @objective(model, Max, risk)
-        success, solvers_tried = optimise_JuMP_model(model, solvers)
+        success, solvers_tried = _optimise_JuMP_model(model, solvers)
         if success
             objective_value(model)
         else

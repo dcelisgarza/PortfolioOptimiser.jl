@@ -1,4 +1,4 @@
-function return_bounds(port)
+function _return_bounds(port)
     mu_l = port.mu_l
     if isinf(mu_l)
         return nothing
@@ -12,7 +12,7 @@ function return_bounds(port)
 
     return nothing
 end
-function sharpe_returns_constraints(port, obj::Sharpe, mu)
+function _sharpe_returns_constraints(port, obj::Sharpe, mu)
     model = port.model
     scale_constr = model[:scale_constr]
     k = model[:k]
@@ -29,10 +29,10 @@ function sharpe_returns_constraints(port, obj::Sharpe, mu)
     end
     return nothing
 end
-function sharpe_returns_constraints(args...)
+function _sharpe_returns_constraints(args...)
     return nothing
 end
-function wc_return_constraints(port, mu, ::Box)
+function _wc_return_constraints(port, mu, ::Box)
     model = port.model
     get_fees(model)
     scale_constr = model[:scale_constr]
@@ -45,7 +45,7 @@ function wc_return_constraints(port, mu, ::Box)
     @expression(model, ret, dot(mu, w) - fees - dot(port.d_mu, abs_w))
     return nothing
 end
-function wc_return_constraints(port, mu, ::Ellipse)
+function _wc_return_constraints(port, mu, ::Ellipse)
     model = port.model
     get_fees(model)
     scale_constr = model[:scale_constr]
@@ -60,7 +60,7 @@ function wc_return_constraints(port, mu, ::Ellipse)
     @expression(model, ret, dot(mu, w) - fees - k_mu * t_gw)
     return nothing
 end
-function wc_return_constraints(port, mu, ::NoWC)
+function _wc_return_constraints(port, mu, ::NoWC)
     model = port.model
     get_fees(model)
     fees = model[:fees]
@@ -68,18 +68,18 @@ function wc_return_constraints(port, mu, ::NoWC)
     @expression(model, ret, dot(mu, w) - fees)
     return nothing
 end
-function return_constraints(port, obj, kelly::NoKelly, mu, args...)
+function _return_constraints(port, obj, kelly::NoKelly, mu, args...)
     if isempty(mu)
         return nothing
     end
 
-    wc_return_constraints(port, mu, kelly.wc_set)
-    sharpe_returns_constraints(port, obj, mu)
-    return_bounds(port)
+    _wc_return_constraints(port, mu, kelly.wc_set)
+    _sharpe_returns_constraints(port, obj, mu)
+    _return_bounds(port)
 
     return nothing
 end
-function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly_approx_idx)
+function _return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly_approx_idx)
     if isempty(mu)
         return nothing
     end
@@ -102,19 +102,19 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly_
                     dot(mu, w) - fees - 0.5 * variance_risk[kelly_approx_idx[1]])
     end
 
-    return_bounds(port)
+    _return_bounds(port)
 
     return nothing
 end
-function return_constraints(port, obj::Sharpe, kelly::AKelly, mu, sigma, returns,
-                            kelly_approx_idx)
-    return_sharpe_akelly_constraints(port, obj, kelly, get_ntwk_clust_type(port), mu, sigma,
-                                     returns, kelly_approx_idx)
+function _return_constraints(port, obj::Sharpe, kelly::AKelly, mu, sigma, returns,
+                             kelly_approx_idx)
+    _return_sharpe_akelly_constraints(port, obj, kelly, get_ntwk_clust_type(port), mu,
+                                      sigma, returns, kelly_approx_idx)
     return nothing
 end
-function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
-                                          adjacency_constraint::Union{NoAdj, IP}, mu, sigma,
-                                          ::Any, kelly_approx_idx)
+function _return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
+                                           adjacency_constraint::Union{NoAdj, IP}, mu,
+                                           sigma, ::Any, kelly_approx_idx)
     if isempty(mu)
         return nothing
     end
@@ -149,16 +149,16 @@ function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
                      scale_constr * 2 * dev[kelly_approx_idx[1]]
                      scale_constr * (k - tapprox_kelly)] ∈ SecondOrderCone())
     end
-    return_bounds(port)
+    _return_bounds(port)
 
     return nothing
 end
-function return_sharpe_akelly_constraints(port, obj::Sharpe, ::AKelly, ::SDP, ::Any, ::Any,
-                                          returns, ::Any)
-    return_constraints(port, obj, EKelly(), nothing, nothing, returns, nothing)
+function _return_sharpe_akelly_constraints(port, obj::Sharpe, ::AKelly, ::SDP, ::Any, ::Any,
+                                           returns, ::Any)
+    _return_constraints(port, obj, EKelly(), nothing, nothing, returns, nothing)
     return nothing
 end
-function sharpe_ekelly_constraints(ret, model, obj::Sharpe, k)
+function _sharpe_ekelly_constraints(ret, model, obj::Sharpe, k)
     scale_constr = model[:scale_constr]
     ohf = model[:ohf]
     risk = model[:risk]
@@ -167,10 +167,10 @@ function sharpe_ekelly_constraints(ret, model, obj::Sharpe, k)
     @constraint(model, constr_sr_ekelly_risk, scale_constr * risk <= scale_constr * ohf)
     return nothing
 end
-function sharpe_ekelly_constraints(args...)
+function _sharpe_ekelly_constraints(args...)
     return nothing
 end
-function return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
+function _return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     model = port.model
     get_fees(model)
     scale_constr = model[:scale_constr]
@@ -180,16 +180,16 @@ function return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     T = size(returns, 1)
     @variable(model, texact_kelly[1:T])
     @expression(model, ret, sum(texact_kelly) / T - fees)
-    sharpe_ekelly_constraints(ret, model, obj, k)
+    _sharpe_ekelly_constraints(ret, model, obj, k)
     @expression(model, kret, k .+ returns * w)
     @constraint(model, constr_ekelly_ret[i = 1:T],
                 [scale_constr * texact_kelly[i], scale_constr * k, scale_constr * kret[i]] ∈
                 MOI.ExponentialCone())
-    return_bounds(port)
+    _return_bounds(port)
 
     return nothing
 end
 function expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
-    return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+    _return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     return nothing
 end

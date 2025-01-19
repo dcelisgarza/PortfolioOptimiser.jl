@@ -1,7 +1,7 @@
-function rebuild_B(B::DataFrame, ::Any, ::Any)
+function _rebuild_B(B::DataFrame, ::Any, ::Any)
     return Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
 end
-function rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::PCAReg)
+function _rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::PCAReg)
     B = Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
     X = transpose(factors)
     X_std = StatsBase.standardize(StatsBase.ZScoreTransform, X; dims = 2)
@@ -15,13 +15,13 @@ function rebuild_B(B::DataFrame, factors::AbstractMatrix, regression::PCAReg)
     return transpose(pinv(Vp) * transpose(B .* transpose(sdev)))
 end
 function factors_b1_b2_b3(B::DataFrame, factors::AbstractMatrix, regression::RegressionType)
-    B = rebuild_B(B, factors, regression)
+    B = _rebuild_B(B, factors, regression)
     b1 = pinv(transpose(B))
     b2 = pinv(transpose(nullspace(transpose(B))))
     b3 = pinv(transpose(b2))
     return b1, b2, b3, B
 end
-function rb_constraints(port::Portfolio, ::Any, w_ini)
+function rp_constraints(port::Portfolio, ::Any, w_ini)
     N = size(port.returns, 2)
     risk_budget = port.risk_budget
     if isempty(risk_budget)
@@ -46,7 +46,7 @@ function rb_constraints(port::Portfolio, ::Any, w_ini)
                  end)
     return nothing
 end
-function rb_constraints(port::Portfolio, class::FC, w_ini)
+function rp_constraints(port::Portfolio, class::FC, w_ini)
     model = port.model
     scale_constr = model[:scale_constr]
     f_returns = port.f_returns

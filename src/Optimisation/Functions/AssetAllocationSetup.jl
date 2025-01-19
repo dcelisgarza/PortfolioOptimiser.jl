@@ -1,4 +1,4 @@
-function setup_alloc_optim(weights, investment, short, budget, short_budget)
+function _setup_alloc_optim(weights, investment, short, budget, short_budget)
     long_idx = weights .>= zero(eltype(weights))
 
     if short

@@ -413,7 +413,7 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
 end
 """
 ```julia
-rb_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
+rp_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
                class_col::Union{String, Symbol, Nothing} = nothing)
 ```
 
@@ -441,11 +441,11 @@ asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "
                        "Class 2" => ["Technology", "Technology", "Technology", "Financial",
                                      "Financial", "Treasury", "Treasury"])
 
-rw_a = rb_constraints(asset_sets, :Asset)
-rw_c = rb_constraints(asset_sets, :Subset, "Class 2")
+rw_a = rp_constraints(asset_sets, :Asset)
+rw_c = rp_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
-function rb_constraints(constraints::DataFrame, asset_sets::DataFrame)
+function rp_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     inv_N = 1 / N
     rw = fill(inv_N, N)
@@ -526,5 +526,5 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-export asset_constraints, factor_constraints, hrp_constraints, rb_constraints,
+export asset_constraints, factor_constraints, hrp_constraints, rp_constraints,
        turnover_constraints

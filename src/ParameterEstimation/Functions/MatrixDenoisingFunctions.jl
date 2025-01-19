@@ -1,19 +1,19 @@
-function denoise!(::DenoiseFixed, X::AbstractMatrix, vals::AbstractVector,
-                  vecs::AbstractMatrix, num_factors::Integer)
+function _denoise!(::DenoiseFixed, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= sum(_vals[1:num_factors]) / num_factors
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function denoise!(::DenoiseSpectral, X::AbstractMatrix, vals::AbstractVector,
-                  vecs::AbstractMatrix, num_factors::Integer)
+function _denoise!(::DenoiseSpectral, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
     _vals = copy(vals)
     _vals[1:num_factors] .= zero(eltype(X))
     X .= cov2cor(vecs * Diagonal(_vals) * transpose(vecs))
     return nothing
 end
-function denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
-                  vecs::AbstractMatrix, num_factors::Integer)
+function _denoise!(ce::DenoiseShrink, X::AbstractMatrix, vals::AbstractVector,
+                   vecs::AbstractMatrix, num_factors::Integer)
     # Small
     vals_l = vals[1:num_factors]
     vecs_l = vecs[:, 1:num_factors]
@@ -75,7 +75,7 @@ function denoise!(ce::AbstractDenoise, posdef::AbstractPosdefFix, X::AbstractMat
 
     num_factors = findlast(vals .< max_val)
 
-    denoise!(ce, X, vals, vecs, num_factors)
+    _denoise!(ce, X, vals, vecs, num_factors)
 
     posdef_fix!(posdef, X)
 

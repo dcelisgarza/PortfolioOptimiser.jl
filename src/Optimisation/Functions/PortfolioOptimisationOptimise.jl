@@ -34,7 +34,7 @@ function optimise!(port::Portfolio, type::Trad)
     # Custom constraints
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
-    set_objective_function(port, obj, kelly, custom_obj)
+    set_objective_function(port, obj, type, kelly, custom_obj)
     return convex_optimisation(port, obj, type, class)
 end
 function optimise!(port::Portfolio, type::RB)
@@ -44,7 +44,7 @@ function optimise!(port::Portfolio, type::RB)
     set_string_names_on_creation(port.model, str_names)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     set_scale_obj_constrs(port)
-    rb_constraints(port, class, w_ini)
+    rp_constraints(port, class, w_ini)
     # Weight constraints
     weight_constraints(port, false)
     MIP_constraints(port, false)
@@ -91,7 +91,7 @@ function optimise!(port::Portfolio, type::RRB)
     management_fee(port)
     rebalance_fee(port)
     # Risk
-    rrb_constraints(port, version, sigma)
+    rrp_constraints(port, version, sigma)
     # Returns
     expected_return_constraints(port, nothing, kelly, mu, sigma, returns, nothing)
     # Objective function penalties

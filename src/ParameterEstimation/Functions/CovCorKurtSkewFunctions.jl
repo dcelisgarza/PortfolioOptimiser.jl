@@ -106,7 +106,7 @@ function StatsBase.cor(ce::CorKendall, X::AbstractMatrix; dims::Int = 1)
     rho = corkendall(X)
     return Symmetric(cov2cor(Matrix(!ce.absolute ? rho : abs.(rho))))
 end
-function mutual_info(A::AbstractMatrix)
+function _mutual_info(A::AbstractMatrix)
     p_i = vec(sum(A; dims = 2))
     p_j = vec(sum(A; dims = 1))
 
@@ -134,7 +134,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
     T, N = size(X)
     mut_mtx = Matrix{eltype(X)}(undef, N, N)
 
-    bin_width_func = get_bin_width_func(bins)
+    bin_width_func = _bin_width_func(bins)
 
     for j ∈ axes(X, 2)
         xj = X[:, j]
@@ -143,7 +143,7 @@ function mutual_info(X::AbstractMatrix, bins::Union{<:AbstractBins, <:Integer} =
             nbins = calc_num_bins(bins, xj, xi, j, i, bin_width_func, T)
             ex, ey, hxy = calc_hist_data(xj, xi, nbins)
 
-            mut_ixy = mutual_info(hxy)
+            mut_ixy = _mutual_info(hxy)
             if normalise
                 mut_ixy /= min(ex, ey)
             end
@@ -323,7 +323,7 @@ function StatsBase.cov(ce::CovLTD, X::AbstractMatrix; dims::Int = 1)
     return lower_tail_dependence(X, ce.alpha) .* (std_vec * transpose(std_vec))
 end
 #=
-function cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
+function _cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
@@ -359,8 +359,8 @@ function cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVe
     return rho
 end
 =#
-function cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     ti = ce.threshold
     X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
@@ -381,7 +381,7 @@ function cor_gerber_norm(ce::CovGerber0, X::AbstractMatrix, mean_vec::AbstractVe
     return rho
 end
 #=
-function cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -418,7 +418,7 @@ function cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     return rho
 end
 =#
-function cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     threshold = ce.threshold
     std_vec = threshold * transpose(std_vec)
@@ -439,8 +439,8 @@ function cor_gerber(ce::CovGerber0, X::AbstractMatrix, std_vec::AbstractVector)
     return rho
 end
 
-function cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     tij = ce.threshold
@@ -477,7 +477,7 @@ function cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVe
     return rho
 end
 #=
-function cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
+function _cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVector,
                           std_vec::AbstractVector)
     T, N = size(X)
     ti = ce.threshold
@@ -500,7 +500,7 @@ function cor_gerber_norm(ce::CovGerber1, X::AbstractMatrix, mean_vec::AbstractVe
     return rho
 end
 =#
-function cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -541,7 +541,7 @@ function cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
 end
 #=
 # This is an alternative formulation that allocates more memory but can be faster.
-function cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     threshold = ce.threshold
     U = Matrix{Bool}(undef, T, N)
@@ -564,8 +564,8 @@ function cor_gerber(ce::CovGerber1, X::AbstractMatrix, std_vec::AbstractVector)
     return rho
 end
 =#
-function cor_gerber_norm(ce::CovGerber2, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerber2, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     ti = ce.threshold
     X = (X .- transpose(mean_vec)) ./ transpose(std_vec)
@@ -589,7 +589,7 @@ function cor_gerber_norm(ce::CovGerber2, X::AbstractMatrix, mean_vec::AbstractVe
 
     return rho
 end
-function cor_gerber(ce::CovGerber2, X::AbstractMatrix, std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerber2, X::AbstractMatrix, std_vec::AbstractVector)
     T, N = size(X)
     threshold = ce.threshold
     std_vec = threshold * transpose(std_vec)
@@ -613,7 +613,7 @@ function cor_gerber(ce::CovGerber2, X::AbstractMatrix, std_vec::AbstractVector)
 
     return rho
 end
-function sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+function _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
     # Zone of confusion.
     # If the return is not a significant proportion of the standard deviation, we classify it as noise.
     if abs(xi) < sigmai * c1 && abs(xj) < sigmaj * c1
@@ -634,8 +634,8 @@ function sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
 
     return kappa / (1 + gamma^n)
 end
-function cor_gerber_norm(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -658,11 +658,11 @@ function cor_gerber_norm(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 end
             end
             den = (pos + neg)
@@ -679,8 +679,8 @@ function cor_gerber_norm(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector
 
     return rho
 end
-function cor_gerber(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -703,9 +703,9 @@ function cor_gerber(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
             den = (pos + neg)
@@ -722,8 +722,8 @@ function cor_gerber(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
 
     return rho
 end
-function cor_gerber_norm(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -747,14 +747,14 @@ function cor_gerber_norm(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)), one(eltype(X)),
-                                   one(eltype(X)), c1, c2, c3, n)
+                    nn += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 end
             end
             den = (pos + neg + nn)
@@ -771,8 +771,8 @@ function cor_gerber_norm(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector
 
     return rho
 end
-function cor_gerber(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -796,11 +796,11 @@ function cor_gerber(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
             den = (pos + neg + nn)
@@ -817,8 +817,8 @@ function cor_gerber(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
 
     return rho
 end
-function cor_gerber_norm(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -841,11 +841,11 @@ function cor_gerber_norm(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                 end
             end
             rho[i, j] = pos - neg
@@ -858,8 +858,8 @@ function cor_gerber_norm(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector
 
     return rho
 end
-function cor_gerber(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -882,9 +882,9 @@ function cor_gerber(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                 end
             end
 
@@ -898,8 +898,8 @@ function cor_gerber(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
 
     return rho
 end
-function cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -924,12 +924,12 @@ function cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::Abstract
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cneg += 1
                 end
             end
@@ -949,8 +949,8 @@ function cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::Abstract
 
     return rho
 end
-function cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -975,10 +975,10 @@ function cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVecto
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
                 end
             end
@@ -998,8 +998,8 @@ function cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVecto
 
     return rho
 end
-function cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -1026,16 +1026,16 @@ function cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::Abstract
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cneg += 1
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)), one(eltype(X)),
-                                   one(eltype(X)), c1, c2, c3, n)
+                    nn += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cnn += 1
                 end
             end
@@ -1056,8 +1056,8 @@ function cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::Abstract
 
     return rho
 end
-function cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -1084,13 +1084,13 @@ function cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVecto
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
                 elseif abs(xi) < ti && abs(xj) < tj
-                    nn += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    nn += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cnn += 1
                 end
             end
@@ -1111,8 +1111,8 @@ function cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVecto
 
     return rho
 end
-function cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
-                         std_vec::AbstractVector)
+function _cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                          std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -1137,12 +1137,12 @@ function cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::Abstract
                 ti = threshold
                 tj = threshold
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
-                                    one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, zero(eltype(X)), zero(eltype(X)),
+                                     one(eltype(X)), one(eltype(X)), c1, c2, c3, n)
                     cneg += 1
                 end
             end
@@ -1156,8 +1156,8 @@ function cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::Abstract
 
     return rho
 end
-function cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
-                    std_vec::AbstractVector)
+function _cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVector,
+                     std_vec::AbstractVector)
     T, N = size(X)
     rho = Matrix{eltype(X)}(undef, N, N)
     threshold = ce.threshold
@@ -1182,10 +1182,10 @@ function cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVecto
                 ti = threshold * sigmai
                 tj = threshold * sigmaj
                 if xi >= ti && xj >= tj || xi <= -ti && xj <= -tj
-                    pos += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    pos += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cpos += 1
                 elseif xi >= ti && xj <= -tj || xi <= -ti && xj >= tj
-                    neg += sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
+                    neg += _sb_delta(xi, xj, mui, muj, sigmai, sigmaj, c1, c2, c3, n)
                     cneg += 1
                 end
             end
@@ -1200,28 +1200,28 @@ function cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVecto
 
     return rho
 end
-function gerber(ce::CovGerberBasic, X::AbstractMatrix, std_vec::AbstractVector)
+function _gerber(ce::CovGerberBasic, X::AbstractMatrix, std_vec::AbstractVector)
     return if ce.normalise
         mean_vec = vec(if isnothing(ce.mean_w)
                            mean(X; dims = 1)
                        else
                            mean(X, ce.mean_w; dims = 1)
                        end)
-        cor_gerber_norm(ce, X, mean_vec, std_vec)
+        _cor_gerber_norm(ce, X, mean_vec, std_vec)
     else
-        cor_gerber(ce, X, std_vec)
+        _cor_gerber(ce, X, std_vec)
     end
 end
-function gerber(ce::Union{CovSB, CovGerberSB}, X::AbstractMatrix, std_vec::AbstractVector)
+function _gerber(ce::Union{CovSB, CovGerberSB}, X::AbstractMatrix, std_vec::AbstractVector)
     mean_vec = vec(if isnothing(ce.mean_w)
                        mean(X; dims = 1)
                    else
                        mean(X, ce.mean_w; dims = 1)
                    end)
     return if ce.normalise
-        cor_gerber_norm(ce, X, mean_vec, std_vec)
+        _cor_gerber_norm(ce, X, mean_vec, std_vec)
     else
-        cor_gerber(ce, X, mean_vec, std_vec)
+        _cor_gerber(ce, X, mean_vec, std_vec)
     end
 end
 function cor_gerber(ce::CovGerber, X::AbstractMatrix)
@@ -1230,7 +1230,7 @@ function cor_gerber(ce::CovGerber, X::AbstractMatrix)
                   else
                       std(ce.ve, X, ce.std_w; dims = 1)
                   end)
-    return Symmetric(gerber(ce, X, std_vec))
+    return Symmetric(_gerber(ce, X, std_vec))
 end
 function cov_gerber(ce::CovGerber, X::AbstractMatrix)
     std_vec = vec(if isnothing(ce.std_w)
@@ -1238,7 +1238,7 @@ function cov_gerber(ce::CovGerber, X::AbstractMatrix)
                   else
                       std(ce.ve, X, ce.std_w; dims = 1)
                   end)
-    return Symmetric(gerber(ce, X, std_vec) .* (std_vec * transpose(std_vec)))
+    return Symmetric(_gerber(ce, X, std_vec) .* (std_vec * transpose(std_vec)))
 end
 function StatsBase.cor(ce::CovGerber, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))

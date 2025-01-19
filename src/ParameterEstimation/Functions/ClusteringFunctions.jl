@@ -95,7 +95,7 @@ function to_tree(a::Hclust)
     end
     return nd, d
 end
-function validate_k_value(clustering::Hclust, nodes, k)
+function _validate_k_value(clustering::Hclust, nodes, k)
     idx = cutree(clustering; k = k)
     clusters = Vector{Vector{Int}}(undef, length(minimum(idx):maximum(idx)))
     for i ∈ eachindex(clusters)
@@ -122,14 +122,14 @@ function validate_k_value(clustering::Hclust, nodes, k)
     end
     return true
 end
-function valid_k_clusters(arr::AbstractVector, clustering::Hclust)
+function _valid_k_clusters(arr::AbstractVector, clustering::Hclust)
     nodes = to_tree(clustering)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
 
     while true
         k = all(.!isfinite.(arr)) ? length(arr) : argmax(arr)
-        if validate_k_value(clustering, nodes, k)
+        if _validate_k_value(clustering, nodes, k)
             return k
         elseif all(isinf.(arr))
             return 1
@@ -137,7 +137,7 @@ function valid_k_clusters(arr::AbstractVector, clustering::Hclust)
         arr[k] = -Inf
     end
 end
-function calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
+function _calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
     N = length(clustering.order)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -150,7 +150,7 @@ function calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
     nodes = to_tree(clustering)[2]
     heights = [i.height for i ∈ nodes]
     nodes = nodes[sortperm(heights; rev = true)]
-    flag = validate_k_value(clustering, nodes, k)
+    flag = _validate_k_value(clustering, nodes, k)
 
     if !flag
         # Above k
@@ -158,7 +158,7 @@ function calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
         du = 0
         ku = k
         for i ∈ (k + 1):max_k
-            flagu = validate_k_value(clustering, nodes, i)
+            flagu = _validate_k_value(clustering, nodes, i)
             if flagu
                 ku = i
                 break
@@ -173,7 +173,7 @@ function calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
         dl = 0
         kl = k
         for i ∈ (k - 1):-1:1
-            flagl = validate_k_value(clustering, nodes, i)
+            flagl = _validate_k_value(clustering, nodes, i)
             if flagl
                 kl = i
                 break
@@ -196,8 +196,8 @@ function calc_k_clusters(k::Integer, max_k::Integer, clustering::Hclust)
 
     return k
 end
-function calc_k_clusters(::TwoDiff, max_k::Integer, dist::AbstractMatrix,
-                         clustering::Hclust)
+function _calc_k_clusters(::TwoDiff, max_k::Integer, dist::AbstractMatrix,
+                          clustering::Hclust)
     N = size(dist, 1)
     if iszero(max_k)
         max_k = ceil(Int, sqrt(N))
@@ -236,10 +236,10 @@ function calc_k_clusters(::TwoDiff, max_k::Integer, dist::AbstractMatrix,
         gaps[1:(end - 2)] .= W_list[1:(end - 2)] .+ W_list[3:end] .- 2 * W_list[2:(end - 1)]
     end
 
-    return valid_k_clusters(gaps, clustering)
+    return _valid_k_clusters(gaps, clustering)
 end
-function calc_k_clusters(type::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
-                         clustering::Hclust)
+function _calc_k_clusters(type::StdSilhouette, max_k::Integer, dist::AbstractMatrix,
+                          clustering::Hclust)
     metric = type.metric
     N = size(dist, 1)
     if iszero(max_k)
@@ -257,7 +257,7 @@ function calc_k_clusters(type::StdSilhouette, max_k::Integer, dist::AbstractMatr
         W_list[i] = msl / std(sl; mean = msl)
     end
 
-    return valid_k_clusters(W_list, clustering)
+    return _valid_k_clusters(W_list, clustering)
 end
 """
 ```
@@ -266,9 +266,9 @@ calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
 """
 function calc_k_clusters(clust_opt::ClustOpt, dist::AbstractMatrix, clustering)
     return if !iszero(clust_opt.k)
-        calc_k_clusters(clust_opt.k, clust_opt.max_k, clustering)
+        _calc_k_clusters(clust_opt.k, clust_opt.max_k, clustering)
     else
-        calc_k_clusters(clust_opt.k_type, clust_opt.max_k, dist, clustering)
+        _calc_k_clusters(clust_opt.k_type, clust_opt.max_k, dist, clustering)
     end
 end
 

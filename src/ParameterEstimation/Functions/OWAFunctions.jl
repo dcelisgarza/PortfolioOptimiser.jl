@@ -201,7 +201,7 @@ end
 
 """
 ```julia
-optimise_JuMP_model(model, solvers)
+_optimise_JuMP_model(model, solvers)
 ```
 
 Internal function to optimise an OWA JuMP model.
@@ -224,7 +224,7 @@ Internal function to optimise an OWA JuMP model.
 
           * `Dict(:objective_val => JuMP.objective_value(model), :term_status => term_status, :params => haskey(val, :params) ? val[:params] : missing)`, where `val` is the value of the dictionary corresponding to `key`.
 """
-function optimise_JuMP_model(model, solvers)
+function _optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
     sucess = false
@@ -275,7 +275,7 @@ end
 
 """
 ```julia
-crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+_crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
 ```
 
 Internal function for computing the Normalized Constant Relative Risk Aversion coefficients.
@@ -290,7 +290,7 @@ Internal function for computing the Normalized Constant Relative Risk Aversion c
 
   - `w`: `T×1` ordered weight vector of the combined L-moments.
 """
-function crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
+function _crra_type(weights::AbstractMatrix{<:Real}, k::Integer, g::Real)
     phis = Vector{eltype(weights)}(undef, k - 1)
     e = 1
     for i ∈ eachindex(phis)
@@ -341,10 +341,10 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     return w
 end
 
-function owa_l_moment_crm(type::CRRA, ::Any, k, weights)
-    return crra_type(weights, k, type.g)
+function _owa_l_moment_crm(type::CRRA, ::Any, k, weights)
+    return _crra_type(weights, k, type.g)
 end
-function owa_model_setup(type, T, weights)
+function _owa_model_setup(type, T, weights)
     N = size(weights, 2)
     model = JuMP.Model()
     max_phi = type.max_phi
@@ -363,9 +363,9 @@ function owa_model_setup(type, T, weights)
                  end)
     return model
 end
-function owa_model_solve(model, weights, type, k)
+function _owa_model_solve(model, weights, type, k)
     solvers = type.solvers
-    success = optimise_JuMP_model(model, solvers)[1]
+    success = _optimise_JuMP_model(model, solvers)[1]
     return if success
         phi = model[:phi]
         phis = value.(phi)
@@ -374,14 +374,14 @@ function owa_model_solve(model, weights, type, k)
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
         @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nReverting to crra type.")
-        w = crra_type(weights, k, 0.5)
+        w = _crra_type(weights, k, 0.5)
     end
 end
-function owa_l_moment_crm(type::MaxEntropy, T, k, weights)
+function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
     ovec = range(; start = 1, stop = 1, length = T)
-    model = owa_model_setup(type, T, weights)
+    model = _owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variables(model, begin
                    t
@@ -396,29 +396,29 @@ function owa_l_moment_crm(type::MaxEntropy, T, k, weights)
                      [scale_constr * x[i]; scale_constr * theta[i]] ∈ MOI.NormOneCone(2)
                  end)
     @objective(model, Max, -scale_obj * t)
-    return owa_model_solve(model, weights, type, k)
+    return _owa_model_solve(model, weights, type, k)
 end
-function owa_l_moment_crm(type::MinSumSq, T, k, weights)
+function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
-    model = owa_model_setup(type, T, weights)
+    model = _owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variable(model, t)
     @constraint(model, [scale_constr * t; scale_constr * theta] ∈ SecondOrderCone())
     @objective(model, Min, scale_obj * t)
-    return owa_model_solve(model, weights, type, k)
+    return _owa_model_solve(model, weights, type, k)
 end
-function owa_l_moment_crm(type::MinSqDist, T, k, weights)
+function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
-    model = owa_model_setup(type, T, weights)
+    model = _owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variable(model, t)
     @constraint(model,
                 [scale_constr * t; scale_constr * (theta[2:end] .- theta[1:(end - 1)])] ∈
                 SecondOrderCone())
     @objective(model, Min, scale_obj * t)
-    return owa_model_solve(model, weights, type, k)
+    return _owa_model_solve(model, weights, type, k)
 end
 """
 ```julia
@@ -451,7 +451,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, type::OWATypes = CRRA())
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end
-    return owa_l_moment_crm(type, T, k, weights)
+    return _owa_l_moment_crm(type, T, k, weights)
 end
 
 export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,

@@ -63,7 +63,7 @@ function find_special_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
 
     return NCOSpecialRMIdx(cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx)
 end
-function set_cov_rm!(rm, cov_idx, idx, old_covs)
+function _set_cov_rm(rm, cov_idx, idx, old_covs)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.sigma) || isempty(rm.sigma))
             push!(old_covs, rm.sigma)
@@ -80,39 +80,39 @@ function set_cov_rm!(rm, cov_idx, idx, old_covs)
     end
     return nothing
 end
-function get_port_kt(::Val{true}, port, idx)
+function _get_port_kt(::Val{true}, port, idx)
     return view(port.kurt, idx, idx)
 end
-function get_port_kt(::Val{false}, port, idx)
+function _get_port_kt(::Val{false}, port, idx)
     return view(port.skurt, idx, idx)
 end
-function set_kt_rm!(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
+function _set_kt_rm(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, old_kts)
     if !isa(rm, AbstractVector)
         if isnothing(rm.kt) || isempty(rm.kt)
             push!(old_kts, rm.kt)
-            rm.kt = get_port_kt(val, port, idx)
+            rm.kt = _get_port_kt(val, port, idx)
         else
             push!(old_kts, rm.kt)
-            rm.kt = view(rm.kt, idx, idx)#get_port_kt(val, port, idx)
+            rm.kt = view(rm.kt, idx, idx)#_get_port_kt(val, port, idx)
         end
     else
         rm_flat = reduce(vcat, rm)
         for r ∈ view(rm_flat, kt_idx)
             if isnothing(r.kt) || isempty(r.kt)
                 push!(old_kts, r.kt)
-                r.kt = get_port_kt(val, port, idx)
+                r.kt = _get_port_kt(val, port, idx)
             else
                 push!(old_kts, r.kt)
-                r.kt = view(r.kt, idx, idx)#get_port_kt(val, port, idx)
+                r.kt = view(r.kt, idx, idx)#_get_port_kt(val, port, idx)
             end
         end
     end
     return nothing
 end
-function get_skew(::Skew, port, cluster, idx)
+function _get_skew(::Skew, port, cluster, idx)
     return view(port.skew, cluster, idx)
 end
-function get_skew(::SSkew, port, cluster, idx)
+function _get_skew(::SSkew, port, cluster, idx)
     return view(port.sskew, cluster, idx)
 end
 function gen_cluster_skew_sskew(args...)
@@ -131,7 +131,7 @@ function gen_cluster_skew_sskew(rm::RMSkew, port, cluster, Nc = nothing, idx = n
         end
     end
     skew = if isnothing(rm.skew) || isempty(rm.skew)
-        get_skew(rm, port, cluster, idx)
+        _get_skew(rm, port, cluster, idx)
     else
         view(rm.skew, cluster, idx)
     end
@@ -149,7 +149,7 @@ function gen_cluster_skew_sskew(rm::RMSkew, port, cluster, Nc = nothing, idx = n
     rm.V = V
     return old_V, old_skew
 end
-function set_skew_rm!(rm, port, skew_idx, cluster, Nc, idx, old_Vs, old_skews)
+function _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx, old_Vs, old_skews)
     if !isa(rm, AbstractVector)
         old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster, Nc, idx)
         push!(old_Vs, old_V)
@@ -164,7 +164,7 @@ function set_skew_rm!(rm, port, skew_idx, cluster, Nc, idx, old_Vs, old_skews)
     end
     return nothing
 end
-function set_wc_var_rm!(rm, port, wc_idx, cidx, idx, old_wc_rms)
+function _set_wc_var_rm(rm, port, wc_idx, cidx, idx, old_wc_rms)
     if !isa(rm, AbstractVector)
         push!(old_wc_rms, deepcopy(rm))
         if isnothing(rm.sigma) || isempty(rm.sigma)
@@ -251,7 +251,7 @@ struct NCOOldStats{T1, T2, T3, T4, T5, T6, T7, T8}
     old_sskews::T7
     old_wc_rms::T8
 end
-function reset_kt_rm!(rm, kt_idx, old_kts)
+function _reset_kt_rm(rm, kt_idx, old_kts)
     if !isempty(kt_idx) && !isempty(old_kts)
         if !isa(rm, AbstractVector)
             rm.kt = old_kts[1]
@@ -264,7 +264,7 @@ function reset_kt_rm!(rm, kt_idx, old_kts)
     end
     return nothing
 end
-function reset_cov_rm!(rm, cov_idx, old_covs)
+function _reset_cov_rm(rm, cov_idx, old_covs)
     if !isempty(cov_idx) && !isempty(old_covs)
         if !isa(rm, AbstractVector)
             rm.sigma = old_covs[1]
@@ -277,7 +277,7 @@ function reset_cov_rm!(rm, cov_idx, old_covs)
     end
     return nothing
 end
-function reset_skew_rm!(rm, skew_idx, old_Vs, old_skews)
+function _reset_skew_rm(rm, skew_idx, old_Vs, old_skews)
     if !isempty(skew_idx) && !isempty(old_Vs)
         if !isa(rm, AbstractVector)
             rm.skew = old_skews[1]
@@ -291,7 +291,7 @@ function reset_skew_rm!(rm, skew_idx, old_Vs, old_skews)
         end
     end
 end
-function reset_wc_var_rm!(rm, wc_idx, old_wc_rms)
+function _reset_wc_var_rm(rm, wc_idx, old_wc_rms)
     if !isempty(wc_idx) && !isempty(old_wc_rms)
         if !isa(rm, AbstractVector)
             old_wc = old_wc_rms[1]
@@ -311,20 +311,20 @@ function reset_wc_var_rm!(rm, wc_idx, old_wc_rms)
     end
     return nothing
 end
-function reset_special_rms!(::Nothing, args...)
+function reset_special_rms(::Nothing, args...)
     return nothing
 end
-function reset_special_rms!(rm::Union{AbstractVector, AbstractRiskMeasure},
-                            special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
+function reset_special_rms(rm::Union{AbstractVector, AbstractRiskMeasure},
+                           special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     (; old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews, old_wc_rms) = old_stats
 
-    reset_cov_rm!(rm, cov_idx, old_covs)
-    reset_kt_rm!(rm, kurt_idx, old_kurts)
-    reset_kt_rm!(rm, skurt_idx, old_skurts)
-    reset_skew_rm!(rm, skew_idx, old_Vs, old_skews)
-    reset_skew_rm!(rm, sskew_idx, old_SVs, old_sskews)
-    reset_wc_var_rm!(rm, wc_idx, old_wc_rms)
+    _reset_cov_rm(rm, cov_idx, old_covs)
+    _reset_kt_rm(rm, kurt_idx, old_kurts)
+    _reset_kt_rm(rm, skurt_idx, old_skurts)
+    _reset_skew_rm(rm, skew_idx, old_Vs, old_skews)
+    _reset_skew_rm(rm, sskew_idx, old_SVs, old_sskews)
+    _reset_wc_var_rm(rm, wc_idx, old_wc_rms)
     return nothing
 end
 function get_cluster_matrix(x::AbstractMatrix, idx)
@@ -631,10 +631,10 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
 
     return w, intra_port.fail
 end
-function set_rm_stats!(::Portfolio, ::Nothing, args...)
+function set_rm_stats(::Portfolio, ::Nothing, args...)
     return nothing
 end
-function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
+function set_rm_stats(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
 
     cov_flag = !isempty(cov_idx)
@@ -654,22 +654,22 @@ function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_r
     old_wc_rms = Vector{Union{WCVariance}}(undef, 0)
 
     if cov_flag
-        set_cov_rm!(rm, cov_idx, cidx, old_covs)
+        _set_cov_rm(rm, cov_idx, cidx, old_covs)
     end
     if kurt_flag
-        set_kt_rm!(Val(true), rm, port, kurt_idx, idx_sq, old_kurts)
+        _set_kt_rm(Val(true), rm, port, kurt_idx, idx_sq, old_kurts)
     end
     if skurt_flag
-        set_kt_rm!(Val(false), rm, port, skurt_idx, idx_sq, old_skurts)
+        _set_kt_rm(Val(false), rm, port, skurt_idx, idx_sq, old_skurts)
     end
     if skew_flag
-        set_skew_rm!(rm, port, skew_idx, cluster, Nc, idx_sq, old_Vs, old_skews)
+        _set_skew_rm(rm, port, skew_idx, cluster, Nc, idx_sq, old_Vs, old_skews)
     end
     if sskew_flag
-        set_skew_rm!(rm, port, sskew_idx, cluster, Nc, idx_sq, old_SVs, old_sskews)
+        _set_skew_rm(rm, port, sskew_idx, cluster, Nc, idx_sq, old_SVs, old_sskews)
     end
     if wc_flag
-        set_wc_var_rm!(rm, port, wc_idx, cidx, idx_sq, old_wc_rms)
+        _set_wc_var_rm(rm, port, wc_idx, cidx, idx_sq, old_wc_rms)
     end
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms)
@@ -722,10 +722,10 @@ function calc_intra_weights(port::Portfolio, internal_args)
             Nc = nothing
         end
 
-        old_stats = set_rm_stats!(port, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
+        old_stats = set_rm_stats(port, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
         cw, cfail = get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                           special_rm_idx)
-        reset_special_rms!(rm, special_rm_idx, old_stats)
+        reset_special_rms(rm, special_rm_idx, old_stats)
 
         w[cidx, i] .= cw
         if !isempty(cfail)
@@ -737,7 +737,7 @@ function calc_intra_weights(port::Portfolio, internal_args)
     end
     return w
 end
-function compute_cov_rm!(rm, cov_idx, wi, old_covs)
+function compute_cov_rm(rm, cov_idx, wi, old_covs)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.sigma) || isempty(rm.sigma))
             push!(old_covs, rm.sigma)
@@ -753,7 +753,7 @@ function compute_cov_rm!(rm, cov_idx, wi, old_covs)
         end
     end
 end
-function set_kt_rm_nothing!(rm, kt_idx, old_kts)
+function _set_kt_rm_nothing(rm, kt_idx, old_kts)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.kt) || isempty(rm.kt))
             push!(old_kts, rm.kt)
@@ -769,7 +769,7 @@ function set_kt_rm_nothing!(rm, kt_idx, old_kts)
         end
     end
 end
-function set_skew_rm_nothing!(rm, skew_idx, old_Vs, old_skews)
+function _set_skew_rm_nothing(rm, skew_idx, old_Vs, old_skews)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.V) || isempty(rm.V))
             push!(old_skews, rm.skew)
@@ -789,7 +789,7 @@ function set_skew_rm_nothing!(rm, skew_idx, old_Vs, old_skews)
         end
     end
 end
-function set_wc_var_rm_nothing!(rm, wc_idx, old_wc_rms)
+function _set_wc_var_rm_nothing(rm, wc_idx, old_wc_rms)
     if !isa(rm, AbstractVector)
         if !(isnothing(rm.sigma) ||
              isempty(rm.sigma) ||
@@ -832,7 +832,7 @@ function set_wc_var_rm_nothing!(rm, wc_idx, old_wc_rms)
     end
     return nothing
 end
-function set_rm_stats!(port, rm, wi, special_rm_idx)
+function set_rm_stats(port, rm, wi, special_rm_idx)
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
 
     cov_flag = !isempty(cov_idx)
@@ -852,22 +852,22 @@ function set_rm_stats!(port, rm, wi, special_rm_idx)
     old_wc_rms = Vector{Union{WCVariance}}(undef, 0)
 
     if cov_flag
-        compute_cov_rm!(rm, cov_idx, wi, old_covs)
+        compute_cov_rm(rm, cov_idx, wi, old_covs)
     end
     if kurt_flag
-        set_kt_rm_nothing!(rm, kurt_idx, old_kurts)
+        _set_kt_rm_nothing(rm, kurt_idx, old_kurts)
     end
     if skurt_flag
-        set_kt_rm_nothing!(rm, skurt_idx, old_skurts)
+        _set_kt_rm_nothing(rm, skurt_idx, old_skurts)
     end
     if skew_flag
-        set_skew_rm_nothing!(rm, skew_idx, old_Vs, old_skews)
+        _set_skew_rm_nothing(rm, skew_idx, old_Vs, old_skews)
     end
     if sskew_flag
-        set_skew_rm_nothing!(rm, sskew_idx, old_SVs, old_sskews)
+        _set_skew_rm_nothing(rm, sskew_idx, old_SVs, old_sskews)
     end
     if wc_flag
-        set_wc_var_rm_nothing!(rm, wc_idx, old_wc_rms)
+        _set_wc_var_rm_nothing(rm, wc_idx, old_wc_rms)
     end
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms)
@@ -1033,9 +1033,9 @@ end
 function calc_inter_weights(port::Portfolio, wi, external_args)
     rm = external_args.type.rm
     special_rm_idx = find_special_rm(rm)
-    old_stats = set_rm_stats!(port, rm, wi, special_rm_idx)
+    old_stats = set_rm_stats(port, rm, wi, special_rm_idx)
     cw, cfail = get_external_portfolio(port, wi, external_args, special_rm_idx)
-    reset_special_rms!(rm, special_rm_idx, old_stats)
+    reset_special_rms(rm, special_rm_idx, old_stats)
 
     w = wi * cw
     if !isempty(cfail)

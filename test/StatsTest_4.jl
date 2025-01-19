@@ -2755,5 +2755,5 @@ end
         @test isapprox(cov(ce, portfolio.returns; dims = 1),
                        cov(ce, transpose(portfolio.returns); dims = 2))
     end
-    @test iszero(PortfolioOptimiser.mutual_info(rand(1, 1)))
+    @test iszero(PortfolioOptimiser._mutual_info(rand(1, 1)))
 end
