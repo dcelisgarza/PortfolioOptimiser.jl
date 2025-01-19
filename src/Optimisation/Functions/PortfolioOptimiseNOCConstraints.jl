@@ -28,7 +28,7 @@ function noc_constraints(port::Portfolio, risk0, ret0)
                  end)
     return nothing
 end
-function _noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3)
+function noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3)
     rm = reduce(vcat, rm)
     risk1 = zero(eltype(returns))
     risk2 = zero(eltype(returns))
@@ -45,7 +45,7 @@ function _noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3)
     end
     return risk1, risk2, risk3
 end
-function _noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1, w2, w3)
+function noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1, w2, w3)
     rm = reduce(vcat, rm)
     risk1 = zero(eltype(returns))
     risk2 = zero(eltype(returns))
@@ -66,7 +66,7 @@ function _noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1
     risk3 = log(risk3) / gamma
     return risk1, risk2, risk3
 end
-function _noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3)
+function noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3)
     rm = reduce(vcat, rm)
     risk1 = -Inf
     risk2 = -Inf
@@ -136,7 +136,7 @@ function noc_risk_ret(port::Portfolio, type)
         ret3 = sum(log.(one(eltype(mu)) .+ returns * w3)) / size(returns, 1)
     end
 
-    risk1, risk2, risk3 = _noc_risks(scalarisation, rm, port, returns, sigma, w1, w2, w3)
+    risk1, risk2, risk3 = noc_risks(scalarisation, rm, port, returns, sigma, w1, w2, w3)
 
     d_ret = (ret2 - ret1) / bins
     d_risk = (risk2 - risk1) / bins

@@ -158,19 +158,19 @@ function _regression(::BReg, criterion::PVal, x::DataFrame, y::AbstractVector)
 
     return included
 end
-function _regression_criterion_func(::AIC)
+function regression_criterion_func(::AIC)
     return GLM.aic
 end
-function _regression_criterion_func(::AICC)
+function regression_criterion_func(::AICC)
     return GLM.aicc
 end
-function _regression_criterion_func(::BIC)
+function regression_criterion_func(::BIC)
     return GLM.bic
 end
-function _regression_criterion_func(::RSq)
+function regression_criterion_func(::RSq)
     return GLM.r2
 end
-function _regression_criterion_func(::AdjRSq)
+function regression_criterion_func(::AdjRSq)
     return GLM.adjr2
 end
 function _regression_threshold(::AIC)
@@ -213,7 +213,7 @@ function _regression(::FReg, criterion::StepwiseRegressionCriteria, x::DataFrame
     ovec = ones(length(y))
     namesx = names(x)
 
-    criterion_func = _regression_criterion_func(criterion)
+    criterion_func = regression_criterion_func(criterion)
     threshold = _regression_threshold(criterion)
 
     included = String[]
@@ -273,7 +273,7 @@ function _regression(::BReg, criterion::StepwiseRegressionCriteria, x::DataFrame
 
     included = names(x)
 
-    criterion_func = _regression_criterion_func(criterion)
+    criterion_func = regression_criterion_func(criterion)
     threshold = criterion_func(fit_result)
 
     for _ ∈ eachindex(y)
@@ -379,7 +379,7 @@ function risk_factors(x::DataFrame, y::DataFrame; factor_type::FactorType = Fact
     end
     B_mtx = Matrix(B[!, setdiff(namesB, ("tickers",))])
 
-    f_cov, f_mu = _sigma_mu(x1, cov_type, mu_type)
+    f_cov, f_mu = sigma_mu(x1, cov_type, mu_type)
 
     if !isnothing(old_posdef)
         cov_type.posdef = old_posdef
@@ -412,7 +412,7 @@ function factor_statistics(assets, returns, f_assets, f_returns;
                            factor_type::FactorType = FactorType(),
                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                            mu_type::MeanEstimator = MuSimple())
-    f_cov, f_mu = _sigma_mu(f_returns, cov_type, mu_type)
+    f_cov, f_mu = sigma_mu(f_returns, cov_type, mu_type)
 
     fm_mu, fm_cov, fm_returns, loadings = risk_factors(DataFrame(f_returns, f_assets),
                                                        DataFrame(returns,

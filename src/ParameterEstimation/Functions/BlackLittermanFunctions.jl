@@ -64,7 +64,7 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
                          Q::AbstractVector, w::AbstractVector;
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                          mu_type::MeanEstimator = MuSimple())
-    sigma, mu = _sigma_mu(X, cov_type, mu_type)
+    sigma, mu = sigma_mu(X, cov_type, mu_type)
 
     T, N = size(X)
 
@@ -99,7 +99,7 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
                          B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                          mu_type::MeanEstimator = MuSimple(), kwargs...)
-    f_sigma, f_mu = _sigma_mu(F, cov_type, mu_type)
+    f_sigma, f_mu = sigma_mu(F, cov_type, mu_type)
 
     f_mu .-= bl.rf
 
@@ -184,11 +184,11 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
     end
 
     if all_asset_provided
-        sigma, mu = _sigma_mu(X, cov_type, mu_type)
+        sigma, mu = sigma_mu(X, cov_type, mu_type)
     end
 
     if all_factor_provided
-        f_sigma, f_mu = _sigma_mu(F, f_cov_type, f_mu_type)
+        f_sigma, f_mu = sigma_mu(F, f_cov_type, f_mu_type)
     end
 
     if all_factor_provided && bl.constant

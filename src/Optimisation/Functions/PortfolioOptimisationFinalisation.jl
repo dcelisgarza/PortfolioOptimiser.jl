@@ -1,4 +1,4 @@
-function _cleanup_weights(port, ::Sharpe, ::Union{Trad, DRCVaR}, ::Any)
+function cleanup_weights(port, ::Sharpe, ::Union{Trad, DRCVaR}, ::Any)
     val_k = value(port.model[:k])
     val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k
@@ -11,7 +11,7 @@ function _cleanup_weights(port, ::Sharpe, ::Union{Trad, DRCVaR}, ::Any)
     end
     return weights
 end
-function _cleanup_weights(port, ::Any, ::Union{Trad, DRCVaR}, ::Any)
+function cleanup_weights(port, ::Any, ::Union{Trad, DRCVaR}, ::Any)
     weights = value.(port.model[:w])
     short = port.short
     budget = port.budget
@@ -22,28 +22,28 @@ function _cleanup_weights(port, ::Any, ::Union{Trad, DRCVaR}, ::Any)
     end
     return weights
 end
-function _cleanup_weights(port, ::Any, ::RB, ::FC)
+function cleanup_weights(port, ::Any, ::RB, ::FC)
     weights = value.(port.model[:w])
     sum_w = value(port.model[:k])
     sum_w = abs(sum_w) > eps() ? sum_w : 1
     weights .= weights / sum_w
     return weights
 end
-function _cleanup_weights(port, ::Any, ::Union{RB, NOC}, ::Any)
+function cleanup_weights(port, ::Any, ::Union{RB, NOC}, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
     weights .= abs.(weights) / sum_w
     return weights
 end
-function _cleanup_weights(port, ::Any, ::RRB, ::Any)
+function cleanup_weights(port, ::Any, ::RRB, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
     weights .= abs.(weights) / sum_w
     return weights
 end
-function convex_optimisation(port, obj, type, class)
+function optimise_model(port, obj, type, class)
     solvers = port.solvers
     model = port.model
 
@@ -96,7 +96,7 @@ function convex_optimisation(port, obj, type, class)
             term_status = termination_status(model)
         end
 
-        weights = _cleanup_weights(port, obj, type, class)
+        weights = cleanup_weights(port, obj, type, class)
 
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
@@ -111,7 +111,7 @@ function convex_optimisation(port, obj, type, class)
         if !isempty(solvers_tried)
             port.fail = solvers_tried
         end
-        weights = _cleanup_weights(port, obj, type, class)
+        weights = cleanup_weights(port, obj, type, class)
         port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
     else
         @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")

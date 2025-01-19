@@ -35,7 +35,7 @@ function optimise!(port::Portfolio, type::Trad)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, obj, type, kelly, custom_obj)
-    return convex_optimisation(port, obj, type, class)
+    return optimise_model(port, obj, type, class)
 end
 function optimise!(port::Portfolio, type::RB)
     (; rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
@@ -69,7 +69,7 @@ function optimise!(port::Portfolio, type::RB)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return convex_optimisation(port, nothing, type, class)
+    return optimise_model(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::RRB)
     (; version, kelly, class, w_ini, custom_constr, custom_obj, str_names) = type
@@ -102,7 +102,7 @@ function optimise!(port::Portfolio, type::RRB)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return convex_optimisation(port, nothing, type, class)
+    return optimise_model(port, nothing, type, class)
 end
 function optimise!(port::Portfolio, type::NOC)
     (; flag, rm, obj, kelly, class, custom_constr, custom_obj, scalarisation, str_names) = type
@@ -148,7 +148,7 @@ function optimise!(port::Portfolio, type::NOC)
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
     set_objective_function(port, type, custom_obj)
-    return convex_optimisation(port, obj, type, class)
+    return optimise_model(port, obj, type, class)
 end
 function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
