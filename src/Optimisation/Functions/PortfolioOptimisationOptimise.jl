@@ -34,7 +34,7 @@ function optimise!(port::Portfolio, type::Trad)
     # Custom constraints
     custom_constraint(port, custom_constr)
     # Objective function and custom penalties
-    set_objective_function(port, obj, type, kelly, custom_obj)
+    set_objective_function(port, obj, kelly, custom_obj)
     return optimise_model(port, obj, type, class)
 end
 function optimise!(port::Portfolio, type::RB)
