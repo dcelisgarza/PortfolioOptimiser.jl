@@ -341,10 +341,10 @@ function owa_l_moment(T::Integer, k::Integer = 2)
     return w
 end
 
-function _owa_l_moment_crm(type::CRRA, ::Any, k, weights)
+function owa_l_moment_crm(type::CRRA, ::Any, k, weights)
     return _crra_type(weights, k, type.g)
 end
-function _owa_model_setup(type, T, weights)
+function owa_model_setup(type, T, weights)
     N = size(weights, 2)
     model = JuMP.Model()
     max_phi = type.max_phi
@@ -377,11 +377,11 @@ function owa_model_solve(model, weights, type, k)
         w = _crra_type(weights, k, 0.5)
     end
 end
-function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
+function owa_l_moment_crm(type::MaxEntropy, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
     ovec = range(; start = 1, stop = 1, length = T)
-    model = _owa_model_setup(type, T, weights)
+    model = owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variables(model, begin
                    t
@@ -398,20 +398,20 @@ function _owa_l_moment_crm(type::MaxEntropy, T, k, weights)
     @objective(model, Max, -scale_obj * t)
     return owa_model_solve(model, weights, type, k)
 end
-function _owa_l_moment_crm(type::MinSumSq, T, k, weights)
+function owa_l_moment_crm(type::MinSumSq, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
-    model = _owa_model_setup(type, T, weights)
+    model = owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variable(model, t)
     @constraint(model, [scale_constr * t; scale_constr * theta] ∈ SecondOrderCone())
     @objective(model, Min, scale_obj * t)
     return owa_model_solve(model, weights, type, k)
 end
-function _owa_l_moment_crm(type::MinSqDist, T, k, weights)
+function owa_l_moment_crm(type::MinSqDist, T, k, weights)
     scale_constr = type.scale_constr
     scale_obj = type.scale_obj
-    model = _owa_model_setup(type, T, weights)
+    model = owa_model_setup(type, T, weights)
     theta = model[:theta]
     @variable(model, t)
     @constraint(model,
@@ -451,7 +451,7 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, type::OWATypes = CRRA())
         wi = (-1)^i * owa_l_moment(T, i)
         weights[:, i - 1] .= wi
     end
-    return _owa_l_moment_crm(type, T, k, weights)
+    return owa_l_moment_crm(type, T, k, weights)
 end
 
 export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,

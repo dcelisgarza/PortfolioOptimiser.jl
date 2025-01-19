@@ -28,7 +28,7 @@ Internal function for computing the Black Litterman statistics as defined in [`b
   - `w`: asset weights obtained via the Black-Litterman model.
   - `Pi_`: equilibrium excess returns after being adjusted by the views.
 """
-function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, denoise, logo)
+function bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, denoise, logo)
     inv_tau_sigma = (tau * sigma) \ I
     inv_omega = omega \ I
     Pi_ = ((inv_tau_sigma + transpose(P) * inv_omega * P) \ I) *
@@ -46,10 +46,10 @@ function _bl_mu_cov_w(tau, omega, P, Pi, Q, rf, sigma, delta, T, N, posdef, deno
 
     return mu, sigma, w, Pi_
 end
-function _omega(P, tau_sigma)
+function calc_omega(P, tau_sigma)
     return Diagonal(P * tau_sigma * transpose(P))
 end
-function _Pi(eq, delta, sigma, w, mu, rf)
+function calc_Pi(eq, delta, sigma, w, mu, rf)
     return eq ? delta * sigma * w : mu .- rf
 end
 """
@@ -69,11 +69,11 @@ function black_litterman(bl::BLType, X::AbstractMatrix, P::AbstractMatrix,
     T, N = size(X)
 
     tau = 1 / T
-    omega = _omega(P, tau * sigma)
-    Pi = _Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
+    omega = calc_omega(P, tau * sigma)
+    Pi = calc_Pi(bl.eq, bl.delta, sigma, w, mu, bl.rf)
 
-    mu, sigma, w = _bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
-                                bl.posdef, bl.denoise, bl.logo)[1:3]
+    mu, sigma, w = bl_mu_cov_w(tau, omega, P, Pi, Q, bl.rf, sigma, bl.delta, T, N,
+                               bl.posdef, bl.denoise, bl.logo)[1:3]
 
     return mu, sigma, w
 end
@@ -123,7 +123,7 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
         sigma .+= D
     end
 
-    omega_f = _omega(P_f, tau * f_sigma)
+    omega_f = calc_omega(P_f, tau * f_sigma)
 
     inv_sigma = sigma \ I
     inv_sigma_f = f_sigma \ I
@@ -204,14 +204,14 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
         sigma_a = sigma
         P_a = P
         Q_a = Q
-        omega_a = _omega(P_a, tau * sigma_a)
-        Pi_a = _Pi(bl.eq, bl.delta, sigma_a, w, mu, bl.rf)
+        omega_a = calc_omega(P_a, tau * sigma_a)
+        Pi_a = calc_Pi(bl.eq, bl.delta, sigma_a, w, mu, bl.rf)
     elseif !all_asset_provided && all_factor_provided
         sigma_a = f_sigma
         P_a = P_f
         Q_a = Q_f
-        omega_a = _omega(P_a, tau * sigma_a)
-        Pi_a = _Pi(bl.eq, bl.delta, sigma_a * transpose(B), w, f_mu, bl.rf)
+        omega_a = calc_omega(P_a, tau * sigma_a)
+        Pi_a = calc_Pi(bl.eq, bl.delta, sigma_a * transpose(B), w, f_mu, bl.rf)
     elseif all_asset_provided && all_factor_provided
         sigma_a = hcat(vcat(sigma, f_sigma * transpose(B)), vcat(B * f_sigma, f_sigma))
 
@@ -221,19 +221,19 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
         P_a = hcat(vcat(P, zeros_1), vcat(zeros_2, P_f))
         Q_a = vcat(Q, Q_f)
 
-        omega = _omega(P, tau * sigma)
-        omega_f = _omega(P_f, tau * f_sigma)
+        omega = calc_omega(P, tau * sigma)
+        omega_f = calc_omega(P_f, tau * f_sigma)
 
         zeros_3 = zeros(size(omega, 1), size(omega_f, 1))
 
         omega_a = hcat(vcat(omega, transpose(zeros_3)), vcat(zeros_3, omega_f))
 
-        Pi_a = _Pi(bl.eq, bl.delta, vcat(sigma, f_sigma * transpose(B)), w, vcat(mu, f_mu),
-                   bl.rf)
+        Pi_a = calc_Pi(bl.eq, bl.delta, vcat(sigma, f_sigma * transpose(B)), w,
+                       vcat(mu, f_mu), bl.rf)
     end
 
-    mu_a, sigma_a, w_a, Pi_a_ = _bl_mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, bl.rf, sigma_a,
-                                             bl.delta, T, N, bl.posdef, bl.denoise, bl.logo)
+    mu_a, sigma_a, w_a, Pi_a_ = bl_mu_cov_w(tau, omega_a, P_a, Pi_a, Q_a, bl.rf, sigma_a,
+                                            bl.delta, T, N, bl.posdef, bl.denoise, bl.logo)
 
     if !all_asset_provided && all_factor_provided
         mu_a = B * mu_a
