@@ -206,55 +206,66 @@ end
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
-
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
-# Description
+Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this field makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
 
-Configuration settings for [`RiskMeasure`](@ref) and [`HCRiskMeasure`](@ref).
+See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
 
-See also: [`AbstractRiskMeasure`](@ref), [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
+# Keyword Parameters
 
-# Fields
+## In [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref) (when the intra and inter-cluster optimisations are not hierarchical) optimisations
 
-  - `flag::Bool = true`: controls risk inclusion to the risk expression in the optimisation objective.
-  - `scale::T1 = 1.0`: risk measure scaling factor.
+  - `flag::Bool = true`:
+
+      + If `true`: it is included in the optimisation's risk vector.
+      + If `false`: it is *not* included in the optimisation's risk vector, used when you want to constrain the upper bound of a risk measure without having that risk measure appear in the [`MinRisk`](@ref), [`Utility`](@ref), or [`Sharpe`](@ref) objective measures.
+
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
   - `ub::T2 = Inf`: upper bound risk constraint.
 
-# Behaviour
+## In [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref) (when the intra and inter-cluster optimisations are hierarchical) optimisations
 
-## [`optimise!`](@ref)
-
-With `R(w)` being a risk measure.
-
-  - When `flag == true`: adds `scale * R(w)` to the risk expression in the optimisation objective.
-  - `scale`: multiplier for this risk term in the risk expression.
-  - When `ub < Inf`: adds constraint `R(w) ≤ ub`.
-
-## [`optimise!`](@ref)
-
-  - `flag`: no effect.
-  - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
-  - `ub`: no effect.
-
-# Notes
-
-  - `scale`: typically used when combining different risk measures in a single optimisation.
+  - `flag::Bool = true`: no effect, the risk cannot be bounded in these optimisations.
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
+  - `ub::T2 = Inf`: no effect, the risk cannot be bounded in these optimisations.
 
 # Examples
 
-```@example
-# Default settings
-settings = RMSettings()
+```julia
 
-# Risk-averse configuration, whatever risk measure this is applied 
-# to will contribute 8 * risk to the risk expression
-settings = RMSettings(; scale = 8.0)
+# Instantiate portfolio.
+port = Portfolio(...)
 
-# Risk not added to the objective but constrainted
-settings = RMSettings(; flag = false, ub = 0.25)
+# Compute statistics.
+asset_statistics!(port)
+
+# Traditional optimisation.
+type = Trad(;
+            rm = [
+                  # Append to the risk vector as `sqrt(252) * sd_risk`
+                  SD(; settings = RMSettings(; flag = true, scale = sqrt(252))),
+                  # Append to the risk vector as `0.5 * cvar_risk`
+                  CVaR(; settings = 0.5, flag = true),
+                  # Do not add to the risk vector but constrain the maximum
+                  # CDaR to 0.15
+                  CDaR(; settings = RMSettings(; flag = false, ub = 0.15))])
+optimise!(port, type)
+
+# Hierarchical equal risk optimisation.
+type = HERC(;
+            rm = [
+                  # Add to the risk calculation (via `AbstractScalarisation`)
+                  # as `sqrt(252) * sd_risk`.
+                  SD(; settings = RMSettings(; flag = true, scale = sqrt(252))),
+                  # Add to the risk calculation (via `AbstractScalarisation`)
+                  # as `0.5 * cvar_risk`.
+                  CVaR(; settings = 0.5, flag = true),
+                  # Add to the risk calculation because `flag` and `ub` have no
+                  # effect in hierarchical optimisations.
+                  CDaR(; settings = RMSettings(; flag = false, ub = 0.15))])
+optimise!(port, type)
 ```
 """
 mutable struct RMSettings{T1 <: Real, T2 <: Real}
