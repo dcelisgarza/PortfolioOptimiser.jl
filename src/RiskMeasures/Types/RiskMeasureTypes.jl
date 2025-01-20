@@ -12,49 +12,11 @@ abstract type AbstractRiskMeasure end
 
 Supertype for risk measures compatible with all optimisations that take risk measures as parameters.
 
-See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
+See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
 # Implementation requirements
 
-## General
-
 To ensure a risk measure can be used by the library, it must abide by a few rules. The general rules apply to all risk measures to be used in optimisations.
-
-  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
-
-```julia
-struct MyRiskMeasure <: RiskMeasure
-    # Fields of MyRiskMeasure
-end
-
-function calc_risk(my_risk::MyRiskMeasure, w::AbstractVector; kwargs...)
-    # Risk measure calculation
-end
-```
-
-  - If the risk measure requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
-
-```julia
-struct MyRiskMeasure <: RiskMeasure
-    # Fields of MyRiskMeasure
-    solvers::Union{<:AbstractDict, Nothing}
-end
-
-function set_rm_solvers!(rm::MyRiskMeasure, solvers)
-    flag = false
-    if isnothing(rm.solvers) || isempty(rm.solvers)
-        rm.solvers = solvers
-        flag = true
-    end
-    return flag
-end
-
-function unset_rm_solvers!(rm::MyRiskMeasure, flag)
-    if flag
-        rm.solvers = nothing
-    end
-end
-```
 
   - Include a `settings::RMSettings` field, [`RMSettings`](@ref).
 
@@ -62,6 +24,14 @@ end
 struct MyRiskMeasure <: RiskMeasure
     # Fields of MyRiskMeasure
     settings::RMSettings
+end
+```
+
+  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+
+```julia
+function calc_risk(my_risk::MyRiskMeasure, w::AbstractVector; kwargs...)
+    # Risk measure calculation
 end
 ```
 
@@ -155,63 +125,16 @@ function set_rm(port, rms::AbstractVector{<:MyRiskMeasure}, type::Union{Trad, RB
     return nothing
 end
 ```
-"""
-abstract type RiskMeasure <: AbstractRiskMeasure end
 
-"""
-    abstract type HCRiskMeasure <: AbstractRiskMeasure end
+  - If calculating the risk requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
 
-# Description
-
-Defines the interface for risk measures specifically designed for use with optimisation.
-
-See also: [`AbstractRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
-
-# Implementation Requirements
-
-Concrete subtypes must implement:
-
-  - Risk calculation type [`calc_risk`](@ref).
-
-  - Include a `settings::HCRMSettings = HCRMSettings()` field for configuration purposes.
-  - If the [`calc_risk`](@ref) involves solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model:
-
-      + Include a `solvers::Union{Nothing, <:AbstractDict}` field.
-      + Implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
-
-# Examples
-
-## No solvers
-
-```@example no_solvers
-# Creating a concrete risk measure that subtypes HCRiskMeasure
-struct MyHCRisk <: HCRiskMeasure
-    settings::HCRMSettings
-    # implementation details
+```julia
+struct MyRiskMeasure <: RiskMeasure
+    # Fields of MyRiskMeasure
+    solvers::Union{<:AbstractDict, Nothing}
 end
 
-# Creating risk calculation type
-function PortfolioOptimiser.calc_risk(risk::MyHCRisk, w::AbstractVector; kwargs...)
-    # implementation details
-end
-```
-
-## Solvers
-
-```@example solvers
-# Creating a concrete risk measure that subtypes HCRiskMeasure
-# and uses solvers
-struct MySolverHCRisk <: HCRiskMeasure
-    settings::HCRMSettings
-    solvers::Union{Nothing, <:AbstractDict}
-    # implementation details
-end
-
-function PortfolioOptimiser.calc_risk(risk::MySolverHCRisk, w::AbstractVector; kwargs...)
-    # implementation details
-end
-
-function PortfolioOptimiser.set_rm_solvers!(rm::MySolverHCRisk, solvers)
+function set_rm_solvers!(rm::MyRiskMeasure, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -220,7 +143,61 @@ function PortfolioOptimiser.set_rm_solvers!(rm::MySolverHCRisk, solvers)
     return flag
 end
 
-function PortfolioOptimiser.unset_rm_solvers!(rm::MySolverHCRisk, flag)
+function unset_rm_solvers!(rm::MyRiskMeasure, flag)
+    if flag
+        rm.solvers = nothing
+    end
+end
+```
+"""
+abstract type RiskMeasure <: AbstractRiskMeasure end
+
+"""
+    abstract type HCRiskMeasure <: AbstractRiskMeasure end
+
+Supertype for risk measures compatible with [`HRP`](@ref) and [`HERC`](@ref) optimisations.
+
+See also: [`calc_risk`](@ref), [`HCRMSettings`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+
+# Implementation requirements
+
+To ensure a risk measure can be used by the library, it must abide by a few rules. The general rules apply to all risk measures to be used in optimisations.
+
+  - Include a `settings::HCRMSettings` field, [`HCRMSettings`](@ref).
+
+```julia
+struct MyHCRiskMeasure <: HCRiskMeasure
+    # Fields of MyHCRiskMeasure
+    settings::HCRMSettings
+end
+```
+
+  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+
+```julia
+function calc_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
+    # Risk measure calculation
+end
+```
+
+  - If calculating the risk requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
+
+```julia
+struct MyHCRiskMeasure <: RiskMeasure
+    # Fields of MyHCRiskMeasure
+    solvers::Union{<:AbstractDict, Nothing}
+end
+
+function set_rm_solvers!(rm::MyHCRiskMeasure, solvers)
+    flag = false
+    if isnothing(rm.solvers) || isempty(rm.solvers)
+        rm.solvers = solvers
+        flag = true
+    end
+    return flag
+end
+
+function unset_rm_solvers!(rm::MyHCRiskMeasure, flag)
     if flag
         rm.solvers = nothing
     end
