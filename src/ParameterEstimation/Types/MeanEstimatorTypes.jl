@@ -45,12 +45,12 @@ struct VW <: MeanTarget end
 
 """
 ```
-struct SE <: MeanTarget end
+struct MSE <: MeanTarget end
 ```
 
 Mean square error of sample mean.
 """
-struct SE <: MeanTarget end
+struct MSE <: MeanTarget end
 
 """
 ```
@@ -193,4 +193,4 @@ function unset_mean_sigma(args...)
     return nothing
 end
 
-export GM, VW, SE, MuSimple, MuJS, MuBS, MuBOP
+export GM, VW, MSE, MuSimple, MuJS, MuBS, MuBOP

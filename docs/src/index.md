@@ -113,8 +113,13 @@ show(wd)
 ## Expected returns estimators
 
   - Arithmetic (weighted and unweighted), [`MuSimple`](@ref).
+
   - Equilibrium, [`MuEquil`](@ref).
-  - Shringage, [`MuJS`](@ref), [`MuBS`](@ref), [`MuBOP`](@ref).
+  - Shringage with Grand Mean [`GM`](@ref), Volatility Weighted [`VW`](@ref), and Mean Square Error [`MSE`](@ref) targets:
+    
+      + James-Stein, [`MuJS`](@ref).
+      + Bayes-Stein, [`MuBS`](@ref).
+      + Bodnar-Okhrin-Parolya, [`MuBOP`](@ref).
 
 ## Covariance estimators
 
@@ -176,9 +181,19 @@ We provide distance and distance of distances estimators. Distance estimators ha
 
 ## Regression models
 
-  - Forward, [`FReg`](@ref).
-  - Backward, [`BReg`](@ref).
-  - Dimensional Reduction Regression, [`PCAReg`](@ref).
+  - Forward and Backward Regression, [`FReg`](@ref), [`BReg`](@ref), with criteria.
+    
+      + p-value threshold, [`PVal`](@ref).
+      + Akaike's Information Criterion, [`AIC`](@ref).
+      + Corrected Akaike's Information Criterion for small sample sizes, [`AICC`](@ref).
+      + Bayesian Information Criterion, [`BIC`](@ref).
+      + R² of a linear model, [`RSq`](@ref).
+      + adjusted R² for a linear model, [`AdjRSq`](@ref).
+
+  - Principal Component-Based Regression, [`PCAReg`](@ref), with targets.
+    
+      + PCA target, [`PCATarget`](@ref).
+      + Probabilistic PCA target, [`PPCATarget`](@ref).
 
 ## Worst-case uncertainty set estimators
 
@@ -186,7 +201,12 @@ These are only for the covariance and expected returns.
 
   - Box and Elliptical sets, [`Box`](@ref), [`Ellipse`](@ref).
     
-      + Autoregressive Conditional Heteroskedasticity models, [`ArchWC`](@ref).
+      + Autoregressive Conditional Heteroskedasticity models, [`ArchWC`](@ref), with bootstraps.
+        
+          * Stationary, [`StationaryBS`](@ref).
+          * Circular, [`CircularBS`](@ref).
+          * Moving, [`MovingBS`](@ref).
+    
       + Normal, [`NormalWC`](@ref).
 
   - Box sets only.
@@ -227,29 +247,7 @@ These are only for the covariance and expected returns.
       + Radiality, [`RadialityCentrality`](@ref).
       + Stress, [`StressCentrality`](@ref).
 
-#### Stepwise methods
-
-  - Forward regression, [`FReg`](@ref).
-  - Backward regression, [`BReg`](@ref).
-
-#### Regression criteria
-
-  - p-value threshold, [`PVal`](@ref).
-
-  - Model quality indicators.
-    
-      + Akaike's Information Criterion, [`AIC`](@ref).
-      + Corrected Akaike's Information Criterion for small sample sizes, [`AICC`](@ref).
-      + Bayesian Information Criterion, [`BIC`](@ref).
-      + R² of a linear model, [`RSq`](@ref).
-      + adjusted R² for a linear model, [`AdjRSq`](@ref).
-
-#### Dimensionality reduction
-
-  - Principal component analysis (PCA) based regression, [`PCAReg`](@ref).
-    
-      + PCA target, [`PCATarget`](@ref).
-      + Probabilistic PCA target, [`PPCATarget`](@ref).
+UP TO HERE
 
 ### Black Litterman models
 

@@ -5694,7 +5694,7 @@ end
     @test isapprox(portfolio.mu, mut)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                      set_skew = false, set_sskew = false, mu_type = MuJS(; target = SE()))
+                      set_skew = false, set_sskew = false, mu_type = MuJS(; target = MSE()))
     mut = [0.0005441589609781395, 0.0005935020904084809, 0.0007466660103623956,
            0.0006872506885098972, 0.0013726175062978355, -0.00043311343670800016,
            0.0014105922290353835, 0.00023937638638871355, 0.0006346398142441455,
@@ -5705,7 +5705,7 @@ end
     @test isapprox(portfolio.mu, mut)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                      set_skew = false, set_sskew = false, mu_type = MuBS(; target = SE()))
+                      set_skew = false, set_sskew = false, mu_type = MuBS(; target = MSE()))
     mut = [0.0003951169434683732, 0.00043069235235584756, 0.00054112047359735,
            0.00049828321553354, 0.000992418975916022, -0.00030947689854174474,
            0.00101979799107727, 0.0001753748063568048, 0.00046035182801232777,
@@ -5716,7 +5716,8 @@ end
     @test isapprox(portfolio.mu, mut)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
-                      set_skew = false, set_sskew = false, mu_type = MuBOP(; target = SE()))
+                      set_skew = false, set_sskew = false,
+                      mu_type = MuBOP(; target = MSE()))
     mut = [0.00013646827659120789, 0.0001488956195534694, 0.00018747080894024627,
            0.00017250672801553466, 0.00034512019209726656, -0.00010966323946397923,
            0.0003546843382875183, 5.9707081525724386e-5, 0.00015925638525063338,

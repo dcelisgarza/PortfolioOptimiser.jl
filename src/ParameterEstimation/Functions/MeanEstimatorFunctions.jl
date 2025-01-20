@@ -19,8 +19,8 @@ function target_mean(::VW, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
     end
     return fill(dot(ones, inv_sigma, mu) / dot(ones, inv_sigma, ones), N)
 end
-function target_mean(::SE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma, T::Integer,
-                     N::Integer)
+function target_mean(::MSE, mu::AbstractVector, sigma::AbstractMatrix, inv_sigma,
+                     T::Integer, N::Integer)
     return fill(tr(sigma) / T, N)
 end
 function StatsBase.mean(me::MuJS, X::AbstractMatrix; dims::Int = 1)

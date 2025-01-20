@@ -84,7 +84,7 @@
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_skew = false, set_sskew = false,
-                      mu_type = MuJS(; w = w, target = SE()))
+                      mu_type = MuJS(; w = w, target = MSE()))
     mut = [0.0005904457073162215, 0.0006705376321945927, 0.0007445947607898815,
            0.0008947026897521978, 0.0014546178850453212, -0.0007855300703204707,
            0.0015239993920568781, 0.00031714079864722804, 0.0008046186713196574,
@@ -96,7 +96,7 @@
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_skew = false, set_sskew = false,
-                      mu_type = MuBS(; w = w, target = SE()))
+                      mu_type = MuBS(; w = w, target = MSE()))
     mut = [0.0004627320477087477, 0.0005252017024410575, 0.0005829643702860314,
            0.000700044719011553, 0.0011367642632409232, -0.0006104938970980581,
            0.0011908800657316405, 0.0002495612029934384, 0.0006297814866454205,
@@ -108,7 +108,7 @@
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_skew = false, set_sskew = false,
-                      mu_type = MuBOP(; w = w, target = SE()))
+                      mu_type = MuBOP(; w = w, target = MSE()))
     mut = [0.00031134274162377795, 0.00035371551449929896, 0.0003928955678510801,
            0.00047231043009086536, 0.0007685345430178291, -0.0004166196490486801,
            0.0008052409505967035, 0.00016675030189426855, 0.0004246513226520941,

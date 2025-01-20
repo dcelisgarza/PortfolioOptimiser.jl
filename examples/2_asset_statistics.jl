@@ -84,7 +84,7 @@ mu2 = copy(portfolio.mu)
 println(isapprox(mu1, mu2)) # false
 
 #=
-The other three estimators included in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) require a target and a covariance matrix, since they use these to correct the estimate of the arithmetic mean. The available targets are [`GM`](@ref), [`VW`](@ref), [`SE`](@ref), they all default to [`GM`](@ref). They can also take an [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/), which they will use to compute the arithmetic mean that is then corrected with the target and covariane matrix. We'll try a few combinations.
+The other three estimators included in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) require a target and a covariance matrix, since they use these to correct the estimate of the arithmetic mean. The available targets are [`GM`](@ref), [`VW`](@ref), [`MSE`](@ref), they all default to [`GM`](@ref). They can also take an [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/), which they will use to compute the arithmetic mean that is then corrected with the target and covariane matrix. We'll try a few combinations.
 
 The covariance matrix is not needed, if it is empty, it will be computed by [`asset_statistics!`](@ref) from the parameters given to it via `cov_type` even if `set_cov = false`, it just won't replace the old covariance matrix with the one that's been computed for the mean estimator, once the calculation is done, the `sigma` field of the estimator will be set to empty once more. If a covariance matrix is provided, then [`asset_statistics!`](@ref) will use this rather than computing one for it.
 
@@ -105,7 +105,7 @@ mu4 = copy(portfolio.mu)
 ## It's not guaranteed to be positive definite.
 noise = randn(N, N) / N^2
 noise = transpose(noise) * noise
-mu_type_4 = MuBOP(; target = SE(), sigma = cov1 + noise)
+mu_type_4 = MuBOP(; target = MSE(), sigma = cov1 + noise)
 asset_statistics!(portfolio; mu_type = mu_type_4, set_cov = false, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
 mu5 = copy(portfolio.mu);
