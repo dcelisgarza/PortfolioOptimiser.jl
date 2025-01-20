@@ -13,7 +13,7 @@ end
 function sigma_mu(X::AbstractMatrix, cov_type::PortfolioOptimiserCovCor,
                   mu_type::MeanEstimator)
     sigma = Matrix(cov(cov_type, X))
-    old_sigma = set_mean_sigma(mu_type, sigma)
+    old_sigma = set_mean_sigma!(mu_type, sigma)
     mu = vec(mean(mu_type, X))
     unset_mean_sigma(mu_type, old_sigma)
 

@@ -1,3 +1,6 @@
+function custom_mtx_process!(::NoCustomMtxProcess, X::AbstractMatrix)
+    return nothing
+end
 function StatsBase.std(ve::SimpleVariance, X::AbstractMatrix; dims::Int = 1, mean = nothing)
     return std(X; dims = dims, corrected = ve.corrected, mean = mean)
 end
@@ -1392,6 +1395,7 @@ function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
     denoise!(ke.denoise, ke.posdef, cokurt, T / N)
     detone!(ke.detone, ke.posdef, cokurt)
     logo!(ke.logo, ke.posdef, cokurt)
+    custom_mtx_process!(ke.custom, cokurt)
 
     return cokurt
 end
@@ -1401,14 +1405,15 @@ function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
     y .= min.(y, ke.target)
     o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
     z = kron(o, y) .* kron(y, o)
-    scokurt = transpose(z) * z / T
+    cokurt = transpose(z) * z / T
 
-    posdef_fix!(ke.posdef, scokurt)
-    denoise!(ke.denoise, ke.posdef, scokurt, T / N)
-    detone!(ke.detone, ke.posdef, scokurt)
-    logo!(ke.logo, ke.posdef, scokurt)
+    posdef_fix!(ke.posdef, cokurt)
+    denoise!(ke.denoise, ke.posdef, cokurt, T / N)
+    detone!(ke.detone, ke.posdef, cokurt)
+    logo!(ke.logo, ke.posdef, cokurt)
+    custom_mtx_process!(ke.custom, cokurt)
 
-    return scokurt
+    return cokurt
 end
 """
 ```
@@ -1475,6 +1480,7 @@ function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     denoise!(ce.denoise, ce.posdef, sigma, size(X, 1) / size(X, 2))
     detone!(ce.detone, ce.posdef, sigma)
     logo!(ce.logo, ce.posdef, sigma)
+    custom_mtx_process!(ce.custom, sigma)
 
     return Symmetric(sigma)
 end
@@ -1492,6 +1498,7 @@ function StatsBase.cor(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     denoise!(ce.denoise, ce.posdef, rho, size(X, 1) / size(X, 2))
     detone!(ce.detone, ce.posdef, rho)
     logo!(ce.logo, ce.posdef, rho)
+    custom_mtx_process!(ce.custom, rho)
 
     return Symmetric(rho)
 end

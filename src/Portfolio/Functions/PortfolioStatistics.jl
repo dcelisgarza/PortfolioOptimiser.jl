@@ -64,12 +64,12 @@ function asset_statistics!(port::AbstractPortfolio;
         end
     end
     if set_mu || set_kurt || set_skurt || set_skew || set_sskew
-        old_sigma = set_mean_sigma(mu_type, @isdefined(sigma) ? sigma : nothing)
+        old_sigma = set_mean_sigma!(mu_type, @isdefined(sigma) ? sigma : nothing)
         mu = vec(mean(mu_type, returns))
         if set_mu
             port.mu = mu
         end
-        unset_mean_sigma(mu_type, old_sigma)
+        unset_mean_sigma!(mu_type, old_sigma)
     end
     if set_kurt || set_skurt
         if set_kurt

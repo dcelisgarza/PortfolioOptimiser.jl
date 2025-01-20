@@ -1,5 +1,13 @@
 """
 ```
+    abstract type AbstractCustomMtxProcess end
+```
+"""
+abstract type AbstractCustomMtxProcess end
+struct NoCustomMtxProcess <: AbstractCustomMtxProcess end
+
+"""
+```
 abstract type PortfolioOptimiserCovCor <: StatsBase.CovarianceEstimator end
 ```
 
@@ -848,11 +856,13 @@ mutable struct KurtFull <: KurtEstimator
     denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
+    custom::AbstractCustomMtxProcess
 end
 function KurtFull(; posdef::AbstractPosdefFix = PosdefNearest(;),
                   denoise::AbstractDenoise = NoDenoise(;),
-                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;))
-    return KurtFull(posdef, denoise, detone, logo)
+                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;),
+                  custom::AbstractCustomMtxProcess = NoCustomMtxProcess())
+    return KurtFull(posdef, denoise, detone, logo, custom)
 end
 
 """
@@ -884,12 +894,14 @@ mutable struct KurtSemi <: KurtEstimator
     denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
+    custom::AbstractCustomMtxProcess
 end
 function KurtSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
                   posdef::AbstractPosdefFix = PosdefNearest(;),
                   denoise::AbstractDenoise = NoDenoise(;),
-                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;))
-    return KurtSemi(target, posdef, denoise, detone, logo)
+                  detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;),
+                  custom::AbstractCustomMtxProcess = NoCustomMtxProcess())
+    return KurtSemi(target, posdef, denoise, detone, logo, custom)
 end
 
 """
@@ -958,12 +970,14 @@ mutable struct PortCovCor <: PortfolioOptimiserCovCor
     denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
+    custom::AbstractCustomMtxProcess
 end
 function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
                     posdef::AbstractPosdefFix = PosdefNearest(;),
                     denoise::AbstractDenoise = NoDenoise(;),
-                    detone::AbstractDetone = NoDetone(), logo::AbstractLoGo = NoLoGo(;))
-    return PortCovCor(ce, posdef, denoise, detone, logo)
+                    detone::AbstractDetone = NoDetone(), logo::AbstractLoGo = NoLoGo(;),
+                    custom::AbstractCustomMtxProcess = NoCustomMtxProcess())
+    return PortCovCor(ce, posdef, denoise, detone, logo, custom)
 end
 
 """
@@ -978,4 +992,4 @@ const PosdefFixCovCor = Union{<:CovGerber, PortCovCor}
 export CovFull, SimpleVariance, CovSemi, CorSpearman, CorKendall, CovMutualInfo,
        CovDistance, CovLTD, CovGerber0, CovGerber1, CovGerber2, CovSB0, CovSB1, CovSB2,
        CovGerberSB0, CovGerberSB1, CovGerberSB2, KurtFull, KurtSemi, SkewFull, SkewSemi,
-       PortCovCor
+       PortCovCor, NoCustomMtxProcess

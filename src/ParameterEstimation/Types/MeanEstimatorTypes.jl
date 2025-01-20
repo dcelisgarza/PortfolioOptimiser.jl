@@ -174,22 +174,22 @@ function MuEquiv(; l::Real = 1.0, w::Union{<:AbstractVector, Nothing} = nothing,
     return MuEquiv{typeof(l)}(l, w, sigma)
 end
 
-function set_mean_sigma(mu_type::MeanSigmaEstimator, sigma)
+function set_mean_sigma!(mu_type::MeanSigmaEstimator, sigma)
     old_sigma = mu_type.sigma
     if isnothing(mu_type.sigma) || isempty(mu_type.sigma)
         mu_type.sigma = sigma
     end
     return old_sigma
 end
-function set_mean_sigma(args...)
+function set_mean_sigma!(args...)
     return nothing
 end
 
-function unset_mean_sigma(mu_type::MeanSigmaEstimator, sigma)
+function unset_mean_sigma!(mu_type::MeanSigmaEstimator, sigma)
     mu_type.sigma = sigma
     return nothing
 end
-function unset_mean_sigma(args...)
+function unset_mean_sigma!(args...)
     return nothing
 end
 
