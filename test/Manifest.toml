@@ -531,15 +531,15 @@ version = "1.9.0"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "72280b252e0af4c79576b71434582c116f05c524"
+git-tree-sha1 = "9bf00ba4c45867c86251a7fd4cb646dcbeb41bf0"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.11"
+version = "0.73.12"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "9d5fe5c15d0807d338b1f6d99f0056613b548d5a"
+git-tree-sha1 = "36d5430819123553bf31dfdceb3653ca7d9e62d7"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.11+0"
+version = "0.73.12+0"
 
 [[deps.GenericLinearAlgebra]]
 deps = ["LinearAlgebra", "Printf", "Random", "libblastrampoline_jll"]
