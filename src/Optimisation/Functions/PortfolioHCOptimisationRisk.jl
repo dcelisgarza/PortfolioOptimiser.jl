@@ -42,7 +42,7 @@ end
 function unset_hc_rm_skew!(args...)
     return nothing
 end
-function cluster_risk(port, sigma, returns, cluster, rm)
+function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
     sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)

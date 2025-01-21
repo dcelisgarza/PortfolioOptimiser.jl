@@ -1,4 +1,4 @@
-function naive_risk(port, sigma, returns, cluster, rm)
+function naive_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
     sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
