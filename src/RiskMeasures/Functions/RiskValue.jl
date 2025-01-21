@@ -4158,5 +4158,29 @@ equal_risk = calc_risk(equal_rm, w)
 function calc_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return equal(w, delta)
 end
+function calc_risk(tcm::TCM, w::AbstractVector; X::AbstractArray)
+    return tcm(X * w)
+end
+function calc_risk(tlpm::TLPM, w::AbstractVector; X::AbstractArray)
+    return tlpm(X * w)
+end
+function calc_risk(ftcm::FTCM, w::AbstractVector; X::AbstractArray)
+    return ftcm(X * w)
+end
+function calc_risk(ftlpm::FTLPM, w::AbstractVector; X::AbstractArray)
+    return ftlpm(X * w)
+end
+function calc_risk(skewness::Skewness, w::AbstractVector; X::AbstractArray)
+    return skewness(X * w)
+end
+function calc_risk(sskewness::SSkewness, w::AbstractVector; X::AbstractArray)
+    return sskewness(X * w)
+end
+function calc_risk(kurtosis::Kurtosis, w::AbstractVector; X::AbstractArray)
+    return kurtosis(X * w)
+end
+function calc_risk(skurtosis::SKurtosis, w::AbstractVector; X::AbstractArray)
+    return skurtosis(X * w)
+end
 
 export calc_risk, cumulative_returns, drawdown

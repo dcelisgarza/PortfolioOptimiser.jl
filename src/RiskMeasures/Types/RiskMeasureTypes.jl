@@ -775,10 +775,10 @@ end
 function (flpm::FLPM)(x::AbstractVector)
     T = length(x)
     target = flpm.target
-    w = flpm.w
     target = if !isinf(target)
         target
     else
+        w = flpm.w
         isnothing(w) ? mean(x) : mean(x, w)
     end
     val = x .- target
@@ -825,10 +825,10 @@ end
 function (slpm::SLPM)(x::AbstractVector)
     T = length(x)
     target = slpm.target
-    w = slpm.w
     target = if !isinf(target)
         target
     else
+        w = slpm.w
         isnothing(w) ? mean(x) : mean(x, w)
     end
     val = x .- target
@@ -3019,7 +3019,13 @@ function TCM(; settings::HCRMSettings = HCRMSettings(;),
              w::Union{AbstractWeights, Nothing} = nothing)
     return TCM(settings, w)
 end
-
+function (tcm::TCM)(x::AbstractVector)
+    T = length(x)
+    w = tcm.w
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sum(val .^ 3) / T
+end
 mutable struct TLPM{T1} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
@@ -3029,7 +3035,18 @@ function TLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
               w::Union{AbstractWeights, Nothing} = nothing)
     return TLPM{typeof(target)}(settings, target, w)
 end
-
+function (tlpm::TLPM)(x::AbstractVector)
+    T = length(x)
+    target = tlpm.target
+    target = if !isinf(target)
+        target
+    else
+        w = tlpm.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    return -sum(val[val .<= zero(target)] .^ 3) / T
+end
 mutable struct FTCM <: HCRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -3037,6 +3054,13 @@ end
 function FTCM(; settings::HCRMSettings = HCRMSettings(;),
               w::Union{AbstractWeights, Nothing} = nothing)
     return FTCM(settings, w)
+end
+function (ftcm::FTCM)(x::AbstractVector)
+    T = length(x)
+    w = ftcm.w
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sum(val .^ 4) / T
 end
 
 mutable struct FTLPM{T1} <: HCRiskMeasure
@@ -3047,6 +3071,18 @@ end
 function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
                w::Union{AbstractWeights, Nothing} = nothing)
     return FTLPM{typeof(target)}(settings, target, w)
+end
+function (ftlpm::FTLPM)(x::AbstractVector)
+    T = length(x)
+    target = ftlpm.target
+    target = if !isinf(target)
+        target
+    else
+        w = ftlpm.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    return sum(val[val .<= zero(target)] .^ 4) / T
 end
 
 mutable struct Skewness <: NoOptRiskMeasure
@@ -3060,6 +3096,16 @@ function Skewness(; settings::HCRMSettings = HCRMSettings(),
                   ve::CovarianceEstimator = SimpleVariance(),
                   std_w::Union{AbstractWeights, Nothing} = nothing)
     return Skewness(settings, mean_w, ve, std_w)
+end
+function (skewness::Skewness)(x::AbstractVector)
+    T = length(x)
+    mean_w = skewness.mean_w
+    ve = skewness.ve
+    std_w = skewness.std_w
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    sigma = isnothing(std_w) ? std(x) : std(ve, x, std_w)
+    val = x .- mu
+    return sum(dot(val, val) * val) / T / sigma^3
 end
 
 mutable struct SSkewness{T1} <: HCRiskMeasure
@@ -3075,6 +3121,18 @@ function SSkewness(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0
                    std_w::Union{AbstractWeights, Nothing} = nothing)
     return SSkewness{typeof(target)}(settings, target, mean_w, ve, std_w)
 end
+function (sskewness::SSkewness)(x::AbstractVector)
+    T = length(x)
+    target = sskewness.target
+    mean_w = sskewness.mean_w
+    ve = sskewness.ve
+    std_w = sskewness.std_w
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    val = x .- mu
+    val .= val[val .<= target]
+    sigma = isnothing(std_w) ? std(val) : std(ve, val, std_w; mean = zero(target))
+    return sum(dot(val, val) * val) / T / sigma^3
+end
 
 mutable struct Kurtosis <: HCRiskMeasure
     settings::HCRMSettings
@@ -3087,6 +3145,16 @@ function Kurtosis(; settings::HCRMSettings = HCRMSettings(),
                   ve::CovarianceEstimator = SimpleVariance(),
                   std_w::Union{AbstractWeights, Nothing} = nothing)
     return Kurtosis(settings, mean_w, ve, std_w)
+end
+function (kurtosis::Kurtosis)(x::AbstractVector)
+    T = length(x)
+    mean_w = kurtosis.mean_w
+    ve = kurtosis.ve
+    std_w = kurtosis.std_w
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    sigma = isnothing(std_w) ? std(x) : std(ve, x, std_w)
+    val = x .- mu
+    return dot(val, val)^2 / T / sigma^4
 end
 
 mutable struct SKurtosis{T1} <: HCRiskMeasure
@@ -3101,6 +3169,18 @@ function SKurtosis(; settings::HCRMSettings = HCRMSettings(), target::Real = 0.0
                    ve::CovarianceEstimator = SimpleVariance(),
                    std_w::Union{AbstractWeights, Nothing} = nothing)
     return SKurtosis{typeof(target)}(settings, target, mean_w, ve, std_w)
+end
+function (skurtosis::SKurtosis)(x::AbstractVector)
+    T = length(x)
+    target = skurtosis.target
+    mean_w = skurtosis.mean_w
+    ve = skurtosis.ve
+    std_w = skurtosis.std_w
+    mu = isnothing(mean_w) ? mean(x) : mean(x, mean_w)
+    val = x .- mu
+    val .= val[val .<= target]
+    sigma = isnothing(std_w) ? std(val) : std(ve, val, std_w; mean = zero(target))
+    return dot(val, val)^2 / T / sigma^4
 end
 
 const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
