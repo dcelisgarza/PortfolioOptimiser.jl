@@ -2,7 +2,7 @@ function naive_risk(::Equal, returns)
     N = size(returns, 2)
     return fill(eltype(returns)(inv(N)), N)
 end
-function naive_risk(rm::AbstractRiskMeasure, returns)
+function naive_risk(rm::Union{RiskMeasure, HCRiskMeasure}, returns)
     N = size(returns, 2)
     inv_risk = Vector{eltype(returns)}(undef, N)
     w = Vector{eltype(returns)}(undef, N)

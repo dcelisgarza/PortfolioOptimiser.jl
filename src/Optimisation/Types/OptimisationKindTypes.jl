@@ -500,12 +500,12 @@ struct HRP <: HCOptimType end
 ```
 """
 mutable struct HRP <: HCOptimType
-    rm::Union{AbstractVector, <:AbstractRiskMeasure}
+    rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}}
     class::PortClass
     scalarisation::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
 end
-function HRP(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
+function HRP(; rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = Variance(),
              class::PortClass = Classic(),
              scalarisation::AbstractScalarisation = ScalarSum(),
              finaliser::HCOptWeightFinaliser = HWF())
@@ -559,16 +559,16 @@ struct HERC <: HCOptimType end
 ```
 """
 mutable struct HERC <: HCOptimType
-    rm::Union{AbstractVector, <:AbstractRiskMeasure}
-    rm_o::Union{AbstractVector, <:AbstractRiskMeasure}
+    rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}}
+    rm_o::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}}
     class::PortClass
     class_o::PortClass
     scalarisation::AbstractScalarisation
     scalarisation_o::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
 end
-function HERC(; rm::Union{AbstractVector, <:AbstractRiskMeasure} = Variance(),
-              rm_o::Union{AbstractVector, <:AbstractRiskMeasure} = rm,
+function HERC(; rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = Variance(),
+              rm_o::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = rm,
               class::PortClass = Classic(), class_o::PortClass = class,
               scalarisation::AbstractScalarisation = ScalarSum(),
               scalarisation_o::AbstractScalarisation = scalarisation,

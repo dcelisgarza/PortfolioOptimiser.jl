@@ -78,8 +78,9 @@ function herc_scalarise_risk_i(port, sigma, returns, rm, cluster, ::ScalarMax)
     end
     return risk
 end
-function herc_optimise(port::Portfolio, rm_i::Union{AbstractVector, <:AbstractRiskMeasure},
-                       rm_o::Union{AbstractVector, <:AbstractRiskMeasure},
+function herc_optimise(port::Portfolio,
+                       rm_i::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
+                       rm_o::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
                        sigma_i::AbstractMatrix, sigma_o::AbstractMatrix,
                        returns_i::AbstractMatrix, returns_o::AbstractMatrix,
                        scalarisation_i::AbstractScalarisation,

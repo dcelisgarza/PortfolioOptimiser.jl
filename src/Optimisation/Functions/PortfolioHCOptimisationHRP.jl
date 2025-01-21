@@ -51,7 +51,8 @@ function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarMax)
     end
     return lrisk, rrisk
 end
-function hrp_optimise(port::Portfolio, rm::Union{AbstractVector, <:AbstractRiskMeasure},
+function hrp_optimise(port::Portfolio,
+                      rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
                       sigma::AbstractMatrix, returns::AbstractMatrix,
                       scalarisation::AbstractScalarisation)
     N = size(returns, 2)

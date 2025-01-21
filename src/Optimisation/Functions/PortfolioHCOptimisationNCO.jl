@@ -11,7 +11,7 @@ function find_special_rm(::Nothing)
                            Vector{Int}(undef, 0), Vector{Int}(undef, 0),
                            Vector{Int}(undef, 0), Vector{Int}(undef, 0))
 end
-function find_special_rm(rm::Union{AbstractVector, <:AbstractRiskMeasure})
+function find_special_rm(rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}})
     cov_idx = Vector{Int}(undef, 0)
     kurt_idx = Vector{Int}(undef, 0)
     skurt_idx = Vector{Int}(undef, 0)
