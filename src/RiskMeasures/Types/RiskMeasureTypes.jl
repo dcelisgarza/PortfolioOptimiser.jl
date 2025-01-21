@@ -206,8 +206,6 @@ end
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
-
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
