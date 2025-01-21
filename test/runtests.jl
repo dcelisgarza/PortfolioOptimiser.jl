@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -54,10 +58,6 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
 end
 
 @safetestset "Type tests" begin

@@ -103,7 +103,8 @@ function factor_risk_contribution(port::AbstractPortfolio, key = :Trad;
     risk = factor_risk_contribution(rm, port.optimal[key].weights; X = X,
                                     assets = port.assets, F = F, f_assets = port.f_assets,
                                     B = port.loadings,
-                                    regression_type = port.regression_type, delta = delta)
+                                    regression_type = port.regression_type, delta = delta,
+                                    scale = true)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end

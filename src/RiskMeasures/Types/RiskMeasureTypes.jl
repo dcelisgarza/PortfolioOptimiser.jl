@@ -613,6 +613,9 @@ function Base.setproperty!(obj::SD, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (sd::SD)(w::AbstractVector)
+    return sqrt(dot(w, sd.sigma, w))
+end
 
 """
     mutable struct MAD <: RiskMeasure
@@ -655,13 +658,21 @@ mad = MAD(; settings = RMSettings(; scale = 2.0), w = w, mu = mu)
 """
 mutable struct MAD <: RiskMeasure
     settings::RMSettings
-    w::Union{<:AbstractWeights, Nothing}
+    w1::Union{<:AbstractWeights, Nothing}
+    w2::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector, Nothing}
 end
 function MAD(; settings::RMSettings = RMSettings(),
-             w::Union{<:AbstractWeights, Nothing} = nothing,
+             w1::Union{<:AbstractWeights, Nothing} = nothing,
+             w2::Union{<:AbstractWeights, Nothing} = nothing,
              mu::Union{<:AbstractVector, Nothing} = nothing)
-    return MAD(settings, w, mu)
+    return MAD(settings, w1, w2, mu)
+end
+function (mad::MAD)(x::AbstractVector)
+    w1 = mad.w1
+    w2 = mad.w2
+    mu = isnothing(w1) ? mean(x) : mean(x, w1)
+    return isnothing(w2) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), w2)
 end
 
 """
@@ -715,6 +726,14 @@ function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
              mu::Union{<:AbstractVector, Nothing} = nothing)
     return SSD{typeof(target)}(settings, target, w, mu)
 end
+function (ssd::SSD)(x::AbstractVector)
+    T = length(x)
+    w = ssd.w
+    target = ssd.target
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sqrt(sum(val[val .<= target] .^ 2) / (T - 1))
+end
 
 """
     mutable struct FLPM{T1 <: Real} <: RiskMeasure
@@ -752,6 +771,18 @@ function FLPM(; settings::RMSettings = RMSettings(),
               ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
               w::Union{AbstractWeights, Nothing} = nothing)
     return FLPM{typeof(target)}(settings, ret_target, target, w)
+end
+function (flpm::FLPM)(x::AbstractVector)
+    T = length(x)
+    target = flpm.target
+    w = flpm.w
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    return -sum(val[val .<= zero(target)]) / T
 end
 
 """
@@ -791,6 +822,19 @@ function SLPM(; settings::RMSettings = RMSettings(),
               w::Union{AbstractWeights, Nothing} = nothing)
     return SLPM{typeof(target)}(settings, ret_target, target, w)
 end
+function (slpm::SLPM)(x::AbstractVector)
+    T = length(x)
+    target = slpm.target
+    w = slpm.w
+    target = if !isinf(target)
+        target
+    else
+        isnothing(w) ? mean(x) : mean(x, w)
+    end
+    val = x .- target
+    val = val[val .<= zero(target)]
+    return sqrt(dot(val, val) / (T - 1))
+end
 
 """
     struct WR <: RiskMeasure
@@ -823,6 +867,9 @@ struct WR <: RiskMeasure
 end
 function WR(; settings::RMSettings = RMSettings())
     return WR(settings)
+end
+function (wr::WR)(x::AbstractVector)
+    return -minimum(x)
 end
 
 """
@@ -872,6 +919,17 @@ function Base.setproperty!(obj::CVaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (cvar::CVaR)(x::AbstractVector)
+    alpha = cvar.alpha
+    aT = alpha * length(x)
+    idx = ceil(Int, aT)
+    var = -partialsort!(x, idx)
+    sum_var = 0.0
+    for i ∈ 1:(idx - 1)
+        sum_var += x[i] + var
+    end
+    return var - sum_var / aT
+end
 
 mutable struct DRCVaR{T1, T2, T3} <: RiskMeasure
     settings::RMSettings
@@ -889,6 +947,17 @@ function Base.setproperty!(obj::DRCVaR, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (drcvar::DRCVaR)(x::AbstractVector)
+    alpha = drcvar.alpha
+    aT = alpha * length(x)
+    idx = ceil(Int, aT)
+    var = -partialsort!(x, idx)
+    sum_var = 0.0
+    for i ∈ 1:(idx - 1)
+        sum_var += x[i] + var
+    end
+    return var - sum_var / aT
 end
 
 """
@@ -948,6 +1017,9 @@ function Base.setproperty!(obj::EVaR, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (evar::EVaR)(x::AbstractVector)
+    return ERM(x, evar.solvers, evar.alpha)
 end
 
 """
@@ -1015,6 +1087,9 @@ function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (rlvar::RLVaR)(x::AbstractVector)
+    return RRM(x, rlvar.solvers, rlvar.alpha, rlvar.kappa)
+end
 
 """
     struct MDD <: RiskMeasure
@@ -1047,6 +1122,23 @@ struct MDD <: RiskMeasure
 end
 function MDD(; settings::RMSettings = RMSettings())
     return MDD(settings)
+end
+function (dar::MDD)(x::AbstractVector)
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    val = 0.0
+    peak = -Inf
+    for i ∈ cs
+        if i > peak
+            peak = i
+        end
+        dd = peak - i
+        if dd > val
+            val = dd
+        end
+    end
+    popfirst!(x)
+    return val
 end
 
 """
@@ -1082,6 +1174,40 @@ end
 function ADD(; settings::RMSettings = RMSettings(),
              w::Union{<:AbstractWeights, Nothing} = nothing)
     return ADD(settings, w)
+end
+function (add::ADD)(x::AbstractVector)
+    T = length(x)
+    w = add.w
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    val = 0.0
+    peak = -Inf
+    if isnothing(w)
+        for i ∈ cs
+            if i > peak
+                peak = i
+            end
+            dd = peak - i
+            if dd > 0
+                val += dd
+            end
+        end
+        popfirst!(x)
+        return val / T
+    else
+        @smart_assert(length(w) == T)
+        for i ∈ cs
+            if i > peak
+                peak = i
+            end
+            dd = peak - i
+            if dd > 0
+                val += dd * w[i]
+            end
+        end
+        popfirst!(x)
+        return val / sum(w)
+    end
 end
 
 """
@@ -1131,6 +1257,30 @@ function Base.setproperty!(obj::CDaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (cdar::CDaR)(x::AbstractVector)
+    T = length(x)
+    alpha = cdar.alpha
+    aT = alpha * T
+    idx = ceil(Int, aT)
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i - peak
+    end
+    popfirst!(x)
+    popfirst!(dd)
+    var = -partialsort!(dd, idx)
+    sum_var = 0.0
+    for i ∈ 1:(idx - 1)
+        sum_var += dd[i] + var
+    end
+    return var - sum_var / aT
+end
 
 """
     mutable struct UCI <: RiskMeasure
@@ -1162,6 +1312,24 @@ struct UCI <: RiskMeasure
 end
 function UCI(; settings::RMSettings = RMSettings())
     return UCI(settings)
+end
+function (uci::UCI)(x::AbstractVector)
+    T = length(x)
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    val = 0.0
+    peak = -Inf
+    for i ∈ cs
+        if i > peak
+            peak = i
+        end
+        dd = peak - i
+        if dd > 0
+            val += dd^2
+        end
+    end
+    popfirst!(x)
+    return sqrt(val / T)
 end
 
 """
@@ -1221,6 +1389,21 @@ function Base.setproperty!(obj::EDaR, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (edar::EDaR)(x::AbstractVector)
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = -(peak - i)
+    end
+    popfirst!(x)
+    popfirst!(dd)
+    return ERM(dd, edar.solvers, edar.alpha)
 end
 
 """
@@ -1288,6 +1471,21 @@ function Base.setproperty!(obj::RLDaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (rldar::RLDaR)(x::AbstractVector)
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i - peak
+    end
+    popfirst!(x)
+    popfirst!(dd)
+    return RRM(dd, rldar.solvers, rldar.alpha, rldar.kappa)
+end
 
 """
     mutable struct Kurt <: RiskMeasure
@@ -1339,6 +1537,14 @@ function Kurt(; settings::RMSettings = RMSettings(),
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
     return Kurt(settings, w, kt)
+end
+function (kurt::Kurt)(x::AbstractVector, scale::Bool = false)
+    T = length(x)
+    w = kurt.w
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    kurt = sqrt(sum(val .^ 4) / T)
+    return !scale ? kurt : kurt / 2
 end
 
 """
@@ -1396,6 +1602,15 @@ function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
     end
     return SKurt{typeof(target)}(settings, target, w, kt)
 end
+function (skurt::SKurt)(x::AbstractVector, scale::Bool = false)
+    T = length(x)
+    w = skurt.w
+    target = skurt.target
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    skurt = sqrt(sum(val[val .<= target] .^ 4) / T)
+    return !scale ? skurt : skurt / 2
+end
 
 """
     mutable struct RG{T1 <: Real} <: RiskMeasure
@@ -1427,6 +1642,11 @@ struct RG <: RiskMeasure
 end
 function RG(; settings::RMSettings = RMSettings())
     return RG(settings)
+end
+function (rg::RG)(x::AbstractVector)
+    T = length(x)
+    w = owa_rg(T)
+    return dot(w, sort!(x))
 end
 
 """
@@ -1481,6 +1701,11 @@ function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (cvarrg::CVaRRG)(x::AbstractVector)
+    T = length(x)
+    w = owa_rcvar(T; alpha = cvarrg.alpha, beta = cvarrg.beta)
+    return dot(w, sort!(x))
 end
 
 """
@@ -1558,6 +1783,11 @@ end
 function GMD(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings())
     return GMD(settings, owa)
 end
+function (gmd::GMD)(x::AbstractVector)
+    T = length(x)
+    w = owa_gmd(T)
+    return dot(w, sort!(x))
+end
 
 """
     mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasure
@@ -1621,6 +1851,11 @@ function Base.setproperty!(obj::TG, sym::Symbol, val)
         @smart_assert(val > zero(val))
     end
     return setfield!(obj, sym, val)
+end
+function (tg::TG)(x::AbstractVector)
+    T = length(x)
+    w = owa_tg(T; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
+    return dot(w, sort!(x))
 end
 
 """
@@ -1706,6 +1941,12 @@ function Base.setproperty!(obj::TGRG, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (tgrg::TGRG)(x::AbstractVector)
+    T = length(x)
+    w = owa_rtg(T; alpha_i = tgrg.alpha_i, alpha = tgrg.alpha, a_sim = tgrg.a_sim,
+                beta_i = tgrg.beta_i, beta = tgrg.beta, b_sim = tgrg.b_sim)
+    return dot(w, sort!(x))
+end
 
 """
     mutable struct OWA <: RiskMeasure
@@ -1748,6 +1989,10 @@ function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettin
              w::Union{<:AbstractVector, Nothing} = nothing)
     return OWA(settings, owa, w)
 end
+function (owa::OWA)(x::AbstractVector)
+    w = isnothing(owa.w) ? owa_gmd(length(x)) : owa.w
+    return dot(w, sort!(x))
+end
 
 abstract type BDVarianceFormulation end
 struct BDVAbsVal <: BDVarianceFormulation end
@@ -1784,6 +2029,15 @@ end
 function BDVariance(; settings::RMSettings = RMSettings(),
                     formulation::BDVarianceFormulation = BDVAbsVal())
     return BDVariance(settings, formulation)
+end
+function (bdvariance::BDVariance)(x::AbstractVector)
+    T = length(x)
+    iT2 = inv(T^2)
+    D = Matrix{eltype(x)}(undef, T, T)
+    D .= x
+    D .-= transpose(x)
+    D .= abs.(D)
+    return iT2 * (dot(D, D) + iT2 * sum(D)^2)
 end
 
 """
@@ -1870,6 +2124,9 @@ function Base.setproperty!(obj::Skew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (skew::Skew)(w::AbstractVector)
+    return sqrt(dot(w, skew.V, w))
+end
 
 """
     struct SSkew <: RiskMeasure
@@ -1955,6 +2212,9 @@ function Base.setproperty!(obj::SSkew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (sskew::SSkew)(w::AbstractVector)
+    return sqrt(dot(w, sskew.V, w))
+end
 
 """
     mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasure
@@ -2010,6 +2270,9 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (variance::Variance)(w::AbstractVector)
+    return dot(w, variance.sigma, w)
+end
 
 """
     mutable struct SVariance{T1 <: Real} <: RiskMeasure
@@ -2054,6 +2317,14 @@ function SVariance(; settings::RMSettings = RMSettings(),
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector, Nothing} = nothing)
     return SVariance{typeof(target)}(settings, formulation, target, w, mu)
+end
+function (svariance::SVariance)(x::AbstractVector)
+    T = length(x)
+    w = svariance.w
+    target = svariance.target
+    mu = isnothing(w) ? mean(x) : mean(x, w)
+    val = x .- mu
+    return sum(val[val .<= target] .^ 2) / (T - 1)
 end
 
 """
@@ -2182,6 +2453,10 @@ function Base.setproperty!(obj::VaR, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (var::VaR)(x::AbstractVector)
+    alpha = var.alpha
+    return -partialsort!(x, ceil(Int, alpha * length(x)))
+end
 
 """
     mutable struct DaR{T1 <: Real} <: HCRiskMeasure
@@ -2229,6 +2504,23 @@ function Base.setproperty!(obj::DaR, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (dar::DaR)(x::AbstractVector)
+    T = length(x)
+    alpha = dar.alpha
+    pushfirst!(x, 1)
+    cs = cumsum(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i - peak
+    end
+    popfirst!(x)
+    popfirst!(dd)
+    return -partialsort!(dd, ceil(Int, alpha * T))
 end
 
 """
@@ -2278,6 +2570,22 @@ function Base.setproperty!(obj::DaR_r, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (dar_r::DaR_r)(x::AbstractVector)
+    T = length(x)
+    alpha = dar_r.alpha
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i / peak - 1
+    end
+    popfirst!(dd)
+    return -partialsort!(dd, ceil(Int, alpha * T))
+end
 
 """
     mutable struct MDD_r <: HCRiskMeasure
@@ -2311,6 +2619,22 @@ end
 function MDD_r(; settings::HCRMSettings = HCRMSettings())
     return MDD_r(settings)
 end
+function (mdd_r::MDD_r)(x::AbstractVector)
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    val = 0.0
+    peak = -Inf
+    for i ∈ cs
+        if i > peak
+            peak = i
+        end
+        dd = 1 - i / peak
+        if dd > val
+            val = dd
+        end
+    end
+    return val
+end
 
 """
     mutable struct ADD_r <: HCRiskMeasure
@@ -2340,9 +2664,45 @@ add = ADD_r(; settings = HCRMSettings(; scale = 1.0), alpha = 0.01) # 1 % signif
 """
 struct ADD_r <: HCRiskMeasure
     settings::HCRMSettings
+    w::Union{<:AbstractWeights, Nothing}
 end
-function ADD_r(; settings::HCRMSettings = HCRMSettings())
-    return ADD_r(settings)
+function ADD_r(; settings::HCRMSettings = HCRMSettings(),
+               w::Union{<:AbstractWeights, Nothing} = nothing)
+    return ADD_r(settings, w)
+end
+function (add_r::ADD_r)(x::AbstractVector)
+    T = length(x)
+    w = add_r.w
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    val = 0.0
+    peak = -Inf
+    if isnothing(w)
+        for i ∈ cs
+            if i > peak
+                peak = i
+            end
+            dd = 1 - i / peak
+            if dd > 0
+                val += dd
+            end
+        end
+        popfirst!(x)
+        return val / T
+    else
+        @smart_assert(length(w) == T)
+        for i ∈ cs
+            if i > peak
+                peak = i
+            end
+            dd = 1 - i / peak
+            if dd > 0
+                val += dd * w[i]
+            end
+        end
+        popfirst!(x)
+        return val / sum(w)
+    end
 end
 
 """
@@ -2392,6 +2752,29 @@ function Base.setproperty!(obj::CDaR_r, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (cdar_r::CDaR_r)(x::AbstractVector)
+    T = length(x)
+    alpha = cdar_r.alpha
+    aT = alpha * T
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i / peak - 1
+    end
+    popfirst!(dd)
+    idx = ceil(Int, aT)
+    var = -partialsort!(dd, idx)
+    sum_var = 0.0
+    for i ∈ 1:(idx - 1)
+        sum_var += dd[i] + var
+    end
+    return var - sum_var / aT
+end
 
 """
     mutable struct UCI_r{T1 <: Real} <: HCRiskMeasure
@@ -2423,6 +2806,23 @@ struct UCI_r <: HCRiskMeasure
 end
 function UCI_r(; settings::HCRMSettings = HCRMSettings())
     return UCI_r(settings)
+end
+function (uci_r::UCI_r)(x::AbstractVector)
+    T = length(x)
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    val = 0.0
+    peak = -Inf
+    for i ∈ cs
+        if i > peak
+            peak = i
+        end
+        dd = 1 - i / peak
+        if dd > 0
+            val += dd^2
+        end
+    end
+    return sqrt(val / T)
 end
 
 """
@@ -2482,6 +2882,20 @@ function Base.setproperty!(obj::EDaR_r, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     end
     return setfield!(obj, sym, val)
+end
+function (edar_r::EDaR_r)(x::AbstractVector)
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i / peak - 1
+    end
+    popfirst!(dd)
+    return ERM(dd, edar_r.solvers, edar_r.alpha)
 end
 
 """
@@ -2549,6 +2963,20 @@ function Base.setproperty!(obj::RLDaR_r, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (rldar_r::RLDaR_r)(x::AbstractVector)
+    x .= pushfirst!(x, 0) .+ 1
+    cs = cumprod(x)
+    peak = -Inf
+    dd = similar(cs)
+    for (idx, i) ∈ pairs(cs)
+        if i > peak
+            peak = i
+        end
+        dd[idx] = i / peak - 1
+    end
+    popfirst!(dd)
+    return RRM(dd, rldar_r.solvers, rldar_r.alpha, rldar_r.kappa)
+end
 
 """
     struct Equal <: HCRiskMeasure
@@ -2578,6 +3006,9 @@ mutable struct Equal <: HCRiskMeasure
 end
 function Equal(; settings::HCRMSettings = HCRMSettings())
     return Equal(settings)
+end
+function (equal::Equal)(w::AbstractVector, delta::Real = 0)
+    return inv(length(w)) + delta
 end
 
 mutable struct TCM <: NoOptRiskMeasure
