@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function add_objective_penalty(model, obj_func, d)
     if haskey(model, :l1_reg)
         l1_reg = model[:l1_reg]

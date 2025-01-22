@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function naive_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
     sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)

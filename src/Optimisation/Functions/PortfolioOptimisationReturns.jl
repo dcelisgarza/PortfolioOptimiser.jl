@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function return_bounds(port)
     mu_l = port.mu_l
     if isinf(mu_l)

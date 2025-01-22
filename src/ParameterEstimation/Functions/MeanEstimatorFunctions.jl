@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function StatsBase.mean(me::MuSimple, X::AbstractMatrix; dims::Int = 1)
     return isnothing(me.w) ? mean(X; dims = dims) : mean(X, me.w; dims = dims)
 end

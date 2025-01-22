@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """
 ```
 clusterise(ca::HAC, port::Union{HCPortfolio, Portfolio}, clust_opt::ClustOpt = ClustOpt())

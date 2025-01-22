@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function finaliser_constraint_obj(::ROJWF, model, weights, scale_constr, scale_obj)
     N = length(weights)
     w = model[:w]

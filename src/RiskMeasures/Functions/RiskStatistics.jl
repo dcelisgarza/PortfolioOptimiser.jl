@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """
     risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
                 X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),

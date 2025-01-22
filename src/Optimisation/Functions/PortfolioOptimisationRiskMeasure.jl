@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 # Risk expression
 function set_risk_expression(model, rm_risk, scale, flag::Bool)
     if !flag

@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function rrb_ver_constraints(::BasicRRB, model, sigma)
     scale_constr = model[:scale_constr]
     w = model[:w]

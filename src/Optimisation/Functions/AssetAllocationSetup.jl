@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function setup_alloc_optim(weights, investment, short, budget, short_budget)
     long_idx = weights .>= zero(eltype(weights))
 

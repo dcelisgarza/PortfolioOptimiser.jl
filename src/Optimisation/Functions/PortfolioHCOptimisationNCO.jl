@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 struct NCOSpecialRMIdx{T1, T2, T3, T4, T5, T6}
     cov_idx::T1
     kurt_idx::T2

@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function rebuild_B(B::DataFrame, ::Any, ::Any)
     return Matrix(B[!, setdiff(names(B), ("tickers", "const"))])
 end

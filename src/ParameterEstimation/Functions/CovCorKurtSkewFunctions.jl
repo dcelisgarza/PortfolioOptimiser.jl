@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function custom_mtx_process!(::NoCustomMtxProcess, X::AbstractMatrix)
     return nothing
 end

@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarSum)
     lrisk = zero(eltype(returns))
     rrisk = zero(eltype(returns))

@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function bootstrap_func(::StationaryBS, block_size, X, seed)
     return pyimport("arch.bootstrap").StationaryBootstrap(block_size, X; seed = seed)
 end

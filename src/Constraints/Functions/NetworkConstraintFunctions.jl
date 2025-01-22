@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function calc_centrality(type::BetweennessCentrality, G)
     return Graphs.betweenness_centrality(G, type.args...; type.kwargs...)
 end

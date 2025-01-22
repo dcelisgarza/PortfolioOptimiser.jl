@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 # module PortfolioOptimiserMakieExt
 # using PortfolioOptimiser, Makie, SmartAsserts, Statistics, MultivariateStats, Distributions,
 #       Clustering, Graphs, SimpleWeightedGraphs, LinearAlgebra

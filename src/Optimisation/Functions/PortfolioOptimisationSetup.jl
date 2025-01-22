@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function set_w_ini(w, w_ini)
     if !isempty(w_ini)
         @smart_assert(length(w_ini) == length(w))

@@ -1,3 +1,7 @@
+# Copywrite (c) 2025
+# Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
+# SPDX-License-Identifier: MIT
+
 function noc_constraints(port::Portfolio, risk0, ret0)
     model = port.model
     w = model[:w]
