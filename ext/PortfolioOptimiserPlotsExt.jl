@@ -405,11 +405,10 @@ function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::Abstrac
 
     dd .*= 100
 
-    risks = [-PortfolioOptimiser._ADD(ret), -PortfolioOptimiser._UCI(ret),
-             -PortfolioOptimiser._DaR(ret, alpha), -PortfolioOptimiser._CDaR(ret, alpha),
-             -PortfolioOptimiser._EDaR(ret, solvers, alpha),
-             -PortfolioOptimiser._RLDaR(ret, solvers, alpha, kappa),
-             -PortfolioOptimiser._MDD(ret)] * 100
+    risks = [-ADD()(ret), -UCI()(ret), -DaR(; alpha = alpha)(ret),
+             -CDaR(; alpha = alpha)(ret), -EDaR(; solvers = solvers, alpha = alpha)(ret),
+             -RLDaR(; solvers = solvers, alpha = alpha, kappa = kappa)(ret), -MDD()(ret)] *
+            100
 
     conf = round((1 - alpha) * 100; digits = 2)
 
@@ -505,14 +504,13 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
 
     x = range(minimum(ret); stop = maximum(ret), length = points)
 
-    mad = PortfolioOptimiser._MAD(ret)
-    gmd = PortfolioOptimiser._GMD(ret)
-    risks = (mu, mu - sigma, mu - mad, mu - gmd, -PortfolioOptimiser._VaR(ret, alpha),
-             -PortfolioOptimiser._CVaR(ret, alpha),
-             -PortfolioOptimiser._TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim),
-             -PortfolioOptimiser._EVaR(ret, solvers, alpha),
-             -PortfolioOptimiser._RLVaR(x, solvers, alpha, kappa),
-             -PortfolioOptimiser._WR(ret))
+    mad = MAD()(ret)
+    gmd = GMD()(ret)
+    risks = (mu, mu - sigma, mu - mad, mu - gmd, -VaR(; alpha = alpha)(ret),
+             -CVaR(; alpha = alpha)(ret),
+             -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret),
+             -EVaR(; solvers = solvers, alpha = alpha)(ret),
+             -RLVaR(; solvers = solvers, alpha = alpha, kappa = kappa)(ret), -WR()(ret))
 
     conf = round((1 - alpha) * 100; digits = 2)
 
@@ -591,10 +589,9 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
 
     ret = returns * w * 100
 
-    risks = (PortfolioOptimiser._RG(ret),
-             PortfolioOptimiser._CVaRRG(ret; alpha = alpha, beta = beta),
-             PortfolioOptimiser._TGRG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                                      beta_i = beta_i, beta = beta, b_sim = b_sim))
+    risks = (RG()(ret), CVaRRG(; alpha = alpha, beta = beta)(ret),
+             TGRG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                  beta = beta, b_sim = b_sim)(ret))
 
     lo_conf = 1 - alpha
     hi_conf = 1 - beta
@@ -613,8 +610,8 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
 
     plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
 
-    bounds = [minimum(ret) -PortfolioOptimiser._TG(ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) -PortfolioOptimiser._CVaR(ret, alpha);
-              maximum(ret) PortfolioOptimiser._TG(-ret; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) PortfolioOptimiser._CVaR(-ret, alpha)]
+    bounds = [minimum(ret) -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret) -CVaR(; alpha = alpha)(ret);
+              maximum(ret) TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(-ret) CVaR(; alpha = alpha)(-ret)]
 
     D = fit(Normal, ret)
     y = pdf(D, mean(D))

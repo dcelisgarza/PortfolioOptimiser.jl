@@ -1,5 +1,21 @@
 using SafeTestsets
 
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "RRB optimisation" begin
+    include("RRBOptimisationTests.jl")
+end
+
+@safetestset "RB optimisation" begin
+    include("RBOptimisationTests.jl")
+end
+
+@safetestset "Stats tests" begin
+    include("StatsTest.jl")
+end
+
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
 end
@@ -86,20 +102,4 @@ end
 
 @safetestset "Allocation tests" begin
     include("AllocationTests.jl")
-end
-
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "RRB optimisation" begin
-    include("RRBOptimisationTests.jl")
-end
-
-@safetestset "RB optimisation" begin
-    include("RBOptimisationTests.jl")
-end
-
-@safetestset "Stats tests" begin
-    include("StatsTest.jl")
 end
