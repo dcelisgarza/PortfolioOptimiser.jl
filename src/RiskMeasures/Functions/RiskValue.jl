@@ -1420,7 +1420,6 @@ function _MDD_r(x::AbstractVector)
             val = dd
         end
     end
-
     return val
 end
 
@@ -1476,7 +1475,6 @@ function _ADD_r(x::AbstractVector)
             val += dd
         end
     end
-
     return val / T
 end
 
@@ -2398,7 +2396,7 @@ risk = calc_risk(sd_rm, w)
 ```
 """
 function calc_risk(sd::SD, w::AbstractVector; kwargs...)
-    return _SD(w, sd.sigma)
+    return sd(w)
 end
 
 """
@@ -2447,7 +2445,7 @@ risk = calc_risk(variance_rm, w)
 ```
 """
 function calc_risk(variance::Variance, w::AbstractVector; kwargs...)
-    return _Variance(w, variance.sigma)
+    return variance(w)
 end
 
 """
@@ -2497,7 +2495,7 @@ mad_risk2 = calc_risk(mad_rm2, w; X = returns)
 ```
 """
 function calc_risk(mad::MAD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _MAD(X * w, mad.w)
+    return mad(X * w)
 end
 
 """
@@ -2547,7 +2545,7 @@ ssd_risk2 = calc_risk(ssd_rm2, w; X = returns)
 ```
 """
 function calc_risk(ssd::SSD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _SSD(X * w, ssd.target, ssd.w)
+    return ssd(X * w)
 end
 
 """
@@ -2597,7 +2595,7 @@ svariance_risk2 = calc_risk(svariance_rm2, w; X = returns)
 ```
 """
 function calc_risk(svariance::SVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _SVariance(X * w, svariance.target, svariance.w)
+    return svariance(X * w)
 end
 
 """
@@ -2647,7 +2645,7 @@ flpm_risk2 = calc_risk(flpm_rm2, w; X = returns)
 ```
 """
 function calc_risk(flpm::FLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _FLPM(X * w, flpm.target, flpm.w)
+    return flpm(X * w)
 end
 
 """
@@ -2697,7 +2695,7 @@ slpm_risk2 = calc_risk(slpm_rm2, w; X = returns)
 ```
 """
 function calc_risk(slpm::SLPM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _SLPM(X * w, slpm.target, slpm.w)
+    return slpm(X * w)
 end
 
 """
@@ -2742,8 +2740,8 @@ wr_rm = WR()
 wr_risk = calc_risk(wr_rm, w; X = returns)
 ```
 """
-function calc_risk(::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _WR(X * w)
+function calc_risk(wr::WR, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return wr(X * w)
 end
 
 """
@@ -2793,7 +2791,7 @@ var_risk2 = calc_risk(var_rm2, w; X = returns)
 ```
 """
 function calc_risk(var::VaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _VaR(X * w, var.alpha)
+    return var(X * w)
 end
 
 """
@@ -2845,7 +2843,7 @@ cvar_risk2 = calc_risk(cvar_rm2, w; X = returns)
 """
 function calc_risk(cvar::Union{CVaR, DRCVaR}, w::AbstractVector; X::AbstractMatrix,
                    kwargs...)
-    return _CVaR(X * w, cvar.alpha)
+    return cvar(X * w)
 end
 
 """
@@ -2895,7 +2893,7 @@ evar_risk2 = calc_risk(evar_rm2, w; X = returns)
 ```
 """
 function calc_risk(evar::EVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _EVaR(X * w, evar.solvers, evar.alpha)
+    return evar(X * w)
 end
 
 """
@@ -2946,7 +2944,7 @@ rlvar_risk2 = calc_risk(rlvar_rm2, w; X = returns)
 ```
 """
 function calc_risk(rlvar::RLVaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLVaR(X * w, rlvar.solvers, rlvar.alpha, rlvar.kappa)
+    return rlvar(X * w)
 end
 
 """
@@ -2998,7 +2996,7 @@ dar_risk2 = calc_risk(dar_rm2, w; X = returns)
 ```
 """
 function calc_risk(dar::DaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _DaR(X * w, dar.alpha)
+    return dar(X * w)
 end
 
 """
@@ -3044,8 +3042,8 @@ mdd_rm = MDD()
 mdd_risk = calc_risk(mdd_rm, w; X = returns)
 ```
 """
-function calc_risk(::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _MDD(X * w)
+function calc_risk(mdd::MDD, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return mdd(X * w)
 end
 
 """
@@ -3091,8 +3089,8 @@ add_rm = ADD()
 add_risk = calc_risk(add_rm, w; X = returns)
 ```
 """
-function calc_risk(::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _ADD(X * w)
+function calc_risk(add::ADD, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return add(X * w)
 end
 
 """
@@ -3144,7 +3142,7 @@ cdar_risk2 = calc_risk(cdar_rm2, w; X = returns)
 ```
 """
 function calc_risk(cdar::CDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _CDaR(X * w, cdar.alpha)
+    return cdar(X * w)
 end
 
 """
@@ -3190,8 +3188,8 @@ uci_rm = UCI()
 uci_risk = calc_risk(uci_rm, w; X = returns)
 ```
 """
-function calc_risk(::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _UCI(X * w)
+function calc_risk(uci::UCI, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return uci(X * w)
 end
 
 """
@@ -3243,7 +3241,7 @@ edar_risk2 = calc_risk(edar_rm2, w; X = returns)
 ```
 """
 function calc_risk(edar::EDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _EDaR(X * w, edar.solvers, edar.alpha)
+    return edar(X * w)
 end
 
 """
@@ -3295,7 +3293,7 @@ rldar_risk2 = calc_risk(rldar_rm2, w; X = returns)
 ```
 """
 function calc_risk(rldar::RLDaR, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLDaR(X * w, rldar.solvers, rldar.alpha, rldar.kappa)
+    return rldar(X * w)
 end
 
 """
@@ -3347,7 +3345,7 @@ dar_r_risk2 = calc_risk(dar_r_rm2, w; X = returns)
 ```
 """
 function calc_risk(dar_r::DaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _DaR_r(X * w, dar_r.alpha)
+    return dar_r(X * w)
 end
 
 """
@@ -3393,8 +3391,8 @@ mdd_r_rm = MDD_r()
 mdd_r_risk = calc_risk(mdd_rm, w; X = returns)
 ```
 """
-function calc_risk(::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _MDD_r(X * w)
+function calc_risk(mdd_r::MDD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return mdd_r(X * w)
 end
 
 """
@@ -3440,8 +3438,8 @@ add_r_rm = ADD_r()
 add_r_risk = calc_risk(add_r_rm, w; X = returns)
 ```
 """
-function calc_risk(::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _ADD_r(X * w)
+function calc_risk(add_r::ADD_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return add_r(X * w)
 end
 
 """
@@ -3493,7 +3491,7 @@ cdar_r_risk2 = calc_risk(cdar_r_rm2, w; X = returns)
 ```
 """
 function calc_risk(cdar_r::CDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _CDaR_r(X * w, cdar_r.alpha)
+    return cdar_r(X * w)
 end
 
 """
@@ -3537,8 +3535,8 @@ uci_r_rm = UCI_r()
 uci_r_risk = calc_risk(uci_r_rm, w; X = returns)
 ```
 """
-function calc_risk(::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _UCI_r(X * w)
+function calc_risk(uci_r::UCI_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return uci_r(X * w)
 end
 
 """
@@ -3590,7 +3588,7 @@ edar_r_risk2 = calc_risk(edar_r_rm2, w; X = returns)
 ```
 """
 function calc_risk(edar_r::EDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _EDaR_r(X * w, edar_r.solvers, edar_r.alpha)
+    return edar_r(X * w)
 end
 
 """
@@ -3642,7 +3640,7 @@ rldar_r_risk2 = calc_risk(rldar_r_rm2, w; X = returns)
 ```
 """
 function calc_risk(rldar_r::RLDaR_r, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RLDaR_r(X * w, rldar_r.solvers, rldar_r.alpha, rldar_r.kappa)
+    return rldar_r(X * w)
 end
 
 """
@@ -3692,8 +3690,8 @@ kurt_rm2 = Kurt(; w = eweights(1:size(returns, 1), 0.3))
 kurt_risk2 = calc_risk(kurt_rm2, w; X = returns)
 ```
 """
-function calc_risk(kt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _Kurt(X * w, kt.w)
+function calc_risk(kurt::Kurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return kurt(X * w, haskey(kwargs, :scale) ? kwargs[:scale] : false)
 end
 
 """
@@ -3743,8 +3741,8 @@ skurt_rm2 = SKurt(; w = eweights(1:size(returns, 1), 0.3), target = 0.015)
 skurt_risk2 = calc_risk(skurt_rm2, w; X = returns)
 ```
 """
-function calc_risk(skt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _SKurt(X * w, skt.target, skt.w)
+function calc_risk(skurt::SKurt, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return skurt(X * w, haskey(kwargs, :scale) ? kwargs[:scale] : false)
 end
 
 """
@@ -3789,8 +3787,8 @@ gmd_rm = GMD()
 gmd_risk = calc_risk(gmd_rm, w; X = returns)
 ```
 """
-function calc_risk(::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _GMD(X * w)
+function calc_risk(gmd::GMD, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return gmd(X * w)
 end
 
 """
@@ -3835,8 +3833,8 @@ rg_rm = RG()
 rg_risk = calc_risk(rg_rm, w; X = returns)
 ```
 """
-function calc_risk(::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _RG(X * w)
+function calc_risk(rg::RG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return rg(X * w)
 end
 
 """
@@ -3886,8 +3884,8 @@ cvarrg_rm2 = CVaRRG(; alpha = 0.07, beta = 0.32)
 cvarrg_risk2 = calc_risk(cvarrg_rm2, w; X = returns)
 ```
 """
-function calc_risk(rcvar::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _CVaRRG(X * w; alpha = rcvar.alpha, beta = rcvar.beta)
+function calc_risk(cvarrg::CVaRRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return cvarrg(X * w)
 end
 
 """
@@ -3937,7 +3935,7 @@ tg_risk2 = calc_risk(tg_rm2, w; X = returns)
 ```
 """
 function calc_risk(tg::TG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _TG(X * w; alpha_i = tg.alpha_i, alpha = tg.alpha, a_sim = tg.a_sim)
+    return tg(X * w)
 end
 
 """
@@ -3987,9 +3985,8 @@ tgrg_rm2 = TGRG(; alpha_i = 0.003, alpha = 0.07, a_sim = 131, beta_i = 0.001, be
 tgrg_risk2 = calc_risk(tgrg_rm2, w; X = returns)
 ```
 """
-function calc_risk(rtg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _TGRG(X * w; alpha_i = rtg.alpha_i, alpha = rtg.alpha, a_sim = rtg.a_sim,
-                 beta_i = rtg.beta_i, beta = rtg.beta, b_sim = rtg.b_sim)
+function calc_risk(tgrg::TGRG, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return tgrg(X * w)
 end
 
 """
@@ -4035,7 +4032,7 @@ owa_risk = calc_risk(owa_rm, w; X = returns)
 ```
 """
 function calc_risk(owa::OWA, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _OWA(X * w, isnothing(owa.w) ? owa_gmd(size(X, 1)) : owa.w)
+    return owa(X * w)
 end
 
 """
@@ -4080,8 +4077,8 @@ bdvariance_rm = BDVariance()
 bdvariance_risk = calc_risk(bdvariance_rm, w; X = returns)
 ```
 """
-function calc_risk(::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return _BDVariance(X * w)
+function calc_risk(bdvariance::BDVariance, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return bdvariance(X * w)
 end
 
 """
@@ -4122,7 +4119,7 @@ skew_risk = calc_risk(skew_rm, w; V = V)
 ```
 """
 function calc_risk(skew::RMSkew, w::AbstractVector; kwargs...)
-    return _Skew(w, skew.V)
+    return skew(w)
 end
 
 """
@@ -4158,8 +4155,32 @@ equal_rm = Equal()
 equal_risk = calc_risk(equal_rm, w)
 ```
 """
-function calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
-    return inv(length(w)) + delta
+function calc_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
+    return equal(w, delta)
+end
+function calc_risk(tcm::TCM, w::AbstractVector; X::AbstractArray)
+    return tcm(X * w)
+end
+function calc_risk(tlpm::TLPM, w::AbstractVector; X::AbstractArray)
+    return tlpm(X * w)
+end
+function calc_risk(ftcm::FTCM, w::AbstractVector; X::AbstractArray)
+    return ftcm(X * w)
+end
+function calc_risk(ftlpm::FTLPM, w::AbstractVector; X::AbstractArray)
+    return ftlpm(X * w)
+end
+function calc_risk(skewness::Skewness, w::AbstractVector; X::AbstractArray)
+    return skewness(X * w)
+end
+function calc_risk(sskewness::SSkewness, w::AbstractVector; X::AbstractArray)
+    return sskewness(X * w)
+end
+function calc_risk(kurtosis::Kurtosis, w::AbstractVector; X::AbstractArray)
+    return kurtosis(X * w)
+end
+function calc_risk(skurtosis::SKurtosis, w::AbstractVector; X::AbstractArray)
+    return skurtosis(X * w)
 end
 
 export calc_risk, cumulative_returns, drawdown

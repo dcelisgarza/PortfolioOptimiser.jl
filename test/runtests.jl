@@ -1,5 +1,9 @@
 using SafeTestsets
 
+@safetestset "Risk measure tests" begin
+    include("RiskMeasureTests.jl")
+end
+
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -12,12 +16,12 @@ end
     include("TradOptimisationTests.jl")
 end
 
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
+end
+
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
 end
 
 @safetestset "Objective scalarisation tests" begin
@@ -54,10 +58,6 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
-end
-
-@safetestset "Risk measure tests" begin
-    include("RiskMeasureTests.jl")
 end
 
 @safetestset "Type tests" begin

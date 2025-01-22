@@ -249,7 +249,7 @@ function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                                   regression_type::RegressionType = FReg(),
                                   delta::Real = 1e-6, kwargs...)
     marginal_risk = risk_contribution(rm, w; X = X, delta = delta, marginal = true,
-                                      kwargs...)
+                                      scale = true, kwargs...)
 
     if isempty(B)
         B = regression(regression_type, DataFrame(F, f_assets), DataFrame(X, assets))
