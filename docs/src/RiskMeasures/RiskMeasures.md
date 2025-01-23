@@ -1,21 +1,20 @@
-# Types
+# Risk Measures
+
+Risk measures are the backbone of portfolio optimisation. They allow for the quantification of risk in different ways. This section describes the various risk measures included in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl), explains their properties, formulations and compatibility with the various optimisation types in the library.
 
 ## Specifying solvers
 
 Some risk measures require solvers to compute the risk measure via [`calc_risk`](@ref). When using high level functions that take in an instance of [`Portfolio`](@ref) as an argument, the solvers will be taken from it. However, it is possible to override them by directly providing the solvers to the risk measure instance.
 
-The solvers can be specified by any container which implements the [`AbstractDict`](https://docs.julialang.org/en/v1/base/collections/#Base.AbstractDict) interfaces. This dictionary must contain the key-value pairs of any solvers one wishes to use. Where the key can be of any type, but the value must be a dictionary with the following key-value pairs.
+The solvers can be specified by any container which implements the [`AbstractDict`](https://docs.julialang.org/en/v1/base/collections/#Base.AbstractDict) interfaces. This dictionary must contain key-value pairs for all solvers one wants to use. The key can be of any type, but the value must be a dictionary with the following key-value pairs.
 
-  - `:solver`: defines the solver to use. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
+  - `:solver`: defines the solver to be used. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
   - `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
-  - `:params`: (optional) defines solver-specific parameters.
-  - `:add_bridges`: (optional) value of the `add_bridges` kwarg of [`JuMP.Model`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model), if not provided defaults to `true`.
-
-```@setup solvers_dict
-using JuMP, Clarabel
-```
+  - `:params`: (optional) defines solver-specific parameters/attributes.
+  - `:add_bridges`: (optional) value of the `add_bridges` kwarg of [`JuMP.set_optimizer`](https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.set_optimizer), if not provided defaults to `true`.
 
 ```@example solvers_dict
+using JuMP, Clarabel
 solvers = Dict(
                # Key-value pair for the solver, solution acceptance 
                # criteria, model bridge argument, and solver attributes.
@@ -49,12 +48,13 @@ solvers = Dict(:Clarabel_1 => Dict(:solver => Clarabel.Optimizer,
 
 ## Abstract types
 
-[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s risk measures are implemented using Julia's type hierarchy. This makes it easy to add new ones by implementing relevant types and methods.
+[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s risk measures are implemented using Julia's type hierarchy. This makes it easy to add new ones by implementing the relevant types and methods.
 
 ```@docs
 PortfolioOptimiser.AbstractRiskMeasure
 RiskMeasure
 HCRiskMeasure
+NoOptRiskMeasure
 ```
 
 ## Settings
@@ -84,11 +84,10 @@ These measure the spread of the returns distribution.
 These measure how far the returns deviate from the mean in both the positive and negative directions.
 
 ```@docs
-PortfolioOptimiser.VarianceFormulation
-PortfolioOptimiser.SDSquaredFormulation
+VarianceFormulation
 Quad
 SOC
-SimpleSD
+Variance
 SD
 MAD
 Kurt
@@ -161,14 +160,6 @@ These risk measures are compatible with . Different risk measures account for di
 ### Dispersion hierarchical risk measures
 
 These measure the characteristics of the returns distribution.
-
-#### Full dispersion hierarchical risk measures
-
-These measure how far the returns deviate from the mean in both the positive and negative directions.
-
-```@docs
-Variance
-```
 
 #### Downside dispersion hierarchical risk measures
 

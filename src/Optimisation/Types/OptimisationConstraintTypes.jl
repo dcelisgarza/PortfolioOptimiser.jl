@@ -203,14 +203,14 @@ end
 """
 ```
 @kwdef mutable struct AKelly <: RetType
-    formulation::SDSquaredFormulation = SOC()
+    formulation::VarianceFormulation = SOC()
 end
 ```
 """
 mutable struct AKelly <: RetType
-    formulation::SDSquaredFormulation
+    formulation::VarianceFormulation
 end
-function AKelly(; formulation::SDSquaredFormulation = SOC())
+function AKelly(; formulation::VarianceFormulation = SOC())
     return AKelly(formulation)
 end
 

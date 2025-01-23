@@ -7,20 +7,20 @@
 
 Supertype for all risk measaures.
 
-See also: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref).
+See also: [`RiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`NoOptRiskMeasure`](@ref).
 """
 abstract type AbstractRiskMeasure end
 
 """
     abstract type RiskMeasure <: AbstractRiskMeasure end
 
-Supertype for risk measures compatible with all optimisations that take risk measures as parameters.
+Supertype for risk measures compatible with [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) optimisation types.
 
-See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
 # Implementation requirements
 
-To ensure a risk measure can be used by the library, it must abide by a few rules. The general rules apply to all risk measures to be used in optimisations.
+To ensure a risk measure can be used any of the above optimisation types, it must abide by a few rules.
 
   - Include a `settings::RMSettings` field, [`RMSettings`](@ref).
 
@@ -159,13 +159,13 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 """
     abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-Supertype for risk measures compatible with [`HRP`](@ref) and [`HERC`](@ref) optimisations.
+Supertype for risk measures compatible with [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) when using any of the previous optimisations internally.
 
 See also: [`calc_risk`](@ref), [`HCRMSettings`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
 # Implementation requirements
 
-To ensure a risk measure can be used by the library, it must abide by a few rules. The general rules apply to all risk measures to be used in optimisations.
+To ensure a risk measure can be used by the above optimisation types, it must abide by a few rules.
 
   - Include a `settings::HCRMSettings` field, [`HCRMSettings`](@ref).
 
@@ -209,13 +209,39 @@ end
 ```
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
+
+"""
+    abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
+
+Abstract type for risk measures that cannot be used in optimisations but can be used as performance measurements via [`calc_risk`](@ref). This can be for two reasons:
+
+ 1. They can be negative, therefore unsuitable for [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) when using any of the previous optimisations internally.
+ 2. They have no known optimisation formulation, therefore unsuitable for [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), and [`NCO`](@ref) when using any of the previous optimisations internally.
+
+See also: [`calc_risk`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
+
+# Implementation
+
+  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+
+```julia
+struct MyNoOptRiskMeasure <: NoOptRiskMeasure
+    # Fields of MyNoOptRiskMeasure
+end
+
+function calc_risk(my_risk::MyNoOptRiskMeasure, w::AbstractVector; kwargs...)
+    # Risk measure calculation
+end
+```
+"""
 abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
+
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
 
 Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this field makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
 
-See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
+See also: [`calc_risk`](@ref), [`RiskMeasure`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
 
 # Keyword Parameters
 
@@ -265,7 +291,7 @@ type = HERC(;
                   SD(; settings = RMSettings(; flag = true, scale = sqrt(252))),
                   # Add to the risk calculation (via `AbstractScalarisation`)
                   # as `0.5 * cvar_risk`.
-                  CVaR(; settings = 0.5, flag = true),
+                  CVaR(; settings = RMSettings(; scale = 0.5, flag = true)),
                   # Add to the risk calculation because `flag` and `ub` have no
                   # effect in hierarchical optimisations.
                   CDaR(; settings = RMSettings(; flag = false, ub = 0.15))])
@@ -284,35 +310,25 @@ end
 """
     mutable struct HCRMSettings{T1 <: Real}
 
-# Description
+Configuration settings for concrete subtypes of [`HCRiskMeasure`](@ref).
 
-Configuration settings for [`HCRiskMeasure`](@ref).
+See also: [`calc_risk`](@ref), [`HCRiskMeasure`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
 
-See also: [`AbstractRiskMeasure`](@ref), [`HCRiskMeasure`](@ref), [`optimise!`](@ref), [`calc_risk`](@ref).
+# Keyword Parameters
 
-# Fields
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
 
-  - `scale::T1 = 1.0`: multiplier for this risk term in the risk expression.
-
-# Behaviour
-
-With `R(w)` being a risk measure.
-
-  - `scale`: multiplier for this risk term in the risk expression. Always adds `scale * R(w)` to the risk expression in the optimisation objective.
-  - Does not include flag or bounds as hierarchical optimisations cannot constrain the risk, only the weights of the assets.
-
-# Notes
-
-  - `scale`: typically used when combining different risk measures in a single optimisation.
-
-# Examples
-
-```@example
-# Default settings
-settings = HCRMSettings()
-
-# Contribute more risk to the risk expression
-settings = HCRMSettings(; scale = 2.5)
+```julia
+# Hierarchical equal risk optimisation.
+type = HERC(;
+            rm = [
+                  # Add to the risk calculation (via `AbstractScalarisation`)
+                  # as `0.5 * dar_risk`.
+                  DaR(; settings = HCRMSettings(; scale = 0.5)),
+                  # Add to the risk calculation (via `AbstractScalarisation`)
+                  # as `3 * var_risk`.
+                  VaR(; settings = HCRMSettings(; scale = 3))])
+optimise!(port, type)
 ```
 """
 mutable struct HCRMSettings{T1 <: Real}
@@ -325,141 +341,96 @@ end
 """
     abstract type VarianceFormulation end
 
-# Description
+Abstract type for implementing various formulations of the [`Variance`](@ref) as an optimisation model.
 
-Base type for implementing various approaches to Mean-Variance and standard deviation calculation strategies in [`Portfolio`](@ref) optimisation, each offering different computational and numerical properties.
-
-See also: [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
-
-# Type Hierarchy
-
-Direct subtypes:
-
-  - [`SDSquaredFormulation`](@ref): for quadratic expressions of the variance.
-  - [`SimpleSD`](@ref): for direct standard deviation optimisation.
-
-# Behaviour
-
-## [`Portfolio`](@ref) Optimisation
-
-  - Concrete subtypes define how standard deviation/variance is represented in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
-  - Choice of formulation can significantly impact solver performance and numerical stability.
-  - Each formulation may have different solver compatibility requirements.
-
-## Optimisation
-
-  - No effect.
+See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref).
 """
 abstract type VarianceFormulation end
 
 """
-    abstract type SDSquaredFormulation <: VarianceFormulation end
+    struct Quad <: VarianceFormulation end
 
-# Description
-
-Abstract type for Mean-Variance formulations using quadratic variance expressions for [`Portfolio`](@ref) optimisations.
-
-These formulations work with the variance form of risk:
+Explicit quadratic formulation for the [`Variance`](@ref) as an optimisation model.
 
 ```math
 \\begin{align}
-\\sigma^2 &= \\bm{w}^{\\intercal} \\mathbf{\\Sigma} \\bm{w}\\,.
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\\\
 \\end{align}
 ```
 
 Where:
 
-  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+  - ``\\bm{w}``: is the `N×1` vector of weights.
   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
-  - ``\\sigma^2`` is the portfolio variance.
 
-See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
-
-# Type Hierarchy
-
-Direct subtypes:
-
-  - [`Quad`](@ref): explicit quadratic formulation of the portfolio variance.
-  - [`SOC`](@ref): second-Order Cone (SOC) formulation of the portfolio variance.
+See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`SD`](@ref).
 
 # Behaviour
 
-  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) for `sd_risk` in the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
-  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - May have different numerical stability properties compared to direct SD formulations.
-  - Risk is expressed in terms of the variance (squared standard deviation).
-"""
-abstract type SDSquaredFormulation <: VarianceFormulation end
-
-"""
-    struct Quad <: SDSquaredFormulation end
-
-# Description
-
-Explicit quadratic formulation for variance-based [`Portfolio`](@ref) optimisation.
-
-Implements the classical quadratic form of portfolio variance:
-
-```math
-\\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\nonumber\\\\
-\\textrm{s.t.} &\\qquad \\sigma^2 = \\bm{w}^\\intercal \\mathbf{\\Sigma} \\bm{w}\\,.
-\\end{align}
-```
-
-Where:
-
-  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
-  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
-  - ``\\sigma^2`` is the portfolio variance.
-
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
-
-# Behaviour
-
-  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dot(w, sigma, w)`.
-  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dot(w, sigma, w)`.
+  - Not compatible with [`NOC`](@ref) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - No additional variables or constraints introduced.
   - Requires a solver capable of handling quadratic objectives.
   - Performance may degrade for large portfolios.
 
 # Examples
 
-```@example
-# Using portfolio's built-in covariance
-sd_risk = SD(; formulation = Quad())
+```julia
+using Clarabel, LinearAlgebra
 
-# Custom configuration with specific covariance matrix
-my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = Quad(), sigma = my_sigma)
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(rets, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+# Compute asset statistics.                                                
+asset_statistics!(port)
+
+# Explicit quadratic expression for the variance.
+w = optimise!(port, Trad(; rm = Variance(; formulation = Quad()), str_names = true))
+
+# Covariance matrix, sigma.
+port.cov
+
+# Check that the variance risk is indeed `dot(w, sigma, w)`.
+port.model[:variance_risk] == dot(port.model[:w], port.cov, port.model[:w])
 ```
 """
-struct Quad <: SDSquaredFormulation end
+struct Quad <: VarianceFormulation end
 
 """
-    struct SOC <: SDSquaredFormulation end
+    struct SOC <: VarianceFormulation end
 
-# Description
-
-Second-Order Cone (SOC) formulation for variance-based [`Portfolio`](@ref) optimisation.
-
-Reformulates the quadratic variance expression using second-order cone constraints:
+Second-Order Cone (SOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
 
 ```math
 \\begin{align}
 \\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma^2\\nonumber\\\\
-\\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
+\\textrm{s.t.} &\\qquad \\left\\lVert \\mathbf{\\G} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
 \\end{align}
 ```
 
 Where:
 
   - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
-  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+  - ``\\mathbf{\\G}`` is a suitable factorisation of the `N×N` covariance matrix, such as the square root matrix, or the Cholesky factorisation.
   - ``\\sigma^2`` is the portfolio variance.
-  - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
+  - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm, which is modelled as a [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
 
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`SD`](@ref).
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SD`](@ref).
 
 # Behaviour
 
@@ -484,59 +455,58 @@ my_sigma = [1.0 0.2; 0.2 1.0]
 sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SOC(), sigma = my_sigma)
 ```
 
-See also: [`SD`](@ref), [`SDSquaredFormulation`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref).
+See also: [`SD`](@ref), [`VarianceFormulation`](@ref), [`Quad`](@ref).
 """
-struct SOC <: SDSquaredFormulation end
+struct SOC <: VarianceFormulation end
 
-"""
-    struct SimpleSD <: VarianceFormulation end
+# """
+#     struct SimpleSD <: VarianceFormulation end
 
-# Description
+# # Description
 
-Linear standard deviation formulation using Second-Order Cone constraints for [`Portfolio`](@ref) optimisations.
+# Linear standard deviation formulation using Second-Order Cone constraints for [`Portfolio`](@ref) optimisations.
 
-Reformulates the affine standard deviation expression using second-order cone constraints:
+# Reformulates the affine standard deviation expression using second-order cone constraints:
 
-```math
-\\begin{align}
-\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma\\nonumber\\\\
-\\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
-\\end{align}
-```
+# ```math
+# \\begin{align}
+# \\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\sigma\\nonumber\\\\
+# \\textrm{s.t.} &\\qquad \\left\\lVert \\sqrt{\\mathbf{\\Sigma}} \\bm{w} \\right\\rVert_{2} \\leq \\sigma\\,.
+# \\end{align}
+# ```
 
-Where:
+# Where:
 
-  - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
-  - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
-  - ``\\sigma`` is the portfolio standard deviation.
-  - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
+#   - ``\\bm{w}`` is the `N×1` vector of portfolio weights.
+#   - ``\\mathbf{\\Sigma}`` is the `N×N` covariance matrix.
+#   - ``\\sigma`` is the portfolio standard deviation.
+#   - ``\\lVert \\cdot \\rVert_{2}`` is the L-2 norm.
 
-See also: [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SD`](@ref).
+# See also: [`VarianceFormulation`](@ref), [`VarianceFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SD`](@ref).
 
-# Behaviour
+# # Behaviour
 
-  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
-  - Defines a standard deviation variable `dev`.
-  - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
-  - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
-  - Direct optimisation of standard deviation rather than variance.
-  - Often better numerical properties than squared formulations.
-  - Compatible with specialised conic solvers.
-  - May provide more intuitive results as risk is in same units as returns.
+#   - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+#   - Defines a standard deviation variable `dev`.
+#   - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
+#   - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
+#   - Direct optimisation of standard deviation rather than variance.
+#   - Often better numerical properties than squared formulations.
+#   - Compatible with specialised conic solvers.
+#   - May provide more intuitive results as risk is in same units as returns.
 
-# Examples
+# # Examples
 
-```@example
-# Using portfolio's built-in covariance
-sd_risk = SD(; formulation = SimpleSD())
+# ```@example
+# # Using portfolio's built-in covariance
+# sd_risk = SD(; formulation = SimpleSD())
 
-# Custom configuration with specific covariance matrix
-my_sigma = [1.0 0.2; 0.2 1.0]
-sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SimpleSD(),
-             sigma = my_sigma)
-```
-"""
-struct SimpleSD <: VarianceFormulation end
+# # Custom configuration with specific covariance matrix
+# my_sigma = [1.0 0.2; 0.2 1.0]
+# sd_risk = SD(; settings = RMSettings(; scale = 2.0), formulation = SimpleSD(),
+#              sigma = my_sigma)
+# ```
+# """
 
 """
     mutable struct SD <: RiskMeasure
@@ -551,7 +521,7 @@ struct SimpleSD <: VarianceFormulation end
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`SDSquaredFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`SimpleSD`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`VarianceFormulation`](@ref), [`VarianceFormulation`](@ref), [`SOC`](@ref), [`Quad`](@ref), [`MAD`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`PortClass`](@ref), [`calc_risk(::SD, ::AbstractVector)`](@ref).
 
 ## [`Portfolio`](@ref)
 
@@ -585,7 +555,6 @@ Implements portfolio Standard Deviation risk.
 
   - [`Quad`](@ref): Direct quadratic implementation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - [`SOC`](@ref): Second-order cone formulation of variance, [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr). Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - [`SimpleSD`](@ref): Standard deviation Second-order cone constraints, [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr). Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
 
 # Examples
 
@@ -2556,7 +2525,7 @@ struct Ellipse <: WCSetMuSigma end
 """
 ```
 @kwdef mutable struct NoWC <: WorstCaseSet
-    formulation::SDSquaredFormulation = SOC()
+    formulation::VarianceFormulation = SOC()
 end
 ```
 
@@ -2564,12 +2533,12 @@ Use no set for worst case mean variance optimisation.
 
 # Parameters
 
-  - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`SDSquaredFormulation`](@ref).
+  - `formulation`: quadratic expression formulation of [`SD`](@ref) risk measure to use [`VarianceFormulation`](@ref).
 """
 mutable struct NoWC <: WCSetMu
-    formulation::SDSquaredFormulation
+    formulation::VarianceFormulation
 end
-function NoWC(; formulation::SDSquaredFormulation = SOC())
+function NoWC(; formulation::VarianceFormulation = SOC())
     return NoWC(formulation)
 end
 
@@ -3480,8 +3449,9 @@ const RMSigma = Union{SD, Variance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
 
-export RiskMeasure, HCRiskMeasure, RMSettings, HCRMSettings, Quad, SOC, SimpleSD, SD, MAD,
-       SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, Kurt,
-       SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-       Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC
+export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings,
+       VarianceFormulation, Quad, SOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD,
+       ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG,
+       OWA, BDVariance, Skew, SSkew, Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r,
+       CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
+       Ellipse, NoWC
