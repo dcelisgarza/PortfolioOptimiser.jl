@@ -160,7 +160,22 @@ function sharpe_ratio(port::AbstractPortfolio, key = :Trad;
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sr
 end
-
+function sharpe_ratio_info_criteria(port::AbstractPortfolio, key = :Trad;
+                                    X::AbstractMatrix = port.returns,
+                                    mu::AbstractVector = port.mu,
+                                    rm::AbstractRiskMeasure = Variance(),
+                                    delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false)
+    solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
+                                                                        port.cov, port.V,
+                                                                        port.SV)
+    sric = sharpe_ratio_info_criteria(rm, port.optimal[key].weights; mu = mu, X = X,
+                                      delta = delta, rf = rf, kelly = kelly,
+                                      long_fees = port.long_fees,
+                                      short_fees = port.short_fees,
+                                      rebalance = port.rebalance)
+    unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
+    return sric
+end
 """
 ```
 number_effective_assets(port; type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP)

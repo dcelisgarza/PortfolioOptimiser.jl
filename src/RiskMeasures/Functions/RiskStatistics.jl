@@ -330,5 +330,18 @@ function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
     risk = calc_risk(rm, w; X = X, delta = delta, fees = fees)
     return (ret - rf) / risk
 end
+function sharpe_ratio_info_criteria(rm::AbstractRiskMeasure, w::AbstractVector;
+                                    mu::AbstractVector = Vector{Float64}(undef, 0),
+                                    X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                    delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false,
+                                    long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                                    short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                                    rebalance::AbstractTR = NoTR())
+    T, N = size(X)
+    sr = sharpe_ratio(rm, w; mu = mu, X = X, delta = delta, rf = rf, kelly = kelly,
+                      long_fees = long_fees, short_fees = short_fees, rebalance = rebalance)
+    return sr - N / (T * sr)
+end
 
-export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio
+export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
+       sharpe_ratio_info_criteria

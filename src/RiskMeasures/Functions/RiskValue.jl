@@ -330,7 +330,7 @@ function calc_fees(w::AbstractVector, long_fees::Union{AbstractVector{<:Real}, R
         sum(short_fees * w[idx])
     elseif isa(short_fees, AbstractVector) &&
            !(isempty(short_fees) || all(iszero.(short_fees)))
-        idx = w .>= zero(eltype(w))
+        idx = w .< zero(eltype(w))
         dot(short_fees[idx], w[idx])
     else
         zero(eltype(w))

@@ -2,7 +2,7 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function cleanup_weights(port, ::Sharpe, ::Trad, ::Any)
+function cleanup_weights(port, ::Trad, ::Any)
     val_k = value(port.model[:k])
     val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k
@@ -15,32 +15,21 @@ function cleanup_weights(port, ::Sharpe, ::Trad, ::Any)
     end
     return weights
 end
-function cleanup_weights(port, ::Any, ::Trad, ::Any)
-    weights = value.(port.model[:w])
-    short = port.short
-    budget = port.budget
-    if short == false
-        sum_w = sum(abs.(weights))
-        sum_w = sum_w > eps() ? sum_w : 1
-        weights .= abs.(weights) / sum_w * budget
-    end
-    return weights
-end
-function cleanup_weights(port, ::Any, ::RB, ::FC)
+function cleanup_weights(port, ::RB, ::FC)
     weights = value.(port.model[:w])
     sum_w = value(port.model[:k])
     sum_w = abs(sum_w) > eps() ? sum_w : 1
     weights .= weights / sum_w
     return weights
 end
-function cleanup_weights(port, ::Any, ::Union{RB, NOC}, ::Any)
+function cleanup_weights(port, ::Union{RB, NOC}, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
     weights .= abs.(weights) / sum_w
     return weights
 end
-function cleanup_weights(port, ::Any, ::RRB, ::Any)
+function cleanup_weights(port, ::RRB, ::Any)
     weights = value.(port.model[:w])
     sum_w = sum(abs.(weights))
     sum_w = sum_w > eps() ? sum_w : 1
@@ -54,7 +43,7 @@ function finilise_fees(port, weights)
     short_fees = zero(eltype(weights))
     rebal_fees = zero(eltype(weights))
     total_fees = zero(eltype(weights))
-    if haskey(model, :long_fee)
+    if haskey(model, :long_fees)
         idx = weights .>= zero(eltype(weights))
         long_fees = port.long_fees
         long_fees = if isa(long_fees, Real)
@@ -65,7 +54,7 @@ function finilise_fees(port, weights)
         total_fees += long_fees
         fees[:long_fees] = long_fees
     end
-    if haskey(model, :short_fee)
+    if haskey(model, :short_fees)
         idx = weights .< zero(eltype(weights))
         short_fees = port.short_fees
         short_fees = if isa(short_fees, Real)
@@ -76,7 +65,7 @@ function finilise_fees(port, weights)
         total_fees += short_fees
         fees[:short_fees] = short_fees
     end
-    if haskey(model, :rebalance_fee)
+    if haskey(model, :rebalance_fees)
         rebalance = port.rebalance
         rebal_fees = rebalance.val
         benchmark = rebalance.w
@@ -148,22 +137,23 @@ function optimise_portfolio_model(port, obj, type, class)
             term_status = termination_status(model)
         end
 
-        weights = cleanup_weights(port, obj, type, class)
-
+        weights = cleanup_weights(port, type, class)
+        fees = finilise_fees(port, weights)
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
                           :term_status => term_status,
                           :params => haskey(val, :params) ? val[:params] : missing,
                           :finite_weights => all_finite_weights,
                           :nonzero_weights => all_non_zero_weights,
-                          :port => DataFrame(; tickers = port.assets, weights = weights)))
+                          :port => DataFrame(; tickers = port.assets, weights = weights),
+                          :fees => fees))
     end
 
     return if success
         if !isempty(solvers_tried)
             port.fail = solvers_tried
         end
-        weights = cleanup_weights(port, obj, type, class)
+        weights = cleanup_weights(port, type, class)
         fees = finilise_fees(port, weights)
         if !isempty(fees)
             port.optimal[Symbol(String(type) * "_fees")] = fees

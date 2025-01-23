@@ -1,21 +1,5 @@
 using SafeTestsets
 
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vector" begin
-    include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
@@ -102,4 +86,20 @@ end
 
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vector" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
 end

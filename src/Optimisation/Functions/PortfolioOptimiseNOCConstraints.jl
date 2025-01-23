@@ -140,9 +140,9 @@ function noc_risk_ret(port::Portfolio, type)
         ret2 = dot(mu, w2) - fees2
         ret3 = dot(mu, w3) - fees3
     else
-        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1) - fees1
-        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1) - fees2
-        ret3 = sum(log.(one(eltype(mu)) .+ returns * w3)) / size(returns, 1) - fees3
+        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) - fees1
+        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) - fees2
+        ret3 = sum(log.(one(eltype(returns)) .+ returns * w3)) / size(returns, 1) - fees3
     end
 
     risk1, risk2, risk3 = noc_risks(scalarisation, rm, port, returns, sigma, w1, w2, w3,

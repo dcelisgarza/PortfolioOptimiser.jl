@@ -24,7 +24,7 @@ function optimise!(port::Portfolio, type::Trad)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fee(port)
+    rebalance_fees(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -58,7 +58,7 @@ function optimise!(port::Portfolio, type::RB)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fee(port)
+    rebalance_fees(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -93,7 +93,7 @@ function optimise!(port::Portfolio, type::RRB)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fee(port)
+    rebalance_fees(port)
     # Risk
     rrb_opt_constraints(port, version, sigma)
     # Returns
@@ -133,7 +133,7 @@ function optimise!(port::Portfolio, type::NOC)
     end
     # Fees
     management_fee(port)
-    rebalance_fee(port)
+    rebalance_fees(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -212,8 +212,8 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad
         ret1 = dot(mu, w1) - fees1
         ret2 = dot(mu, w2) - fees2
     else
-        ret1 = sum(log.(one(eltype(mu)) .+ returns * w1)) / size(returns, 1) - fees1
-        ret2 = sum(log.(one(eltype(mu)) .+ returns * w2)) / size(returns, 1) - fees2
+        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) - fees1
+        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) - fees2
     end
 
     rm_i = get_first_rm(rm)
