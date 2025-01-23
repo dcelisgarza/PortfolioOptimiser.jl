@@ -172,7 +172,6 @@ function optimise_portfolio_model(port, obj, type, class)
     else
         @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         port.fail = solvers_tried
-        port.optimal[Symbol(type * "_fees")] = Dict{Symbol, eltype(weights)}()
         port.optimal[Symbol(type)] = DataFrame()
     end
 end

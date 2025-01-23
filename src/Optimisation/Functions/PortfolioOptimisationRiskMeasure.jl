@@ -396,13 +396,15 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
     scale_constr = model[:scale_constr]
     w = model[:w]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
     end
-    mar = returns .- transpose(mu)
     @variable(model, mad[1:T] .>= 0)
     @expression(model, mad_risk, 2 * sum(mad) / T)
-    @constraint(model, constr_mar_mad, scale_constr * mar * w .>= scale_constr * -mad)
+    @constraint(model, constr_mar_mad,
+                scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -mad)
     set_rm_risk_upper_bound(type, model, mad_risk, rm.settings.ub, "mad_risk")
     set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -413,6 +415,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     scale_constr = model[:scale_constr]
     w = model[:w]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     iT2 = 2 * inv(T)
     count = length(rms)
     @variable(model, mad[1:T, 1:count] .>= 0)
@@ -421,9 +425,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        mar = returns .- transpose(mu)
         model[Symbol("constr_mar_mad_$(i)")] = @constraint(model,
-                                                           scale_constr * mar * w .>=
+                                                           scale_constr *
+                                                           (net_X .- dot(mu, w)) .>=
                                                            scale_constr * -view(mad, :, i))
         add_to_expression!(mad_risk[i], iT2, sum(view(mad, :, i)))
         set_rm_risk_upper_bound(type, model, mad_risk[i], rm.settings.ub, "mad_risk_$(i)")
@@ -466,10 +470,11 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
     end
-    mar = returns .- transpose(mu)
     target = rm.target
     @variable(model, svariance[1:T])
     semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
@@ -478,7 +483,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
                      constr_svariance_target,
                      scale_constr * svariance .>= scale_constr * target * k
                      constr_svariance_mar,
-                     scale_constr * mar * w .>= scale_constr * -svariance
+                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance
                  end)
     svariance_risk = model[:svariance_risk]
     set_rm_risk_upper_bound(type, model, svariance_risk, rm.settings.ub, "svariance_risk")
@@ -494,6 +499,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     iTm1 = inv(T - 1)
     count = length(rms)
     @variable(model, svariance[1:T, 1:count])
@@ -502,7 +509,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        mar = returns .- transpose(mu)
         target = rm.target
         model[Symbol("constr_svariance_target_$(i)")], model[Symbol("constr_svariance_mar_$(i)")] = @constraints(model,
                                                                                                                  begin
@@ -514,8 +520,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                                                                                                                      target *
                                                                                                                      k
                                                                                                                      scale_constr *
-                                                                                                                     mar *
-                                                                                                                     w .>=
+                                                                                                                     (net_X .-
+                                                                                                                      dot(mu,
+                                                                                                                          w)) .>=
                                                                                                                      scale_constr *
                                                                                                                      -view(svariance,
                                                                                                                            :,
@@ -536,10 +543,11 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
     end
-    mar = returns .- transpose(mu)
     target = rm.target
     @variables(model, begin
                    ssd[1:T]
@@ -549,7 +557,8 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
     @constraints(model,
                  begin
                      constr_ssd_target, scale_constr * ssd .>= scale_constr * target * k
-                     constr_ssd_mar, scale_constr * mar * w .>= scale_constr * -ssd
+                     constr_ssd_mar,
+                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -ssd
                      constr_sdev_soc,
                      [scale_constr * sdev; scale_constr * ssd] ∈ SecondOrderCone()
                  end)
@@ -565,6 +574,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     iTm1 = inv(sqrt(T - 1))
     count = length(rms)
     @variable(model, ssd[1:T, 1:count])
@@ -574,7 +585,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        mar = returns .- transpose(mu)
         target = rm.target
         model[Symbol("constr_ssd_target_$(i)")], model[Symbol("constr_ssd_mar_$(i)")], model[Symbol("constr_sdev_soc_$(i)")] = @constraints(model,
                                                                                                                                             begin
@@ -586,8 +596,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
                                                                                                                                                 target *
                                                                                                                                                 k
                                                                                                                                                 scale_constr *
-                                                                                                                                                mar *
-                                                                                                                                                w .>=
+                                                                                                                                                (net_X .-
+                                                                                                                                                 dot(mu,
+                                                                                                                                                     w)) .>=
                                                                                                                                                 scale_constr *
                                                                                                                                                 -view(ssd,
                                                                                                                                                       :,
@@ -613,16 +624,21 @@ function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RB, NOC};
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     ret_target = rm.ret_target
     if isinf(ret_target)
         ret_target = port.mu
     end
+    if !isa(ret_target, AbstractVector)
+        ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+    end
     target = rm.target
-    mar = returns .- transpose(ret_target)
     @variable(model, flpm[1:T] .>= 0)
     @expression(model, flpm_risk, sum(flpm) / T)
     @constraint(model, constr_flpm,
-                scale_constr * flpm .>= scale_constr * (target * k .- mar * w))
+                scale_constr * flpm .>=
+                scale_constr * (target * k .- (net_X .- dot(ret_target, w))))
     set_rm_risk_upper_bound(type, model, flpm_risk, rm.settings.ub, "flpm_risk")
     set_risk_expression(model, flpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -634,6 +650,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     iT = inv(T)
     count = length(rms)
     @variable(model, flpm[1:T, 1:count] .>= 0)
@@ -643,13 +661,15 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
         if isinf(ret_target)
             ret_target = port.mu
         end
+        if !isa(ret_target, AbstractVector)
+            ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+        end
         target = rm.target
-        mar = returns .- transpose(ret_target)
         add_to_expression!(flpm_risk[i], iT, sum(view(flpm, :, i)))
         model[Symbol("constr_flpm_$(i)")] = @constraint(model,
                                                         scale_constr * view(flpm, :, i) .>=
-                                                        scale_constr *
-                                                        (target * k .- mar * w))
+                                                        scale_constr * (target * k .-
+                                                                        (net_X .- dot(ret_target, w))))
         set_rm_risk_upper_bound(type, model, flpm_risk[i], rm.settings.ub, "flpm_risk_$(i)")
         set_risk_expression(model, flpm_risk[i], rm.settings.scale, rm.settings.flag)
     end
@@ -662,12 +682,16 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     ret_target = rm.ret_target
     if isinf(ret_target)
         ret_target = port.mu
     end
+    if !isa(ret_target, AbstractVector)
+        ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+    end
     target = rm.target
-    mar = returns .- transpose(ret_target)
     @variables(model, begin
                    slpm[1:T] .>= 0
                    tslpm
@@ -676,7 +700,8 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
     @constraints(model,
                  begin
                      constr_slpm,
-                     scale_constr * slpm .>= scale_constr * (target * k .- mar * w)
+                     scale_constr * slpm .>=
+                     scale_constr * (target * k .- (net_X .- dot(ret_target, w)))
                      constr_slpm_soc,
                      [scale_constr * tslpm; scale_constr * slpm] ∈ SecondOrderCone()
                  end)
@@ -691,6 +716,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
     w = model[:w]
     k = model[:k]
     T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     iTm1 = sqrt(inv(T - 1))
     count = length(rms)
     @variables(model, begin
@@ -703,8 +730,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
         if isinf(ret_target)
             ret_target = port.mu
         end
+        if !isa(ret_target, AbstractVector)
+            ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+        end
         target = rm.target
-        mar = returns .- transpose(ret_target)
         add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
         model[Symbol("constr_slpm_$(i)")], model[Symbol("constr_slpm_soc_$(i)")] = @constraints(model,
                                                                                                 begin
@@ -715,8 +744,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
                                                                                                     scale_constr *
                                                                                                     (target *
                                                                                                      k .-
-                                                                                                     mar *
-                                                                                                     w)
+                                                                                                     (net_X .-
+                                                                                                      dot(ret_target,
+                                                                                                          w)))
                                                                                                     [scale_constr *
                                                                                                      tslpm[i]
                                                                                                      scale_constr *
