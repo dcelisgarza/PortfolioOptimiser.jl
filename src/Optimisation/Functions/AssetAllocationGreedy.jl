@@ -86,18 +86,15 @@ function greedy_sub_allocation!(tickers, weights, latest_prices, investment, rou
 
     return tickers, shares, latest_prices, cost, allocated_weights, available_funds
 end
-function greedy_allocation!(port, port_key, latest_prices, investment, short, budget,
-                            short_budget, rounding)
+function greedy_allocation!(port, port_key, investment, rounding)
     key = Symbol("Greedy_" * string(port_key))
 
     weights = port.optimal[port_key].weights
     tickers = port.assets
-
-    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(weights,
-                                                                               investment,
-                                                                               short,
-                                                                               budget,
-                                                                               short_budget)
+    latest_prices = port.latest_prices
+    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(port,
+                                                                               weights,
+                                                                               investment)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = greedy_sub_allocation!(tickers[long_idx],
                                                                                                                              weights[long_idx],
@@ -124,9 +121,6 @@ function greedy_allocation!(port, port_key, latest_prices, investment, short, bu
     return port.alloc_optimal[key]
 end
 function allocate!(port::AbstractPortfolio, type::Greedy; key::Symbol = :Trad,
-                   latest_prices = port.latest_prices, investment::Real = 1e6,
-                   short = port.short, budget = port.budget,
-                   short_budget = port.short_budget, keargs...)
-    return greedy_allocation!(port, key, latest_prices, investment, short, budget,
-                              short_budget, type.rounding)
+                   investment::Real = 1e6, kwargs...)
+    return greedy_allocation!(port, key, investment, type.rounding)
 end

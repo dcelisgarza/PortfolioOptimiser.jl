@@ -68,7 +68,7 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
                           cluster_adj = IP(; A = A))
     portfolio = Portfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
-                          short_fees = fill(3, N), bl_bench_weights = 2 * (1:N),
+                          short_fees = fill(-3, N), bl_bench_weights = 2 * (1:N),
                           rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
                           tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),

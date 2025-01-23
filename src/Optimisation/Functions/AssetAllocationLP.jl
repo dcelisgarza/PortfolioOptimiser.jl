@@ -148,18 +148,17 @@ function combine_allocations!(port, key, long_tickers, short_tickers, long_share
 
     return nothing
 end
-function lp_allocation!(port, port_key, latest_prices, investment, short, budget,
-                        short_budget, string_names)
+function lp_allocation!(port, port_key, investment, string_names)
     key = Symbol("LP_" * string(port_key))
 
     weights = port.optimal[port_key].weights
     tickers = port.assets
 
-    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(weights,
-                                                                               investment,
-                                                                               short,
-                                                                               budget,
-                                                                               short_budget)
+    latest_prices = port.latest_prices
+
+    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(port,
+                                                                               weights,
+                                                                               investment)
 
     long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = lp_sub_allocation!(port,
                                                                                                                          :long,
@@ -192,9 +191,6 @@ function lp_allocation!(port, port_key, latest_prices, investment, short, budget
     return port.alloc_optimal[key]
 end
 function allocate!(port::AbstractPortfolio, ::LP; key::Symbol = :Trad,
-                   latest_prices = port.latest_prices, investment::Real = 1e6,
-                   short = port.short, budget = port.budget,
-                   short_budget = port.short_budget, string_names::Bool = false)
-    return lp_allocation!(port, key, latest_prices, investment, short, budget, short_budget,
-                          string_names)
+                   investment::Real = 1e6, string_names::Bool = false)
+    return lp_allocation!(port, key, investment, string_names)
 end
