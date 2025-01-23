@@ -56,9 +56,15 @@ r1, r2 = risk_bounds(CVaR(), w1, w2; X = returns)
 """
 function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVector;
                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-                     scale::Bool = false, kwargs...)
-    r1 = calc_risk(rm, w1; X = X, delta = delta, scale = scale, kwargs...)
-    r2 = calc_risk(rm, w2; X = X, delta = -delta, scale = scale, kwargs...)
+                     scale::Bool = false,
+                     long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                     short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                     rebalance::AbstractTR = NoTR(), fees1 = nothing, fees2 = nothing,
+                     kwargs...)
+    r1 = calc_risk(rm, w1; X = X, delta = delta, scale = scale, long_fees = long_fees,
+                   short_fees = short_fees, rebalance = rebalance, fees = fees1, kwargs...)
+    r2 = calc_risk(rm, w2; X = X, delta = -delta, scale = scale, long_fees = long_fees,
+                   short_fees = short_fees, rebalance = rebalance, fees = fees2, kwargs...)
     return r1, r2
 end
 
@@ -115,7 +121,10 @@ rc = risk_contribution(CVaR(), w; X = returns)
 """
 function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                            X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                           delta::Real = 1e-6, marginal::Bool = false, kwargs...)
+                           delta::Real = 1e-6, marginal::Bool = false,
+                           long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                           short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                           rebalance::AbstractTR = NoTR(), kwargs...)
     N = length(w)
     ew = eltype(w)
     rc = Vector{ew}(undef, N)
@@ -131,7 +140,9 @@ function risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
         w2 .= w
         w2[i] -= delta
 
-        r1, r2 = risk_bounds(rm, w1, w2; X = X, delta = delta, scale = true, kwargs...)
+        r1, r2 = risk_bounds(rm, w1, w2; X = X, delta = delta, scale = true,
+                             long_fees = long_fees, short_fees = short_fees,
+                             rebalance = rebalance, kwargs...)
 
         rci = (r1 - r2) / (2 * delta)
         if !marginal
@@ -251,9 +262,14 @@ function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
                                   f_assets::AbstractVector = Vector{String}(undef, 0),
                                   B::DataFrame = DataFrame(),
                                   regression_type::RegressionType = FReg(),
-                                  delta::Real = 1e-6, kwargs...)
+                                  delta::Real = 1e-6,
+                                  long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                                  short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                                  rebalance::AbstractTR = NoTR(), kwargs...)
     marginal_risk = risk_contribution(rm, w; X = X, delta = delta, marginal = true,
-                                      scale = true, kwargs...)
+                                      scale = true, long_fees = long_fees,
+                                      short_fees = short_fees, rebalance = rebalance,
+                                      kwargs...)
 
     if isempty(B)
         B = regression(regression_type, DataFrame(F, f_assets), DataFrame(X, assets))
@@ -301,13 +317,17 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
 function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-                      rf::Real = 0.0, kelly::Bool = false)
-    ret = if kelly
-        1 / size(X, 1) * sum(log.(one(eltype(X)) .+ X * w))
+                      rf::Real = 0.0, kelly::Bool = false,
+                      long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                      short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                      rebalance::AbstractTR = NoTR())
+    fees = calc_fees(w, long_fees, short_fees, rebalance)
+    ret = if !kelly
+        dot(mu, w) - fees
     else
-        dot(mu, w)
+        sum(log.(one(eltype(X)) .+ X * w)) / size(X, 1) - fees
     end
-    risk = calc_risk(rm, w; X = X, delta = delta)
+    risk = calc_risk(rm, w; X = X, delta = delta, fees = fees)
     return (ret - rf) / risk
 end
 

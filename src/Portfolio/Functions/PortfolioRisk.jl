@@ -27,8 +27,8 @@ function calc_risk(port::AbstractPortfolio, key = :Trad; X::AbstractMatrix = por
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-
-    risk = calc_risk(rm, port.optimal[key].weights; X = X)
+    risk = calc_risk(rm, port.optimal[key].weights; X = X, long_fees = port.long_fees,
+                     short_fees = port.short_fees, rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -67,8 +67,10 @@ function risk_contribution(port::AbstractPortfolio, key = :Trad;
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
+
     risk = risk_contribution(rm, port.optimal[key].weights; X = X, delta = delta,
-                             marginal = marginal)
+                             marginal = marginal, long_fees = port.long_fees,
+                             short_fees = port.short_fees, rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -108,7 +110,9 @@ function factor_risk_contribution(port::AbstractPortfolio, key = :Trad;
                                     assets = port.assets, F = F, f_assets = port.f_assets,
                                     B = port.loadings,
                                     regression_type = port.regression_type, delta = delta,
-                                    scale = true)
+                                    long_fees = port.long_fees,
+                                    short_fees = port.short_fees,
+                                    rebalance = port.rebalance, scale = true)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -150,10 +154,11 @@ function sharpe_ratio(port::AbstractPortfolio, key = :Trad;
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    risk = sharpe_ratio(rm, port.optimal[key].weights; mu = mu, X = X, delta = delta,
-                        rf = rf, kelly = kelly)
+    sr = sharpe_ratio(rm, port.optimal[key].weights; mu = mu, X = X, delta = delta, rf = rf,
+                      kelly = kelly, long_fees = port.long_fees,
+                      short_fees = port.short_fees, rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
-    return risk
+    return sr
 end
 
 """

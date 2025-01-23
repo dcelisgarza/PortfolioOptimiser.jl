@@ -2,11 +2,32 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function naive_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
+function get_cluster_fees(port, cluster)
+    long_fees = port.long_fees
+    rebalance = port.rebalance
+
+    if isa(long_fees, AbstractVector) && !(isempty(long_fees) || all(iszero.(long_fees)))
+        long_fees = long_fees[cluster]
+    end
+
+    if isa(rebalance, TR)
+        rebal_fees = rebalance.val
+        benchmark = rebalance.w
+        if isa(rebal_fees, AbstractVector)
+            rebal_fees = rebal_fees[cluster]
+        end
+        rebalance = TR(; val = rebal_fees, w = benchmark[cluster])
+    end
+
+    return long_fees, rebalance
+end
+function naive_risk(port::AbstractPortfolio, sigma, returns, cluster,
+                    rm::Union{RiskMeasure, HCRiskMeasure})
     sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
     cret = view(returns, :, cluster)
+    clong_fees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = naive_risk(rm, cret)
+    crisk = naive_risk(rm, cret, clong_fees, crebalance)
     unset_hc_rm_sigma!(rm, sigma_old)
     unset_hc_rm_skew!(rm, old_V, old_skew)
     return crisk

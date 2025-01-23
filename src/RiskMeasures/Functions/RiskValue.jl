@@ -311,17 +311,70 @@ equal_risk = calc_risk(equal_rm, w)
 function calc_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return equal(w, delta)
 end
+function calc_fees(w::AbstractVector, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   rebalance::AbstractTR = NoTR())
+    long_fees = if isa(long_fees, Real) && !iszero(long_fees)
+        idx = w .>= zero(eltype(w))
+        sum(long_fees * w[idx])
+    elseif isa(long_fees, AbstractVector) &&
+           !(isempty(long_fees) || all(iszero.(long_fees)))
+        idx = w .>= zero(eltype(w))
+        dot(long_fees[idx], w[idx])
+    else
+        zero(eltype(w))
+    end
+
+    short_fees = if isa(short_fees, Real) && !iszero(short_fees)
+        idx = w .< zero(eltype(w))
+        sum(short_fees * w[idx])
+    elseif isa(short_fees, AbstractVector) &&
+           !(isempty(short_fees) || all(iszero.(short_fees)))
+        idx = w .>= zero(eltype(w))
+        dot(short_fees[idx], w[idx])
+    else
+        zero(eltype(w))
+    end
+
+    rebal_fees = if isa(rebalance, TR)
+        rebal_fees = rebalance.val
+        benchmark = rebalance.w
+        if isa(rebal_fees, Real)
+            sum(rebal_fees * abs.(benchmark .- w))
+        else
+            dot(rebal_fees, abs.(benchmark .- w))
+        end
+    else
+        zero(eltype(w))
+    end
+
+    return long_fees + short_fees + rebal_fees
+end
 function calc_risk(rm::Union{MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, DRCVaR, EVaR,
                              RLVaR, DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r,
                              ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG,
                              TGRG, OWA, BDVariance, TCM, TLPM, FTCM, FTLPM, Skewness,
                              SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
-                   X::AbstractMatrix, kwargs...)
-    return rm(X * w)
+                   X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
+    fees = if isnothing(fees)
+        calc_fees(w, long_fees, short_fees, rebalance)
+    else
+        zero(eltype(w))
+    end
+    return rm(X * w .- fees)
 end
 function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
-                   scale::Bool = false, kwargs...)
-    return rm(X * w, scale)
+                   scale::Bool = false, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
+    fees = if isnothing(fees)
+        calc_fees(w, long_fees, short_fees, rebalance)
+    else
+        zero(eltype(w))
+    end
+    return rm(X * w .- fees, scale)
 end
 function calc_risk(rm::Union{SD, Variance, Skew, SSkew}, w::AbstractVector; kwargs...)
     return rm(w)
