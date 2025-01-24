@@ -356,11 +356,11 @@ function set_rm(port, rm::SD, type::Union{Trad, RB, NOC}; sigma::AbstractMatrix{
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    @variable(model, sd_risk)
     use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
     if !use_portfolio_sigma
         sigma = rm.sigma
     end
-    @variable(model, sd_risk)
     G = sqrt(sigma)
     @constraint(model, constr_sd_risk_soc,
                 [scale_constr * sd_risk; scale_constr * G * w] ∈ SecondOrderCone())
@@ -806,10 +806,11 @@ function set_rm(port::Portfolio, rm::CVaR, type::Union{Trad, RB, NOC};
     iat = inv(rm.alpha * T)
     @variables(model, begin
                    var
-                   z_var[1:T] .>= 0
+                   z_cvar[1:T] .>= 0
                end)
-    @expression(model, cvar_risk, var + sum(z_var) * iat)
-    @constraint(model, constr_cvar, scale_constr * z_var .>= scale_constr * (-net_X .- var))
+    @expression(model, cvar_risk, var + sum(z_cvar) * iat)
+    @constraint(model, constr_cvar,
+                scale_constr * z_cvar .>= scale_constr * (-net_X .- var))
     set_rm_risk_upper_bound(type, model, cvar_risk, rm.settings.ub, "cvar_risk")
     set_risk_expression(model, cvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -824,15 +825,16 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaR}, type::Union{Trad, 
     count = length(rms)
     @variables(model, begin
                    var[1:count]
-                   z_var[1:T, 1:count] .>= 0
+                   z_cvar[1:T, 1:count] .>= 0
                end)
     @expression(model, cvar_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         add_to_expression!(cvar_risk[i], var[i])
-        add_to_expression!(cvar_risk[i], iat, sum(view(z_var, :, i)))
+        add_to_expression!(cvar_risk[i], iat, sum(view(z_cvar, :, i)))
         model[Symbol("constr_cvar_$(i)")] = @constraint(model,
-                                                        scale_constr * view(z_var, :, i) .>=
+                                                        scale_constr *
+                                                        view(z_cvar, :, i) .>=
                                                         scale_constr * (-net_X .- var[i]))
         set_rm_risk_upper_bound(type, model, cvar_risk[i], rm.settings.ub, "cvar_risk_$(i)")
         set_risk_expression(model, cvar_risk[i], rm.settings.scale, rm.settings.flag)
@@ -1017,21 +1019,21 @@ function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RB, NOC};
     ibt = inv(rm.beta * T)
     @variables(model, begin
                    var_l
-                   z_var_l[1:T] .>= 0
+                   z_cvar_l[1:T] .>= 0
                    var_h
-                   z_var_h[1:T] .<= 0
+                   z_cvar_h[1:T] .<= 0
                end)
     @expressions(model, begin
-                     cvar_risk_l, var_l + sum(z_var_l) * iat
-                     cvar_risk_h, var_h + sum(z_var_h) * ibt
+                     cvar_risk_l, var_l + sum(z_cvar_l) * iat
+                     cvar_risk_h, var_h + sum(z_cvar_h) * ibt
                      rcvar_risk, cvar_risk_l - cvar_risk_h
                  end)
     @constraints(model,
                  begin
                      constr_cvar_l,
-                     scale_constr * z_var_l .>= scale_constr * (-net_X .- var_l)
+                     scale_constr * z_cvar_l .>= scale_constr * (-net_X .- var_l)
                      constr_cvar_h,
-                     scale_constr * z_var_h .<= scale_constr * (-net_X .- var_h)
+                     scale_constr * z_cvar_h .<= scale_constr * (-net_X .- var_h)
                  end)
 
     set_rm_risk_upper_bound(type, model, rcvar_risk, rm.settings.ub, "rcvar_risk")
@@ -1048,9 +1050,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
     count = length(rms)
     @variables(model, begin
                    var_l[1:count]
-                   z_var_l[1:T, 1:count] .>= 0
+                   z_cvar_l[1:T, 1:count] .>= 0
                    var_h[1:count]
-                   z_var_h[1:T, 1:count] .<= 0
+                   z_cvar_h[1:T, 1:count] .<= 0
                end)
     @expressions(model, begin
                      cvar_risk_l[1:count], zero(AffExpr)
@@ -1064,14 +1066,14 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
         model[Symbol("constr_cvar_l_$(i)")], model[Symbol("constr_cvar_h_$(i)")] = @constraints(model,
                                                                                                 begin
                                                                                                     scale_constr *
-                                                                                                    view(z_var_l,
+                                                                                                    view(z_cvar_l,
                                                                                                          :,
                                                                                                          i) .>=
                                                                                                     scale_constr *
                                                                                                     (-net_X .-
                                                                                                      var_l[i])
                                                                                                     scale_constr *
-                                                                                                    view(z_var_h,
+                                                                                                    view(z_cvar_h,
                                                                                                          :,
                                                                                                          i) .<=
                                                                                                     scale_constr *
@@ -1079,9 +1081,9 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
                                                                                                      var_h[i])
                                                                                                 end)
         add_to_expression!(cvar_risk_l[i], var_l[i])
-        add_to_expression!(cvar_risk_l[i], iat, sum(view(z_var_l, :, i)))
+        add_to_expression!(cvar_risk_l[i], iat, sum(view(z_cvar_l, :, i)))
         add_to_expression!(cvar_risk_h[i], var_h[i])
-        add_to_expression!(cvar_risk_h[i], ibt, sum(view(z_var_h, :, i)))
+        add_to_expression!(cvar_risk_h[i], ibt, sum(view(z_cvar_h, :, i)))
         add_to_expression!(rcvar_risk[i], cvar_risk_l[i])
         add_to_expression!(rcvar_risk[i], -1, cvar_risk_h[i])
         set_rm_risk_upper_bound(type, model, rcvar_risk[i], rm.settings.ub,
@@ -1174,29 +1176,30 @@ function set_rm(port::Portfolio, rm::RLVaR, type::Union{Trad, RB, NOC};
     iopk = inv(opk)
     iomk = inv(omk)
     @variables(model, begin
-                   t_rvar
-                   z_rvar >= 0
-                   omega_rvar[1:T]
-                   psi_rvar[1:T]
-                   theta_rvar[1:T]
-                   epsilon_rvar[1:T]
+                   t_rlvar
+                   z_rlvar >= 0
+                   omega_rlvar[1:T]
+                   psi_rlvar[1:T]
+                   theta_rlvar[1:T]
+                   epsilon_rlvar[1:T]
                end)
-    @expression(model, rvar_risk, t_rvar + lnk * z_rvar + sum(psi_rvar .+ theta_rvar))
+    @expression(model, rlvar_risk, t_rlvar + lnk * z_rlvar + sum(psi_rlvar .+ theta_rlvar))
     @constraints(model,
                  begin
-                     constr_rvar_pcone_a[i = 1:T],
-                     [scale_constr * z_rvar * opk * ik2,
-                      scale_constr * psi_rvar[i] * opk * ik,
-                      scale_constr * epsilon_rvar[i]] ∈ MOI.PowerCone(iopk)
-                     constr_rvar_pcone_b[i = 1:T],
-                     [scale_constr * omega_rvar[i] * iomk,
-                      scale_constr * theta_rvar[i] * ik, scale_constr * -z_rvar * ik2] ∈
+                     constr_rlvar_pcone_a[i = 1:T],
+                     [scale_constr * z_rlvar * opk * ik2,
+                      scale_constr * psi_rlvar[i] * opk * ik,
+                      scale_constr * epsilon_rlvar[i]] ∈ MOI.PowerCone(iopk)
+                     constr_rlvar_pcone_b[i = 1:T],
+                     [scale_constr * omega_rlvar[i] * iomk,
+                      scale_constr * theta_rlvar[i] * ik, scale_constr * -z_rlvar * ik2] ∈
                      MOI.PowerCone(omk)
-                     constr_rvar,
-                     scale_constr * (-net_X .- t_rvar .+ epsilon_rvar .+ omega_rvar) .<= 0
+                     constr_rlvar,
+                     scale_constr * (-net_X .- t_rlvar .+ epsilon_rlvar .+ omega_rlvar) .<=
+                     0
                  end)
-    set_rm_risk_upper_bound(type, model, rvar_risk, rm.settings.ub, "rvar_risk")
-    set_risk_expression(model, rvar_risk, rm.settings.scale, rm.settings.flag)
+    set_rm_risk_upper_bound(type, model, rlvar_risk, rm.settings.ub, "rlvar_risk")
+    set_risk_expression(model, rlvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad, RB, NOC};
@@ -1208,14 +1211,14 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad,
     T = size(returns, 1)
     count = length(rms)
     @variables(model, begin
-                   t_rvar[1:count]
-                   z_rvar[1:count] .>= 0
-                   omega_rvar[1:T, 1:count]
-                   psi_rvar[1:T, 1:count]
-                   theta_rvar[1:T, 1:count]
-                   epsilon_rvar[1:T, 1:count]
+                   t_rlvar[1:count]
+                   z_rlvar[1:count] .>= 0
+                   omega_rlvar[1:T, 1:count]
+                   psi_rlvar[1:T, 1:count]
+                   theta_rlvar[1:T, 1:count]
+                   epsilon_rlvar[1:T, 1:count]
                end)
-    @expression(model, rvar_risk[1:count], zero(AffExpr))
+    @expression(model, rlvar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -1225,52 +1228,53 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaR}, type::Union{Trad,
         ik = inv(rm.kappa)
         iopk = inv(opk)
         iomk = inv(omk)
-        model[Symbol("constr_rvar_pcone_a_$(j)")], model[Symbol("constr_rvar_pcone_b_$(j)")], model[Symbol("constr_rvar_$(j)")] = @constraints(model,
-                                                                                                                                               begin
-                                                                                                                                                   [i = 1:T],
-                                                                                                                                                   [scale_constr *
-                                                                                                                                                    z_rvar[j] *
-                                                                                                                                                    opk *
-                                                                                                                                                    ik2,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    psi_rvar[i,
-                                                                                                                                                             j] *
-                                                                                                                                                    opk *
-                                                                                                                                                    ik,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    epsilon_rvar[i,
-                                                                                                                                                                 j]] ∈
-                                                                                                                                                   MOI.PowerCone(iopk)
-                                                                                                                                                   [i = 1:T],
-                                                                                                                                                   [scale_constr *
-                                                                                                                                                    omega_rvar[i,
-                                                                                                                                                               j] *
-                                                                                                                                                    iomk,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    theta_rvar[i,
-                                                                                                                                                               j] *
-                                                                                                                                                    ik,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    -z_rvar[j] *
-                                                                                                                                                    ik2] ∈
-                                                                                                                                                   MOI.PowerCone(omk)
-                                                                                                                                                   scale_constr *
-                                                                                                                                                   (-net_X .-
-                                                                                                                                                    t_rvar[j] .+
-                                                                                                                                                    view(epsilon_rvar,
-                                                                                                                                                         :,
-                                                                                                                                                         j) .+
-                                                                                                                                                    view(omega_rvar,
-                                                                                                                                                         :,
-                                                                                                                                                         j)) .<=
-                                                                                                                                                   0
-                                                                                                                                               end)
-        add_to_expression!(rvar_risk[j], t_rvar[j])
-        add_to_expression!(rvar_risk[j], lnk, z_rvar[j])
-        add_to_expression!(rvar_risk[j],
-                           sum(view(psi_rvar, :, j) .+ view(theta_rvar, :, j)))
-        set_rm_risk_upper_bound(type, model, rvar_risk[j], rm.settings.ub, "rvar_risk_$(j)")
-        set_risk_expression(model, rvar_risk[j], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_rlvar_pcone_a_$(j)")], model[Symbol("constr_rlvar_pcone_b_$(j)")], model[Symbol("constr_rlvar_$(j)")] = @constraints(model,
+                                                                                                                                                  begin
+                                                                                                                                                      [i = 1:T],
+                                                                                                                                                      [scale_constr *
+                                                                                                                                                       z_rlvar[j] *
+                                                                                                                                                       opk *
+                                                                                                                                                       ik2,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       psi_rlvar[i,
+                                                                                                                                                                 j] *
+                                                                                                                                                       opk *
+                                                                                                                                                       ik,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       epsilon_rlvar[i,
+                                                                                                                                                                     j]] ∈
+                                                                                                                                                      MOI.PowerCone(iopk)
+                                                                                                                                                      [i = 1:T],
+                                                                                                                                                      [scale_constr *
+                                                                                                                                                       omega_rlvar[i,
+                                                                                                                                                                   j] *
+                                                                                                                                                       iomk,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       theta_rlvar[i,
+                                                                                                                                                                   j] *
+                                                                                                                                                       ik,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       -z_rlvar[j] *
+                                                                                                                                                       ik2] ∈
+                                                                                                                                                      MOI.PowerCone(omk)
+                                                                                                                                                      scale_constr *
+                                                                                                                                                      (-net_X .-
+                                                                                                                                                       t_rlvar[j] .+
+                                                                                                                                                       view(epsilon_rlvar,
+                                                                                                                                                            :,
+                                                                                                                                                            j) .+
+                                                                                                                                                       view(omega_rlvar,
+                                                                                                                                                            :,
+                                                                                                                                                            j)) .<=
+                                                                                                                                                      0
+                                                                                                                                                  end)
+        add_to_expression!(rlvar_risk[j], t_rlvar[j])
+        add_to_expression!(rlvar_risk[j], lnk, z_rlvar[j])
+        add_to_expression!(rlvar_risk[j],
+                           sum(view(psi_rlvar, :, j) .+ view(theta_rlvar, :, j)))
+        set_rm_risk_upper_bound(type, model, rlvar_risk[j], rm.settings.ub,
+                                "rlvar_risk_$(j)")
+        set_risk_expression(model, rlvar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
@@ -1492,30 +1496,30 @@ function set_rm(port::Portfolio, rm::RLDaR, type::Union{Trad, RB, NOC};
     iopk = inv(opk)
     iomk = inv(omk)
     @variables(model, begin
-                   t_rdar
-                   z_rdar >= 0
-                   omega_rdar[1:T]
-                   psi_rdar[1:T]
-                   theta_rdar[1:T]
-                   epsilon_rdar[1:T]
+                   t_rldar
+                   z_rldar >= 0
+                   omega_rldar[1:T]
+                   psi_rldar[1:T]
+                   theta_rldar[1:T]
+                   epsilon_rldar[1:T]
                end)
-    @expression(model, rdar_risk, t_rdar + lnk * z_rdar + sum(psi_rdar .+ theta_rdar))
+    @expression(model, rldar_risk, t_rldar + lnk * z_rldar + sum(psi_rldar .+ theta_rldar))
     @constraints(model,
                  begin
-                     constr_rdar_pcone_a[i = 1:T],
-                     [scale_constr * z_rdar * opk * ik2,
-                      scale_constr * psi_rdar[i] * opk * ik,
-                      scale_constr * epsilon_rdar[i]] ∈ MOI.PowerCone(iopk)
-                     constr_rdar_pcone_b[i = 1:T],
-                     [scale_constr * omega_rdar[i] * iomk,
-                      scale_constr * theta_rdar[i] * ik, scale_constr * -z_rdar * ik2] ∈
+                     constr_rldar_pcone_a[i = 1:T],
+                     [scale_constr * z_rldar * opk * ik2,
+                      scale_constr * psi_rldar[i] * opk * ik,
+                      scale_constr * epsilon_rldar[i]] ∈ MOI.PowerCone(iopk)
+                     constr_rldar_pcone_b[i = 1:T],
+                     [scale_constr * omega_rldar[i] * iomk,
+                      scale_constr * theta_rldar[i] * ik, scale_constr * -z_rldar * ik2] ∈
                      MOI.PowerCone(omk)
-                     constr_rdar,
+                     constr_rldar,
                      scale_constr *
-                     (view(dd, 2:(T + 1)) .- t_rdar .+ epsilon_rdar .+ omega_rdar) .<= 0
+                     (view(dd, 2:(T + 1)) .- t_rldar .+ epsilon_rldar .+ omega_rldar) .<= 0
                  end)
-    set_rm_risk_upper_bound(type, model, rdar_risk, rm.settings.ub, "rdar_risk")
-    set_risk_expression(model, rdar_risk, rm.settings.scale, rm.settings.flag)
+    set_rm_risk_upper_bound(type, model, rldar_risk, rm.settings.ub, "rldar_risk")
+    set_risk_expression(model, rldar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad, RB, NOC};
@@ -1527,14 +1531,14 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
     T = size(returns, 1)
     count = length(rms)
     @variables(model, begin
-                   t_rdar[1:count]
-                   z_rdar[1:count] .>= 0
-                   omega_rdar[1:T, 1:count]
-                   psi_rdar[1:T, 1:count]
-                   theta_rdar[1:T, 1:count]
-                   epsilon_rdar[1:T, 1:count]
+                   t_rldar[1:count]
+                   z_rldar[1:count] .>= 0
+                   omega_rldar[1:T, 1:count]
+                   psi_rldar[1:T, 1:count]
+                   theta_rldar[1:T, 1:count]
+                   epsilon_rldar[1:T, 1:count]
                end)
-    @expression(model, rdar_risk[1:count], zero(AffExpr))
+    @expression(model, rldar_risk[1:count], zero(AffExpr))
     for (j, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
         lnk = (iat^rm.kappa - iat^(-rm.kappa)) / (2 * rm.kappa)
@@ -1544,53 +1548,54 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLDaR}, type::Union{Trad,
         ik = inv(rm.kappa)
         iopk = inv(opk)
         iomk = inv(omk)
-        model[Symbol("constr_rdar_pcone_a_$(j)")], model[Symbol("constr_rdar_pcone_b_$(j)")], model[Symbol("constr_rdar_$(j)")] = @constraints(model,
-                                                                                                                                               begin
-                                                                                                                                                   [i = 1:T],
-                                                                                                                                                   [scale_constr *
-                                                                                                                                                    z_rdar[j] *
-                                                                                                                                                    opk *
-                                                                                                                                                    ik2,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    psi_rdar[i,
-                                                                                                                                                             j] *
-                                                                                                                                                    opk *
-                                                                                                                                                    ik,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    epsilon_rdar[i,
-                                                                                                                                                                 j]] ∈
-                                                                                                                                                   MOI.PowerCone(iopk)
-                                                                                                                                                   [i = 1:T],
-                                                                                                                                                   [scale_constr *
-                                                                                                                                                    omega_rdar[i,
-                                                                                                                                                               j] *
-                                                                                                                                                    iomk,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    theta_rdar[i,
-                                                                                                                                                               j] *
-                                                                                                                                                    ik,
-                                                                                                                                                    scale_constr *
-                                                                                                                                                    -z_rdar[j] *
-                                                                                                                                                    ik2] ∈
-                                                                                                                                                   MOI.PowerCone(omk)
-                                                                                                                                                   scale_constr *
-                                                                                                                                                   (view(dd,
-                                                                                                                                                         2:(T + 1)) .-
-                                                                                                                                                    t_rdar[j] .+
-                                                                                                                                                    view(epsilon_rdar,
-                                                                                                                                                         :,
-                                                                                                                                                         j) .+
-                                                                                                                                                    view(omega_rdar,
-                                                                                                                                                         :,
-                                                                                                                                                         j)) .<=
-                                                                                                                                                   0
-                                                                                                                                               end)
-        add_to_expression!(rdar_risk[j], t_rdar[j])
-        add_to_expression!(rdar_risk[j], lnk, z_rdar[j])
-        add_to_expression!(rdar_risk[j],
-                           sum(view(psi_rdar, :, j) .+ view(theta_rdar, :, j)))
-        set_rm_risk_upper_bound(type, model, rdar_risk[j], rm.settings.ub, "rdar_risk_$(j)")
-        set_risk_expression(model, rdar_risk[j], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_rldar_pcone_a_$(j)")], model[Symbol("constr_rldar_pcone_b_$(j)")], model[Symbol("constr_rldar_$(j)")] = @constraints(model,
+                                                                                                                                                  begin
+                                                                                                                                                      [i = 1:T],
+                                                                                                                                                      [scale_constr *
+                                                                                                                                                       z_rldar[j] *
+                                                                                                                                                       opk *
+                                                                                                                                                       ik2,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       psi_rldar[i,
+                                                                                                                                                                 j] *
+                                                                                                                                                       opk *
+                                                                                                                                                       ik,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       epsilon_rldar[i,
+                                                                                                                                                                     j]] ∈
+                                                                                                                                                      MOI.PowerCone(iopk)
+                                                                                                                                                      [i = 1:T],
+                                                                                                                                                      [scale_constr *
+                                                                                                                                                       omega_rldar[i,
+                                                                                                                                                                   j] *
+                                                                                                                                                       iomk,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       theta_rldar[i,
+                                                                                                                                                                   j] *
+                                                                                                                                                       ik,
+                                                                                                                                                       scale_constr *
+                                                                                                                                                       -z_rldar[j] *
+                                                                                                                                                       ik2] ∈
+                                                                                                                                                      MOI.PowerCone(omk)
+                                                                                                                                                      scale_constr *
+                                                                                                                                                      (view(dd,
+                                                                                                                                                            2:(T + 1)) .-
+                                                                                                                                                       t_rldar[j] .+
+                                                                                                                                                       view(epsilon_rldar,
+                                                                                                                                                            :,
+                                                                                                                                                            j) .+
+                                                                                                                                                       view(omega_rldar,
+                                                                                                                                                            :,
+                                                                                                                                                            j)) .<=
+                                                                                                                                                      0
+                                                                                                                                                  end)
+        add_to_expression!(rldar_risk[j], t_rldar[j])
+        add_to_expression!(rldar_risk[j], lnk, z_rldar[j])
+        add_to_expression!(rldar_risk[j],
+                           sum(view(psi_rldar, :, j) .+ view(theta_rldar, :, j)))
+        set_rm_risk_upper_bound(type, model, rldar_risk[j], rm.settings.ub,
+                                "rldar_risk_$(j)")
+        set_risk_expression(model, rldar_risk[j], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end

@@ -15,10 +15,10 @@ function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EVaR})
     return value.(model[:z_evar]) / value(model[:k])
 end
 function get_z_from_model(model::JuMP.Model, ::RLVaR)
-    return value(model[:z_rvar]) / value(model[:k])
+    return value(model[:z_rlvar]) / value(model[:k])
 end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLVaR})
-    return value.(model[:z_rvar]) / value(model[:k])
+    return value.(model[:z_rlvar]) / value(model[:k])
 end
 function get_z_from_model(model::JuMP.Model, ::EDaR)
     return value(model[:z_edar]) / value(model[:k])
@@ -27,10 +27,10 @@ function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:EDaR})
     return value.(model[:z_edar]) / value(model[:k])
 end
 function get_z_from_model(model::JuMP.Model, ::RLDaR)
-    return value(model[:z_rdar]) / value(model[:k])
+    return value(model[:z_rldar]) / value(model[:k])
 end
 function get_z_from_model(model::JuMP.Model, ::AbstractVector{<:RLDaR})
-    return value.(model[:z_rdar]) / value(model[:k])
+    return value.(model[:z_rldar]) / value(model[:k])
 end
 """
 ```
