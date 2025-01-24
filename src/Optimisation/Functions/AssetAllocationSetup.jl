@@ -2,7 +2,8 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function calc_fees(w::AbstractVector, fees, latest_prices, op::Function)
+function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
+                   latest_prices::AbstractVector, op::Function)
     return if isa(fees, Real) && !iszero(fees)
         idx = op(w, zero(eltype(w)))
         sum(fees * w[idx] .* latest_prices[idx])
@@ -13,7 +14,7 @@ function calc_fees(w::AbstractVector, fees, latest_prices, op::Function)
         zero(eltype(w))
     end
 end
-function calc_fees(w::AbstractVector, rebalance::AbstractTR, latest_prices)
+function calc_fees(w::AbstractVector, rebalance::AbstractTR, latest_prices::AbstractVector)
     return if isa(rebalance, TR)
         rebal_fees = rebalance.val
         benchmark = rebalance.w

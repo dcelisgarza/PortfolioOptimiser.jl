@@ -311,7 +311,8 @@ equal_risk = calc_risk(equal_rm, w)
 function calc_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return equal(w, delta)
 end
-function calc_fees(w::AbstractVector, fees, op::Function)
+function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
+                   op::Function)
     return if isa(fees, Real) && !iszero(fees)
         idx = op(w, zero(eltype(w)))
         sum(fees * w[idx])
