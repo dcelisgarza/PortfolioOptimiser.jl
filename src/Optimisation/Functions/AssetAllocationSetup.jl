@@ -39,10 +39,12 @@ function setup_alloc_optim(port, weights, investment)
     short = port.short
     budget = port.budget
     short_budget = port.short_budget
+    latest_prices = port.latest_prices
+    long_fees = port.long_fees
+    short_fees = port.short_fees
+    rebalance = port.rebalance
 
-    #! May be in the wrong place, maybe it should be in greedy_sub_allocation! and lp_sub_allocation!
-    fees = calc_fees(weights, port.latest_prices, port.long_fees, port.short_fees,
-                     port.rebalance)
+    fees = calc_fees(weights, latest_prices, long_fees, short_fees, rebalance)
     investment -= fees
 
     long_idx = weights .>= zero(eltype(weights))
