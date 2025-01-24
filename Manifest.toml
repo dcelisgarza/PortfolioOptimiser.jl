@@ -367,9 +367,9 @@ version = "1.12.0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
-git-tree-sha1 = "b1c2585431c382e3fe5805874bda6aea90a95de9"
+git-tree-sha1 = "2bd56245074fab4015b9174f24ceba8293209053"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
-version = "0.3.25"
+version = "0.3.27"
 
 [[deps.Inflate]]
 git-tree-sha1 = "d1b1b796e47d94588b3757fe84fbf65a5ec4a80d"
@@ -582,9 +582,9 @@ version = "7.8.3"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
-git-tree-sha1 = "dbad50672562ce422a406d172fb19fc1f0166f06"
+git-tree-sha1 = "fe891aea7ccd23897520db7f16931212454e277e"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
-version = "1.1.0"
+version = "1.1.1"
 
 [[deps.NearestCorrelationMatrix]]
 deps = ["CommonSolve", "LinearAlgebra", "PrecompileTools", "Tullio", "UnPack"]
@@ -624,9 +624,9 @@ version = "0.5.6+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "ab7edad78cdef22099f43c54ef77ac63c2c9cc64"
+git-tree-sha1 = "c1f51f704f689f87f28b33836fd460ecf9b34583"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.10.0"
+version = "1.11.0"
 weakdeps = ["MathOptInterface"]
 
     [deps.Optim.extensions]
@@ -983,9 +983,9 @@ version = "0.11.3"
 
 [[deps.Tullio]]
 deps = ["DiffRules", "LinearAlgebra", "Requires"]
-git-tree-sha1 = "6d476962ba4e435d7f4101a403b1d3d72afe72f3"
+git-tree-sha1 = "972698b132b9df8791ae74aa547268e977b55f68"
 uuid = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
-version = "0.3.7"
+version = "0.3.8"
 
     [deps.Tullio.extensions]
     TullioCUDAExt = "CUDA"

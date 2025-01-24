@@ -418,9 +418,9 @@ version = "4.4.4+1"
 
 [[deps.FFTW]]
 deps = ["AbstractFFTs", "FFTW_jll", "LinearAlgebra", "MKL_jll", "Preferences", "Reexport"]
-git-tree-sha1 = "4820348781ae578893311153d69049a93d05f39d"
+git-tree-sha1 = "7de7c78d681078f027389e067864a8d53bd7c3c9"
 uuid = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
-version = "1.8.0"
+version = "1.8.1"
 
 [[deps.FFTW_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -560,9 +560,9 @@ version = "1.4.1"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
-git-tree-sha1 = "c1a9c159c3ac53aa09663d8662c7277ef3fa508d"
+git-tree-sha1 = "f0895e73ba6c469ec8efaa13712eb5ee1a3647a3"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.5.1"
+version = "0.5.2"
 
 [[deps.GeometryTypes]]
 deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "StaticArrays"]
@@ -643,9 +643,9 @@ version = "1.9.0+0"
 
 [[deps.HypergeometricFunctions]]
 deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
-git-tree-sha1 = "b1c2585431c382e3fe5805874bda6aea90a95de9"
+git-tree-sha1 = "2bd56245074fab4015b9174f24ceba8293209053"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
-version = "0.3.25"
+version = "0.3.27"
 
 [[deps.Inflate]]
 git-tree-sha1 = "d1b1b796e47d94588b3757fe84fbf65a5ec4a80d"
@@ -667,9 +667,9 @@ version = "1.4.2"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "LazyArtifacts", "Libdl"]
-git-tree-sha1 = "10bd689145d2c3b2a9844005d01087cc1194e79e"
+git-tree-sha1 = "0f14a5456bdc6b9731a5682f439a672750a09e48"
 uuid = "1d5cc7b8-4909-519e-a0f8-d0f5ad9712d0"
-version = "2024.2.1+0"
+version = "2025.0.4+0"
 
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
@@ -926,9 +926,9 @@ version = "1.1.0"
 
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "oneTBB_jll"]
-git-tree-sha1 = "f046ccd0c6db2832a9f639e2c669c6fe867e5f4f"
+git-tree-sha1 = "5de60bc6cb3899cd318d80d627560fae2e2d99ae"
 uuid = "856f044c-d86e-5d09-b602-aeab76dc8ba7"
-version = "2024.2.0+0"
+version = "2025.0.1+1"
 
 [[deps.MacroTools]]
 git-tree-sha1 = "72aebe0b5051e5143a079a4685a46da330a40472"
@@ -1008,9 +1008,9 @@ version = "7.8.3"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
-git-tree-sha1 = "dbad50672562ce422a406d172fb19fc1f0166f06"
+git-tree-sha1 = "fe891aea7ccd23897520db7f16931212454e277e"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
-version = "1.1.0"
+version = "1.1.1"
 
 [[deps.NearestCorrelationMatrix]]
 deps = ["CommonSolve", "LinearAlgebra", "PrecompileTools", "Tullio", "UnPack"]
@@ -1098,9 +1098,9 @@ version = "0.5.6+0"
 
 [[deps.Optim]]
 deps = ["Compat", "FillArrays", "ForwardDiff", "LineSearches", "LinearAlgebra", "NLSolversBase", "NaNMath", "Parameters", "PositiveFactorizations", "Printf", "SparseArrays", "StatsBase"]
-git-tree-sha1 = "ab7edad78cdef22099f43c54ef77ac63c2c9cc64"
+git-tree-sha1 = "c1f51f704f689f87f28b33836fd460ecf9b34583"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.10.0"
+version = "1.11.0"
 weakdeps = ["MathOptInterface"]
 
     [deps.Optim.extensions]
@@ -1148,9 +1148,9 @@ version = "0.12.3"
 
 [[deps.Pardiso]]
 deps = ["Libdl", "LinearAlgebra", "MKL_jll", "SparseArrays"]
-git-tree-sha1 = "4b618484bf94a52f02595cd73ac8a6417f4c0c70"
+git-tree-sha1 = "8dbcb7c3c8066167825338732450db0ed1f2cad0"
 uuid = "46dd5b70-b6fb-5a00-ae2d-e8fea33afaf2"
-version = "0.5.7"
+version = "0.5.0"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
@@ -1638,9 +1638,9 @@ version = "0.11.3"
 
 [[deps.Tullio]]
 deps = ["DiffRules", "LinearAlgebra", "Requires"]
-git-tree-sha1 = "6d476962ba4e435d7f4101a403b1d3d72afe72f3"
+git-tree-sha1 = "972698b132b9df8791ae74aa547268e977b55f68"
 uuid = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
-version = "0.3.7"
+version = "0.3.8"
 
     [deps.Tullio.extensions]
     TullioCUDAExt = "CUDA"
