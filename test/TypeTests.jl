@@ -83,7 +83,7 @@ l = 2.0
                           d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
     @test portfolio.long_fees == fill(1, N)
-    @test portfolio.short_fees == fill(3, N)
+    @test portfolio.short_fees == fill(-3, N)
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
