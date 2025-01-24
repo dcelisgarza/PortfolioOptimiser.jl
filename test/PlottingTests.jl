@@ -10,7 +10,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                                                            :params => Dict("verbose" => false,
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
-    rm = Variance()
+    RM = Variance()
     w = optimise!(portfolio, RB())
     plt1 = plot_returns(portfolio, :RB; per_asset = true)
     @test plt1.n == 20
@@ -18,14 +18,14 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     @test plt2.n == 1
     plt3 = plot_bar(portfolio, :RB)
     @test plt3.n == 1
-    plt4 = plot_risk_contribution(portfolio, :RB; rm = rm, percentage = true)
+    plt4 = plot_risk_contribution(portfolio, :RB; rm = RM, percentage = true)
     @test plt4.n == 2
-    plt5 = plot_risk_contribution(portfolio, :RB; rm = rm, percentage = false)
+    plt5 = plot_risk_contribution(portfolio, :RB; rm = RM, percentage = false)
     @test plt5.n == 2
-    frontier = efficient_frontier!(portfolio, Trad(; rm = rm))
-    plt6 = plot_frontier(portfolio; rm = rm)
+    frontier = efficient_frontier!(portfolio, Trad(; rm = RM))
+    plt6 = plot_frontier(portfolio; rm = RM)
     @test plt6.n == 2
-    plt7 = plot_frontier_area(portfolio; rm = rm)
+    plt7 = plot_frontier_area(portfolio; rm = RM)
     @test plt7.n == 21
     plt8 = plot_drawdown(portfolio, :RB)
     @test plt8.n == 9

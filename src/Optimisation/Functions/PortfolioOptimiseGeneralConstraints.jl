@@ -424,19 +424,19 @@ function management_fee(port)
     if !(isa(long_fees, Real) && iszero(long_fees) ||
          isa(long_fees, AbstractVector) && (isempty(long_fees) || all(iszero.(long_fees))))
         long_w = model[:long_w]
-        @expression(model, long_fee, sum(long_fees .* long_w))
+        @expression(model, long_fees, sum(long_fees .* long_w))
     end
 
     if short && !(isa(short_fees, Real) && iszero(short_fees) ||
                   isa(short_fees, AbstractVector) &&
                   (isempty(short_fees) || all(iszero.(short_fees))))
         short_w = model[:short_w]
-        @expression(model, short_fee, sum(short_fees .* short_w))
+        @expression(model, short_fees, sum(short_fees .* short_w))
     end
 
     return nothing
 end
-function rebalance_fee(port)
+function rebalance_fees(port)
     rebalance = port.rebalance
     if isa(rebalance, NoTR) ||
        isa(rebalance.val, Real) && iszero(rebalance.val) ||
@@ -458,7 +458,7 @@ function rebalance_fee(port)
     @variable(model, t_rebalance[1:N])
     @expressions(model, begin
                      rebalance, w .- benchmark * k
-                     rebalance_fee, sum(val .* t_rebalance)
+                     rebalance_fees, sum(val .* t_rebalance)
                  end)
     @constraint(model, constr_rebalance[i = 1:N],
                 [scale_constr * t_rebalance[i]; scale_constr * rebalance[i]] ∈
@@ -471,14 +471,14 @@ function get_fees(model)
         return nothing
     end
     @expression(model, fees, zero(AffExpr))
-    if haskey(model, :long_fee)
-        add_to_expression!(fees, model[:long_fee])
+    if haskey(model, :long_fees)
+        add_to_expression!(fees, model[:long_fees])
     end
-    if haskey(model, :short_fee)
-        add_to_expression!(fees, model[:short_fee])
+    if haskey(model, :short_fees)
+        add_to_expression!(fees, model[:short_fees])
     end
-    if haskey(model, :rebalance_fee)
-        add_to_expression!(fees, model[:rebalance_fee])
+    if haskey(model, :rebalance_fees)
+        add_to_expression!(fees, model[:rebalance_fees])
     end
     return nothing
 end

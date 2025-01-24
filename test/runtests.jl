@@ -1,5 +1,33 @@
 using SafeTestsets
 
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "OWA Weights" begin
+    include("OWAWeightsTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Misc Statistics" begin
+    include("MiscStatisticsTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
 @safetestset "Plotting" begin
     include("PlottingTests.jl")
 end
@@ -74,32 +102,4 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
-end
-
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "OWA Weights" begin
-    include("OWAWeightsTests.jl")
-end
-
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "Misc Statistics" begin
-    include("MiscStatisticsTests.jl")
-end
-
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
 end

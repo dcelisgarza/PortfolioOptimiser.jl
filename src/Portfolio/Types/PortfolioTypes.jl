@@ -918,7 +918,7 @@ function Portfolio(;
     @smart_assert(l2 >= zero(l2))
     # Fees
     real_or_vector_assert(long_fees, N, :long_fees, >=, zero(eltype(long_fees)))
-    real_or_vector_assert(short_fees, N, :short_fees, >=, zero(eltype(short_fees)))
+    real_or_vector_assert(short_fees, N, :short_fees, <=, zero(eltype(short_fees)))
     tr_assert(rebalance, N)
     # Constraint and objective scales
     @smart_assert(scale_constr > zero(scale_constr))
@@ -1280,6 +1280,12 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                 @smart_assert(length(val.w) == size(port.returns, 2))
             end
         end
+    elseif sym == :long_fees
+        N = size(port.returns, 2)
+        real_or_vector_assert(val, N, sym, >=, zero(eltype(val)))
+    elseif sym == :short_fees
+        N = size(port.returns, 2)
+        real_or_vector_assert(val, N, sym, <=, zero(eltype(val)))
     elseif sym ∈ (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))
     else

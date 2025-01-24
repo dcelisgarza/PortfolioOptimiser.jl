@@ -22,7 +22,7 @@
     optimise!(portfolio, Trad(; rm = rm))
     @test !isempty(portfolio.fail)
     @test haskey(portfolio.fail, :Clarabel_Trad)
-    @test length(keys(portfolio.fail[:Clarabel_Trad])) == 6
+    @test length(keys(portfolio.fail[:Clarabel_Trad])) == 7
 
     portfolio.solvers = Dict(:Clarabel1 => Dict(:solver => Clarabel.Optimizer,
                                                 :check_sol => (allow_local = true,
@@ -36,7 +36,7 @@
     optimise!(portfolio, Trad(; rm = SD()))
     @test !isempty(portfolio.fail)
     @test haskey(portfolio.fail, :Clarabel1_Trad)
-    @test length(keys(portfolio.fail[:Clarabel1_Trad])) == 6
+    @test length(keys(portfolio.fail[:Clarabel1_Trad])) == 7
 end
 
 @testset "Variance" begin
