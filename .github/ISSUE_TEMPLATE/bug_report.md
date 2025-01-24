@@ -21,11 +21,12 @@ In order to know if the bug is platform- or version-specific we need some inform
 
 ```julia
 julia> versioninfo()
+
 ```
 
 and paste the result here. For me this is:
 
-```julia
+```
 Julia Version 1.11.3
 Commit d63adeda50 (2025-01-21 19:42 UTC) 
 Build Info:
@@ -40,13 +41,13 @@ Threads: 1 default, 0 interactive, 1 GC (on 16 virtual cores)
 
 Aside from this, we need to know what version of `PortfolioOptimise` you're using. This can also be obtained from the `REPL`, like so:
 
-```julia
+```
 julia> ]status PortfolioOptimiser
 ```
 
 and paste the results here. For me this is:
 
-```julia
+```
 Status `C:\Users\Daniel Celis Garza\.julia\environments\v1.11\Project.toml`
   [748726ae] PortfolioOptimiser v0.1.0 `D:\Daniel Celis Garza\dev\PortfolioOptimiser.jl`
 ```
