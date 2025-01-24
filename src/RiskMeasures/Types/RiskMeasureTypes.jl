@@ -43,7 +43,8 @@ end
 
 ```julia
 # The scalar function.
-function set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
+function PortfolioOptimiser.set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB, NOC};
+                                   kwargs...)
     # Get optimisation model.
     model = port.model
 
@@ -73,8 +74,8 @@ function set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
 end
 
 # Vector equivalent if it's possible to provide multiple instances of MyRiskMeasure.
-function set_rm(port, rms::AbstractVector{<:MyRiskMeasure}, type::Union{Trad, RB, NOC};
-                kwargs...)
+function PortfolioOptimiser.set_rm(port, rms::AbstractVector{<:MyRiskMeasure},
+                                   type::Union{Trad, RB, NOC}; kwargs...)
 
     # Get optimisation model.
     model = port.model
@@ -138,7 +139,7 @@ struct MyRiskMeasure <: RiskMeasure
     solvers::Union{<:AbstractDict, Nothing}
 end
 
-function set_rm_solvers!(rm::MyRiskMeasure, solvers)
+function PortfolioOptimiser.set_rm_solvers!(rm::MyRiskMeasure, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -147,7 +148,7 @@ function set_rm_solvers!(rm::MyRiskMeasure, solvers)
     return flag
 end
 
-function unset_rm_solvers!(rm::MyRiskMeasure, flag)
+function PortfolioOptimiser.unset_rm_solvers!(rm::MyRiskMeasure, flag)
     if flag
         rm.solvers = nothing
     end
@@ -192,7 +193,7 @@ struct MyHCRiskMeasure <: RiskMeasure
     solvers::Union{<:AbstractDict, Nothing}
 end
 
-function set_rm_solvers!(rm::MyHCRiskMeasure, solvers)
+function PortfolioOptimiser.set_rm_solvers!(rm::MyHCRiskMeasure, solvers)
     flag = false
     if isnothing(rm.solvers) || isempty(rm.solvers)
         rm.solvers = solvers
@@ -201,7 +202,7 @@ function set_rm_solvers!(rm::MyHCRiskMeasure, solvers)
     return flag
 end
 
-function unset_rm_solvers!(rm::MyHCRiskMeasure, flag)
+function PortfolioOptimiser.unset_rm_solvers!(rm::MyHCRiskMeasure, flag)
     if flag
         rm.solvers = nothing
     end
@@ -644,7 +645,7 @@ struct SOC <: VarianceFormulation end
 """
     mutable struct SD <: RiskMeasure
 
-Measures the portfolio standard deviation. Also defines a functor for computing the standard deviation.
+Measures and computes the portfolio Standard Deviation (SD).
 
 ```math
 \\begin{align}
@@ -812,24 +813,27 @@ end
 """
     mutable struct MAD <: RiskMeasure
 
-# Description
-
-Mean Absolute Deviation risk measure implementation.
-
-  - Measures the dispersion in the returns from the mean.
+Measures and computes the portfolio Mean Absolute Deviation (MAD). In other words, it is the expected value of the absolute deviation from the expected value of the returns vector. This is a generalisation to accomodate the use of weighted means.
 
 ```math
 \\begin{align}
-\\mathrm{MAD}(\\bm{X}) &= \\dfrac{1}{T} \\sum\\limits_{t=1}^T \\left\\lvert X_{t} - \\mathbb{E}(\\bm{X}) \\right\\rvert\\,.
+\\mathrm{MAD}(\\bm{X}) &= \\mathbb{E}\\left(\\left\\lvert \\bm{X} - \\mathbb{E}(\\bm{X}) \\right\\rvert\\right)\\,.
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MAD, ::AbstractVector)`](@ref).
+Where:
 
-# Fields
+  - ``\\bm{X}``: is the `T×1` portfolio returns vector.
+  - ``\\lvert \\cdot \\rvert``: is the absolute value.
+  - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Parameters
+
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `w1::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
+  - `w2::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1`
   - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional `N×1` vector of expected asset returns.
 
 # Behaviour

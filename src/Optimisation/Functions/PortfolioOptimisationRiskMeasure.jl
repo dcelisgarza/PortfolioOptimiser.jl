@@ -402,7 +402,12 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
         mu = rm.mu
     end
     @variable(model, mad[1:T] .>= 0)
-    @expression(model, mad_risk, 2 * sum(mad) / T)
+    w2 = rm.w2
+    if isnothing(w2)
+        @expression(model, mad_risk, 2 * mean(mad))
+    else
+        @expression(model, mad_risk, 2 * mean(mad, w2))
+    end
     @constraint(model, constr_mar_mad,
                 scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -mad)
     set_rm_risk_upper_bound(type, model, mad_risk, rm.settings.ub, "mad_risk")
@@ -417,7 +422,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    iT2 = 2 * inv(T)
     count = length(rms)
     @variable(model, mad[1:T, 1:count] .>= 0)
     @expression(model, mad_risk[1:count], zero(AffExpr))
@@ -429,7 +433,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
                                                            scale_constr *
                                                            (net_X .- dot(mu, w)) .>=
                                                            scale_constr * -view(mad, :, i))
-        add_to_expression!(mad_risk[i], iT2, sum(view(mad, :, i)))
+        w2 = rm.w2
+        if isnothing(w2)
+            add_to_expression!(mad_risk[i], 2, mean(view(mad, :, i)))
+        else
+            add_to_expression!(mad_risk[i], 2, mean(view(mad, :, i), w2))
+        end
         set_rm_risk_upper_bound(type, model, mad_risk[i], rm.settings.ub, "mad_risk_$(i)")
         set_risk_expression(model, mad_risk[i], rm.settings.scale, rm.settings.flag)
     end
@@ -891,7 +900,7 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RB, NOC};
                      constr_v_drcvar_lb, scale_constr * tv_drcvar .<= scale_constr * lb
                  end)
 
-    @expression(model, drcvar_risk, radius * lb + sum(s) * inv(T))
+    @expression(model, drcvar_risk, radius * lb + mean(s))
     set_rm_risk_upper_bound(type, model, drcvar_risk, rm.settings.ub, "drcvar_risk")
     set_risk_expression(model, drcvar_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -907,7 +916,6 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
     ret_p_1 = model[:ret_p_1]
     T, N = size(returns)
 
-    iT = inv(T)
     count = length(rms)
 
     @variables(model, begin
@@ -1001,7 +1009,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                                                                                                                                                                                                                                                                                           lb[j]
                                                                                                                                                                                                                                                                                       end)
         add_to_expression!(drcvar_risk[j], radius, lb[j])
-        add_to_expression!(drcvar_risk[j], iT, sum(view(s, :, j)))
+        add_to_expression!(drcvar_risk[j], mean(view(s, :, j)))
         set_rm_risk_upper_bound(type, model, drcvar_risk[j], rm.settings.ub,
                                 "drcvar_risk_$(j)")
         set_risk_expression(model, drcvar_risk[j], rm.settings.scale, rm.settings.flag)
