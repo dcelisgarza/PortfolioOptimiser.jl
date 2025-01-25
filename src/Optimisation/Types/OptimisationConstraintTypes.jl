@@ -221,90 +221,6 @@ struct EKelly <: RetType end
 """
 struct EKelly <: RetType end
 
-# ### Tracking
-
-"""
-```
-abstract type TrackingErr end
-```
-"""
-abstract type TrackingErr end
-
-"""
-```
-struct NoTracking <: TrackingErr end
-```
-"""
-struct NoTracking <: TrackingErr end
-
-"""
-```
-@kwdef mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1
-    w::T2
-end
-function TrackWeight(; err::Real = 0.0,
-                     w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TrackWeight{typeof(err), typeof(w)}(err, w)
-end
-
-"""
-```
-@kwdef mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1
-    w::T2
-end
-function TrackRet(; err::Real = 0.0, w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TrackRet{typeof(err), typeof(w)}(err, w)
-end
-
-# ### Turnover and rebalance
-
-"""
-```
-abstract type AbstractTR end
-```
-"""
-abstract type AbstractTR end
-
-"""
-```
-struct NoTR <: AbstractTR end
-```
-"""
-struct NoTR <: AbstractTR end
-
-"""
-```
-@kwdef mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
-                         T2 <: AbstractVector{<:Real}} <: AbstractTR
-    val::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
-                  T2 <: AbstractVector{<:Real}} <: AbstractTR
-    val::T1
-    w::T2
-end
-function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-            w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TR{typeof(val), typeof(w)}(val, w)
-end
-
 """
     abstract type CustomConstraint end
 """
@@ -315,4 +231,4 @@ abstract type CustomConstraint end
 """
 struct NoCustomConstraint <: CustomConstraint end
 
-export NoAdj, SDP, IP, NoKelly, AKelly, EKelly, NoTracking, TrackWeight, TrackRet, NoTR, TR
+export NoAdj, SDP, IP, NoKelly, AKelly, EKelly

@@ -2,18 +2,20 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-struct NCOSpecialRMIdx{T1, T2, T3, T4, T5, T6}
+struct NCOSpecialRMIdx{T1, T2, T3, T4, T5, T6, T7}
     cov_idx::T1
     kurt_idx::T2
     skurt_idx::T3
     skew_idx::T4
     sskew_idx::T5
     wc_idx::T6
+    trto_idx::T7
 end
 function find_special_rm(::Nothing)
     return NCOSpecialRMIdx(Vector{Int}(undef, 0), Vector{Int}(undef, 0),
                            Vector{Int}(undef, 0), Vector{Int}(undef, 0),
-                           Vector{Int}(undef, 0), Vector{Int}(undef, 0))
+                           Vector{Int}(undef, 0), Vector{Int}(undef, 0),
+                           Vector{Int}(undef, 0))
 end
 function find_special_rm(rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}})
     cov_idx = Vector{Int}(undef, 0)
@@ -22,50 +24,46 @@ function find_special_rm(rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMe
     skew_idx = Vector{Int}(undef, 0)
     sskew_idx = Vector{Int}(undef, 0)
     wc_idx = Vector{Int}(undef, 0)
+    trto_idx = Vector{Int}(undef, 0)
     if !isa(rm, AbstractVector)
         if isa(rm, SD) || isa(rm, Variance)
             push!(cov_idx, 1)
-        end
-        if isa(rm, Kurt)
+        elseif isa(rm, Kurt)
             push!(kurt_idx, 1)
-        end
-        if isa(rm, SKurt)
+        elseif isa(rm, SKurt)
             push!(skurt_idx, 1)
-        end
-        if isa(rm, Skew)
+        elseif isa(rm, Skew)
             push!(skew_idx, 1)
-        end
-        if isa(rm, SSkew)
+        elseif isa(rm, SSkew)
             push!(sskew_idx, 1)
-        end
-        if isa(rm, WCVariance)
+        elseif isa(rm, WCVariance)
             push!(wc_idx, 1)
+        elseif isa(rm, TurnoverRM) || isa(rm, TrackingRM) && isa(rm.tr, TrackWeight)
+            push!(trto_idx, 1)
         end
     else
         rm_flat = reduce(vcat, rm)
         for (i, r) ∈ enumerate(rm_flat) #! Do not change this enumerate to pairs.
             if isa(r, SD) || isa(r, Variance)
                 push!(cov_idx, i)
-            end
-            if isa(r, Kurt)
+            elseif isa(r, Kurt)
                 push!(kurt_idx, i)
-            end
-            if isa(r, SKurt)
+            elseif isa(r, SKurt)
                 push!(skurt_idx, i)
-            end
-            if isa(r, Skew)
+            elseif isa(r, Skew)
                 push!(skew_idx, i)
-            end
-            if isa(r, SSkew)
+            elseif isa(r, SSkew)
                 push!(sskew_idx, i)
-            end
-            if isa(r, WCVariance)
+            elseif isa(r, WCVariance)
                 push!(wc_idx, i)
+            elseif isa(r, TurnoverRM) || isa(r, TrackingRM) && isa(r.tr, TrackWeight)
+                push!(trto_idx, i)
             end
         end
     end
 
-    return NCOSpecialRMIdx(cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx)
+    return NCOSpecialRMIdx(cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx,
+                           trto_idx)
 end
 function set_cov_rm!(rm, cov_idx, idx, old_covs)
     if !isa(rm, AbstractVector)
@@ -234,6 +232,19 @@ function set_wc_var_rm!(rm, port, wc_idx, cidx, idx, old_wc_rms)
     end
     return nothing
 end
+function set_trto_rm!(rm, trto_idx, idx, old_trtos)
+    if !isa(rm, AbstractVector)
+        push!(old_trtos, rm.tr.w)
+        rm.tr.w = view(rm.tr.w, idx)
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, trto_idx)
+            push!(old_trtos, r.tr.w)
+            r.tr.w = view(r.tr.w, idx)
+        end
+    end
+    return nothing
+end
 struct NCOClusterStats{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15,
                        T16}
     cassets::T1
@@ -245,7 +256,7 @@ struct NCOClusterStats{T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
     ccov_mu::T7
     cd_mu::T8
 end
-struct NCOOldStats{T1, T2, T3, T4, T5, T6, T7, T8}
+struct NCOOldStats{T1, T2, T3, T4, T5, T6, T7, T8, T9}
     old_covs::T1
     old_kurts::T2
     old_skurts::T3
@@ -254,6 +265,7 @@ struct NCOOldStats{T1, T2, T3, T4, T5, T6, T7, T8}
     old_SVs::T6
     old_sskews::T7
     old_wc_rms::T8
+    old_trtos::T9
 end
 function reset_kt_rm!(rm, kt_idx, old_kts)
     if !isempty(kt_idx) && !isempty(old_kts)
@@ -315,13 +327,26 @@ function reset_wc_var_rm!(rm, wc_idx, old_wc_rms)
     end
     return nothing
 end
+function reset_trto_rm!(rm, trto_idx, old_trtos)
+    if !isempty(trto_idx) && !isempty(old_trtos)
+        if !isa(rm, AbstractVector)
+            rm.tr.w = old_trtos[1]
+        else
+            rm_flat = reduce(vcat, rm)
+            for (r, old_trto) ∈ zip(view(rm_flat, trto_idx), old_trtos)
+                r.tr.w = old_trto
+            end
+        end
+    end
+    return nothing
+end
 function reset_special_rms!(::Nothing, args...)
     return nothing
 end
 function reset_special_rms!(rm::Union{AbstractVector, AbstractRiskMeasure},
                             special_rm_idx::NCOSpecialRMIdx, old_stats::NCOOldStats)
-    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
-    (; old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews, old_wc_rms) = old_stats
+    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx, trto_idx) = special_rm_idx
+    (; old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs, old_sskews, old_wc_rms, old_trtos) = old_stats
 
     reset_cov_rm!(rm, cov_idx, old_covs)
     reset_kt_rm!(rm, kurt_idx, old_kurts)
@@ -329,6 +354,7 @@ function reset_special_rms!(rm::Union{AbstractVector, AbstractRiskMeasure},
     reset_skew_rm!(rm, skew_idx, old_Vs, old_skews)
     reset_skew_rm!(rm, sskew_idx, old_SVs, old_sskews)
     reset_wc_var_rm!(rm, wc_idx, old_wc_rms)
+    reset_trto_rm!(rm, trto_idx, old_trtos)
     return nothing
 end
 function get_cluster_matrix(x::AbstractMatrix, idx)
@@ -639,7 +665,7 @@ function set_rm_stats!(::Portfolio, ::Nothing, args...)
     return nothing
 end
 function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_rm_idx)
-    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
+    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx, trto_idx) = special_rm_idx
 
     cov_flag = !isempty(cov_idx)
     kurt_flag = !isempty(kurt_idx)
@@ -647,6 +673,7 @@ function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_r
     skew_flag = !isempty(skew_idx)
     sskew_flag = !isempty(sskew_idx)
     wc_flag = !isempty(wc_idx)
+    trto_flag = !isempty(trto_idx)
 
     old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
@@ -656,6 +683,7 @@ function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_r
     old_skews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_sskews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_wc_rms = Vector{Union{WCVariance}}(undef, 0)
+    old_trtos = Vector{Union{Vector{eltype(port.returns)}, Nothing}}(undef, 0)
 
     if cov_flag
         set_cov_rm!(rm, cov_idx, cidx, old_covs)
@@ -675,8 +703,11 @@ function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_r
     if wc_flag
         set_wc_var_rm!(rm, port, wc_idx, cidx, idx_sq, old_wc_rms)
     end
+    if trto_flag
+        set_trto_rm!(rm, trto_idx, cidx, old_trtos)
+    end
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
-                       old_sskews, old_wc_rms)
+                       old_sskews, old_wc_rms, old_trtos)
 end
 function calc_intra_weights(port::Portfolio, internal_args)
     k = port.k
@@ -756,6 +787,7 @@ function compute_cov_rm!(rm, cov_idx, wi, old_covs)
             end
         end
     end
+    return nothing
 end
 function set_kt_rm_nothing!(rm, kt_idx, old_kts)
     if !isa(rm, AbstractVector)
@@ -772,6 +804,7 @@ function set_kt_rm_nothing!(rm, kt_idx, old_kts)
             end
         end
     end
+    return nothing
 end
 function set_skew_rm_nothing!(rm, skew_idx, old_Vs, old_skews)
     if !isa(rm, AbstractVector)
@@ -836,8 +869,21 @@ function set_wc_var_rm_nothing!(rm, wc_idx, old_wc_rms)
     end
     return nothing
 end
+function compute_trto_rm!(rm, trto_idx, wi, old_trtos)
+    if !isa(rm, AbstractVector)
+        push!(old_trtos, rm.tr.w)
+        rm.tr.w = transpose(wi) * rm.tr.w
+    else
+        rm_flat = reduce(vcat, rm)
+        for r ∈ view(rm_flat, trto_idx)
+            push!(old_trtos, r.tr.w)
+            r.tr.w = transpose(wi) * r.tr.w
+        end
+    end
+    return nothing
+end
 function set_rm_stats!(port, rm, wi, special_rm_idx)
-    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
+    (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx, trto_idx) = special_rm_idx
 
     cov_flag = !isempty(cov_idx)
     kurt_flag = !isempty(kurt_idx)
@@ -845,6 +891,7 @@ function set_rm_stats!(port, rm, wi, special_rm_idx)
     skew_flag = !isempty(skew_idx)
     sskew_flag = !isempty(sskew_idx)
     wc_flag = !isempty(wc_idx)
+    trto_flag = !isempty(trto_idx)
 
     old_covs = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_kurts = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
@@ -854,6 +901,7 @@ function set_rm_stats!(port, rm, wi, special_rm_idx)
     old_skews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_sskews = Vector{Union{Matrix{eltype(port.returns)}, Nothing}}(undef, 0)
     old_wc_rms = Vector{Union{WCVariance}}(undef, 0)
+    old_trtos = Vector{Union{Vector{eltype(port.returns)}, Nothing}}(undef, 0)
 
     if cov_flag
         compute_cov_rm!(rm, cov_idx, wi, old_covs)
@@ -873,8 +921,11 @@ function set_rm_stats!(port, rm, wi, special_rm_idx)
     if wc_flag
         set_wc_var_rm_nothing!(rm, wc_idx, old_wc_rms)
     end
+    if trto_flag
+        compute_trto_rm!(rm, trto_idx, wi, old_trtos)
+    end
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
-                       old_sskews, old_wc_rms)
+                       old_sskews, old_wc_rms, old_trtos)
 end
 function pre_modify_inter_port!(::NoNCOModify, inter_port, wi, external_args,
                                 special_rm_idx)

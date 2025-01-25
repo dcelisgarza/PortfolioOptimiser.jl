@@ -407,7 +407,7 @@ function turnover_constraints(port)
     @expression(model, turnover, w .- benchmark * k)
     @constraints(model,
                  begin
-                     constr_turnover_soc[i = 1:N],
+                     constr_turnover_noc[i = 1:N],
                      [scale_constr * t_turnover[i]; scale_constr * turnover[i]] ∈
                      MOI.NormOneCone(2)
                      constr_turnover, scale_constr * t_turnover .<= scale_constr * val * k
