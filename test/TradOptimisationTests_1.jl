@@ -1,3 +1,41 @@
+@testset "Tracking and Turnover" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false))))
+    asset_statistics!(portfolio)
+    N = size(portfolio.returns, 2)
+    w1 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
+    tw1 = copy(w1.weights)
+
+    rm = TrackingRM(; tr = TrackWeight(; w = tw1))
+    w2 = optimise!(portfolio, Trad(; rm = rm, obj = MinRisk()))
+    r2 = calc_risk(portfolio; rm = rm)
+    w3 = optimise!(portfolio, Trad(; rm = [[rm, rm]], obj = MinRisk()))
+    r3 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-7)
+    @test isapprox(w1.weights, w3.weights, rtol = 5.0e-7)
+    @test r2 < sqrt(eps() * N)
+    @test r3 < sqrt(eps() * N)
+
+    rm = TrackingRM(; tr = TrackRet(; w = portfolio.returns * tw1))
+    w4 = optimise!(portfolio, Trad(; rm = rm, obj = MinRisk()))
+    w5 = optimise!(portfolio, Trad(; rm = [[rm, rm]], obj = MinRisk()))
+    @test isapprox(w4.weights, w2.weights)
+    @test isapprox(w5.weights, w3.weights)
+
+    rm = TurnoverRM(; tr = TR(; w = tw1))
+    w6 = optimise!(portfolio, Trad(; rm = rm, obj = MinRisk()))
+    r6 = calc_risk(portfolio; rm = rm)
+    w7 = optimise!(portfolio, Trad(; rm = [[rm, rm]], obj = MinRisk()))
+    r7 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w1.weights, w6.weights, rtol = 5.0e-9)
+    @test isapprox(w1.weights, w7.weights, rtol = 5.0e-10)
+    @test r6 < sqrt(eps() * N)
+    @test r7 < sqrt(eps() * N)
+end
+
 @testset "Fail optimisation" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
                           solvers = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,

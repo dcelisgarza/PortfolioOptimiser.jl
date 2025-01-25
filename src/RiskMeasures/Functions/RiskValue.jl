@@ -370,7 +370,11 @@ function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
     end
     return rm(X * w .- fees, scale)
 end
-function calc_risk(rm::Union{SD, Variance, Skew, SSkew}, w::AbstractVector; kwargs...)
+function calc_risk(rm::TrackingRM, w::AbstractVector; X::AbstractMatrix, kwargs...)
+    return rm(X, w)
+end
+function calc_risk(rm::Union{SD, Variance, Skew, SSkew, TurnoverRM}, w::AbstractVector;
+                   kwargs...)
     return rm(w)
 end
 

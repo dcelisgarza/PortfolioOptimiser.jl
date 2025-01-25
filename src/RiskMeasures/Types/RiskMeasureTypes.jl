@@ -559,7 +559,7 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
 
 # Behaviour
 
-  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
   - Defines a standard deviation variable `dev`.
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dev^2`.
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
@@ -674,7 +674,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Por
 
 ## In [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref) with any of the previous
 
-  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
   - Defines a standard deviation variable `sd_risk`.
   - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
   - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
@@ -2789,6 +2789,116 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 
+# ### Tracking
+
+"""
+```
+abstract type TrackingErr end
+```
+"""
+abstract type TrackingErr end
+
+"""
+```
+struct NoTracking <: TrackingErr end
+```
+"""
+struct NoTracking <: TrackingErr end
+
+"""
+```
+@kwdef mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1
+    w::T2
+end
+function TrackWeight(; err::Real = 0.0,
+                     w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return TrackWeight{typeof(err), typeof(w)}(err, w)
+end
+
+"""
+```
+@kwdef mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1
+    w::T2
+end
+function TrackRet(; err::Real = 0.0, w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return TrackRet{typeof(err), typeof(w)}(err, w)
+end
+
+# ### Turnover and rebalance
+
+"""
+```
+abstract type AbstractTR end
+```
+"""
+abstract type AbstractTR end
+
+"""
+```
+struct NoTR <: AbstractTR end
+```
+"""
+struct NoTR <: AbstractTR end
+
+"""
+```
+@kwdef mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
+                         T2 <: AbstractVector{<:Real}} <: AbstractTR
+    val::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
+                  T2 <: AbstractVector{<:Real}} <: AbstractTR
+    val::T1
+    w::T2
+end
+function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+            w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return TR{typeof(val), typeof(w)}(val, w)
+end
+
+mutable struct TrackingRM <: RiskMeasure
+    settings::RMSettings
+    tr::Union{TrackWeight, TrackRet}
+end
+function TrackingRM(; settings::RMSettings = RMSettings(),
+                    tr::Union{TrackWeight, TrackRet} = TrackRet(;))
+    return TrackingRM(settings, tr)
+end
+function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector)
+    T = size(X, 1)
+    tr = trackingRM.tr
+    benchmark = tracking_error_benchmark(tr, X)
+    return norm(X * w - benchmark) / sqrt(T - 1)
+end
+
+mutable struct TurnoverRM <: RiskMeasure
+    settings::RMSettings
+    tr::TR
+end
+function TurnoverRM(; settings::RMSettings = RMSettings(), tr::TR = TR(;))
+    return TurnoverRM(settings, tr)
+end
+function (turnoverRM::TurnoverRM)(w::AbstractVector)
+    benchmark = turnoverRM.tr.w
+    return norm(benchmark - w, 1)
+end
 """
     mutable struct VaR{T1 <: Real} <: HCRiskMeasure
 
@@ -3634,7 +3744,6 @@ function (kurtosis::Kurtosis)(x::AbstractVector)
     val = x .- mu
     return dot(val, val)^2 / T / sigma^4
 end
-
 mutable struct SKurtosis{T1} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
@@ -3671,4 +3780,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings,
        ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG,
        OWA, BDVariance, Skew, SSkew, Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r,
        CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
-       Ellipse, NoWC
+       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR

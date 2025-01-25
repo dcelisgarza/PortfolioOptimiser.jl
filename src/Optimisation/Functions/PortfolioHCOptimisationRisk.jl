@@ -19,19 +19,19 @@ function naive_risk(rm::Union{RiskMeasure, HCRiskMeasure}, returns, long_fees, r
     return inv_risk / sum(inv_risk)
 end
 function set_hc_rm_sigma!(rm::RMSigma, sigma, cluster)
-    sigma_old = rm.sigma
+    old_sigma = rm.sigma
     if isnothing(rm.sigma) || isempty(rm.sigma)
         rm.sigma = view(sigma, cluster, cluster)
     else
-        rm.sigma = view(sigma_old, cluster, cluster)
+        rm.sigma = view(old_sigma, cluster, cluster)
     end
-    return sigma_old
+    return old_sigma
 end
 function set_hc_rm_sigma!(args...)
     return nothing
 end
-function unset_hc_rm_sigma!(rm::RMSigma, sigma_old)
-    rm.sigma = sigma_old
+function unset_hc_rm_sigma!(rm::RMSigma, old_sigma)
+    rm.sigma = old_sigma
     return nothing
 end
 function unset_hc_rm_sigma!(args...)
@@ -45,14 +45,40 @@ end
 function unset_hc_rm_skew!(args...)
     return nothing
 end
+function set_tracking_turnover_rm!(args...)
+    return nothing
+end
+function set_tracking_turnover_rm!(::TrackRet, ::Any)
+    return nothing
+end
+function set_tracking_turnover_rm!(trto::Union{TrackWeight, TR}, cluster)
+    trto_w_old = trto.w
+    trto.w = view(trto_w_old, cluster)
+    return trto_w_old
+end
+function set_tracking_turnover_rm!(rm::Union{TrackingRM, TurnoverRM}, cluster)
+    tr = rm.tr
+    return set_tracking_turnover_rm!(tr, cluster)
+end
+function unset_tracking_turnover_rm!(rm::Union{TrackingRM, TurnoverRM}, old_tr_w)
+    if !isnothing(old_tr_w)
+        rm.tr.w = old_tr_w
+    end
+    return nothing
+end
+function unset_tracking_turnover_rm!(args...)
+    return nothing
+end
 function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
-    sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
+    old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
+    old_tr_w = set_tracking_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
     clong_fees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     cw = naive_risk(rm, cret, clong_fees, crebalance)
     crisk = calc_risk(rm, cw; X = cret, long_fees = clong_fees, rebalance = crebalance)
-    unset_hc_rm_sigma!(rm, sigma_old)
+    unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)
+    unset_tracking_turnover_rm!(rm, old_tr_w)
     return crisk
 end

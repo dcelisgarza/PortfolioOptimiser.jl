@@ -2683,20 +2683,19 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, 
     count = length(rms)
     @variable(model, t_skew[1:count])
     @expression(model, skew_risk, t_skew .^ 2)
-    for (idx, rm) ∈ pairs(rms)
+    for (i, rm) ∈ pairs(rms)
         V = if (isnothing(rm.V) || isempty(rm.V))
             port.V
         else
             rm.V
         end
         G = real(sqrt(V))
-        model[Symbol("constr_skew_soc_$(idx)")] = @constraint(model,
-                                                              [scale_constr * t_skew[idx];
-                                                               scale_constr * G * w] ∈
-                                                              SecondOrderCone())
-        set_rm_risk_upper_bound(type, model, t_skew[idx], rm.settings.ub,
-                                "skew_risk_$(idx)")
-        set_risk_expression(model, skew_risk[idx], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_skew_soc_$(i)")] = @constraint(model,
+                                                            [scale_constr * t_skew[i];
+                                                             scale_constr * G * w] ∈
+                                                            SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, t_skew[i], rm.settings.ub, "skew_risk_$(i)")
+        set_risk_expression(model, skew_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
@@ -2726,20 +2725,115 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad,
     count = length(rms)
     @variable(model, t_sskew[1:count])
     @expression(model, sskew_risk, t_sskew .^ 2)
-    for (idx, rm) ∈ pairs(rms)
+    for (i, rm) ∈ pairs(rms)
         V = if (isnothing(rm.V) || isempty(rm.V))
             port.SV
         else
             rm.V
         end
         G = real(sqrt(V))
-        model[Symbol("constr_sskew_soc_$(idx)")] = @constraint(model,
-                                                               [scale_constr * t_sskew[idx];
-                                                                scale_constr * G * w] ∈
-                                                               SecondOrderCone())
-        set_rm_risk_upper_bound(type, model, t_sskew[idx], rm.settings.ub,
-                                "sskew_risk_$(idx)")
-        set_risk_expression(model, sskew_risk[idx], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_sskew_soc_$(i)")] = @constraint(model,
+                                                             [scale_constr * t_sskew[i];
+                                                              scale_constr * G * w] ∈
+                                                             SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, t_sskew[i], rm.settings.ub, "sskew_risk_$(i)")
+        set_risk_expression(model, sskew_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::TrackingRM, type::Union{Trad, RB, NOC};
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    k = model[:k]
+    get_portfolio_returns(model, returns)
+    X = model[:X]
+    T = size(returns, 1)
+    @variable(model, t_tracking_risk)
+    @expression(model, tracking_risk, t_tracking_risk / sqrt(T - 1))
+    tracking = rm.tr
+    benchmark = tracking_error_benchmark(tracking, returns)
+    @expression(model, tracking_error_rm, X .- benchmark * k)
+    @constraint(model, constr_tracking_rm_soc,
+                [scale_constr * t_tracking_risk; scale_constr * tracking_error_rm] ∈
+                SecondOrderCone())
+    set_rm_risk_upper_bound(type, model, tracking_risk, rm.settings.ub, "tracking_risk")
+    set_risk_expression(model, tracking_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:TrackingRM},
+                type::Union{Trad, RB, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    k = model[:k]
+    get_portfolio_returns(model, returns)
+    X = model[:X]
+    T = size(returns, 1)
+    iTm1 = inv(sqrt(T - 1))
+    count = length(rms)
+    @variable(model, t_tracking_risk[1:count])
+    @expression(model, tracking_risk[1:count], zero(AffExpr))
+    for (i, rm) ∈ pairs(rms)
+        tracking = rm.tr
+        benchmark = tracking_error_benchmark(tracking, returns)
+        tracking_error_rm = model[Symbol("tracking_error_rm_$(i)")] = @expression(model,
+                                                                                  X .-
+                                                                                  benchmark *
+                                                                                  k)
+        model[Symbol("constr_tracking_rm_soc_$(i)")] = @constraint(model,
+                                                                   [scale_constr *
+                                                                    t_tracking_risk[i]
+                                                                    scale_constr *
+                                                                    tracking_error_rm] ∈
+                                                                   SecondOrderCone())
+        add_to_expression!(tracking_risk[i], iTm1, t_tracking_risk[i])
+        set_rm_risk_upper_bound(type, model, tracking_risk[i], rm.settings.ub,
+                                "tracking_risk_$(i)")
+        set_risk_expression(model, tracking_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::TurnoverRM, type::Union{Trad, RB, NOC};
+                returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    k = model[:k]
+    N = length(w)
+    @variable(model, turnover_risk)
+    benchmark = rm.tr.w
+    @expression(model, turnover_rm, w .- benchmark * k)
+    @constraint(model, constr_turnover_rm_noc,
+                [scale_constr * turnover_risk; scale_constr * turnover_rm] ∈
+                MOI.NormOneCone(1 + N))
+    set_rm_risk_upper_bound(type, model, turnover_risk, rm.settings.ub, "turnover_risk")
+    set_risk_expression(model, turnover_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:TurnoverRM},
+                type::Union{Trad, RB, NOC}; returns::AbstractMatrix{<:Real}, kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    k = model[:k]
+    N = length(w)
+    count = length(rms)
+    @variable(model, turnover_risk[1:count])
+    @expression(model, turnover_rm[1:N, 1:count], zero(AffExpr))
+    for (i, rm) ∈ pairs(rms)
+        benchmark = rm.tr.w
+        add_to_expression!.(view(turnover_rm, :, i), w .- benchmark * k)
+        model[Symbol("constr_turnover_rm_noc_$(i)")] = @constraint(model,
+                                                                   [scale_constr *
+                                                                    turnover_risk[i]
+                                                                    scale_constr *
+                                                                    view(turnover_rm, :, i)] ∈
+                                                                   MOI.NormOneCone(1 + N))
+        set_rm_risk_upper_bound(type, model, turnover_risk[i], rm.settings.ub,
+                                "turnover_risk_$(i)")
+        set_risk_expression(model, turnover_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end

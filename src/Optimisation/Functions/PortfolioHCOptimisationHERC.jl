@@ -23,15 +23,18 @@ function get_cluster_fees(port, cluster)
 end
 function naive_risk(port::AbstractPortfolio, sigma, returns, cluster,
                     rm::Union{RiskMeasure, HCRiskMeasure})
-    sigma_old = set_hc_rm_sigma!(rm, sigma, cluster)
+    old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
+    old_tr_w = set_tracking_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
     clong_fees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = naive_risk(rm, cret, clong_fees, crebalance)
-    unset_hc_rm_sigma!(rm, sigma_old)
+    unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)
+    unset_tracking_turnover_rm!(rm, old_tr_w)
     return crisk
 end
+
 function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarSum)
     crisk = zero(eltype(returns))
     for r ∈ rm
