@@ -363,15 +363,15 @@ function tracking_error_constraints(port, returns)
     model = port.model
     scale_constr = model[:scale_constr]
     k = model[:k]
-    get_portfolio_returns(model, returns)
-    X = model[:X]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
 
     benchmark = tracking_error_benchmark(tracking, returns)
     err = tracking.err
 
     @variable(model, t_tracking_error)
-    @expression(model, tracking_error, X .- benchmark * k)
+    @expression(model, tracking_error, net_X .- benchmark * k)
     @constraints(model,
                  begin
                      constr_tracking_soc,

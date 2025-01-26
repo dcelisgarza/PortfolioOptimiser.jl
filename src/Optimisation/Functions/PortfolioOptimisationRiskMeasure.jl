@@ -854,10 +854,10 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    get_portfolio_returns(model, returns)
+    get_net_portfolio_returns(model, returns)
     get_one_plus_returns(model, returns)
     w = model[:w]
-    X = model[:X]
+    net_X = model[:net_X]
     ret_p_1 = model[:ret_p_1]
     T, N = size(returns)
 
@@ -882,11 +882,11 @@ function set_rm(port::Portfolio, rm::DRCVaR, type::Union{Trad, RB, NOC};
                  begin
                      constr_u_drcvar,
                      scale_constr *
-                     (b1 * tau .+ a1 * X .+ vec(sum(u .* ret_p_1; dims = 2))) .<=
+                     (b1 * tau .+ a1 * net_X .+ vec(sum(u .* ret_p_1; dims = 2))) .<=
                      scale_constr * s
                      constr_v_drcvar,
                      scale_constr *
-                     (b2 * tau .+ a2 * X .+ vec(sum(v .* ret_p_1; dims = 2))) .<=
+                     (b2 * tau .+ a2 * net_X .+ vec(sum(v .* ret_p_1; dims = 2))) .<=
                      scale_constr * s
                      constr_u_drcvar_infnorm[i = 1:T],
                      [scale_constr * tu_drcvar[i];
@@ -909,10 +909,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
-    get_portfolio_returns(model, returns)
+    get_net_portfolio_returns(model, returns)
     get_one_plus_returns(model, returns)
     w = model[:w]
-    X = model[:X]
+    net_X = model[:net_X]
     ret_p_1 = model[:ret_p_1]
     T, N = size(returns)
 
@@ -943,7 +943,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                                                                                                                                                                                                                                                                                           (b1 *
                                                                                                                                                                                                                                                                                            tau[j] .+
                                                                                                                                                                                                                                                                                            a1 *
-                                                                                                                                                                                                                                                                                           X .+
+                                                                                                                                                                                                                                                                                           net_X .+
                                                                                                                                                                                                                                                                                            vec(sum(view(u,
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         :,
@@ -958,7 +958,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:DRCVaR}, type::Union{Trad
                                                                                                                                                                                                                                                                                           (b2 *
                                                                                                                                                                                                                                                                                            tau[j] .+
                                                                                                                                                                                                                                                                                            a2 *
-                                                                                                                                                                                                                                                                                           X .+
+                                                                                                                                                                                                                                                                                           net_X .+
                                                                                                                                                                                                                                                                                            vec(sum(view(v,
                                                                                                                                                                                                                                                                                                         :,
                                                                                                                                                                                                                                                                                                         :,
@@ -2641,14 +2641,14 @@ end
 function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    get_portfolio_returns(model, returns)
-    X = model[:X]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
     iT2 = inv(T^2)
     ovec = range(1; stop = 1, length = T)
     @variable(model, Dt[1:T, 1:T], Symmetric)
     @expressions(model, begin
-                     Dx, X * transpose(ovec) - ovec * transpose(X)
+                     Dx, net_X * transpose(ovec) - ovec * transpose(net_X)
                      bd_variance_risk, iT2 * (dot(Dt, Dt) + iT2 * sum(Dt)^2)
                  end)
     BDVariance_constraints(rm.formulation, model, Dt, Dx, T)
@@ -2747,14 +2747,14 @@ function set_rm(port::Portfolio, rm::TrackingRM, type::Union{Trad, RB, NOC};
     scale_constr = model[:scale_constr]
     w = model[:w]
     k = model[:k]
-    get_portfolio_returns(model, returns)
-    X = model[:X]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
     @variable(model, t_tracking_risk)
     @expression(model, tracking_risk, t_tracking_risk / sqrt(T - 1))
     tracking = rm.tr
     benchmark = tracking_error_benchmark(tracking, returns)
-    @expression(model, tracking_error_rm, X .- benchmark * k)
+    @expression(model, tracking_error_rm, net_X .- benchmark * k)
     @constraint(model, constr_tracking_rm_soc,
                 [scale_constr * t_tracking_risk; scale_constr * tracking_error_rm] ∈
                 SecondOrderCone())
@@ -2768,8 +2768,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TrackingRM},
     scale_constr = model[:scale_constr]
     w = model[:w]
     k = model[:k]
-    get_portfolio_returns(model, returns)
-    X = model[:X]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
     T = size(returns, 1)
     iTm1 = inv(sqrt(T - 1))
     count = length(rms)
@@ -2779,7 +2779,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TrackingRM},
         tracking = rm.tr
         benchmark = tracking_error_benchmark(tracking, returns)
         tracking_error_rm = model[Symbol("tracking_error_rm_$(i)")] = @expression(model,
-                                                                                  X .-
+                                                                                  net_X .-
                                                                                   benchmark *
                                                                                   k)
         model[Symbol("constr_tracking_rm_soc_$(i)")] = @constraint(model,

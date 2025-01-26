@@ -553,7 +553,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{G}``: is a suitable factorisation of the `N×N` covariance matrix, such as the square root matrix, or the Cholesky factorisation.
   - ``\\sigma^2``: is the portfolio variance.
-  - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as a [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
+  - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as an [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
 
 See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
 
@@ -817,7 +817,7 @@ Measures and computes the portfolio Mean Absolute Deviation (MAD). In other word
 
 ```math
 \\begin{align}
-\\mathrm{MAD}(\\bm{X}) &= \\mathbb{E}\\left(\\left\\lvert \\bm{X} - \\mathbb{E}(\\bm{X}) \\right\\rvert\\right)\\,.
+\\mathrm{MAD}(\\bm{X}) &= \\mathbb{E}\\left(\\left\\lvert \\bm{X} - \\mathbb{E}\\left(\\bm{X}\\right) \\right\\rvert\\right)\\,.
 \\end{align}
 ```
 
@@ -827,28 +827,24 @@ Where:
   - ``\\lvert \\cdot \\rvert``: is the absolute value.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`MuSimple`](@ref), [`NoKelly`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-  - `w1::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
-  - `w2::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1`
-  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional `N×1` vector of expected asset returns.
 
-# Behaviour
+  - `w1::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-## [`Portfolio`](@ref) Optimisation
+      + `w1` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator and the would-be value of `w1` as the weight vector.
+  - `w2::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
+  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional, vector of expected returns.
 
-  - If `mu` is `nothing`: use the expected returns vector from the [`Portfolio`](@ref) instance.
-
-## Optimisation or in [`calc_risk(::MAD, ::AbstractVector)`](@ref).
-
-  - If `w` is `nothing`: computes the unweighted mean portfolio return.
+      + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
+      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor and `w1`.
 
 # Examples
 
-```@example
+```julia
 # Default settings
 mad = MAD()
 
@@ -874,7 +870,7 @@ function (mad::MAD)(x::AbstractVector)
     w1 = mad.w1
     w2 = mad.w2
     mu = isnothing(w1) ? mean(x) : mean(x, w1)
-    return isnothing(w2) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), w2)
+    return isnothing(w2) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), Weights(2 * w2))
 end
 
 """
