@@ -1,4 +1,0 @@
-# Hierarchical Risk Parity
-
-```@docs
-```

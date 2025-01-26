@@ -1,4 +1,0 @@
-# Critical Line Algorithm
-
-```@docs
-```

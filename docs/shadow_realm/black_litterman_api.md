@@ -1,4 +1,0 @@
-# Black-Litterman Optimiser
-
-```@docs
-```
