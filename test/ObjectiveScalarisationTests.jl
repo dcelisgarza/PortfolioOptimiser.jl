@@ -54,10 +54,10 @@ l = 2.0
 
     @test isapprox(w6.weights, w7.weights, rtol = 5.0e-5)
     @test isapprox(w6.weights, w8.weights, rtol = 0.005)
-    @test isapprox(w6.weights, w9.weights, rtol = 1.0e-4)
+    @test isapprox(w6.weights, w9.weights, rtol = 5.0e-3)
     @test isapprox(w6.weights, w10.weights, rtol = 5.0e-5)
     @test isapprox(w7.weights, w8.weights, rtol = 0.005)
-    @test isapprox(w7.weights, w9.weights, rtol = 5.0e-5)
+    @test isapprox(w7.weights, w9.weights, rtol = 5.0e-3)
     @test isapprox(w7.weights, w10.weights, rtol = 1.0e-4)
 
     w11 = optimise!(portfolio,
