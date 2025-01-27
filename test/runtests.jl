@@ -1,5 +1,53 @@
 using SafeTestsets
 
+@safetestset "Trad optimisation rm vector" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Objective scalarisation tests" begin
+    include("ObjectiveScalarisationTests.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
+end
+
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -54,52 +102,4 @@ end
 
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
-end
-
-@safetestset "Trad optimisation rm vector" begin
-    include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "Objective scalarisation tests" begin
-    include("ObjectiveScalarisationTests.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
-@safetestset "Factor Stats tests" begin
-    include("FactorStatsTest.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
 end

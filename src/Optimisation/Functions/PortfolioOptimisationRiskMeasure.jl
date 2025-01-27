@@ -487,12 +487,9 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     target = rm.target
     @variable(model, svariance[1:T] .>= 0)
     semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
-    @constraints(model,
-                 begin
-                     constr_svariance_mar,
-                     scale_constr * (net_X .- dot(mu, w) .- target * k) .>=
-                     scale_constr * -svariance
-                 end)
+    @constraint(model, constr_svariance_mar,
+                scale_constr * (net_X .- dot(mu, w) .- target * k) .>=
+                scale_constr * -svariance)
     svariance_risk = model[:svariance_risk]
     set_rm_risk_upper_bound(type, model, svariance_risk, rm.settings.ub, "svariance_risk")
     set_risk_expression(model, svariance_risk, rm.settings.scale, rm.settings.flag)
@@ -518,19 +515,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
             mu = rm.mu
         end
         target = rm.target
-        model[Symbol("constr_svariance_target_$(i)")], model[Symbol("constr_svariance_mar_$(i)")] = @constraints(model,
-                                                                                                                 begin
-                                                                                                                     scale_constr *
-                                                                                                                     (net_X .-
-                                                                                                                      dot(mu,
-                                                                                                                          w) .-
-                                                                                                                      target *
-                                                                                                                      k) .>=
-                                                                                                                     scale_constr *
-                                                                                                                     -view(svariance,
-                                                                                                                           :,
-                                                                                                                           i)
-                                                                                                                 end)
+        model[Symbol("constr_svariance_mar_$(i)")] = @constraint(model,
+                                                                 scale_constr *
+                                                                 (net_X .- dot(mu, w) .-
+                                                                  target * k) .>=
+                                                                 scale_constr *
+                                                                 -view(svariance, :, i))
         semi_variance_risk(rm.formulation, model, view(svariance, :, i), svariance_risk[i],
                            iTm1, i)
         set_rm_risk_upper_bound(type, model, svariance_risk[i], rm.settings.ub,
@@ -589,26 +579,26 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
             mu = rm.mu
         end
         target = rm.target
-        model[Symbol("constr_ssd_target_$(i)")], model[Symbol("constr_ssd_mar_$(i)")], model[Symbol("constr_sdev_soc_$(i)")] = @constraints(model,
-                                                                                                                                            begin
-                                                                                                                                                scale_constr *
-                                                                                                                                                (net_X .-
-                                                                                                                                                 dot(mu,
-                                                                                                                                                     w) .-
-                                                                                                                                                 target *
-                                                                                                                                                 k) .>=
-                                                                                                                                                scale_constr *
-                                                                                                                                                -view(ssd,
-                                                                                                                                                      :,
-                                                                                                                                                      i)
-                                                                                                                                                [scale_constr *
-                                                                                                                                                 sdev[i]
-                                                                                                                                                 scale_constr *
-                                                                                                                                                 view(ssd,
-                                                                                                                                                      :,
-                                                                                                                                                      i)] ∈
-                                                                                                                                                SecondOrderCone()
-                                                                                                                                            end)
+        model[Symbol("constr_ssd_mar_$(i)")], model[Symbol("constr_sdev_soc_$(i)")] = @constraints(model,
+                                                                                                   begin
+                                                                                                       scale_constr *
+                                                                                                       (net_X .-
+                                                                                                        dot(mu,
+                                                                                                            w) .-
+                                                                                                        target *
+                                                                                                        k) .>=
+                                                                                                       scale_constr *
+                                                                                                       -view(ssd,
+                                                                                                             :,
+                                                                                                             i)
+                                                                                                       [scale_constr *
+                                                                                                        sdev[i]
+                                                                                                        scale_constr *
+                                                                                                        view(ssd,
+                                                                                                             :,
+                                                                                                             i)] ∈
+                                                                                                       SecondOrderCone()
+                                                                                                   end)
         add_to_expression!(sdev_risk[i], iTm1, sdev[i])
         set_rm_risk_upper_bound(type, model, sdev_risk[i], rm.settings.ub, "sdev_risk_$(i)")
         set_risk_expression(model, sdev_risk[i], rm.settings.scale, rm.settings.flag)
