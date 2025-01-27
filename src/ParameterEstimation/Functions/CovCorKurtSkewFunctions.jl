@@ -654,11 +654,17 @@ function cor_gerber_norm(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -699,11 +705,17 @@ function cor_gerber(ce::CovSB0, X::AbstractMatrix, mean_vec::AbstractVector,
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]
@@ -742,12 +754,18 @@ function cor_gerber_norm(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             nn = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -791,12 +809,18 @@ function cor_gerber(ce::CovSB1, X::AbstractMatrix, mean_vec::AbstractVector,
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             nn = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]
@@ -837,11 +861,17 @@ function cor_gerber_norm(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -878,11 +908,17 @@ function cor_gerber(ce::CovSB2, X::AbstractMatrix, mean_vec::AbstractVector,
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]
@@ -918,6 +954,9 @@ function cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::Abstract
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -925,6 +964,9 @@ function cor_gerber_norm(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::Abstract
             cpos = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -969,6 +1011,9 @@ function cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVecto
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -976,6 +1021,9 @@ function cor_gerber(ce::CovGerberSB0, X::AbstractMatrix, mean_vec::AbstractVecto
             cpos = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]
@@ -1018,6 +1066,9 @@ function cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::Abstract
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -1027,6 +1078,9 @@ function cor_gerber_norm(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::Abstract
             cnn = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -1076,6 +1130,9 @@ function cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVecto
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -1085,6 +1142,9 @@ function cor_gerber(ce::CovGerberSB1, X::AbstractMatrix, mean_vec::AbstractVecto
             cnn = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]
@@ -1131,6 +1191,9 @@ function cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::Abstract
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -1138,6 +1201,9 @@ function cor_gerber_norm(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::Abstract
             cpos = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = (X[k, i] - mui) / sigmai
                 xj = (X[k, j] - muj) / sigmaj
@@ -1176,6 +1242,9 @@ function cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVecto
     for j ∈ axes(X, 2)
         muj = mean_vec[j]
         sigmaj = std_vec[j]
+        if iszero(sigmaj)
+            sigmaj += eps(typeof(sigmaj))
+        end
         for i ∈ 1:j
             neg = zero(eltype(X))
             pos = zero(eltype(X))
@@ -1183,6 +1252,9 @@ function cor_gerber(ce::CovGerberSB2, X::AbstractMatrix, mean_vec::AbstractVecto
             cpos = 0
             mui = mean_vec[i]
             sigmai = std_vec[i]
+            if iszero(sigmai)
+                sigmai += eps(typeof(sigmai))
+            end
             for k ∈ 1:T
                 xi = X[k, i]
                 xj = X[k, j]

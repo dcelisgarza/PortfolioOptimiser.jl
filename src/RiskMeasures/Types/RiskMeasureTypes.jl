@@ -842,16 +842,173 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
       + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
       + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor and `w1`.
 
+# Functor
+
+  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation .
+
+!!! warning
+
+    Using non-default `w1`, `w2` and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `mad_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
+
 # Examples
 
 ```julia
-# Default settings
-mad = MAD()
+using Clarabel, StatsBase, JuMP
 
-# Custom configuration
-w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
-mu = rand(10)             # Expected returns
-mad = MAD(; settings = RMSettings(; scale = 2.0), w = w, mu = mu)
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute asset statistics.
+asset_statistics!(port)
+
+# Vanilla mean absolute deviation.
+rm = MAD()
+
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+w1
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.52867e-11 
+   2 │       2  0.125902    
+   3 │       3  0.558899    
+   4 │       4  0.0528451   
+   5 │       5  0.262353 
+=#
+
+r1 = calc_risk(port; rm = rm) # 0.2742955393862703
+isapprox(r1, value(port.model[:mad_risk])) # true
+
+# Exponential weights.
+ew1 = eweights(1:size(ret, 1), 0.2; scale = true)
+ew2 = eweights(1:size(ret, 1), 0.3; scale = true)
+
+# Compute asset statistics, use ew1 in the `Trad` optimisation.
+# This makes it consistent with the risk measure.
+asset_statistics!(port; mu_type = MuSimple(; w = ew1))
+
+# Mean absolute deviation with different weights.
+# w1 has no effect, so we account for it in the computation
+# of `port.mu` above.
+rm = MAD(; w1 = ew1, w2 = ew2)
+
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+w2
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.0868265
+   2 │       2  1.62118e-10
+   3 │       3  0.623665
+   4 │       4  5.10551e-11
+   5 │       5  0.289508
+=#
+
+# Using `w1` and `w2` may lead to inconsistent values between the
+# functor and value in the model because the mean absolute 
+# deviation is formulated with slack constraints.
+r2_1 = calc_risk(port; rm = rm) # 0.23722684255394683
+r2_2 = value(port.model[:mad_risk]) # 0.21882857231148417
+
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = MAD(; mu = custom_mu)
+
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+w3
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.129419
+   2 │       2  9.10067e-11
+   3 │       3  0.590633
+   4 │       4  0.13825
+   5 │       5  0.141698
+=#
+
+# Values don't match.
+r3_1 = calc_risk(port; rm = rm) # 0.359772128074709
+r3_2 = value(port.model[:mad_risk]) # 0.23232767711259888
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# Vanilla mean absolute deviation.
+rm = MAD()
+
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+w4
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.179264
+   2 │       2  0.222268
+   3 │       3  0.216523
+   4 │       4  0.160511
+   5 │       5  0.221434
+=#
+
+# Compute the mean absolute deviation.
+r4 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
+# As a functor.
+r4 == rm(port.returns * w4.weights) # true
+
+# Custom mu has no effect.
+rm = MAD(; mu = custom_mu)
+
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+w4.weights == w5.weights # true
+
+# Compute the mean absolute deviation.
+r5 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
+
+# w1 and w2 both have effects.
+rm = MAD(; w1 = ew1, w2 = ew2)
+
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+w6
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.157301
+   2 │       2  0.179251
+   3 │       3  0.363034
+   4 │       4  0.128884
+   5 │       5  0.171529
+=#
+
+# Compute the mean absolute deviation.
+r6 = calc_risk(port, :HRP; rm = rm) # 0.3704190560125852
 ```
 """
 mutable struct MAD <: RiskMeasure
