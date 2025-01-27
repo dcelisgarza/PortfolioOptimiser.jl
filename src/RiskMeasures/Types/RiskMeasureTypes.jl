@@ -658,7 +658,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD`](@ref), [`SVariance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
 
@@ -681,7 +681,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Por
 
 # Functor
 
-  - `(sd::SD)(w::AbstractVector)`: computes the standard deviation using the covariance matrix stored in the `N×N` matrix `sigma`, and using an `N×1` vector of asset weights as the input.
+  - `(sd::SD)(w::AbstractVector)`: computes the standard deviation using the covariance matrix stored in the `N×N` matrix `sigma`, and `N×1` vector of asset weights, `w`.
 
 # Examples
 
@@ -840,11 +840,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
   - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional, vector of expected returns.
 
       + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
-      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor and `w1`.
+      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
 
 # Functor
 
-  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation .
+  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation using the internal values of `w1` and `w2`, for a `T×1` vector of portfolio returns, `x`.
 
 !!! warning
 
@@ -1033,11 +1033,7 @@ end
 """
     mutable struct SSD{T1 <: Real} <: RiskMeasure
 
-# Description
-
-Semi Standard Deviation risk measure implementation.
-
-  - Measures the standard deviation equal to or below the `target` return threshold.
+Measures and computes the portfolio Semi Standard Deviation (SD) below a `target` value. In other words, it measures the standard deviation below a `target` value while ignoring deviations above it.
 
 ```math
 \\begin{align}
@@ -1045,36 +1041,30 @@ Semi Standard Deviation risk measure implementation.
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSD, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `target::T1 = 0.0`: minimum return threshold for downside classification.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
-  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional `N×1` vector of expected asset returns.
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-# Behaviour
+  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-## [`Portfolio`](@ref) Optimisation
+      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator and the would-be value of `w` as the weight vector.
+  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional, vector of expected returns.
 
-  - If `mu` is `nothing`: use the expected returns vector from the [`Portfolio`](@ref) instance.
+      + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
+      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
 
-## Optimisation or in [`calc_risk(::SSD, ::AbstractVector)`](@ref).
+# Functor
 
-  - If `w` is `nothing`: computes the unweighted mean portfolio return.
+  - `(ssd::SSD)(x::AbstractVector)`: computes the semi standard deviation using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+
+!!! warning
+
+    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `sdev_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
 
 # Examples
-
-```@example
-# Default settings
-ssd = SSD()
-
-# Custom configuration with specific target
-w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
-mu = rand(10)             # Expected returns
-ssd = SSD(; settings = RMSettings(; scale = 2.0), w = w, mu = mu)
-```
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
     settings::RMSettings
