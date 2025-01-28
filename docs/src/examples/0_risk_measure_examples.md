@@ -238,7 +238,7 @@ r6 = calc_risk(port, :HRP; rm = rm)
 
 ## Semi Standard Deviation, [`SSD`](@ref)
 
-Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+Recompute asset statistics.
 
 ````@example 0_risk_measure_examples
 asset_statistics!(port)
@@ -415,7 +415,7 @@ r8 = calc_risk(port, :HRP; rm = rm)
 
 # First Lower Partial Moment, [`FLPM`](@ref)
 
-Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+Recompute asset statistics.
 
 ````@example 0_risk_measure_examples
 asset_statistics!(port)
@@ -603,7 +603,7 @@ r8 = calc_risk(port, :HRP; rm = rm)
 
 # Second Lower Partial Moment, [`SLPM`](@ref)
 
-Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+Recompute asset statistics.
 
 ````@example 0_risk_measure_examples
 asset_statistics!(port)
@@ -787,6 +787,185 @@ Compute the second lower partial moment.
 
 ````@example 0_risk_measure_examples
 r8 = calc_risk(port, :HRP; rm = rm)
+````
+
+# Worst Realisation, [`WR`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+Worst realisation.
+
+````@example 0_risk_measure_examples
+rm = WR()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute worst realisation.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:wr_risk]))
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute worst realisation.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port, :HRP; rm = rm)
+````
+
+Use it in conjunction with another, less conservative risk measure.
+
+````@example 0_risk_measure_examples
+rm = [WR(; settings = RMSettings(; scale = 0.15)), Variance()]
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+WR.
+
+````@example 0_risk_measure_examples
+r3_1 = calc_risk(port; rm = WR())
+````
+
+Variance.
+
+````@example 0_risk_measure_examples
+r3_2 = calc_risk(port; rm = Variance())
+````
+
+This portfolio is not optimal in either risk measure, but mixes their characteristics.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+````
+
+Minimum variance portfolio.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port; rm = Variance())
+````
+
+WR of mixed portfolio is higher than the minimal worst realisation.
+
+````@example 0_risk_measure_examples
+r3_1 > r1
+````
+
+Variance of mixed portfolio is higher than the minimal worst realisation.
+
+````@example 0_risk_measure_examples
+r3_2 > r4
+````
+
+# Conditional Value at Risk, [`CVaR`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+CVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = CVaR()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute CVaR for `alpha  = 0.05`.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+Risk is consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:cvar_risk]); rtol = 5e-8)
+````
+
+CVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = CVaR(; alpha = 0.5)
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute CVaR for `alpha  = 0.5`.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r2, value(port.model[:cvar_risk]))
+````
+
+CVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = CVaR()
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w3 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute worst realisation.
+
+````@example 0_risk_measure_examples
+r3 = calc_risk(port, :HRP; rm = rm)
+````
+
+CVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = CVaR(; alpha = 0.5)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute worst realisation.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port, :HRP; rm = rm)
 ````
 
 * * *

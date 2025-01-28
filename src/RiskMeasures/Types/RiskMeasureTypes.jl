@@ -838,7 +838,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 
 # Functor
 
-  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation using the internal values of `w1` and `w2`, for a `T×1` vector of portfolio returns, `x`.
+  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation using the internal values of `w1` and `w2`, of a `T×1` vector of portfolio returns, `x`.
 
 !!! warning
 
@@ -868,8 +868,11 @@ port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
                                                                  allow_almost = true),
                                                   :params => Dict("verbose" => false))))
 
-# Compute asset statistics.
+# Compute statistics.
 asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
 
 # Vanilla mean absolute deviation.
 rm = MAD()
@@ -944,9 +947,6 @@ w3 = optimise!(port, Trad(; rm = rm, str_names = true))
 # Values don't match.
 r3_1 = calc_risk(port; rm = rm) # 0.359772128074709
 r3_2 = value(port.model[:mad_risk]) # 0.23232767711259888
-
-# Clusterise assets.
-cluster_assets!(port)
 
 # Vanilla mean absolute deviation.
 rm = MAD()
@@ -1031,6 +1031,13 @@ Measures and computes the portfolio Semi Standard Deviation (SD) below a `target
 \\end{align}
 ```
 
+Where:
+
+  - ``T``: is the number of observations.
+  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
+  - ``r``: is the minimum acceptable return.
+  - ``\\mathbb{E}(\\cdot)``: is the expected value.
+
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
@@ -1048,7 +1055,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
 # Functor
 
-  - `(ssd::SSD)(x::AbstractVector)`: computes the semi standard deviation using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+  - `(ssd::SSD)(x::AbstractVector)`: computes the semi standard deviation using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
 
 !!! warning
 
@@ -1078,8 +1085,11 @@ port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
                                                                  allow_almost = true),
                                                   :params => Dict("verbose" => false))))
 
-# Compute asset statistics.
+# Compute statistics.
 asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
 
 # Vanilla semi standard deviation.
 rm = SSD()
@@ -1187,9 +1197,6 @@ w5 = optimise!(port, Trad(; rm = rm, str_names = true))
 r5_1 = calc_risk(port; rm = rm) # 0.34782982196502943
 r5_2 = value(port.model[:sdev_risk]) # 0.24896211021424786
 
-# Clusterise assets.
-cluster_assets!(port)
-
 # Vanilla semi standard deviation.
 rm = SSD()
 
@@ -1274,6 +1281,12 @@ Measures and computes the portfolio First Lower Partial Moment (FLPM) risk measu
 \\end{align}
 ```
 
+Where:
+
+  - ``T``: is the number of observations.
+  - ``r``: is the minimum acceptable return.
+  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
+
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
@@ -1300,7 +1313,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
 # Functor
 
-  - `(flpm::FLPM)(x::AbstractVector)`: computes the first lower partial moment using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+  - `(flpm::FLPM)(x::AbstractVector)`: computes the first lower partial moment using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
 
 !!! warning
 
@@ -1327,6 +1340,12 @@ port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
                                                   :check_sol => (allow_local = true,
                                                                  allow_almost = true),
                                                   :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
 
 # Vanilla first lower partial moment.
 rm = FLPM()
@@ -1548,6 +1567,12 @@ Measures and computes the portfolio Second Lower Partial Moment (SLPM) risk meas
 \\end{align}
 ```
 
+Where:
+
+  - ``T``: is the number of observations.
+  - ``r``: is the minimum acceptable return.
+  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
+
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
@@ -1574,7 +1599,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
 # Functor
 
-  - `(slpm::SLPM)(x::AbstractVector)`: computes the second lower partial moment using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+  - `(slpm::SLPM)(x::AbstractVector)`: computes the second lower partial moment using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
 
 !!! warning
 
@@ -1601,6 +1626,12 @@ port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
                                                   :check_sol => (allow_local = true,
                                                                  allow_almost = true),
                                                   :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
 
 # Vanilla second lower partial moment.
 rm = SLPM()
@@ -1815,11 +1846,8 @@ end
 """
     struct WR <: RiskMeasure
 
-# Description
+Measures and computes the Worst Realization/Return (WR) risk measure. It is the absolute value of the most extreme loss for the period. Best used in combination with other risk measures.
 
-Worst Realization/Return risk measure.
-
-  - Useful for extremely conservative risk assessment.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 ```math
@@ -1828,20 +1856,121 @@ Worst Realization/Return risk measure.
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::WR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+Where:
 
-# Fields
+  - ``\\bm{X}``: is the vector of portfolio returns.
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Parameters
+
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+
+# Functor
+
+  - `(wr::WR)(x::AbstractVector)`: computes the worst realisation of a `T×1` vector of portfolio returns, `x`.
 
 # Examples
 
-```@example
-# Default settings
-wr = WR()
+```julia
+using Clarabel, StatsBase, JuMP
 
-# Custom settings
-wr = WR(; settings = RMSettings(; scale = 1.5))
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# Worst realisation.
+rm = WR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.01823e-11
+   2 │       2  5.08671e-11
+   3 │       3  0.432177
+   4 │       4  1.88254e-11
+   5 │       5  0.567823
+=#
+
+# Compute worst realisation.
+r1 = calc_risk(port; rm = rm) # 0.3353112333705662
+
+# Values are consistent.
+isapprox(r1, value(port.model[:wr_risk])) # true
+
+# Hierarchical optimisation, no JuMP model.
+w2 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.179856
+   2 │       2  0.251612
+   3 │       3  0.269012
+   4 │       4  0.0620356
+   5 │       5  0.237484
+=#
+
+# Compute worst realisation.
+r2 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
+
+# Use it in conjunction with another, less conservative risk measure.
+rm = [WR(; settings = RMSettings(; scale = 0.15)), Variance()]
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  3.20319e-10
+   2 │       2  5.48753e-9
+   3 │       3  0.535975
+   4 │       4  6.62746e-10
+   5 │       5  0.464025
+=#
+
+# WR.
+r3_1 = calc_risk(port; rm = WR()) # 0.3888545340695951
+
+# Variance.
+r3_2 = calc_risk(port; rm = Variance()) # 0.1348006113596908
+
+# This portfolio is not optimal in either risk measure, but mixes their characteristics.
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+
+# Minimum variance portfolio.
+r4 = calc_risk(port; rm = Variance())
+
+# WR of mixed portfolio is higher than the minimal worst realisation.
+r3_1 > r1 # true
+
+# Variance of mixed portfolio is higher than the minimal worst realisation.
+r3_2 > r4 # true
 ```
 """
 struct WR <: RiskMeasure
@@ -1857,11 +1986,8 @@ end
 """
     mutable struct CVaR{T1 <: Real} <: RiskMeasure
 
-# Description
+Measures and computes the Conditional Value at Risk (CVaR) risk measure. Also known as the Expected Shortfall, it is the weighted average of all tail losses up to the Value at Risk, which is the threshold below or equal to which are the worst `alpha %` of portfolio returns.
 
-Conditional Value at Risk (Expected Shortfall) risk measure.
-
-  - Measures expected loss in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 ```math
@@ -1872,29 +1998,137 @@ Conditional Value at Risk (Expected Shortfall) risk measure.
 
 Where:
 
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)`` is the Value at Risk as defined in [`VaR`](@ref).
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level.
+  - ``T``: is the number of observations.
+  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
 
-# Behaviour
+# Functor
 
-## Validation
-
-  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+  - `(cvar::CVaR)(x::AbstractVector)`: computes the conditional value at risk using the internal value of `alpha`, of a `T×1` vector of portfolio returns, `x`.
 
 # Examples
 
 ```@example
-# Default settings
-cvar = CVaR()
+using Clarabel, StatsBase, JuMP
 
-# Custom significance level
-cvar = CVaR(; settings = RMSettings(; scale = 1.0), alpha = 0.01)
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# CVaR with default values.
+rm = CVaR()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  3.42814e-10
+   2 │       2  1.79365e-9
+   3 │       3  0.432177
+   4 │       4  7.48868e-11
+   5 │       5  0.567823
+=#
+
+# Compute CVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm) # 0.3353112360331464
+
+# Risk is consistent.
+isapprox(r1, value(port.model[:cvar_risk]); rtol = 5e-8) # true
+
+# CVaR of the worst 50 % of cases.
+rm = CVaR(; alpha = 0.5)
+
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.234514
+   2 │       2  0.111534
+   3 │       3  0.237635
+   4 │       4  0.278882
+   5 │       5  0.137435
+=#
+# Compute CVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm) # 0.03485547491800034
+
+# Values are consistent.
+isapprox(r2, value(port.model[:cvar_risk])) # true
+
+# CVaR with default values.
+rm = CVaR()
+
+# Hierarchical optimisation, no JuMP model.
+w3 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.179856
+   2 │       2  0.251612
+   3 │       3  0.269012
+   4 │       4  0.0620356
+   5 │       5  0.237484
+=#
+
+# Compute worst realisation.
+r3 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
+
+# CVaR of the worst 50 % of cases.
+rm = CVaR(; alpha = 0.5)
+
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.187826
+   2 │       2  0.277756
+   3 │       3  0.237229
+   4 │       4  0.184567
+   5 │       5  0.112621
+=#
+
+# Compute worst realisation.
+r4 = calc_risk(port, :HRP; rm = rm) # 0.11405037467700407
 ```
 """
 mutable struct CVaR{T1 <: Real} <: RiskMeasure

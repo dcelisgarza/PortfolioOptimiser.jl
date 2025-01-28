@@ -125,7 +125,7 @@ r6 = calc_risk(port, :HRP; rm = rm)
 ## Semi Standard Deviation, [`SSD`](@ref)
 =#
 
-# Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+# Recompute asset statistics.
 asset_statistics!(port)
 # Vanilla semi standard deviation.
 rm = SSD()
@@ -201,7 +201,7 @@ r8 = calc_risk(port, :HRP; rm = rm)
 # First Lower Partial Moment, [`FLPM`](@ref)
 =#
 
-# Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+# Recompute asset statistics.
 asset_statistics!(port)
 # Vanilla first lower partial moment.
 rm = FLPM()
@@ -284,7 +284,7 @@ r8 = calc_risk(port, :HRP; rm = rm)
 # Second Lower Partial Moment, [`SLPM`](@ref)
 =#
 
-# Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+# Recompute asset statistics.
 asset_statistics!(port)
 # Vanilla second lower partial moment.
 rm = SLPM()
@@ -362,3 +362,72 @@ rm = SLPM(; target = Inf, w = ew)
 w8 = optimise!(port, HRP(; rm = rm))
 # Compute the second lower partial moment.
 r8 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Worst Realisation, [`WR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# Worst realisation.
+rm = WR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute worst realisation.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:wr_risk]))
+# Hierarchical optimisation, no JuMP model.
+w2 = optimise!(port, HRP(; rm = rm))
+# Compute worst realisation.
+r2 = calc_risk(port, :HRP; rm = rm)
+# Use it in conjunction with another, less conservative risk measure.
+rm = [WR(; settings = RMSettings(; scale = 0.15)), Variance()]
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+# WR.
+r3_1 = calc_risk(port; rm = WR())
+# Variance.
+r3_2 = calc_risk(port; rm = Variance())
+# This portfolio is not optimal in either risk measure, but mixes their characteristics.
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+# Minimum variance portfolio.
+r4 = calc_risk(port; rm = Variance())
+# WR of mixed portfolio is higher than the minimal worst realisation.
+r3_1 > r1
+# Variance of mixed portfolio is higher than the minimal worst realisation.
+r3_2 > r4
+
+#=
+# Conditional Value at Risk, [`CVaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# CVaR with default values.
+rm = CVaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute CVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# Risk is consistent.
+isapprox(r1, value(port.model[:cvar_risk]); rtol = 5e-8)
+# CVaR of the worst 50 % of cases.
+rm = CVaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute CVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:cvar_risk]))
+# CVaR with default values.
+rm = CVaR()
+# Hierarchical optimisation, no JuMP model.
+w3 = optimise!(port, HRP(; rm = rm))
+# Compute worst realisation.
+r3 = calc_risk(port, :HRP; rm = rm)
+# CVaR of the worst 50 % of cases.
+rm = CVaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute worst realisation.
+r4 = calc_risk(port, :HRP; rm = rm)
