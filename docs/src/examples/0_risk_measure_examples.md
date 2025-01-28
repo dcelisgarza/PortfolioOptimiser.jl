@@ -474,7 +474,7 @@ rm.target = 0
 isapprox(r2_2, calc_risk(port; rm = rm))
 ````
 
-# First lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+First lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
 
 ````@example 0_risk_measure_examples
 rm = FLPM(; target = Inf, mu = Inf)
@@ -662,7 +662,7 @@ rm.target = 0
 isapprox(r2_2, calc_risk(port; rm = rm))
 ````
 
-# Second lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+Second lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
 
 ````@example 0_risk_measure_examples
 rm = SLPM(; target = Inf, mu = Inf)
@@ -797,7 +797,7 @@ Recompute asset statistics.
 asset_statistics!(port)
 ````
 
-Worst realisation.
+Worst Realisation.
 
 ````@example 0_risk_measure_examples
 rm = WR()
@@ -809,7 +809,7 @@ Optimise portfolio.
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
 ````
 
-Compute worst realisation.
+Compute the worst realisation.
 
 ````@example 0_risk_measure_examples
 r1 = calc_risk(port; rm = rm)
@@ -827,7 +827,7 @@ Hierarchical optimisation, no JuMP model.
 w2 = optimise!(port, HRP(; rm = rm))
 ````
 
-Compute worst realisation.
+Compute the worst realisation.
 
 ````@example 0_risk_measure_examples
 r2 = calc_risk(port, :HRP; rm = rm)
@@ -944,7 +944,7 @@ Hierarchical optimisation, no JuMP model.
 w3 = optimise!(port, HRP(; rm = rm))
 ````
 
-Compute worst realisation.
+Compute the CVaR.
 
 ````@example 0_risk_measure_examples
 r3 = calc_risk(port, :HRP; rm = rm)
@@ -962,10 +962,326 @@ Hierarchical optimisation, no JuMP model.
 w4 = optimise!(port, HRP(; rm = rm))
 ````
 
-Compute worst realisation.
+Compute the CVaR.
 
 ````@example 0_risk_measure_examples
 r4 = calc_risk(port, :HRP; rm = rm)
+````
+
+# Entropic Value at Risk, [`EVaR`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+EVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = EVaR()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute EVaR for `alpha  = 0.05`.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+As a functor, must provide the solvers.
+
+````@example 0_risk_measure_examples
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+````
+
+Risk is consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:evar_risk]))
+````
+
+EVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = EVaR(; alpha = 0.5)
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute EVaR for `alpha  = 0.5`.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r2, value(port.model[:evar_risk]))
+````
+
+EVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = EVaR()
+````
+
+Hierarchical optimisation, no JuMP model but needs solvers.
+
+````@example 0_risk_measure_examples
+w3 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the EVaR.
+
+````@example 0_risk_measure_examples
+r3 = calc_risk(port, :HRP; rm = rm)
+````
+
+EVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = EVaR(; alpha = 0.5)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the EVaR.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port, :HRP; rm = rm)
+````
+
+# Relativistic Value at Risk, [`RLVaR`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+RLVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = RLVaR()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute RLVaR for `alpha  = 0.05`.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+As a functor, must provide the solvers.
+
+````@example 0_risk_measure_examples
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+````
+
+Risk is consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:rlvar_risk]))
+````
+
+RLVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = RLVaR(; alpha = 0.5)
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute RLVaR for `alpha  = 0.5`.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r2, value(port.model[:rlvar_risk]))
+````
+
+Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
+
+````@example 0_risk_measure_examples
+w3_1 = optimise!(port, Trad(; rm = RLVaR(; alpha = 0.5, kappa = 5e-5), str_names = true))
+````
+
+````@example 0_risk_measure_examples
+w3_2 = optimise!(port,
+                 Trad(; rm = RLVaR(; alpha = 0.5, kappa = 1 - 5e-5), str_names = true))
+````
+
+````@example 0_risk_measure_examples
+w3_3 = optimise!(port, Trad(; rm = EVaR(; alpha = 0.5), str_names = true))
+````
+
+````@example 0_risk_measure_examples
+w3_4 = optimise!(port, Trad(; rm = WR(), str_names = true))
+````
+
+``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
+
+````@example 0_risk_measure_examples
+rmsd(w3_1.weights, w3_3.weights)
+````
+
+``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
+
+````@example 0_risk_measure_examples
+rmsd(w3_2.weights, w3_4.weights)
+````
+
+RLVaR with default values.
+
+````@example 0_risk_measure_examples
+rm = RLVaR()
+````
+
+Hierarchical optimisation, no JuMP model but needs solvers.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the RLVaR.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port, :HRP; rm = rm)
+````
+
+RLVaR of the worst 50 % of cases.
+
+````@example 0_risk_measure_examples
+rm = EVaR(; alpha = 0.5)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w5 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the RLVaR.
+
+````@example 0_risk_measure_examples
+r5 = calc_risk(port, :HRP; rm = rm)
+````
+
+# Maximum Drawdown of Uncompounded Cumulative Returns, [`MDD`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+Maximum drawdown of uncompounded returns.
+
+````@example 0_risk_measure_examples
+rm = MDD()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute MDD.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:mdd_risk]))
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the MDD.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port, :HRP; rm = rm)
+````
+
+Use it in conjunction with another, less conservative risk measure.
+
+````@example 0_risk_measure_examples
+rm = [MDD(; settings = RMSettings(; scale = 0.15)), Variance()]
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+MDD.
+
+````@example 0_risk_measure_examples
+r3_1 = calc_risk(port; rm = MDD())
+````
+
+Variance.
+
+````@example 0_risk_measure_examples
+r3_2 = calc_risk(port; rm = Variance())
+````
+
+This portfolio is not optimal in either risk measure, but mixes their characteristics.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+````
+
+Minimum variance portfolio.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port; rm = Variance())
+````
+
+MDD of mixed portfolio is higher than the minimal MDD.
+
+````@example 0_risk_measure_examples
+r3_1 > r1
+````
+
+Variance of mixed portfolio is higher than the minimal MDD.
+
+````@example 0_risk_measure_examples
+r3_2 > r4
 ````
 
 * * *

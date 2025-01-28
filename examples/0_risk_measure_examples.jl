@@ -225,7 +225,7 @@ r2_2 = value(port.model[:flpm_risk])
 rm.target = 0
 isapprox(r2_2, calc_risk(port; rm = rm))
 #=
-# First lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+First lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
 =#
 rm = FLPM(; target = Inf, mu = Inf)
 # Value are approximately equal.
@@ -308,7 +308,7 @@ r2_2 = value(port.model[:slpm_risk])
 rm.target = 0
 isapprox(r2_2, calc_risk(port; rm = rm))
 #=
-# Second lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+Second lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
 =#
 rm = SLPM(; target = Inf, mu = Inf)
 # Value are approximately equal.
@@ -369,17 +369,17 @@ r8 = calc_risk(port, :HRP; rm = rm)
 
 # Recompute asset statistics.
 asset_statistics!(port)
-# Worst realisation.
+# Worst Realisation.
 rm = WR()
 # Optimise portfolio.
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-# Compute worst realisation.
+# Compute the worst realisation.
 r1 = calc_risk(port; rm = rm)
 # Values are consistent.
 isapprox(r1, value(port.model[:wr_risk]))
 # Hierarchical optimisation, no JuMP model.
 w2 = optimise!(port, HRP(; rm = rm))
-# Compute worst realisation.
+# Compute the worst realisation.
 r2 = calc_risk(port, :HRP; rm = rm)
 # Use it in conjunction with another, less conservative risk measure.
 rm = [WR(; settings = RMSettings(; scale = 0.15)), Variance()]
@@ -423,11 +423,134 @@ isapprox(r2, value(port.model[:cvar_risk]))
 rm = CVaR()
 # Hierarchical optimisation, no JuMP model.
 w3 = optimise!(port, HRP(; rm = rm))
-# Compute worst realisation.
+# Compute the CVaR.
 r3 = calc_risk(port, :HRP; rm = rm)
 # CVaR of the worst 50 % of cases.
 rm = CVaR(; alpha = 0.5)
 # Hierarchical optimisation, no JuMP model.
 w4 = optimise!(port, HRP(; rm = rm))
-# Compute worst realisation.
+# Compute the CVaR.
 r4 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Entropic Value at Risk, [`EVaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# EVaR with default values.
+rm = EVaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute EVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+# Risk is consistent.
+isapprox(r1, value(port.model[:evar_risk]))
+# EVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute EVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:evar_risk]))
+# EVaR with default values.
+rm = EVaR()
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w3 = optimise!(port, HRP(; rm = rm))
+# Compute the EVaR.
+r3 = calc_risk(port, :HRP; rm = rm)
+# EVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute the EVaR.
+r4 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Relativistic Value at Risk, [`RLVaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# RLVaR with default values.
+rm = RLVaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute RLVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+# Risk is consistent.
+isapprox(r1, value(port.model[:rlvar_risk]))
+# RLVaR of the worst 50 % of cases.
+rm = RLVaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute RLVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:rlvar_risk]))
+# Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
+w3_1 = optimise!(port, Trad(; rm = RLVaR(; alpha = 0.5, kappa = 5e-5), str_names = true))
+#
+w3_2 = optimise!(port,
+                 Trad(; rm = RLVaR(; alpha = 0.5, kappa = 1 - 5e-5), str_names = true))
+#
+w3_3 = optimise!(port, Trad(; rm = EVaR(; alpha = 0.5), str_names = true))
+#
+w3_4 = optimise!(port, Trad(; rm = WR(), str_names = true))
+# ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
+rmsd(w3_1.weights, w3_3.weights)
+# ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
+rmsd(w3_2.weights, w3_4.weights)
+# RLVaR with default values.
+rm = RLVaR()
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute the RLVaR.
+r4 = calc_risk(port, :HRP; rm = rm)
+# RLVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+# Compute the RLVaR.
+r5 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Maximum Drawdown of Uncompounded Cumulative Returns, [`MDD`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# Maximum drawdown of uncompounded returns.
+rm = MDD()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute MDD.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:mdd_risk]))
+# Hierarchical optimisation, no JuMP model.
+w2 = optimise!(port, HRP(; rm = rm))
+# Compute the MDD.
+r2 = calc_risk(port, :HRP; rm = rm)
+# Use it in conjunction with another, less conservative risk measure.
+rm = [MDD(; settings = RMSettings(; scale = 0.15)), Variance()]
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+# MDD.
+r3_1 = calc_risk(port; rm = MDD())
+# Variance.
+r3_2 = calc_risk(port; rm = Variance())
+# This portfolio is not optimal in either risk measure, but mixes their characteristics.
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+# Minimum variance portfolio.
+r4 = calc_risk(port; rm = Variance())
+# MDD of mixed portfolio is higher than the minimal MDD.
+r3_1 > r1
+# Variance of mixed portfolio is higher than the minimal MDD.
+r3_2 > r4

@@ -677,7 +677,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD
 
 # Functor
 
-  - `(sd::SD)(w::AbstractVector)`: computes the standard deviation using the covariance matrix stored in the `N×N` matrix `sigma`, and `N×1` vector of asset weights, `w`.
+  - `(sd::SD)(w::AbstractVector)`: computes the standard deviation of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 
@@ -838,7 +838,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 
 # Functor
 
-  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation using the internal values of `w1` and `w2`, of a `T×1` vector of portfolio returns, `x`.
+  - `(mad::MAD)(x::AbstractVector)`: computes the mean absolute deviation of a `T×1` vector of portfolio returns `x`.
 
 !!! warning
 
@@ -1044,7 +1044,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
       + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
@@ -1055,7 +1055,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
 # Functor
 
-  - `(ssd::SSD)(x::AbstractVector)`: computes the semi standard deviation using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
+  - `(ssd::SSD)(x::AbstractVector)`: computes the semi standard deviation of a `T×1` vector of portfolio returns `x`.
 
 !!! warning
 
@@ -1293,13 +1293,13 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
 
       + If `isinf(target)`:
 
           * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
 
-              - If `isinf(mu)`: it takes the value from the `mu` field of the [`Portfolio`](@ref) instance.
+              - If `isinf(mu)`: it takes its value from the `mu` field of the [`Portfolio`](@ref) instance.
 
           * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector.
@@ -1313,7 +1313,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
 # Functor
 
-  - `(flpm::FLPM)(x::AbstractVector)`: computes the first lower partial moment using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
+  - `(flpm::FLPM)(x::AbstractVector)`: computes the first lower partial moment of a `T×1` vector of portfolio returns `x`.
 
 !!! warning
 
@@ -1579,13 +1579,13 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
 
       + If `isinf(target)`:
 
           * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
 
-              - If `isinf(mu)`: it takes the value from the `mu` field of the [`Portfolio`](@ref) instance.
+              - If `isinf(mu)`: it takes its value from the `mu` field of the [`Portfolio`](@ref) instance.
 
           * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector.
@@ -1599,7 +1599,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
 # Functor
 
-  - `(slpm::SLPM)(x::AbstractVector)`: computes the second lower partial moment using the internal values of `target` and `w`, of a `T×1` vector of portfolio returns, `x`.
+  - `(slpm::SLPM)(x::AbstractVector)`: computes the second lower partial moment of a `T×1` vector of portfolio returns `x`.
 
 !!! warning
 
@@ -1868,7 +1868,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
 # Functor
 
-  - `(wr::WR)(x::AbstractVector)`: computes the worst realisation of a `T×1` vector of portfolio returns, `x`.
+  - `(wr::WR)(x::AbstractVector)`: computes the worst realisation of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 
@@ -1916,7 +1916,7 @@ w1 = optimise!(port, Trad(; rm = rm, str_names = true))
    5 │       5  0.567823
 =#
 
-# Compute worst realisation.
+# Compute the worst realisation.
 r1 = calc_risk(port; rm = rm) # 0.3353112333705662
 
 # Values are consistent.
@@ -1936,7 +1936,7 @@ w2 = optimise!(port, HRP(; rm = rm))
    5 │       5  0.237484
 =#
 
-# Compute worst realisation.
+# Compute the worst realisation.
 r2 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
 
 # Use it in conjunction with another, less conservative risk measure.
@@ -1969,7 +1969,7 @@ r4 = calc_risk(port; rm = Variance())
 # WR of mixed portfolio is higher than the minimal worst realisation.
 r3_1 > r1 # true
 
-# Variance of mixed portfolio is higher than the minimal worst realisation.
+# Variance of mixed portfolio is higher than the minimal variance.
 r3_2 > r4 # true
 ```
 """
@@ -2013,7 +2013,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
 # Functor
 
-  - `(cvar::CVaR)(x::AbstractVector)`: computes the conditional value at risk using the internal value of `alpha`, of a `T×1` vector of portfolio returns, `x`.
+  - `(cvar::CVaR)(x::AbstractVector)`: computes the conditional value at risk  of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 
@@ -2107,7 +2107,7 @@ w3 = optimise!(port, HRP(; rm = rm))
    5 │       5  0.237484
 =#
 
-# Compute worst realisation.
+# Compute the CVaR.
 r3 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
 
 # CVaR of the worst 50 % of cases.
@@ -2127,7 +2127,7 @@ w4 = optimise!(port, HRP(; rm = rm))
    5 │       5  0.112621
 =#
 
-# Compute worst realisation.
+# Compute the CVaR.
 r4 = calc_risk(port, :HRP; rm = rm) # 0.11405037467700407
 ```
 """
@@ -2189,11 +2189,8 @@ end
 """
     mutable struct EVaR{T1 <: Real} <: RiskMeasure
 
-# Description
+Measures and computes the Entropic Value at Risk (EVaR) risk measure. It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
 
-Entropic Value at Risk risk measure.
-
-  - It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 ```math
@@ -2205,37 +2202,144 @@ Entropic Value at Risk risk measure.
 Where:
 
   - ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
+  - ``z``: is the entropic value at risk.
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems.
+  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional, abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-# Behaviour
+      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
 
-  - Requires solver capability for exponential cone problems.
+# Functor
 
-  - When computing [`calc_risk(::EVaR, ::AbstractVector)`](@ref):
-
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref).
-      + If `solvers` is provided: use the solvers.
-
-## Validation
-
-  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
+  - `(evar::EVaR)(x::AbstractVector)`: computes the conditional value at risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 
-```@example
-# Default settings
-evar = EVaR()
+```julia
+using Clarabel, StatsBase, JuMP
 
-# Custom configuration with specific solver
-evar = EVaR(; alpha = 0.025,  # 2.5 % significance level
-            solvers = Dict("solver" => my_solver))
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# EVaR with default values.
+rm = EVaR()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.80007e-10
+   2 │       2  2.53151e-10
+   3 │       3  0.432177
+   4 │       4  1.49677e-10
+   5 │       5  0.567823
+=#
+
+# Compute EVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm) # 0.33531123421543
+
+# Risk is consistent.
+isapprox(r1, value(port.model[:evar_risk])) # true
+
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights) # true
+
+# EVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.0181213
+   2 │       2  0.018299
+   3 │       3  0.507395
+   4 │       4  1.79592e-9
+   5 │       5  0.456185
+=#
+
+# Compute EVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm) # 0.26782403994246134
+
+# Values are consistent.
+isapprox(r2, value(port.model[:evar_risk])) # true
+
+# EVaR with default values.
+rm = EVaR()
+
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w3 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.179856
+   2 │       2  0.251612
+   3 │       3  0.269012
+   4 │       4  0.0620356
+   5 │       5  0.237484
+=#
+
+# Compute the EVaR.
+r3 = calc_risk(port, :HRP; rm = rm) # 0.954575073881352
+
+# EVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.210601
+   2 │       2  0.281815
+   3 │       3  0.21888
+   4 │       4  0.0884636
+   5 │       5  0.20024
+=#
+
+# Compute the EVaR.
+r4 = calc_risk(port, :HRP; rm = rm) # 0.4995910664303083
 ```
 """
 mutable struct EVaR{T1 <: Real} <: RiskMeasure
@@ -2261,11 +2365,8 @@ end
 """
     mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
 
-# Description
+Measures and computes the Relativistic Value at Risk (RLVaR) risk measure. It is a generalisation of the [`EVaR`](@ref).
 
-Relativistic Value at Risk risk measure.
-
-  - It is a generalisation of the [`EVaR`](@ref).
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
@@ -2279,40 +2380,201 @@ Relativistic Value at Risk risk measure.
 Where:
 
   - ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level.
+  - ``\\kappa``: is the relativistic deformation parameter.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `kappa::T1 = 0.3`: significance level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for 3D power cone problems.
+  - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
+  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional, abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-# Behaviour
-
-  - Requires solver capability for 3D power cone problems.
-
-  - When computing [`calc_risk(::RLVaR, ::AbstractVector)`](@ref):
-
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref).
-      + If `solvers` is provided: use the solvers.
-
-## Validation
-
-  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
-  - When setting `kappa` at construction or runtime, `kappa ∈ (0, 1)`.
+      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
 
 # Examples
 
-```@example
-# Default settings
-rlvar = RLVaR()
+```julia
+using Clarabel, StatsBase, JuMP
 
-# Custom configuration
-rlvar = RLVaR(; alpha = 0.07,   # 7 % significance level
-              kappa = 0.2,      # Deformation parameter
-              solvers = Dict("solver" => my_solver))
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# RLVaR with default values.
+rm = RLVaR()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.80007e-10
+   2 │       2  2.53151e-10
+   3 │       3  0.432177
+   4 │       4  1.49677e-10
+   5 │       5  0.567823
+=#
+
+# Compute RLVaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm) # 0.33531123421543
+
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights) # true
+
+# Risk is consistent.
+isapprox(r1, value(port.model[:rlvar_risk])) # true
+
+# RLVaR of the worst 50 % of cases.
+rm = RLVaR(; alpha = 0.5)
+
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.0181213
+   2 │       2  0.018299
+   3 │       3  0.507395
+   4 │       4  1.79592e-9
+   5 │       5  0.456185
+=#
+
+# Compute RLVaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm) # 0.26782403994246134
+
+# Values are consistent.
+isapprox(r2, value(port.model[:rlvar_risk])) # true
+
+# Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
+w3_1 = optimise!(port, Trad(; rm = RLVaR(; alpha = 0.5, kappa = 5e-5), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.0181197
+   2 │       2  0.0182987
+   3 │       3  0.507394
+   4 │       4  2.95838e-8
+   5 │       5  0.456187
+=#
+
+w3_2 = optimise!(port,
+                 Trad(; rm = RLVaR(; alpha = 0.5, kappa = 1 - 5e-5), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  4.13117e-14
+   2 │       2  3.08176e-14
+   3 │       3  0.432177
+   4 │       4  5.61983e-14
+   5 │       5  0.567823
+=#
+
+w3_3 = optimise!(port, Trad(; rm = EVaR(; alpha = 0.5), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.0181213
+   2 │       2  0.018299
+   3 │       3  0.507395
+   4 │       4  1.79592e-9
+   5 │       5  0.456185
+=#
+
+w3_4 = optimise!(port, Trad(; rm = WR(), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.01823e-11
+   2 │       2  5.08671e-11
+   3 │       3  0.432177
+   4 │       4  1.88254e-11
+   5 │       5  0.567823
+=#
+
+# `kappa → 0 ∴ RLVaR(X, alpha, kappa) → EVaR(X, alpha)`
+d1 = rmsd(w3_1.weights, w3_3.weights) # 1.2142341888644785e-6
+
+# `kappa → 0 ∴ RLVaR(X, alpha, kappa) → WR(X)`
+d2 = rmsd(w3_2.weights, w3_4.weights) # 4.790216951410363e-11
+
+# RLVaR with default values.
+rm = RLVaR()
+
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w4 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.179856
+   2 │       2  0.251612
+   3 │       3  0.269012
+   4 │       4  0.0620356
+   5 │       5  0.237484
+=#
+
+# Compute the RLVaR.
+r4 = calc_risk(port, :HRP; rm = rm) # 0.9545750670771044
+
+# RLVaR of the worst 50 % of cases.
+rm = EVaR(; alpha = 0.5)
+
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.210601
+   2 │       2  0.281815
+   3 │       3  0.21888
+   4 │       4  0.0884636
+   5 │       5  0.20024
+=#
+
+# Compute the RLVaR.
+r5 = calc_risk(port, :HRP; rm = rm) # 0.4995910664303083
 ```
 """
 mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
@@ -2340,11 +2602,8 @@ end
 """
     struct MDD <: RiskMeasure
 
-# Description
+Measures and computes the Maximum Drawdown of uncompounded cumulative returns (MDD) risk measure. It measures the largest peak-to-trough decline. Best used in combination with other risk measures. The risk-adjusted return ratio of this risk measure is commonly known as the Calmar ratio.
 
-Maximum Drawdown (Calmar ratio) risk measure for uncompounded cumulative returns.
-
-  - Measures the largest peak-to-trough decline.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
 ```math
@@ -2356,21 +2615,132 @@ Maximum Drawdown (Calmar ratio) risk measure for uncompounded cumulative returns
 Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X})`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::MDD, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+
+# Functor
+
+  - `(mdd::MDD)(x::AbstractVector)`: computes the maximum drawdown of uncompounded returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 
-```@example
-# Default settings
-mdd = MDD()
+```julia
+using Clarabel, StatsBase, JuMP
 
-# Custom settings
-mdd = MDD(; settings = RMSettings(; scale = 2.0))
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# Maximum drawdown of uncompounded returns.
+rm = MDD()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.13391
+   2 │       2  1.17101e-11
+   3 │       3  0.496406
+   4 │       4  8.35795e-12
+   5 │       5  0.369684
+=#
+
+# Compute MDD.
+r1 = calc_risk(port; rm = rm) # 0.5374188549183612
+
+# Values are consistent.
+isapprox(r1, value(port.model[:mdd_risk])) # true
+
+# Hierarchical optimisation, no JuMP model.
+w2 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.340287
+   2 │       2  0.254799
+   3 │       3  0.132603
+   4 │       4  0.124343
+   5 │       5  0.147968
+=#
+
+# Compute the MDD.
+r2 = calc_risk(port, :HRP; rm = rm) # 1.2557175411222494
+
+# Use it in conjunction with another, less conservative risk measure.
+rm = [MDD(; settings = RMSettings(; scale = 0.15)), Variance()]
+
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.024221
+   2 │       2  4.10595e-9
+   3 │       3  0.520211
+   4 │       4  0.0302782
+   5 │       5  0.42529
+=#
+
+# MDD.
+r3_1 = calc_risk(port; rm = MDD()) # 0.7055289743577166
+
+# Variance.
+r3_2 = calc_risk(port; rm = Variance()) # 0.13551503837607193
+
+# This portfolio is not optimal in either risk measure, but mixes their characteristics.
+w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  2.14218e-9
+   2 │       2  0.0183819
+   3 │       3  0.520499
+   4 │       4  0.0340462
+   5 │       5  0.427073
+=#
+
+# Minimum variance portfolio.
+r4 = calc_risk(port; rm = Variance()) # 0.13051761827097458
+
+# MDD of mixed portfolio is higher than the minimal MDD.
+r3_1 > r1 # true
+
+# Variance of mixed portfolio is higher than the minimal Variance.
+r3_2 > r4 # true
 ```
 """
 struct MDD <: RiskMeasure
