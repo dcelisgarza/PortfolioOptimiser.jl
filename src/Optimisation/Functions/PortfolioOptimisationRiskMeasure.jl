@@ -614,19 +614,22 @@ function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    ret_target = rm.ret_target
-    if isinf(ret_target)
-        ret_target = port.mu
+    mu = rm.mu
+    if isa(mu, Real) && isinf(mu)
+        mu = port.mu
     end
-    if !isa(ret_target, AbstractVector)
-        ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+    if !isa(mu, AbstractVector)
+        mu = range(; start = mu, stop = mu, length = length(w))
     end
     target = rm.target
+    if isinf(target)
+        target = dot(mu, w)
+    end
     @variable(model, flpm[1:T] .>= 0)
     @expression(model, flpm_risk, sum(flpm) / T)
     @constraint(model, constr_flpm,
                 scale_constr * flpm .>=
-                scale_constr * (target * k .- (net_X .- dot(ret_target, w))))
+                scale_constr * (target * k .- (net_X .- dot(mu, w))))
     set_rm_risk_upper_bound(type, model, flpm_risk, rm.settings.ub, "flpm_risk")
     set_risk_expression(model, flpm_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -645,19 +648,22 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     @variable(model, flpm[1:T, 1:count] .>= 0)
     @expression(model, flpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        ret_target = rm.ret_target
-        if isinf(ret_target)
-            ret_target = port.mu
+        mu = rm.mu
+        if isa(mu, Real) && isinf(mu)
+            mu = port.mu
         end
-        if !isa(ret_target, AbstractVector)
-            ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+        if !isa(mu, AbstractVector)
+            mu = range(; start = mu, stop = mu, length = length(w))
         end
         target = rm.target
+        if isinf(target)
+            target = dot(mu, w)
+        end
         add_to_expression!(flpm_risk[i], iT, sum(view(flpm, :, i)))
         model[Symbol("constr_flpm_$(i)")] = @constraint(model,
                                                         scale_constr * view(flpm, :, i) .>=
                                                         scale_constr * (target * k .-
-                                                                        (net_X .- dot(ret_target, w))))
+                                                                        (net_X .- dot(mu, w))))
         set_rm_risk_upper_bound(type, model, flpm_risk[i], rm.settings.ub, "flpm_risk_$(i)")
         set_risk_expression(model, flpm_risk[i], rm.settings.scale, rm.settings.flag)
     end
@@ -672,14 +678,17 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    ret_target = rm.ret_target
-    if isinf(ret_target)
-        ret_target = port.mu
+    mu = rm.mu
+    if isa(mu, Real) && isinf(mu)
+        mu = port.mu
     end
-    if !isa(ret_target, AbstractVector)
-        ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+    if !isa(mu, AbstractVector)
+        mu = range(; start = mu, stop = mu, length = length(w))
     end
     target = rm.target
+    if isinf(target)
+        target = dot(mu, w)
+    end
     @variables(model, begin
                    slpm[1:T] .>= 0
                    tslpm
@@ -689,7 +698,7 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
                  begin
                      constr_slpm,
                      scale_constr * slpm .>=
-                     scale_constr * (target * k .- (net_X .- dot(ret_target, w)))
+                     scale_constr * (target * k .- (net_X .- dot(mu, w)))
                      constr_slpm_soc,
                      [scale_constr * tslpm; scale_constr * slpm] ∈ SecondOrderCone()
                  end)
@@ -714,14 +723,17 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
                end)
     @expression(model, slpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        ret_target = rm.ret_target
-        if isinf(ret_target)
-            ret_target = port.mu
+        mu = rm.mu
+        if isa(mu, Real) && isinf(mu)
+            mu = port.mu
         end
-        if !isa(ret_target, AbstractVector)
-            ret_target = range(; start = ret_target, stop = ret_target, length = length(w))
+        if !isa(mu, AbstractVector)
+            mu = range(; start = mu, stop = mu, length = length(w))
         end
         target = rm.target
+        if isinf(target)
+            target = dot(mu, w)
+        end
         add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
         model[Symbol("constr_slpm_$(i)")], model[Symbol("constr_slpm_soc_$(i)")] = @constraints(model,
                                                                                                 begin
@@ -733,7 +745,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
                                                                                                     (target *
                                                                                                      k .-
                                                                                                      (net_X .-
-                                                                                                      dot(ret_target,
+                                                                                                      dot(mu,
                                                                                                           w)))
                                                                                                     [scale_constr *
                                                                                                      tslpm[i]

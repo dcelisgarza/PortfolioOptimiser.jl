@@ -78,7 +78,7 @@ Compute asset statistics, use ew1 in the `Trad` optimisation. This makes it cons
 =#
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 #=
-Mean absolute deviation with different weights. w1 has no effect in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based optimisations, so we account for it in the computation of `port.mu` above.
+Mean absolute deviation with different weights. w1 has no effect in the following optimisation in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based optimisations, so we account for it in the computation of `port.mu` above.
 =#
 rm = MAD(; w1 = ew1, w2 = ew2)
 # Use the custom weights in the optimisation.
@@ -107,7 +107,7 @@ w4 = optimise!(port, HRP(; rm = rm))
 r4 = calc_risk(port, :HRP; rm = rm)
 # Use the risk measure as a functor.
 r4 == rm(port.returns * w4.weights)
-# Custom mu has no effect.
+# Custom mu has no effect in the following optimisation.
 rm = MAD(; mu = custom_mu)
 # Hierarchical optimisation, no JuMP model.
 w5 = optimise!(port, HRP(; rm = rm))
@@ -152,7 +152,7 @@ Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it con
 =#
 asset_statistics!(port; mu_type = MuSimple(; w = ew))
 #=
-Semi standard deviation with exponential weights. `w` has no effect, so we account for it in the computation of `port.mu` above.
+Semi standard deviation with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
 =#
 rm = SSD(; w = ew)
 # Optimise using the exponential weight.
@@ -183,16 +183,182 @@ w6 = optimise!(port, HRP(; rm = rm))
 r6 = calc_risk(port, :HRP; rm = rm)
 # As a functor.
 r6 == rm(port.returns * w6.weights)
-# Custom mu has no effect.
+# Custom mu has no effect in the following optimisation.
 rm = SSD(; mu = custom_mu)
 # Hierarchical optimisation, no JuMP model.
 w7 = optimise!(port, HRP(; rm = rm))
 w6.weights == w7.weights # true
 # Compute the semi standard deviation.
 r7 = calc_risk(port, :HRP; rm = rm)
-# `w` has an effect.
+# `w` has an effect in the following optimisation.
 rm = SSD(; w = ew)
 # Hierarchical optimisation, no JuMP model.
 w8 = optimise!(port, HRP(; rm = rm))
 # Compute the semi standard deviation.
+r8 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# First Lower Partial Moment, [`FLPM`](@ref)
+=#
+
+# Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+asset_statistics!(port)
+# Vanilla first lower partial moment.
+rm = FLPM()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute first lower partial moment.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:flpm_risk]))
+#=
+First lower partial moment with a returns threshold equal to `Inf` will use `rm.mu` (which in this case is zero) in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+=#
+rm = FLPM(; target = Inf)
+# Optimise portfolio using the first lower partial moment with a return threshold that includes all returns.
+w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+# The risks do not match. This is because when using the functor, `mu` has no effect, and if `isinf(target)`, it will be set to the expected value of the returns vector. Whereas [`PortfolioOptimiser.set_rm`](@ref) took the value to be `target = range(; start = mu, stop = mu, length = N)`, where `N` is the number of assets, and `mu == 0` in this case.
+r2_1 = calc_risk(port; rm = rm)
+#
+r2_2 = value(port.model[:flpm_risk])
+# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
+rm.target = 0
+isapprox(r2_2, calc_risk(port; rm = rm))
+#=
+# First lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+=#
+rm = FLPM(; target = Inf, mu = Inf)
+# Value are approximately equal.
+w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+#=
+Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it consistent with the risk measure.
+=#
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+#=
+First lower partial moment with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
+=#
+rm = FLPM(; w = ew)
+# Optimise using the exponential weight.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Since we used the same exponential weights to compute `port.mu` and passed it on to the functor, the risk computed by `calc_risk` will be consistent with the value in the `JuMP` model.
+=#
+r4 = calc_risk(port; rm = rm)
+# Check they are approximately equal.
+isapprox(r4, value(port.model[:flpm_risk]))
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = FLPM(; mu = custom_mu)
+# Optimise portfolio using this custom mu.
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Values don't match because the mean return is computed from the portfolio weights and returns matrix.
+=#
+r5_1 = calc_risk(port; rm = rm)
+#
+r5_2 = value(port.model[:flpm_risk])
+# Vanilla first lower partial moment.
+rm = FLPM()
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+# Compute the first lower partial moment.
+r6 = calc_risk(port, :HRP; rm = rm)
+# As a functor.
+r6 == rm(port.returns * w6.weights)
+# Custom mu has no effect in the following optimisation.
+rm = FLPM(; mu = custom_mu)
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+# If we set `target = Inf`, the target will be the return vector's expected value computed with the weights.
+rm = FLPM(; target = Inf, w = ew)
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+# Compute the first lower partial moment.
+r8 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Second Lower Partial Moment, [`SLPM`](@ref)
+=#
+
+# Recompute asset statistics to get rid of the exponentially weighted expected returns vector.
+asset_statistics!(port)
+# Vanilla second lower partial moment.
+rm = SLPM()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute second lower partial moment.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:slpm_risk]))
+#=
+Second lower partial moment with a returns threshold equal to `Inf` will use `rm.mu` (which in this case is zero) in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+=#
+rm = SLPM(; target = Inf)
+# Optimise portfolio using the second lower partial moment with a return threshold that includes all returns.
+w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+# The risks do not match. This is because when using the functor, `mu` has no effect, and if `isinf(target)`, it will be set to the expected value of the returns vector. Whereas [`PortfolioOptimiser.set_rm`](@ref) took the value to be `target = range(; start = mu, stop = mu, length = N)`, where `N` is the number of assets, and `mu == 0` in this case.
+r2_1 = calc_risk(port; rm = rm)
+#
+r2_2 = value(port.model[:slpm_risk])
+# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
+rm.target = 0
+isapprox(r2_2, calc_risk(port; rm = rm))
+#=
+# Second lower partial moment with a returns threshold equal to `Inf`, will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute the mean of the returns vector when used in the functor.
+=#
+rm = SLPM(; target = Inf, mu = Inf)
+# Value are approximately equal.
+w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+#=
+Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it consistent with the risk measure.
+=#
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+#=
+Second lower partial moment with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
+=#
+rm = SLPM(; w = ew)
+# Optimise using the exponential weight.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Since we used the same exponential weights to compute `port.mu` and passed it on to the functor, the risk computed by `calc_risk` will be consistent with the value in the `JuMP` model.
+=#
+r4 = calc_risk(port; rm = rm)
+# Check they are approximately equal.
+isapprox(r4, value(port.model[:slpm_risk]))
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = SLPM(; mu = custom_mu)
+# Optimise portfolio using this custom mu.
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Values don't match because the mean return is computed from the portfolio weights and returns matrix.
+=#
+r5_1 = calc_risk(port; rm = rm)
+#
+r5_2 = value(port.model[:slpm_risk])
+# Vanilla second lower partial moment.
+rm = SLPM()
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+# Compute the second lower partial moment.
+r6 = calc_risk(port, :HRP; rm = rm)
+# As a functor.
+r6 == rm(port.returns * w6.weights)
+# Custom mu has no effect in the following optimisation.
+rm = SLPM(; mu = custom_mu)
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+# If we set `target = Inf`, the target will be the return vector's expected value computed with the weights.
+rm = SLPM(; target = Inf, w = ew)
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+# Compute the second lower partial moment.
 r8 = calc_risk(port, :HRP; rm = rm)

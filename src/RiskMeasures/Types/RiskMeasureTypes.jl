@@ -829,7 +829,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 
   - `w1::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-      + `w1` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator and the would-be value of `w1` as the weight vector.
+      + `w1` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
   - `w2::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
   - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional, vector of expected returns.
 
@@ -970,7 +970,7 @@ r4 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
 # As a functor.
 r4 == rm(port.returns * w4.weights) # true
 
-# Custom mu has no effect.
+# Custom mu has no effect in the following optimisation.
 rm = MAD(; mu = custom_mu)
 
 # Hierarchical optimisation, no JuMP model.
@@ -1040,7 +1040,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
   - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator and the would-be value of `w` as the weight vector.
+      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
   - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional, vector of expected returns.
 
       + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
@@ -1140,8 +1140,8 @@ ew = eweights(1:size(ret, 1), 0.2; scale = true)
 asset_statistics!(port; mu_type = MuSimple(; w = ew))
 
 # Semi standard deviation with exponential weights.
-# `w` has no effect, so we account for it in the computation
-# of `port.mu` above.
+# `w` has no effect in the following optimisation, 
+# so we account for it in the computation of `port.mu` above.
 rm = SSD(; w = ew)
 
 w4 = optimise!(port, Trad(; rm = rm, str_names = true))
@@ -1212,7 +1212,7 @@ r6 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
 # As a functor.
 r6 == rm(port.returns * w6.weights) # true
 
-# Custom mu has no effect.
+# Custom mu has no effect in the following optimisation.
 rm = SSD(; mu = custom_mu)
 
 # Hierarchical optimisation, no JuMP model.
@@ -1222,7 +1222,7 @@ w6.weights == w7.weights # true
 # Compute the semi standard deviation.
 r7 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
 
-# `w` has an effect.
+# `w` has an effect in the following optimisation.
 rm = SSD(; w = ew)
 
 # Hierarchical optimisation, no JuMP model.
@@ -1266,11 +1266,7 @@ end
 """
     mutable struct FLPM{T1 <: Real} <: RiskMeasure
 
-# Description
-
-First Lower Partial Moment (Omega ratio) risk measure.
-
-  - Measures the dispersion equal to or below the `target` return threshold.
+Measures and computes the portfolio First Lower Partial Moment (FLPM) risk measure. Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Omega ratio.
 
 ```math
 \\begin{align}
@@ -1278,33 +1274,255 @@ First Lower Partial Moment (Omega ratio) risk measure.
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SLPM`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::FLPM, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `target::T1 = 0.0`: minimum return threshold for downside classification.
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-# Examples
+  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
 
-```@example
-# Default settings
-flpm = FLPM()
+      + If `isinf(target)`:
 
-# Custom target return
-flpm = FLPM(; target = 0.01)  # 1 % minimum return threshold
+          * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
+
+              - If `isinf(mu)`: it takes the value from the `mu` field of the [`Portfolio`](@ref) instance.
+
+          * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector.
+
+      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
+  - `mu::Union{<:Real, AbstractVector{<:Real}} = 0.0`: optional, minimum return target.
+
+      + If `isinf(mu)`: takes its value from the `mu` instance [`Portfolio`](@ref).
+      + If `isa(mu, Real)`: sets the expected returns vector to this value.
+      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+
+# Functor
+
+  - `(flpm::FLPM)(x::AbstractVector)`: computes the first lower partial moment using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+
+!!! warning
+
+    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `flpm_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
+
+```julia
+using Clarabel, StatsBase, JuMP
+
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Vanilla first lower partial moment.
+rm = FLPM()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.129097
+   2 │       2  7.13509e-10
+   3 │       3  0.586438
+   4 │       4  0.0577378
+   5 │       5  0.226727
+=#
+
+# Compute first lower partial moment.
+r1 = calc_risk(port; rm = rm) # 0.07307909070642135
+
+# Values are consistent.
+isapprox(r1, value(port.model[:flpm_risk])) # true
+
+# First lower partial moment with a returns threshold equal to `Inf`, 
+# will use `rm.mu` (which in this case is zero) in optimisations using 
+# [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute 
+# the mean of the returns vector when used in the functor.
+rm = FLPM(; target = Inf)
+
+# Optimise portfolio using the first lower partial moment with a 
+# return threshold that includes all returns.
+w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.129097
+   2 │       2  7.13509e-10
+   3 │       3  0.586438
+   4 │       4  0.0577378
+   5 │       5  0.226727
+=#
+
+# The risks do not match. This is because when using the functor, `mu` 
+# has no effect, and if `isinf(target)`, it will be set to the 
+# expected value of the returns vector. Whereas [`set_rm`](@ref) took
+# the value to be `target = range(; start = mu, stop = mu, length = N)`,
+# where `N` is the number of assets, and `mu == 0` in this case.
+r2_1 = calc_risk(port; rm = rm) # 0.1727455718397823
+r2_2 = value(port.model[:flpm_risk]) # 0.07307909079327962
+
+# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
+rm.target = 0
+isapprox(r2_2, calc_risk(port; rm = rm)) # true
+
+# First lower partial moment with a returns threshold equal to `Inf`, 
+# will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models,
+# and compute the mean of the returns vector when used in the functor.
+rm = FLPM(; target = Inf, mu = Inf)
+
+# Value are approximately equal.
+w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.8061e-11
+   2 │       2  5.26329e-10
+   3 │       3  0.591219
+   4 │       4  5.03171e-9
+   5 │       5  0.408781
+=#
+
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+
+# Compute asset statistics, use `ew` in the `Trad` optimisation. 
+# This makes it consistent with the risk measure.
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+
+# First lower partial moment with exponential weights. `w` has no 
+# effect in the following optimisation, so we account for it in 
+# the computation of `port.mu` above.
+rm = FLPM(; w = ew)
+
+# Optimise using the exponential weight.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  0.129097
+   2 │       2  7.13509e-10
+   3 │       3  0.586438
+   4 │       4  0.0577378
+   5 │       5  0.226727
+=#
+
+# Since we used the same exponential weights to compute `port.mu` 
+# and passed it on to the functor, the risk computed by `calc_risk` 
+# will be consistent with the value in the `JuMP` model.
+r4 = calc_risk(port; rm = rm) # 0.07307909070642135
+
+# Check they are approximately equal.
+isapprox(r4, value(port.model[:flpm_risk])) # true
+
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = FLPM(; mu = custom_mu)
+
+# Optimise portfolio using this custom mu.
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  0.129419
+   2 │       2  4.3467e-10
+   3 │       3  0.590633
+   4 │       4  0.13825
+   5 │       5  0.141698
+=#
+
+# Values don't match because the mean return is computed 
+# from the portfolio weights and returns matrix.
+r5_1 = calc_risk(port; rm = rm) # 0.09467150228915336
+r5_2 = value(port.model[:flpm_risk]) # 0.1161638387813645
+
+# Vanilla first lower partial moment.
+rm = FLPM()
+
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.222221
+   2 │       2  0.274757
+   3 │       3  0.185196
+   4 │       4  0.149013
+   5 │       5  0.168813
+=#
+
+# Compute the first lower partial moment.
+r6 = calc_risk(port, :HRP; rm = rm) # 0.17425430923284418
+
+# As a functor.
+r6 == rm(port.returns * w6.weights) # true
+
+# Custom mu has no effect in the following optimisation.
+rm = FLPM(; mu = custom_mu)
+
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+
+# If we set `target = Inf`, the target will be the return vector's 
+# expected value computed with the weights.
+rm = FLPM(; target = Inf, w = ew)
+
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.143391
+   2 │       2  0.182024
+   3 │       3  0.408805
+   4 │       4  0.163642
+   5 │       5  0.102138
+=#
+
+# Compute the first lower partial moment.
+r8 = calc_risk(port, :HRP; rm = rm) # 0.18695122450749355
 ```
 """
 mutable struct FLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
-    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
     w::Union{AbstractWeights, Nothing}
+    mu::Union{<:Real, AbstractVector{<:Real}}
 end
-function FLPM(; settings::RMSettings = RMSettings(),
-              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing)
-    return FLPM{typeof(target)}(settings, ret_target, target, w)
+function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing,
+              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
+    return FLPM{typeof(target)}(settings, target, w, mu)
 end
 function (flpm::FLPM)(x::AbstractVector)
     T = length(x)
@@ -1322,11 +1540,7 @@ end
 """
     mutable struct SLPM{T1 <: Real} <: RiskMeasure
 
-# Description
-
-Second Lower Partial Moment (Sortino ratio) risk measure.
-
-  - Measures the dispersion equal to or below the `target` return threshold.
+Measures and computes the portfolio Second Lower Partial Moment (SLPM) risk measure. Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Sortino ratio.
 
 ```math
 \\begin{align}
@@ -1334,33 +1548,255 @@ Second Lower Partial Moment (Sortino ratio) risk measure.
 \\end{align}
 ```
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`FLPM`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SLPM, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Fields
+# Keyword Parameters
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `target::T1 = 0.0`: minimum return threshold for downside classification.
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-# Examples
+  - `target::T1 <: Real = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
 
-```@example
-# Default settings
-slpm = SLPM()
+      + If `isinf(target)`:
 
-# Custom settings
-slpm = SLPM(; settings = RMSettings(; scale = 2.0), target = 0.005)
+          * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
+
+              - If `isinf(mu)`: it takes the value from the `mu` field of the [`Portfolio`](@ref) instance.
+
+          * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional, `T×1` vector of weights for computing the expected value of the returns vector.
+
+      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
+  - `mu::Union{<:Real, AbstractVector{<:Real}} = 0.0`: optional, minimum return target.
+
+      + If `isinf(mu)`: takes its value from the `mu` instance [`Portfolio`](@ref).
+      + If `isa(mu, Real)`: sets the expected returns vector to this value.
+      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+
+# Functor
+
+  - `(slpm::SLPM)(x::AbstractVector)`: computes the second lower partial moment using the internal values of `target` and `w`, for a `T×1` vector of portfolio returns, `x`.
+
+!!! warning
+
+    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `slpm_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
+
+```julia
+using Clarabel, StatsBase, JuMP
+
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Vanilla second lower partial moment.
+rm = SLPM()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.029713
+   2 │       2  0.0247062
+   3 │       3  0.513805
+   4 │       4  2.2412e-9
+   5 │       5  0.431776
+=#
+
+# Compute second lower partial moment.
+r1 = calc_risk(port; rm = rm) # 0.18612605973579038
+
+# Values are consistent.
+isapprox(r1, value(port.model[:slpm_risk])) # true
+
+# Second lower partial moment with a returns threshold equal to `Inf`, 
+# will use `rm.mu` (which in this case is zero) in optimisations using 
+# [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute 
+# the mean of the returns vector when used in the functor.
+rm = SLPM(; target = Inf)
+
+# Optimise portfolio using the second lower partial moment with a 
+# return threshold that includes all returns.
+w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.029713
+   2 │       2  0.0247062
+   3 │       3  0.513805
+   4 │       4  2.2412e-9
+   5 │       5  0.431776
+=#
+
+# The risks do not match. This is because when using the functor, `mu` 
+# has no effect, and if `isinf(target)`, it will be set to the 
+# expected value of the returns vector. Whereas [`set_rm`](@ref) took
+# the value to be `target = range(; start = mu, stop = mu, length = N)`,
+# where `N` is the number of assets, and `mu == 0` in this case.
+r2_1 = calc_risk(port; rm = rm) # 0.26046332250133397
+r2_2 = value(port.model[:slpm_risk]) # 0.18612606036834833
+
+# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
+rm.target = 0
+isapprox(r2_2, calc_risk(port; rm = rm)) # true
+
+# Second lower partial moment with a returns threshold equal to `Inf`, 
+# will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models,
+# and compute the mean of the returns vector when used in the functor.
+rm = SLPM(; target = Inf, mu = Inf)
+
+# Value are approximately equal.
+w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  3.98611e-11
+   2 │       2  9.51975e-11
+   3 │       3  0.498067
+   4 │       4  8.01089e-10
+   5 │       5  0.501933
+=#
+
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+
+# Compute asset statistics, use `ew` in the `Trad` optimisation. 
+# This makes it consistent with the risk measure.
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+
+# Second lower partial moment with exponential weights. `w` has no 
+# effect in the following optimisation, so we account for it in 
+# the computation of `port.mu` above.
+rm = SLPM(; w = ew)
+
+# Optimise using the exponential weight.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.029713
+   2 │       2  0.0247062
+   3 │       3  0.513805
+   4 │       4  2.2412e-9
+   5 │       5  0.431776
+=#
+
+# Since we used the same exponential weights to compute `port.mu` 
+# and passed it on to the functor, the risk computed by `calc_risk` 
+# will be consistent with the value in the `JuMP` model.
+r4 = calc_risk(port; rm = rm) # 0.18612605973579038
+
+# Check they are approximately equal.
+isapprox(r4, value(port.model[:slpm_risk])) # true
+
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = SLPM(; mu = custom_mu)
+
+# Optimise portfolio using this custom mu.
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.69283e-8
+   2 │       2  3.85731e-10
+   3 │       3  0.805951
+   4 │       4  0.00282056
+   5 │       5  0.191229
+=#
+
+# Values don't match because the mean return is computed 
+# from the portfolio weights and returns matrix.
+r5_1 = calc_risk(port; rm = rm) # 0.2578210994835851
+r5_2 = value(port.model[:slpm_risk]) # 0.24896211021424786
+
+# Vanilla second lower partial moment.
+rm = SLPM()
+
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights   
+     │ Int64    Float64   
+─────┼────────────────────
+   1 │       1  0.208317
+   2 │       2  0.266106
+   3 │       3  0.212304
+   4 │       4  0.0917449
+   5 │       5  0.221529
+=#
+
+# Compute the second lower partial moment.
+r6 = calc_risk(port, :HRP; rm = rm) # 0.39501582076391084
+
+# As a functor.
+r6 == rm(port.returns * w6.weights) # true
+
+# Custom mu has no effect in the following optimisation.
+rm = SLPM(; mu = custom_mu)
+
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+
+# If we set `target = Inf`, the target will be the return vector's 
+# expected value computed with the weights.
+rm = SLPM(; target = Inf, w = ew)
+
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.152888
+   2 │       2  0.198178
+   3 │       3  0.391641
+   4 │       4  0.107353
+   5 │       5  0.149941
+=#
+
+# Compute the second lower partial moment.
+r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
 ```
 """
 mutable struct SLPM{T1 <: Real} <: RiskMeasure
     settings::RMSettings
-    ret_target::Union{<:Real, AbstractVector{<:Real}}
     target::T1
     w::Union{AbstractWeights, Nothing}
+    mu::Union{<:Real, AbstractVector{<:Real}}
 end
-function SLPM(; settings::RMSettings = RMSettings(),
-              ret_target::Union{<:Real, AbstractVector{<:Real}} = 0.0, target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing)
-    return SLPM{typeof(target)}(settings, ret_target, target, w)
+function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+              w::Union{AbstractWeights, Nothing} = nothing,
+              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
+    return SLPM{typeof(target)}(settings, target, w, mu)
 end
 function (slpm::SLPM)(x::AbstractVector)
     T = length(x)
@@ -1550,7 +1986,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
   - When computing [`calc_risk(::EVaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref).
       + If `solvers` is provided: use the solvers.
 
 ## Validation
@@ -1625,7 +2061,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
   - When computing [`calc_risk(::RLVaR, ::AbstractVector)`](@ref):
 
-      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
+      + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref).
       + If `solvers` is provided: use the solvers.
 
 ## Validation
