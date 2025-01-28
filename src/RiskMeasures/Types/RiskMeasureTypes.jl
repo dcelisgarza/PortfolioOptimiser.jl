@@ -303,7 +303,6 @@ type = Trad(;
                   # CDaR to 100
                   CDaR(; settings = RMSettings(; flag = false, ub = 100))])
 w1 = optimise!(port, type)
-w1
 #=
 5×2 DataFrame
  Row │ tickers  weights     
@@ -351,7 +350,6 @@ type = HERC(;
                   # effect in hierarchical optimisations.
                   CDaR(; settings = RMSettings(; flag = false, ub = 100))])
 w2 = optimise!(port, type)
-w2
 #=
 5×2 DataFrame
  Row │ tickers  weights   
@@ -506,7 +504,6 @@ asset_statistics!(port)
 
 # Explicit quadratic expression for the variance.
 w = optimise!(port, Trad(; rm = Variance(; formulation = Quad()), str_names = true))
-w
 #=
 5×2 DataFrame
  Row │ tickers  weights    
@@ -597,7 +594,6 @@ asset_statistics!(port)
 
 # Explicit quadratic expression for the variance.
 w = optimise!(port, Trad(; rm = Variance(; formulation = SOC()), str_names = true))
-w
 #=
 5×2 DataFrame
  Row │ tickers  weights    
@@ -712,9 +708,8 @@ rm = SD()
 # Compute asset statistics.                                                
 asset_statistics!(port)
 
-# Explicit quadratic expression for the variance.
+# Optimise portfolio.
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-w1
 #=
 5×2 DataFrame
  Row │ tickers  weights     
@@ -767,7 +762,6 @@ cluster_assets!(port)
 
 # Hierarchical optimisation, no JuMP model.
 w2 = optimise!(port, HRP(; rm = rm))
-w2
 #=
 5×2 DataFrame
  Row │ tickers  weights  
@@ -783,7 +777,7 @@ w2
 # Compute the standard deviation.
 r2 = calc_risk(port, :HRP; rm = rm) # 0.6547632732108616
 
-# As a functor.
+# Use SD as a functor.
 r2 == SD(; sigma = port.cov)(w2.weights) # true
 ```
 """
@@ -881,7 +875,6 @@ asset_statistics!(port)
 rm = MAD()
 
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-w1
 #=
 5×2 DataFrame
  Row │ tickers  weights     
@@ -901,17 +894,17 @@ isapprox(r1, value(port.model[:mad_risk])) # true
 ew1 = eweights(1:size(ret, 1), 0.2; scale = true)
 ew2 = eweights(1:size(ret, 1), 0.3; scale = true)
 
-# Compute asset statistics, use ew1 in the `Trad` optimisation.
+# Compute asset statistics, use `ew1` in the `Trad` optimisation.
 # This makes it consistent with the risk measure.
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 
-# Mean absolute deviation with different weights.
-# w1 has no effect, so we account for it in the computation
-# of `port.mu` above.
+# Mean absolute deviation with different weights. w1 has no 
+# effect in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based 
+# optimisations, so we account for it in the computation of 
+# `port.mu` above.
 rm = MAD(; w1 = ew1, w2 = ew2)
 
 w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-w2
 #=
 5×2 DataFrame
  Row │ tickers  weights     
@@ -936,7 +929,6 @@ custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.0105741
 rm = MAD(; mu = custom_mu)
 
 w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-w3
 #=
 5×2 DataFrame
  Row │ tickers  weights     
@@ -961,7 +953,6 @@ rm = MAD()
 
 # Hierarchical optimisation, no JuMP model.
 w4 = optimise!(port, HRP(; rm = rm))
-w4
 #=
 5×2 DataFrame
  Row │ tickers  weights  
@@ -989,12 +980,11 @@ w4.weights == w5.weights # true
 # Compute the mean absolute deviation.
 r5 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
 
-# w1 and w2 both have effects.
+# `w1` and `w2` both have effects.
 rm = MAD(; w1 = ew1, w2 = ew2)
 
 # Hierarchical optimisation, no JuMP model.
 w6 = optimise!(port, HRP(; rm = rm))
-w6
 #=
 5×2 DataFrame
  Row │ tickers  weights  
@@ -1065,6 +1055,193 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
     Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `sdev_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
 
 # Examples
+
+```julia
+using Clarabel, StatsBase, JuMP
+
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
+
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute asset statistics.
+asset_statistics!(port)
+
+# Vanilla semi standard deviation.
+rm = SSD()
+
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  3.5044e-10
+   2 │       2  2.2773e-9
+   3 │       3  0.505148
+   4 │       4  0.000939296
+   5 │       5  0.493913
+=#
+
+r1 = calc_risk(port; rm = rm) # 0.24891229550443303
+isapprox(r1, value(port.model[:sdev_risk])) # true
+
+# Semi standard deviation with a returns threshold 
+# equal to the maximum return, this should make it
+# equivalent to using the standard deviation.
+rm = SSD(; target = maximum(ret))
+
+w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  2.24485e-8
+   2 │       2  0.0183783
+   3 │       3  0.520501
+   4 │       4  0.0340455
+   5 │       5  0.427076
+=#
+
+w3 = optimise!(port, Trad(; rm = SD(), str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.42346e-10
+   2 │       2  0.018383
+   3 │       3  0.520498
+   4 │       4  0.0340474
+   5 │       5  0.427072
+=#
+isapprox(w2.weights, w3.weights; rtol = 5e-5) # true
+
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+
+# Compute asset statistics, use `ew` in the `Trad` optimisation.
+# This makes it consistent with the risk measure.
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+
+# Semi standard deviation with exponential weights.
+# `w` has no effect, so we account for it in the computation
+# of `port.mu` above.
+rm = SSD(; w = ew)
+
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  9.71354e-9
+   2 │       2  2.22374e-10
+   3 │       3  0.812157
+   4 │       4  0.000746068
+   5 │       5  0.187097
+=#
+
+# Since we used the same exponential weights to compute
+# `port.mu` and passed it on to the functor, the risk
+# computed by `calc_risk` will be consistent with the
+# value in the `JuMP` model.
+r4 = calc_risk(port; rm = rm) # 0.24351372267149982
+isapprox(r4, value(port.model[:sdev_risk])) # true
+
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+rm = SSD(; mu = custom_mu)
+
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights     
+     │ Int64    Float64     
+─────┼──────────────────────
+   1 │       1  1.69283e-8
+   2 │       2  3.85731e-10
+   3 │       3  0.805951
+   4 │       4  0.00282056
+   5 │       5  0.191229
+=#
+
+# Values don't match because the mean return is computed 
+# from the portfolio weights and returns matrix.
+r5_1 = calc_risk(port; rm = rm) # 0.34782982196502943
+r5_2 = value(port.model[:sdev_risk]) # 0.24896211021424786
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# Vanilla semi standard deviation.
+rm = SSD()
+
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.184329
+   2 │       2  0.223478
+   3 │       3  0.220501
+   4 │       4  0.103132
+   5 │       5  0.268561
+=#
+
+# Compute the semi standard deviation.
+r6 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
+# As a functor.
+r6 == rm(port.returns * w6.weights) # true
+
+# Custom mu has no effect.
+rm = SSD(; mu = custom_mu)
+
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+
+# Compute the semi standard deviation.
+r7 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
+
+# `w` has an effect.
+rm = SSD(; w = ew)
+
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.152888
+   2 │       2  0.198178
+   3 │       3  0.391641
+   4 │       4  0.107353
+   5 │       5  0.149941
+=#
+
+# Compute the semi standard deviation.
+r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
+```
 """
 mutable struct SSD{T1 <: Real} <: RiskMeasure
     settings::RMSettings

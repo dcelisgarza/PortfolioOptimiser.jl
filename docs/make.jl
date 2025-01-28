@@ -38,7 +38,6 @@ function postprocess(cont)
            """ * cont
 end
 
-#=
 example_path = joinpath(@__DIR__, "../examples/")
 build_path_md = joinpath(@__DIR__, "src", "examples/")
 files = readdir(example_path)
@@ -58,7 +57,6 @@ for file ∈ code_files
     Literate.notebook(example_path * file, example_path;
                       preprocess = pre_process_content_nb, documenter = true, credit = true)
 end
-=#
 
 makedocs(;
          modules = [PortfolioOptimiser,
@@ -71,7 +69,7 @@ makedocs(;
                                   assets = String[],
                                   size_threshold_ignore = ["RiskMeasures/RiskMeasures.md",
                                                            "RiskMeasures/RiskValue.md"]),
-         pages = ["Home" => "index.md", #"Examples" => examples_nav,
+         pages = ["Home" => "index.md", "Examples" => examples_nav,
                   "API" => ["Risk Measures" => ["RiskMeasures/RiskMeasures.md",
                                                 "RiskMeasures/RiskValue.md",
                                                 "RiskMeasures/RiskStatistics.md",
