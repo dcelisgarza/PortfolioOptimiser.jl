@@ -131,7 +131,7 @@ asset_statistics!(port)
 rm = SSD()
 # Optimise portfolio.
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-# Compute semi standard devation.
+# Compute semi standard deviation.
 r1 = calc_risk(port; rm = rm)
 # Values are consistent.
 isapprox(r1, value(port.model[:sdev_risk]))
@@ -141,7 +141,7 @@ Semi standard deviation with a returns threshold equal to the maximum return, th
 rm = SSD(; target = maximum(ret))
 # Optimise portfolio using the semi standard deviation with a return threshold that includes all returns.
 w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-# Optimise portfolio using the standard devation.
+# Optimise portfolio using the standard deviation.
 w3 = optimise!(port, Trad(; rm = SD(), str_names = true))
 # Value are approximately equal.
 isapprox(w2.weights, w3.weights; rtol = 5e-5)
@@ -505,9 +505,9 @@ w3_3 = optimise!(port, Trad(; rm = EVaR(; alpha = 0.5), str_names = true))
 #
 w3_4 = optimise!(port, Trad(; rm = WR(), str_names = true))
 # ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
-rmsd(w3_1.weights, w3_3.weights)
+d1 = rmsd(w3_1.weights, w3_3.weights)
 # ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
-rmsd(w3_2.weights, w3_4.weights)
+d2 = rmsd(w3_2.weights, w3_4.weights)
 # RLVaR with default values.
 rm = RLVaR()
 # Hierarchical optimisation, no JuMP model but needs solvers.
@@ -515,14 +515,14 @@ w4 = optimise!(port, HRP(; rm = rm))
 # Compute the RLVaR.
 r4 = calc_risk(port, :HRP; rm = rm)
 # RLVaR of the worst 50 % of cases.
-rm = EVaR(; alpha = 0.5)
+rm = RLVaR(; alpha = 0.5)
 # Hierarchical optimisation, no JuMP model.
 w5 = optimise!(port, HRP(; rm = rm))
 # Compute the RLVaR.
 r5 = calc_risk(port, :HRP; rm = rm)
 
 #=
-# Maximum Drawdown of Uncompounded Cumulative Returns, [`MDD`](@ref)
+# Maximum Drawdown of uncompounded cumulative returns, [`MDD`](@ref)
 =#
 
 # Recompute asset statistics.
@@ -554,3 +554,251 @@ r4 = calc_risk(port; rm = Variance())
 r3_1 > r1
 # Variance of mixed portfolio is higher than the minimal MDD.
 r3_2 > r4
+
+#=
+# Average Drawdown of uncompounded cumulative returns, [`ADD`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# Average drawdown of uncompounded returns.
+rm = ADD()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute ADD.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:add_risk]))
+# Exponentially weighted average drawdown.
+ew = eweights(1:size(ret, 1), 0.3; scale = true)
+# Average weighted drawdown of uncompounded returns.
+rm = ADD(; w = ew)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute ADD.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:add_risk]))
+# Average drawdown of uncompounded returns.
+rm = ADD()
+# Hierarchical optimisation, no JuMP model.
+w3 = optimise!(port, HRP(; rm = rm))
+# Compute the ADD.
+r3 = calc_risk(port, :HRP; rm = rm)
+# Average weighted drawdown of uncompounded returns.
+rm = ADD(; w = ew)
+# Optimise portfolio.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute ADD.
+r4 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Conditional Drawdown at Risk of uncompounded cumulative returns, [`CDaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# CDaR with default values.
+rm = CDaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute CDaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# Risk is consistent.
+isapprox(r1, value(port.model[:cdar_risk]))
+# CDaR of the worst 50 % of cases.
+rm = CDaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute CDaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:cdar_risk]))
+# CDaR with default values.
+rm = CDaR()
+# Hierarchical optimisation, no JuMP model.
+w3 = optimise!(port, HRP(; rm = rm))
+# Compute the CDaR.
+r3 = calc_risk(port, :HRP; rm = rm)
+# CDaR of the worst 50 % of cases.
+rm = CDaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute the CDaR.
+r4 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Ulcer Index of uncompounded cumulative returns, [`MDD`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# Ulcer Index of uncompounded returns.
+rm = UCI()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute UCI.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:uci_risk]))
+# Hierarchical optimisation, no JuMP model.
+w2 = optimise!(port, HRP(; rm = rm))
+# Compute the UCI.
+r2 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Entropic Drawdown at Risk of uncompounded cumulative returns, [`EDaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# EDaR with default values.
+rm = EDaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute EDaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+# Risk is consistent.
+isapprox(r1, value(port.model[:edar_risk]))
+# EDaR of the worst 50 % of cases.
+rm = EDaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute EDaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:edar_risk]))
+# EDaR with default values.
+rm = EDaR()
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w3 = optimise!(port, HRP(; rm = rm))
+# Compute the EDaR.
+r3 = calc_risk(port, :HRP; rm = rm)
+# EDaR of the worst 50 % of cases.
+rm = EDaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute the EDaR.
+r4 = calc_risk(port, :HRP; rm = rm)
+
+#=
+# Relativistic Drawdown at Risk of uncompounded cumulative returns, [`RLVaR`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# RLDaR with default values.
+rm = RLDaR()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute RLDaR for `alpha  = 0.05`.
+r1 = calc_risk(port; rm = rm)
+# As a functor, must provide the solvers.
+rm.solvers = port.solvers
+r1 == rm(port.returns * w1.weights)
+# Risk is consistent.
+isapprox(r1, value(port.model[:rldar_risk]))
+# RLDaR of the worst 50 % of cases.
+rm = RLDaR(; alpha = 0.5)
+# Optimise portfolio.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute RLDaR for `alpha  = 0.5`.
+r2 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r2, value(port.model[:rldar_risk]))
+# Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
+w3_1 = optimise!(port, Trad(; rm = RLDaR(; alpha = 0.5, kappa = 1e-6), str_names = true))
+#
+w3_2 = optimise!(port,
+                 Trad(; rm = RLDaR(; alpha = 0.5, kappa = 1 - 1e-6), str_names = true))
+#
+w3_3 = optimise!(port, Trad(; rm = EDaR(; alpha = 0.5), str_names = true))
+#
+w3_4 = optimise!(port, Trad(; rm = MDD(), str_names = true))
+# ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
+d1 = rmsd(w3_1.weights, w3_3.weights)
+# ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
+d2 = rmsd(w3_2.weights, w3_4.weights)
+# RLDaR with default values.
+rm = RLDaR()
+# Hierarchical optimisation, no JuMP model but needs solvers.
+w4 = optimise!(port, HRP(; rm = rm))
+# Compute the RLDaR.
+r4 = calc_risk(port, :HRP; rm = rm)
+# RLDaR of the worst 50 % of cases.
+rm = RLDaR(; alpha = 0.5)
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+# Compute the RLDaR.
+r5 = calc_risk(port, :HRP; rm = rm)
+
+#=
+## Square Root Kurtosis, [`Kurt`](@ref)
+=#
+
+# Recompute asset statistics.
+asset_statistics!(port)
+# Vanilla square root kurtosis.
+rm = Kurt()
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute semi standard deviation.
+r1 = calc_risk(port; rm = rm)
+# Values are consistent.
+isapprox(r1, value(port.model[:kurt_risk]))
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+#=
+Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it consistent with the risk measure, because it computes the cokurtosis using this value of `mu`.
+=#
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+#=
+Square root kurtosis with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
+=#
+rm = Kurt(; w = ew)
+# Optimise using the exponential weight.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Since we used the same exponential weights to compute `port.mu`, and therefore `port.kurt` and passed it on to the functor, the risk computed by `calc_risk` will be consistent with the value in the `JuMP` model.
+=#
+r2 = calc_risk(port; rm = rm)
+# Check they are approximately equal.
+isapprox(r2, value(port.model[:kurt_risk]); rtol = 5e-8)
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+# This won't work even if we use `custom_mu` to compute the cokurtosis, because the expected value is computed inside the functor.
+rm = Kurt()
+port.kurt = cokurt(KurtFull(), port.returns, custom_mu)
+# Optimise portfolio using this custom mu.
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Values don't match because the expected return is computed from the portfolio weights and returns matrix.
+=#
+r3_1 = calc_risk(port; rm = rm)
+#
+r3_2 = value(port.model[:kurt_risk])
+#! Vanilla square root kurtosis.
+rm = Kurt()
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+# Compute the square root kurtosis.
+r6 = calc_risk(port, :HRP; rm = rm)
+# As a functor.
+r6 == rm(port.returns * w6.weights)
+# Custom mu has no effect in the following optimisation.
+rm = Kurt(; mu = custom_mu)
+# Hierarchical optimisation, no JuMP model.
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+# Compute the square root kurtosis.
+r7 = calc_risk(port, :HRP; rm = rm)
+# `w` has an effect in the following optimisation.
+rm = Kurt(; w = ew)
+# Hierarchical optimisation, no JuMP model.
+w8 = optimise!(port, HRP(; rm = rm))
+# Compute the square root kurtosis.
+r8 = calc_risk(port, :HRP; rm = rm)
