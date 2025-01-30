@@ -789,6 +789,7 @@ w6 = optimise!(port, HRP(; rm = rm))
 r6 = calc_risk(port, :HRP; rm = rm)
 # As a functor.
 r6 == rm(port.returns * w6.weights)
+#=
 # Custom mu has no effect in the following optimisation.
 rm = Kurt(; mu = custom_mu)
 # Hierarchical optimisation, no JuMP model.
@@ -802,3 +803,4 @@ rm = Kurt(; w = ew)
 w8 = optimise!(port, HRP(; rm = rm))
 # Compute the square root kurtosis.
 r8 = calc_risk(port, :HRP; rm = rm)
+=#
