@@ -80,7 +80,7 @@ asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 #=
 Mean absolute deviation with different weights. w1 has no effect in the following optimisation in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based optimisations, so we account for it in the computation of `port.mu` above.
 =#
-rm = MAD(; w = ew1, we = ew2)
+rm = MAD(; mu = port.mu, we = ew2)
 # Use the custom weights in the optimisation.
 w2 = optimise!(port, Trad(; rm = rm, str_names = true))
 #=
