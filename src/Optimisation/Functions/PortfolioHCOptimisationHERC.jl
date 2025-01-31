@@ -23,15 +23,21 @@ function get_cluster_fees(port, cluster)
 end
 function naive_risk(port::AbstractPortfolio, sigma, returns, cluster,
                     rm::Union{RiskMeasure, HCRiskMeasure})
+    old_custom = set_custom_hc_rm!(rm, port, sigma, cluster)
+    old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
-    old_tr_w = set_tracking_turnover_rm!(rm, cluster)
+    old_tr = set_tracking_rm!(rm, cluster)
+    old_to = set_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
     clong_fees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     crisk = naive_risk(rm, cret, clong_fees, crebalance)
+    unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)
-    unset_tracking_turnover_rm!(rm, old_tr_w)
+    unset_tracking_rm!(rm, old_tr)
+    unset_turnover_rm!(rm, old_to)
+    unset_custom_hc_rm!(rm, old_custom)
     return crisk
 end
 

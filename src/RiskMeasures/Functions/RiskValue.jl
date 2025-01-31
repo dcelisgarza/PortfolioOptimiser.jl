@@ -344,11 +344,10 @@ function calc_fees(w::AbstractVector, long_fees::Union{AbstractVector{<:Real}, R
     rebal_fees = calc_fees(w, rebalance)
     return long_fees + short_fees + rebal_fees
 end
-function calc_risk(rm::Union{MAD, SSD, SVariance, FLPM, SLPM, WR, VaR, CVaR, DRCVaR, EVaR,
-                             RLVaR, DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r,
-                             ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG,
-                             TGRG, OWA, BDVariance, TCM, TLPM, FTCM, FTLPM, Skewness,
-                             SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
+function calc_risk(rm::Union{WR, VaR, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR, UCI,
+                             EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
+                             RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, TCM, FTCM,
+                             Skewness, SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
                    X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
                    short_fees::Union{AbstractVector{<:Real}, Real} = 0,
                    rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
@@ -368,10 +367,19 @@ function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
     else
         zero(eltype(w))
     end
-    return rm(X * w .- fees, scale)
+    return rm(X, w, fees; scale = scale)
 end
-function calc_risk(rm::TrackingRM, w::AbstractVector; X::AbstractMatrix, kwargs...)
-    return rm(X, w)
+function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, TrackingRM},
+                   w::AbstractVector; X::AbstractMatrix,
+                   long_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
+    fees = if isnothing(fees)
+        calc_fees(w, long_fees, short_fees, rebalance)
+    else
+        zero(eltype(w))
+    end
+    return rm(X, w, fees)
 end
 function calc_risk(rm::Union{SD, Variance, Skew, SSkew, TurnoverRM}, w::AbstractVector;
                    kwargs...)

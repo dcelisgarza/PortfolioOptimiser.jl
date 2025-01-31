@@ -660,7 +660,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N×N` covariance matrix.
+  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: (optional) `N×N` covariance matrix.
 
       + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the field depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
@@ -804,6 +804,16 @@ function (sd::SD)(w::AbstractVector)
     return sqrt(dot(w, sd.sigma, w))
 end
 
+function calc_ret_mu(x, w, rm)
+    mu = rm.mu
+    return mu = if isnothing(mu) || isempty(mu)
+        wi = rm.w
+        isnothing(wi) ? mean(x) : mean(x, wi)
+    else
+        dot(mu, w)
+    end
+end
+
 """
     mutable struct MAD <: RiskMeasure
 
@@ -827,203 +837,44 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `w1::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-      + `w1` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `w2::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
-  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional vector of expected returns.
+      + Only used if `isnothing(mu) || isempty(mu)`, else uses `mu`.
+  - `we::Union{<:AbstractWeights, Nothing} = nothing`: (optional) `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-      + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
-      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+      + In the functor: takes precedence over `w`,
+      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use. If `isnothing(mu)`, takes the value from the `mu` property of the [`Portfolio`](@ref) instance.
 
 # Functor
 
-  - `(mad::MAD)(x::AbstractVector)`: computes the Mean Absolute Deviation of a `T×1` vector of portfolio returns `x`.
-
-!!! warning
-
-    Using non-default `w1`, `w2` and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `mad_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
+  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, and a `N×1` vector of portfolio weights `w`, accounting for fees.
 
 # Examples
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Vanilla mean absolute deviation.
-rm = MAD()
-
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.52867e-11 
-   2 │       2  0.125902    
-   3 │       3  0.558899    
-   4 │       4  0.0528451   
-   5 │       5  0.262353 
-=#
-
-r1 = calc_risk(port; rm = rm) # 0.2742955393862703
-isapprox(r1, value(port.model[:mad_risk])) # true
-
-# Exponential weights.
-ew1 = eweights(1:size(ret, 1), 0.2; scale = true)
-ew2 = eweights(1:size(ret, 1), 0.3; scale = true)
-
-# Compute asset statistics, use `ew1` in the `Trad` optimisation.
-# This makes it consistent with the risk measure.
-asset_statistics!(port; mu_type = MuSimple(; w = ew1))
-
-# Mean absolute deviation with different weights. w1 has no 
-# effect in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based 
-# optimisations, so we account for it in the computation of 
-# `port.mu` above.
-rm = MAD(; w1 = ew1, w2 = ew2)
-
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.0868265
-   2 │       2  1.62118e-10
-   3 │       3  0.623665
-   4 │       4  5.10551e-11
-   5 │       5  0.289508
-=#
-
-# Using `w1` and `w2` may lead to inconsistent values between the
-# functor and value in the model because the mean absolute 
-# deviation is formulated with slack constraints.
-r2_1 = calc_risk(port; rm = rm) # 0.23722684255394683
-r2_2 = value(port.model[:mad_risk]) # 0.21882857231148417
-
-# Custom mu (added some random noise).
-custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
-                       0.0021521845052968917, -0.004417767086053032]
-rm = MAD(; mu = custom_mu)
-
-w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.129419
-   2 │       2  9.10067e-11
-   3 │       3  0.590633
-   4 │       4  0.13825
-   5 │       5  0.141698
-=#
-
-# Values don't match.
-r3_1 = calc_risk(port; rm = rm) # 0.359772128074709
-r3_2 = value(port.model[:mad_risk]) # 0.23232767711259888
-
-# Vanilla mean absolute deviation.
-rm = MAD()
-
-# Hierarchical optimisation, no JuMP model.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.179264
-   2 │       2  0.222268
-   3 │       3  0.216523
-   4 │       4  0.160511
-   5 │       5  0.221434
-=#
-
-# Compute the mean absolute deviation.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
-# As a functor.
-r4 == rm(port.returns * w4.weights) # true
-
-# Custom mu has no effect in the following optimisation.
-rm = MAD(; mu = custom_mu)
-
-# Hierarchical optimisation, no JuMP model.
-w5 = optimise!(port, HRP(; rm = rm))
-w4.weights == w5.weights # true
-
-# Compute the mean absolute deviation.
-r5 = calc_risk(port, :HRP; rm = rm) # 0.46350089072293715
-
-# `w1` and `w2` both have effects.
-rm = MAD(; w1 = ew1, w2 = ew2)
-
-# Hierarchical optimisation, no JuMP model.
-w6 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.157301
-   2 │       2  0.179251
-   3 │       3  0.363034
-   4 │       4  0.128884
-   5 │       5  0.171529
-=#
-
-# Compute the mean absolute deviation.
-r6 = calc_risk(port, :HRP; rm = rm) # 0.3704190560125852
-```
 """
 mutable struct MAD <: RiskMeasure
     settings::RMSettings
-    w1::Union{<:AbstractWeights, Nothing}
-    w2::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    we::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function MAD(; settings::RMSettings = RMSettings(),
-             w1::Union{<:AbstractWeights, Nothing} = nothing,
-             w2::Union{<:AbstractWeights, Nothing} = nothing,
-             mu::Union{<:AbstractVector, Nothing} = nothing)
-    return MAD(settings, w1, w2, mu)
+             w::Union{<:AbstractWeights, Nothing} = nothing,
+             we::Union{<:AbstractWeights, Nothing} = nothing,
+             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return MAD(settings, w, we, mu)
 end
-function (mad::MAD)(x::AbstractVector)
-    w1 = mad.w1
-    w2 = mad.w2
-    mu = isnothing(w1) ? mean(x) : mean(x, w1)
-    return isnothing(w2) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), Weights(2 * w2))
+function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
+    x = X * w .- fees
+    we = mad.we
+    mu = calc_ret_mu(x, w, mad)
+    return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
 end
 
 """
     mutable struct SSD{T1 <: Real} <: RiskMeasure
 
-Measures and computes the portfolio Semi Standard Deviation (SD) below a `target` value. In other words, it measures the standard deviation below a `target` value while ignoring deviations above it.
+Measures and computes the portfolio Semi Standard Deviation (SD) below equal to or below the `target` return threshold.
 
 ```math
 \\begin{align}
@@ -1057,217 +908,25 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
   - `(ssd::SSD)(x::AbstractVector)`: computes the Semi Standard Deviation of a `T×1` vector of portfolio returns `x`.
 
-!!! warning
-
-    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `sdev_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
-
 # Examples
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Vanilla semi standard deviation.
-rm = SSD()
-
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  3.5044e-10
-   2 │       2  2.2773e-9
-   3 │       3  0.505148
-   4 │       4  0.000939296
-   5 │       5  0.493913
-=#
-
-r1 = calc_risk(port; rm = rm) # 0.24891229550443303
-isapprox(r1, value(port.model[:sdev_risk])) # true
-
-# Semi standard deviation with a returns threshold 
-# equal to the maximum return, this should make it
-# equivalent to using the standard deviation.
-rm = SSD(; target = maximum(ret))
-
-w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  2.24485e-8
-   2 │       2  0.0183783
-   3 │       3  0.520501
-   4 │       4  0.0340455
-   5 │       5  0.427076
-=#
-
-w3 = optimise!(port, Trad(; rm = SD(), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.42346e-10
-   2 │       2  0.018383
-   3 │       3  0.520498
-   4 │       4  0.0340474
-   5 │       5  0.427072
-=#
-isapprox(w2.weights, w3.weights; rtol = 5e-5) # true
-
-# Exponential weights.
-ew = eweights(1:size(ret, 1), 0.2; scale = true)
-
-# Compute asset statistics, use `ew` in the `Trad` optimisation.
-# This makes it consistent with the risk measure.
-asset_statistics!(port; mu_type = MuSimple(; w = ew))
-
-# Semi standard deviation with exponential weights.
-# `w` has no effect in the following optimisation, 
-# so we account for it in the computation of `port.mu` above.
-rm = SSD(; w = ew)
-
-w4 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  9.71354e-9
-   2 │       2  2.22374e-10
-   3 │       3  0.812157
-   4 │       4  0.000746068
-   5 │       5  0.187097
-=#
-
-# Since we used the same exponential weights to compute
-# `port.mu` and passed it on to the functor, the risk
-# computed by `calc_risk` will be consistent with the
-# value in the `JuMP` model.
-r4 = calc_risk(port; rm = rm) # 0.24351372267149982
-isapprox(r4, value(port.model[:sdev_risk])) # true
-
-# Custom mu (added some random noise).
-custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
-                       0.0021521845052968917, -0.004417767086053032]
-rm = SSD(; mu = custom_mu)
-
-w5 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.69283e-8
-   2 │       2  3.85731e-10
-   3 │       3  0.805951
-   4 │       4  0.00282056
-   5 │       5  0.191229
-=#
-
-# Values don't match because the mean return is computed 
-# from the portfolio weights and returns matrix.
-r5_1 = calc_risk(port; rm = rm) # 0.34782982196502943
-r5_2 = value(port.model[:sdev_risk]) # 0.24896211021424786
-
-# Vanilla semi standard deviation.
-rm = SSD()
-
-# Hierarchical optimisation, no JuMP model.
-w6 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.184329
-   2 │       2  0.223478
-   3 │       3  0.220501
-   4 │       4  0.103132
-   5 │       5  0.268561
-=#
-
-# Compute the semi standard deviation.
-r6 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
-# As a functor.
-r6 == rm(port.returns * w6.weights) # true
-
-# Custom mu has no effect in the following optimisation.
-rm = SSD(; mu = custom_mu)
-
-# Hierarchical optimisation, no JuMP model.
-w7 = optimise!(port, HRP(; rm = rm))
-w6.weights == w7.weights # true
-
-# Compute the semi standard deviation.
-r7 = calc_risk(port, :HRP; rm = rm) # 0.5159961592965934
-
-# `w` has an effect in the following optimisation.
-rm = SSD(; w = ew)
-
-# Hierarchical optimisation, no JuMP model.
-w8 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.152888
-   2 │       2  0.198178
-   3 │       3  0.391641
-   4 │       4  0.107353
-   5 │       5  0.149941
-=#
-
-# Compute the semi standard deviation.
-r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
-```
 """
-mutable struct SSD{T1 <: Real} <: RiskMeasure
+mutable struct SSD <: RiskMeasure
     settings::RMSettings
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+function SSD(; settings::RMSettings = RMSettings(),
              w::Union{<:AbstractWeights, Nothing} = nothing,
-             mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SSD{typeof(target)}(settings, target, w, mu)
+             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SSD(settings, w, mu)
 end
-function (ssd::SSD)(x::AbstractVector)
+function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
-    w = ssd.w
-    target = ssd.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
+    mu = calc_ret_mu(x, w, ssd)
     val = x .- mu
-    return sqrt(sum(val[val .<= target] .^ 2) / (T - 1))
+    val = val[val .<= zero(eltype(val))]
+    return sqrt(dot(val, val) / (T - 1))
 end
 
 """
@@ -1315,245 +974,30 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
   - `(flpm::FLPM)(x::AbstractVector)`: computes the First Lower Partial Moment of a `T×1` vector of portfolio returns `x`.
 
-!!! warning
-
-    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `flpm_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Vanilla first lower partial moment.
-rm = FLPM()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.129097
-   2 │       2  7.13509e-10
-   3 │       3  0.586438
-   4 │       4  0.0577378
-   5 │       5  0.226727
-=#
-
-# Compute first lower partial moment.
-r1 = calc_risk(port; rm = rm) # 0.07307909070642135
-
-# Values are consistent.
-isapprox(r1, value(port.model[:flpm_risk])) # true
-
-# First lower partial moment with a returns threshold equal to `Inf`, 
-# will use `rm.mu` (which in this case is zero) in optimisations using 
-# [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute 
-# the mean of the returns vector when used in the functor.
-rm = FLPM(; target = Inf)
-
-# Optimise portfolio using the first lower partial moment with a 
-# return threshold that includes all returns.
-w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.129097
-   2 │       2  7.13509e-10
-   3 │       3  0.586438
-   4 │       4  0.0577378
-   5 │       5  0.226727
-=#
-
-# The risks do not match. This is because when using the functor, `mu` 
-# has no effect, and if `isinf(target)`, it will be set to the 
-# expected value of the returns vector. Whereas [`set_rm`](@ref) took
-# the value to be `target = range(; start = mu, stop = mu, length = N)`,
-# where `N` is the number of assets, and `mu == 0` in this case.
-r2_1 = calc_risk(port; rm = rm) # 0.1727455718397823
-r2_2 = value(port.model[:flpm_risk]) # 0.07307909079327962
-
-# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
-rm.target = 0
-isapprox(r2_2, calc_risk(port; rm = rm)) # true
-
-# First lower partial moment with a returns threshold equal to `Inf`, 
-# will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models,
-# and compute the mean of the returns vector when used in the functor.
-rm = FLPM(; target = Inf, mu = Inf)
-
-# Value are approximately equal.
-w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.8061e-11
-   2 │       2  5.26329e-10
-   3 │       3  0.591219
-   4 │       4  5.03171e-9
-   5 │       5  0.408781
-=#
-
-# Exponential weights.
-ew = eweights(1:size(ret, 1), 0.2; scale = true)
-
-# Compute asset statistics, use `ew` in the `Trad` optimisation. 
-# This makes it consistent with the risk measure.
-asset_statistics!(port; mu_type = MuSimple(; w = ew))
-
-# First lower partial moment with exponential weights. `w` has no 
-# effect in the following optimisation, so we account for it in 
-# the computation of `port.mu` above.
-rm = FLPM(; w = ew)
-
-# Optimise using the exponential weight.
-w4 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.129097
-   2 │       2  7.13509e-10
-   3 │       3  0.586438
-   4 │       4  0.0577378
-   5 │       5  0.226727
-=#
-
-# Since we used the same exponential weights to compute `port.mu` 
-# and passed it on to the functor, the risk computed by `calc_risk` 
-# will be consistent with the value in the `JuMP` model.
-r4 = calc_risk(port; rm = rm) # 0.07307909070642135
-
-# Check they are approximately equal.
-isapprox(r4, value(port.model[:flpm_risk])) # true
-
-# Custom mu (added some random noise).
-custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
-                       0.0021521845052968917, -0.004417767086053032]
-rm = FLPM(; mu = custom_mu)
-
-# Optimise portfolio using this custom mu.
-w5 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.129419
-   2 │       2  4.3467e-10
-   3 │       3  0.590633
-   4 │       4  0.13825
-   5 │       5  0.141698
-=#
-
-# Values don't match because the mean return is computed 
-# from the portfolio weights and returns matrix.
-r5_1 = calc_risk(port; rm = rm) # 0.09467150228915336
-r5_2 = value(port.model[:flpm_risk]) # 0.1161638387813645
-
-# Vanilla first lower partial moment.
-rm = FLPM()
-
-# Hierarchical optimisation, no JuMP model.
-w6 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.222221
-   2 │       2  0.274757
-   3 │       3  0.185196
-   4 │       4  0.149013
-   5 │       5  0.168813
-=#
-
-# Compute the first lower partial moment.
-r6 = calc_risk(port, :HRP; rm = rm) # 0.17425430923284418
-
-# As a functor.
-r6 == rm(port.returns * w6.weights) # true
-
-# Custom mu has no effect in the following optimisation.
-rm = FLPM(; mu = custom_mu)
-
-# Hierarchical optimisation, no JuMP model.
-w7 = optimise!(port, HRP(; rm = rm))
-w6.weights == w7.weights # true
-
-# If we set `target = Inf`, the target will be the return vector's 
-# expected value computed with the weights.
-rm = FLPM(; target = Inf, w = ew)
-
-# Hierarchical optimisation, no JuMP model.
-w8 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.143391
-   2 │       2  0.182024
-   3 │       3  0.408805
-   4 │       4  0.163642
-   5 │       5  0.102138
-=#
-
-# Compute the first lower partial moment.
-r8 = calc_risk(port, :HRP; rm = rm) # 0.18695122450749355
-```
+# Examples
 """
-mutable struct FLPM{T1 <: Real} <: RiskMeasure
+mutable struct FLPM <: RiskMeasure
     settings::RMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
-    mu::Union{<:Real, AbstractVector{<:Real}}
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing,
-              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
-    return FLPM{typeof(target)}(settings, target, w, mu)
+function FLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return FLPM(settings, target, w, mu)
 end
-function (flpm::FLPM)(x::AbstractVector)
+function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = flpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = flpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        target = calc_ret_mu(x, w, flpm)
     end
     val = x .- target
-    return -sum(val[val .<= zero(target)]) / T
+    val = val[val .<= zero(eltype(val))]
+    return -sum(val) / T
 end
 
 """
@@ -1601,245 +1045,29 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
   - `(slpm::SLPM)(x::AbstractVector)`: computes the Second Lower Partial Moment of a `T×1` vector of portfolio returns `x`.
 
-!!! warning
-
-    Using non-default `target`, `w`, and/or `mu` in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) may lead to the value computed by the functor to be different than that of `slpm_risk`. This is because the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model is based on slack constraints, and the functor computes the internal expected return.
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Vanilla second lower partial moment.
-rm = SLPM()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.029713
-   2 │       2  0.0247062
-   3 │       3  0.513805
-   4 │       4  2.2412e-9
-   5 │       5  0.431776
-=#
-
-# Compute second lower partial moment.
-r1 = calc_risk(port; rm = rm) # 0.18612605973579038
-
-# Values are consistent.
-isapprox(r1, value(port.model[:slpm_risk])) # true
-
-# Second lower partial moment with a returns threshold equal to `Inf`, 
-# will use `rm.mu` (which in this case is zero) in optimisations using 
-# [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and compute 
-# the mean of the returns vector when used in the functor.
-rm = SLPM(; target = Inf)
-
-# Optimise portfolio using the second lower partial moment with a 
-# return threshold that includes all returns.
-w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.029713
-   2 │       2  0.0247062
-   3 │       3  0.513805
-   4 │       4  2.2412e-9
-   5 │       5  0.431776
-=#
-
-# The risks do not match. This is because when using the functor, `mu` 
-# has no effect, and if `isinf(target)`, it will be set to the 
-# expected value of the returns vector. Whereas [`set_rm`](@ref) took
-# the value to be `target = range(; start = mu, stop = mu, length = N)`,
-# where `N` is the number of assets, and `mu == 0` in this case.
-r2_1 = calc_risk(port; rm = rm) # 0.26046332250133397
-r2_2 = value(port.model[:slpm_risk]) # 0.18612606036834833
-
-# If we set `rm.target = 0`, then `calc_risk` will compute the correct risk.
-rm.target = 0
-isapprox(r2_2, calc_risk(port; rm = rm)) # true
-
-# Second lower partial moment with a returns threshold equal to `Inf`, 
-# will use `port.mu`in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models,
-# and compute the mean of the returns vector when used in the functor.
-rm = SLPM(; target = Inf, mu = Inf)
-
-# Value are approximately equal.
-w3 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  3.98611e-11
-   2 │       2  9.51975e-11
-   3 │       3  0.498067
-   4 │       4  8.01089e-10
-   5 │       5  0.501933
-=#
-
-# Exponential weights.
-ew = eweights(1:size(ret, 1), 0.2; scale = true)
-
-# Compute asset statistics, use `ew` in the `Trad` optimisation. 
-# This makes it consistent with the risk measure.
-asset_statistics!(port; mu_type = MuSimple(; w = ew))
-
-# Second lower partial moment with exponential weights. `w` has no 
-# effect in the following optimisation, so we account for it in 
-# the computation of `port.mu` above.
-rm = SLPM(; w = ew)
-
-# Optimise using the exponential weight.
-w4 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.029713
-   2 │       2  0.0247062
-   3 │       3  0.513805
-   4 │       4  2.2412e-9
-   5 │       5  0.431776
-=#
-
-# Since we used the same exponential weights to compute `port.mu` 
-# and passed it on to the functor, the risk computed by `calc_risk` 
-# will be consistent with the value in the `JuMP` model.
-r4 = calc_risk(port; rm = rm) # 0.18612605973579038
-
-# Check they are approximately equal.
-isapprox(r4, value(port.model[:slpm_risk])) # true
-
-# Custom mu (added some random noise).
-custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
-                       0.0021521845052968917, -0.004417767086053032]
-rm = SLPM(; mu = custom_mu)
-
-# Optimise portfolio using this custom mu.
-w5 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.69283e-8
-   2 │       2  3.85731e-10
-   3 │       3  0.805951
-   4 │       4  0.00282056
-   5 │       5  0.191229
-=#
-
-# Values don't match because the mean return is computed 
-# from the portfolio weights and returns matrix.
-r5_1 = calc_risk(port; rm = rm) # 0.2578210994835851
-r5_2 = value(port.model[:slpm_risk]) # 0.24896211021424786
-
-# Vanilla second lower partial moment.
-rm = SLPM()
-
-# Hierarchical optimisation, no JuMP model.
-w6 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.208317
-   2 │       2  0.266106
-   3 │       3  0.212304
-   4 │       4  0.0917449
-   5 │       5  0.221529
-=#
-
-# Compute the second lower partial moment.
-r6 = calc_risk(port, :HRP; rm = rm) # 0.39501582076391084
-
-# As a functor.
-r6 == rm(port.returns * w6.weights) # true
-
-# Custom mu has no effect in the following optimisation.
-rm = SLPM(; mu = custom_mu)
-
-# Hierarchical optimisation, no JuMP model.
-w7 = optimise!(port, HRP(; rm = rm))
-w6.weights == w7.weights # true
-
-# If we set `target = Inf`, the target will be the return vector's 
-# expected value computed with the weights.
-rm = SLPM(; target = Inf, w = ew)
-
-# Hierarchical optimisation, no JuMP model.
-w8 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.152888
-   2 │       2  0.198178
-   3 │       3  0.391641
-   4 │       4  0.107353
-   5 │       5  0.149941
-=#
-
-# Compute the second lower partial moment.
-r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
-```
+# Examples
 """
-mutable struct SLPM{T1 <: Real} <: RiskMeasure
+mutable struct SLPM <: RiskMeasure
     settings::RMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
-    mu::Union{<:Real, AbstractVector{<:Real}}
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing,
-              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
-    return SLPM{typeof(target)}(settings, target, w, mu)
+function SLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SLPM(settings, target, w, mu)
 end
-function (slpm::SLPM)(x::AbstractVector)
+function (slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = slpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = slpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        target = calc_ret_mu(x, w, slpm)
     end
     val = x .- target
-    val = val[val .<= zero(target)]
+    val = val[val .<= zero(eltype(val))]
     return sqrt(dot(val, val) / (T - 1))
 end
 
@@ -1871,107 +1099,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `(wr::WR)(x::AbstractVector)`: computes the Worst Realisation of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Worst realisation.
-rm = WR()
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.01823e-11
-   2 │       2  5.08671e-11
-   3 │       3  0.432177
-   4 │       4  1.88254e-11
-   5 │       5  0.567823
-=#
-
-# Compute the worst realisation.
-r1 = calc_risk(port; rm = rm) # 0.3353112333705662
-
-# Values are consistent.
-isapprox(r1, value(port.model[:wr_risk])) # true
-
-# Hierarchical optimisation, no JuMP model.
-w2 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.179856
-   2 │       2  0.251612
-   3 │       3  0.269012
-   4 │       4  0.0620356
-   5 │       5  0.237484
-=#
-
-# Compute the worst realisation.
-r2 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
-
-# Use it in conjunction with another, less conservative risk measure.
-rm = [WR(; settings = RMSettings(; scale = 0.15)), Variance()]
-w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  3.20319e-10
-   2 │       2  5.48753e-9
-   3 │       3  0.535975
-   4 │       4  6.62746e-10
-   5 │       5  0.464025
-=#
-
-# WR.
-r3_1 = calc_risk(port; rm = WR()) # 0.3888545340695951
-
-# Variance.
-r3_2 = calc_risk(port; rm = Variance()) # 0.1348006113596908
-
-# This portfolio is not optimal in either risk measure, but mixes their characteristics.
-w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
-
-# Minimum variance portfolio.
-r4 = calc_risk(port; rm = Variance())
-
-# WR of mixed portfolio is higher than the minimal worst realisation.
-r3_1 > r1 # true
-
-# Variance of mixed portfolio is higher than the minimal variance.
-r3_2 > r4 # true
-```
 """
 struct WR <: RiskMeasure
     settings::RMSettings
@@ -2016,120 +1143,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `(cvar::CVaR)(x::AbstractVector)`: computes the Conditional Value at Risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```@example
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# CVaR with default values.
-rm = CVaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  3.42814e-10
-   2 │       2  1.79365e-9
-   3 │       3  0.432177
-   4 │       4  7.48868e-11
-   5 │       5  0.567823
-=#
-
-# Compute CVaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.3353112360331464
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:cvar_risk]); rtol = 5e-8) # true
-
-# CVaR of the worst 50 % of cases.
-rm = CVaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.234514
-   2 │       2  0.111534
-   3 │       3  0.237635
-   4 │       4  0.278882
-   5 │       5  0.137435
-=#
-# Compute CVaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.03485547491800034
-
-# Values are consistent.
-isapprox(r2, value(port.model[:cvar_risk])) # true
-
-# CVaR with default values.
-rm = CVaR()
-
-# Hierarchical optimisation, no JuMP model.
-w3 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.179856
-   2 │       2  0.251612
-   3 │       3  0.269012
-   4 │       4  0.0620356
-   5 │       5  0.237484
-=#
-
-# Compute the CVaR.
-r3 = calc_risk(port, :HRP; rm = rm) # 0.9545750658848196
-
-# CVaR of the worst 50 % of cases.
-rm = CVaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.187826
-   2 │       2  0.277756
-   3 │       3  0.237229
-   4 │       4  0.184567
-   5 │       5  0.112621
-=#
-
-# Compute the CVaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.11405037467700407
-```
 """
 mutable struct CVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -2222,125 +1235,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `(evar::EVaR)(x::AbstractVector)`: computes the Entropic Value at Risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# EVaR with default values.
-rm = EVaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.80007e-10
-   2 │       2  2.53151e-10
-   3 │       3  0.432177
-   4 │       4  1.49677e-10
-   5 │       5  0.567823
-=#
-
-# Compute EVaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.33531123421543
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:evar_risk])) # true
-
-# As a functor, must provide the solvers.
-rm.solvers = port.solvers
-r1 == rm(port.returns * w1.weights) # true
-
-# EVaR of the worst 50 % of cases.
-rm = EVaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.0181213
-   2 │       2  0.018299
-   3 │       3  0.507395
-   4 │       4  1.79592e-9
-   5 │       5  0.456185
-=#
-
-# Compute EVaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.26782403994246134
-
-# Values are consistent.
-isapprox(r2, value(port.model[:evar_risk])) # true
-
-# EVaR with default values.
-rm = EVaR()
-
-# Hierarchical optimisation, no JuMP model but needs solvers.
-w3 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.179856
-   2 │       2  0.251612
-   3 │       3  0.269012
-   4 │       4  0.0620356
-   5 │       5  0.237484
-=#
-
-# Compute the EVaR.
-r3 = calc_risk(port, :HRP; rm = rm) # 0.954575073881352
-
-# EVaR of the worst 50 % of cases.
-rm = EVaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.210601
-   2 │       2  0.281815
-   3 │       3  0.21888
-   4 │       4  0.0884636
-   5 │       5  0.20024
-=#
-
-# Compute the EVaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.4995910664303083
-```
 """
 mutable struct EVaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -2365,7 +1259,7 @@ end
 """
     mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
 
-Measures and computes the portfolio Relativistic Value at Risk (RLVaR) risk measure. It is a generalisation of the [`EVaR`](@ref).
+Measures and computes the portfolio Relativistic Value at Risk (RLVaR). It is a generalisation of the [`EVaR`](@ref).
 
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
@@ -2401,185 +1295,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `(rlvar::RLVaR)(x::AbstractVector)`: computes the Relativistic Value at Risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# RLVaR with default values.
-rm = RLVaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.80007e-10
-   2 │       2  2.53151e-10
-   3 │       3  0.432177
-   4 │       4  1.49677e-10
-   5 │       5  0.567823
-=#
-
-# Compute RLVaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.33531123421543
-
-# As a functor, must provide the solvers.
-rm.solvers = port.solvers
-r1 == rm(port.returns * w1.weights) # true
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:rlvar_risk])) # true
-
-# RLVaR of the worst 50 % of cases.
-rm = RLVaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.0181213
-   2 │       2  0.018299
-   3 │       3  0.507395
-   4 │       4  1.79592e-9
-   5 │       5  0.456185
-=#
-
-# Compute RLVaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.26782403994246134
-
-# Values are consistent.
-isapprox(r2, value(port.model[:rlvar_risk])) # true
-
-# Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
-w3_1 = optimise!(port, Trad(; rm = RLVaR(; alpha = 0.5, kappa = 5e-5), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.0181197
-   2 │       2  0.0182987
-   3 │       3  0.507394
-   4 │       4  2.95838e-8
-   5 │       5  0.456187
-=#
-
-w3_2 = optimise!(port,
-                 Trad(; rm = RLVaR(; alpha = 0.5, kappa = 1 - 5e-5), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  4.13117e-14
-   2 │       2  3.08176e-14
-   3 │       3  0.432177
-   4 │       4  5.61983e-14
-   5 │       5  0.567823
-=#
-
-w3_3 = optimise!(port, Trad(; rm = EVaR(; alpha = 0.5), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.0181213
-   2 │       2  0.018299
-   3 │       3  0.507395
-   4 │       4  1.79592e-9
-   5 │       5  0.456185
-=#
-
-w3_4 = optimise!(port, Trad(; rm = WR(), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.01823e-11
-   2 │       2  5.08671e-11
-   3 │       3  0.432177
-   4 │       4  1.88254e-11
-   5 │       5  0.567823
-=#
-
-# `kappa → 0 ∴ RLVaR(X, alpha, kappa) → EVaR(X, alpha)`
-d1 = rmsd(w3_1.weights, w3_3.weights) # 1.2142341888644785e-6
-
-# `kappa → 0 ∴ RLVaR(X, alpha, kappa) → WR(X)`
-d2 = rmsd(w3_2.weights, w3_4.weights) # 4.790216951410363e-11
-
-# RLVaR with default values.
-rm = RLVaR()
-
-# Hierarchical optimisation, no JuMP model but needs solvers.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.179856
-   2 │       2  0.251612
-   3 │       3  0.269012
-   4 │       4  0.0620356
-   5 │       5  0.237484
-=#
-
-# Compute the RLVaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.9545750670771044
-
-# RLVaR of the worst 50 % of cases.
-rm = RLVaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w5 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.20634
-   2 │       2  0.277482
-   3 │       3  0.224641
-   4 │       4  0.0832757
-   5 │       5  0.208261
-=#
-
-# Compute the RLVaR.
-r5 = calc_risk(port, :HRP; rm = rm) # 0.5554606878764385
-```
 """
 mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -2632,120 +1347,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `(mdd::MDD)(x::AbstractVector)`: computes the Maximum Drawdown of uncompounded returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Maximum drawdown of uncompounded returns.
-rm = MDD()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  1.17101e-11
-   3 │       3  0.496406
-   4 │       4  8.35795e-12
-   5 │       5  0.369684
-=#
-
-# Compute MDD.
-r1 = calc_risk(port; rm = rm) # 0.5374188549183612
-
-# Values are consistent.
-isapprox(r1, value(port.model[:mdd_risk])) # true
-
-# Hierarchical optimisation, no JuMP model.
-w2 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.340287
-   2 │       2  0.254799
-   3 │       3  0.132603
-   4 │       4  0.124343
-   5 │       5  0.147968
-=#
-
-# Compute the MDD.
-r2 = calc_risk(port, :HRP; rm = rm) # 1.2557175411222494
-
-# Use it in conjunction with another, less conservative risk measure.
-rm = [MDD(; settings = RMSettings(; scale = 0.15)), Variance()]
-
-w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.024221
-   2 │       2  4.10595e-9
-   3 │       3  0.520211
-   4 │       4  0.0302782
-   5 │       5  0.42529
-=#
-
-# MDD.
-r3_1 = calc_risk(port; rm = MDD()) # 0.7055289743577166
-
-# Variance.
-r3_2 = calc_risk(port; rm = Variance()) # 0.13551503837607193
-
-# This portfolio is not optimal in either risk measure, but mixes their characteristics.
-w4 = optimise!(port, Trad(; rm = Variance(), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  2.14218e-9
-   2 │       2  0.0183819
-   3 │       3  0.520499
-   4 │       4  0.0340462
-   5 │       5  0.427073
-=#
-
-# Minimum variance portfolio.
-r4 = calc_risk(port; rm = Variance()) # 0.13051761827097458
-
-# MDD of mixed portfolio is higher than the minimal MDD.
-r3_1 > r1 # true
-
-# Variance of mixed portfolio is higher than the minimal Variance.
-r3_2 > r4 # true
-```
 """
 struct MDD <: RiskMeasure
     settings::RMSettings
@@ -2799,124 +1400,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `(add::ADD)(x::AbstractVector)`: computes the Average Drawdown of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Average drawdown of uncompounded returns.
-rm = ADD()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.157897
-   2 │       2  0.280578
-   3 │       3  0.328294
-   4 │       4  1.21821e-8
-   5 │       5  0.23323
-=#
-
-# Compute ADD.
-r1 = calc_risk(port; rm = rm) # 0.13590651497832792
-
-# Values are consistent.
-isapprox(r1, value(port.model[:add_risk])) # true
-
-# Exponentially weighted average drawdown.
-ew = eweights(1:size(ret, 1), 0.3; scale = true)
-
-# Average weighted drawdown of uncompounded returns.
-rm = ADD(; w = ew)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.129348
-   2 │       2  0.126851
-   3 │       3  0.355284
-   4 │       4  2.51369e-10
-   5 │       5  0.388516
-=#
-
-# Compute ADD.
-r2 = calc_risk(port; rm = rm) # 0.09063790934123649
-
-# Values are consistent.
-isapprox(r2, value(port.model[:add_risk])) # true
-
-# Average drawdown of uncompounded returns.
-rm = ADD()
-
-# Hierarchical optimisation, no JuMP model.
-w3 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.383943
-   2 │       2  0.304009
-   3 │       3  0.112083
-   4 │       4  0.122954
-   5 │       5  0.0770105
-=#
-
-# Compute the ADD.
-r3 = calc_risk(port, :HRP; rm = rm) # 0.2750672864487597
-
-# Average weighted drawdown of uncompounded returns.
-rm = ADD(; w = ew)
-
-# Optimise portfolio.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.607728
-   2 │       2  0.216725
-   3 │       3  0.039682
-   4 │       4  0.0526712
-   5 │       5  0.0831938
-=#
-
-# Compute ADD.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.21671851558511382
-```
 """
 struct ADD <: RiskMeasure
     settings::RMSettings
@@ -2995,121 +1478,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `(cdar::CDaR)(x::AbstractVector)`: computes the Conditional Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# CDaR with default values.
-rm = CDaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  6.43661e-11
-   3 │       3  0.496406
-   4 │       4  5.21573e-11
-   5 │       5  0.369684
-=#
-
-# Compute CDaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.5374188551509567
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:cdar_risk])) # true
-
-# CDaR of the worst 50 % of cases.
-rm = CDaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.157897
-   2 │       2  0.280578
-   3 │       3  0.328295
-   4 │       4  3.315e-8
-   5 │       5  0.23323
-=#
-
-# Compute CDaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.27181303095703657
-
-# Values are consistent.
-isapprox(r2, value(port.model[:cdar_risk])) # true
-
-# CDaR with default values.
-rm = CDaR()
-
-# Hierarchical optimisation, no JuMP model.
-w3 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.340287
-   2 │       2  0.254799
-   3 │       3  0.132603
-   4 │       4  0.124343
-   5 │       5  0.147968
-=#
-
-# Compute the CDaR.
-r3 = calc_risk(port, :HRP; rm = rm) # 1.2557175411222494
-
-# CDaR of the worst 50 % of cases.
-rm = CDaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.361168
-   2 │       2  0.319851
-   3 │       3  0.10707
-   4 │       4  0.115947
-   5 │       5  0.0959649
-=#
-
-# Compute the CDaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.5195947768868961
-```
 """
 mutable struct CDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -3177,75 +1545,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `(uci::UCI)(x::AbstractVector)`: computes the Ulcer Index of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Ulcer Index of uncompounded returns.
-rm = UCI()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.142635
-   2 │       2  1.1694e-7
-   3 │       3  0.533284
-   4 │       4  3.04499e-9
-   5 │       5  0.324081
-=#
-
-# Compute UCI.
-r1 = calc_risk(port; rm = rm) # 0.2377472147972752
-
-# Values are consistent.
-isapprox(r1, value(port.model[:uci_risk])) # true
-
-# Hierarchical optimisation, no JuMP model.
-w2 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.349727
-   2 │       2  0.31559
-   3 │       3  0.112635
-   4 │       4  0.112921
-   5 │       5  0.109127
-=#
-
-# Compute the UCI.
-r2 = calc_risk(port, :HRP; rm = rm) # 0.4909766994917799
-```
 """
 struct UCI <: RiskMeasure
     settings::RMSettings
@@ -3308,125 +1607,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `(edar::EDaR)(x::AbstractVector)`: computes the Entropic Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# EDaR with default values.
-rm = EDaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  2.08405e-10
-   3 │       3  0.496406
-   4 │       4  7.41738e-11
-   5 │       5  0.369684
-=#
-
-# Compute EDaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.537418856941819
-
-# As a functor, must provide the solvers.
-rm.solvers = port.solvers
-r1 == rm(port.returns * w1.weights) # true
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:edar_risk])) # true
-
-# EDaR of the worst 50 % of cases.
-rm = EDaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.139608
-   2 │       2  7.73182e-10
-   3 │       3  0.520488
-   4 │       4  3.57463e-10
-   5 │       5  0.339904
-=#
-
-# Compute EDaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.3925767492609657
-
-# Values are consistent.
-isapprox(r2, value(port.model[:edar_risk])) # true
-
-# EDaR with default values.
-rm = EDaR()
-
-# Hierarchical optimisation, no JuMP model but needs solvers.
-w3 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.340287
-   2 │       2  0.254799
-   3 │       3  0.132603
-   4 │       4  0.124343
-   5 │       5  0.147968
-=#
-
-# Compute the EDaR.
-r3 = calc_risk(port, :HRP; rm = rm) # 1.255717548184091
-
-# EDaR of the worst 50 % of cases.
-rm = EDaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.340134
-   2 │       2  0.298646
-   3 │       3  0.119899
-   4 │       4  0.116706
-   5 │       5  0.124616
-=#
-
-# Compute the EDaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 0.8346536154698635
-```
 """
 mutable struct EDaR{T1 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -3499,185 +1679,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `(rlvar::RLDaR)(x::AbstractVector)`: computes the Relativistic Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel, StatsBase, JuMP
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# RLDaR with default values.
-rm = RLDaR()
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  4.36339e-11
-   3 │       3  0.496406
-   4 │       4  8.60891e-11
-   5 │       5  0.369684
-=#
-
-# Compute RLDaR for `alpha  = 0.05`.
-r1 = calc_risk(port; rm = rm) # 0.5374188551702055
-
-# As a functor, must provide the solvers.
-rm.solvers = port.solvers
-r1 == rm(port.returns * w1.weights) # true
-
-# Risk is consistent.
-isapprox(r1, value(port.model[:rldar_risk])) # true
-
-# RLDaR of the worst 50 % of cases.
-rm = RLDaR(; alpha = 0.5)
-
-# Optimise portfolio.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.138343
-   2 │       2  3.0894e-10
-   3 │       3  0.515143
-   4 │       4  2.51349e-10
-   5 │       5  0.346514
-=#
-
-# Compute RLDaR for `alpha  = 0.5`.
-r2 = calc_risk(port; rm = rm) # 0.4111292001006315
-
-# Values are consistent.
-isapprox(r2, value(port.model[:rldar_risk])) # true
-
-# Check the limits as `kappa → 0`, and `kappa → Inf`. We use a large value of alpha because there are very few observations, so we need it to differentiate the results of the optimisations.
-w3_1 = optimise!(port, Trad(; rm = RLDaR(; alpha = 0.2, kappa = 1e-6), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  0.139578
-   2 │       2  1.928e-5
-   3 │       3  0.520359
-   4 │       4  1.06283e-5
-   5 │       5  0.340034
-=#
-
-w3_2 = optimise!(port,
-                 Trad(; rm = RLDaR(; alpha = 0.2, kappa = 1 - 1e-6), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  5.60144e-16
-   3 │       3  0.496406
-   4 │       4  1.10577e-15
-   5 │       5  0.369684
-=#
-
-w3_3 = optimise!(port, Trad(; rm = EDaR(; alpha = 0.2), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.139608
-   2 │       2  7.73182e-10
-   3 │       3  0.520488
-   4 │       4  3.57463e-10
-   5 │       5  0.339904
-=#
-
-w3_4 = optimise!(port, Trad(; rm = MDD(), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  0.13391
-   2 │       2  1.17101e-11
-   3 │       3  0.496406
-   4 │       4  8.35795e-12
-   5 │       5  0.369684
-=#
-
-# ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
-d1 = rmsd(w3_1.weights, w3_3.weights) # 8.353868497525375e-5
-
-# ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
-d2 = rmsd(w3_2.weights, w3_4.weights) # 2.269648123415672e-11
-
-# RLDaR with default values.
-rm = RLDaR()
-
-# Hierarchical optimisation, no JuMP model but needs solvers.
-w4 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.340287
-   2 │       2  0.254799
-   3 │       3  0.132603
-   4 │       4  0.124343
-   5 │       5  0.147968
-=#
-
-# Compute the RLDaR.
-r4 = calc_risk(port, :HRP; rm = rm) # 1.2557175456696996
-
-# RLDaR of the worst 50 % of cases.
-rm = RLDaR(; alpha = 0.5)
-
-# Hierarchical optimisation, no JuMP model.
-w5 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.338449
-   2 │       2  0.294247
-   3 │       3  0.121911
-   4 │       4  0.117776
-   5 │       5  0.127617
-=#
-
-# Compute the RLDaR.
-r5 = calc_risk(port, :HRP; rm = rm) # 0.8833806536885922
-```
 """
 mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
@@ -3716,7 +1717,7 @@ end
 """
     mutable struct Kurt <: RiskMeasure
 
-Measures and computes the portfolio Square Root Kurtosis risk measure.
+Measures and computes the portfolio Square Root Kurtosis.
 
 ```math
 \\begin{align}
@@ -3742,42 +1743,33 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtos
   - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` cokurtosis matrix.
 
       + If `nothing`: takes its value from the `kurt` instance [`Portfolio`](@ref).
+      + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
 
 # Functor
 
   - `(kurt::Kurt)(x::AbstractVector)`: computes the Square Root Kurtosis of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```@example
-# Default settings
-kurt = Kurt()
-
-# Custom configuration with specific cokurtosis matrix
-my_kt = [1.0 0.2; 0.2 1.0]
-kurt = Kurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
-
-# Using portfolio's built-in cokurtosis matrix
-kurt = Kurt(; kt = nothing)
-```
 """
 mutable struct Kurt <: RiskMeasure
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
     kt::Union{<:AbstractMatrix, Nothing}
 end
 function Kurt(; settings::RMSettings = RMSettings(),
               w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
               kt::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
-    return Kurt(settings, w, kt)
+    return Kurt(settings, w, mu, kt)
 end
-function (kurt::Kurt)(x::AbstractVector, scale::Bool = false)
+function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0; scale::Bool = false)
+    x = X * w .- fees
     T = length(x)
-    w = kurt.w
-    mu = isnothing(w) ? mean(x) : mean(x, w)
+    mu = calc_ret_mu(x, w, kurt)
     val = x .- mu
     kurt = sqrt(sum(val .^ 4) / T)
     return !scale ? kurt : kurt / 2
@@ -3786,11 +1778,7 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasure
 
-# Description
-
-Square Root Semi Kurtosis risk measure implementation for portfolio optimisation.
-
-  - Measures the kurtosis equal to or below the `target` return threshold.
+Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the `target` return threshold.
 
 ```math
 \\begin{align}
@@ -3805,7 +1793,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SKurt, ::AbstractVector)`](@ref), [`Kurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
 
@@ -3818,46 +1806,36 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
   - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` semi cokurtosis matrix.
 
       + If `nothing`: takes its value from the `skurt` instance [`Portfolio`](@ref).
+      + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
 
 # Functor
 
   - `(skurt::SKurt)(x::AbstractVector)`: computes the Semi Square Root Kurtosis of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```@example
-# Default settings
-skurt = SKurt()
-
-# Custom configuration with specific cokurtosis matrix
-my_kt = [1.0 0.2; 0.2 1.0]
-skurt = SKurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
-
-# Using portfolio's built-in cokurtosis matrix
-skurt = SKurt(; kt = nothing, target = 0.015) # 1.5% minimum return threshold
-```
 """
-mutable struct SKurt{T1 <: Real} <: RiskMeasure
+mutable struct SKurt <: RiskMeasure
     settings::RMSettings
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
     kt::Union{<:AbstractMatrix, Nothing}
 end
-function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+function SKurt(; settings::RMSettings = RMSettings(),
                w::Union{<:AbstractWeights, Nothing} = nothing,
+               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                kt::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
-    return SKurt{typeof(target)}(settings, target, w, kt)
+    return SKurt(settings, w, mu, kt)
 end
-function (skurt::SKurt)(x::AbstractVector, scale::Bool = false)
+function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0;
+                        scale::Bool = false)
+    x = X * w .- fees
     T = length(x)
-    w = skurt.w
-    target = skurt.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
+    mu = calc_ret_mu(x, w, skurt)
     val = x .- mu
-    skurt = sqrt(sum(val[val .<= target] .^ 4) / T)
+    skurt = sqrt(sum(val[val .<= zero(eltype(val))] .^ 4) / T)
     return !scale ? skurt : skurt / 2
 end
 
@@ -3866,7 +1844,7 @@ end
 
 # Description
 
-Defines the Range risk measure.
+Defines the Range.
 
   - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
 
@@ -3903,7 +1881,7 @@ end
 
 # Description
 
-Defines the Conditional Value at Risk Range risk measure.
+Defines the Conditional Value at Risk Range.
 
   - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
 
@@ -3923,16 +1901,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
   - When setting `beta` at construction or runtime, `beta ∈ (0, 1)`.
 
 # Examples
-
-```@example
-# Default settings
-cdar = CVaRRG()
-
-# Custom significance level
-cdar = CVaRRG(; settings = RMSettings(; scale = 1.0), #
-              alpha = 0.01, # 1 % significance level losses 
-              beta = 0.03)  # 3 % significance level gains
-```
 """
 mutable struct CVaRRG{T1, T2} <: RiskMeasure
     settings::RMSettings
@@ -3976,17 +1944,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
   - `p` is only used when `approx == true`.
 
 # Examples
-
-```@example
-# Default settings
-owa = OWASettings()
-
-# Use full risk measure formulation
-owa = OWASettings(; approx = false)
-
-# Use more p-norms
-owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128])
-```
 """
 mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
     approx::Bool
@@ -4002,7 +1959,7 @@ end
 
 # Description
 
-Defines the Gini Mean Difference risk measure.
+Defines the Gini Mean Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
 
@@ -4012,18 +1969,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
 
 # Examples
-
-```@example
-# Default settings
-gmd = GMD()
-
-# Use full risk measure formulation
-gmd = GMD(; owa = OWASettings(; approx = false))
-
-# Use more p-norms and custom settings
-gmd = GMD(; settings = RMSettings(; scale = 1.7),
-          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
-```
 """
 struct GMD <: RiskMeasure
     settings::RMSettings
@@ -4043,7 +1988,7 @@ end
 
 # Description
 
-Defines the Tail Gini Difference risk measure.
+Defines the Tail Gini Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 
@@ -4112,7 +2057,7 @@ end
 
 # Description
 
-Defines the Tail Gini Difference Range risk measure.
+Defines the Tail Gini Difference Range.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
@@ -4141,18 +2086,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - When setting `b_sim` at construction or runtime, `b_sim > 0`.
 
 # Examples
-
-```@example
-# Default settings
-rtg = RTG()
-
-# Use full risk measure formulation with custom parameters
-rtg = RTG(; alpha = 0.07, b_sim = 200, owa = OWASettings(; approx = false))
-
-# Use more p-norms and constrain risk without adding it to the problem's risk expression
-rtg = RTG(; settings = RMSettings(; flag = false, ub = 0.1),
-          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
-```
 """
 mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     settings::RMSettings
@@ -4202,7 +2135,7 @@ end
 
 # Description
 
-Defines the generic Ordered Weight Array risk measure.
+Defines the generic Ordered Weight Array.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
@@ -4215,19 +2148,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: `T×1` ordered weight vector of arbitrary L-moments generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
 
 # Examples
-
-```@example
-# Default settings
-w = owa_l_moment_crm(10)
-owa = OWA(; w = w)
-
-# Use full risk measure formulation with custom parameters
-owa = OWA(; w = w, owa = OWASettings(; approx = false))
-
-# Use more p-norms and constrain risk without adding it to the problem's risk expression
-owa = OWA(; w = w, settings = RMSettings(; flag = false, ub = 0.1),
-          owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
-```
 """
 mutable struct OWA <: RiskMeasure
     settings::RMSettings
@@ -4251,7 +2171,7 @@ struct BDVIneq <: BDVarianceFormulation end
 
 # Description
 
-Define the Brownian Distance Variance risk measure.
+Define the Brownian Distance Variance.
 
   - Measures linear and non-linear relationships between variables.
 
@@ -4282,14 +2202,6 @@ where:
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
 # Examples
-
-```@example
-# Default settings
-dvar = BDVariance()
-
-# Custom settings
-dvar = BDVariance(; settings = RMSettings(; ub = 0.5))
-```
 """
 struct BDVariance <: RiskMeasure
     settings::RMSettings
@@ -4314,7 +2226,7 @@ end
 
 # Description
 
-Define the Quadratic Skewness risk measure.
+Define the Quadratic Skewness.
 
 ```math
 \\begin{align}
@@ -4367,14 +2279,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
 
 # Examples
-
-```@example
-# Default settings
-skew = Skew()
-
-# Custom settings
-skew = Skew(; settings = RMSettings(; ub = 0.5))
-```
 """
 mutable struct Skew <: RiskMeasure
     settings::RMSettings
@@ -4413,7 +2317,7 @@ end
 
 # Description
 
-Define the Quadratic Semi Skewness risk measure.
+Define the Quadratic Semi Skewness.
 
 ```math
 \\begin{align}
@@ -4466,14 +2370,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
   - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
 
 # Examples
-
-```@example
-# Default settings
-sskew = SSkew()
-
-# Custom settings
-sskew = SSkew(; settings = RMSettings(; ub = 0.5))
-```
 """
 mutable struct SSkew <: RiskMeasure
     settings::RMSettings
@@ -4512,7 +2408,7 @@ end
 
 # Description
 
-Defines the Variance risk measure.
+Defines the Variance.
 
 ```math
 \\begin{align}
@@ -4576,7 +2472,7 @@ end
 
 # Description
 
-Defines the Semi Variance risk measure.
+Defines the Semi Variance.
 
 ```math
 \\begin{align}
@@ -4608,26 +2504,25 @@ svariance = SVariance(; target = 0.02,  # 2 % return target
                       settings = HCRMSettings(; scale = 2.0), w = w)
 ```
 """
-mutable struct SVariance{T1 <: Real} <: RiskMeasure
+mutable struct SVariance <: RiskMeasure
     settings::RMSettings
     formulation::VarianceFormulation
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SVariance(; settings::RMSettings = RMSettings(),
-                   formulation::VarianceFormulation = SOC(), target::Real = 0.0,
+                   formulation::VarianceFormulation = SOC(),
                    w::Union{<:AbstractWeights, Nothing} = nothing,
-                   mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SVariance{typeof(target)}(settings, formulation, target, w, mu)
+                   mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SVariance(settings, formulation, w, mu)
 end
-function (svariance::SVariance)(x::AbstractVector)
+function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
-    w = svariance.w
-    target = svariance.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
+    mu = calc_ret_mu(x, w, svariance)
     val = x .- mu
-    return sum(val[val .<= target] .^ 2) / (T - 1)
+    val = val[val .<= zero(eltype(val))]
+    return dot(val, val) / (T - 1)
 end
 
 """
@@ -4708,56 +2603,6 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-
-# ### Tracking
-
-"""
-```
-abstract type TrackingErr end
-```
-"""
-abstract type TrackingErr end
-
-"""
-```
-struct NoTracking <: TrackingErr end
-```
-"""
-struct NoTracking <: TrackingErr end
-
-"""
-```
-@kwdef mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1
-    w::T2
-end
-function TrackWeight(; err::Real = 0.0,
-                     w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TrackWeight{typeof(err), typeof(w)}(err, w)
-end
-
-"""
-```
-@kwdef mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
-    err::T1
-    w::T2
-end
-function TrackRet(; err::Real = 0.0, w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TrackRet{typeof(err), typeof(w)}(err, w)
-end
-
 # ### Turnover and rebalance
 
 """
@@ -4793,6 +2638,61 @@ function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
     return TR{typeof(val), typeof(w)}(val, w)
 end
 
+# ### Tracking
+
+"""
+```
+abstract type TrackingErr end
+```
+"""
+abstract type TrackingErr end
+
+"""
+```
+struct NoTracking <: TrackingErr end
+```
+"""
+struct NoTracking <: TrackingErr end
+
+"""
+```
+@kwdef mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1
+    w::T2
+    long_fees::Union{<:Real, <:AbstractVector{<:Real}}
+    short_fees::Union{<:Real, <:AbstractVector{<:Real}}
+    rebalance::AbstractTR
+end
+function TrackWeight(; err::Real = 0.0,
+                     w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
+                     long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                     short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                     rebalance::AbstractTR = NoTR())
+    return TrackWeight{typeof(err), typeof(w)}(err, w, long_fees, short_fees, rebalance)
+end
+
+"""
+```
+@kwdef mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TrackRet{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
+    err::T1
+    w::T2
+end
+function TrackRet(; err::Real = 0.0, w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return TrackRet{typeof(err), typeof(w)}(err, w)
+end
+
 mutable struct TrackingRM <: RiskMeasure
     settings::RMSettings
     tr::Union{TrackWeight, TrackRet}
@@ -4801,11 +2701,11 @@ function TrackingRM(; settings::RMSettings = RMSettings(),
                     tr::Union{TrackWeight, TrackRet} = TrackRet(;))
     return TrackingRM(settings, tr)
 end
-function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector)
+function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     T = size(X, 1)
     tr = trackingRM.tr
     benchmark = tracking_error_benchmark(tr, X)
-    return norm(X * w - benchmark) / sqrt(T - 1)
+    return norm(X * w - benchmark .- fees) / sqrt(T - 1)
 end
 
 mutable struct TurnoverRM <: RiskMeasure
@@ -4819,12 +2719,13 @@ function (turnoverRM::TurnoverRM)(w::AbstractVector)
     benchmark = turnoverRM.tr.w
     return norm(benchmark - w, 1)
 end
+
 """
     mutable struct VaR{T1 <: Real} <: HCRiskMeasure
 
 # Description
 
-Defines the Value at Risk risk measure.
+Defines the Value at Risk.
 
   - Measures lower bound of the losses in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
@@ -4882,7 +2783,7 @@ end
 
 # Description
 
-Defines the Drawdown at Risk for uncompounded cumulative returns risk measure.
+Defines the Drawdown at Risk for uncompounded cumulative returns.
 
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
@@ -4961,7 +2862,7 @@ end
 
 # Description
 
-Defines the Drawdown at Risk for compounded cumulative returns risk measure.
+Defines the Drawdown at Risk for compounded cumulative returns.
 
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
@@ -5519,7 +3420,7 @@ end
 function (equal::Equal)(w::AbstractVector, delta::Real = 0)
     return inv(length(w)) + delta
 end
-
+#! Generalise this like the TCM
 mutable struct TCM <: NoOptRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -5535,27 +3436,30 @@ function (tcm::TCM)(x::AbstractVector)
     val = x .- mu
     return sum(val .^ 3) / T
 end
-mutable struct TLPM{T1} <: HCRiskMeasure
-    settings::HCRMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
+mutable struct TLPM <: RiskMeasure
+    settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function TLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing)
-    return TLPM{typeof(target)}(settings, target, w)
+function TLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return TLPM(settings, target, w, mu)
 end
-function (tlpm::TLPM)(x::AbstractVector)
+function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = tlpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = tlpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        target = calc_ret_mu(x, w, tlpm)
     end
     val = x .- target
-    return -sum(val[val .<= zero(target)] .^ 3) / T
+    val = val[val .<= zero(eltype(val))] .^ 3
+    return -sum(val) / T
 end
+#! Generalise this like the FTLPM
 mutable struct FTCM <: HCRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -5572,26 +3476,28 @@ function (ftcm::FTCM)(x::AbstractVector)
     return sum(val .^ 4) / T
 end
 
-mutable struct FTLPM{T1} <: HCRiskMeasure
-    settings::HCRMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
+mutable struct FTLPM <: RiskMeasure
+    settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
-               w::Union{AbstractWeights, Nothing} = nothing)
-    return FTLPM{typeof(target)}(settings, target, w)
+function FTLPM(; settings::RMSettings = RMSettings(),
+               target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+               w::Union{<:AbstractWeights, Nothing} = nothing,
+               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return FTLPM(settings, target, w, mu)
 end
-function (ftlpm::FTLPM)(x::AbstractVector)
+function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = ftlpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = ftlpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        target = calc_ret_mu(x, w, ftlpm)
     end
     val = x .- target
-    return sum(val[val .<= zero(target)] .^ 4) / T
+    val = val[val .<= zero(eltype(val))] .^ 4
+    return sum(val) / T
 end
 
 mutable struct Skewness <: NoOptRiskMeasure
@@ -5643,6 +3549,9 @@ function (sskewness::SSkewness)(x::AbstractVector)
     return sum(dot(val, val) * val) / T / sigma^3
 end
 
+"""
+    mutable struct Kurtosis <: HCRiskMeasure
+"""
 mutable struct Kurtosis <: HCRiskMeasure
     settings::HCRMSettings
     mean_w::Union{AbstractWeights, Nothing}
@@ -5665,6 +3574,9 @@ function (kurtosis::Kurtosis)(x::AbstractVector)
     val = x .- mu
     return dot(val, val)^2 / T / sigma^4
 end
+"""
+    mutable struct SKurtosis{T1} <: HCRiskMeasure
+"""
 mutable struct SKurtosis{T1} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
@@ -5695,10 +3607,13 @@ const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
 const RMSigma = Union{SD, Variance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
+const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TLPM, FTLPM}
+const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings,
        VarianceFormulation, Quad, SOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD,
        ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG,
        OWA, BDVariance, Skew, SSkew, Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r,
        CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
-       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR
+       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR,
+       Kurtosis, SKurtosis

@@ -121,6 +121,8 @@ FLPM
 SLPM
 SKurt
 SSkew
+Kurtosis
+SKurtosis
 ```
 
 #### Worst case variance

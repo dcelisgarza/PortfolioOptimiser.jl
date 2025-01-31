@@ -48,7 +48,6 @@ function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    target = ce.target
     mu = ce.mu
     if isnothing(mu)
         mu = vec(if isnothing(ce.mu_w)
@@ -57,8 +56,7 @@ function StatsBase.cov(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
                      mean(X, ce.mu_w; dims = 1)
                  end)
     end
-    X = min.(X .- transpose(mu), target)
-
+    X = min.(X .- transpose(mu), zero(eltype(X)))
     return Symmetric(if isnothing(ce.cov_w)
                          cov(ce.ce, X; mean = zero(eltype(X)))
                      else
@@ -70,7 +68,6 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
     if dims == 2
         X = transpose(X)
     end
-    target = ce.target
     mu = ce.mu
     if isnothing(mu)
         mu = vec(if isnothing(ce.mu_w)
@@ -79,7 +76,7 @@ function StatsBase.cor(ce::CovSemi, X::AbstractMatrix; dims::Int = 1)
                      mean(X, ce.mu_w; dims = 1)
                  end)
     end
-    X = min.(X .- transpose(mu), target)
+    X = min.(X .- transpose(mu), zero(eltype(X)))
 
     rho = Symmetric(try
                         if isnothing(ce.cov_w)
@@ -1462,34 +1459,33 @@ function dup_elim_sum_matrices(n::Int)
 end
 function cokurt(ke::KurtFull, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
-    y = X .- transpose(mu)
-    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
-    z = kron(o, y) .* kron(y, o)
-    cokurt = transpose(z) * z / T
+    X = X .- transpose(mu)
+    o = transpose(range(; start = one(eltype(X)), stop = one(eltype(X)), length = N))
+    z = kron(o, X) .* kron(X, o)
+    ckurt = transpose(z) * z / T
 
-    posdef_fix!(ke.posdef, cokurt)
-    denoise!(ke.denoise, ke.posdef, cokurt, T / N)
-    detone!(ke.detone, ke.posdef, cokurt)
-    logo!(ke.logo, ke.posdef, cokurt)
-    custom_mtx_process!(ke.custom, cokurt)
+    posdef_fix!(ke.posdef, ckurt)
+    denoise!(ke.denoise, ke.posdef, ckurt, T / N)
+    detone!(ke.detone, ke.posdef, ckurt)
+    logo!(ke.logo, ke.posdef, ckurt)
+    custom_mtx_process!(ke.custom, ckurt)
 
-    return cokurt
+    return ckurt
 end
 function cokurt(ke::KurtSemi, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
-    y = X .- transpose(mu)
-    y .= min.(y, ke.target)
-    o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
-    z = kron(o, y) .* kron(y, o)
-    cokurt = transpose(z) * z / T
+    X = min.(X .- transpose(mu), zero(eltype(X)))
+    o = transpose(range(; start = one(eltype(X)), stop = one(eltype(X)), length = N))
+    z = kron(o, X) .* kron(X, o)
+    sckurt = transpose(z) * z / T
 
-    posdef_fix!(ke.posdef, cokurt)
-    denoise!(ke.denoise, ke.posdef, cokurt, T / N)
-    detone!(ke.detone, ke.posdef, cokurt)
-    logo!(ke.logo, ke.posdef, cokurt)
-    custom_mtx_process!(ke.custom, cokurt)
+    posdef_fix!(ke.posdef, sckurt)
+    denoise!(ke.denoise, ke.posdef, sckurt, T / N)
+    detone!(ke.detone, ke.posdef, sckurt)
+    logo!(ke.logo, ke.posdef, sckurt)
+    custom_mtx_process!(ke.custom, sckurt)
 
-    return cokurt
+    return sckurt
 end
 """
 ```
@@ -1501,13 +1497,13 @@ function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
     y = X .- transpose(mu)
     o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
     z = kron(o, y) .* kron(y, o)
-    coskew = transpose(X) * z / T
+    cskew = transpose(X) * z / T
 
     V = zeros(eltype(y), N, N)
     for i ∈ 1:N
         j = (i - 1) * N + 1
         k = i * N
-        coskew_jk = coskew[:, j:k]
+        coskew_jk = cskew[:, j:k]
         vals, vecs = eigen(coskew_jk)
         vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
         V .-= real(vecs * Diagonal(vals) * transpose(vecs))
@@ -1516,26 +1512,25 @@ function coskew(::SkewFull, X::AbstractMatrix, mu::AbstractVector)
         # logo!(se.logo, se.posdef, -real(vecs * Diagonal(vals) * transpose(vecs)))
     end
 
-    return coskew, V
+    return cskew, V
 end
 """
 ```
 coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
 ```
 """
-function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
+function coskew(::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
     T, N = size(X)
-    y = X .- transpose(mu)
-    y .= min.(y, se.target)
+    y = min.(X .- transpose(mu), zero(eltype(X)))
     o = transpose(range(; start = one(eltype(y)), stop = one(eltype(y)), length = N))
     z = kron(o, y) .* kron(y, o)
-    scoskew = transpose(X) * z / T
+    scskew = transpose(X) * z / T
 
     SV = zeros(eltype(y), N, N)
     for i ∈ 1:N
         j = (i - 1) * N + 1
         k = i * N
-        scoskew_jk = scoskew[:, j:k]
+        scoskew_jk = scskew[:, j:k]
         vals, vecs = eigen(scoskew_jk)
         vals = clamp.(real.(vals), -Inf, 0) .+ clamp.(imag.(vals), -Inf, 0)im
         SV .-= real(vecs * Diagonal(vals) * transpose(vecs))
@@ -1544,7 +1539,7 @@ function coskew(se::SkewSemi, X::AbstractMatrix, mu::AbstractVector)
         # logo!(se.logo, NoPosdef(), -real(vecs * Diagonal(vals) * transpose(vecs)))
     end
 
-    return scoskew, SV
+    return scskew, SV
 end
 function StatsBase.cov(ce::PortCovCor, X::AbstractMatrix; dims::Int = 1)
     @smart_assert(dims ∈ (1, 2))

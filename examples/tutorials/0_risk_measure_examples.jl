@@ -59,6 +59,7 @@ r2 = calc_risk(port, :HRP; rm = rm)
 r2 == SD(; sigma = port.cov)(w2.weights)
 
 #=
+#=
 ## Mean Absolute Deviation, [`MAD`](@ref)
 =#
 
@@ -74,31 +75,31 @@ isapprox(r1, value(port.model[:mad_risk]))
 ew1 = eweights(1:size(ret, 1), 0.2; scale = true);
 ew2 = eweights(1:size(ret, 1), 0.3; scale = true);
 #=
-Compute asset statistics, use ew1 in the `Trad` optimisation. This makes it consistent with the risk measure.
+If we want to make the risk measure and [`JuMP`](https://github.com/jump-dev/JuMP.jl) model consistent, we need to compute `port.mu` using the same weights. And provide it to the risk measure.
 =#
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
-#=
-Mean absolute deviation with different weights. w1 has no effect in the following optimisation in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based optimisations, so we account for it in the computation of `port.mu` above.
-=#
-rm = MAD(; w1 = ew1, w2 = ew2)
-# Use the custom weights in the optimisation.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-Using `w1` and `w2` may lead to inconsistent values between the functor and value in the model because the mean absolute deviation is formulated with slack constraints.
-=#
+rm = MAD(; w = ew1, we = ew2)
+w2_1 = optimise!(port, Trad(; rm = rm, str_names = true))
 r2_1 = calc_risk(port; rm = rm)
-#
-r2_2 = value(port.model[:mad_risk])
+# Compare the calculated risk with the model's risk.
+isapprox(r2_1, value(port.model[:mad_risk]))
+# Alternatively, we can direcly provide the vector of expected returns.
+rm = MAD(; mu = port.mu, we = ew2)
+w2_2 = optimise!(port, Trad(; rm = rm, str_names = true))
+r2_2 = calc_risk(port; rm = rm)
+# Compare teh risks.
+isapprox(r2_2, value(port.model[:mad_risk]))
+# Show that both formulations are equivalent.
+isapprox(r2_1, r2_2)
 # Use a custom mu (added some random noise).
 custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
                        0.0021521845052968917, -0.004417767086053032]
 rm = MAD(; mu = custom_mu)
 # Optimise with the custom mu.
 w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-# Values don't match.
-r3_1 = calc_risk(port; rm = rm)
-#
-r3_2 = value(port.model[:mad_risk])
+# Values are consistent.
+r3 = calc_risk(port; rm = rm)
+isapprox(r3, value(port.model[:mad_risk]))
 # Vanilla mean absolute deviation.
 rm = MAD()
 # Hierarchical optimisation, no JuMP model.
@@ -106,8 +107,8 @@ w4 = optimise!(port, HRP(; rm = rm))
 # Compute the mean absolute deviation.
 r4 = calc_risk(port, :HRP; rm = rm)
 # Use the risk measure as a functor.
-r4 == rm(port.returns * w4.weights)
-# Custom mu has no effect in the following optimisation.
+r4 == rm(port.returns, w4.weights)
+# Custom mu affects the optimisation.
 rm = MAD(; mu = custom_mu)
 # Hierarchical optimisation, no JuMP model.
 w5 = optimise!(port, HRP(; rm = rm))
@@ -115,7 +116,7 @@ w4.weights == w5.weights
 # Compute the mean absolute deviation.
 r5 = calc_risk(port, :HRP; rm = rm)
 # `w1` and `w2` both have effects.
-rm = MAD(; w1 = ew1, w2 = ew2)
+rm = MAD(; w = ew1, we = ew2)
 # Hierarchical optimisation, no JuMP model.
 w6 = optimise!(port, HRP(; rm = rm))
 # Compute the mean absolute deviation.
@@ -739,6 +740,9 @@ r5 = calc_risk(port, :HRP; rm = rm)
 ## Square Root Kurtosis, [`Kurt`](@ref)
 =#
 
+# Ensure we use the exact model.
+port.max_num_assets_kurt = 0
+port.max_num_assets_kurt_scale = 2
 # Recompute asset statistics.
 asset_statistics!(port)
 # Vanilla square root kurtosis.
@@ -766,13 +770,13 @@ Since we used the same exponential weights to compute `port.mu`, and therefore `
 =#
 r2 = calc_risk(port; rm = rm)
 # Check they are approximately equal.
-isapprox(r2, value(port.model[:kurt_risk]); rtol = 5e-8)
+isapprox(r2, value(port.model[:kurt_risk]))
 # Custom mu (added some random noise).
 custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
                        0.0021521845052968917, -0.004417767086053032]
-# This won't work even if we use `custom_mu` to compute the cokurtosis, because the expected value is computed inside the functor.
+# This won't work even if we use `custom_mu` to compute the cokurtosis, because the expected value is computed inside the functor. We'll also use the `kt` field of the data structure, which takes precedence over `port.kurt` if it is not empty or `nothing`.
 rm = Kurt()
-port.kurt = cokurt(KurtFull(), port.returns, custom_mu)
+rm.kt = cokurt(KurtFull(), port.returns, custom_mu)
 # Optimise portfolio using this custom mu.
 w3 = optimise!(port, Trad(; rm = rm, str_names = true))
 #=
@@ -781,26 +785,118 @@ Values don't match because the expected return is computed from the portfolio we
 r3_1 = calc_risk(port; rm = rm)
 #
 r3_2 = value(port.model[:kurt_risk])
-#! Vanilla square root kurtosis.
+#=
+Both [`Kurt`](@ref) and [`SKurt`](@ref) have approximate formulations for optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, which reduce computational complexity at the cost of accuracy. These are mediated by the `max_num_assets_kurt`, and `max_num_assets_kurt_scale` properties of [`Portfolio`](@ref). Lets make the threshold for using the approximate formulation a single asset (always on), and we will use the largest sets of eigenvalues.
+=#
+port.max_num_assets_kurt = 1
+port.max_num_assets_kurt_scale = 1
+# Vanilla square root kurtosis.
 rm = Kurt()
+# Recompute statistics to reset them.
+asset_statistics!(port)
+# Run approximate model.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute the square root kurtosis.
+r4 = calc_risk(port, :Trad; rm = rm)
+# Because this is an approximate solution, the risk is not minimal.
+r4 > r1
+# Square root kurtosis.
+rm = Kurt(;)
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+# Compute the square root kurtosis.
+r5 = calc_risk(port, :HRP; rm = rm)
+# `w` has an effect in the following optimisation, with no need to recompute `port.mu`.
+rm = Kurt(; w = ew)
 # Hierarchical optimisation, no JuMP model.
 w6 = optimise!(port, HRP(; rm = rm))
 # Compute the square root kurtosis.
 r6 = calc_risk(port, :HRP; rm = rm)
-# As a functor.
-r6 == rm(port.returns * w6.weights)
-#=
-# Custom mu has no effect in the following optimisation.
-rm = Kurt(; mu = custom_mu)
-# Hierarchical optimisation, no JuMP model.
+# The `kt` property of the instance of [`Kurt`](@ref) has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+rm.kt = cokurt(KurtFull(), port.returns, custom_mu)
 w7 = optimise!(port, HRP(; rm = rm))
-w6.weights == w7.weights # true
-# Compute the square root kurtosis.
-r7 = calc_risk(port, :HRP; rm = rm)
-# `w` has an effect in the following optimisation.
-rm = Kurt(; w = ew)
+w6.weights == w7.weights
+
+#=
+## Square Root Semi Kurtosis, [`SKurt`](@ref)
+=#
+
+# Ensure we use the exact model.
+port.max_num_assets_kurt = 0
+port.max_num_assets_kurt_scale = 2
+# Recompute asset statistics.
+asset_statistics!(port)
+# Vanilla square root semi kurtosis.
+rm = SKurt(; target = 0.01)
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute semi standard deviation.
+r1 = calc_risk(port; rm = rm)
+# Values are not consistent because [`cokurt`](@ref) tends to produce poorly conditioned matrices even after making them positive definite, more so for [`KurtSemi`](@ref) because it replaces values above the threshold with zero, this is the case in this example where there are few readings and the values fluctuate a lot. This makes the [`JuMP`](https://github.com/jump-dev/JuMP.jl) model difficult to optimise.
+isapprox(r1, value(port.model[:skurt_risk]))
+# Conditioning number of the semi cokurtosis.
+cond(port.skurt)
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+#=
+Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it consistent with the risk measure, because it computes the cokurtosis using this value of `mu`.
+=#
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+#=
+Square root semi kurtosis with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
+=#
+rm = SKurt(; w = ew)
+# Optimise using the exponential weight.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Since we used the same exponential weights to compute `port.mu`, and therefore `port.kurt` and passed it on to the functor, the risk computed by `calc_risk` will be consistent with the value in the `JuMP` model.
+=#
+r2 = calc_risk(port; rm = rm)
+# Check they are approximately equal.
+isapprox(r2, value(port.model[:kurt_risk]))
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+# This won't work even if we use `custom_mu` to compute the cokurtosis, because the expected value is computed inside the functor. We'll also use the `kt` field of the data structure, which takes precedence over `port.kurt` if it is not empty or `nothing`.
+rm = SKurt()
+rm.kt = cokurt(KurtSemi(), port.returns, custom_mu)
+# Optimise portfolio using this custom mu.
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+Values don't match because the expected return is computed from the portfolio weights and returns matrix.
+=#
+r3_1 = calc_risk(port; rm = rm)
+#
+r3_2 = value(port.model[:kurt_risk])
+#=
+Both [`SKurt`](@ref) and [`SKurt`](@ref) have approximate formulations for optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, which reduce computational complexity at the cost of accuracy. These are mediated by the `max_num_assets_kurt`, and `max_num_assets_kurt_scale` properties of [`Portfolio`](@ref). Lets make the threshold for using the approximate formulation a single asset (always on), and we will use the largest sets of eigenvalues.
+=#
+port.max_num_assets_kurt = 1
+port.max_num_assets_kurt_scale = 1
+# Vanilla square root semi kurtosis.
+rm = SKurt()
+# Recompute statistics to reset them.
+asset_statistics!(port)
+# Run approximate model.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+# Compute the square root semi kurtosis.
+r4 = calc_risk(port, :Trad; rm = rm)
+# Because this is an approximate solution, the risk is not minimal.
+r4 > r1
+# Square root semi kurtosis.
+rm = SKurt(;)
 # Hierarchical optimisation, no JuMP model.
-w8 = optimise!(port, HRP(; rm = rm))
-# Compute the square root kurtosis.
-r8 = calc_risk(port, :HRP; rm = rm)
+w5 = optimise!(port, HRP(; rm = rm))
+# Compute the square root semi kurtosis.
+r5 = calc_risk(port, :HRP; rm = rm)
+# `w` has an effect in the following optimisation, with no need to recompute `port.mu`.
+rm = SKurt(; w = ew)
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+# Compute the square root semi kurtosis.
+r6 = calc_risk(port, :HRP; rm = rm)
+# The `kt` property of the instance of [`SKurt`](@ref) has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+rm.kt = cokurt(KurtSemi(), port.returns, custom_mu)
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights
 =#
