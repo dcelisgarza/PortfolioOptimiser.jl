@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/0_risk_measure_examples.jl"
 ```
@@ -256,7 +255,7 @@ Optimise portfolio.
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
 ````
 
-Compute semi standard devation.
+Compute semi standard deviation.
 
 ````@example 0_risk_measure_examples
 r1 = calc_risk(port; rm = rm)
@@ -280,7 +279,7 @@ Optimise portfolio using the semi standard deviation with a return threshold tha
 w2 = optimise!(port, Trad(; obj = MinRisk(), rm = rm, str_names = true))
 ````
 
-Optimise portfolio using the standard devation.
+Optimise portfolio using the standard deviation.
 
 ````@example 0_risk_measure_examples
 w3 = optimise!(port, Trad(; rm = SD(), str_names = true))
@@ -1747,6 +1746,181 @@ Compute the RLDaR.
 r5 = calc_risk(port, :HRP; rm = rm)
 ````
 
-* * *
+## Square Root Kurtosis, [`Kurt`](@ref)
+
+Recompute asset statistics.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+Vanilla square root kurtosis.
+
+````@example 0_risk_measure_examples
+rm = Kurt()
+````
+
+Optimise portfolio.
+
+````@example 0_risk_measure_examples
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute semi standard deviation.
+
+````@example 0_risk_measure_examples
+r1 = calc_risk(port; rm = rm)
+````
+
+Values are consistent.
+
+````@example 0_risk_measure_examples
+isapprox(r1, value(port.model[:kurt_risk]))
+````
+
+Exponential weights.
+
+````@example 0_risk_measure_examples
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+````
+
+Compute asset statistics, use `ew` in the `Trad` optimisation. This makes it consistent with the risk measure, because it computes the cokurtosis using this value of `mu`.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port; mu_type = MuSimple(; w = ew))
+````
+
+Square root kurtosis with exponential weights. `w` has no effect in the following optimisation, so we account for it in the computation of `port.mu` above.
+
+````@example 0_risk_measure_examples
+rm = Kurt(; w = ew)
+````
+
+Optimise using the exponential weight.
+
+````@example 0_risk_measure_examples
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Since we used the same exponential weights to compute `port.mu`, and therefore `port.kurt` and passed it on to the functor, the risk computed by `calc_risk` will be consistent with the value in the `JuMP` model.
+
+````@example 0_risk_measure_examples
+r2 = calc_risk(port; rm = rm)
+````
+
+Check they are approximately equal.
+
+````@example 0_risk_measure_examples
+isapprox(r2, value(port.model[:kurt_risk]); rtol = 5e-8)
+````
+
+Custom mu (added some random noise).
+
+````@example 0_risk_measure_examples
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+````
+
+This won't work even if we use `custom_mu` to compute the cokurtosis, because the expected value is computed inside the functor.
+
+````@example 0_risk_measure_examples
+rm = Kurt()
+port.kurt = cokurt(KurtFull(), port.returns, custom_mu)
+````
+
+Optimise portfolio using this custom mu.
+
+````@example 0_risk_measure_examples
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Values don't match because the expected return is computed from the portfolio weights and returns matrix.
+
+````@example 0_risk_measure_examples
+r3_1 = calc_risk(port; rm = rm)
+````
+
+````@example 0_risk_measure_examples
+r3_2 = value(port.model[:kurt_risk])
+````
+
+Both [`Kurt`](@ref) and [`SKurt`](@ref) have approximate formulations for optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, which reduce computational complexity at the cost of accuracy. These are mediated by the `max_num_assets_kurt`, and `max_num_assets_kurt_scale` properties of [`Portfolio`](@ref). Lets make the threshold for using the approximate formulation a single asset (always on), and we will use the largest sets of eigenvalues.
+
+````@example 0_risk_measure_examples
+port.max_num_assets_kurt = 1
+port.max_num_assets_kurt_scale = 1
+````
+
+Vanilla square root kurtosis.
+
+````@example 0_risk_measure_examples
+rm = Kurt()
+````
+
+Recompute statistics to reset them.
+
+````@example 0_risk_measure_examples
+asset_statistics!(port)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+````
+
+Compute the square root kurtosis.
+
+````@example 0_risk_measure_examples
+r4 = calc_risk(port, :Trad; rm = rm)
+````
+
+Because this is an approximate solution, the risk is not minimal.
+
+````@example 0_risk_measure_examples
+r4 > r1
+#! As a functor.
+r4 == rm(port.returns * w4.weights)
+````
+
+Custom mu has no effect in the following optimisatfunion.
+
+````@example 0_risk_measure_examples
+rm = Kurt(;)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
+````
+
+Compute the square root kurtosis.
+
+````@example 0_risk_measure_examples
+r7 = calc_risk(port, :HRP; rm = rm)
+````
+
+`w` has an effect in the following optimisation.
+
+````@example 0_risk_measure_examples
+rm = Kurt(; w = ew)
+````
+
+Hierarchical optimisation, no JuMP model.
+
+````@example 0_risk_measure_examples
+w8 = optimise!(port, HRP(; rm = rm))
+````
+
+Compute the square root kurtosis.
+
+````@example 0_risk_measure_examples
+r8 = calc_risk(port, :HRP; rm = rm)
+````
+
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

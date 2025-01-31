@@ -1003,27 +1003,33 @@ r6 = calc_risk(port, :HRP; rm = rm) # 0.3704190560125852
 """
 mutable struct MAD <: RiskMeasure
     settings::RMSettings
-    w1::Union{<:AbstractWeights, Nothing}
-    w2::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    we::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function MAD(; settings::RMSettings = RMSettings(),
-             w1::Union{<:AbstractWeights, Nothing} = nothing,
-             w2::Union{<:AbstractWeights, Nothing} = nothing,
-             mu::Union{<:AbstractVector, Nothing} = nothing)
-    return MAD(settings, w1, w2, mu)
+             w::Union{<:AbstractWeights, Nothing} = nothing,
+             we::Union{<:AbstractWeights, Nothing} = nothing,
+             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return MAD(settings, w, we, mu)
 end
-function (mad::MAD)(x::AbstractVector)
-    w1 = mad.w1
-    w2 = mad.w2
-    mu = isnothing(w1) ? mean(x) : mean(x, w1)
-    return isnothing(w2) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), Weights(2 * w2))
+function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
+    we = mad.we
+    mu = mad.mu
+    mu = if isnothing(mu) || isempty(mu)
+        w = mad.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    else
+        dot(mu, w)
+    end
+    return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
 end
 
 """
     mutable struct SSD{T1 <: Real} <: RiskMeasure
 
-Measures and computes the portfolio Semi Standard Deviation (SD) below a `target` value. In other words, it measures the standard deviation below a `target` value while ignoring deviations above it.
+Measures and computes the portfolio Semi Standard Deviation (SD) below equal to or below the `target` return threshold.
 
 ```math
 \\begin{align}
@@ -1250,24 +1256,29 @@ w8 = optimise!(port, HRP(; rm = rm))
 r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
 ```
 """
-mutable struct SSD{T1 <: Real} <: RiskMeasure
+mutable struct SSD <: RiskMeasure
     settings::RMSettings
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function SSD(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+function SSD(; settings::RMSettings = RMSettings(),
              w::Union{<:AbstractWeights, Nothing} = nothing,
-             mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SSD{typeof(target)}(settings, target, w, mu)
+             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SSD(settings, w, mu)
 end
-function (ssd::SSD)(x::AbstractVector)
+function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
-    w = ssd.w
-    target = ssd.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = x .- mu
-    return sqrt(sum(val[val .<= target] .^ 2) / (T - 1))
+    mu = ssd.mu
+    target = if isnothing(mu) || isempty(mu)
+        w = ssd.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    else
+        dot(mu, w)
+    end
+    val = x .- target
+    val = val[val .<= zero(eltype(val))]
+    return sqrt(dot(val, val) / (T - 1))
 end
 
 """
@@ -1532,28 +1543,34 @@ w8 = optimise!(port, HRP(; rm = rm))
 r8 = calc_risk(port, :HRP; rm = rm) # 0.18695122450749355
 ```
 """
-mutable struct FLPM{T1 <: Real} <: RiskMeasure
+mutable struct FLPM <: RiskMeasure
     settings::RMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
-    mu::Union{<:Real, AbstractVector{<:Real}}
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function FLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing,
-              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
-    return FLPM{typeof(target)}(settings, target, w, mu)
+function FLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return FLPM(settings, target, w, mu)
 end
-function (flpm::FLPM)(x::AbstractVector)
+function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = flpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = flpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        mu = flpm.mu
+        target = if isnothing(mu) || isempty(mu)
+            w = flpm.w
+            isnothing(w) ? mean(x) : mean(x, w)
+        else
+            dot(mu, w)
+        end
     end
     val = x .- target
-    return -sum(val[val .<= zero(target)]) / T
+    val = val[val .<= zero(eltype(val))]
+    return -sum(val) / T
 end
 
 """
@@ -1818,28 +1835,33 @@ w8 = optimise!(port, HRP(; rm = rm))
 r8 = calc_risk(port, :HRP; rm = rm) # 0.46579700495675935
 ```
 """
-mutable struct SLPM{T1 <: Real} <: RiskMeasure
+mutable struct SLPM <: RiskMeasure
     settings::RMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
-    mu::Union{<:Real, AbstractVector{<:Real}}
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function SLPM(; settings::RMSettings = RMSettings(), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing,
-              mu::Union{<:Real, AbstractVector{<:Real}} = 0.0)
-    return SLPM{typeof(target)}(settings, target, w, mu)
+function SLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SLPM(settings, target, w, mu)
 end
-function (slpm::SLPM)(x::AbstractVector)
+function (slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = slpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = slpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        mu = slpm.mu
+        target = if isnothing(mu) || isempty(mu)
+            w = slpm.w
+            isnothing(w) ? mean(x) : mean(x, w)
+        else
+            dot(mu, w)
+        end
     end
     val = x .- target
-    val = val[val .<= zero(target)]
+    val = val[val .<= zero(eltype(val))]
     return sqrt(dot(val, val) / (T - 1))
 end
 
@@ -2365,7 +2387,7 @@ end
 """
     mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
 
-Measures and computes the portfolio Relativistic Value at Risk (RLVaR) risk measure. It is a generalisation of the [`EVaR`](@ref).
+Measures and computes the portfolio Relativistic Value at Risk (RLVaR). It is a generalisation of the [`EVaR`](@ref).
 
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
@@ -3716,7 +3738,7 @@ end
 """
     mutable struct Kurt <: RiskMeasure
 
-Measures and computes the portfolio Square Root Kurtosis risk measure.
+Measures and computes the portfolio Square Root Kurtosis.
 
 ```math
 \\begin{align}
@@ -3742,6 +3764,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtos
   - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` cokurtosis matrix.
 
       + If `nothing`: takes its value from the `kurt` instance [`Portfolio`](@ref).
+      + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
 
 # Functor
 
@@ -3749,36 +3772,236 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtos
 
 # Examples
 
-```@example
-# Default settings
-kurt = Kurt()
+```julia
+using Clarabel, JuMP
 
-# Custom configuration with specific cokurtosis matrix
-my_kt = [1.0 0.2; 0.2 1.0]
-kurt = Kurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
+# Randomly generated normally distributed returns.
+ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
+       1.33575    -0.541003   2.28744    -0.157588    -1.45177
+       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
+       0.123141    1.59841   -0.185076    2.58911     -0.250747
+       1.92782     1.01679    1.12107     1.09731     -0.99954
+       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
+       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
+       1.3831      1.14021   -0.577472    0.224504     1.28137
+       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
+       1.6319      2.05059   -0.21469    -0.640715     1.39879]
 
-# Using portfolio's built-in cokurtosis matrix
-kurt = Kurt(; kt = nothing)
+# Instantiate portfolio instance.
+port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
+                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                  :check_sol => (allow_local = true,
+                                                                 allow_almost = true),
+                                                  :params => Dict("verbose" => false))))
+
+# Compute statistics.
+asset_statistics!(port)
+
+# Clusterise assets.
+cluster_assets!(port)
+
+# Ensure we use the exact model.
+port.max_num_assets_kurt = 0
+port.max_num_assets_kurt_scale = 2
+
+# Vanilla square root kurtosis.
+rm = Kurt()
+
+# Optimise portfolio.
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  2.56293e-9
+   2 │       2  6.55707e-8
+   3 │       3  0.530143
+   4 │       4  0.00140803
+   5 │       5  0.468449
+=#
+
+# Compute semi standard deviation.
+r1 = calc_risk(port; rm = rm) # 0.14674734551294577
+
+# Values are consistent.
+isapprox(r1, value(port.model[:kurt_risk])) # true
+
+# Exponential weights.
+ew = eweights(1:size(ret, 1), 0.2; scale = true)
+
+# Compute asset statistics, use `ew` in the `Trad` optimisation. 
+# This makes it consistent with the risk measure, because it 
+# computes the cokurtosis using this value of `mu`.
+asset_statistics!(port; mu_type = MuSimple(; w = ew)) # true
+
+# Square root kurtosis with exponential weights. `w` has no effect
+# in the following optimisation, so we account for it in the
+# computation of `port.mu` above.
+rm = Kurt(; w = ew)
+
+# Optimise using the exponential weight.
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  2.66975e-9
+   2 │       2  3.77242e-9
+   3 │       3  0.546032
+   4 │       4  9.09736e-9
+   5 │       5  0.453968
+=#
+
+# Since we used the same exponential weights to compute 
+# `port.mu`, and therefore `port.kurt` and passed it on
+# to the functor, the risk computed by `calc_risk` will
+# be consistent with the value in the `JuMP` model.
+r2 = calc_risk(port; rm = rm) # 0.16121684939969627
+
+# Check they are approximately equal.
+isapprox(r2, value(port.model[:kurt_risk])) # true
+
+# Custom mu (added some random noise).
+custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
+                       0.0021521845052968917, -0.004417767086053032]
+
+# This won't work even if we use `custom_mu` to compute the cokurtosis,
+# because the expected value is computed inside the functor.
+# We'll also use the `kt` field of the data structure, which takes
+# precedence over `port.kurt` if it is not empty or `nothing`.
+rm = Kurt()
+rm.kt = cokurt(KurtFull(), port.returns, custom_mu)
+
+# Optimise portfolio using this custom mu.
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  2.57172e-9
+   2 │       2  3.60584e-9
+   3 │       3  0.546598
+   4 │       4  8.78949e-9
+   5 │       5  0.453402
+=#
+
+# Values don't match because the expected return is computed 
+# from the portfolio weights and returns matrix.
+r3_1 = calc_risk(port; rm = rm) # 0.14750022835287854
+r3_2 = value(port.model[:kurt_risk]) # 0.1626079379934344
+
+# Both [`Kurt`](@ref) and [`SKurt`](@ref) have approximate
+# formulations for optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models,
+# which reduce computational complexity at the cost of accuracy.
+# These are mediated by the `max_num_assets_kurt`, and
+# `max_num_assets_kurt_scale` properties of [`Portfolio`](@ref). 
+# Lets make the threshold for using the approximate formulation a 
+# single asset (always on), and we will use the largest sets of eigenvalues.
+port.max_num_assets_kurt = 1
+port.max_num_assets_kurt_scale = 1
+
+# Vanilla square root kurtosis.
+rm = Kurt()
+
+# Recompute statistics to reset them.
+asset_statistics!(port)
+
+# Run approximate model.
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+#=
+5×2 DataFrame
+ Row │ tickers  weights    
+     │ Int64    Float64    
+─────┼─────────────────────
+   1 │       1  1.05782e-9
+   2 │       2  0.0217701
+   3 │       3  0.516437
+   4 │       4  4.86713e-9
+   5 │       5  0.461793
+=#
+
+# Compute the square root kurtosis.
+r4 = calc_risk(port, :Trad; rm = rm) # 0.14674734551294577
+
+# Because this is an approximate solution, the risk is not minimal.
+r4 > r1 # true
+
+# Square root kurtosis.
+rm = Kurt(;)
+
+# Hierarchical optimisation, no JuMP model.
+w5 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.164515
+   2 │       2  0.213628
+   3 │       3  0.254462
+   4 │       4  0.109839
+   5 │       5  0.257556
+=#
+
+# Compute the square root kurtosis.
+r5 = calc_risk(port, :HRP; rm = rm) # 0.5770165278024598
+
+# `w` has an effect in the following optimisation, with no
+# need to recompute `port.mu`.
+rm = Kurt(; w = ew)
+
+# Hierarchical optimisation, no JuMP model.
+w6 = optimise!(port, HRP(; rm = rm))
+#=
+5×2 DataFrame
+ Row │ tickers  weights  
+     │ Int64    Float64  
+─────┼───────────────────
+   1 │       1  0.152855
+   2 │       2  0.243674
+   3 │       3  0.251182
+   4 │       4  0.148135
+   5 │       5  0.204155
+=#
+
+# Compute the square root kurtosis.
+r6 = calc_risk(port, :HRP; rm = rm) # 0.737446775076927
+
+# The `kt` property of the instance of [`Kurt`](@ref) has no effect
+# in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+rm.kt = cokurt(KurtFull(), port.returns, custom_mu)
+w7 = optimise!(port, HRP(; rm = rm))
+w6.weights == w7.weights # true
 ```
 """
 mutable struct Kurt <: RiskMeasure
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
     kt::Union{<:AbstractMatrix, Nothing}
 end
 function Kurt(; settings::RMSettings = RMSettings(),
               w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
               kt::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
-    return Kurt(settings, w, kt)
+    return Kurt(settings, w, mu, kt)
 end
 function (kurt::Kurt)(x::AbstractVector, scale::Bool = false)
     T = length(x)
-    w = kurt.w
-    mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = x .- mu
+    mu = kurt.mu
+    target = if isnothing(mu) || isempty(mu)
+        w = kurt.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    else
+        dot(mu, w)
+    end
+    val = x .- target
     kurt = sqrt(sum(val .^ 4) / T)
     return !scale ? kurt : kurt / 2
 end
@@ -3786,11 +4009,7 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasure
 
-# Description
-
-Square Root Semi Kurtosis risk measure implementation for portfolio optimisation.
-
-  - Measures the kurtosis equal to or below the `target` return threshold.
+Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the `target` return threshold.
 
 ```math
 \\begin{align}
@@ -3805,7 +4024,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SKurt, ::AbstractVector)`](@ref), [`Kurt`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
 
@@ -3818,6 +4037,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
   - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` semi cokurtosis matrix.
 
       + If `nothing`: takes its value from the `skurt` instance [`Portfolio`](@ref).
+      + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
 
 # Functor
 
@@ -3837,27 +4057,32 @@ skurt = SKurt(; settings = RMSettings(; scale = 2.0), kt = my_kt)
 skurt = SKurt(; kt = nothing, target = 0.015) # 1.5% minimum return threshold
 ```
 """
-mutable struct SKurt{T1 <: Real} <: RiskMeasure
+mutable struct SKurt <: RiskMeasure
     settings::RMSettings
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
     kt::Union{<:AbstractMatrix, Nothing}
 end
-function SKurt(; settings::RMSettings = RMSettings(), target::Real = 0.0,
+function SKurt(; settings::RMSettings = RMSettings(),
                w::Union{<:AbstractWeights, Nothing} = nothing,
+               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                kt::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
-    return SKurt{typeof(target)}(settings, target, w, kt)
+    return SKurt(settings, w, mu, kt)
 end
 function (skurt::SKurt)(x::AbstractVector, scale::Bool = false)
     T = length(x)
-    w = skurt.w
-    target = skurt.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = x .- mu
-    skurt = sqrt(sum(val[val .<= target] .^ 4) / T)
+    mu = skurt.mu
+    target = if isnothing(mu) || isempty(mu)
+        w = skurt.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    else
+        dot(mu, w)
+    end
+    val = x .- target
+    skurt = sqrt(sum(val[val .<= zero(eltype(val))] .^ 4) / T)
     return !scale ? skurt : skurt / 2
 end
 
@@ -3866,7 +4091,7 @@ end
 
 # Description
 
-Defines the Range risk measure.
+Defines the Range.
 
   - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
 
@@ -3903,7 +4128,7 @@ end
 
 # Description
 
-Defines the Conditional Value at Risk Range risk measure.
+Defines the Conditional Value at Risk Range.
 
   - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
 
@@ -4002,7 +4227,7 @@ end
 
 # Description
 
-Defines the Gini Mean Difference risk measure.
+Defines the Gini Mean Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
 
@@ -4043,7 +4268,7 @@ end
 
 # Description
 
-Defines the Tail Gini Difference risk measure.
+Defines the Tail Gini Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 
@@ -4112,7 +4337,7 @@ end
 
 # Description
 
-Defines the Tail Gini Difference Range risk measure.
+Defines the Tail Gini Difference Range.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
@@ -4202,7 +4427,7 @@ end
 
 # Description
 
-Defines the generic Ordered Weight Array risk measure.
+Defines the generic Ordered Weight Array.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
@@ -4251,7 +4476,7 @@ struct BDVIneq <: BDVarianceFormulation end
 
 # Description
 
-Define the Brownian Distance Variance risk measure.
+Define the Brownian Distance Variance.
 
   - Measures linear and non-linear relationships between variables.
 
@@ -4314,7 +4539,7 @@ end
 
 # Description
 
-Define the Quadratic Skewness risk measure.
+Define the Quadratic Skewness.
 
 ```math
 \\begin{align}
@@ -4413,7 +4638,7 @@ end
 
 # Description
 
-Define the Quadratic Semi Skewness risk measure.
+Define the Quadratic Semi Skewness.
 
 ```math
 \\begin{align}
@@ -4512,7 +4737,7 @@ end
 
 # Description
 
-Defines the Variance risk measure.
+Defines the Variance.
 
 ```math
 \\begin{align}
@@ -4576,7 +4801,7 @@ end
 
 # Description
 
-Defines the Semi Variance risk measure.
+Defines the Semi Variance.
 
 ```math
 \\begin{align}
@@ -4608,26 +4833,31 @@ svariance = SVariance(; target = 0.02,  # 2 % return target
                       settings = HCRMSettings(; scale = 2.0), w = w)
 ```
 """
-mutable struct SVariance{T1 <: Real} <: RiskMeasure
+mutable struct SVariance <: RiskMeasure
     settings::RMSettings
     formulation::VarianceFormulation
-    target::T1
     w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SVariance(; settings::RMSettings = RMSettings(),
-                   formulation::VarianceFormulation = SOC(), target::Real = 0.0,
+                   formulation::VarianceFormulation = SOC(),
                    w::Union{<:AbstractWeights, Nothing} = nothing,
-                   mu::Union{<:AbstractVector, Nothing} = nothing)
-    return SVariance{typeof(target)}(settings, formulation, target, w, mu)
+                   mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return SVariance(settings, formulation, w, mu)
 end
-function (svariance::SVariance)(x::AbstractVector)
+function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
-    w = svariance.w
-    target = svariance.target
-    mu = isnothing(w) ? mean(x) : mean(x, w)
-    val = x .- mu
-    return sum(val[val .<= target] .^ 2) / (T - 1)
+    mu = svariance.mu
+    target = if isnothing(mu) || isempty(mu)
+        w = svariance.w
+        isnothing(w) ? mean(x) : mean(x, w)
+    else
+        dot(mu, w)
+    end
+    val = x .- target
+    val = val[val .<= zero(eltype(val))]
+    return dot(val, val) / (T - 1)
 end
 
 """
@@ -4801,11 +5031,11 @@ function TrackingRM(; settings::RMSettings = RMSettings(),
                     tr::Union{TrackWeight, TrackRet} = TrackRet(;))
     return TrackingRM(settings, tr)
 end
-function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector)
+function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     T = size(X, 1)
     tr = trackingRM.tr
     benchmark = tracking_error_benchmark(tr, X)
-    return norm(X * w - benchmark) / sqrt(T - 1)
+    return norm(X * w - benchmark .- fees) / sqrt(T - 1)
 end
 
 mutable struct TurnoverRM <: RiskMeasure
@@ -4824,7 +5054,7 @@ end
 
 # Description
 
-Defines the Value at Risk risk measure.
+Defines the Value at Risk.
 
   - Measures lower bound of the losses in the worst `alpha %` of cases.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
@@ -4882,7 +5112,7 @@ end
 
 # Description
 
-Defines the Drawdown at Risk for uncompounded cumulative returns risk measure.
+Defines the Drawdown at Risk for uncompounded cumulative returns.
 
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
@@ -4961,7 +5191,7 @@ end
 
 # Description
 
-Defines the Drawdown at Risk for compounded cumulative returns risk measure.
+Defines the Drawdown at Risk for compounded cumulative returns.
 
   - Measures the lower bound of the peak-to-trough loss in the worst `alpha %` of cases.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
@@ -5519,7 +5749,7 @@ end
 function (equal::Equal)(w::AbstractVector, delta::Real = 0)
     return inv(length(w)) + delta
 end
-
+#! Generalise this like the TCM
 mutable struct TCM <: NoOptRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -5535,27 +5765,36 @@ function (tcm::TCM)(x::AbstractVector)
     val = x .- mu
     return sum(val .^ 3) / T
 end
-mutable struct TLPM{T1} <: HCRiskMeasure
-    settings::HCRMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
+mutable struct TLPM <: RiskMeasure
+    settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function TLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
-              w::Union{AbstractWeights, Nothing} = nothing)
-    return TLPM{typeof(target)}(settings, target, w)
+function TLPM(; settings::RMSettings = RMSettings(),
+              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+              w::Union{<:AbstractWeights, Nothing} = nothing,
+              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return TLPM(settings, target, w, mu)
 end
-function (tlpm::TLPM)(x::AbstractVector)
+function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = tlpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = tlpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        mu = tlpm.mu
+        target = if isnothing(mu) || isempty(mu)
+            w = tlpm.w
+            isnothing(w) ? mean(x) : mean(x, w)
+        else
+            dot(mu, w)
+        end
     end
     val = x .- target
-    return -sum(val[val .<= zero(target)] .^ 3) / T
+    val = val[val .<= zero(eltype(val))] .^ 3
+    return -sum(val) / T
 end
+#! Generalise this like the FTLPM
 mutable struct FTCM <: HCRiskMeasure
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -5572,26 +5811,34 @@ function (ftcm::FTCM)(x::AbstractVector)
     return sum(val .^ 4) / T
 end
 
-mutable struct FTLPM{T1} <: HCRiskMeasure
-    settings::HCRMSettings
-    target::T1
-    w::Union{AbstractWeights, Nothing}
+mutable struct FTLPM <: RiskMeasure
+    settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
+    w::Union{<:AbstractWeights, Nothing}
+    mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
-function FTLPM(; settings::HCRMSettings = HCRMSettings(;), target::Real = 0.0,
-               w::Union{AbstractWeights, Nothing} = nothing)
-    return FTLPM{typeof(target)}(settings, target, w)
+function FTLPM(; settings::RMSettings = RMSettings(),
+               target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
+               w::Union{<:AbstractWeights, Nothing} = nothing,
+               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
+    return FTLPM(settings, target, w, mu)
 end
-function (ftlpm::FTLPM)(x::AbstractVector)
+function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+    x = X * w .- fees
     T = length(x)
     target = ftlpm.target
-    target = if !isinf(target)
-        target
-    else
-        w = ftlpm.w
-        isnothing(w) ? mean(x) : mean(x, w)
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        mu = ftlpm.mu
+        target = if isnothing(mu) || isempty(mu)
+            w = ftlpm.w
+            isnothing(w) ? mean(x) : mean(x, w)
+        else
+            dot(mu, w)
+        end
     end
     val = x .- target
-    return sum(val[val .<= zero(target)] .^ 4) / T
+    val = val[val .<= zero(eltype(val))] .^ 4
+    return sum(val) / T
 end
 
 mutable struct Skewness <: NoOptRiskMeasure
@@ -5643,6 +5890,9 @@ function (sskewness::SSkewness)(x::AbstractVector)
     return sum(dot(val, val) * val) / T / sigma^3
 end
 
+"""
+    mutable struct Kurtosis <: HCRiskMeasure
+"""
 mutable struct Kurtosis <: HCRiskMeasure
     settings::HCRMSettings
     mean_w::Union{AbstractWeights, Nothing}
@@ -5665,6 +5915,9 @@ function (kurtosis::Kurtosis)(x::AbstractVector)
     val = x .- mu
     return dot(val, val)^2 / T / sigma^4
 end
+"""
+    mutable struct SKurtosis{T1} <: HCRiskMeasure
+"""
 mutable struct SKurtosis{T1} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
@@ -5695,10 +5948,13 @@ const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
 const RMSigma = Union{SD, Variance, WCVariance}
 const RMSkew = Union{Skew, SSkew}
 const RMOWA = Union{GMD, TG, TGRG, OWA}
+const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TLPM, FTLPM}
+const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings,
        VarianceFormulation, Quad, SOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD,
        ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG,
        OWA, BDVariance, Skew, SSkew, Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r,
        CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
-       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR
+       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR,
+       Kurtosis, SKurtosis

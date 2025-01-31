@@ -18,6 +18,42 @@ function naive_risk(rm::Union{RiskMeasure, HCRiskMeasure}, returns, long_fees, r
     end
     return inv_risk / sum(inv_risk)
 end
+function set_hc_rm_target!(rm::RMTarget, cluster)
+    old_target = rm.target
+    if isa(rm.target, AbstractVector) && !isempty(rm.target)
+        rm.target = view(old_target, cluster)
+    end
+    return old_target
+end
+function set_hc_rm_target!(args...)
+    return nothing
+end
+function unset_set_hc_rm_target!(rm::RMTarget, old_target)
+    rm.target = old_target
+    return nothing
+end
+function unset_set_hc_rm_target!(args...)
+    return nothing
+end
+function set_hc_rm_mu_w!(rm::RMMu, cluster)
+    old_mu = rm.mu
+    if !(isnothing(rm.mu) || isempty(rm.mu))
+        rm.mu = view(rm.mu, cluster)
+    end
+    old_target = set_hc_rm_target!(rm, cluster)
+    return old_mu, old_target
+end
+function set_hc_rm_mu_w!(args...)
+    return nothing, nothing
+end
+function unset_set_hc_rm_mu_w!(rm::RMMu, old_mu, old_target)
+    rm.mu = old_mu
+    unset_set_hc_rm_target!(rm, old_target)
+    return nothing
+end
+function unset_set_hc_rm_mu_w!(args...)
+    return nothing
+end
 function set_hc_rm_sigma!(rm::RMSigma, sigma, cluster)
     old_sigma = rm.sigma
     if isnothing(rm.sigma) || isempty(rm.sigma)
@@ -70,6 +106,7 @@ function unset_tracking_turnover_rm!(args...)
     return nothing
 end
 function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
+    old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
     old_tr_w = set_tracking_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
@@ -77,6 +114,7 @@ function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRi
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     cw = naive_risk(rm, cret, clong_fees, crebalance)
     crisk = calc_risk(rm, cw; X = cret, long_fees = clong_fees, rebalance = crebalance)
+    unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)
     unset_tracking_turnover_rm!(rm, old_tr_w)

@@ -96,7 +96,6 @@ end
 @kwdef mutable struct CovSemi <: CorPearson
     absolute::Bool = false
     ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(; corrected = true)
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     w::Union{<:AbstractWeights, Nothing} = nothing
 end
 ```
@@ -116,10 +115,9 @@ Semi Pearson-type covariance and correlation estimator.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
   - `w`: optional `T×1` vector of weights for computing the covariance.
 """
-mutable struct CovSemi{T1} <: CorPearson
+mutable struct CovSemi <: CorPearson
     absolute::Bool
     ce::StatsBase.CovarianceEstimator
-    target::T1
     mu::Union{<:AbstractVector, Nothing}
     cov_w::Union{<:AbstractWeights, Nothing}
     mu_w::Union{<:AbstractWeights, Nothing}
@@ -127,10 +125,10 @@ end
 function CovSemi(; absolute::Bool = false,
                  ce::StatsBase.CovarianceEstimator = StatsBase.SimpleCovariance(;
                                                                                 corrected = true),
-                 target::Real = 0.0, mu::Union{<:AbstractVector, Nothing} = nothing,
+                 mu::Union{<:AbstractVector, Nothing} = nothing,
                  cov_w::Union{<:AbstractWeights, Nothing} = nothing,
                  mu_w::Union{<:AbstractWeights, Nothing} = nothing)
-    return CovSemi{typeof(target)}(absolute, ce, target, mu, cov_w, mu_w)
+    return CovSemi(absolute, ce, mu, cov_w, mu_w)
 end
 
 """
@@ -872,7 +870,6 @@ end
 """
 ```
 @kwdef mutable struct KurtSemi <: KurtEstimator
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
     posdef::AbstractPosdefFix = PosdefNearest(;)
     denoise::AbstractDenoise = NoDenoise(;)
     logo::AbstractLoGo = NoLoGo(;)
@@ -893,19 +890,17 @@ Semi cokurtosis estimator.
   - `logo`: type for computing the LoGo semi cokurtosis matrix [`AbstractLoGo`](@ref).
 """
 mutable struct KurtSemi <: KurtEstimator
-    target::Union{<:Real, AbstractVector{<:Real}}
     posdef::AbstractPosdefFix
     denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
     custom::AbstractCustomMtxProcess
 end
-function KurtSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0,
-                  posdef::AbstractPosdefFix = PosdefNearest(;),
+function KurtSemi(; posdef::AbstractPosdefFix = PosdefNearest(;),
                   denoise::AbstractDenoise = NoDenoise(;),
                   detone::AbstractDetone = NoDetone(;), logo::AbstractLoGo = NoLoGo(;),
                   custom::AbstractCustomMtxProcess = NoCustomMtxProcess())
-    return KurtSemi(target, posdef, denoise, detone, logo, custom)
+    return KurtSemi(posdef, denoise, detone, logo, custom)
 end
 
 """
@@ -929,7 +924,6 @@ struct SkewFull <: SkewEstimator end
 """
 ```
 @kwdef mutable struct SkewSemi <: SkewEstimator
-    target::Union{<:Real, AbstractVector{<:Real}} = 0.0
 end
 ```
 
@@ -942,12 +936,7 @@ Semi cokurtosis estimator.
       + if `isa(target, Real)`: apply the same target to all assets.
       + if `isa(target, AbstractVector)`: apply individual target to each asset.
 """
-mutable struct SkewSemi <: SkewEstimator
-    target::Union{<:Real, AbstractVector{<:Real}}
-end
-function SkewSemi(; target::Union{<:Real, AbstractVector{<:Real}} = 0.0)
-    return SkewSemi(target)
-end
+struct SkewSemi <: SkewEstimator end
 
 """
 ```
