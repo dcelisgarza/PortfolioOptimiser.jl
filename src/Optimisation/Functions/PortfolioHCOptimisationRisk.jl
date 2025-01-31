@@ -111,7 +111,14 @@ end
 function unset_turnover_rm!(args...)
     return nothing
 end
+function set_custom_hc_rm!(args...)
+    return nothing
+end
+function unset_custom_hc_rm!(args...)
+    return nothing
+end
 function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
+    old_custom = set_custom_hc_rm!(rm, port, sigma, cluster)
     old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
     old_tr = set_tracking_rm!(rm, cluster)
@@ -126,5 +133,6 @@ function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRi
     unset_hc_rm_skew!(rm, old_V, old_skew)
     unset_tracking_rm!(rm, old_tr)
     unset_turnover_rm!(rm, old_to)
+    unset_custom_hc_rm!(rm, old_custom)
     return crisk
 end

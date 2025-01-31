@@ -59,6 +59,7 @@ r2 = calc_risk(port, :HRP; rm = rm)
 r2 == SD(; sigma = port.cov)(w2.weights)
 
 #=
+#=
 ## Mean Absolute Deviation, [`MAD`](@ref)
 =#
 
@@ -74,31 +75,31 @@ isapprox(r1, value(port.model[:mad_risk]))
 ew1 = eweights(1:size(ret, 1), 0.2; scale = true);
 ew2 = eweights(1:size(ret, 1), 0.3; scale = true);
 #=
-Compute asset statistics, use ew1 in the `Trad` optimisation. This makes it consistent with the risk measure.
+If we want to make the risk measure and [`JuMP`](https://github.com/jump-dev/JuMP.jl) model consistent, we need to compute `port.mu` using the same weights. And provide it to the risk measure.
 =#
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
-#=
-Mean absolute deviation with different weights. w1 has no effect in the following optimisation in [`JuMP`](https://github.com/jump-dev/JuMP.jl)-based optimisations, so we account for it in the computation of `port.mu` above.
-=#
-rm = MAD(; mu = port.mu, we = ew2)
-# Use the custom weights in the optimisation.
-w2 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-Using `w1` and `w2` may lead to inconsistent values between the functor and value in the model because the mean absolute deviation is formulated with slack constraints.
-=#
+rm = MAD(; w = ew1, we = ew2)
+w2_1 = optimise!(port, Trad(; rm = rm, str_names = true))
 r2_1 = calc_risk(port; rm = rm)
-#
-r2_2 = value(port.model[:mad_risk])
+# Compare the calculated risk with the model's risk.
+isapprox(r2_1, value(port.model[:mad_risk]))
+# Alternatively, we can direcly provide the vector of expected returns.
+rm = MAD(; mu = port.mu, we = ew2)
+w2_2 = optimise!(port, Trad(; rm = rm, str_names = true))
+r2_2 = calc_risk(port; rm = rm)
+# Compare teh risks.
+isapprox(r2_2, value(port.model[:mad_risk]))
+# Show that both formulations are equivalent.
+isapprox(r2_1, r2_2)
 # Use a custom mu (added some random noise).
 custom_mu = port.mu + [-0.0025545471368230766, -0.0047554044723918795, 0.010574122455999866,
                        0.0021521845052968917, -0.004417767086053032]
 rm = MAD(; mu = custom_mu)
 # Optimise with the custom mu.
 w3 = optimise!(port, Trad(; rm = rm, str_names = true))
-# Values don't match.
-r3_1 = calc_risk(port; rm = rm)
-#
-r3_2 = value(port.model[:mad_risk])
+# Values are consistent.
+r3 = calc_risk(port; rm = rm)
+isapprox(r3, value(port.model[:mad_risk]))
 # Vanilla mean absolute deviation.
 rm = MAD()
 # Hierarchical optimisation, no JuMP model.
@@ -106,8 +107,8 @@ w4 = optimise!(port, HRP(; rm = rm))
 # Compute the mean absolute deviation.
 r4 = calc_risk(port, :HRP; rm = rm)
 # Use the risk measure as a functor.
-r4 == rm(port.returns * w4.weights)
-# Custom mu has no effect in the following optimisation.
+r4 == rm(port.returns, w4.weights)
+# Custom mu affects the optimisation.
 rm = MAD(; mu = custom_mu)
 # Hierarchical optimisation, no JuMP model.
 w5 = optimise!(port, HRP(; rm = rm))
@@ -898,3 +899,4 @@ r6 = calc_risk(port, :HRP; rm = rm)
 rm.kt = cokurt(KurtSemi(), port.returns, custom_mu)
 w7 = optimise!(port, HRP(; rm = rm))
 w6.weights == w7.weights
+=#
