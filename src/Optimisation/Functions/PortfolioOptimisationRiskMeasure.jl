@@ -437,8 +437,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        add_to_expression!.(mar_mad[:, i], net_X .- dot(mu, w) .+ view(mad, :, i))
-        model[Symbol("constr_mar_mad_$(i)")] = @constraint(model, scale_constr * view(mar_mad, :, i) .>= 0)
+        mar_mad[:, i] .= @expression(model, net_X .- dot(mu, w) .+ view(mad, :, i))
+        model[Symbol("constr_mar_mad_$(i)")] = @constraint(model,
+                                                           scale_constr *
+                                                           view(mar_mad, :, i) .>= 0)
         we = rm.we
         if isnothing(we)
             add_to_expression!(mad_risk[i], mean(view(mad, :, i) + view(mar_mad, :, i)))
@@ -1699,7 +1701,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Kurt}, type::Union{Trad, 
                 rm.kt
             end
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            add_to_expression!.(view(zkurt, :, idx), L_2 * vec(W))
+            zkurt[:, idx] .= @expression(model, L_2 * vec(W))
             model[Symbol("constr_kurt_soc_$(idx)")] = @constraint(model,
                                                                   [scale_constr *
                                                                    kurt_risk[idx]
@@ -1826,7 +1828,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SKurt}, type::Union{Trad,
                 rm.kt
             end
             sqrt_sigma_4 = sqrt(S_2 * kt * transpose(S_2))
-            add_to_expression!.(view(zskurt, :, idx), L_2 * vec(W))
+            zskurt[:, idx] .= @expression(model, L_2 * vec(W))
             model[Symbol("constr_skurt_soc_$(idx)")] = @constraint(model,
                                                                    [scale_constr *
                                                                     skurt_risk[idx]
@@ -2805,7 +2807,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TurnoverRM},
     @expression(model, turnover_rm[1:N, 1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         benchmark = rm.tr.w
-        add_to_expression!.(view(turnover_rm, :, i), w .- benchmark * k)
+        turnover_rm[:, i] .= @expression(model, w .- benchmark * k)
         model[Symbol("constr_turnover_rm_noc_$(i)")] = @constraint(model,
                                                                    [scale_constr *
                                                                     turnover_risk[i]

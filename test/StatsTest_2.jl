@@ -2920,7 +2920,6 @@ end
                     4.462796785794452e-5, 3.2022916476031776e-5, 4.293742183973771e-5,
                     8.295401722182479e-5], (20, 20))
     @test isapprox(portfolio.cov, covt)
-    
 
     ve = SimpleVariance(; corrected = false)
 

@@ -349,7 +349,12 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     return nothing
 end
 function tracking_error_benchmark(tracking::TrackWeight, returns)
-    return returns * tracking.w
+    w = tracking.w
+    long_fees = tracking.long_fees
+    short_fees = tracking.short_fees
+    rebalance = tracking.rebalance
+    fees = calc_fees(w, long_fees, short_fees, rebalance)
+    return returns * w .- fees
 end
 function tracking_error_benchmark(tracking::TrackRet, ::Any)
     return tracking.w

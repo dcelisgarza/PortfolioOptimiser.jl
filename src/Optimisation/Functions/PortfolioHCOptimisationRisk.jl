@@ -81,34 +81,41 @@ end
 function unset_hc_rm_skew!(args...)
     return nothing
 end
-function set_tracking_turnover_rm!(args...)
+function set_tracking_rm!(args...)
     return nothing
 end
-function set_tracking_turnover_rm!(::TrackRet, ::Any)
+function set_tracking_rm!(rm::TrackingRM, cluster)
+    old_tr = rm.tr
+    rm.tr = get_cluster_tracking(rm.tr, cluster)
+    return old_tr
+end
+function unset_tracking_rm!(rm::TrackingRM, old_tr)
+    rm.tr = old_tr
     return nothing
 end
-function set_tracking_turnover_rm!(trto::Union{TrackWeight, TR}, cluster)
-    trto_w_old = trto.w
-    trto.w = view(trto_w_old, cluster)
-    return trto_w_old
-end
-function set_tracking_turnover_rm!(rm::Union{TrackingRM, TurnoverRM}, cluster)
-    tr = rm.tr
-    return set_tracking_turnover_rm!(tr, cluster)
-end
-function unset_tracking_turnover_rm!(rm::Union{TrackingRM, TurnoverRM}, old_tr_w)
-    if !isnothing(old_tr_w)
-        rm.tr.w = old_tr_w
-    end
+function unset_tracking_rm!(args...)
     return nothing
 end
-function unset_tracking_turnover_rm!(args...)
+function set_turnover_rm!(args...)
+    return nothing
+end
+function set_turnover_rm!(rm::TurnoverRM, cluster)
+    old_to = rm.tr
+    rm.tr = get_cluster_tr(rm.tr, cluster)
+    return old_to
+end
+function unset_turnover_rm!(rm::TurnoverRM, old_to)
+    rm.tr = old_to
+    return nothing
+end
+function unset_turnover_rm!(args...)
     return nothing
 end
 function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
     old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
-    old_tr_w = set_tracking_turnover_rm!(rm, cluster)
+    old_tr = set_tracking_rm!(rm, cluster)
+    old_to = set_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
     clong_fees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
@@ -117,6 +124,7 @@ function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRi
     unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)
-    unset_tracking_turnover_rm!(rm, old_tr_w)
+    unset_tracking_rm!(rm, old_tr)
+    unset_turnover_rm!(rm, old_to)
     return crisk
 end

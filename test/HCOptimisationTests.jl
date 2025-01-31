@@ -81,6 +81,78 @@ l = 2.0
     @test n14 <= n11_1
 end
 
+@testset "Tracking and Turnover vector rms" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
+                                                           :check_sol => (allow_local = true,
+                                                                          allow_almost = true),
+                                                           :params => Dict("verbose" => false,
+                                                                           "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+    cluster_assets!(portfolio)
+    N = size(portfolio.returns, 2)
+    w1 = optimise!(portfolio, Trad(; rm = CVaR(), obj = MinRisk()))
+    w2 = optimise!(portfolio, HRP(; rm = CVaR()))
+    w3 = optimise!(portfolio, HERC(; rm = CVaR()))
+    benchmark = portfolio.returns * w1.weights
+    n2 = norm(benchmark - portfolio.returns * w2.weights)
+    n3 = norm(benchmark - portfolio.returns * w3.weights)
+    n2_1 = norm(w1.weights - w2.weights, 1)
+    n3_1 = norm(w1.weights - w3.weights, 1)
+
+    rm = TrackingRM(; tr = TrackWeight(; w = w1.weights))
+    w4 = optimise!(portfolio, HRP(; rm = [rm]))
+    w5 = optimise!(portfolio, HERC(; rm = [rm]))
+    n4 = norm(benchmark - portfolio.returns * w4.weights)
+    n5 = norm(benchmark - portfolio.returns * w5.weights)
+
+    @test n4 <= n2
+    @test n5 <= n3
+
+    rm = TrackingRM(; tr = TrackRet(; w = benchmark))
+    w6 = optimise!(portfolio, HRP(; rm = [rm]))
+    w7 = optimise!(portfolio, HERC(; rm = [rm]))
+    n6 = norm(benchmark - portfolio.returns * w6.weights)
+    n7 = norm(benchmark - portfolio.returns * w7.weights)
+
+    @test n6 <= n2
+    @test n7 <= n3
+
+    rm = TurnoverRM(; tr = TR(; w = w1.weights))
+    w8 = optimise!(portfolio, HRP(; rm = [rm]))
+    w9 = optimise!(portfolio, HERC(; rm = [rm]))
+    n8 = norm(w1.weights - w8.weights, 1)
+    n9 = norm(w1.weights - w9.weights, 1)
+
+    @test n8 >= n2_1
+    @test n9 >= n3_1
+
+    w10 = optimise!(portfolio, Trad(; rm = CVaR(), obj = Sharpe(; rf = rf)))
+    w11 = optimise!(portfolio,
+                    NCO(;
+                        internal = NCOArgs(; type = Trad(; obj = MinRisk(), rm = CVaR()))))
+
+    benchmark = portfolio.returns * w10.weights
+    n11 = norm(benchmark - portfolio.returns * w11.weights)
+    n11_1 = norm(w10.weights - w11.weights, 1)
+
+    rm = TrackingRM(; tr = TrackWeight(; w = w10.weights))
+    w12 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = [[rm]]))))
+    n12 = norm(benchmark - portfolio.returns * w12.weights)
+
+    rm = TrackingRM(; tr = TrackRet(; w = benchmark))
+    w13 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = [[rm]]))))
+    n13 = norm(benchmark - portfolio.returns * w13.weights)
+
+    rm = TurnoverRM(; tr = TR(; w = w10.weights))
+    w14 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = [[rm]]))))
+    n14 = norm(w10.weights - w14.weights, 1)
+
+    @test n12 <= n11
+    @test n13 <= n11
+    @test n14 <= n11_1
+end
+
 @testset "Weight bounds" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
