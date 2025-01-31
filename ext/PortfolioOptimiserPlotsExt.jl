@@ -519,7 +519,7 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
 
     x = range(minimum(ret); stop = maximum(ret), length = points)
 
-    mad = MAD()(ret)
+    mad = MAD()(returns * 100, w)
     gmd = GMD()(ret)
     risks = (mu, mu - sigma, mu - mad, mu - gmd, -VaR(; alpha = alpha)(ret),
              -CVaR(; alpha = alpha)(ret),

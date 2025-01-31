@@ -72,10 +72,6 @@ end
     include("AllocationTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "RRB optimisation" begin
     include("RRBOptimisationTests.jl")
 end
@@ -102,4 +98,8 @@ end
 
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
