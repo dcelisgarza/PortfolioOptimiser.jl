@@ -367,7 +367,7 @@ function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
     else
         zero(eltype(w))
     end
-    return rm(X * w .- fees, scale)
+    return rm(X, w, fees; scale = scale)
 end
 function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, TrackingRM},
                    w::AbstractVector; X::AbstractMatrix,

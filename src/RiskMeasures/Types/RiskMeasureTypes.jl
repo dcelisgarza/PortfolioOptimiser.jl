@@ -1766,7 +1766,8 @@ function Kurt(; settings::RMSettings = RMSettings(),
     end
     return Kurt(settings, w, mu, kt)
 end
-function (kurt::Kurt)(x::AbstractVector, scale::Bool = false)
+function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0; scale::Bool = false)
+    x = X * w .- fees
     T = length(x)
     mu = calc_ret_mu(x, w, kurt)
     val = x .- mu
@@ -1828,7 +1829,9 @@ function SKurt(; settings::RMSettings = RMSettings(),
     end
     return SKurt(settings, w, mu, kt)
 end
-function (skurt::SKurt)(x::AbstractVector, scale::Bool = false)
+function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0;
+                        scale::Bool = false)
+    x = X * w .- fees
     T = length(x)
     mu = calc_ret_mu(x, w, skurt)
     val = x .- mu
