@@ -437,7 +437,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        add_to_expression!(view(mar_mad, :, i), net_X .- dot(mu, w) .+ view(mad, :, i))
+        add_to_expression!.(mar_mad[:, i], net_X .- dot(mu, w) .+ view(mad, :, i))
         model[Symbol("constr_mar_mad_$(i)")] = @constraint(model, scale_constr * view(mar_mad, :, i) .>= 0)
         we = rm.we
         if isnothing(we)
