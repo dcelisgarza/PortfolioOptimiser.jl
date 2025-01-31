@@ -410,13 +410,13 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
     # end
     # @constraint(model, constr_mar_mad,
     #             scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -mad)
-    @expression(model, mar_mad, scale_constr * (net_X .- dot(mu, w) + mad))
+    @expression(model, mar_mad, net_X .- dot(mu, w) .+ mad)
     if isnothing(we)
         @expression(model, mad_risk, mean(mad + mar_mad))
     else
         @expression(model, mad_risk, mean(mad + mar_mad, we))
     end
-    @constraint(model, constr_mar_mad, mar_mad .>= 0)
+    @constraint(model, constr_mar_mad, scale_constr * mar_mad .>= 0)
     set_rm_risk_upper_bound(type, model, mad_risk, rm.settings.ub, "mad_risk")
     set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
@@ -431,21 +431,19 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     net_X = model[:net_X]
     count = length(rms)
     @variable(model, mad[1:T, 1:count] .>= 0)
+    @expression(model, mar_mad[1:T, 1:count], zero(AffExpr))
     @expression(model, mad_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         if !(isnothing(rm.mu) || isempty(rm.mu))
             mu = rm.mu
         end
-        mar_mad = model[Symbol("mar_mad_$(i)")] = @expression(model,
-                                                              scale_constr *
-                                                              (net_X .- dot(mu, w) +
-                                                               view(mad, :, i)))
-        model[Symbol("constr_mar_mad_$(i)")] = @constraint(model, mar_mad .>= 0)
+        add_to_expression!(view(mar_mad, :, i), net_X .- dot(mu, w) .+ view(mad, :, i))
+        model[Symbol("constr_mar_mad_$(i)")] = @constraint(model, scale_constr * view(mar_mad, :, i) .>= 0)
         we = rm.we
         if isnothing(we)
-            add_to_expression!(mad_risk[i], mean(view(mad, :, i) + mar_mad))
+            add_to_expression!(mad_risk[i], mean(view(mad, :, i) + view(mar_mad, :, i)))
         else
-            add_to_expression!(mad_risk[i], mean(view(mad, :, i) + mar_mad, we))
+            add_to_expression!(mad_risk[i], mean(view(mad, :, i) + view(mar_mad, :, i), we))
         end
         set_rm_risk_upper_bound(type, model, mad_risk[i], rm.settings.ub, "mad_risk_$(i)")
         set_risk_expression(model, mad_risk[i], rm.settings.scale, rm.settings.flag)
