@@ -1017,7 +1017,7 @@ function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RB, NOC};
     @expressions(model, begin
                      cvar_risk_l, var_l + sum(z_cvar_l) * iat
                      cvar_risk_h, var_h + sum(z_cvar_h) * ibt
-                     rcvar_risk, cvar_risk_l - cvar_risk_h
+                     cvarrg_risk, cvar_risk_l - cvar_risk_h
                  end)
     @constraints(model,
                  begin
@@ -1027,8 +1027,8 @@ function set_rm(port::Portfolio, rm::CVaRRG, type::Union{Trad, RB, NOC};
                      scale_constr * z_cvar_h .<= scale_constr * (-net_X .- var_h)
                  end)
 
-    set_rm_risk_upper_bound(type, model, rcvar_risk, rm.settings.ub, "rcvar_risk")
-    set_risk_expression(model, rcvar_risk, rm.settings.scale, rm.settings.flag)
+    set_rm_risk_upper_bound(type, model, cvarrg_risk, rm.settings.ub, "cvarrg_risk")
+    set_risk_expression(model, cvarrg_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad, RB, NOC};
@@ -1048,7 +1048,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
     @expressions(model, begin
                      cvar_risk_l[1:count], zero(AffExpr)
                      cvar_risk_h[1:count], zero(AffExpr)
-                     rcvar_risk[1:count], zero(AffExpr)
+                     cvarrg_risk[1:count], zero(AffExpr)
                  end)
     for (i, rm) ∈ pairs(rms)
         iat = inv(rm.alpha * T)
@@ -1075,11 +1075,11 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:CVaRRG}, type::Union{Trad
         add_to_expression!(cvar_risk_l[i], iat, sum(view(z_cvar_l, :, i)))
         add_to_expression!(cvar_risk_h[i], var_h[i])
         add_to_expression!(cvar_risk_h[i], ibt, sum(view(z_cvar_h, :, i)))
-        add_to_expression!(rcvar_risk[i], cvar_risk_l[i])
-        add_to_expression!(rcvar_risk[i], -1, cvar_risk_h[i])
-        set_rm_risk_upper_bound(type, model, rcvar_risk[i], rm.settings.ub,
+        add_to_expression!(cvarrg_risk[i], cvar_risk_l[i])
+        add_to_expression!(cvarrg_risk[i], -1, cvar_risk_h[i])
+        set_rm_risk_upper_bound(type, model, cvarrg_risk[i], rm.settings.ub,
                                 "rcvar_risk_$(i)")
-        set_risk_expression(model, rcvar_risk[i], rm.settings.scale, rm.settings.flag)
+        set_risk_expression(model, cvarrg_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
@@ -1857,68 +1857,188 @@ function OWA_constraints(model, returns)
 
     return nothing
 end
+function gmd_risk_formulation(::OWAExact, model, returns)
+    scale_constr = model[:scale_constr]
+    T = size(returns, 1)
+    OWA_constraints(model, returns)
+    owa = model[:owa]
+    ovec = range(1; stop = 1, length = T)
+    @variables(model, begin
+                   gmda[1:T]
+                   gmdb[1:T]
+               end)
+    @expression(model, gmd_risk, sum(gmda .+ gmdb))
+    gmd_w = owa_gmd(T)
+    @constraint(model, constr_gmd,
+                scale_constr * owa * transpose(gmd_w) .<=
+                scale_constr * (ovec * transpose(gmda) + gmdb * transpose(ovec)))
+    return gmd_risk
+end
+function gmd_risk_formulation(formulation::OWAApprox, model, returns)
+    scale_constr = model[:scale_constr]
+    T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    @variables(model, begin
+                   gmd_t
+                   gmd_nu[1:T] .>= 0
+                   gmd_eta[1:T] .>= 0
+                   gmd_epsilon[1:T, 1:M]
+                   gmd_psi[1:T, 1:M]
+                   gmd_z[1:M]
+                   gmd_y[1:M] .>= 0
+               end)
+
+    gmd_w = -owa_gmd(T)
+    gmd_s = sum(gmd_w)
+    gmd_l = minimum(gmd_w)
+    gmd_h = maximum(gmd_w)
+    gmd_d = [norm(gmd_w, p) for p ∈ owa_p]
+
+    @expression(model, gmd_risk,
+                gmd_s * gmd_t - gmd_l * sum(gmd_nu) +
+                gmd_h * sum(gmd_eta) +
+                dot(gmd_d, gmd_y))
+    @constraints(model,
+                 begin
+                     constr_approx_1_gmd,
+                     scale_constr * (net_X .+ gmd_t .- gmd_nu .+ gmd_eta .-
+                                     vec(sum(gmd_epsilon; dims = 2))) .== 0
+                     constr_approx_2_gmd,
+                     scale_constr * (gmd_z .+ gmd_y) .==
+                     scale_constr * vec(sum(gmd_psi; dims = 1))
+                     constr_approx_gmd_pcone[i = 1:M, j = 1:T],
+                     [scale_constr * -gmd_z[i] * owa_p[i],
+                      scale_constr * gmd_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                      scale_constr * gmd_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+                 end)
+
+    return gmd_risk
+end
 function set_rm(port::Portfolio, rm::GMD, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    scale_constr = model[:scale_constr]
-    T = size(returns, 1)
+    gmd_risk = gmd_risk_formulation(rm.formulation, model, returns)
 
-    if !rm.owa.approx
-        OWA_constraints(model, returns)
-        owa = model[:owa]
-        ovec = range(1; stop = 1, length = T)
-        @variables(model, begin
-                       gmda[1:T]
-                       gmdb[1:T]
-                   end)
-        @expression(model, gmd_risk, sum(gmda .+ gmdb))
-        gmd_w = owa_gmd(T)
-        @constraint(model, constr_gmd,
-                    scale_constr * owa * transpose(gmd_w) .<=
-                    scale_constr * (ovec * transpose(gmda) + gmdb * transpose(ovec)))
-    else
-        get_net_portfolio_returns(model, returns)
-        net_X = model[:net_X]
-        owa_p = rm.owa.p
-        M = length(owa_p)
+    # scale_constr = model[:scale_constr]
+    # T = size(returns, 1)
+    # if !rm.owa.approx
+    #     OWA_constraints(model, returns)
+    #     owa = model[:owa]
+    #     ovec = range(1; stop = 1, length = T)
+    #     @variables(model, begin
+    #                    gmda[1:T]
+    #                    gmdb[1:T]
+    #                end)
+    #     @expression(model, gmd_risk, sum(gmda .+ gmdb))
+    #     gmd_w = owa_gmd(T)
+    #     @constraint(model, constr_gmd,
+    #                 scale_constr * owa * transpose(gmd_w) .<=
+    #                 scale_constr * (ovec * transpose(gmda) + gmdb * transpose(ovec)))
+    # else
+    #     get_net_portfolio_returns(model, returns)
+    #     net_X = model[:net_X]
+    #     owa_p = rm.owa.p
+    #     M = length(owa_p)
 
-        @variables(model, begin
-                       gmd_t
-                       gmd_nu[1:T] .>= 0
-                       gmd_eta[1:T] .>= 0
-                       gmd_epsilon[1:T, 1:M]
-                       gmd_psi[1:T, 1:M]
-                       gmd_z[1:M]
-                       gmd_y[1:M] .>= 0
-                   end)
+    #     @variables(model, begin
+    #                    gmd_t
+    #                    gmd_nu[1:T] .>= 0
+    #                    gmd_eta[1:T] .>= 0
+    #                    gmd_epsilon[1:T, 1:M]
+    #                    gmd_psi[1:T, 1:M]
+    #                    gmd_z[1:M]
+    #                    gmd_y[1:M] .>= 0
+    #                end)
 
-        gmd_w = -owa_gmd(T)
-        gmd_s = sum(gmd_w)
-        gmd_l = minimum(gmd_w)
-        gmd_h = maximum(gmd_w)
-        gmd_d = [norm(gmd_w, p) for p ∈ owa_p]
+    #     gmd_w = -owa_gmd(T)
+    #     gmd_s = sum(gmd_w)
+    #     gmd_l = minimum(gmd_w)
+    #     gmd_h = maximum(gmd_w)
+    #     gmd_d = [norm(gmd_w, p) for p ∈ owa_p]
 
-        @expression(model, gmd_risk,
-                    gmd_s * gmd_t - gmd_l * sum(gmd_nu) +
-                    gmd_h * sum(gmd_eta) +
-                    dot(gmd_d, gmd_y))
-        @constraints(model,
-                     begin
-                         constr_approx_1_gmd,
-                         scale_constr * (net_X .+ gmd_t .- gmd_nu .+ gmd_eta .-
-                                         vec(sum(gmd_epsilon; dims = 2))) .== 0
-                         constr_approx_2_gmd,
-                         scale_constr * (gmd_z .+ gmd_y) .==
-                         scale_constr * vec(sum(gmd_psi; dims = 1))
-                         constr_approx_gmd_pcone[i = 1:M, j = 1:T],
-                         [scale_constr * -gmd_z[i] * owa_p[i],
-                          scale_constr * gmd_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                          scale_constr * gmd_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
-                     end)
-    end
+    #     @expression(model, gmd_risk,
+    #                 gmd_s * gmd_t - gmd_l * sum(gmd_nu) +
+    #                 gmd_h * sum(gmd_eta) +
+    #                 dot(gmd_d, gmd_y))
+    #     @constraints(model,
+    #                  begin
+    #                      constr_approx_1_gmd,
+    #                      scale_constr * (net_X .+ gmd_t .- gmd_nu .+ gmd_eta .-
+    #                                      vec(sum(gmd_epsilon; dims = 2))) .== 0
+    #                      constr_approx_2_gmd,
+    #                      scale_constr * (gmd_z .+ gmd_y) .==
+    #                      scale_constr * vec(sum(gmd_psi; dims = 1))
+    #                      constr_approx_gmd_pcone[i = 1:M, j = 1:T],
+    #                      [scale_constr * -gmd_z[i] * owa_p[i],
+    #                       scale_constr * gmd_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+    #                       scale_constr * gmd_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+    #                  end)
+    # end
     set_rm_risk_upper_bound(type, model, gmd_risk, rm.settings.ub, "gmd_risk")
     set_risk_expression(model, gmd_risk, rm.settings.scale, rm.settings.flag)
     return nothing
+end
+function tg_risk_formulation(::OWAExact, model, returns, T, alpha, a_sim, alpha_i)
+    scale_constr = model[:scale_constr]
+    OWA_constraints(model, returns)
+    owa = model[:owa]
+    ovec = range(1; stop = 1, length = T)
+    @variables(model, begin
+                   tga[1:T]
+                   tgb[1:T]
+               end)
+    @expression(model, tg_risk, sum(tga .+ tgb))
+    tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    @constraint(model, constr_tg,
+                scale_constr * owa * transpose(tg_w) .<=
+                scale_constr * (ovec * transpose(tga) + tgb * transpose(ovec)))
+    return tg_risk
+end
+function tg_risk_formulation(formulation::OWAApprox, model, returns, T, alpha, a_sim,
+                             alpha_i)
+    scale_constr = model[:scale_constr]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    @variables(model, begin
+                   tg_t
+                   tg_nu[1:T] .>= 0
+                   tg_eta[1:T] .>= 0
+                   tg_epsilon[1:T, 1:M]
+                   tg_psi[1:T, 1:M]
+                   tg_z[1:M]
+                   tg_y[1:M] .>= 0
+               end)
+
+    tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    tg_s = sum(tg_w)
+    tg_l = minimum(tg_w)
+    tg_h = maximum(tg_w)
+    tg_d = [norm(tg_w, p) for p ∈ owa_p]
+
+    @expression(model, tg_risk,
+                tg_s * tg_t - tg_l * sum(tg_nu) + tg_h * sum(tg_eta) + dot(tg_d, tg_y))
+    @constraints(model,
+                 begin
+                     constr_approx_1_tg,
+                     scale_constr *
+                     (net_X .+ tg_t .- tg_nu .+ tg_eta .- vec(sum(tg_epsilon; dims = 2))) .==
+                     0
+                     constr_approx_2_tg,
+                     scale_constr * (tg_z .+ tg_y) .==
+                     scale_constr * vec(sum(tg_psi; dims = 1))
+                     constr_approx_tg_pcone[i = 1:M, j = 1:T],
+                     [scale_constr * -tg_z[i] * owa_p[i],
+                      scale_constr * tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                      scale_constr * tg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+                 end)
+    return tg_risk
 end
 function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
@@ -1928,59 +2048,168 @@ function set_rm(port::Portfolio, rm::TG, type::Union{Trad, RB, NOC};
     alpha = rm.alpha
     a_sim = rm.a_sim
     alpha_i = rm.alpha_i
-    if !rm.owa.approx
-        OWA_constraints(model, returns)
-        owa = model[:owa]
-        ovec = range(1; stop = 1, length = T)
-        @variables(model, begin
-                       tga[1:T]
-                       tgb[1:T]
-                   end)
-        @expression(model, tg_risk, sum(tga .+ tgb))
-        tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        @constraint(model, constr_tg,
-                    scale_constr * owa * transpose(tg_w) .<=
-                    scale_constr * (ovec * transpose(tga) + tgb * transpose(ovec)))
-    else
-        get_net_portfolio_returns(model, returns)
-        net_X = model[:net_X]
-        owa_p = rm.owa.p
-        M = length(owa_p)
+    tg_risk = tg_risk_formulation(rm.formulation, model, returns, T, alpha, a_sim, alpha_i)
+    # if !rm.owa.approx
+    #     OWA_constraints(model, returns)
+    #     owa = model[:owa]
+    #     ovec = range(1; stop = 1, length = T)
+    #     @variables(model, begin
+    #                    tga[1:T]
+    #                    tgb[1:T]
+    #                end)
+    #     @expression(model, tg_risk, sum(tga .+ tgb))
+    #     tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    #     @constraint(model, constr_tg,
+    #                 scale_constr * owa * transpose(tg_w) .<=
+    #                 scale_constr * (ovec * transpose(tga) + tgb * transpose(ovec)))
+    # else
+    #     get_net_portfolio_returns(model, returns)
+    #     net_X = model[:net_X]
+    #     owa_p = rm.owa.p
+    #     M = length(owa_p)
 
-        @variables(model, begin
-                       tg_t
-                       tg_nu[1:T] .>= 0
-                       tg_eta[1:T] .>= 0
-                       tg_epsilon[1:T, 1:M]
-                       tg_psi[1:T, 1:M]
-                       tg_z[1:M]
-                       tg_y[1:M] .>= 0
-                   end)
+    #     @variables(model, begin
+    #                    tg_t
+    #                    tg_nu[1:T] .>= 0
+    #                    tg_eta[1:T] .>= 0
+    #                    tg_epsilon[1:T, 1:M]
+    #                    tg_psi[1:T, 1:M]
+    #                    tg_z[1:M]
+    #                    tg_y[1:M] .>= 0
+    #                end)
 
-        tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        tg_s = sum(tg_w)
-        tg_l = minimum(tg_w)
-        tg_h = maximum(tg_w)
-        tg_d = [norm(tg_w, p) for p ∈ owa_p]
+    #     tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    #     tg_s = sum(tg_w)
+    #     tg_l = minimum(tg_w)
+    #     tg_h = maximum(tg_w)
+    #     tg_d = [norm(tg_w, p) for p ∈ owa_p]
 
-        @expression(model, tg_risk,
-                    tg_s * tg_t - tg_l * sum(tg_nu) + tg_h * sum(tg_eta) + dot(tg_d, tg_y))
-        @constraints(model,
-                     begin
-                         constr_approx_1_tg,
-                         scale_constr * (net_X .+ tg_t .- tg_nu .+ tg_eta .-
-                                         vec(sum(tg_epsilon; dims = 2))) .== 0
-                         constr_approx_2_tg,
-                         scale_constr * (tg_z .+ tg_y) .==
-                         scale_constr * vec(sum(tg_psi; dims = 1))
-                         constr_approx_tg_pcone[i = 1:M, j = 1:T],
-                         [scale_constr * -tg_z[i] * owa_p[i],
-                          scale_constr * tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                          scale_constr * tg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
-                     end)
-    end
+    #     @expression(model, tg_risk,
+    #                 tg_s * tg_t - tg_l * sum(tg_nu) + tg_h * sum(tg_eta) + dot(tg_d, tg_y))
+    #     @constraints(model,
+    #                  begin
+    #                      constr_approx_1_tg,
+    #                      scale_constr * (net_X .+ tg_t .- tg_nu .+ tg_eta .-
+    #                                      vec(sum(tg_epsilon; dims = 2))) .== 0
+    #                      constr_approx_2_tg,
+    #                      scale_constr * (tg_z .+ tg_y) .==
+    #                      scale_constr * vec(sum(tg_psi; dims = 1))
+    #                      constr_approx_tg_pcone[i = 1:M, j = 1:T],
+    #                      [scale_constr * -tg_z[i] * owa_p[i],
+    #                       scale_constr * tg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+    #                       scale_constr * tg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+    #                  end)
+    # end
     set_rm_risk_upper_bound(type, model, tg_risk, rm.settings.ub, "tg_risk")
     set_risk_expression(model, tg_risk, rm.settings.scale, rm.settings.flag)
+
+    return nothing
+end
+function tg_risk_vec_formulation(::OWAExact, model, returns, T, count, alpha, a_sim,
+                                 alpha_i, idx, tg_risk)
+    scale_constr = model[:scale_constr]
+    ovec = range(1; stop = 1, length = T)
+    if !haskey(model, :tga)
+        OWA_constraints(model, returns)
+        @variables(model, begin
+                       tga[1:T, 1:count]
+                       tgb[1:T, 1:count]
+                   end)
+    end
+    tga = model[:tga]
+    tgb = model[:tgb]
+    owa = model[:owa]
+    add_to_expression!(tg_risk[idx], sum(view(tga, :, idx) .+ view(tgb, :, idx)))
+    tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    model[Symbol("constr_tg_$(idx)")] = @constraint(model,
+                                                    scale_constr * owa * transpose(tg_w) .<=
+                                                    scale_constr *
+                                                    (ovec * transpose(view(tga, :, idx)) +
+                                                     view(tgb, :, idx) * transpose(ovec)))
+    return nothing
+end
+function tg_risk_vec_formulation(formulation::OWAApprox, model, returns, T, count, alpha,
+                                 a_sim, alpha_i, idx, tg_risk)
+    scale_constr = model[:scale_constr]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    tg_s = sum(tg_w)
+    tg_l = minimum(tg_w)
+    tg_h = maximum(tg_w)
+    tg_d = [norm(tg_w, p) for p ∈ owa_p]
+    if !haskey(model, :tg_t)
+        @variables(model, begin
+                       tg_t[1:count]
+                       tg_nu[1:T, 1:count] .>= 0
+                       tg_eta[1:T, 1:count] .>= 0
+                       tg_epsilon[1:T, 1:M, 1:count]
+                       tg_psi[1:T, 1:M, 1:count]
+                       tg_z[1:M, 1:count]
+                       tg_y[1:M, 1:count] .>= 0
+                   end)
+    end
+    tg_t = model[:tg_t]
+    tg_nu = model[:tg_nu]
+    tg_eta = model[:tg_eta]
+    tg_epsilon = model[:tg_epsilon]
+    tg_psi = model[:tg_psi]
+    tg_z = model[:tg_z]
+    tg_y = model[:tg_y]
+    add_to_expression!(tg_risk[idx], tg_s, tg_t[idx])
+    add_to_expression!(tg_risk[idx], -tg_l, sum(view(tg_nu, :, idx)))
+    add_to_expression!(tg_risk[idx], tg_h, sum(view(tg_eta, :, idx)))
+    add_to_expression!(tg_risk[idx], dot(tg_d, view(tg_y, :, idx)))
+    model[Symbol("constr_approx_1_tg_$(idx)")], model[Symbol("constr_approx_2_tg_$(idx)")], model[Symbol("constr_approx_tg_pcone_$(idx)")] = @constraints(model,
+                                                                                                                                                          begin
+                                                                                                                                                              scale_constr *
+                                                                                                                                                              (net_X .+
+                                                                                                                                                               tg_t[idx] .-
+                                                                                                                                                               view(tg_nu,
+                                                                                                                                                                    :,
+                                                                                                                                                                    idx) .+
+                                                                                                                                                               view(tg_eta,
+                                                                                                                                                                    :,
+                                                                                                                                                                    idx) .-
+                                                                                                                                                               vec(sum(view(tg_epsilon,
+                                                                                                                                                                            :,
+                                                                                                                                                                            :,
+                                                                                                                                                                            idx);
+                                                                                                                                                                       dims = 2))) .==
+                                                                                                                                                              0
+                                                                                                                                                              scale_constr *
+                                                                                                                                                              (tg_z[:,
+                                                                                                                                                                    idx] .+
+                                                                                                                                                               tg_y[:,
+                                                                                                                                                                    idx]) .==
+                                                                                                                                                              scale_constr *
+                                                                                                                                                              vec(sum(view(tg_psi,
+                                                                                                                                                                           :,
+                                                                                                                                                                           :,
+                                                                                                                                                                           idx);
+                                                                                                                                                                      dims = 1))
+                                                                                                                                                              [i = 1:M,
+                                                                                                                                                               j = 1:T],
+                                                                                                                                                              [scale_constr *
+                                                                                                                                                               -tg_z[i,
+                                                                                                                                                                     idx] *
+                                                                                                                                                               owa_p[i],
+                                                                                                                                                               scale_constr *
+                                                                                                                                                               tg_psi[j,
+                                                                                                                                                                      i,
+                                                                                                                                                                      idx] *
+                                                                                                                                                               owa_p[i] /
+                                                                                                                                                               (owa_p[i] -
+                                                                                                                                                                1),
+                                                                                                                                                               scale_constr *
+                                                                                                                                                               tg_epsilon[j,
+                                                                                                                                                                          i,
+                                                                                                                                                                          idx]] ∈
+                                                                                                                                                              MOI.PowerCone(inv(owa_p[i]))
+                                                                                                                                                          end)
 
     return nothing
 end
@@ -1995,114 +2224,215 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TG}, type::Union{Trad, RB
         alpha = rm.alpha
         a_sim = rm.a_sim
         alpha_i = rm.alpha_i
-        if !rm.owa.approx
-            ovec = range(1; stop = 1, length = T)
-            if !haskey(model, :tga)
-                OWA_constraints(model, returns)
-                @variables(model, begin
-                               tga[1:T, 1:count]
-                               tgb[1:T, 1:count]
-                           end)
-            end
-            tga = model[:tga]
-            tgb = model[:tgb]
-            owa = model[:owa]
-            add_to_expression!(tg_risk[idx], sum(view(tga, :, idx) .+ view(tgb, :, idx)))
-            tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-            model[Symbol("constr_tg_$(idx)")] = @constraint(model,
-                                                            scale_constr *
-                                                            owa *
-                                                            transpose(tg_w) .<=
-                                                            scale_constr * (ovec *
-                                                                            transpose(view(tga, :, idx)) +
-                                                                            view(tgb, :, idx) *
-                                                                            transpose(ovec)))
-        else
-            get_net_portfolio_returns(model, returns)
-            net_X = model[:net_X]
-            owa_p = rm.owa.p
-            M = length(owa_p)
+        tg_risk_vec_formulation(rm.formulation, model, returns, T, count, alpha, a_sim,
+                                alpha_i, idx, tg_risk)
+        # if !rm.owa.approx
+        #     ovec = range(1; stop = 1, length = T)
+        #     if !haskey(model, :tga)
+        #         OWA_constraints(model, returns)
+        #         @variables(model, begin
+        #                        tga[1:T, 1:count]
+        #                        tgb[1:T, 1:count]
+        #                    end)
+        #     end
+        #     tga = model[:tga]
+        #     tgb = model[:tgb]
+        #     owa = model[:owa]
+        #     add_to_expression!(tg_risk[idx], sum(view(tga, :, idx) .+ view(tgb, :, idx)))
+        #     tg_w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        #     model[Symbol("constr_tg_$(idx)")] = @constraint(model,
+        #                                                     scale_constr *
+        #                                                     owa *
+        #                                                     transpose(tg_w) .<=
+        #                                                     scale_constr * (ovec *
+        #                                                                     transpose(view(tga, :, idx)) +
+        #                                                                     view(tgb, :, idx) *
+        #                                                                     transpose(ovec)))
+        # else
+        #     get_net_portfolio_returns(model, returns)
+        #     net_X = model[:net_X]
+        #     owa_p = rm.owa.p
+        #     M = length(owa_p)
 
-            tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-            tg_s = sum(tg_w)
-            tg_l = minimum(tg_w)
-            tg_h = maximum(tg_w)
-            tg_d = [norm(tg_w, p) for p ∈ owa_p]
-            if !haskey(model, :tg_t)
-                M = length(rm.owa.p)
-                @variables(model, begin
-                               tg_t[1:count]
-                               tg_nu[1:T, 1:count] .>= 0
-                               tg_eta[1:T, 1:count] .>= 0
-                               tg_epsilon[1:T, 1:M, 1:count]
-                               tg_psi[1:T, 1:M, 1:count]
-                               tg_z[1:M, 1:count]
-                               tg_y[1:M, 1:count] .>= 0
-                           end)
-            end
-            tg_t = model[:tg_t]
-            tg_nu = model[:tg_nu]
-            tg_eta = model[:tg_eta]
-            tg_epsilon = model[:tg_epsilon]
-            tg_psi = model[:tg_psi]
-            tg_z = model[:tg_z]
-            tg_y = model[:tg_y]
-            add_to_expression!(tg_risk[idx], tg_s, tg_t[idx])
-            add_to_expression!(tg_risk[idx], -tg_l, sum(view(tg_nu, :, idx)))
-            add_to_expression!(tg_risk[idx], tg_h, sum(view(tg_eta, :, idx)))
-            add_to_expression!(tg_risk[idx], dot(tg_d, view(tg_y, :, idx)))
-            model[Symbol("constr_approx_1_tg_$(idx)")], model[Symbol("constr_approx_2_tg_$(idx)")], model[Symbol("constr_approx_tg_pcone_$(idx)")] = @constraints(model,
-                                                                                                                                                                  begin
-                                                                                                                                                                      scale_constr *
-                                                                                                                                                                      (net_X .+
-                                                                                                                                                                       tg_t[idx] .-
-                                                                                                                                                                       view(tg_nu,
-                                                                                                                                                                            :,
-                                                                                                                                                                            idx) .+
-                                                                                                                                                                       view(tg_eta,
-                                                                                                                                                                            :,
-                                                                                                                                                                            idx) .-
-                                                                                                                                                                       vec(sum(view(tg_epsilon,
-                                                                                                                                                                                    :,
-                                                                                                                                                                                    :,
-                                                                                                                                                                                    idx);
-                                                                                                                                                                               dims = 2))) .==
-                                                                                                                                                                      0
-                                                                                                                                                                      scale_constr *
-                                                                                                                                                                      (tg_z[:,
-                                                                                                                                                                            idx] .+
-                                                                                                                                                                       tg_y[:,
-                                                                                                                                                                            idx]) .==
-                                                                                                                                                                      scale_constr *
-                                                                                                                                                                      vec(sum(view(tg_psi,
-                                                                                                                                                                                   :,
-                                                                                                                                                                                   :,
-                                                                                                                                                                                   idx);
-                                                                                                                                                                              dims = 1))
-                                                                                                                                                                      [i = 1:M,
-                                                                                                                                                                       j = 1:T],
-                                                                                                                                                                      [scale_constr *
-                                                                                                                                                                       -tg_z[i,
-                                                                                                                                                                             idx] *
-                                                                                                                                                                       owa_p[i],
-                                                                                                                                                                       scale_constr *
-                                                                                                                                                                       tg_psi[j,
-                                                                                                                                                                              i,
-                                                                                                                                                                              idx] *
-                                                                                                                                                                       owa_p[i] /
-                                                                                                                                                                       (owa_p[i] -
-                                                                                                                                                                        1),
-                                                                                                                                                                       scale_constr *
-                                                                                                                                                                       tg_epsilon[j,
-                                                                                                                                                                                  i,
-                                                                                                                                                                                  idx]] ∈
-                                                                                                                                                                      MOI.PowerCone(inv(owa_p[i]))
-                                                                                                                                                                  end)
-        end
+        #     tg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        #     tg_s = sum(tg_w)
+        #     tg_l = minimum(tg_w)
+        #     tg_h = maximum(tg_w)
+        #     tg_d = [norm(tg_w, p) for p ∈ owa_p]
+        #     if !haskey(model, :tg_t)
+        #         M = length(rm.owa.p)
+        #         @variables(model, begin
+        #                        tg_t[1:count]
+        #                        tg_nu[1:T, 1:count] .>= 0
+        #                        tg_eta[1:T, 1:count] .>= 0
+        #                        tg_epsilon[1:T, 1:M, 1:count]
+        #                        tg_psi[1:T, 1:M, 1:count]
+        #                        tg_z[1:M, 1:count]
+        #                        tg_y[1:M, 1:count] .>= 0
+        #                    end)
+        #     end
+        #     tg_t = model[:tg_t]
+        #     tg_nu = model[:tg_nu]
+        #     tg_eta = model[:tg_eta]
+        #     tg_epsilon = model[:tg_epsilon]
+        #     tg_psi = model[:tg_psi]
+        #     tg_z = model[:tg_z]
+        #     tg_y = model[:tg_y]
+        #     add_to_expression!(tg_risk[idx], tg_s, tg_t[idx])
+        #     add_to_expression!(tg_risk[idx], -tg_l, sum(view(tg_nu, :, idx)))
+        #     add_to_expression!(tg_risk[idx], tg_h, sum(view(tg_eta, :, idx)))
+        #     add_to_expression!(tg_risk[idx], dot(tg_d, view(tg_y, :, idx)))
+        #     model[Symbol("constr_approx_1_tg_$(idx)")], model[Symbol("constr_approx_2_tg_$(idx)")], model[Symbol("constr_approx_tg_pcone_$(idx)")] = @constraints(model,
+        #                                                                                                                                                           begin
+        #                                                                                                                                                               scale_constr *
+        #                                                                                                                                                               (net_X .+
+        #                                                                                                                                                                tg_t[idx] .-
+        #                                                                                                                                                                view(tg_nu,
+        #                                                                                                                                                                     :,
+        #                                                                                                                                                                     idx) .+
+        #                                                                                                                                                                view(tg_eta,
+        #                                                                                                                                                                     :,
+        #                                                                                                                                                                     idx) .-
+        #                                                                                                                                                                vec(sum(view(tg_epsilon,
+        #                                                                                                                                                                             :,
+        #                                                                                                                                                                             :,
+        #                                                                                                                                                                             idx);
+        #                                                                                                                                                                        dims = 2))) .==
+        #                                                                                                                                                               0
+        #                                                                                                                                                               scale_constr *
+        #                                                                                                                                                               (tg_z[:,
+        #                                                                                                                                                                     idx] .+
+        #                                                                                                                                                                tg_y[:,
+        #                                                                                                                                                                     idx]) .==
+        #                                                                                                                                                               scale_constr *
+        #                                                                                                                                                               vec(sum(view(tg_psi,
+        #                                                                                                                                                                            :,
+        #                                                                                                                                                                            :,
+        #                                                                                                                                                                            idx);
+        #                                                                                                                                                                       dims = 1))
+        #                                                                                                                                                               [i = 1:M,
+        #                                                                                                                                                                j = 1:T],
+        #                                                                                                                                                               [scale_constr *
+        #                                                                                                                                                                -tg_z[i,
+        #                                                                                                                                                                      idx] *
+        #                                                                                                                                                                owa_p[i],
+        #                                                                                                                                                                scale_constr *
+        #                                                                                                                                                                tg_psi[j,
+        #                                                                                                                                                                       i,
+        #                                                                                                                                                                       idx] *
+        #                                                                                                                                                                owa_p[i] /
+        #                                                                                                                                                                (owa_p[i] -
+        #                                                                                                                                                                 1),
+        #                                                                                                                                                                scale_constr *
+        #                                                                                                                                                                tg_epsilon[j,
+        #                                                                                                                                                                           i,
+        #                                                                                                                                                                           idx]] ∈
+        #                                                                                                                                                               MOI.PowerCone(inv(owa_p[i]))
+        #                                                                                                                                                           end)
+        # end
         set_rm_risk_upper_bound(type, model, tg_risk[idx], rm.settings.ub, "tg_risk_$(idx)")
         set_risk_expression(model, tg_risk[idx], rm.settings.scale, rm.settings.flag)
     end
     return nothing
+end
+function tgrg_risk_formulation(::OWAExact, model, returns, T, alpha, a_sim, alpha_i, beta,
+                               b_sim, beta_i)
+    scale_constr = model[:scale_constr]
+    OWA_constraints(model, returns)
+    owa = model[:owa]
+    ovec = range(1; stop = 1, length = T)
+    @variables(model, begin
+                   rtga[1:T]
+                   rtgb[1:T]
+               end)
+    @expression(model, tgrg_risk, sum(rtga .+ rtgb))
+    rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                    beta = beta, b_sim = b_sim)
+    @constraint(model, constr_rtg,
+                scale_constr * owa * transpose(rtg_w) .<=
+                scale_constr * (ovec * transpose(rtga) + rtgb * transpose(ovec)))
+    return tgrg_risk
+end
+function tgrg_risk_formulation(formulation::OWAApprox, model, returns, T, alpha, a_sim,
+                               alpha_i, beta, b_sim, beta_i)
+    scale_constr = model[:scale_constr]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    @variables(model, begin
+                   rltg_t
+                   rltg_nu[1:T] .>= 0
+                   rltg_eta[1:T] .>= 0
+                   rltg_epsilon[1:T, 1:M]
+                   rltg_psi[1:T, 1:M]
+                   rltg_z[1:M]
+                   rltg_y[1:M] .>= 0
+               end)
+
+    rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    rltg_s = sum(rltg_w)
+    rltg_l = minimum(rltg_w)
+    rltg_h = maximum(rltg_w)
+    rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
+
+    @expression(model, rltg_risk,
+                rltg_s * rltg_t - rltg_l * sum(rltg_nu) +
+                rltg_h * sum(rltg_eta) +
+                dot(rltg_d, rltg_y))
+    @constraints(model,
+                 begin
+                     constr_approx_1_rtg,
+                     scale_constr * (net_X .+ rltg_t .- rltg_nu .+ rltg_eta .-
+                                     vec(sum(rltg_epsilon; dims = 2))) .== 0
+                     constr_approx_2_rtg,
+                     scale_constr * (rltg_z .+ rltg_y) .==
+                     scale_constr * vec(sum(rltg_psi; dims = 1))
+                     constr_approx_1_rtg_pcone[i = 1:M, j = 1:T],
+                     [scale_constr * -rltg_z[i] * owa_p[i],
+                      scale_constr * rltg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                      scale_constr * rltg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+                 end)
+
+    @variables(model, begin
+                   rhtg_t
+                   rhtg_nu[1:T] .>= 0
+                   rhtg_eta[1:T] .>= 0
+                   rhtg_epsilon[1:T, 1:M]
+                   rhtg_psi[1:T, 1:M]
+                   rhtg_z[1:M]
+                   rhtg_y[1:M] .>= 0
+               end)
+
+    rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
+    rhtg_s = sum(rhtg_w)
+    rhtg_l = minimum(rhtg_w)
+    rhtg_h = maximum(rhtg_w)
+    rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
+
+    @expressions(model,
+                 begin
+                     rhtg_risk,
+                     rhtg_s * rhtg_t - rhtg_l * sum(rhtg_nu) +
+                     rhtg_h * sum(rhtg_eta) +
+                     dot(rhtg_d, rhtg_y)
+                     tgrg_risk, rltg_risk + rhtg_risk
+                 end)
+    @constraints(model,
+                 begin
+                     constr_approx_3_rtg,
+                     scale_constr * (-net_X .+ rhtg_t .- rhtg_nu .+ rhtg_eta .-
+                                     vec(sum(rhtg_epsilon; dims = 2))) .== 0
+                     constr_approx_4_rtg,
+                     scale_constr * (rhtg_z .+ rhtg_y) .==
+                     scale_constr * vec(sum(rhtg_psi; dims = 1))
+                     constr_approx_2_rtg_pcone[i = 1:M, j = 1:T],
+                     [scale_constr * -rhtg_z[i] * owa_p[i],
+                      scale_constr * rhtg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                      scale_constr * rhtg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+                 end)
+    return tgrg_risk
 end
 function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
@@ -2115,100 +2445,294 @@ function set_rm(port::Portfolio, rm::TGRG, type::Union{Trad, RB, NOC};
     beta = rm.beta
     b_sim = rm.b_sim
     beta_i = rm.beta_i
-    if !rm.owa.approx
+    tgrg_risk = tgrg_risk_formulation(rm.formulation, model, returns, T, alpha, a_sim,
+                                      alpha_i, beta, b_sim, beta_i)
+    # if !rm.owa.approx
+    #     OWA_constraints(model, returns)
+    #     owa = model[:owa]
+    #     ovec = range(1; stop = 1, length = T)
+    #     @variables(model, begin
+    #                    rtga[1:T]
+    #                    rtgb[1:T]
+    #                end)
+    #     @expression(model, tgrg_risk, sum(rtga .+ rtgb))
+    #     rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+    #                     beta = beta, b_sim = b_sim)
+    #     @constraint(model, constr_rtg,
+    #                 scale_constr * owa * transpose(rtg_w) .<=
+    #                 scale_constr * (ovec * transpose(rtga) + rtgb * transpose(ovec)))
+    # else
+    #     get_net_portfolio_returns(model, returns)
+    #     net_X = model[:net_X]
+    #     owa_p = rm.owa.p
+    #     M = length(owa_p)
+
+    #     @variables(model, begin
+    #                    rltg_t
+    #                    rltg_nu[1:T] .>= 0
+    #                    rltg_eta[1:T] .>= 0
+    #                    rltg_epsilon[1:T, 1:M]
+    #                    rltg_psi[1:T, 1:M]
+    #                    rltg_z[1:M]
+    #                    rltg_y[1:M] .>= 0
+    #                end)
+
+    #     rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    #     rltg_s = sum(rltg_w)
+    #     rltg_l = minimum(rltg_w)
+    #     rltg_h = maximum(rltg_w)
+    #     rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
+
+    #     @expression(model, rltg_risk,
+    #                 rltg_s * rltg_t - rltg_l * sum(rltg_nu) +
+    #                 rltg_h * sum(rltg_eta) +
+    #                 dot(rltg_d, rltg_y))
+    #     @constraints(model,
+    #                  begin
+    #                      constr_approx_1_rtg,
+    #                      scale_constr * (net_X .+ rltg_t .- rltg_nu .+ rltg_eta .-
+    #                                      vec(sum(rltg_epsilon; dims = 2))) .== 0
+    #                      constr_approx_2_rtg,
+    #                      scale_constr * (rltg_z .+ rltg_y) .==
+    #                      scale_constr * vec(sum(rltg_psi; dims = 1))
+    #                      constr_approx_1_rtg_pcone[i = 1:M, j = 1:T],
+    #                      [scale_constr * -rltg_z[i] * owa_p[i],
+    #                       scale_constr * rltg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+    #                       scale_constr * rltg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+    #                  end)
+
+    #     @variables(model, begin
+    #                    rhtg_t
+    #                    rhtg_nu[1:T] .>= 0
+    #                    rhtg_eta[1:T] .>= 0
+    #                    rhtg_epsilon[1:T, 1:M]
+    #                    rhtg_psi[1:T, 1:M]
+    #                    rhtg_z[1:M]
+    #                    rhtg_y[1:M] .>= 0
+    #                end)
+
+    #     rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
+    #     rhtg_s = sum(rhtg_w)
+    #     rhtg_l = minimum(rhtg_w)
+    #     rhtg_h = maximum(rhtg_w)
+    #     rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
+
+    #     @expressions(model,
+    #                  begin
+    #                      rhtg_risk,
+    #                      rhtg_s * rhtg_t - rhtg_l * sum(rhtg_nu) +
+    #                      rhtg_h * sum(rhtg_eta) +
+    #                      dot(rhtg_d, rhtg_y)
+    #                      tgrg_risk, rltg_risk + rhtg_risk
+    #                  end)
+    #     @constraints(model,
+    #                  begin
+    #                      constr_approx_3_rtg,
+    #                      scale_constr * (-net_X .+ rhtg_t .- rhtg_nu .+ rhtg_eta .-
+    #                                      vec(sum(rhtg_epsilon; dims = 2))) .== 0
+    #                      constr_approx_4_rtg,
+    #                      scale_constr * (rhtg_z .+ rhtg_y) .==
+    #                      scale_constr * vec(sum(rhtg_psi; dims = 1))
+    #                      constr_approx_2_rtg_pcone[i = 1:M, j = 1:T],
+    #                      [scale_constr * -rhtg_z[i] * owa_p[i],
+    #                       scale_constr * rhtg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+    #                       scale_constr * rhtg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+    #                  end)
+    # end
+    set_rm_risk_upper_bound(type, model, tgrg_risk, rm.settings.ub, "tgrg_risk")
+    set_risk_expression(model, tgrg_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function tgrg_risk_vec_formulation(::OWAExact, model, returns, T, count, alpha, a_sim,
+                                   alpha_i, idx, tgrg_risk, beta, b_sim, beta_i)
+    scale_constr = model[:scale_constr]
+    ovec = range(1; stop = 1, length = T)
+    if !haskey(model, :rtga)
         OWA_constraints(model, returns)
-        owa = model[:owa]
-        ovec = range(1; stop = 1, length = T)
         @variables(model, begin
-                       rtga[1:T]
-                       rtgb[1:T]
+                       rtga[1:T, 1:count]
+                       rtgb[1:T, 1:count]
                    end)
-        @expression(model, rtg_risk, sum(rtga .+ rtgb))
-        rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                        beta = beta, b_sim = b_sim)
-        @constraint(model, constr_rtg,
-                    scale_constr * owa * transpose(rtg_w) .<=
-                    scale_constr * (ovec * transpose(rtga) + rtgb * transpose(ovec)))
-    else
-        get_net_portfolio_returns(model, returns)
-        net_X = model[:net_X]
-        owa_p = rm.owa.p
-        M = length(owa_p)
+    end
+    rtga = model[:rtga]
+    rtgb = model[:rtgb]
+    owa = model[:owa]
+    add_to_expression!(tgrg_risk[idx], sum(view(rtga, :, idx) .+ view(rtgb, :, idx)))
+    rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
+                    beta = beta, b_sim = b_sim)
+    model[Symbol("constr_rtg_$(idx)")] = @constraint(model,
+                                                     scale_constr *
+                                                     owa *
+                                                     transpose(rtg_w) .<=
+                                                     scale_constr *
+                                                     (ovec * transpose(view(rtga, :, idx)) +
+                                                      view(rtgb, :, idx) * transpose(ovec)))
+    return nothing
+end
+function tgrg_risk_vec_formulation(formulation::OWAApprox, model, returns, T, count, alpha,
+                                   a_sim, alpha_i, idx, tgrg_risk, beta, b_sim, beta_i)
+    scale_constr = model[:scale_constr]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
 
+    rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+    rltg_s = sum(rltg_w)
+    rltg_l = minimum(rltg_w)
+    rltg_h = maximum(rltg_w)
+    rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
+    if !haskey(model, :rltg_t)
         @variables(model, begin
-                       rltg_t
-                       rltg_nu[1:T] .>= 0
-                       rltg_eta[1:T] .>= 0
-                       rltg_epsilon[1:T, 1:M]
-                       rltg_psi[1:T, 1:M]
-                       rltg_z[1:M]
-                       rltg_y[1:M] .>= 0
+                       rltg_t[1:count]
+                       rltg_nu[1:T, 1:count] .>= 0
+                       rltg_eta[1:T, 1:count] .>= 0
+                       rltg_epsilon[1:T, 1:M, 1:count]
+                       rltg_psi[1:T, 1:M, 1:count]
+                       rltg_z[1:M, 1:count]
+                       rltg_y[1:M, 1:count] .>= 0
+                       rhtg_t[1:count]
+                       rhtg_nu[1:T, 1:count] .>= 0
+                       rhtg_eta[1:T, 1:count] .>= 0
+                       rhtg_epsilon[1:T, 1:M, 1:count]
+                       rhtg_psi[1:T, 1:M, 1:count]
+                       rhtg_z[1:M, 1:count]
+                       rhtg_y[1:M, 1:count] .>= 0
                    end)
-
-        rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-        rltg_s = sum(rltg_w)
-        rltg_l = minimum(rltg_w)
-        rltg_h = maximum(rltg_w)
-        rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
-
-        @expression(model, rltg_risk,
-                    rltg_s * rltg_t - rltg_l * sum(rltg_nu) +
-                    rltg_h * sum(rltg_eta) +
-                    dot(rltg_d, rltg_y))
-        @constraints(model,
-                     begin
-                         constr_approx_1_rtg,
-                         scale_constr * (net_X .+ rltg_t .- rltg_nu .+ rltg_eta .-
-                                         vec(sum(rltg_epsilon; dims = 2))) .== 0
-                         constr_approx_2_rtg,
-                         scale_constr * (rltg_z .+ rltg_y) .==
-                         scale_constr * vec(sum(rltg_psi; dims = 1))
-                         constr_approx_1_rtg_pcone[i = 1:M, j = 1:T],
-                         [scale_constr * -rltg_z[i] * owa_p[i],
-                          scale_constr * rltg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                          scale_constr * rltg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
-                     end)
-
-        @variables(model, begin
-                       rhtg_t
-                       rhtg_nu[1:T] .>= 0
-                       rhtg_eta[1:T] .>= 0
-                       rhtg_epsilon[1:T, 1:M]
-                       rhtg_psi[1:T, 1:M]
-                       rhtg_z[1:M]
-                       rhtg_y[1:M] .>= 0
-                   end)
-
-        rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
-        rhtg_s = sum(rhtg_w)
-        rhtg_l = minimum(rhtg_w)
-        rhtg_h = maximum(rhtg_w)
-        rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
-
-        @expressions(model,
-                     begin
-                         rhtg_risk,
-                         rhtg_s * rhtg_t - rhtg_l * sum(rhtg_nu) +
-                         rhtg_h * sum(rhtg_eta) +
-                         dot(rhtg_d, rhtg_y)
-                         rtg_risk, rltg_risk + rhtg_risk
-                     end)
-        @constraints(model,
-                     begin
-                         constr_approx_3_rtg,
-                         scale_constr * (-net_X .+ rhtg_t .- rhtg_nu .+ rhtg_eta .-
-                                         vec(sum(rhtg_epsilon; dims = 2))) .== 0
-                         constr_approx_4_rtg,
-                         scale_constr * (rhtg_z .+ rhtg_y) .==
-                         scale_constr * vec(sum(rhtg_psi; dims = 1))
-                         constr_approx_2_rtg_pcone[i = 1:M, j = 1:T],
-                         [scale_constr * -rhtg_z[i] * owa_p[i],
-                          scale_constr * rhtg_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                          scale_constr * rhtg_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+        @expressions(model, begin
+                         rltg_risk[1:count], zero(AffExpr)
+                         rhtg_risk[1:count], zero(AffExpr)
                      end)
     end
-    set_rm_risk_upper_bound(type, model, rtg_risk, rm.settings.ub, "rtg_risk")
-    set_risk_expression(model, rtg_risk, rm.settings.scale, rm.settings.flag)
+    rltg_t = model[:rltg_t]
+    rltg_nu = model[:rltg_nu]
+    rltg_eta = model[:rltg_eta]
+    rltg_epsilon = model[:rltg_epsilon]
+    rltg_psi = model[:rltg_psi]
+    rltg_z = model[:rltg_z]
+    rltg_y = model[:rltg_y]
+    rltg_risk = model[:rltg_risk]
+    rhtg_t = model[:rhtg_t]
+    rhtg_nu = model[:rhtg_nu]
+    rhtg_eta = model[:rhtg_eta]
+    rhtg_epsilon = model[:rhtg_epsilon]
+    rhtg_psi = model[:rhtg_psi]
+    rhtg_z = model[:rhtg_z]
+    rhtg_y = model[:rhtg_y]
+    rhtg_risk = model[:rhtg_risk]
+    add_to_expression!(rltg_risk[idx], rltg_s, rltg_t[idx])
+    add_to_expression!(rltg_risk[idx], -rltg_l, sum(view(rltg_nu, :, idx)))
+    add_to_expression!(rltg_risk[idx], rltg_h, sum(view(rltg_eta, :, idx)))
+    add_to_expression!(rltg_risk[idx], dot(rltg_d, view(rltg_y, :, idx)))
+
+    model[Symbol("constr_approx_1_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_$(idx)")], model[Symbol("constr_approx_1_rtg_pcone_$(idx)")] = @constraints(model,
+                                                                                                                                                               begin
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   (net_X .+
+                                                                                                                                                                    rltg_t[idx] .-
+                                                                                                                                                                    view(rltg_nu,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .+
+                                                                                                                                                                    view(rltg_eta,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .-
+                                                                                                                                                                    vec(sum(view(rltg_epsilon,
+                                                                                                                                                                                 :,
+                                                                                                                                                                                 :,
+                                                                                                                                                                                 idx);
+                                                                                                                                                                            dims = 2))) .==
+                                                                                                                                                                   0
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   (view(rltg_z,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .+
+                                                                                                                                                                    view(rltg_y,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx)) .==
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   vec(sum(view(rltg_psi,
+                                                                                                                                                                                :,
+                                                                                                                                                                                :,
+                                                                                                                                                                                idx);
+                                                                                                                                                                           dims = 1))
+                                                                                                                                                                   [i = 1:M,
+                                                                                                                                                                    j = 1:T],
+                                                                                                                                                                   [scale_constr *
+                                                                                                                                                                    -rltg_z[i,
+                                                                                                                                                                            idx] *
+                                                                                                                                                                    owa_p[i],
+                                                                                                                                                                    scale_constr *
+                                                                                                                                                                    rltg_psi[j,
+                                                                                                                                                                             i,
+                                                                                                                                                                             idx] *
+                                                                                                                                                                    owa_p[i] /
+                                                                                                                                                                    (owa_p[i] -
+                                                                                                                                                                     1),
+                                                                                                                                                                    scale_constr *
+                                                                                                                                                                    rltg_epsilon[j,
+                                                                                                                                                                                 i,
+                                                                                                                                                                                 idx]] ∈
+                                                                                                                                                                   MOI.PowerCone(inv(owa_p[i]))
+                                                                                                                                                               end)
+    rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
+    rhtg_s = sum(rhtg_w)
+    rhtg_l = minimum(rhtg_w)
+    rhtg_h = maximum(rhtg_w)
+    rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
+    add_to_expression!(rhtg_risk[idx], rhtg_s, rhtg_t[idx])
+    add_to_expression!(rhtg_risk[idx], -rhtg_l, sum(view(rhtg_nu, :, idx)))
+    add_to_expression!(rhtg_risk[idx], rhtg_h, sum(view(rhtg_eta, :, idx)))
+    add_to_expression!(rhtg_risk[idx], dot(rhtg_d, view(rhtg_y, :, idx)))
+    add_to_expression!(tgrg_risk[idx], rltg_risk[idx])
+    add_to_expression!(tgrg_risk[idx], rhtg_risk[idx])
+    model[Symbol("constr_approx_3_rtg_$(idx)")], model[Symbol("constr_approx_4_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_pcone_$(idx)")] = @constraints(model,
+                                                                                                                                                               begin
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   (-net_X .+
+                                                                                                                                                                    rhtg_t[idx] .-
+                                                                                                                                                                    view(rhtg_nu,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .+
+                                                                                                                                                                    view(rhtg_eta,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .-
+                                                                                                                                                                    vec(sum(rhtg_epsilon[:,
+                                                                                                                                                                                         :,
+                                                                                                                                                                                         idx];
+                                                                                                                                                                            dims = 2))) .==
+                                                                                                                                                                   0
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   (view(rhtg_z,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx) .+
+                                                                                                                                                                    view(rhtg_y,
+                                                                                                                                                                         :,
+                                                                                                                                                                         idx)) .==
+                                                                                                                                                                   scale_constr *
+                                                                                                                                                                   vec(sum(view(rhtg_psi,
+                                                                                                                                                                                :,
+                                                                                                                                                                                :,
+                                                                                                                                                                                idx);
+                                                                                                                                                                           dims = 1))
+                                                                                                                                                                   [i = 1:M,
+                                                                                                                                                                    j = 1:T],
+                                                                                                                                                                   [scale_constr *
+                                                                                                                                                                    -rhtg_z[i,
+                                                                                                                                                                            idx] *
+                                                                                                                                                                    owa_p[i],
+                                                                                                                                                                    scale_constr *
+                                                                                                                                                                    rhtg_psi[j,
+                                                                                                                                                                             i,
+                                                                                                                                                                             idx] *
+                                                                                                                                                                    owa_p[i] /
+                                                                                                                                                                    (owa_p[i] -
+                                                                                                                                                                     1),
+                                                                                                                                                                    scale_constr *
+                                                                                                                                                                    rhtg_epsilon[j,
+                                                                                                                                                                                 i,
+                                                                                                                                                                                 idx]] ∈
+                                                                                                                                                                   MOI.PowerCone(inv(owa_p[i]))
+                                                                                                                                                               end)
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, RB, NOC};
@@ -2217,7 +2741,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, 
     scale_constr = model[:scale_constr]
     T = size(returns, 1)
     count = length(rms)
-    @expression(model, rtg_risk[1:count], zero(AffExpr))
+    @expression(model, tgrg_risk[1:count], zero(AffExpr))
     for (idx, rm) ∈ pairs(rms)
         alpha = rm.alpha
         a_sim = rm.a_sim
@@ -2225,260 +2749,440 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TGRG}, type::Union{Trad, 
         beta = rm.beta
         b_sim = rm.b_sim
         beta_i = rm.beta_i
-        if !rm.owa.approx
-            ovec = range(1; stop = 1, length = T)
-            if !haskey(model, :rtga)
-                OWA_constraints(model, returns)
-                @variables(model, begin
-                               rtga[1:T, 1:count]
-                               rtgb[1:T, 1:count]
-                           end)
-            end
-            rtga = model[:rtga]
-            rtgb = model[:rtgb]
-            owa = model[:owa]
-            add_to_expression!(rtg_risk[idx], sum(view(rtga, :, idx) .+ view(rtgb, :, idx)))
-            rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
-                            beta_i = beta_i, beta = beta, b_sim = b_sim)
-            model[Symbol("constr_rtg_$(idx)")] = @constraint(model,
-                                                             scale_constr *
-                                                             owa *
-                                                             transpose(rtg_w) .<=
-                                                             scale_constr * (ovec *
-                                                                             transpose(view(rtga, :, idx)) +
-                                                                             view(rtgb, :, idx) *
-                                                                             transpose(ovec)))
-        else
-            get_net_portfolio_returns(model, returns)
-            net_X = model[:net_X]
-            owa_p = rm.owa.p
-            M = length(owa_p)
+        tgrg_risk_vec_formulation(rm.formulation, model, returns, T, count, alpha, a_sim,
+                                  alpha_i, idx, tgrg_risk, beta, b_sim, beta_i)
+        # if !rm.owa.approx
+        #     ovec = range(1; stop = 1, length = T)
+        #     if !haskey(model, :rtga)
+        #         OWA_constraints(model, returns)
+        #         @variables(model, begin
+        #                        rtga[1:T, 1:count]
+        #                        rtgb[1:T, 1:count]
+        #                    end)
+        #     end
+        #     rtga = model[:rtga]
+        #     rtgb = model[:rtgb]
+        #     owa = model[:owa]
+        #     add_to_expression!(tgrg_risk[idx],
+        #                        sum(view(rtga, :, idx) .+ view(rtgb, :, idx)))
+        #     rtg_w = owa_rtg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+        #                     beta_i = beta_i, beta = beta, b_sim = b_sim)
+        #     model[Symbol("constr_rtg_$(idx)")] = @constraint(model,
+        #                                                      scale_constr *
+        #                                                      owa *
+        #                                                      transpose(rtg_w) .<=
+        #                                                      scale_constr * (ovec *
+        #                                                                      transpose(view(rtga, :, idx)) +
+        #                                                                      view(rtgb, :, idx) *
+        #                                                                      transpose(ovec)))
+        # else
+        #     get_net_portfolio_returns(model, returns)
+        #     net_X = model[:net_X]
+        #     owa_p = rm.owa.p
+        #     M = length(owa_p)
 
-            rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
-            rltg_s = sum(rltg_w)
-            rltg_l = minimum(rltg_w)
-            rltg_h = maximum(rltg_w)
-            rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
-            if !haskey(model, :rltg_t)
-                M = length(rm.owa.p)
-                @variables(model, begin
-                               rltg_t[1:count]
-                               rltg_nu[1:T, 1:count] .>= 0
-                               rltg_eta[1:T, 1:count] .>= 0
-                               rltg_epsilon[1:T, 1:M, 1:count]
-                               rltg_psi[1:T, 1:M, 1:count]
-                               rltg_z[1:M, 1:count]
-                               rltg_y[1:M, 1:count] .>= 0
-                               rhtg_t[1:count]
-                               rhtg_nu[1:T, 1:count] .>= 0
-                               rhtg_eta[1:T, 1:count] .>= 0
-                               rhtg_epsilon[1:T, 1:M, 1:count]
-                               rhtg_psi[1:T, 1:M, 1:count]
-                               rhtg_z[1:M, 1:count]
-                               rhtg_y[1:M, 1:count] .>= 0
-                           end)
-                @expressions(model, begin
-                                 rltg_risk[1:count], zero(AffExpr)
-                                 rhtg_risk[1:count], zero(AffExpr)
-                             end)
-            end
-            rltg_t = model[:rltg_t]
-            rltg_nu = model[:rltg_nu]
-            rltg_eta = model[:rltg_eta]
-            rltg_epsilon = model[:rltg_epsilon]
-            rltg_psi = model[:rltg_psi]
-            rltg_z = model[:rltg_z]
-            rltg_y = model[:rltg_y]
-            rltg_risk = model[:rltg_risk]
-            rhtg_t = model[:rhtg_t]
-            rhtg_nu = model[:rhtg_nu]
-            rhtg_eta = model[:rhtg_eta]
-            rhtg_epsilon = model[:rhtg_epsilon]
-            rhtg_psi = model[:rhtg_psi]
-            rhtg_z = model[:rhtg_z]
-            rhtg_y = model[:rhtg_y]
-            rhtg_risk = model[:rhtg_risk]
-            add_to_expression!(rltg_risk[idx], rltg_s, rltg_t[idx])
-            add_to_expression!(rltg_risk[idx], -rltg_l, sum(view(rltg_nu, :, idx)))
-            add_to_expression!(rltg_risk[idx], rltg_h, sum(view(rltg_eta, :, idx)))
-            add_to_expression!(rltg_risk[idx], dot(rltg_d, view(rltg_y, :, idx)))
+        #     rltg_w = -owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)
+        #     rltg_s = sum(rltg_w)
+        #     rltg_l = minimum(rltg_w)
+        #     rltg_h = maximum(rltg_w)
+        #     rltg_d = [norm(rltg_w, p) for p ∈ owa_p]
+        #     if !haskey(model, :rltg_t)
+        #         M = length(rm.owa.p)
+        #         @variables(model, begin
+        #                        rltg_t[1:count]
+        #                        rltg_nu[1:T, 1:count] .>= 0
+        #                        rltg_eta[1:T, 1:count] .>= 0
+        #                        rltg_epsilon[1:T, 1:M, 1:count]
+        #                        rltg_psi[1:T, 1:M, 1:count]
+        #                        rltg_z[1:M, 1:count]
+        #                        rltg_y[1:M, 1:count] .>= 0
+        #                        rhtg_t[1:count]
+        #                        rhtg_nu[1:T, 1:count] .>= 0
+        #                        rhtg_eta[1:T, 1:count] .>= 0
+        #                        rhtg_epsilon[1:T, 1:M, 1:count]
+        #                        rhtg_psi[1:T, 1:M, 1:count]
+        #                        rhtg_z[1:M, 1:count]
+        #                        rhtg_y[1:M, 1:count] .>= 0
+        #                    end)
+        #         @expressions(model, begin
+        #                          rltg_risk[1:count], zero(AffExpr)
+        #                          rhtg_risk[1:count], zero(AffExpr)
+        #                      end)
+        #     end
+        #     rltg_t = model[:rltg_t]
+        #     rltg_nu = model[:rltg_nu]
+        #     rltg_eta = model[:rltg_eta]
+        #     rltg_epsilon = model[:rltg_epsilon]
+        #     rltg_psi = model[:rltg_psi]
+        #     rltg_z = model[:rltg_z]
+        #     rltg_y = model[:rltg_y]
+        #     rltg_risk = model[:rltg_risk]
+        #     rhtg_t = model[:rhtg_t]
+        #     rhtg_nu = model[:rhtg_nu]
+        #     rhtg_eta = model[:rhtg_eta]
+        #     rhtg_epsilon = model[:rhtg_epsilon]
+        #     rhtg_psi = model[:rhtg_psi]
+        #     rhtg_z = model[:rhtg_z]
+        #     rhtg_y = model[:rhtg_y]
+        #     rhtg_risk = model[:rhtg_risk]
+        #     add_to_expression!(rltg_risk[idx], rltg_s, rltg_t[idx])
+        #     add_to_expression!(rltg_risk[idx], -rltg_l, sum(view(rltg_nu, :, idx)))
+        #     add_to_expression!(rltg_risk[idx], rltg_h, sum(view(rltg_eta, :, idx)))
+        #     add_to_expression!(rltg_risk[idx], dot(rltg_d, view(rltg_y, :, idx)))
 
-            model[Symbol("constr_approx_1_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_$(idx)")], model[Symbol("constr_approx_1_rtg_pcone_$(idx)")] = @constraints(model,
-                                                                                                                                                                       begin
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           (net_X .+
-                                                                                                                                                                            rltg_t[idx] .-
-                                                                                                                                                                            view(rltg_nu,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .+
-                                                                                                                                                                            view(rltg_eta,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .-
-                                                                                                                                                                            vec(sum(view(rltg_epsilon,
-                                                                                                                                                                                         :,
-                                                                                                                                                                                         :,
-                                                                                                                                                                                         idx);
-                                                                                                                                                                                    dims = 2))) .==
-                                                                                                                                                                           0
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           (view(rltg_z,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .+
-                                                                                                                                                                            view(rltg_y,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx)) .==
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           vec(sum(view(rltg_psi,
-                                                                                                                                                                                        :,
-                                                                                                                                                                                        :,
-                                                                                                                                                                                        idx);
-                                                                                                                                                                                   dims = 1))
-                                                                                                                                                                           [i = 1:M,
-                                                                                                                                                                            j = 1:T],
-                                                                                                                                                                           [scale_constr *
-                                                                                                                                                                            -rltg_z[i,
-                                                                                                                                                                                    idx] *
-                                                                                                                                                                            owa_p[i],
-                                                                                                                                                                            scale_constr *
-                                                                                                                                                                            rltg_psi[j,
-                                                                                                                                                                                     i,
-                                                                                                                                                                                     idx] *
-                                                                                                                                                                            owa_p[i] /
-                                                                                                                                                                            (owa_p[i] -
-                                                                                                                                                                             1),
-                                                                                                                                                                            scale_constr *
-                                                                                                                                                                            rltg_epsilon[j,
-                                                                                                                                                                                         i,
-                                                                                                                                                                                         idx]] ∈
-                                                                                                                                                                           MOI.PowerCone(inv(owa_p[i]))
-                                                                                                                                                                       end)
-            rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
-            rhtg_s = sum(rhtg_w)
-            rhtg_l = minimum(rhtg_w)
-            rhtg_h = maximum(rhtg_w)
-            rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
-            add_to_expression!(rhtg_risk[idx], rhtg_s, rhtg_t[idx])
-            add_to_expression!(rhtg_risk[idx], -rhtg_l, sum(view(rhtg_nu, :, idx)))
-            add_to_expression!(rhtg_risk[idx], rhtg_h, sum(view(rhtg_eta, :, idx)))
-            add_to_expression!(rhtg_risk[idx], dot(rhtg_d, view(rhtg_y, :, idx)))
-            add_to_expression!(rtg_risk[idx], rltg_risk[idx])
-            add_to_expression!(rtg_risk[idx], rhtg_risk[idx])
-            model[Symbol("constr_approx_3_rtg_$(idx)")], model[Symbol("constr_approx_4_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_pcone_$(idx)")] = @constraints(model,
-                                                                                                                                                                       begin
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           (-net_X .+
-                                                                                                                                                                            rhtg_t[idx] .-
-                                                                                                                                                                            view(rhtg_nu,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .+
-                                                                                                                                                                            view(rhtg_eta,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .-
-                                                                                                                                                                            vec(sum(rhtg_epsilon[:,
-                                                                                                                                                                                                 :,
-                                                                                                                                                                                                 idx];
-                                                                                                                                                                                    dims = 2))) .==
-                                                                                                                                                                           0
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           (view(rhtg_z,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx) .+
-                                                                                                                                                                            view(rhtg_y,
-                                                                                                                                                                                 :,
-                                                                                                                                                                                 idx)) .==
-                                                                                                                                                                           scale_constr *
-                                                                                                                                                                           vec(sum(view(rhtg_psi,
-                                                                                                                                                                                        :,
-                                                                                                                                                                                        :,
-                                                                                                                                                                                        idx);
-                                                                                                                                                                                   dims = 1))
-                                                                                                                                                                           [i = 1:M,
-                                                                                                                                                                            j = 1:T],
-                                                                                                                                                                           [scale_constr *
-                                                                                                                                                                            -rhtg_z[i,
-                                                                                                                                                                                    idx] *
-                                                                                                                                                                            owa_p[i],
-                                                                                                                                                                            scale_constr *
-                                                                                                                                                                            rhtg_psi[j,
-                                                                                                                                                                                     i,
-                                                                                                                                                                                     idx] *
-                                                                                                                                                                            owa_p[i] /
-                                                                                                                                                                            (owa_p[i] -
-                                                                                                                                                                             1),
-                                                                                                                                                                            scale_constr *
-                                                                                                                                                                            rhtg_epsilon[j,
-                                                                                                                                                                                         i,
-                                                                                                                                                                                         idx]] ∈
-                                                                                                                                                                           MOI.PowerCone(inv(owa_p[i]))
-                                                                                                                                                                       end)
-        end
-        set_rm_risk_upper_bound(type, model, rtg_risk[idx], rm.settings.ub,
+        #     model[Symbol("constr_approx_1_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_$(idx)")], model[Symbol("constr_approx_1_rtg_pcone_$(idx)")] = @constraints(model,
+        #                                                                                                                                                                begin
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    (net_X .+
+        #                                                                                                                                                                     rltg_t[idx] .-
+        #                                                                                                                                                                     view(rltg_nu,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .+
+        #                                                                                                                                                                     view(rltg_eta,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .-
+        #                                                                                                                                                                     vec(sum(view(rltg_epsilon,
+        #                                                                                                                                                                                  :,
+        #                                                                                                                                                                                  :,
+        #                                                                                                                                                                                  idx);
+        #                                                                                                                                                                             dims = 2))) .==
+        #                                                                                                                                                                    0
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    (view(rltg_z,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .+
+        #                                                                                                                                                                     view(rltg_y,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx)) .==
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    vec(sum(view(rltg_psi,
+        #                                                                                                                                                                                 :,
+        #                                                                                                                                                                                 :,
+        #                                                                                                                                                                                 idx);
+        #                                                                                                                                                                            dims = 1))
+        #                                                                                                                                                                    [i = 1:M,
+        #                                                                                                                                                                     j = 1:T],
+        #                                                                                                                                                                    [scale_constr *
+        #                                                                                                                                                                     -rltg_z[i,
+        #                                                                                                                                                                             idx] *
+        #                                                                                                                                                                     owa_p[i],
+        #                                                                                                                                                                     scale_constr *
+        #                                                                                                                                                                     rltg_psi[j,
+        #                                                                                                                                                                              i,
+        #                                                                                                                                                                              idx] *
+        #                                                                                                                                                                     owa_p[i] /
+        #                                                                                                                                                                     (owa_p[i] -
+        #                                                                                                                                                                      1),
+        #                                                                                                                                                                     scale_constr *
+        #                                                                                                                                                                     rltg_epsilon[j,
+        #                                                                                                                                                                                  i,
+        #                                                                                                                                                                                  idx]] ∈
+        #                                                                                                                                                                    MOI.PowerCone(inv(owa_p[i]))
+        #                                                                                                                                                                end)
+        #     rhtg_w = -owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim)
+        #     rhtg_s = sum(rhtg_w)
+        #     rhtg_l = minimum(rhtg_w)
+        #     rhtg_h = maximum(rhtg_w)
+        #     rhtg_d = [norm(rhtg_w, p) for p ∈ owa_p]
+        #     add_to_expression!(rhtg_risk[idx], rhtg_s, rhtg_t[idx])
+        #     add_to_expression!(rhtg_risk[idx], -rhtg_l, sum(view(rhtg_nu, :, idx)))
+        #     add_to_expression!(rhtg_risk[idx], rhtg_h, sum(view(rhtg_eta, :, idx)))
+        #     add_to_expression!(rhtg_risk[idx], dot(rhtg_d, view(rhtg_y, :, idx)))
+        #     add_to_expression!(tgrg_risk[idx], rltg_risk[idx])
+        #     add_to_expression!(tgrg_risk[idx], rhtg_risk[idx])
+        #     model[Symbol("constr_approx_3_rtg_$(idx)")], model[Symbol("constr_approx_4_rtg_$(idx)")], model[Symbol("constr_approx_2_rtg_pcone_$(idx)")] = @constraints(model,
+        #                                                                                                                                                                begin
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    (-net_X .+
+        #                                                                                                                                                                     rhtg_t[idx] .-
+        #                                                                                                                                                                     view(rhtg_nu,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .+
+        #                                                                                                                                                                     view(rhtg_eta,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .-
+        #                                                                                                                                                                     vec(sum(rhtg_epsilon[:,
+        #                                                                                                                                                                                          :,
+        #                                                                                                                                                                                          idx];
+        #                                                                                                                                                                             dims = 2))) .==
+        #                                                                                                                                                                    0
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    (view(rhtg_z,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx) .+
+        #                                                                                                                                                                     view(rhtg_y,
+        #                                                                                                                                                                          :,
+        #                                                                                                                                                                          idx)) .==
+        #                                                                                                                                                                    scale_constr *
+        #                                                                                                                                                                    vec(sum(view(rhtg_psi,
+        #                                                                                                                                                                                 :,
+        #                                                                                                                                                                                 :,
+        #                                                                                                                                                                                 idx);
+        #                                                                                                                                                                            dims = 1))
+        #                                                                                                                                                                    [i = 1:M,
+        #                                                                                                                                                                     j = 1:T],
+        #                                                                                                                                                                    [scale_constr *
+        #                                                                                                                                                                     -rhtg_z[i,
+        #                                                                                                                                                                             idx] *
+        #                                                                                                                                                                     owa_p[i],
+        #                                                                                                                                                                     scale_constr *
+        #                                                                                                                                                                     rhtg_psi[j,
+        #                                                                                                                                                                              i,
+        #                                                                                                                                                                              idx] *
+        #                                                                                                                                                                     owa_p[i] /
+        #                                                                                                                                                                     (owa_p[i] -
+        #                                                                                                                                                                      1),
+        #                                                                                                                                                                     scale_constr *
+        #                                                                                                                                                                     rhtg_epsilon[j,
+        #                                                                                                                                                                                  i,
+        #                                                                                                                                                                                  idx]] ∈
+        #                                                                                                                                                                    MOI.PowerCone(inv(owa_p[i]))
+        #                                                                                                                                                                end)
+        # end
+        set_rm_risk_upper_bound(type, model, tgrg_risk[idx], rm.settings.ub,
                                 "rtg_risk_$(idx)")
-        set_risk_expression(model, rtg_risk[idx], rm.settings.scale, rm.settings.flag)
+        set_risk_expression(model, tgrg_risk[idx], rm.settings.scale, rm.settings.flag)
     end
     return nothing
+end
+function owa_risk_formulation(::OWAExact, model, returns, owa_w)
+    scale_constr = model[:scale_constr]
+    T = size(returns, 1)
+    OWA_constraints(model, returns)
+    owa = model[:owa]
+    ovec = range(1; stop = 1, length = T)
+    @variables(model, begin
+                   owa_a[1:T]
+                   owa_b[1:T]
+               end)
+    @expression(model, owa_risk, sum(owa_a .+ owa_b))
+    if isnothing(owa_w) || isempty(owa_w)
+        owa_w = owa_gmd(T)
+    end
+    @constraint(model, constr_owa,
+                scale_constr * owa * transpose(owa_w) .<=
+                scale_constr * (ovec * transpose(owa_a) + owa_b * transpose(ovec)))
+    return owa_risk
+end
+function owa_risk_formulation(formulation::OWAApprox, model, returns, owa_w)
+    scale_constr = model[:scale_constr]
+    T = size(returns, 1)
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    @variables(model, begin
+                   owa_t
+                   owa_nu[1:T] .>= 0
+                   owa_eta[1:T] .>= 0
+                   owa_epsilon[1:T, 1:M]
+                   owa_psi[1:T, 1:M]
+                   owa_z[1:M]
+                   owa_y[1:M] .>= 0
+               end)
+
+    owa_w = (isnothing(owa_w) || isempty(owa_w)) ? -owa_gmd(T) : -owa_w
+    owa_s = sum(owa_w)
+    owa_l = minimum(owa_w)
+    owa_h = maximum(owa_w)
+    owa_d = [norm(owa_w, p) for p ∈ owa_p]
+
+    @expression(model, owa_risk,
+                owa_s * owa_t - owa_l * sum(owa_nu) +
+                owa_h * sum(owa_eta) +
+                dot(owa_d, owa_y))
+    @constraints(model,
+                 begin
+                     constr_approx_1_owa,
+                     scale_constr * (net_X .+ owa_t .- owa_nu .+ owa_eta .-
+                                     vec(sum(owa_epsilon; dims = 2))) .== 0
+                     constr_approx_2_owa,
+                     scale_constr * (owa_z .+ owa_y) .==
+                     scale_constr * vec(sum(owa_psi; dims = 1))
+                     constr_approx_owa_pcone[i = 1:M, j = 1:T],
+                     [scale_constr * -owa_z[i] * owa_p[i],
+                      scale_constr * owa_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+                      scale_constr * owa_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+                 end)
+    return owa_risk
 end
 function set_rm(port::Portfolio, rm::OWA, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model
-    scale_constr = model[:scale_constr]
-    T = size(returns, 1)
+    owa_risk = owa_risk_formulation(rm.formulation, model, returns, rm.w)
+    # scale_constr = model[:scale_constr]
+    # T = size(returns, 1)
+    # if !rm.owa.approx
+    #     OWA_constraints(model, returns)
+    #     owa = model[:owa]
+    #     ovec = range(1; stop = 1, length = T)
+    #     @variables(model, begin
+    #                    owa_a[1:T]
+    #                    owa_b[1:T]
+    #                end)
+    #     @expression(model, owa_risk, sum(owa_a .+ owa_b))
+    #     owa_w = (isnothing(rm.w) || isempty(rm.w)) ? owa_gmd(T) : rm.w
+    #     @constraint(model, constr_owa,
+    #                 scale_constr * owa * transpose(owa_w) .<=
+    #                 scale_constr * (ovec * transpose(owa_a) + owa_b * transpose(ovec)))
+    # else
+    #     get_net_portfolio_returns(model, returns)
+    #     net_X = model[:net_X]
+    #     owa_p = rm.owa.p
+    #     M = length(owa_p)
 
-    if !rm.owa.approx
-        OWA_constraints(model, returns)
-        owa = model[:owa]
-        ovec = range(1; stop = 1, length = T)
-        @variables(model, begin
-                       owa_a[1:T]
-                       owa_b[1:T]
-                   end)
-        @expression(model, owa_risk, sum(owa_a .+ owa_b))
-        owa_w = (isnothing(rm.w) || isempty(rm.w)) ? owa_gmd(T) : rm.w
-        @constraint(model, constr_owa,
-                    scale_constr * owa * transpose(owa_w) .<=
-                    scale_constr * (ovec * transpose(owa_a) + owa_b * transpose(ovec)))
-    else
-        get_net_portfolio_returns(model, returns)
-        net_X = model[:net_X]
-        owa_p = rm.owa.p
-        M = length(owa_p)
+    #     @variables(model, begin
+    #                    owa_t
+    #                    owa_nu[1:T] .>= 0
+    #                    owa_eta[1:T] .>= 0
+    #                    owa_epsilon[1:T, 1:M]
+    #                    owa_psi[1:T, 1:M]
+    #                    owa_z[1:M]
+    #                    owa_y[1:M] .>= 0
+    #                end)
 
-        @variables(model, begin
-                       owa_t
-                       owa_nu[1:T] .>= 0
-                       owa_eta[1:T] .>= 0
-                       owa_epsilon[1:T, 1:M]
-                       owa_psi[1:T, 1:M]
-                       owa_z[1:M]
-                       owa_y[1:M] .>= 0
-                   end)
+    #     owa_w = (isnothing(rm.w) || isempty(rm.w)) ? -owa_gmd(T) : -rm.w
+    #     owa_s = sum(owa_w)
+    #     owa_l = minimum(owa_w)
+    #     owa_h = maximum(owa_w)
+    #     owa_d = [norm(owa_w, p) for p ∈ owa_p]
 
-        owa_w = (isnothing(rm.w) || isempty(rm.w)) ? -owa_gmd(T) : -rm.w
-        owa_s = sum(owa_w)
-        owa_l = minimum(owa_w)
-        owa_h = maximum(owa_w)
-        owa_d = [norm(owa_w, p) for p ∈ owa_p]
-
-        @expression(model, owa_risk,
-                    owa_s * owa_t - owa_l * sum(owa_nu) +
-                    owa_h * sum(owa_eta) +
-                    dot(owa_d, owa_y))
-        @constraints(model,
-                     begin
-                         constr_approx_1_owa,
-                         scale_constr * (net_X .+ owa_t .- owa_nu .+ owa_eta .-
-                                         vec(sum(owa_epsilon; dims = 2))) .== 0
-                         constr_approx_2_owa,
-                         scale_constr * (owa_z .+ owa_y) .==
-                         scale_constr * vec(sum(owa_psi; dims = 1))
-                         constr_approx_owa_pcone[i = 1:M, j = 1:T],
-                         [scale_constr * -owa_z[i] * owa_p[i],
-                          scale_constr * owa_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
-                          scale_constr * owa_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
-                     end)
-    end
+    #     @expression(model, owa_risk,
+    #                 owa_s * owa_t - owa_l * sum(owa_nu) +
+    #                 owa_h * sum(owa_eta) +
+    #                 dot(owa_d, owa_y))
+    #     @constraints(model,
+    #                  begin
+    #                      constr_approx_1_owa,
+    #                      scale_constr * (net_X .+ owa_t .- owa_nu .+ owa_eta .-
+    #                                      vec(sum(owa_epsilon; dims = 2))) .== 0
+    #                      constr_approx_2_owa,
+    #                      scale_constr * (owa_z .+ owa_y) .==
+    #                      scale_constr * vec(sum(owa_psi; dims = 1))
+    #                      constr_approx_owa_pcone[i = 1:M, j = 1:T],
+    #                      [scale_constr * -owa_z[i] * owa_p[i],
+    #                       scale_constr * owa_psi[j, i] * owa_p[i] / (owa_p[i] - 1),
+    #                       scale_constr * owa_epsilon[j, i]] ∈ MOI.PowerCone(inv(owa_p[i]))
+    #                  end)
+    # end
     set_rm_risk_upper_bound(type, model, owa_risk, rm.settings.ub, "owa_risk")
     set_risk_expression(model, owa_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function owa_risk_vec_formulation(::OWAExact, model, returns, T, count, owa_w, idx,
+                                  owa_risk)
+    scale_constr = model[:scale_constr]
+    ovec = range(1; stop = 1, length = T)
+    if !haskey(model, :owa_a)
+        OWA_constraints(model, returns)
+        @variables(model, begin
+                       owa_a[1:T, 1:count]
+                       owa_b[1:T, 1:count]
+                   end)
+    end
+    owa_a = model[:owa_a]
+    owa_b = model[:owa_b]
+    owa = model[:owa]
+    add_to_expression!(owa_risk[idx], sum(view(owa_a, :, idx) .+ view(owa_b, :, idx)))
+    if isnothing(owa_w) || isempty(owa_w)
+        owa_w = owa_gmd(T)
+    end
+    model[Symbol("constr_owa_$(idx)")] = @constraint(model,
+                                                     scale_constr *
+                                                     owa *
+                                                     transpose(owa_w) .<=
+                                                     scale_constr * (ovec *
+                                                                     transpose(view(owa_a, :, idx)) +
+                                                                     view(owa_b, :, idx) * transpose(ovec)))
+    return nothing
+end
+function owa_risk_vec_formulation(formulation::OWAApprox, model, returns, T, count, owa_w,
+                                  idx, owa_risk)
+    scale_constr = model[:scale_constr]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    owa_p = formulation.p
+    M = length(owa_p)
+
+    owa_w = (isnothing(owa_w) || isempty(owa_w)) ? -owa_gmd(T) : -owa_w
+    owa_s = sum(owa_w)
+    owa_l = minimum(owa_w)
+    owa_h = maximum(owa_w)
+    owa_d = [norm(owa_w, p) for p ∈ owa_p]
+
+    if !haskey(model, :owa_t)
+        @variables(model, begin
+                       owa_t[1:count]
+                       owa_nu[1:T, 1:count] .>= 0
+                       owa_eta[1:T, 1:count] .>= 0
+                       owa_epsilon[1:T, 1:M, 1:count]
+                       owa_psi[1:T, 1:M, 1:count]
+                       owa_z[1:M, 1:count]
+                       owa_y[1:M, 1:count] .>= 0
+                   end)
+    end
+    owa_t = model[:owa_t]
+    owa_nu = model[:owa_nu]
+    owa_eta = model[:owa_eta]
+    owa_epsilon = model[:owa_epsilon]
+    owa_psi = model[:owa_psi]
+    owa_z = model[:owa_z]
+    owa_y = model[:owa_y]
+    add_to_expression!(owa_risk[idx], owa_s, owa_t[idx])
+    add_to_expression!(owa_risk[idx], -owa_l, sum(view(owa_nu, :, idx)))
+    add_to_expression!(owa_risk[idx], owa_h, sum(view(owa_eta, :, idx)))
+    add_to_expression!(owa_risk[idx], dot(owa_d, view(owa_y, :, idx)))
+
+    model[Symbol("constr_approx_1_owa_$(idx)")], model[Symbol("constr_approx_2_owa_$(idx)")], model[Symbol("constr_approx_owa_pcone_$(idx)")] = @constraints(model,
+                                                                                                                                                             begin
+                                                                                                                                                                 scale_constr *
+                                                                                                                                                                 (net_X .+
+                                                                                                                                                                  owa_t[idx] .-
+                                                                                                                                                                  view(owa_nu,
+                                                                                                                                                                       :,
+                                                                                                                                                                       idx) .+
+                                                                                                                                                                  view(owa_eta,
+                                                                                                                                                                       :,
+                                                                                                                                                                       idx) .-
+                                                                                                                                                                  vec(sum(view(owa_epsilon,
+                                                                                                                                                                               :,
+                                                                                                                                                                               :,
+                                                                                                                                                                               idx);
+                                                                                                                                                                          dims = 2))) .==
+                                                                                                                                                                 0
+                                                                                                                                                                 scale_constr *
+                                                                                                                                                                 (view(owa_z,
+                                                                                                                                                                       :,
+                                                                                                                                                                       idx) .+
+                                                                                                                                                                  view(owa_y,
+                                                                                                                                                                       :,
+                                                                                                                                                                       idx)) .==
+                                                                                                                                                                 scale_constr *
+                                                                                                                                                                 vec(sum(view(owa_psi,
+                                                                                                                                                                              :,
+                                                                                                                                                                              :,
+                                                                                                                                                                              idx);
+                                                                                                                                                                         dims = 1))
+                                                                                                                                                                 [i = 1:M,
+                                                                                                                                                                  j = 1:T],
+                                                                                                                                                                 [scale_constr *
+                                                                                                                                                                  -owa_z[i,
+                                                                                                                                                                         idx] *
+                                                                                                                                                                  owa_p[i],
+                                                                                                                                                                  scale_constr *
+                                                                                                                                                                  owa_psi[j,
+                                                                                                                                                                          i,
+                                                                                                                                                                          idx] *
+                                                                                                                                                                  owa_p[i] /
+                                                                                                                                                                  (owa_p[i] -
+                                                                                                                                                                   1),
+                                                                                                                                                                  scale_constr *
+                                                                                                                                                                  owa_epsilon[j,
+                                                                                                                                                                              i,
+                                                                                                                                                                              idx]] ∈
+                                                                                                                                                                 MOI.PowerCone(inv(owa_p[i]))
+                                                                                                                                                             end)
     return nothing
 end
 function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, RB, NOC};
@@ -2489,115 +3193,117 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:OWA}, type::Union{Trad, R
     count = length(rms)
     @expression(model, owa_risk[1:count], zero(AffExpr))
     for (idx, rm) ∈ pairs(rms)
-        if !rm.owa.approx
-            ovec = range(1; stop = 1, length = T)
-            if !haskey(model, :owa_a)
-                OWA_constraints(model, returns)
-                @variables(model, begin
-                               owa_a[1:T, 1:count]
-                               owa_b[1:T, 1:count]
-                           end)
-            end
-            owa_a = model[:owa_a]
-            owa_b = model[:owa_b]
-            owa = model[:owa]
-            add_to_expression!(owa_risk[idx],
-                               sum(view(owa_a, :, idx) .+ view(owa_b, :, idx)))
-            owa_w = (isnothing(rm.w) || isempty(rm.w)) ? owa_gmd(T) : rm.w
-            model[Symbol("constr_owa_$(idx)")] = @constraint(model,
-                                                             scale_constr *
-                                                             owa *
-                                                             transpose(owa_w) .<=
-                                                             scale_constr * (ovec *
-                                                                             transpose(view(owa_a, :, idx)) +
-                                                                             view(owa_b, :, idx) *
-                                                                             transpose(ovec)))
-        else
-            get_net_portfolio_returns(model, returns)
-            net_X = model[:net_X]
-            owa_p = rm.owa.p
-            M = length(owa_p)
+        owa_risk_vec_formulation(rm.formulation, model, returns, T, count, rm.w, idx,
+                                 owa_risk)
+        # if !rm.owa.approx
+        #     ovec = range(1; stop = 1, length = T)
+        #     if !haskey(model, :owa_a)
+        #         OWA_constraints(model, returns)
+        #         @variables(model, begin
+        #                        owa_a[1:T, 1:count]
+        #                        owa_b[1:T, 1:count]
+        #                    end)
+        #     end
+        #     owa_a = model[:owa_a]
+        #     owa_b = model[:owa_b]
+        #     owa = model[:owa]
+        #     add_to_expression!(owa_risk[idx],
+        #                        sum(view(owa_a, :, idx) .+ view(owa_b, :, idx)))
+        #     owa_w = (isnothing(rm.w) || isempty(rm.w)) ? owa_gmd(T) : rm.w
+        #     model[Symbol("constr_owa_$(idx)")] = @constraint(model,
+        #                                                      scale_constr *
+        #                                                      owa *
+        #                                                      transpose(owa_w) .<=
+        #                                                      scale_constr * (ovec *
+        #                                                                      transpose(view(owa_a, :, idx)) +
+        #                                                                      view(owa_b, :, idx) *
+        #                                                                      transpose(ovec)))
+        # else
+        #     get_net_portfolio_returns(model, returns)
+        #     net_X = model[:net_X]
+        #     owa_p = rm.owa.p
+        #     M = length(owa_p)
 
-            owa_w = (isnothing(rm.w) || isempty(rm.w)) ? -owa_gmd(T) : -rm.w
-            owa_s = sum(owa_w)
-            owa_l = minimum(owa_w)
-            owa_h = maximum(owa_w)
-            owa_d = [norm(owa_w, p) for p ∈ owa_p]
+        #     owa_w = (isnothing(rm.w) || isempty(rm.w)) ? -owa_gmd(T) : -rm.w
+        #     owa_s = sum(owa_w)
+        #     owa_l = minimum(owa_w)
+        #     owa_h = maximum(owa_w)
+        #     owa_d = [norm(owa_w, p) for p ∈ owa_p]
 
-            if !haskey(model, :owa_t)
-                M = length(rm.owa.p)
-                @variables(model, begin
-                               owa_t[1:count]
-                               owa_nu[1:T, 1:count] .>= 0
-                               owa_eta[1:T, 1:count] .>= 0
-                               owa_epsilon[1:T, 1:M, 1:count]
-                               owa_psi[1:T, 1:M, 1:count]
-                               owa_z[1:M, 1:count]
-                               owa_y[1:M, 1:count] .>= 0
-                           end)
-            end
-            owa_t = model[:owa_t]
-            owa_nu = model[:owa_nu]
-            owa_eta = model[:owa_eta]
-            owa_epsilon = model[:owa_epsilon]
-            owa_psi = model[:owa_psi]
-            owa_z = model[:owa_z]
-            owa_y = model[:owa_y]
-            add_to_expression!(owa_risk[idx], owa_s, owa_t[idx])
-            add_to_expression!(owa_risk[idx], -owa_l, sum(view(owa_nu, :, idx)))
-            add_to_expression!(owa_risk[idx], owa_h, sum(view(owa_eta, :, idx)))
-            add_to_expression!(owa_risk[idx], dot(owa_d, view(owa_y, :, idx)))
+        #     if !haskey(model, :owa_t)
+        #         M = length(rm.owa.p)
+        #         @variables(model, begin
+        #                        owa_t[1:count]
+        #                        owa_nu[1:T, 1:count] .>= 0
+        #                        owa_eta[1:T, 1:count] .>= 0
+        #                        owa_epsilon[1:T, 1:M, 1:count]
+        #                        owa_psi[1:T, 1:M, 1:count]
+        #                        owa_z[1:M, 1:count]
+        #                        owa_y[1:M, 1:count] .>= 0
+        #                    end)
+        #     end
+        #     owa_t = model[:owa_t]
+        #     owa_nu = model[:owa_nu]
+        #     owa_eta = model[:owa_eta]
+        #     owa_epsilon = model[:owa_epsilon]
+        #     owa_psi = model[:owa_psi]
+        #     owa_z = model[:owa_z]
+        #     owa_y = model[:owa_y]
+        #     add_to_expression!(owa_risk[idx], owa_s, owa_t[idx])
+        #     add_to_expression!(owa_risk[idx], -owa_l, sum(view(owa_nu, :, idx)))
+        #     add_to_expression!(owa_risk[idx], owa_h, sum(view(owa_eta, :, idx)))
+        #     add_to_expression!(owa_risk[idx], dot(owa_d, view(owa_y, :, idx)))
 
-            model[Symbol("constr_approx_1_owa_$(idx)")], model[Symbol("constr_approx_2_owa_$(idx)")], model[Symbol("constr_approx_owa_pcone_$(idx)")] = @constraints(model,
-                                                                                                                                                                     begin
-                                                                                                                                                                         scale_constr *
-                                                                                                                                                                         (net_X .+
-                                                                                                                                                                          owa_t[idx] .-
-                                                                                                                                                                          view(owa_nu,
-                                                                                                                                                                               :,
-                                                                                                                                                                               idx) .+
-                                                                                                                                                                          view(owa_eta,
-                                                                                                                                                                               :,
-                                                                                                                                                                               idx) .-
-                                                                                                                                                                          vec(sum(view(owa_epsilon,
-                                                                                                                                                                                       :,
-                                                                                                                                                                                       :,
-                                                                                                                                                                                       idx);
-                                                                                                                                                                                  dims = 2))) .==
-                                                                                                                                                                         0
-                                                                                                                                                                         scale_constr *
-                                                                                                                                                                         (view(owa_z,
-                                                                                                                                                                               :,
-                                                                                                                                                                               idx) .+
-                                                                                                                                                                          view(owa_y,
-                                                                                                                                                                               :,
-                                                                                                                                                                               idx)) .==
-                                                                                                                                                                         scale_constr *
-                                                                                                                                                                         vec(sum(view(owa_psi,
-                                                                                                                                                                                      :,
-                                                                                                                                                                                      :,
-                                                                                                                                                                                      idx);
-                                                                                                                                                                                 dims = 1))
-                                                                                                                                                                         [i = 1:M,
-                                                                                                                                                                          j = 1:T],
-                                                                                                                                                                         [scale_constr *
-                                                                                                                                                                          -owa_z[i,
-                                                                                                                                                                                 idx] *
-                                                                                                                                                                          owa_p[i],
-                                                                                                                                                                          scale_constr *
-                                                                                                                                                                          owa_psi[j,
-                                                                                                                                                                                  i,
-                                                                                                                                                                                  idx] *
-                                                                                                                                                                          owa_p[i] /
-                                                                                                                                                                          (owa_p[i] -
-                                                                                                                                                                           1),
-                                                                                                                                                                          scale_constr *
-                                                                                                                                                                          owa_epsilon[j,
-                                                                                                                                                                                      i,
-                                                                                                                                                                                      idx]] ∈
-                                                                                                                                                                         MOI.PowerCone(inv(owa_p[i]))
-                                                                                                                                                                     end)
-        end
+        #     model[Symbol("constr_approx_1_owa_$(idx)")], model[Symbol("constr_approx_2_owa_$(idx)")], model[Symbol("constr_approx_owa_pcone_$(idx)")] = @constraints(model,
+        #                                                                                                                                                              begin
+        #                                                                                                                                                                  scale_constr *
+        #                                                                                                                                                                  (net_X .+
+        #                                                                                                                                                                   owa_t[idx] .-
+        #                                                                                                                                                                   view(owa_nu,
+        #                                                                                                                                                                        :,
+        #                                                                                                                                                                        idx) .+
+        #                                                                                                                                                                   view(owa_eta,
+        #                                                                                                                                                                        :,
+        #                                                                                                                                                                        idx) .-
+        #                                                                                                                                                                   vec(sum(view(owa_epsilon,
+        #                                                                                                                                                                                :,
+        #                                                                                                                                                                                :,
+        #                                                                                                                                                                                idx);
+        #                                                                                                                                                                           dims = 2))) .==
+        #                                                                                                                                                                  0
+        #                                                                                                                                                                  scale_constr *
+        #                                                                                                                                                                  (view(owa_z,
+        #                                                                                                                                                                        :,
+        #                                                                                                                                                                        idx) .+
+        #                                                                                                                                                                   view(owa_y,
+        #                                                                                                                                                                        :,
+        #                                                                                                                                                                        idx)) .==
+        #                                                                                                                                                                  scale_constr *
+        #                                                                                                                                                                  vec(sum(view(owa_psi,
+        #                                                                                                                                                                               :,
+        #                                                                                                                                                                               :,
+        #                                                                                                                                                                               idx);
+        #                                                                                                                                                                          dims = 1))
+        #                                                                                                                                                                  [i = 1:M,
+        #                                                                                                                                                                   j = 1:T],
+        #                                                                                                                                                                  [scale_constr *
+        #                                                                                                                                                                   -owa_z[i,
+        #                                                                                                                                                                          idx] *
+        #                                                                                                                                                                   owa_p[i],
+        #                                                                                                                                                                   scale_constr *
+        #                                                                                                                                                                   owa_psi[j,
+        #                                                                                                                                                                           i,
+        #                                                                                                                                                                           idx] *
+        #                                                                                                                                                                   owa_p[i] /
+        #                                                                                                                                                                   (owa_p[i] -
+        #                                                                                                                                                                    1),
+        #                                                                                                                                                                   scale_constr *
+        #                                                                                                                                                                   owa_epsilon[j,
+        #                                                                                                                                                                               i,
+        #                                                                                                                                                                               idx]] ∈
+        #                                                                                                                                                                  MOI.PowerCone(inv(owa_p[i]))
+        #                                                                                                                                                              end)
+        # end
         set_rm_risk_upper_bound(type, model, owa_risk[idx], rm.settings.ub,
                                 "owa_risk_$(idx)")
         set_risk_expression(model, owa_risk[idx], rm.settings.scale, rm.settings.flag)

@@ -154,6 +154,115 @@ function PortfolioOptimiser.unset_rm_solvers!(rm::MyRiskMeasure, flag)
     end
 end
 ```
+
+  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
+
+```julia
+struct MyRiskMeasure{T1, T2, T3} <: RiskMeasure
+    # Fields containing asset information (computable or indexable).
+    indexable_vector::Vector{T1}
+    indexable_matrix::Matrix{T1}
+    computable_vector::Vector{T1}
+    computable_matrix::Matrix{T1}
+    computable_vector_args::T2
+    computable_matrix_args::T3
+end
+
+# We have some computable fields, so we need to define the function to do so.
+function compute_MyRiskMeasure_vec_mtx!(rm::MyRiskMeasure, args...)
+    # Compute vector and matrix
+    new_computable_vector = ...
+    new_computable_matrix = ...
+
+    rm.computable_vector = new_computable_vector
+    rm.computable_matrix = new_computable_matrix
+
+    return nothing
+end
+
+# port is the portfolio, sigma is the covariance matrix, cluster are the indices defining the cluster.
+function set_custom_hc_rm!(rm::MyRiskMeasure, port, sigma, cluster)
+    old_i_vector = rm.indexable_vector
+    old_i_matrix = rm.indexable_matrix
+    old_c_vector = rm.computable_vector
+    old_c_matrix = rm.computable_matrix
+
+    ###
+    ###
+    # These can be placed inside if statements that condition the indexing
+    rm.indexable_vector = rm.indexable_vector[cluster]
+    rm.indexable_matrix = rm.indexable_matrix[cluster, cluster]
+    ###
+    ###
+
+    compute_MyRiskMeasure_vec_mtx!(rm, port, sigma, cluster)
+
+    return Tuple(old_i_vector, old_i_matrix, old_c_vector, old_c_matrix)
+end
+function unset_custom_hc_rm!(rm::MyRiskMeasure, old_custom)
+    rm.indexable_vector = old_custom[1]
+    rm.indexable_matrix = old_custom[2]
+    rm.computable_vector = old_custom[3]
+    rm.computable_matrix = old_custom[4]
+
+    return nothing
+end
+```
+
+  - Similarly if the risk measure is to be used in [`NCO`](@ref) optimisations, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`pre_modify_intra_port!`](@ref), [`post_modify_intra_port!`](@ref), [`reset_intra_port!`](@ref), [`pre_modify_inter_port!`](@ref), [`post_modify_inter_port!`](@ref), [`reset_inter_port!`](@ref), which dispatch on custom structures that. The functions can then check for the custom risk measure and modify it as in the previous bullet point. See the function's docstrings for explanations on their arguments and use.
+
+```julia
+# Structures for dispatching on.
+struct MyPreModify <: AbstractNCOModify
+    # Custom fields.
+end
+struct MyPostModify <: AbstractNCOModify
+    # Custom fields.
+end
+
+# Procedures for computing or modifying risk measures for the internal optimisations (each cluster is treated as a single portfolio).
+function pre_modify_intra_port!(pre_modify::MyPreModify, intra_port, internal_args, i,
+                                cluster, cidx, idx_sq, Nc, special_rm_idx)
+    # Modify intra-cluster portfolio pre computation of statistics.
+    return pre_mod_output
+end
+function post_modify_intra_port!(post_modify::MyPostModify, intra_port, internal_args, i,
+                                 cluster, cidx, idx_sq, Nc, special_rm_idx)
+    # Modify intra-cluster portfolio post computation of statistics.
+    return post_mod_output
+end
+function reset_intra_port!(pre_modify::MyPreModify, pre_mod_output,
+                           post_modify::MyPostModify, post_mod_output, intra_port,
+                           internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
+    # Reset any changes done to the optimisation arguments.
+    return nothing
+end
+
+# Procedures for computing or modifying risk measures for the external optimisation (each cluster is turned into a synthetic asset and a portfolio optimisation is performed on them).
+function pre_modify_inter_port!(pre_modify::MyPreModify, inter_port, wi, external_args,
+                                special_rm_idx)
+    # Modify inter-cluster portfolio pre computation of statistics.
+    return pre_mod_output
+end
+function post_modify_inter_port!(post_modify::MyPostModify, inter_port, wi, external_args,
+                                 special_rm_idx)
+    # Modify inter-cluster portfolio post computation of statistics.
+    return post_mod_output
+end
+function reset_inter_port!(pre_modify::MyPreModify, pre_mod_output,
+                           post_modify::MyPostModify, post_mod_output, inter_port, wi,
+                           external_args, special_rm_idx)
+    # Reset any changes done to the optimisation arguments.
+    return nothing
+end
+
+# The NCO optimisation type would then be defined like so.
+type = NCO(;
+           internal = NCOArgs(; type = Trad(; rm = MyRiskMeasure()),
+                              pre_modify = MyPreModify(), post_modify = MyPostModify()),
+           # In case the external optimisation is to use something different.
+           external = ...)
+```
 """
 abstract type RiskMeasure <: AbstractRiskMeasure end
 
@@ -236,6 +345,10 @@ end
 ```
 """
 abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
+
+"""
+"""
+abstract type AbstractRMSettings end
 
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real}
@@ -366,7 +479,7 @@ w2 = optimise!(port, type)
 # The effects can be seen by changing coefficients.
 ```
 """
-mutable struct RMSettings{T1 <: Real, T2 <: Real}
+mutable struct RMSettings{T1 <: Real, T2 <: Real} <: AbstractRMSettings
     flag::Bool
     scale::T1
     ub::T2
@@ -434,7 +547,7 @@ w = optimise!(port, type)
 # The effects can be seen by changing coefficients.
 ```
 """
-mutable struct HCRMSettings{T1 <: Real}
+mutable struct HCRMSettings{T1 <: Real} <: AbstractRMSettings
     scale::T1
 end
 function HCRMSettings(; scale::Real = 1.0)
@@ -1926,7 +2039,13 @@ function (cvarrg::CVaRRG)(x::AbstractVector)
 end
 
 """
-    mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
+"""
+abstract type OWAFormulation end
+"""
+"""
+struct OWAExact <: OWAFormulation end
+"""
+    mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
 
 # Description
 
@@ -1945,13 +2064,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-mutable struct OWASettings{T1 <: AbstractVector{<:Real}}
-    approx::Bool
+mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
     p::T1
 end
-function OWASettings(; approx::Bool = true,
-                     p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50])
-    return OWASettings{typeof(p)}(approx, p)
+function OWAApprox(; p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50])
+    return OWAApprox{typeof(p)}(p)
 end
 
 """
@@ -1961,21 +2078,22 @@ end
 
 Defines the Gini Mean Difference.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
 
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
 
 # Examples
 """
 struct GMD <: RiskMeasure
     settings::RMSettings
-    owa::OWASettings
+    formulation::OWAFormulation
 end
-function GMD(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings())
-    return GMD(settings, owa)
+function GMD(; settings::RMSettings = RMSettings(),
+             formulation::OWAFormulation = OWAApprox())
+    return GMD(settings, formulation)
 end
 function (gmd::GMD)(x::AbstractVector)
     T = length(x)
@@ -1990,12 +2108,12 @@ end
 
 Defines the Tail Gini Difference.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
   - `alpha_i::T1 = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `alpha::T2 = 0.05`: end value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `a_sim::T3 = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
@@ -2024,17 +2142,18 @@ tg = TG(; settings = RMSettings(; flag = false, ub = 0.1),
 """
 mutable struct TG{T1, T2, T3} <: RiskMeasure
     settings::RMSettings
-    owa::OWASettings
+    formulation::OWAFormulation
     alpha_i::T1
     alpha::T2
     a_sim::T3
 end
-function TG(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
-            alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100)
+function TG(; settings::RMSettings = RMSettings(),
+            formulation::OWAFormulation = OWAApprox(), alpha_i::Real = 0.0001,
+            alpha::Real = 0.05, a_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
-    return TG{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(settings, owa, alpha_i, alpha,
-                                                             a_sim)
+    return TG{typeof(alpha_i), typeof(alpha), typeof(a_sim)}(settings, formulation, alpha_i,
+                                                             alpha, a_sim)
 end
 function Base.setproperty!(obj::TG, sym::Symbol, val)
     if sym == :alpha_i
@@ -2061,12 +2180,12 @@ Defines the Tail Gini Difference Range.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
 
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
   - `alpha_i::T1 = 0.0001`: start value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `alpha::T2 = 0.05`: end value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `a_sim::T3 = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
@@ -2089,7 +2208,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`
 """
 mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     settings::RMSettings
-    owa::OWASettings
+    formulation::OWAFormulation
     alpha_i::T1
     alpha::T2
     a_sim::T3
@@ -2097,15 +2216,17 @@ mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
     beta::T5
     b_sim::T6
 end
-function TGRG(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
-              alpha_i = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001,
-              beta::Real = 0.05, b_sim::Integer = 100)
+function TGRG(; settings::RMSettings = RMSettings(),
+              formulation::OWAFormulation = OWAApprox(), alpha_i = 0.0001,
+              alpha::Real = 0.05, a_sim::Integer = 100, beta_i = 0.0001, beta::Real = 0.05,
+              b_sim::Integer = 100)
     @smart_assert(zero(alpha) < alpha_i < alpha < one(alpha))
     @smart_assert(a_sim > zero(a_sim))
     @smart_assert(zero(beta) < beta_i < beta < one(beta))
     @smart_assert(b_sim > zero(b_sim))
     return TGRG{typeof(alpha_i), typeof(alpha), typeof(a_sim), typeof(beta_i), typeof(beta),
-                typeof(b_sim)}(settings, owa, alpha_i, alpha, a_sim, beta_i, beta, b_sim)
+                typeof(b_sim)}(settings, formulation, alpha_i, alpha, a_sim, beta_i, beta,
+                               b_sim)
 end
 function Base.setproperty!(obj::TGRG, sym::Symbol, val)
     if sym == :alpha_i
@@ -2139,24 +2260,25 @@ Defines the generic Ordered Weight Array.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
 # Fields
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `owa::OWASettings = OWASettings()`: OWA risk measure settings.
+  - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: `T×1` ordered weight vector of arbitrary L-moments generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref).
 
 # Examples
 """
 mutable struct OWA <: RiskMeasure
     settings::RMSettings
-    owa::OWASettings
+    formulation::OWAFormulation
     w::Union{<:AbstractVector, Nothing}
 end
-function OWA(; settings::RMSettings = RMSettings(), owa::OWASettings = OWASettings(),
+function OWA(; settings::RMSettings = RMSettings(),
+             formulation::OWAFormulation = OWAApprox(),
              w::Union{<:AbstractVector, Nothing} = nothing)
-    return OWA(settings, owa, w)
+    return OWA(settings, formulation, w)
 end
 function (owa::OWA)(x::AbstractVector)
     w = isnothing(owa.w) ? owa_gmd(length(x)) : owa.w
@@ -2175,7 +2297,7 @@ Define the Brownian Distance Variance.
 
   - Measures linear and non-linear relationships between variables.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref).
 
 ```math
 \\begin{align}
@@ -2239,7 +2361,7 @@ Where:
   - ``\\bm{w}`` is the vector of asset weights.
   - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of the coskewness.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref).
 
 # Fields
 
@@ -2330,7 +2452,7 @@ Where:
   - ``\\bm{w}`` is the vector of asset weights.
   - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of the semicoskewness.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`OWASettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref).
 
 # Fields
 
@@ -3610,10 +3732,9 @@ const RMOWA = Union{GMD, TG, TGRG, OWA}
 const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TLPM, FTLPM}
 const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
 
-export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings,
-       VarianceFormulation, Quad, SOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD,
-       ADD, CDaR, UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, OWASettings, GMD, TG, TGRG,
-       OWA, BDVariance, Skew, SSkew, Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r,
-       CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
-       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR,
-       Kurtosis, SKurtosis
+export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
+       SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR,
+       Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew, Variance,
+       SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal,
+       BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC, TrackingRM, TurnoverRM,
+       NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox, OWAExact

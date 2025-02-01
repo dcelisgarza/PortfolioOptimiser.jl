@@ -2,11 +2,9 @@
 
 Risk measures are the backbone of portfolio optimisation. They allow for the quantification of risk in different ways. This section describes the various risk measures included in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl), explains their properties, formulations and compatibility with the various optimisation types in the library.
 
-## Specifying solvers
+## Solvers
 
-Some risk measures require solvers to compute the risk measure via [`calc_risk`](@ref). When using high level functions that take in an instance of [`Portfolio`](@ref) as an argument, the solvers will be taken from it. However, it is possible to override them by directly providing the solvers to the risk measure instance.
-
-The solvers can be specified by any container which implements the [`AbstractDict`](https://docs.julialang.org/en/v1/base/collections/#Base.AbstractDict) interfaces. This dictionary must contain key-value pairs for all solvers one wants to use. The key can be of any type, but the value must be a dictionary with the following key-value pairs.
+Some optimisations and risk measures use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, and therefore require solvers to solve/compute. These can be specified by any container which implements the [`AbstractDict`](https://docs.julialang.org/en/v1/base/collections/#Base.AbstractDict) interfaces. This dictionary must contain key-value pairs for all solvers one wants to use. The key can be of any type, but the value must be an abstract dictionary with the following key-value pairs.
 
   - `:solver`: defines the solver to be used. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.
   - `:check_sol`: (optional) defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
@@ -46,9 +44,37 @@ solvers = Dict(:Clarabel_1 => Dict(:solver => Clarabel.Optimizer,
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) will iterate over the solvers until it finds the first one to successfully solve the problem. If a deterministic ordering is desired (for example when going from relaxed to strict tolerances), use an [`OrderedDict`](https://juliacollections.github.io/OrderedCollections.jl/dev/ordered_containers/#OrderedDicts).
 
-## Abstract types
+## Settings
 
-[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s risk measures are implemented using Julia's type hierarchy. This makes it easy to add new ones by implementing the relevant types and methods.
+### Multiple risk measures simultaneously
+
+Portfolio Optimisation has typically limited itself to using a single risk measure. However, some risk measures can/must use internal parameters in order to compute the risk. There is nothing preventing us from using multiple measures simultaneously, or even multiple instances of the same risk measure with different hyperparameters. This can be achieved via multiple objective optimisation (not currently supported, but may in the future), or a scalarisation procedure [`PortfolioOptimiser.AbstractScalarisation`](@ref). Each instance's contribution to the overall risk expression is tunable via a weight parameter (called `scale` for disambiguation purposes).
+
+For risk measures that can be used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, we must also provide a way to define their upper bound, and whether or not they should be included in the risk expression or used only for setting a risk upper bound.
+
+For these purposes, we have two special structures that are to be used in optimisations, and not simply as performance metrics. Which one to use depends on what optimisation types the risk measure is compatible with.
+
+```@docs
+PortfolioOptimiser.AbstractRMSettings
+RMSettings
+HCRMSettings
+```
+
+### Ordered Weight Array settings
+
+Certain risk measures make use of Ordered Weight Array formulations, for which there is an expensive exact formulation, and an approximate, tunable one based on [3D Power Cones](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone). We therefore also provide a couple of structures that let users pick which formulation to use and tune the approximate one.
+
+```@docs
+PortfolioOptimiser.OWAFormulation
+OWAApprox
+OWAExact
+```
+
+## Risk measures
+
+### Abstract types
+
+[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s risk measures are implemented using `Julia`'s type hierarchy. This makes it easy to add new ones by implementing the relevant types and methods.
 
 ```@docs
 PortfolioOptimiser.AbstractRiskMeasure
@@ -57,23 +83,7 @@ HCRiskMeasure
 NoOptRiskMeasure
 ```
 
-## Settings
-
-[`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) lets users provide multiple risk measures at the same time. They can be added to the risk expression in the optimisation objective, or used to set upper risk bounds. If multiple risk measures are to be used as part of the risk expression in the optimisation objective, it makes sense provide a way to scale each risk contribution in the objective, especially because different risk expressions may have different units, and therefore require appropriate scaling.
-
-Furthermore, certain risk measures make use of Ordered Weight Array formulations, for which there is an expensive exact formulation, and an approximate, tunable one. We let users decide which one to use, and if they want to use the approximate one they can tune it as they see fit.
-
-The following structures provide said functionality.
-
-```@docs
-RMSettings
-HCRMSettings
-OWASettings
-```
-
-## Risk measures
-
-These risk measures are compatible with both [`Portfolio`](@ref) and optimisations. Different risk measures account for different aspects of the returns.
+These risk measures are compatible with all optimisation types that accept a risk measure.
 
 ### Dispersion risk measures
 
@@ -84,7 +94,7 @@ These measure the spread of the returns distribution.
 These measure how far the returns deviate from the mean in both the positive and negative directions.
 
 ```@docs
-VarianceFormulation
+PortfolioOptimiser.VarianceFormulation
 Quad
 SOC
 Variance

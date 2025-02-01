@@ -557,12 +557,23 @@ function get_external_tr(x::TR, w)
     return TR(; val = get_external_real_or_vector(x.val, w),
               w = get_external_vector(x.w, w))
 end
-function pre_modify_intra_port!(::NoNCOModify, intra_port, internal_args, i, cluster, cidx,
-                                idx_sq, Nc, special_rm_idx)
+"""
+"""
+function pre_modify_intra_port!(pre_modify::NoNCOModify, intra_port, internal_args, i,
+                                cluster, cidx, idx_sq, Nc, special_rm_idx)
     return nothing
 end
-function post_modify_intra_port!(::NoNCOModify, intra_port, internal_args, i, cluster, cidx,
-                                 idx_sq, Nc, special_rm_idx)
+"""
+"""
+function post_modify_intra_port!(post_modify::NoNCOModify, intra_port, internal_args, i,
+                                 cluster, cidx, idx_sq, Nc, special_rm_idx)
+    return nothing
+end
+"""
+"""
+function reset_intra_port!(pre_modify::NoNCOModify, pre_mod_output::Nothing,
+                           post_modify::NoNCOModify, post_mod_output::Nothing, intra_port,
+                           internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
     return nothing
 end
 function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc,
@@ -752,8 +763,8 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
 
-    pre_modify_intra_port!(pre_modify, intra_port, internal_args, i, cluster, cidx, idx_sq,
-                           Nc, special_rm_idx)
+    pre_mod_output = pre_modify_intra_port!(pre_modify, intra_port, internal_args, i,
+                                            cluster, cidx, idx_sq, Nc, special_rm_idx)
 
     if !isempty(stats_kwargs)
         asset_statistics!(intra_port; stats_kwargs...)
@@ -768,8 +779,8 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
         cluster_assets!(intra_port; cluster_kwargs...)
     end
 
-    post_modify_intra_port!(post_modify, intra_port, internal_args, i, cluster, cidx,
-                            idx_sq, Nc, special_rm_idx)
+    post_mod_output = post_modify_intra_port!(post_modify, intra_port, internal_args, i,
+                                              cluster, cidx, idx_sq, Nc, special_rm_idx)
 
     w = optimise!(intra_port, type)
     if !isempty(w)
@@ -777,6 +788,9 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
     else
         w = zeros(eltype(returns), size(returns, 2))
     end
+
+    reset_intra_port!(pre_modify, pre_mod_output, post_modify, post_mod_output, intra_port,
+                      internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
 
     return w, intra_port.fail
 end
@@ -1114,12 +1128,23 @@ function set_rm_stats!(port, rm, wi, special_rm_idx)
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms, old_trs, old_tos, old_mus, old_targets)
 end
-function pre_modify_inter_port!(::NoNCOModify, inter_port, wi, external_args,
+"""
+"""
+function pre_modify_inter_port!(pre_modify::NoNCOModify, inter_port, wi, external_args,
                                 special_rm_idx)
     return nothing
 end
-function post_modify_inter_port!(::NoNCOModify, inter_port, wi, external_args,
+"""
+"""
+function post_modify_inter_port!(post_modify::NoNCOModify, inter_port, wi, external_args,
                                  special_rm_idx)
+    return nothing
+end
+"""
+"""
+function reset_inter_port!(pre_modify::NoNCOModify, pre_mod_output::Nothing,
+                           post_modify::NoNCOModify, post_mod_output::Nothing, inter_port,
+                           wi, external_args, special_rm_idx)
     return nothing
 end
 function get_external_portfolio(port, wi, external_args, special_rm_idx)
@@ -1246,7 +1271,8 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
                            l1 = l1, l2 = l2, long_fees = long_fees, short_fees = short_fees,
                            rebalance = rebalance, solvers = solvers, port_kwargs...)
 
-    pre_modify_inter_port!(pre_modify, inter_port, wi, external_args, special_rm_idx)
+    pre_mod_output = pre_modify_inter_port!(pre_modify, inter_port, wi, external_args,
+                                            special_rm_idx)
 
     asset_statistics!(inter_port; set_cov = false, set_mu = false, set_cor = hc_flag,
                       set_dist = hc_flag, set_kurt = kurt_flag, set_skurt = skurt_flag,
@@ -1261,7 +1287,8 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         cluster_assets!(inter_port; cluster_kwargs...)
     end
 
-    post_modify_inter_port!(post_modify, inter_port, wi, external_args, special_rm_idx)
+    post_mod_output = post_modify_inter_port!(post_modify, inter_port, wi, external_args,
+                                              special_rm_idx)
 
     w = optimise!(inter_port, type)
     if !isempty(w)
@@ -1269,6 +1296,9 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     else
         w = zeros(eltype(returns), size(returns, 2))
     end
+
+    reset_inter_port!(pre_modify, pre_mod_output, post_modify, post_mod_output, inter_port,
+                      wi, external_args, special_rm_idx)
 
     return w, inter_port.fail
 end

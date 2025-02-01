@@ -8,7 +8,7 @@
                                                                            "max_iter" => 100,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = GMD(; owa = OWASettings(; approx = false))
+    rm = GMD(; formulation = OWAExact())
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -239,7 +239,7 @@
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = GMD(; owa = OWASettings())
+    rm = GMD(; formulation = OWAApprox())
 
     obj = MinRisk()
     w21 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -488,7 +488,7 @@ end
                                                                            "max_iter" => 100,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = TG(; owa = OWASettings(; approx = false))
+    rm = TG(; formulation = OWAExact())
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -717,7 +717,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = TG(; owa = OWASettings())
+    rm = TG(; formulation = OWAApprox())
 
     obj = MinRisk()
     w21 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -966,7 +966,7 @@ end
                                                                            "max_iter" => 150,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = TGRG(; owa = OWASettings(; approx = false))
+    rm = TGRG(; formulation = OWAExact())
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1194,7 +1194,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = TGRG(; owa = OWASettings())
+    rm = TGRG(; formulation = OWAApprox())
 
     obj = MinRisk()
     w21 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1458,7 +1458,7 @@ end
                                                                            "max_iter" => 100,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = OWA(; owa = OWASettings(; approx = false))
+    rm = OWA(; formulation = OWAExact())
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1689,7 +1689,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = OWA(; owa = OWASettings())
+    rm = OWA(; formulation = OWAApprox())
 
     obj = MinRisk()
     w21 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1936,7 +1936,7 @@ end
                                                                            "max_iter" => 100,
                                                                            "equilibrate_max_iter" => 20))))
     asset_statistics!(portfolio)
-    rm = OWA(; w = owa_tg(200), owa = OWASettings(; approx = false))
+    rm = OWA(; w = owa_tg(200), formulation = OWAExact())
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -2165,7 +2165,7 @@ end
           abs(dot(portfolio.mu, w20.weights) - ret4) < 1e-10
 
     portfolio.mu_l = Inf
-    rm = OWA(; w = owa_tg(200), owa = OWASettings())
+    rm = OWA(; w = owa_tg(200), formulation = OWAApprox())
 
     obj = MinRisk()
     w21 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))

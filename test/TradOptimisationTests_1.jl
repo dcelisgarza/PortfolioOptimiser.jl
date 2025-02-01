@@ -55,8 +55,7 @@ end
                                                                "max_step_fraction" => 0.75,
                                                                "max_iter" => 100,
                                                                "equilibrate_max_iter" => 20)))
-    rm = [[OWA(; owa = OWASettings(; approx = false)),
-           OWA(; owa = OWASettings(; approx = true))]]
+    rm = [[OWA(; formulation = OWAExact()), OWA(; formulation = OWAApprox())]]
     optimise!(portfolio, Trad(; rm = rm))
     @test !isempty(portfolio.fail)
     @test haskey(portfolio.fail, :Clarabel_Trad)

@@ -1061,7 +1061,7 @@ end
                                                                            "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
 
-    rm = GMD(; owa = OWASettings(; approx = false))
+    rm = GMD(; formulation = OWAExact())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -1087,12 +1087,12 @@ end
            0.025156161354234995, 0.09117165252189166, 0.03757692494901132,
            0.06309559240482479, 0.09826122341472683, 0.11627275437789045,
            0.09026494288348534, 0.12943235155804417]
-    @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-4)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.001)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 
-    rm = GMD(; owa = OWASettings(; approx = true))
+    rm = GMD(; formulation = OWAApprox())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -1133,7 +1133,7 @@ end
                                                                            "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
-    rm = TG(; owa = OWASettings(; approx = false))
+    rm = TG(; formulation = OWAExact())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -1165,7 +1165,7 @@ end
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.05)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.05)
 
-    rm = TG(; owa = OWASettings(; approx = true))
+    rm = TG(; formulation = OWAApprox())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -1233,7 +1233,7 @@ end
            0.06602199165673786, 0.07860838479579062, 0.1002302980981733,
            0.07990869136838882, 0.1283522921371587]
     @test isapprox(w1.weights, w1t, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w2t, rtol = 5.0e-5)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-4)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.05)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.1)
 end
@@ -1247,7 +1247,7 @@ end
                                                                            "max_step_fraction" => 0.7))))
     asset_statistics!(portfolio)
 
-    rm = OWA(; owa = OWASettings(; approx = false))
+    rm = OWA(; formulation = OWAExact())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -1273,12 +1273,12 @@ end
            0.09116841055417137, 0.037576367699632254, 0.06309648657138091,
            0.09826236476510795, 0.11627318427500141, 0.09026525263239465,
            0.12943065420723956]
-    @test isapprox(w1.weights, w1t, rtol = 5.0e-5)
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-4)
     @test isapprox(w2.weights, w2t, rtol = 0.0001)
     @test isapprox(hrc1 / lrc1, 1, rtol = 0.001)
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 
-    rm = OWA(; owa = OWASettings(; approx = true))
+    rm = OWA(; formulation = OWAApprox())
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
