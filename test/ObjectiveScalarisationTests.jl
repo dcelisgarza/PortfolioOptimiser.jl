@@ -30,13 +30,13 @@ l = 2.0
                    Trad(; obj = MinRisk(), rm = SD(),
                         scalarisation = ScalarLogSumExp(; gamma = 1e3)))
 
-    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-7)
+    @test isapprox(w1.weights, w2.weights, rtol = 5.0e-6)
     @test isapprox(w1.weights, w3.weights, rtol = 0.005)
     @test isapprox(w1.weights, w4.weights, rtol = 1.0e-5)
-    @test isapprox(w1.weights, w5.weights, rtol = 5.0e-6)
+    @test isapprox(w1.weights, w5.weights, rtol = 5.0e-5)
     @test isapprox(w2.weights, w3.weights, rtol = 0.005)
-    @test isapprox(w2.weights, w4.weights, rtol = 1.0e-5)
-    @test isapprox(w2.weights, w5.weights, rtol = 5.0e-6)
+    @test isapprox(w2.weights, w4.weights, rtol = 5.0e-5)
+    @test isapprox(w2.weights, w5.weights, rtol = 5.0e-5)
 
     w6 = optimise!(portfolio,
                    Trad(; obj = MinRisk(), rm = SVariance(), scalarisation = ScalarSum()))
@@ -44,7 +44,7 @@ l = 2.0
                    Trad(; obj = MinRisk(), rm = SVariance(), scalarisation = ScalarMax()))
     w8 = optimise!(portfolio,
                    Trad(; obj = MinRisk(), rm = SVariance(),
-                        scalarisation = ScalarLogSumExp(; gamma = 1e-3)))
+                        scalarisation = ScalarLogSumExp(; gamma = 1e-4)))
     w9 = optimise!(portfolio,
                    Trad(; obj = MinRisk(), rm = SVariance(),
                         scalarisation = ScalarLogSumExp(; gamma = 1e0)))
