@@ -62,7 +62,12 @@ HCRMSettings
 
 ### Ordered Weight Array settings
 
-Certain risk measures make use of Ordered Weight Array formulations, for which there is an expensive exact formulation, and an approximate, tunable one based on [3D Power Cones](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone). We therefore also provide a couple of structures that let users pick which formulation to use and tune the approximate one.
+Certain risk measures make use of Ordered Weight Array formulations in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) implements two formulations.
+
+  - An exact but expensive formulation.
+  - An approximate, tunable one based on [3D Power Cones](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone).
+
+We therefore provide a structure for dispatching the exact method, and a structure for tuning and dispatching the approximate one.
 
 ```@docs
 PortfolioOptimiser.OWAFormulation

@@ -3,6 +3,113 @@
 # SPDX-License-Identifier: MIT
 
 """
+    abstract type AbstractRMSettings end
+
+Abstract type for subtyping risk measure settings.
+
+See also: [`RMSettings`](@ref), [`HCRMSettings`](@ref).
+"""
+abstract type AbstractRMSettings end
+
+"""
+    mutable struct RMSettings{T1 <: Real, T2 <: Real} <: AbstractRMSettings
+
+Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this field makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
+
+See also: [`RiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
+
+# Keyword Parameters
+
+## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - `flag::Bool = true`:
+
+      + If `true`: it is included in the optimisation's risk vector.
+      + If `false`: it is *not* included in the optimisation's risk vector, used when you want to constrain the upper bound of a risk measure without having that risk measure appear in the [`MinRisk`](@ref), [`Utility`](@ref), or [`Sharpe`](@ref) objective measures.
+
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
+  - `ub::T2 = Inf`: upper bound risk constraint.
+
+## In optimisations which take risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - `flag::Bool = true`: no effect, the risk cannot be bounded in these optimisations.
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
+  - `ub::T2 = Inf`: no effect, the risk cannot be bounded in these optimisations.
+
+# Examples
+"""
+mutable struct RMSettings{T1 <: Real, T2 <: Real} <: AbstractRMSettings
+    flag::Bool
+    scale::T1
+    ub::T2
+end
+function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
+    return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
+end
+
+"""
+    mutable struct HCRMSettings{T1 <: Real} <: AbstractRMSettings
+
+Configuration settings for concrete subtypes of [`HCRiskMeasure`](@ref).
+
+See also: [`HCRiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
+
+# Keyword Parameters
+
+  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
+
+# Examples
+"""
+mutable struct HCRMSettings{T1 <: Real} <: AbstractRMSettings
+    scale::T1
+end
+function HCRMSettings(; scale::Real = 1.0)
+    return HCRMSettings{typeof(scale)}(scale)
+end
+
+"""
+    abstract type OWAFormulation end
+
+Abstract type for subtyping Ordered Weight Array formulations in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+
+See also: [`OWAExact`](@ref), [`OWAApprox`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+"""
+abstract type OWAFormulation end
+
+"""
+    struct OWAExact <: OWAFormulation end
+
+Type for dispatching the exact formulation of Ordered Weight Array risk measures.
+
+See also: [`OWAApprox`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+"""
+struct OWAExact <: OWAFormulation end
+
+"""
+    mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
+
+Type for dispatching and tuning the approximate formulation of Ordered Weight Array risk measures.
+
+See also: [`OWAExact`](@ref),[`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+
+# Keyword Parameters
+
+  - `p::T1 = Float64[2, 3, 4, 10, 50]`: vector of the p-norm orders to be used in the approximation.
+
+# Behaviour
+
+  - Uses [3D Power Cones](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone).
+
+# Examples
+"""
+mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
+    p::T1
+end
+function OWAApprox(; p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50])
+    return OWAApprox{typeof(p)}(p)
+end
+
+"""
     abstract type AbstractRiskMeasure end
 
 Supertype for all risk measaures.
@@ -14,11 +121,11 @@ abstract type AbstractRiskMeasure end
 """
     abstract type RiskMeasure <: AbstractRiskMeasure end
 
-Supertype for risk measures compatible with [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) optimisation types.
+Supertype for risk measures compatible with optimisations which accept risk measures.
 
-See also: [`calc_risk`](@ref), [`RMSettings`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`RMSettings`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
-# Implementation requirements
+# Implementation
 
 To ensure a risk measure can be used any of the above optimisation types, it must abide by a few rules.
 
@@ -269,11 +376,11 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 """
     abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
-Supertype for risk measures compatible with [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) with any of the previous.
+Supertype for risk measures compatible with optimisations which accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`calc_risk`](@ref), [`HCRMSettings`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`HCRMSettings`](@ref), [`calc_risk`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
-# Implementation requirements
+# Implementation
 
 To ensure a risk measure can be used by the above optimisation types, it must abide by a few rules.
 
@@ -325,10 +432,10 @@ abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
 Abstract type for risk measures that cannot be used in optimisations but can be used as performance measurements via [`calc_risk`](@ref). This can be for two reasons:
 
- 1. They can be negative, therefore unsuitable for [`HRP`](@ref), [`HERC`](@ref), and [`NCO`](@ref) with any of the previous.
- 2. They have no known optimisation formulation, therefore unsuitable for [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), and [`NCO`](@ref) with any of the previous.
+ 1. They can be negative, therefore unsuitable for optimisations that accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+ 2. They have no known optimisation formulation, therefore unsuitable for optimisations that accept risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`calc_risk`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref).
+See also: [`calc_risk`](@ref).
 
 # Implementation
 
@@ -347,219 +454,11 @@ end
 abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
 
 """
-"""
-abstract type AbstractRMSettings end
-
-"""
-    mutable struct RMSettings{T1 <: Real, T2 <: Real}
-
-Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this field makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
-
-See also: [`calc_risk`](@ref), [`RiskMeasure`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
-
-# Keyword Parameters
-
-## In [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref) with any of the previous
-
-  - `flag::Bool = true`:
-
-      + If `true`: it is included in the optimisation's risk vector.
-      + If `false`: it is *not* included in the optimisation's risk vector, used when you want to constrain the upper bound of a risk measure without having that risk measure appear in the [`MinRisk`](@ref), [`Utility`](@ref), or [`Sharpe`](@ref) objective measures.
-
-  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
-  - `ub::T2 = Inf`: upper bound risk constraint.
-
-## In [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref) with any of the previous
-
-  - `flag::Bool = true`: no effect, the risk cannot be bounded in these optimisations.
-  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
-  - `ub::T2 = Inf`: no effect, the risk cannot be bounded in these optimisations.
-
-# Examples
-
-```julia
-using Clarabel
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-
-# Compute statistics.
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Traditional optimisation.
-type = Trad(;
-            rm = [
-                  # Append to the risk vector as `sqrt(252) * sd_risk`
-                  SD(; settings = RMSettings(; flag = true, scale = sqrt(252))),
-                  # Append to the risk vector as `0.5 * cvar_risk`
-                  CVaR(; settings = RMSettings(; scale = 0.5, flag = true)),
-                  # Do not add to the risk vector but constrain the maximum
-                  # CDaR to 100
-                  CDaR(; settings = RMSettings(; flag = false, ub = 100))])
-w1 = optimise!(port, type)
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  3.11076e-11
-   2 │       2  0.0165189
-   3 │       3  0.525957
-   4 │       4  0.0220971
-   5 │       5  0.435427
-=#
-
-# Risk vector only contains the risk measures with `flag == true`, 
-# multiplied by the scaling factor
-port.model[:risk_vec]
-#=
-2-element Vector{JuMP.AbstractJuMPScalar}:
- 15.874507866387544 sd_risk
- 0.5 var + z_cvar[1] + z_cvar[2] + z_cvar[3] + z_cvar[4] + z_cvar[5] + z_cvar[6] + z_cvar[7] + z_cvar[8] + z_cvar[9] + z_cvar[10]
-=#
-
-# The risk expression is the sum of the entries in the vector because
-# the default scalarisation is the sum of the expressions.
-port.model[:risk]
-#=
-15.874507866387544 sd_risk + 0.5 var + z_cvar[1] + z_cvar[2] + z_cvar[3] + z_cvar[4] + z_cvar[5] + z_cvar[6] + z_cvar[7] + z_cvar[8] + z_cvar[9] + z_cvar[10]
-=#
-
-# Check that the CDaR is indeed constrained to be <= 100.
-port.model[:cdar_risk_ub]
-#=
-dar + 2 z_cdar[1] + 2 z_cdar[2] + 2 z_cdar[3] + 2 z_cdar[4] + 2 z_cdar[5] + 2 z_cdar[6] + 2 z_cdar[7] + 2 z_cdar[8] + 2 z_cdar[9] + 2 z_cdar[10] <= 100
-=#
-
-# Hierarchical equal risk optimisation.
-type = HERC(;
-            rm = [
-                  # Add to the risk calculation (via `AbstractScalarisation`)
-                  # as `sqrt(252) * sd_risk`.
-                  SD(; settings = RMSettings(; flag = true, scale = sqrt(252))),
-                  # Add to the risk calculation (via `AbstractScalarisation`)
-                  # as `0.5 * cvar_risk`.
-                  CVaR(; settings = RMSettings(; scale = 0.5, flag = true)),
-                  # Add to the risk calculation because `flag` and `ub` have no
-                  # effect in hierarchical optimisations.
-                  CDaR(; settings = RMSettings(; flag = false, ub = 100))])
-w2 = optimise!(port, type)
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.0548607
-   2 │       2  0.0634407
-   3 │       3  0.695601
-   4 │       4  0.0506031
-   5 │       5  0.135495
-=#
-
-# There is no `JuMP` model for HRP and HERC so we can't see the internals. 
-# The effects can be seen by changing coefficients.
-```
-"""
-mutable struct RMSettings{T1 <: Real, T2 <: Real} <: AbstractRMSettings
-    flag::Bool
-    scale::T1
-    ub::T2
-end
-function RMSettings(; flag::Bool = true, scale::Real = 1.0, ub::Real = Inf)
-    return RMSettings{typeof(scale), typeof(ub)}(flag, scale, ub)
-end
-
-"""
-    mutable struct HCRMSettings{T1 <: Real}
-
-Configuration settings for concrete subtypes of [`HCRiskMeasure`](@ref).
-
-See also: [`calc_risk`](@ref), [`HCRiskMeasure`](@ref), [`HRP`](@ref), [`HERC`](@ref), [`NCO`](@ref), [`AbstractScalarisation`](@ref).
-
-# Keyword Parameters
-
-  - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
-
-```julia
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2))
-
-# Compute asset statistics.                                                
-asset_statistics!(port)
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Hierarchical equal risk optimisation.
-type = HERC(;
-            rm = [
-                  # Add to the risk calculation (via `AbstractScalarisation`)
-                  # as `0.5 * dar_risk`.
-                  DaR(; settings = HCRMSettings(; scale = 0.5)),
-                  # Add to the risk calculation (via `AbstractScalarisation`)
-                  # as `3 * var_risk`.
-                  VaR(; settings = HCRMSettings(; scale = 3))])
-w = optimise!(port, type)
-#=
-5×2 DataFrame
- Row │ tickers  weights   
-     │ Int64    Float64   
-─────┼────────────────────
-   1 │       1  0.035433
-   2 │       2  0.0480019
-   3 │       3  0.795106
-   4 │       4  0.0245889
-   5 │       5  0.0968701
-=#
-
-# There is no `JuMP` model for HRP and HERC so we can't see the internals. 
-# The effects can be seen by changing coefficients.
-```
-"""
-mutable struct HCRMSettings{T1 <: Real} <: AbstractRMSettings
-    scale::T1
-end
-function HCRMSettings(; scale::Real = 1.0)
-    return HCRMSettings{typeof(scale)}(scale)
-end
-
-"""
     abstract type VarianceFormulation end
 
-Abstract type for implementing various formulations of the [`Variance`](@ref) in [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref) with any of the previous optimisation types.
+Abstract type for implementing various formulations of the [`Variance`](@ref) in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref).
+See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref).
 """
 abstract type VarianceFormulation end
 
@@ -590,59 +489,6 @@ See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`Variance`](@ref).
   - Performance may degrade for large portfolios.
 
 # Examples
-
-```julia
-using Clarabel, LinearAlgebra
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-# Compute asset statistics.                                                
-asset_statistics!(port)
-
-# Explicit quadratic expression for the variance.
-w = optimise!(port, Trad(; rm = Variance(; formulation = Quad()), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  3.5113e-10
-   2 │       2  0.0183835
-   3 │       3  0.520498
-   4 │       4  0.0340474
-   5 │       5  0.427071
-=#
-
-# Covariance matrix, sigma.
-port.cov
-#=
-5×5 Matrix{Float64}:
- 1.89335    0.649754   0.129808     0.602482     0.262616
- 0.649754   1.41321   -0.152314     0.785941     0.367755
- 0.129808  -0.152314   0.958713    -0.00842172  -0.855604
- 0.602482   0.785941  -0.00842172   2.11576      0.113369
- 0.262616   0.367755  -0.855604     0.113369     1.32352
-=#
-
-# Check that the variance risk is indeed `dot(w, sigma, w)`.
-port.model[:variance_risk] == dot(port.model[:w], port.cov, port.model[:w]) # true
-```
 """
 struct Quad <: VarianceFormulation end
 
@@ -680,76 +526,79 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
   - Particularly effective for large-scale problems.
 
 # Examples
-
-```julia
-using Clarabel
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-# Compute asset statistics.                                                
-asset_statistics!(port)
-
-# Explicit quadratic expression for the variance.
-w = optimise!(port, Trad(; rm = Variance(; formulation = SOC()), str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights    
-     │ Int64    Float64    
-─────┼─────────────────────
-   1 │       1  2.14218e-9
-   2 │       2  0.0183819
-   3 │       3  0.520499
-   4 │       4  0.0340462
-   5 │       5  0.427073
-=#
-
-# Covariance matrix, sigma.
-port.cov
-#=
-5×5 Matrix{Float64}:
- 1.89335    0.649754   0.129808     0.602482     0.262616
- 0.649754   1.41321   -0.152314     0.785941     0.367755
- 0.129808  -0.152314   0.958713    -0.00842172  -0.855604
- 0.602482   0.785941  -0.00842172   2.11576      0.113369
- 0.262616   0.367755  -0.855604     0.113369     1.32352
- =#
-
-# Check that the variance risk exists as an SOC constraint.
-port.model[:variance_risk]
-#=
-dev²
-=#
-
-port.model[:constr_dev_soc]
-#=
-constr_dev_soc : 
-[dev, 
-1.3339817521328776 w[1] + 0.23752111354642388 w[2] + 0.08772311968949179 w[3] + 0.1933954630317334 w[4] + 0.11104990914089145 w[5], 
-0.23752111354642388 w[1] + 1.1172071395407432 w[2] - 0.05472328163488465 w[3] + 0.2914549020386699 w[4] + 0.14389651700778633 w[5],
-0.08772311968949179 w[1] - 0.05472328163488465 w[2] + 0.8635663605757948 w[3] - 0.00013005161391315675 w[4] - 0.4497512686528594 w[5],
-0.1933954630317334 w[1] + 0.2914549020386699 w[2] - 0.00013005161391315675 w[3] + 1.4117365158022712 w[4] + 0.020326110574790338 w[5],
-0.11104990914089145 w[1] + 0.14389651700778633 w[2] - 0.4497512686528594 w[3] + 0.020326110574790338 w[4] + 1.0429726582846264 w[5]]
-in MathOptInterface.SecondOrderCone(6)
-=#
-```
 """
 struct SOC <: VarianceFormulation end
+
+"""
+    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasure
+
+Measures and computes the portfolio Variance (Variance).
+
+```math
+\\begin{align}
+\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) &= \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
+
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Parameters
+
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+
+  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: (optional) `N×N` covariance matrix.
+
+      + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the field depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
+
+## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - [`NoAdj`](@ref), [`IP`](@ref) network and cluster constraints.
+
+      + Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
+      + Defines the variance risk `:variance_risk` as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
+      + Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+
+  - [`SDP`](@ref) network and/or cluster constraints.
+
+      + Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
+      + Defines the variance risk `:variance_risk` as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
+      + Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
+
+# Functor
+
+  - `(variance::Variance)(w::AbstractVector)`: computes the Variance of an `N×1` vector of asset weights.
+
+# Examples
+"""
+mutable struct Variance <: RiskMeasure
+    settings::RMSettings
+    formulation::VarianceFormulation
+    sigma::Union{<:AbstractMatrix, Nothing}
+end
+function Variance(; settings::RMSettings = RMSettings(),
+                  formulation::VarianceFormulation = SOC(),
+                  sigma::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(sigma)
+        @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    return Variance(settings, formulation, sigma)
+end
+function Base.setproperty!(obj::Variance, sym::Symbol, val)
+    if sym == :sigma
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
+function (variance::Variance)(w::AbstractVector)
+    return dot(w, variance.sigma, w)
+end
 
 """
     mutable struct SD <: RiskMeasure
@@ -767,7 +616,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD`](@ref), [`SVariance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Parameters
 
@@ -777,11 +626,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD
 
       + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the field depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
-# Behaviour
-
-  - When setting `sigma` at construction or runtime, the matrix must be square (`N×N`).
-
-## In [`Trad`](@ref), [`RB`](@ref), [`NOC`](@ref), [`NCO`](@ref) with any of the previous
+## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
   - Defines a standard deviation variable `sd_risk`.
@@ -793,106 +638,6 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`SSD
   - `(sd::SD)(w::AbstractVector)`: computes the Standard Deviation of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```julia
-using Clarabel
-
-# Randomly generated normally distributed returns.
-ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
-       1.33575    -0.541003   2.28744    -0.157588    -1.45177
-       -1.91694    -0.167745   0.920495    0.00677243  -1.29112
-       0.123141    1.59841   -0.185076    2.58911     -0.250747
-       1.92782     1.01679    1.12107     1.09731     -0.99954
-       2.07114    -0.513216  -0.532891    0.917748    -0.0346682
-       -1.37424    -1.35272   -0.628216   -2.76234     -0.112378
-       1.3831      1.14021   -0.577472    0.224504     1.28137
-       -0.0577619  -0.10658   -0.637011    1.70933      1.84176
-       1.6319      2.05059   -0.21469    -0.640715     1.39879]
-
-# Instantiate portfolio instance.
-port = Portfolio(; ret = ret, assets = 1:size(ret, 2),
-                 solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                  :check_sol => (allow_local = true,
-                                                                 allow_almost = true),
-                                                  :params => Dict("verbose" => false))))
-# Risk measure
-rm = SD()
-
-# Compute asset statistics.                                                
-asset_statistics!(port)
-
-# Optimise portfolio.
-w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-#=
-5×2 DataFrame
- Row │ tickers  weights     
-     │ Int64    Float64     
-─────┼──────────────────────
-   1 │       1  1.42346e-10
-   2 │       2  0.018383
-   3 │       3  0.520498
-   4 │       4  0.0340474
-   5 │       5  0.427072
-=#
-
-# Compute the standard deviation.
-r1 = calc_risk(port, :Trad; rm = rm) # 0.3612722213729872
-
-# As a functor.
-r1 == SD(; sigma = port.cov)(w1.weights) # true
-
-# Covariance matrix, sigma.
-port.cov
-#=
-5×5 Matrix{Float64}:
- 1.89335    0.649754   0.129808     0.602482     0.262616
- 0.649754   1.41321   -0.152314     0.785941     0.367755
- 0.129808  -0.152314   0.958713    -0.00842172  -0.855604
- 0.602482   0.785941  -0.00842172   2.11576      0.113369
- 0.262616   0.367755  -0.855604     0.113369     1.32352
-=#
-
-# Check that the std risk exists as an SOC constraint.
-port.model[:sd_risk]
-#=
-sd_risk
-=#
-
-port.model[:constr_sd_risk_soc]
-#=
-constr_sd_risk_soc : 
-[sd_risk,
-1.3339817521328776 w[1] + 0.23752111354642388 w[2] + 0.08772311968949179 w[3] + 0.1933954630317334 w[4] + 0.11104990914089145 w[5],
-0.23752111354642388 w[1] + 1.1172071395407432 w[2] - 0.05472328163488465 w[3] + 0.2914549020386699 w[4] + 0.14389651700778633 w[5],
-0.08772311968949179 w[1] - 0.05472328163488465 w[2] + 0.8635663605757948 w[3] - 0.00013005161391315675 w[4] - 0.4497512686528594 w[5],
-0.1933954630317334 w[1] + 0.2914549020386699 w[2] - 0.00013005161391315675 w[3] + 1.4117365158022712 w[4] + 0.020326110574790338 w[5],
-0.11104990914089145 w[1] + 0.14389651700778633 w[2] - 0.4497512686528594 w[3] + 0.020326110574790338 w[4] + 1.0429726582846264 w[5]]
-in MathOptInterface.SecondOrderCone(6)
-=#
-
-# Clusterise assets.
-cluster_assets!(port)
-
-# Hierarchical optimisation, no JuMP model.
-w2 = optimise!(port, HRP(; rm = rm))
-#=
-5×2 DataFrame
- Row │ tickers  weights  
-     │ Int64    Float64  
-─────┼───────────────────
-   1 │       1  0.199755
-   2 │       2  0.229988
-   3 │       3  0.198033
-   4 │       4  0.133306
-   5 │       5  0.238918
-=#
-
-# Compute the standard deviation.
-r2 = calc_risk(port, :HRP; rm = rm) # 0.6547632732108616
-
-# Use SD as a functor.
-r2 == SD(; sigma = port.cov)(w2.weights) # true
-```
 """
 mutable struct SD <: RiskMeasure
     settings::RMSettings
@@ -2039,39 +1784,6 @@ function (cvarrg::CVaRRG)(x::AbstractVector)
 end
 
 """
-"""
-abstract type OWAFormulation end
-"""
-"""
-struct OWAExact <: OWAFormulation end
-"""
-    mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
-
-# Description
-
-Defines the settings for Ordered Weight Array (OWA) risk measures.
-
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
-
-# Fields
-
-  - `approx::Bool = true`: use the p-norm based approximation of the OWA risk measure optimisation.
-  - `p::T1 = Float64[2, 3, 4, 10, 50]`: vector of the p-norm orders to be used in the approximation.
-
-# Behaviour
-
-  - `p` is only used when `approx == true`.
-
-# Examples
-"""
-mutable struct OWAApprox{T1 <: AbstractVector{<:Real}} <: OWAFormulation
-    p::T1
-end
-function OWAApprox(; p::AbstractVector{<:Real} = Float64[2, 3, 4, 10, 50])
-    return OWAApprox{typeof(p)}(p)
-end
-
-"""
     struct GMD <: RiskMeasure
 
 # Description
@@ -2523,70 +2235,6 @@ function Base.setproperty!(obj::SSkew, sym::Symbol, val)
 end
 function (sskew::SSkew)(w::AbstractVector)
     return sqrt(dot(w, sskew.V, w))
-end
-
-"""
-    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasure
-
-# Description
-
-Defines the Variance.
-
-```math
-\\begin{align}
-\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) &= \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
-\\end{align}
-```
-
-See also: [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::Variance, ::AbstractVector)`](@ref).
-
-# Fields
-
-  - `settings::HCRMSettings = HCRMSettings()`: hierarchical risk measure configuration settings.
-  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: optional covariance matrix.
-
-# Behaviour
-
-  - If `sigma` is `nothing`: uses the covariance matrix `cov` from the (or [`Portfolio`] when used in [`calc_risk`](@ref)) instance.
-  - If `sigma` provided: uses custom covariance matrix.
-
-## Validation
-
-  - When setting `sigma` at construction or runtime, the matrix must be square (`N×N`).
-
-# Examples
-
-```@example
-# Default settings
-variance = Variance()
-
-# Custom settings
-variance = Variance(; settings = RMSettings(; scale = 3))
-```
-"""
-mutable struct Variance <: RiskMeasure
-    settings::RMSettings
-    formulation::VarianceFormulation
-    sigma::Union{<:AbstractMatrix, Nothing}
-end
-function Variance(; settings::RMSettings = RMSettings(),
-                  formulation::VarianceFormulation = SOC(),
-                  sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(sigma)
-        @smart_assert(size(sigma, 1) == size(sigma, 2))
-    end
-    return Variance(settings, formulation, sigma)
-end
-function Base.setproperty!(obj::Variance, sym::Symbol, val)
-    if sym == :sigma
-        if !isnothing(val)
-            @smart_assert(size(val, 1) == size(val, 2))
-        end
-    end
-    return setfield!(obj, sym, val)
-end
-function (variance::Variance)(w::AbstractVector)
-    return dot(w, variance.sigma, w)
 end
 
 """

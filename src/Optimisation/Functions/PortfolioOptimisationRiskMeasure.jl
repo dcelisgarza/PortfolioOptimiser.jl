@@ -190,7 +190,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
     ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
     set_rm_risk_upper_bound(type, model, var_bound_expr, ub, var_bound_key)
-    set_risk_expression(model, model[:variance_risk], rm.settings.scale, rm.settings.flag)
+    set_risk_expression(model, variance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
 function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC};
