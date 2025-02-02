@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/0_risk_measure_examples.jl"
 ```
@@ -179,7 +180,6 @@ port.model[:sd_risk_ub]
 w2 = optimise!(port, HRP(; rm = rm))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

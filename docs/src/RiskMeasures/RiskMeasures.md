@@ -81,6 +81,8 @@ OWAExact
 
 [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/)'s risk measures are implemented using `Julia`'s type hierarchy. This makes it easy to add new ones by implementing the relevant types and methods.
 
+By properly subtyping and following the implementation instructions of each abstract type, it's possible to define risk measures that will be entirely compatible with current functionality, without the need for extending method definitions and/or subtyping any of the myriad of abstract types that allow users to define custom behaviour within the library.
+
 ```@docs
 PortfolioOptimiser.AbstractRiskMeasure
 RiskMeasure
@@ -98,8 +100,6 @@ RiskMeasureOWA
 RiskMeasureSkew
 ```
 
-These risk measures are compatible with all optimisation types that accept a risk measure.
-
 ### Support functions
 
 Some risk measures require the computation of certain statistics, these are performed by the following functions.
@@ -111,7 +111,7 @@ PortfolioOptimiser.calc_target_ret_mu
 
 ### Constants
 
-Some risk measures can be classified by the properties they contain. They are not types because there is overlap in some of them, if needing .
+It is useful to group risk measures by their properties other than their types. By defining constants which group various risk measure types with certain characteristics we can facilitate their use in the many different optimisation types offered by [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). This makes adding new features easier and lowers the difficulty in defining customised behaviour.
 
 ```@docs
 PortfolioOptimiser.RMSolvers
