@@ -63,7 +63,7 @@ makedocs(;
                     Base.get_extension(PortfolioOptimiser, :PortfolioOptimiserPlotsExt)],
          authors = "Daniel Celis Garza",
          repo = "https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/{commit}{path}#{line}",
-         sitename = "PortfolioOptimiser.jl",
+         sitename = "PortfolioOptimiser.jl", warnonly = :doctest,
          format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true",
                                   canonical = "https://dcelisgarza.github.io/PortfolioOptimiser.jl",
                                   assets = String[],

@@ -86,9 +86,41 @@ PortfolioOptimiser.AbstractRiskMeasure
 RiskMeasure
 HCRiskMeasure
 NoOptRiskMeasure
+RiskMeasureSigma
+RiskMeasureMu
+HCRiskMeasureMu
+NoOptRiskMeasureMu
+RiskMeasureTarget       
+HCRiskMeasureTarget
+RiskMeasureSolvers
+HCRiskMeasureSolvers
+RiskMeasureOWA
+RiskMeasureSkew
 ```
 
 These risk measures are compatible with all optimisation types that accept a risk measure.
+
+### Support functions
+
+Some risk measures require the computation of certain statistics, these are performed by the following functions.
+
+```@docs
+PortfolioOptimiser.calc_ret_mu
+PortfolioOptimiser.calc_target_ret_mu
+```
+
+### Constants
+
+Some risk measures can be classified by the properties they contain. They are not types because there is overlap in some of them, if needing .
+
+```@docs
+PortfolioOptimiser.RMSolvers
+PortfolioOptimiser.RMSigma
+PortfolioOptimiser.RMSkew
+PortfolioOptimiser.RMOWA
+PortfolioOptimiser.RMMu
+PortfolioOptimiser.RMTarget
+```
 
 ### Dispersion risk measures
 

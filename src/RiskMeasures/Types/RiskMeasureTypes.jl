@@ -18,7 +18,7 @@ Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having th
 
 See also: [`RiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
 ## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
@@ -54,7 +54,7 @@ Configuration settings for concrete subtypes of [`HCRiskMeasure`](@ref).
 
 See also: [`HCRiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `scale::T1 = 1.0`: weight parameter of the risk measure in the [`AbstractScalarisation`](@ref) method being used.
 
@@ -92,7 +92,7 @@ Type for dispatching and tuning the approximate formulation of Ordered Weight Ar
 
 See also: [`OWAExact`](@ref),[`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `p::T1 = Float64[2, 3, 4, 10, 50]`: vector of the p-norm orders to be used in the approximation.
 
@@ -238,30 +238,6 @@ function PortfolioOptimiser.set_rm(port, rms::AbstractVector{<:MyRiskMeasure},
 end
 ```
 
-  - If calculating the risk requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
-
-```julia
-struct MyRiskMeasure <: RiskMeasure
-    # Fields of MyRiskMeasure
-    solvers::Union{<:AbstractDict, Nothing}
-end
-
-function PortfolioOptimiser.set_rm_solvers!(rm::MyRiskMeasure, solvers)
-    flag = false
-    if isnothing(rm.solvers) || isempty(rm.solvers)
-        rm.solvers = solvers
-        flag = true
-    end
-    return flag
-end
-
-function PortfolioOptimiser.unset_rm_solvers!(rm::MyRiskMeasure, flag)
-    if flag
-        rm.solvers = nothing
-    end
-end
-```
-
   - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
 
 ```julia
@@ -400,30 +376,6 @@ function calc_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
     # Risk measure calculation
 end
 ```
-
-  - If calculating the risk requires solving an optimisation model it must have a `solvers::Union{<:AbstractDict, Nothing}` field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers, and implement [`set_rm_solvers!`](@ref) and [`unset_rm_solvers!`](@ref).
-
-```julia
-struct MyHCRiskMeasure <: RiskMeasure
-    # Fields of MyHCRiskMeasure
-    solvers::Union{<:AbstractDict, Nothing}
-end
-
-function PortfolioOptimiser.set_rm_solvers!(rm::MyHCRiskMeasure, solvers)
-    flag = false
-    if isnothing(rm.solvers) || isempty(rm.solvers)
-        rm.solvers = solvers
-        flag = true
-    end
-    return flag
-end
-
-function PortfolioOptimiser.unset_rm_solvers!(rm::MyHCRiskMeasure, flag)
-    if flag
-        rm.solvers = nothing
-    end
-end
-```
 """
 abstract type HCRiskMeasure <: AbstractRiskMeasure end
 
@@ -454,11 +406,153 @@ end
 abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
 
 """
+    abstract type RiskMeasureSolvers <: RiskMeasure end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) for which computing the risk requires solving an optimisation model.
+
+# Implementation
+
+Concrete subtypes must contain the following properties:
+
+  - `solvers::Union{<:AbstractDict, Nothing}`: field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+"""
+abstract type RiskMeasureSolvers <: RiskMeasure end
+
+"""
+    abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
+
+Abstract type for subtyping [`HCRiskMeasure`](@ref) for which computing the risk requires solving an optimisation model.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `solvers::Union{<:AbstractDict, Nothing}`: field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+"""
+abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
+
+"""
+    abstract type RiskMeasureSigma <: RiskMeasure end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `sigma::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N` covariance matrix.
+"""
+abstract type RiskMeasureSigma <: RiskMeasure end
+
+"""
+    abstract type RiskMeasureSkew <: RiskMeasure end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) which can use an `N×N²` coskew matrix and `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `skew::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N²` coskew matrix.
+  - `V::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+"""
+abstract type RiskMeasureSkew <: RiskMeasure end
+
+"""
+    abstract type RiskMeasureOWA <: RiskMeasure end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) which is implemented via an Ordered Weight Array formulation.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `formulation::OWAFormulation`: field to store the formulation dispatch type.
+"""
+abstract type RiskMeasureOWA <: RiskMeasure end
+
+"""
+    abstract type RiskMeasureMu <: RiskMeasure end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+"""
+abstract type RiskMeasureMu <: RiskMeasure end
+
+"""
+    abstract type HCRiskMeasureMu <: RiskMeasure end
+
+Abstract type for subtyping [`HCRiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+"""
+abstract type HCRiskMeasureMu <: HCRiskMeasure end
+
+"""
+    abstract type NoOptRiskMeasureMu <: RiskMeasure end
+
+Abstract type for subtyping [`NoOptRiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+"""
+abstract type NoOptRiskMeasureMu <: NoOptRiskMeasure end
+
+"""
+    abstract type RiskMeasureTarget <: RiskMeasureMu end
+
+Abstract type for subtyping [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector specifying the minimum return threshold for classifying downside returns, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+    - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+    - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+
+  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+"""
+abstract type RiskMeasureTarget <: RiskMeasureMu end
+
+"""
+    abstract type HCRiskMeasureTarget <: RiskMeasureMu end
+
+Abstract type for subtyping [`HCRiskMeasure`](@ref) which can use a scalar or `N×1` vector specifying the minimum return threshold for classifying downside returns, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+# Implementation
+
+Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+
+    - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+    - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+
+  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+"""
+abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
+
+"""
     abstract type VarianceFormulation end
 
 Abstract type for implementing various formulations of the [`Variance`](@ref) in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref).
+  - If either `network_adj` or `cluster_adj` field of the [`Portfolio`](@ref) instance is [`SDP`](@ref), the formulation has no effect because this constraint type requires a [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) formulation of the variance.
+
+See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Portfolio`](@ref), [`SDP`](@ref).
 """
 abstract type VarianceFormulation end
 
@@ -530,7 +624,7 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
 struct SOC <: VarianceFormulation end
 
 """
-    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasure
+    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasureSigma
 
 Measures and computes the portfolio Variance (Variance).
 
@@ -547,7 +641,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -557,17 +651,20 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass
 
 ## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
+  - The Variance risk is defined as the key `:variance_risk`.
+
   - [`NoAdj`](@ref), [`IP`](@ref) network and cluster constraints.
 
       + Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
-      + Defines the variance risk `:variance_risk` as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
+      + Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
       + Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
-
+      + If it exists, the upper bound is defined via the portfolio standard deviation with key `:dev_ub`.
   - [`SDP`](@ref) network and/or cluster constraints.
 
       + Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
-      + Defines the variance risk `:variance_risk` as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
+      + Defines the variance risk, `:variance_risk`, as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
       + Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
+      + If it exists, the upper bound is defined via the portfolio variance with key `:variance_risk_ub`.
 
 # Functor
 
@@ -575,7 +672,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass
 
 # Examples
 """
-mutable struct Variance <: RiskMeasure
+mutable struct Variance <: RiskMeasureSigma
     settings::RMSettings
     formulation::VarianceFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
@@ -601,7 +698,7 @@ function (variance::Variance)(w::AbstractVector)
 end
 
 """
-    mutable struct SD <: RiskMeasure
+    mutable struct SD <: RiskMeasureSigma
 
 Measures and computes the portfolio Standard Deviation (SD).
 
@@ -618,7 +715,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -628,18 +725,16 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Por
 
 ## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
-  - Defines a standard deviation variable `sd_risk`.
-  - Sets the [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) risk expression `sd_risk = dev`.
-  - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
+  - The Standard Deviation risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key `:sd_risk`.
+  - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
 
 # Functor
 
-  - `(sd::SD)(w::AbstractVector)`: computes the Standard Deviation of a `T×1` vector of portfolio returns `x`.
+  - `(sd::SD)(w::AbstractVector)`: computes the Standard Deviation of an `N×1` vector of asset weights.
 
 # Examples
 """
-mutable struct SD <: RiskMeasure
+mutable struct SD <: RiskMeasureSigma
     settings::RMSettings
     sigma::Union{<:AbstractMatrix, Nothing}
 end
@@ -662,18 +757,8 @@ function (sd::SD)(w::AbstractVector)
     return sqrt(dot(w, sd.sigma, w))
 end
 
-function calc_ret_mu(x, w, rm)
-    mu = rm.mu
-    return mu = if isnothing(mu) || isempty(mu)
-        wi = rm.w
-        isnothing(wi) ? mean(x) : mean(x, wi)
-    else
-        dot(mu, w)
-    end
-end
-
 """
-    mutable struct MAD <: RiskMeasure
+    mutable struct MAD <: RiskMeasureMu
 
 Measures and computes the portfolio Mean Absolute Deviation (MAD). In other words, it is the expected value of the absolute deviation from the expected value of the returns vector. This is a generalisation to accomodate the use of weighted means.
 
@@ -689,28 +774,34 @@ Where:
   - ``\\lvert \\cdot \\rvert``: is the absolute value.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`MuSimple`](@ref), [`NoKelly`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`MuSimple`](@ref), [`NoKelly`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
-
-      + Only used if `isnothing(mu) || isempty(mu)`, else uses `mu`.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector (internal expected value) via [`calc_ret_mu`](@ref).
   - `we::Union{<:AbstractWeights, Nothing} = nothing`: (optional) `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
+
+      + If `isnothing(we)`: computes the unweighted mean.
+      + Else: computes the weighted mean.
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector (internal expected value).
 
-      + In the functor: takes precedence over `w`,
-      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use. If `isnothing(mu)`, takes the value from the `mu` property of the [`Portfolio`](@ref) instance.
+      + In the functor: uses [`calc_ret_mu`](@ref).
+
+      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use.
+
+          * If `isnothing(mu)`: takes the value from the `mu` property of the [`Portfolio`](@ref) instance.
 
 # Functor
 
-  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, and a `N×1` vector of portfolio weights `w`, accounting for fees.
+  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, a `N×1` vector of portfolio weights `w`, and fees `fees`.
+
+      + `fees`: must be consistent with the returns frequency.
 
 # Examples
 """
-mutable struct MAD <: RiskMeasure
+mutable struct MAD <: RiskMeasureMu
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
     we::Union{<:AbstractWeights, Nothing}
@@ -730,7 +821,7 @@ function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
 end
 
 """
-    mutable struct SSD{T1 <: Real} <: RiskMeasure
+    mutable struct SSD{T1 <: Real} <: RiskMeasureMu
 
 Measures and computes the portfolio Semi Standard Deviation (SD) below equal to or below the `target` return threshold.
 
@@ -749,7 +840,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -768,7 +859,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
 # Examples
 """
-mutable struct SSD <: RiskMeasure
+mutable struct SSD <: RiskMeasureMu
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
@@ -788,7 +879,7 @@ function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
 end
 
 """
-    mutable struct FLPM{T1 <: Real} <: RiskMeasure
+    mutable struct FLPM{T1 <: Real} <: RiskMeasureTarget
 
 Measures and computes the portfolio First Lower Partial Moment (FLPM). Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Omega ratio.
 
@@ -806,7 +897,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -834,7 +925,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
 # Examples
 """
-mutable struct FLPM <: RiskMeasure
+mutable struct FLPM <: RiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
@@ -849,17 +940,14 @@ end
 function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    target = flpm.target
-    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        target = calc_ret_mu(x, w, flpm)
-    end
+    target = calc_target_ret_mu(x, w, flpm)
     val = x .- target
     val = val[val .<= zero(eltype(val))]
     return -sum(val) / T
 end
 
 """
-    mutable struct SLPM{T1 <: Real} <: RiskMeasure
+    mutable struct SLPM{T1 <: Real} <: RiskMeasureTarget
 
 Measures and computes the portfolio Second Lower Partial Moment (SLPM). Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Sortino ratio.
 
@@ -877,7 +965,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -905,7 +993,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
 # Examples
 """
-mutable struct SLPM <: RiskMeasure
+mutable struct SLPM <: RiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
@@ -920,10 +1008,7 @@ end
 function (slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    target = slpm.target
-    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        target = calc_ret_mu(x, w, slpm)
-    end
+    target = calc_target_ret_mu(x, w, slpm)
     val = x .- target
     val = val[val .<= zero(eltype(val))]
     return sqrt(dot(val, val) / (T - 1))
@@ -948,7 +1033,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -991,7 +1076,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -1058,7 +1143,7 @@ function (drcvar::DRCVaR)(x::AbstractVector)
 end
 
 """
-    mutable struct EVaR{T1 <: Real} <: RiskMeasure
+    mutable struct EVaR{T1 <: Real} <: RiskMeasureSolvers
 
 Measures and computes the portfolio Entropic Value at Risk (EVaR). It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
 
@@ -1079,7 +1164,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1094,7 +1179,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
 # Examples
 """
-mutable struct EVaR{T1 <: Real} <: RiskMeasure
+mutable struct EVaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     solvers::Union{<:AbstractDict, Nothing}
@@ -1115,7 +1200,7 @@ function (evar::EVaR)(x::AbstractVector)
 end
 
 """
-    mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+    mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
 
 Measures and computes the portfolio Relativistic Value at Risk (RLVaR). It is a generalisation of the [`EVaR`](@ref).
 
@@ -1138,7 +1223,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1154,7 +1239,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
 # Examples
 """
-mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
@@ -1196,7 +1281,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -1249,7 +1334,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
 
@@ -1326,7 +1411,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -1394,7 +1479,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1430,7 +1515,7 @@ function (uci::UCI)(x::AbstractVector)
 end
 
 """
-    mutable struct EDaR{T1 <: Real} <: RiskMeasure
+    mutable struct EDaR{T1 <: Real} <: RiskMeasureSolvers
 
 Measures and computes the portfolio Entropic Drawdown at Risk of uncompounded cumulative returns (EDaR). It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
 
@@ -1451,7 +1536,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1466,7 +1551,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 
 # Examples
 """
-mutable struct EDaR{T1 <: Real} <: RiskMeasure
+mutable struct EDaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     solvers::Union{<:AbstractDict, Nothing}
@@ -1499,7 +1584,7 @@ function (edar::EDaR)(x::AbstractVector)
 end
 
 """
-    mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+    mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
 
 Measures and computes the portfolio Relativistic Drawdown at Risk of uncompounded cumulative returns (RLVaR). It is a generalisation of the [`EDaR`](@ref).
 
@@ -1522,7 +1607,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1538,7 +1623,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
 # Examples
 """
-mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasure
+mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
@@ -1573,7 +1658,7 @@ function (rldar::RLDaR)(x::AbstractVector)
 end
 
 """
-    mutable struct Kurt <: RiskMeasure
+    mutable struct Kurt <: RiskMeasureMu
 
 Measures and computes the portfolio Square Root Kurtosis.
 
@@ -1591,7 +1676,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -1609,7 +1694,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtos
 
 # Examples
 """
-mutable struct Kurt <: RiskMeasure
+mutable struct Kurt <: RiskMeasureMu
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
@@ -1634,7 +1719,7 @@ function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0; scale::B
 end
 
 """
-    mutable struct SKurt{T1 <: Real} <: RiskMeasure
+    mutable struct SKurt{T1 <: Real} <: RiskMeasureMu
 
 Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the `target` return threshold.
 
@@ -1653,7 +1738,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Keyword Parameters
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
@@ -1672,7 +1757,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosi
 
 # Examples
 """
-mutable struct SKurt <: RiskMeasure
+mutable struct SKurt <: RiskMeasureMu
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
@@ -1784,7 +1869,7 @@ function (cvarrg::CVaRRG)(x::AbstractVector)
 end
 
 """
-    struct GMD <: RiskMeasure
+    struct GMD <: RiskMeasureOWA
 
 # Description
 
@@ -1799,7 +1884,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-struct GMD <: RiskMeasure
+struct GMD <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
 end
@@ -1814,7 +1899,7 @@ function (gmd::GMD)(x::AbstractVector)
 end
 
 """
-    mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasure
+    mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasureOWA
 
 # Description
 
@@ -1852,7 +1937,7 @@ tg = TG(; settings = RMSettings(; flag = false, ub = 0.1),
         owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
 ```
 """
-mutable struct TG{T1, T2, T3} <: RiskMeasure
+mutable struct TG{T1, T2, T3} <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
     alpha_i::T1
@@ -1884,7 +1969,7 @@ function (tg::TG)(x::AbstractVector)
 end
 
 """
-    mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasure
+    mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasureOWA
 
 # Description
 
@@ -1918,7 +2003,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasure
+mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
     alpha_i::T1
@@ -1964,7 +2049,7 @@ function (tgrg::TGRG)(x::AbstractVector)
 end
 
 """
-    mutable struct OWA <: RiskMeasure
+    mutable struct OWA <: RiskMeasureOWA
 
 # Description
 
@@ -1982,7 +2067,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-mutable struct OWA <: RiskMeasure
+mutable struct OWA <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
     w::Union{<:AbstractVector, Nothing}
@@ -2056,7 +2141,7 @@ function (bdvariance::BDVariance)(x::AbstractVector)
 end
 
 """
-    struct Skew <: RiskMeasure
+    struct Skew <: RiskMeasureSkew
 
 # Description
 
@@ -2114,7 +2199,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-mutable struct Skew <: RiskMeasure
+mutable struct Skew <: RiskMeasureSkew
     settings::RMSettings
     skew::Union{<:AbstractMatrix, Nothing}
     V::Union{<:AbstractMatrix, Nothing}
@@ -2147,7 +2232,7 @@ function (skew::Skew)(w::AbstractVector)
 end
 
 """
-    struct SSkew <: RiskMeasure
+    struct SSkew <: RiskMeasureSkew
 
 # Description
 
@@ -2205,7 +2290,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-mutable struct SSkew <: RiskMeasure
+mutable struct SSkew <: RiskMeasureSkew
     settings::RMSettings
     skew::Union{<:AbstractMatrix, Nothing}
     V::Union{Nothing, <:AbstractMatrix}
@@ -2238,7 +2323,7 @@ function (sskew::SSkew)(w::AbstractVector)
 end
 
 """
-    mutable struct SVariance{T1 <: Real} <: RiskMeasure
+    mutable struct SVariance{T1 <: Real} <: RiskMeasureMu
 
 # Description
 
@@ -2274,7 +2359,7 @@ svariance = SVariance(; target = 0.02,  # 2 % return target
                       settings = HCRMSettings(; scale = 2.0), w = w)
 ```
 """
-mutable struct SVariance <: RiskMeasure
+mutable struct SVariance <: RiskMeasureMu
     settings::RMSettings
     formulation::VarianceFormulation
     w::Union{<:AbstractWeights, Nothing}
@@ -2344,7 +2429,7 @@ function NoWC(; formulation::VarianceFormulation = SOC())
     return NoWC(formulation)
 end
 
-mutable struct WCVariance{T1} <: RiskMeasure
+mutable struct WCVariance{T1} <: RiskMeasureSigma
     settings::RMSettings
     wc_set::WCSetMuSigma
     sigma::Union{<:AbstractMatrix, Nothing}
@@ -2986,7 +3071,7 @@ function (uci_r::UCI_r)(x::AbstractVector)
 end
 
 """
-    mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+    mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
 
 # Description
 
@@ -3037,7 +3122,7 @@ edar_r = EDaR_r(; alpha = 0.025,  # 2.5 % significance level
                 solvers = Dict("solver" => my_solver))
 ```
 """
-mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasure
+mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
     solvers::Union{<:AbstractDict, Nothing}
@@ -3069,7 +3154,7 @@ function (edar_r::EDaR_r)(x::AbstractVector)
 end
 
 """
-    mutable struct RLDaR_r{T1 <: Real} <: RiskMeasure
+    mutable struct RLDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
 
 # Description
 
@@ -3125,7 +3210,7 @@ rldar = RLDaR(; alpha = 0.05, # 5 % significance level
               solvers = Dict("solver" => my_solver))
 ```
 """
-mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasure
+mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
     kappa::T2
@@ -3191,7 +3276,7 @@ function (equal::Equal)(w::AbstractVector, delta::Real = 0)
     return inv(length(w)) + delta
 end
 #! Generalise this like the TCM
-mutable struct TCM <: NoOptRiskMeasure
+mutable struct TCM <: NoOptRiskMeasureMu
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
 end
@@ -3206,7 +3291,7 @@ function (tcm::TCM)(x::AbstractVector)
     val = x .- mu
     return sum(val .^ 3) / T
 end
-mutable struct TLPM <: RiskMeasure
+mutable struct TLPM <: HCRiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
@@ -3221,16 +3306,13 @@ end
 function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    target = tlpm.target
-    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        target = calc_ret_mu(x, w, tlpm)
-    end
+    target = calc_target_ret_mu(x, w, tlpm)
     val = x .- target
     val = val[val .<= zero(eltype(val))] .^ 3
     return -sum(val) / T
 end
 #! Generalise this like the FTLPM
-mutable struct FTCM <: HCRiskMeasure
+mutable struct FTCM <: HCRiskMeasureMu
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
 end
@@ -3246,7 +3328,7 @@ function (ftcm::FTCM)(x::AbstractVector)
     return sum(val .^ 4) / T
 end
 
-mutable struct FTLPM <: RiskMeasure
+mutable struct FTLPM <: HCRiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
@@ -3261,10 +3343,7 @@ end
 function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    target = ftlpm.target
-    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        target = calc_ret_mu(x, w, ftlpm)
-    end
+    target = calc_target_ret_mu(x, w, ftlpm)
     val = x .- target
     val = val[val .<= zero(eltype(val))] .^ 4
     return sum(val) / T
@@ -3373,16 +3452,116 @@ function (skurtosis::SKurtosis)(x::AbstractVector)
     return dot(val, val)^2 / T / sigma^4
 end
 
-const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
-const RMSigma = Union{SD, Variance, WCVariance}
-const RMSkew = Union{Skew, SSkew}
-const RMOWA = Union{GMD, TG, TGRG, OWA}
-const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TLPM, FTLPM}
-const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
+"""
+    const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
+
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) with a `solvers` property because they require solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+"""
+const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
+
+"""
+    const RMSigma = Union{SD, Variance, WCVariance}
+
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix via the `sigma` property.
+"""
+const RMSigma = Union{RiskMeasureSigma}
+
+"""
+    const RMSkew = Union{Skew, SSkew}
+
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N²` coskewness matrix via the `skew` property, and an `N×N` matrix of the negative spectral slices of the coskewness matrix.
+"""
+const RMSkew = Union{RiskMeasureSkew}
+
+"""
+    const RMOWA = Union{GMD, TG, TGRG, OWA}
+
+Constant definint all concrete subtypes of [`RiskMeasure`](@ref) which use Ordered Weight Array formulations.
+"""
+const RMOWA = Union{RiskMeasureOWA}
+
+"""
+    const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TCM, FTCM, TLPM, FTLPM}
+
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×1` vector of asset expected returns via the `mu` property.
+"""
+const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
+
+"""
+    const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
+
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector of minimum acceptable returns via the `target` property.
+"""
+const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
+
+"""
+    calc_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMMu)
+
+Computes the mean portfolio return for `rm`.
+
+  - If `isnothing(rm.mu) || isempty(rm.mu)`, computes the mean return from `x`.
+
+      + If `isnothing(rm.w)`: computes the unweighted mean.
+      + Else: computes the weighted mean.
+
+  - Else: computes the mean return as `dot(rm.mu, w)`.
+
+See also: [`RMMu`](@ref).
+
+# Positional Arguments
+
+  - `x`: `T×1` vector of portfolio returns.
+  - `w`: `N×1` vector of portfolio weights.
+  - `rm`: [`RMMu`](@ref) risk measure.
+
+# Returns
+
+  - `mu::Real`: portfolio mean return.
+"""
+function calc_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMMu)
+    mu = rm.mu
+    return mu = if isnothing(mu) || isempty(mu)
+        wi = rm.w
+        isnothing(wi) ? mean(x) : mean(x, wi)
+    else
+        dot(mu, w)
+    end
+end
+
+"""
+    calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
+
+Computes the minimum acceptable portfolio return target for `rm`.
+
+  - If `isnothing(rm.target) || isa(rm.target, AbstractVector) && isempty(rm.target)`, computes the mean acceptable return from `x` via [`calc_ret_mu`](@ref).
+  - Else: returns `rm.target`.
+
+See also: [`RMTarget`](@ref).
+
+# Positional Arguments
+
+  - `x`: `T×1` vector of portfolio returns.
+  - `w`: `N×1` vector of portfolio weights.
+  - `rm`: [`RMTarget`](@ref) risk measure.
+
+# Returns
+
+  - `target::Real`: minimum acceptable return target.
+"""
+function calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
+    target = rm.target
+    if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        target = calc_ret_mu(x, w, rm)
+    end
+    return target
+end
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
        SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR,
        Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew, Variance,
        SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal,
        BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC, TrackingRM, TurnoverRM,
-       NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox, OWAExact
+       NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox,
+       OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu,
+       RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers, HCRiskMeasureSolvers,
+       RiskMeasureOWA, RiskMeasureSkew
