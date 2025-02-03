@@ -3,6 +3,19 @@
 # SPDX-License-Identifier: MIT
 
 """
+    mutable struct PortOptSolver
+
+Structure for defining solver and solver parameters for solving [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+
+See also: [`Portfolio`](@ref), [`RMSolvers`](@ref), [`OWAJTypes`](@ref).
+
+# Keyword Arguments
+
+  - `name::Union{Symbol, <:AbstractString} = ""`:
+  - `solver::Any = nothing`:
+  - `check_sol::NamedTuple = (; allow_local = true, allow_almost = true)`:
+  - `params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing`:
+  - `add_bridges::Bool = true`:
 """
 mutable struct PortOptSolver
     name::Union{Symbol, <:AbstractString}

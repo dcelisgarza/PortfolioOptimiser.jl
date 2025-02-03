@@ -26,7 +26,9 @@ function optimise_allocation(port, label, tickers, latest_prices)
         check_sol = solver.check_sol
 
         set_optimizer(model, solver_i; add_bridges = add_bridges)
-        set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
+        if !isnothing(params)
+            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
+        end
 
         try
             JuMP.optimize!(model)

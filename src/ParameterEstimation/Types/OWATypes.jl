@@ -10,6 +10,10 @@ abstract type OWATypes end
 Abstract type for subtyping Ordered Weight Array (OWA) types for computing the weights used to combine L-moments higher than 2 [OWAL](@cite) in [`owa_l_moment_crm`](@ref).
 """
 abstract type OWATypes end
+
+"""
+    abstract type OWAJTypes <: OWATypes end
+"""
 abstract type OWAJTypes <: OWATypes end
 
 """
