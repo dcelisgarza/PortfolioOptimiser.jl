@@ -137,10 +137,10 @@ function MinSqDist(; max_phi::Real = 0.5, scale_constr::Real = 1.0, scale_obj::R
     @smart_assert(scale_constr > zero(scale_constr))
     @smart_assert(scale_obj > zero(scale_obj))
     return MinSqDist{typeof(max_phi), typeof(scale_constr), typeof(scale_obj),
-                     solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}}(max_phi,
-                                                                                     scale_constr,
-                                                                                     scale_obj,
-                                                                                     solvers)
+                     Union{PortOptSolver, <:AbstractVector{PortOptSolver}}}(max_phi,
+                                                                            scale_constr,
+                                                                            scale_obj,
+                                                                            solvers)
 end
 function Base.setproperty!(obj::OWAJTypes, sym::Symbol, val)
     if sym == :max_phi
