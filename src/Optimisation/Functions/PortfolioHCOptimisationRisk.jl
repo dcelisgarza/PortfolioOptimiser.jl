@@ -39,7 +39,7 @@ function set_hc_rm_mu_w!(rm::RMMu, mu, cluster)
     old_mu = rm.mu
     if isnothing(rm.mu) || isempty(rm.mu)
         rm.mu = view(mu, cluster)
-    else
+    elseif !isempty(old_mu)
         rm.mu = view(old_mu, cluster)
     end
     old_target = set_hc_rm_target!(rm, cluster)
