@@ -14,7 +14,7 @@ abstract type AbstractRMSettings end
 """
     mutable struct RMSettings{T1 <: Real, T2 <: Real} <: AbstractRMSettings
 
-Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this field makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
+Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this property makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
 
 See also: [`RiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
 
@@ -133,7 +133,7 @@ To ensure a risk measure can be used any of the above optimisation types, it mus
 
 ```julia
 struct MyRiskMeasure <: RiskMeasure
-    # Fields of MyRiskMeasure
+    # Properties of MyRiskMeasure
 end
 
 Base.iterate(S::MyRiskMeasure, state = 1) = state > 1 ? nothing : (S, state + 1)
@@ -154,11 +154,11 @@ function Base.view(S::MyRiskMeasure, ::Any)
 end
 ```
 
-  - Include a `settings::RMSettings` field, [`RMSettings`](@ref).
+  - Include a `settings::RMSettings` property, [`RMSettings`](@ref).
 
 ```julia
 struct MyRiskMeasure <: RiskMeasure
-    # Fields of MyRiskMeasure
+    # Properties of MyRiskMeasure
     settings::RMSettings
 end
 ```
@@ -265,11 +265,11 @@ function PortfolioOptimiser.set_rm(port, rms::AbstractVector{<:MyRiskMeasure},
 end
 ```
 
-  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
+  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a properties which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
 
 ```julia
 struct MyRiskMeasure{T1, T2, T3} <: RiskMeasure
-    # Fields containing asset information (computable or indexable).
+    # Properties containing asset information (computable or indexable).
     indexable_vector::Vector{T1}
     indexable_matrix::Matrix{T1}
     computable_vector::Vector{T1}
@@ -278,7 +278,7 @@ struct MyRiskMeasure{T1, T2, T3} <: RiskMeasure
     computable_matrix_args::T3
 end
 
-# We have some computable fields, so we need to define the function to do so.
+# We have some computable properties, so we need to define the function to do so.
 function compute_MyRiskMeasure_vec_mtx!(rm::MyRiskMeasure, args...)
     # Compute vector and matrix
     new_computable_vector = ...
@@ -319,15 +319,15 @@ function unset_custom_hc_rm!(rm::MyRiskMeasure, old_custom)
 end
 ```
 
-  - Similarly, if the risk measure is to be used in [`NCO`](@ref) optimisations, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`pre_modify_intra_port!`](@ref), [`post_modify_intra_port!`](@ref), [`reset_intra_port!`](@ref), [`pre_modify_inter_port!`](@ref), [`post_modify_inter_port!`](@ref), [`reset_inter_port!`](@ref), which dispatch on custom structures that. The functions can then check for the custom risk measure and modify it as in the previous bullet point. See the function's docstrings for explanations on their arguments and use.
+  - Similarly, if the risk measure is to be used in [`NCO`](@ref) optimisations, and it contains a properties which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`pre_modify_intra_port!`](@ref), [`post_modify_intra_port!`](@ref), [`reset_intra_port!`](@ref), [`pre_modify_inter_port!`](@ref), [`post_modify_inter_port!`](@ref), [`reset_inter_port!`](@ref), which dispatch on custom structures that. The functions can then check for the custom risk measure and modify it as in the previous bullet point. See the function's docstrings for explanations on their arguments and use.
 
 ```julia
 # Structures for dispatching on.
 struct MyPreModify <: AbstractNCOModify
-    # Custom fields.
+    # Custom properties.
 end
 struct MyPostModify <: AbstractNCOModify
-    # Custom fields.
+    # Custom properties.
 end
 
 # Procedures for computing or modifying risk measures for the internal optimisations.
@@ -394,7 +394,7 @@ To ensure a risk measure can be used by the above optimisation types, it must ab
 
 ```julia
 struct MyHCRiskMeasure <: HCRiskMeasure
-    # Fields of MyHCRiskMeasure
+    # Properties of MyHCRiskMeasure
 end
 
 Base.iterate(S::MyHCRiskMeasure, state = 1) = state > 1 ? nothing : (S, state + 1)
@@ -415,11 +415,11 @@ function Base.view(S::MyHCRiskMeasure, ::Any)
 end
 ```
 
-  - Include a `settings::HCRMSettings` field, [`HCRMSettings`](@ref).
+  - Include a `settings::HCRMSettings` property, [`HCRMSettings`](@ref).
 
 ```julia
 struct MyHCRiskMeasure <: HCRiskMeasure
-    # Fields of MyHCRiskMeasure
+    # Properties of MyHCRiskMeasure
     settings::HCRMSettings
 end
 ```
@@ -432,11 +432,11 @@ function calc_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
 end
 ```
 
-  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
+  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a properties which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
 
 ```julia
 struct MyHCRiskMeasure{T1, T2, T3} <: HCRiskMeasure
-    # Fields containing asset information (computable or indexable).
+    # Properties containing asset information (computable or indexable).
     indexable_vector::Vector{T1}
     indexable_matrix::Matrix{T1}
     computable_vector::Vector{T1}
@@ -445,7 +445,7 @@ struct MyHCRiskMeasure{T1, T2, T3} <: HCRiskMeasure
     computable_matrix_args::T3
 end
 
-# We have some computable fields, so we need to define the function to do so.
+# We have some computable properties, so we need to define the function to do so.
 function compute_MyRiskMeasure_vec_mtx!(rm::MyHCRiskMeasure, args...)
     # Compute vector and matrix
     new_computable_vector = ...
@@ -504,7 +504,7 @@ See also: [`calc_risk`](@ref).
 
 ```julia
 struct MyNoOptRiskMeasure <: NoOptRiskMeasure
-    # Fields of MyNoOptRiskMeasure
+    # Properties of MyNoOptRiskMeasure
 end
 
 function calc_risk(my_risk::MyNoOptRiskMeasure, w::AbstractVector; kwargs...)
@@ -525,7 +525,7 @@ See also: [`RiskMeasure`](@ref), [`EVaR`](@ref), [`EDaR`](@ref), [`RLVaR`](@ref)
 
 Concrete subtypes must contain the following properties:
 
-  - `solvers::Union{<:AbstractDict, Nothing}`: field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+  - `solvers::Union{<:AbstractDict, Nothing}`: property to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
 """
 abstract type RiskMeasureSolvers <: RiskMeasure end
 
@@ -540,7 +540,7 @@ See also: [`HCRiskMeasure`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `solvers::Union{<:AbstractDict, Nothing}`: field to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+  - `solvers::Union{<:AbstractDict, Nothing}`: property to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
 """
 abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
 
@@ -555,7 +555,7 @@ See also: [`RiskMeasure`](@ref), [`Variance`](@ref), [`SD`](@ref), [`WCVariance`
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `sigma::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N` covariance matrix.
+  - `sigma::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` covariance matrix.
 """
 abstract type RiskMeasureSigma <: RiskMeasure end
 
@@ -570,8 +570,8 @@ See also: [`RiskMeasure`](@ref), [`Skew`](@ref), [`SSkew`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `skew::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N²` coskew matrix.
-  - `V::Union{<:AbstractMatrix, Nothing}`: field to store an `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+  - `skew::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N²` coskew matrix.
+  - `V::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
 """
 abstract type RiskMeasureSkew <: RiskMeasure end
 
@@ -586,7 +586,7 @@ See also: [`RiskMeasure`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `formulation::OWAFormulation`: field to store the formulation dispatch type.
+  - `formulation::OWAFormulation`: property to store the formulation dispatch type.
 """
 abstract type RiskMeasureOWA <: RiskMeasure end
 
@@ -601,8 +601,8 @@ See also: [`RiskMeasure`](@ref), [`RiskMeasureTarget`](@ref), [`MAD`](@ref), [`S
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
-  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
 """
 abstract type RiskMeasureMu <: RiskMeasure end
 
@@ -617,8 +617,8 @@ See also: [`HCRiskMeasure`](@ref), [`FTCM`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
-  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
 """
 abstract type HCRiskMeasureMu <: HCRiskMeasure end
 
@@ -633,8 +633,8 @@ See also: [`NoOptRiskMeasure`](@ref), [`TCM`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
 """
 abstract type NoOptRiskMeasureMu <: NoOptRiskMeasure end
 
@@ -650,8 +650,8 @@ See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SLPM`](@ref).
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
   - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
 """
 abstract type RiskMeasureTarget <: RiskMeasureMu end
 
@@ -667,8 +667,8 @@ See also: [`HCRiskMeasure`](@ref), [`TLPM`](@ref), [`FTLPM`](@ref).
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
   - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
+  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
 """
 abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
 
@@ -677,7 +677,7 @@ abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
 
 Abstract type for implementing various formulations of the [`Variance`](@ref) in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-  - If either `network_adj` or `cluster_adj` field of the [`Portfolio`](@ref) instance is [`SDP`](@ref), the formulation has no effect because this constraint type requires a [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) formulation of the variance.
+  - If either `network_adj` or `cluster_adj` property of the [`Portfolio`](@ref) instance is [`SDP`](@ref), the formulation has no effect because this constraint type requires a [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) formulation of the variance.
 
 See also: [`Variance`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Portfolio`](@ref), [`SDP`](@ref).
 """
@@ -766,7 +766,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -774,9 +774,9 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass
 
   - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: (optional) `N×N` covariance matrix.
 
-      + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the field depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
+      + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
-## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The Variance risk is defined as the key `:variance_risk`.
 
@@ -785,13 +785,13 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass
       + Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
       + Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
       + Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
-      + If it exists, the upper bound is defined via the portfolio standard deviation with key `:dev_ub`.
+      + If it exists, the upper bound is defined via the portfolio standard deviation with key, `:dev_ub`.
   - [`SDP`](@ref) network and/or cluster constraints.
 
       + Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
       + Defines the variance risk, `:variance_risk`, as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
       + Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
-      + If it exists, the upper bound is defined via the portfolio variance with key `:variance_risk_ub`.
+      + If it exists, the upper bound is defined via the portfolio variance with key, `:variance_risk_ub`.
 
 # Functor
 
@@ -840,7 +840,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -848,11 +848,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Por
 
   - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: (optional) `N×N` covariance matrix.
 
-      + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the field depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
+      + If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
-## In optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Standard Deviation risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key `:sd_risk`.
+  - The Standard Deviation risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key, `:sd_risk`.
   - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
 
 # Functor
@@ -901,7 +901,7 @@ Where:
   - ``\\lvert \\cdot \\rvert``: is the absolute value.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`MuSimple`](@ref), [`NoKelly`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
 
 # Keyword Arguments
 
@@ -918,11 +918,11 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 
       + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use.
 
-          * If `isnothing(mu)`: takes the value from the `mu` property of the [`Portfolio`](@ref) instance.
+          * If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
 # Functor
 
-  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, a `N×1` vector of portfolio weights `w`, and fees `fees`.
+  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -931,19 +931,19 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Mu
 mutable struct MAD <: RiskMeasureMu
     settings::RMSettings
     w::Union{<:AbstractWeights, Nothing}
-    we::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
+    we::Union{<:AbstractWeights, Nothing}
 end
 function MAD(; settings::RMSettings = RMSettings(),
              w::Union{<:AbstractWeights, Nothing} = nothing,
-             we::Union{<:AbstractWeights, Nothing} = nothing,
-             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return MAD(settings, w, we, mu)
+             mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
+             we::Union{<:AbstractWeights, Nothing} = nothing)
+    return MAD(settings, w, mu, we)
 end
 function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
     x = X * w .- fees
-    we = mad.we
     mu = calc_ret_mu(x, w, mad)
+    we = mad.we
     return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
 end
 
@@ -1034,7 +1034,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
           * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
 
-              - If `isinf(mu)`: it takes its value from the `mu` field of the [`Portfolio`](@ref) instance.
+              - If `isinf(mu)`: it takes its value from the `mu` property of the [`Portfolio`](@ref) instance.
 
           * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
@@ -1102,7 +1102,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 
           * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
 
-              - If `isinf(mu)`: it takes its value from the `mu` field of the [`Portfolio`](@ref) instance.
+              - If `isinf(mu)`: it takes its value from the `mu` property of the [`Portfolio`](@ref) instance.
 
           * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
@@ -1298,7 +1298,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
+      + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
 # Functor
 
@@ -1358,7 +1358,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
   - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
+      + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
 # Functor
 
@@ -1670,7 +1670,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
+      + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
 # Functor
 
@@ -1742,7 +1742,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
   - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-      + If `isnothing(solvers)`: it takes its value from the `solvers` field of the instance of [`Portfolio`](@ref).
+      + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
 # Functor
 
@@ -1920,7 +1920,7 @@ Defines the Range.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RG, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -1957,7 +1957,7 @@ Defines the Conditional Value at Risk Range.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaRRG, ::AbstractVector)`](@ref), [`CVaR`](@ref), [`RG`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
@@ -2004,7 +2004,7 @@ Defines the Gini Mean Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2034,7 +2034,7 @@ Defines the Tail Gini Difference.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2106,7 +2106,7 @@ Defines the Tail Gini Difference Range.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2186,7 +2186,7 @@ Defines the generic Ordered Weight Array.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2243,7 +2243,7 @@ where:
   - ``\\bar{a}_{\\cdot,\\,\\cdot}`` and ``\\bar{b}_{\\cdot,\\,\\cdot}`` are the grand means of their respective matrices.
   - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are doubly centered distances.
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -2287,7 +2287,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom coskewness matrix.
@@ -2378,7 +2378,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom semi coskewness matrix.
@@ -2464,7 +2464,7 @@ Defines the Semi Variance.
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::SVariance, ::AbstractVector)`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `target::T1 = 0.0`: minimum return threshold for downside classification.
@@ -2723,7 +2723,7 @@ Defines the Value at Risk.
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -2789,7 +2789,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -2868,7 +2868,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -2942,7 +2942,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
 
@@ -3001,7 +3001,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
 
@@ -3082,7 +3082,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -3162,7 +3162,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref), [`UCI`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
 
@@ -3222,7 +3222,7 @@ Where:
 
 See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -3307,7 +3307,7 @@ Where:
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
@@ -3382,7 +3382,7 @@ Equal risk measure.
 
   - Risk is allocated evenly among a group of assets.
 
-# Fields
+# Properties
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
@@ -3652,7 +3652,7 @@ See also: [`RMMu`](@ref).
 # Positional Arguments
 
   - `x`: `T×1` vector of portfolio returns.
-  - `w`: `N×1` vector of portfolio weights.
+  - `w`: `N×1` vector of asset weights.
   - `rm`: [`RMMu`](@ref) risk measure.
 
 # Returns
@@ -3672,7 +3672,7 @@ end
 """
     calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
 
-Computes the minimum acceptable portfolio return target for `rm`.
+Computes the minimum acceptable portfolio return target for `rm`. Only returns equal to or below this value are accounted for in the calculation.
 
   - If `isnothing(rm.target) || isa(rm.target, AbstractVector) && isempty(rm.target)`, computes the mean acceptable return from `x` via [`calc_ret_mu`](@ref).
   - Else: returns `rm.target`.
@@ -3682,7 +3682,7 @@ See also: [`RMTarget`](@ref).
 # Positional Arguments
 
   - `x`: `T×1` vector of portfolio returns.
-  - `w`: `N×1` vector of portfolio weights.
+  - `w`: `N×1` vector of asset weights.
   - `rm`: [`RMTarget`](@ref) risk measure.
 
 # Returns
