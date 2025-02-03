@@ -123,7 +123,7 @@ abstract type AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures.
 
-See also: [`RMSettings`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasureSkew`](@ref), [`RiskMeasureOWA`](@ref), [`RiskMeasureMu`](@ref), [`RiskMeasureTarget`](@ref), [`calc_risk`](@ref), [`RMSettings`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
 # Implementation
 
@@ -354,7 +354,7 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`HCRMSettings`](@ref), [`calc_risk`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMeasureTarget`](@ref), [`HCRMSettings`](@ref), [`calc_risk`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
 
 # Implementation
 
