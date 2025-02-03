@@ -57,7 +57,8 @@ Maximum Entropy. Solver must support `MOI.RelativeEntropyCone` and `MOI.NormOneC
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MaxEntropy{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict} <:
+mutable struct MaxEntropy{T1 <: Real, T2 <: Real, T3 <: Real,
+                          T4 <: Union{PortOptSolver, <:AbstractVector{PortOptSolver}}} <:
                OWAJTypes
     max_phi::T1
     scale_constr::T2
@@ -89,7 +90,9 @@ Minimum Sum of Squares. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSumSq{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict} <: OWAJTypes
+mutable struct MinSumSq{T1 <: Real, T2 <: Real, T3 <: Real,
+                        T4 <: Union{PortOptSolver, <:AbstractVector{PortOptSolver}}} <:
+               OWAJTypes
     max_phi::T1
     scale_constr::T2
     scale_obj::T3
@@ -120,7 +123,8 @@ Minimum Square Distance. Solver must support `MOI.SecondOrderCone`.
 
   - `max_phi`: Maximum weight constraint of the L-moments.
 """
-mutable struct MinSqDist{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict} <:
+mutable struct MinSqDist{T1 <: Real, T2 <: Real, T3 <: Real,
+                         T4 <: Union{PortOptSolver, <:AbstractVector{PortOptSolver}}} <:
                OWAJTypes
     max_phi::T1
     scale_constr::T2

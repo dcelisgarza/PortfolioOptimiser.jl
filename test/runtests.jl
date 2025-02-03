@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
-end
-
 @safetestset "OWA Weights" begin
     include("OWAWeightsTests.jl")
 end
@@ -102,4 +98,8 @@ end
 
 @safetestset "BL Stats tests" begin
     include("BLStatsTests.jl")
+end
+
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
 end
