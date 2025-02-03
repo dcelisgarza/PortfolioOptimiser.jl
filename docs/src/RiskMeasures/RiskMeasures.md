@@ -33,8 +33,8 @@ We therefore provide a structure for dispatching the exact method, and a structu
 
 ```@docs
 PortfolioOptimiser.OWAFormulation
-OWAApprox
 OWAExact
+OWAApprox
 ```
 
 ## Abstract types
@@ -71,7 +71,7 @@ PortfolioOptimiser.RMMu
 PortfolioOptimiser.RMTarget
 ```
 
-## Support functions
+## Utility functions
 
 Some risk measures require the computation of certain statistics, these are performed by the following functions.
 

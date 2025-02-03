@@ -188,6 +188,7 @@ function PortfolioOptimiser.set_rm(port, rm::MyRiskMeasure, type::Union{Trad, RB
     @expression(model, MyRiskMeasure_risk, ...)
 
     # Define the key name for the upper bound.
+    # The upper bound key will be `Symbol("MyRiskMeasure_risk_ub")`
     ub_key = "MyRiskMeasure_risk"
 
     # Set the upper bound on MyRiskMeasure_risk. 
@@ -243,6 +244,7 @@ function PortfolioOptimiser.set_rm(port, rms::AbstractVector{<:MyRiskMeasure},
         ###
 
         # Define the key name for the upper bound.
+        # The upper bound key will be `Symbol("MyRiskMeasure_risk_\$(i)_ub")`
         ub_key = "MyRiskMeasure_risk_\$(i)"
 
         # Set the upper bound on MyRiskMeasure_risk[i]. 
@@ -317,7 +319,7 @@ function unset_custom_hc_rm!(rm::MyRiskMeasure, old_custom)
 end
 ```
 
-  - Similarly if the risk measure is to be used in [`NCO`](@ref) optimisations, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`pre_modify_intra_port!`](@ref), [`post_modify_intra_port!`](@ref), [`reset_intra_port!`](@ref), [`pre_modify_inter_port!`](@ref), [`post_modify_inter_port!`](@ref), [`reset_inter_port!`](@ref), which dispatch on custom structures that. The functions can then check for the custom risk measure and modify it as in the previous bullet point. See the function's docstrings for explanations on their arguments and use.
+  - Similarly, if the risk measure is to be used in [`NCO`](@ref) optimisations, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`pre_modify_intra_port!`](@ref), [`post_modify_intra_port!`](@ref), [`reset_intra_port!`](@ref), [`pre_modify_inter_port!`](@ref), [`post_modify_inter_port!`](@ref), [`reset_inter_port!`](@ref), which dispatch on custom structures that. The functions can then check for the custom risk measure and modify it as in the previous bullet point. See the function's docstrings for explanations on their arguments and use.
 
 ```julia
 # Structures for dispatching on.
@@ -328,7 +330,8 @@ struct MyPostModify <: AbstractNCOModify
     # Custom fields.
 end
 
-# Procedures for computing or modifying risk measures for the internal optimisations (each cluster is treated as a single portfolio).
+# Procedures for computing or modifying risk measures for the internal optimisations.
+# Each cluster is treated as a single portfolio.
 function pre_modify_intra_port!(pre_modify::MyPreModify, intra_port, internal_args, i,
                                 cluster, cidx, idx_sq, Nc, special_rm_idx)
     # Modify intra-cluster portfolio pre computation of statistics.
@@ -346,7 +349,9 @@ function reset_intra_port!(pre_modify::MyPreModify, pre_mod_output,
     return nothing
 end
 
-# Procedures for computing or modifying risk measures for the external optimisation (each cluster is turned into a synthetic asset and a portfolio optimisation is performed on them).
+# Procedures for computing or modifying risk measures for the external optimisation.
+# Each cluster is turned into a synthetic asset and a portfolio optimisation is
+# performed on them.
 function pre_modify_inter_port!(pre_modify::MyPreModify, inter_port, wi, external_args,
                                 special_rm_idx)
     # Modify inter-cluster portfolio pre computation of statistics.
