@@ -61,12 +61,15 @@ mutable struct MaxEntropy{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict
     solvers::T4
 end
 function MaxEntropy(; max_phi::Real = 0.5, scale_constr::Real = 1.0, scale_obj::Real = 1.0,
-                    solvers::AbstractDict = Dict())
+                    solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}} = PortOptSolver())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
     @smart_assert(scale_constr > zero(scale_constr))
     @smart_assert(scale_obj > zero(scale_obj))
     return MaxEntropy{typeof(max_phi), typeof(scale_constr), typeof(scale_obj),
-                      typeof(solvers)}(max_phi, scale_constr, scale_obj, solvers)
+                      Union{PortOptSolver, <:AbstractVector{PortOptSolver}}}(max_phi,
+                                                                             scale_constr,
+                                                                             scale_obj,
+                                                                             solvers)
 end
 
 """
@@ -89,12 +92,15 @@ mutable struct MinSumSq{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict} 
     solvers::T4
 end
 function MinSumSq(; max_phi::Real = 0.5, scale_constr::Real = 1.0, scale_obj::Real = 1.0,
-                  solvers::AbstractDict = Dict())
+                  solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}} = PortOptSolver())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
     @smart_assert(scale_constr > zero(scale_constr))
     @smart_assert(scale_obj > zero(scale_obj))
     return MinSumSq{typeof(max_phi), typeof(scale_constr), typeof(scale_obj),
-                    typeof(solvers)}(max_phi, scale_constr, scale_obj, solvers)
+                    solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}}(max_phi,
+                                                                                    scale_constr,
+                                                                                    scale_obj,
+                                                                                    solvers)
 end
 
 """
@@ -118,12 +124,15 @@ mutable struct MinSqDist{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: AbstractDict}
     solvers::T4
 end
 function MinSqDist(; max_phi::Real = 0.5, scale_constr::Real = 1.0, scale_obj::Real = 1.0,
-                   solvers::AbstractDict = Dict())
+                   solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}} = PortOptSolver())
     @smart_assert(zero(max_phi) < max_phi < one(max_phi))
     @smart_assert(scale_constr > zero(scale_constr))
     @smart_assert(scale_obj > zero(scale_obj))
     return MinSqDist{typeof(max_phi), typeof(scale_constr), typeof(scale_obj),
-                     typeof(solvers)}(max_phi, scale_constr, scale_obj, solvers)
+                     solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}}(max_phi,
+                                                                                     scale_constr,
+                                                                                     scale_obj,
+                                                                                     solvers)
 end
 function Base.setproperty!(obj::OWAJTypes, sym::Symbol, val)
     if sym == :max_phi

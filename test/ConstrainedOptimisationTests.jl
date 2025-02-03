@@ -8,11 +8,13 @@ l = 2.0
 
 @testset "Management fees" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
+
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -212,11 +214,13 @@ end
 
 @testset "Rebalance Trad" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.7))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.7]))
+
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio, Trad(; obj = MinRisk()))
@@ -324,13 +328,15 @@ end
 
 @testset "Cluster + Network and Dendrogram non variance Short" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
+
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -466,13 +472,14 @@ end
     end
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -605,13 +612,14 @@ end
 
 @testset "Cluster + Network and Dendrogram non variance" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     network_type = TMFG()
@@ -737,13 +745,14 @@ end
     @test isapprox(w10.weights, wt)
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -869,13 +878,14 @@ end
 
 @testset "Cluster + Network and Dendrogram variance" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -1011,13 +1021,14 @@ end
     @test isapprox(w10.weights, wt, rtol = 1.2)
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -1161,15 +1172,17 @@ end
 
 @testset "Cluster + Network and Dendrogram variance short" begin
     portfolio = Portfolio(; prices = prices, short_budget = 10.0,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
+
     asset_statistics!(portfolio)
 
     portfolio.short = true
@@ -1310,13 +1323,14 @@ end
     @test isapprox(w10.weights, wt)
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     portfolio.short = true
@@ -1461,15 +1475,16 @@ end
 
 @testset "Cluster + Network and Dendrogram upper dev" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     C = cluster_matrix(portfolio)
@@ -1541,13 +1556,14 @@ end
     @test r5 <= r1 || abs(r5 - r1) < 5e-8
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = [[Variance(), Variance()]]
     w10 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
@@ -1615,13 +1631,14 @@ end
     @test r14 <= r10 || abs(r14 - r10) < 5e-7
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = [Variance(; settings = RMSettings(; flag = false)), CDaR()]
@@ -1663,13 +1680,14 @@ end
 
 @testset "Network/Cluster and Dendrogram Variance" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -1832,13 +1850,14 @@ end
     portfolio.cluster_adj = NoAdj()
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -2003,15 +2022,16 @@ end
 
 @testset "Network/Cluster and Dendrogram Variance short" begin
     portfolio = Portfolio(; prices = prices, short_budget = 10.0,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     portfolio.short = true
@@ -2180,13 +2200,14 @@ end
     portfolio.cluster_adj = NoAdj()
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     portfolio.short = true
@@ -2351,13 +2372,14 @@ end
 
 @testset "Cardinality and cardinality Group constraints" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     asset_sets = DataFrame("Asset" => portfolio.assets,
                            "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
@@ -2488,11 +2510,12 @@ end
 
 @testset "L1 reg" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -2595,11 +2618,12 @@ end
 
 @testset "L2 reg" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     w = fill(inv(20), 20)
@@ -2712,15 +2736,16 @@ end
 
 @testset "Network/cluster and Dendrogram upper variance" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:check_sol => (allow_local = true,
-                                                                       allow_almost = true),
-                                                        :solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     B = connection_matrix(portfolio; network_type = TMFG())
 
@@ -2780,13 +2805,14 @@ end
     @test r9 <= r1
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     rm = [[Variance(), Variance()]]
     w10 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
@@ -2844,13 +2870,14 @@ end
     @test r18 <= r10
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     rm = [Variance(; settings = RMSettings(; flag = false)), CDaR()]
@@ -2880,13 +2907,14 @@ end
 
 @testset "Network/cluster and Dendrogram non variance" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio; network_type = TMFG())
@@ -3023,13 +3051,14 @@ end
     @test isapprox(w10.weights, w10_2.weights)
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -3166,13 +3195,14 @@ end
 
 @testset "Network/cluster and Dendrogram non variance Short" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     A = centrality_vector(portfolio)
@@ -3323,13 +3353,14 @@ end
     @test isapprox(w10.weights, w10_2.weights)
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
     obj = Sharpe(; rf = rf)
 
@@ -3478,11 +3509,12 @@ end
 
 @testset "Turnover" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
@@ -3524,11 +3556,12 @@ end
 
 @testset "Tracking" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
     T = size(portfolio.returns, 1)
 
@@ -3572,11 +3605,12 @@ end
 
 @testset "Linear" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     asset_sets = DataFrame("Asset" => portfolio.assets,
@@ -3630,11 +3664,12 @@ end
 
 @testset "Min and max number of effective assets" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio, Trad(; obj = MinRisk()))
@@ -3688,13 +3723,14 @@ end
     @test isapprox(portfolio.nea, floor(Int, number_effective_assets(portfolio)))
 
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                             "verbose" => false,
-                                                                                             "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                                      MOI.Silent() => true),
-                                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                         "verbose" => false,
-                                                                                                                                         "max_step_fraction" => 0.75)))))
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
     asset_statistics!(portfolio)
 
     w9 = optimise!(portfolio, Trad(; obj = MinRisk()))

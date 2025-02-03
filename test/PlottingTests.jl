@@ -6,9 +6,14 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 
 @testset "Plotting" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => (Clarabel.Optimizer),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75])
+                          )
+
     asset_statistics!(portfolio)
     RM = Variance()
     w = optimise!(portfolio, RB())

@@ -107,7 +107,9 @@ er1 = ERM(returns, Dict("solver" => my_solver))
 er2 = ERM(returns, Dict("solver" => my_solver), 0.03)
 ```
 """
-function ERM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05)
+function ERM(x::AbstractVector,
+             solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
+             alpha::Real = 0.05)
     model = JuMP.Model()
     set_string_names_on_creation(model, false)
     T = length(x)
@@ -196,8 +198,9 @@ rlr1 = RRM(returns, Dict("solver" => my_solver))
 rlr2 = RRM(returns, Dict("solver" => my_solver), 0.03, 0.8)
 ```
 """
-function RRM(x::AbstractVector, solvers::AbstractDict, alpha::Real = 0.05,
-             kappa::Real = 0.3)
+function RRM(x::AbstractVector,
+             solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
+             alpha::Real = 0.05, kappa::Real = 0.3)
     T = length(x)
 
     at = alpha * T

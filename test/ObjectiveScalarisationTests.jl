@@ -8,11 +8,12 @@ l = 2.0
 
 @testset "Objective scalarisation Trad" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.85))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.85]))
 
     asset_statistics!(portfolio)
 
@@ -90,11 +91,12 @@ end
 
 @testset "Objective scalarisation NOC" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
 

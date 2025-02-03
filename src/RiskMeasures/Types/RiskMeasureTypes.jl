@@ -3,6 +3,22 @@
 # SPDX-License-Identifier: MIT
 
 """
+"""
+mutable struct PortOptSolver
+    name::Union{Symbol, <:AbstractString}
+    solver::Any
+    check_sol::NamedTuple
+    params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}}
+    add_bridges::Bool
+end
+function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any = nothing,
+                       check_sol::NamedTuple = (; allow_local = true, allow_almost = true),
+                       params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing,
+                       add_bridges::Bool = true)
+    return PortOptSolver(name, solver, check_sol, params, add_bridges)
+end
+
+"""
     abstract type AbstractRMSettings end
 
 Abstract type for subtyping risk measure settings.
@@ -1309,10 +1325,10 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 mutable struct EVaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
-              solvers::Union{<:AbstractDict, Nothing} = nothing)
+              solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EVaR{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1370,10 +1386,10 @@ mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, Nothing} = nothing)
+               solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -1681,10 +1697,10 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 mutable struct EDaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EDaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
-              solvers::Union{<:AbstractDict, Nothing} = nothing)
+              solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1754,10 +1770,10 @@ mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLDaR(; settings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, Nothing} = nothing)
+               solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -3255,10 +3271,10 @@ edar_r = EDaR_r(; alpha = 0.025,  # 2.5 % significance level
 mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05,
-                solvers::Union{<:AbstractDict, Nothing} = nothing)
+                solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR_r{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -3344,10 +3360,10 @@ mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05, kappa = 0.3,
-                 solvers::Union{<:AbstractDict, Nothing} = nothing)
+                 solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLDaR_r{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -3705,4 +3721,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Q
        NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox,
        OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu,
        RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers, HCRiskMeasureSolvers,
-       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM
+       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM, PortOptSolver

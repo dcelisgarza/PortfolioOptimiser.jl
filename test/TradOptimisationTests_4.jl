@@ -1,12 +1,14 @@
 @testset "GMD" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 100,
-                                                                           "equilibrate_max_iter" => 20))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 100,
+                                                            "equilibrate_max_iter" => 20]))
+
     asset_statistics!(portfolio)
     rm = GMD(; formulation = OWAExact())
 
@@ -480,13 +482,14 @@ end
 
 @testset "TG" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 100,
-                                                                           "equilibrate_max_iter" => 20))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 100,
+                                                            "equilibrate_max_iter" => 20]))
     asset_statistics!(portfolio)
     rm = TG(; formulation = OWAExact())
 
@@ -958,13 +961,15 @@ end
 
 @testset "TGRG" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 150,
-                                                                           "equilibrate_max_iter" => 20))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 150,
+                                                            "equilibrate_max_iter" => 20]))
+
     asset_statistics!(portfolio)
     rm = TGRG(; formulation = OWAExact())
 
@@ -1269,13 +1274,14 @@ end
     @test isapprox(w25.weights, wt, rtol = 5.0e-5)
     @test isapprox(w25.weights, w5.weights, rtol = 0.05)
 
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false,
-                                                               "max_step_fraction" => 0.65,
-                                                               "max_iter" => 200,
-                                                               "equilibrate_max_iter" => 20)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = ["verbose" => false,
+                                                "max_step_fraction" => 0.65,
+                                                "max_iter" => 200,
+                                                "equilibrate_max_iter" => 20])
+
     w26 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [1.1021014280037167e-10, 0.07451709909662046, 1.4914922139122829e-10,
           2.638451535490444e-10, 0.013398398692832728, 0.030570877454752877,
@@ -1287,13 +1293,14 @@ end
     @test isapprox(w26.weights, wt, rtol = 5.0e-5)
     @test isapprox(w26.weights, w6.weights, rtol = 0.05)
 
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false,
-                                                               "max_step_fraction" => 0.75,
-                                                               "max_iter" => 150,
-                                                               "equilibrate_max_iter" => 20)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = ["verbose" => false,
+                                                "max_step_fraction" => 0.75,
+                                                "max_iter" => 150,
+                                                "equilibrate_max_iter" => 20])
+
     obj = Sharpe(; rf = rf)
     w27 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r7 = calc_risk(portfolio, :Trad; rm = rm)
@@ -1450,13 +1457,14 @@ end
 
 @testset "OWA" begin
     portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 100,
-                                                                           "equilibrate_max_iter" => 20))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 100,
+                                                            "equilibrate_max_iter" => 20]))
     asset_statistics!(portfolio)
     rm = OWA(; formulation = OWAExact())
 
@@ -1928,13 +1936,14 @@ end
     @test dot(portfolio.mu, w40.weights) >= ret8
 
     portfolio = Portfolio(; prices = prices[(end - 200):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 100,
-                                                                           "equilibrate_max_iter" => 20))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 100,
+                                                            "equilibrate_max_iter" => 20]))
     asset_statistics!(portfolio)
     rm = OWA(; w = owa_tg(200), formulation = OWAExact())
 
@@ -2408,11 +2417,12 @@ end
     path = joinpath(@__DIR__, "assets/stock_prices3.csv")
     prices = TimeArray(CSV.File(path); timestamp = :date)
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
                       set_sskew = false)

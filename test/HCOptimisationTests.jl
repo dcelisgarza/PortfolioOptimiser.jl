@@ -11,11 +11,13 @@ l = 2.0
 
 @testset "Tracking and Turnover rms" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
+
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
     N = size(portfolio.returns, 2)
@@ -83,11 +85,12 @@ end
 
 @testset "Tracking and Turnover vector rms" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
     N = size(portfolio.returns, 2)
@@ -155,11 +158,12 @@ end
 
 @testset "Weight bounds" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -391,10 +395,12 @@ end
 
 @testset "Schur HRP" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
+
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
 
@@ -538,12 +544,13 @@ end
 
 @testset "Test failures" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75,
-                                                                           "max_iter" => 1))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75,
+                                                            "max_iter" => 1]))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -572,11 +579,12 @@ end
 
 @testset "NCO HCOptimType and OptimType" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio; cor_type = PortCovCor(; ce = CovLTD()))
     cluster_assets!(portfolio)
@@ -679,11 +687,12 @@ end
 
 @testset "NCO factors" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -741,11 +750,12 @@ end
 
 @testset "Kurt, skew and cov via rm" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
                       set_skurt = false)
@@ -1028,11 +1038,12 @@ end
 
 @testset "Kurt, skew and cov via rm vecs" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
                       set_skurt = false)
@@ -1321,11 +1332,12 @@ end
 
 @testset "NCO" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -1769,11 +1781,12 @@ end
     @test isapprox(w39.weights, w4t)
     @test isapprox(w40.weights, w5t, rtol = 5.0e-5)
 
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false,
-                                                               "max_step_fraction" => 0.65)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = ["verbose" => false,
+                                                "max_step_fraction" => 0.65])
+
     rm = RLVaR()
     w41 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
@@ -1829,11 +1842,12 @@ end
     @test isapprox(w44.weights, w4t, rtol = 5.0e-6)
     @test isapprox(w45.weights, w5t, rtol = 5.0e-6)
 
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false,
-                                                               "max_step_fraction" => 0.75)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = ["verbose" => false,
+                                                "max_step_fraction" => 0.75])
+
     rm = MDD()
     w46 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
@@ -2558,11 +2572,12 @@ end
     @test isapprox(w105.weights, w5t, rtol = 5.0e-6)
 
     portfolio = Portfolio(; prices = prices[(end - 25):end],
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -2625,11 +2640,12 @@ end
 
 @testset "HRP and HERC risk scale" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -2673,11 +2689,12 @@ end
 
 @testset "HRP" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -3005,11 +3022,12 @@ end
 
 @testset "HERC" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -3338,11 +3356,12 @@ end
 
 @testset "HERC and NCO mixed parameters" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT(; root_type = EqualDBHT())
@@ -3457,11 +3476,12 @@ end
 
 @testset "NCO vector rm" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -3515,11 +3535,12 @@ end
 
 @testset "Shorting with NCO" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
