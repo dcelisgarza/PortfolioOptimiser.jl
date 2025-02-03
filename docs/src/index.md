@@ -56,28 +56,31 @@ TimeSeries.rename!(prices, Symbol.(assets))
 # Generate the portfolio.
 portfolio = Portfolio(; prices = prices,
                       # Continuous solvers.
-                      solvers = Dict(
-                                     # Key-value pair for a single solver-solver settings combination. 
-                                     :Clarabel => Dict(
-                                                       # :solver must contain the solver instance.
-                                                       :solver => Clarabel.Optimizer,
-                                                       # :check_sol passes kwargs to JuMP.is_solved_and_feasible
-                                                       :check_sol => (allow_local = true,
-                                                                      allow_almost = true),
-                                                       # :params passes solver attributes to the solver.
-                                                       :params => Dict("verbose" => false,
-                                                                       "max_step_fraction" => 0.75,
-                                                                       "tol_gap_abs" => 1e-9,
-                                                                       "tol_gap_rel" => 1e-9))),
+                      solvers = PortOptSolver(
+                                              # Key-value pair for the solver, solution acceptance 
+                                              # criteria, model bridge argument, and solver attributes.
+                                              ; name = :Clarabel,
+                                              # Solver we wish to use.
+                                              solver = Clarabel.Optimizer,
+                                              # (Optional) Solution acceptance criteria.
+                                              check_sol = (allow_local = true,
+                                                           allow_almost = true),
+                                              # (Optional) Solver-specific attributes.
+                                              params = ["verbose" => false,
+                                                        "max_step_fraction" => 0.75,
+                                                        "tol_gap_abs" => 1e-9,
+                                                        "tol_gap_rel" => 1e-9]),
                       # Discrete solvers (for discrete allocation).
-                      alloc_solvers = Dict(
-                                           # Key-value pair for a single solver-solver settings combination. 
-                                           :HiGHS => Dict(
-                                                          # :solver can be initialised with solver attributes.
-                                                          :solver => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                               MOI.Silent() => true),
-                                                          :check_sol => (allow_local = true,
-                                                                         allow_almost = true))))
+                      alloc_solvers = PortOptSolver(
+                                                    # Key-value pair for the solver, solution acceptance 
+                                                    # criteria, model bridge argument, and solver attributes.
+                                                    ; name = :HiGHS,
+                                                    # Solver we wish to use.
+                                                    solver = optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                       MOI.Silent() => true),
+                                                    # (Optional) Solution acceptance criteria.
+                                                    check_sol = (allow_local = true,
+                                                                 allow_almost = true)))
 
 # Compute the asset statistics.
 asset_statistics!(portfolio)

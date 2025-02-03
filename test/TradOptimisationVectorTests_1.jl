@@ -1479,8 +1479,7 @@ end
                                                                allow_almost = true),
                                                   params = ["verbose" => false,
                                                             "max_step_fraction" => 0.75,
-                                                            "max_iter" => 500])
-                          )
+                                                            "max_iter" => 500]))
 
     asset_statistics!(portfolio)
 

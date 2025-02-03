@@ -10,8 +10,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false)
-                          )
+                                                  params = "verbose" => false))
 
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad(; obj = Sharpe()))

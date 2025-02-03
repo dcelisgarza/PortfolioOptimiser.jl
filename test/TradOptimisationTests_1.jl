@@ -43,8 +43,7 @@ end
                           solvers = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "log_to_console" => false)
-                          )
+                                                  params = "log_to_console" => false))
 
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad())

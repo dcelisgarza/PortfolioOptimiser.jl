@@ -32,8 +32,7 @@ port = Portfolio(; ret = ret, assets = [:A, :B, :C, :D, :E],
                                                                                                                      MOI.Silent() => true),
                                                                             "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
                                                                                                                         "verbose" => false,
-                                                                                                                        "max_step_fraction" => 0.75)))
-                 );
+                                                                                                                        "max_step_fraction" => 0.75))));
 
 ## Compute asset statistics.                                                
 asset_statistics!(port)

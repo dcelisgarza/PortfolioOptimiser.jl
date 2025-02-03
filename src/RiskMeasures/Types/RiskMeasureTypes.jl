@@ -7,15 +7,65 @@
 
 Structure for defining solver and solver parameters for solving [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
+  - Functions and types which take a PortOptSolver also take <:AbstractVector{<:PortOptSolver}.
+
+      + If a vector is provided, it will iterated over until a solution is accepted or the vector runs out, at which point the optimisation will be considered to have failed.
+
 See also: [`Portfolio`](@ref), [`RMSolvers`](@ref), [`OWAJTypes`](@ref).
 
 # Keyword Arguments
 
-  - `name::Union{Symbol, <:AbstractString} = ""`:
-  - `solver::Any = nothing`:
-  - `check_sol::NamedTuple = (; allow_local = true, allow_almost = true)`:
-  - `params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing`:
-  - `add_bridges::Bool = true`:
+  - `name::Union{Symbol, <:AbstractString} = ""`: optimiser name (for registering solutions).
+  - `solver::Any = nothing`: defines the solver to be used. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.`JuMP` optimiser factory [`optimizer_factory`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model).
+  - `check_sol::NamedTuple = (; allow_local = true, allow_almost = true)`: defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
+  - `params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing`:  defines solver-specific parameters/attributes.
+  - `add_bridges::Bool = true`: value of the `add_bridges` kwarg of [`JuMP.set_optimizer`](https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.set_optimizer).
+
+# Examples
+
+It's possible to define a single solver.
+
+```jldoctest solvers
+using JuMP, Clarabel, PortfolioOptimiser
+solvers = PortOptSolver(
+                        # Key-value pair for the solver, solution acceptance 
+                        # criteria, model bridge argument, and solver attributes.
+                        ; name = :Clarabel,
+                        # Solver we wish to use.
+                        solver = Clarabel.Optimizer,
+                        # (Optional) Solution acceptance criteria.
+                        check_sol = (allow_local = true, allow_almost = true),
+                        # (Optional) Solver-specific attributes.
+                        params = ["verbose" => false, "max_step_fraction" => 0.8],
+                        # (Optional) Flag for adding JuMP bridges to JuMP.Model()
+                        # defaults to true (https://jump.dev/JuMP.jl/stable/api/JuMP/#Model).
+                        add_bridges = false)
+
+# output
+
+PortOptSolver(:Clarabel, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), ["verbose" => 0.0, "max_step_fraction" => 0.8], false)
+```
+
+Or a collection of solvers.
+
+```jldoctest solvers
+solvers = [PortOptSolver(; name = :Clarabel_1, solver = Clarabel.Optimizer,
+                         check_sol = (allow_local = true, allow_almost = true),
+                         params = ["verbose" => false, "max_step_fraction" => 0.8]),
+           # Provide solver with pre-attached attributes and no arguments 
+           # for the `JuMP.is_solved_and_feasible` function.
+           PortOptSolver(; name = :Clarabel_2,
+                         solver = JuMP.optimizer_with_attributes(Clarabel.Optimizer,
+                                                                 "max_step_fraction" => 0.75),
+                         # Do not add JuMP bridges to JuMP.Model()
+                         add_bridges = false)]
+
+# output
+
+2-element Vector{PortOptSolver}:
+ PortOptSolver(:Clarabel_1, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), ["verbose" => 0.0, "max_step_fraction" => 0.8], true)
+ PortOptSolver(:Clarabel_2, MathOptInterface.OptimizerWithAttributes(Clarabel.MOIwrapper.Optimizer, Pair{MathOptInterface.AbstractOptimizerAttribute, Any}[MathOptInterface.RawOptimizerAttribute("max_step_fraction") => 0.75]), (allow_local = true, allow_almost = true), nothing, false)
+```
 """
 mutable struct PortOptSolver
     name::Union{Symbol, <:AbstractString}
@@ -29,6 +79,16 @@ function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any
                        params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing,
                        add_bridges::Bool = true)
     return PortOptSolver(name, solver, check_sol, params, add_bridges)
+end
+function Base.isequal(A::PortOptSolver, B::PortOptSolver)
+    for property ∈ propertynames(A)
+        prop_A = getproperty(A, property)
+        prop_B = getproperty(B, property)
+        if !isequal(prop_A, prop_B)
+            return false
+        end
+    end
+    return true
 end
 
 """

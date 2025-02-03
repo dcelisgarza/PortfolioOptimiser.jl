@@ -13,8 +13,7 @@ l = 2.0
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75])
-                          )
+                                                            "max_step_fraction" => 0.75]))
 
     asset_statistics!(portfolio)
 
