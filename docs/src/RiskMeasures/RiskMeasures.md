@@ -93,11 +93,8 @@ PortfolioOptimiser.VarianceFormulation
 Quad
 SOC
 Variance
-WCVariance
 SD
 MAD
-TCM
-FTCM
 Kurt
 RG
 CVaRRG
@@ -105,6 +102,9 @@ TGRG
 GMD
 Skew
 BDVariance
+WCVariance
+TCM
+FTCM
 ```
 
 ## Tracking and turnover risk measures

@@ -2,21 +2,21 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarSum)
+function hrp_scalarise_risk(port, mu, sigma, returns, rm, lc, rc, ::ScalarSum)
     lrisk = zero(eltype(returns))
     rrisk = zero(eltype(returns))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         # Left risk.
-        lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
+        lrisk += cluster_risk(port, mu, sigma, returns, lc, r) * scale
         # Right risk.
-        rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
+        rrisk += cluster_risk(port, mu, sigma, returns, rc, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return lrisk, rrisk
 end
-function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc,
+function hrp_scalarise_risk(port, mu, sigma, returns, rm, lc, rc,
                             scalarisation::ScalarLogSumExp)
     gamma = scalarisation.gamma
     igamma = inv(gamma)
@@ -26,14 +26,14 @@ function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc,
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale * gamma
         # Left risk.
-        lrisk += cluster_risk(port, sigma, returns, lc, r) * scale
+        lrisk += cluster_risk(port, mu, sigma, returns, lc, r) * scale
         # Right risk.
-        rrisk += cluster_risk(port, sigma, returns, rc, r) * scale
+        rrisk += cluster_risk(port, mu, sigma, returns, rc, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return log(exp(lrisk)) * igamma, log(exp(rrisk)) * igamma
 end
-function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarMax)
+function hrp_scalarise_risk(port, mu, sigma, returns, rm, lc, rc, ::ScalarMax)
     trisk = -Inf
     lrisk = zero(eltype(returns))
     rrisk = zero(eltype(returns))
@@ -41,9 +41,9 @@ function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarMax)
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         # Left risk.
-        lrisk_n = cluster_risk(port, sigma, returns, lc, r) * scale
+        lrisk_n = cluster_risk(port, mu, sigma, returns, lc, r) * scale
         # Right risk.
-        rrisk_n = cluster_risk(port, sigma, returns, rc, r) * scale
+        rrisk_n = cluster_risk(port, mu, sigma, returns, rc, r) * scale
         # Total risk.
         trisk_n = lrisk_n + rrisk_n
         if trisk_n > trisk
@@ -57,7 +57,7 @@ function hrp_scalarise_risk(port, sigma, returns, rm, lc, rc, ::ScalarMax)
 end
 function hrp_optimise(port::Portfolio,
                       rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
-                      sigma::AbstractMatrix, returns::AbstractMatrix,
+                      mu::AbstractVector, sigma::AbstractMatrix, returns::AbstractMatrix,
                       scalarisation::AbstractScalarisation)
     N = size(returns, 2)
     weights = ones(eltype(returns), N)
@@ -71,7 +71,7 @@ function hrp_optimise(port::Portfolio,
         for i ∈ 1:2:length(items)
             lc = items[i]
             rc = items[i + 1]
-            lrisk, rrisk = hrp_scalarise_risk(port, sigma, returns, rm, lc, rc,
+            lrisk, rrisk = hrp_scalarise_risk(port, mu, sigma, returns, rm, lc, rc,
                                               scalarisation)
             # Allocate weight to clusters.
             alpha_1 = one(lrisk) - lrisk / (lrisk + rrisk)
