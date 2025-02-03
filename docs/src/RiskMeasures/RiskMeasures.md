@@ -111,7 +111,7 @@ PortfolioOptimiser.calc_target_ret_mu
 
 ### Constants
 
-It is useful to group risk measures by their properties other than their types. By defining constants which group various risk measure types with certain characteristics we can facilitate their use in the many different optimisation types offered by [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). This makes adding new features easier and lowers the difficulty in defining customised behaviour.
+It is useful to group risk measures by their properties as well as their types. By defining constants which group various risk measure types with certain characteristics, we can facilitate their use in the many different optimisation types offered by [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). This makes adding new features easier and lowers the difficulty for defining customised behaviour.
 
 ```@docs
 PortfolioOptimiser.RMSolvers
@@ -135,8 +135,11 @@ PortfolioOptimiser.VarianceFormulation
 Quad
 SOC
 Variance
+WCVariance
 SD
 MAD
+TCM
+FTCM
 Kurt
 RG
 CVaRRG
@@ -166,6 +169,8 @@ These measure how far the returns deviate from the mean in the negative directio
 SSD
 FLPM
 SLPM
+TLPM
+FTLPM
 SKurt
 SSkew
 Kurtosis

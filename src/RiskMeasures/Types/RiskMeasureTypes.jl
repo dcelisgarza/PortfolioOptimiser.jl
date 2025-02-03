@@ -72,7 +72,7 @@ end
 
 Abstract type for subtyping Ordered Weight Array formulations in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`OWAExact`](@ref), [`OWAApprox`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+See also: [`OWAExact`](@ref), [`OWAApprox`](@ref), [`RiskMeasureOWA`](@ref).
 """
 abstract type OWAFormulation end
 
@@ -81,7 +81,7 @@ abstract type OWAFormulation end
 
 Type for dispatching the exact formulation of Ordered Weight Array risk measures.
 
-See also: [`OWAApprox`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+See also: [`OWAApprox`](@ref), [`RiskMeasureOWA`](@ref).
 """
 struct OWAExact <: OWAFormulation end
 
@@ -90,7 +90,7 @@ struct OWAExact <: OWAFormulation end
 
 Type for dispatching and tuning the approximate formulation of Ordered Weight Array risk measures.
 
-See also: [`OWAExact`](@ref),[`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+See also: [`OWAExact`](@ref), [`RiskMeasureOWA`](@ref).
 
 # Keyword Arguments
 
@@ -410,6 +410,8 @@ abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) for which computing the risk requires solving an optimisation model.
 
+See also: [`RiskMeasure`](@ref), [`EVaR`](@ref), [`EDaR`](@ref), [`RLVaR`](@ref), [`RLDaR`](@ref).
+
 # Implementation
 
 Concrete subtypes must contain the following properties:
@@ -422,6 +424,8 @@ abstract type RiskMeasureSolvers <: RiskMeasure end
     abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
 
 Abstract type for subtyping [`HCRiskMeasure`](@ref) for which computing the risk requires solving an optimisation model.
+
+See also: [`HCRiskMeasure`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref).
 
 # Implementation
 
@@ -436,6 +440,8 @@ abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix.
 
+See also: [`RiskMeasure`](@ref), [`Variance`](@ref), [`SD`](@ref), [`WCVariance`](@ref).
+
 # Implementation
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
@@ -448,6 +454,8 @@ abstract type RiskMeasureSigma <: RiskMeasure end
     abstract type RiskMeasureSkew <: RiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use an `N×N²` coskew matrix and `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+
+See also: [`RiskMeasure`](@ref), [`Skew`](@ref), [`SSkew`](@ref).
 
 # Implementation
 
@@ -463,6 +471,8 @@ abstract type RiskMeasureSkew <: RiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which is implemented via an Ordered Weight Array formulation.
 
+See also: [`RiskMeasure`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`OWA`](@ref).
+
 # Implementation
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
@@ -475,6 +485,8 @@ abstract type RiskMeasureOWA <: RiskMeasure end
     abstract type RiskMeasureMu <: RiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+See also: [`RiskMeasure`](@ref), [`RiskMeasureTarget`](@ref), [`MAD`](@ref), [`SSD`](@ref), [`SVariance`](@ref), [`Kurt`](@ref), [`SKurt`](@ref).
 
 # Implementation
 
@@ -490,6 +502,8 @@ abstract type RiskMeasureMu <: RiskMeasure end
 
 Abstract type for subtyping [`HCRiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
 
+See also: [`HCRiskMeasure`](@ref), [`FTCM`](@ref).
+
 # Implementation
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
@@ -504,6 +518,8 @@ abstract type HCRiskMeasureMu <: HCRiskMeasure end
 
 Abstract type for subtyping [`NoOptRiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
 
+See also: [`NoOptRiskMeasure`](@ref), [`TCM`](@ref).
+
 # Implementation
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
@@ -517,6 +533,8 @@ abstract type NoOptRiskMeasureMu <: NoOptRiskMeasure end
     abstract type RiskMeasureTarget <: RiskMeasureMu end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector specifying the minimum return threshold for classifying downside returns, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SLPM`](@ref).
 
 # Implementation
 
@@ -533,6 +551,8 @@ abstract type RiskMeasureTarget <: RiskMeasureMu end
     abstract type HCRiskMeasureTarget <: RiskMeasureMu end
 
 Abstract type for subtyping [`HCRiskMeasure`](@ref) which can use a scalar or `N×1` vector specifying the minimum return threshold for classifying downside returns, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+
+See also: [`HCRiskMeasure`](@ref), [`TLPM`](@ref), [`FTLPM`](@ref).
 
 # Implementation
 
@@ -2429,6 +2449,9 @@ function NoWC(; formulation::VarianceFormulation = SOC())
     return NoWC(formulation)
 end
 
+"""
+    mutable struct WCVariance{T1} <: RiskMeasureSigma
+"""
 mutable struct WCVariance{T1} <: RiskMeasureSigma
     settings::RMSettings
     wc_set::WCSetMuSigma
@@ -3275,7 +3298,10 @@ end
 function (equal::Equal)(w::AbstractVector, delta::Real = 0)
     return inv(length(w)) + delta
 end
+
 #! Generalise this like the TCM
+"""
+"""
 mutable struct TCM <: NoOptRiskMeasureMu
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -3291,6 +3317,9 @@ function (tcm::TCM)(x::AbstractVector)
     val = x .- mu
     return sum(val .^ 3) / T
 end
+
+"""
+"""
 mutable struct TLPM <: HCRiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
@@ -3311,7 +3340,10 @@ function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     val = val[val .<= zero(eltype(val))] .^ 3
     return -sum(val) / T
 end
+
 #! Generalise this like the FTLPM
+"""
+"""
 mutable struct FTCM <: HCRiskMeasureMu
     settings::HCRMSettings
     w::Union{AbstractWeights, Nothing}
@@ -3328,6 +3360,8 @@ function (ftcm::FTCM)(x::AbstractVector)
     return sum(val .^ 4) / T
 end
 
+"""
+"""
 mutable struct FTLPM <: HCRiskMeasureTarget
     settings::RMSettings
     target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
@@ -3453,42 +3487,42 @@ function (skurtosis::SKurtosis)(x::AbstractVector)
 end
 
 """
-    const RMSolvers = Union{EVaR, EDaR, EDaR_r, RLVaR, RLDaR, RLDaR_r}
+    const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
 
 Constant defining all concrete subtypes of [`RiskMeasure`](@ref) with a `solvers` property because they require solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
 """
 const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
 
 """
-    const RMSigma = Union{SD, Variance, WCVariance}
+    const RMSigma = Union{RiskMeasureSigma}
 
 Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix via the `sigma` property.
 """
 const RMSigma = Union{RiskMeasureSigma}
 
 """
-    const RMSkew = Union{Skew, SSkew}
+    const RMSkew = Union{RiskMeasureSkew}
 
 Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N²` coskewness matrix via the `skew` property, and an `N×N` matrix of the negative spectral slices of the coskewness matrix.
 """
 const RMSkew = Union{RiskMeasureSkew}
 
 """
-    const RMOWA = Union{GMD, TG, TGRG, OWA}
+    const RMOWA = Union{RiskMeasureOWA}
 
 Constant definint all concrete subtypes of [`RiskMeasure`](@ref) which use Ordered Weight Array formulations.
 """
 const RMOWA = Union{RiskMeasureOWA}
 
 """
-    const RMMu = Union{MAD, SSD, FLPM, SLPM, Kurt, SKurt, SVariance, TCM, FTCM, TLPM, FTLPM}
+    const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
 Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×1` vector of asset expected returns via the `mu` property.
 """
 const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
 """
-    const RMTarget = Union{FLPM, SLPM, TCM, FTLPM}
+    const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
 
 Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector of minimum acceptable returns via the `target` property.
 """
@@ -3564,4 +3598,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Q
        NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox,
        OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu,
        RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers, HCRiskMeasureSolvers,
-       RiskMeasureOWA, RiskMeasureSkew
+       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM

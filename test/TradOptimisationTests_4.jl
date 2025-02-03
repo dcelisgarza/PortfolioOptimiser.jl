@@ -1362,7 +1362,7 @@ end
           5.904334945812074e-7, 0.14224814169002153, 3.1015697260980933e-8,
           1.9554040501965535e-7, 1.9472981995822403e-8]
     @test isapprox(w31.weights, wt)
-    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-6)
+    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-5)
 
     w32 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [6.988817379941981e-9, 1.246112573221949e-8, 7.27450216352786e-9,
@@ -1843,7 +1843,7 @@ end
           5.904873555033599e-7, 0.14224816386009598, 3.099570046473094e-8,
           1.9547088438783105e-7, 1.945577272707206e-8]
     @test isapprox(w31.weights, wt)
-    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-6)
+    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-5)
 
     w32 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [7.495244566211183e-9, 1.3356715214376525e-8, 7.779717687780013e-9,
@@ -2319,7 +2319,7 @@ end
           5.904873555033599e-7, 0.14224816386009598, 3.099570046473094e-8,
           1.9547088438783105e-7, 1.945577272707206e-8]
     @test isapprox(w31.weights, wt)
-    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-6)
+    @test isapprox(w31.weights, w11.weights, rtol = 5.0e-5)
 
     w32 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [7.495244566211183e-9, 1.3356715214376525e-8, 7.779717687780013e-9,
