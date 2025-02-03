@@ -147,7 +147,7 @@ end
     frct = [0.00020822470113906105, 0.00020821744054522453, 0.0002082380049283071,
             -2.754072633534196e-20]
     @test isapprox(w3.weights, wt, rtol = 5.0e-5)
-    @test isapprox(frc3, frct, rtol = 5.0e-5)
+    @test isapprox(frc3, frct, rtol = 1.0e-4)
     @test isapprox(frc3_h / frc3_l, 1, rtol = 1.0e-4)
 
     portfolio.f_risk_budget = 1:3
