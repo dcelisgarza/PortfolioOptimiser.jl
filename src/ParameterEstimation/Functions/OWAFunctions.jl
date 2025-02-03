@@ -232,32 +232,22 @@ function optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
     sucess = false
-    for (key, val) ∈ solvers
-        if haskey(val, :solver)
-            set_optimizer(model, val[:solver];
-                          add_bridges = if !haskey(val, :add_bridges)
-                              true
-                          else
-                              val[:add_bridges]
-                          end)
-        end
+    for solver ∈ solvers
+        name = solver.name
+        solver_i = solver.solver
+        params = solver.params
+        add_bridges = solver.add_bridges
+        check_sol = solver.check_sol
 
-        if haskey(val, :params)
-            for (attribute, value) ∈ val[:params]
-                set_attribute(model, attribute, value)
-            end
-        end
-
-        if haskey(val, :check_sol)
-            check_sol = val[:check_sol]
-        else
-            check_sol = (;)
+        set_optimizer(model, solver_i; add_bridges = add_bridges)
+        if !isnothing(params)
+            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
         end
 
         try
             JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, key => Dict(:jump_error => jump_error))
+            push!(solvers_tried, name => Dict(:jump_error => jump_error))
             continue
         end
 
@@ -269,9 +259,8 @@ function optimise_JuMP_model(model, solvers)
         end
 
         push!(solvers_tried,
-              key => Dict(:objective_val => objective_value(model),
-                          :term_status => term_status,
-                          :params => haskey(val, :params) ? val[:params] : missing))
+              name => Dict(:objective_val => objective_value(model),
+                           :term_status => term_status, :params => params))
     end
 
     return sucess, solvers_tried

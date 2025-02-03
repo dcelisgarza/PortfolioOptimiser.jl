@@ -111,7 +111,8 @@ Set properties for risk measures that use solvers or covariance matrices.
   - `solvers`: solvers.
   - `sigma`: covariance matrix.
 """
-function set_rm_properties!(rm::AbstractRiskMeasure, solvers::AbstractDict,
+function set_rm_properties!(rm::AbstractRiskMeasure,
+                            solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
                             sigma::Union{Nothing, <:AbstractMatrix{<:Real}},
                             V::Union{Nothing, <:AbstractMatrix{<:Real}},
                             SV::Union{Nothing, <:AbstractMatrix{<:Real}})

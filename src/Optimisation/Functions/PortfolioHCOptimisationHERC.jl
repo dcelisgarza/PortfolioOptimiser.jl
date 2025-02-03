@@ -21,10 +21,10 @@ function get_cluster_fees(port, cluster)
 
     return long_fees, rebalance
 end
-function naive_risk(port::AbstractPortfolio, sigma, returns, cluster,
+function naive_risk(port::AbstractPortfolio, mu, sigma, returns, cluster,
                     rm::Union{RiskMeasure, HCRiskMeasure})
     old_custom = set_custom_hc_rm!(rm, port, sigma, cluster)
-    old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
+    old_mu, old_target = set_hc_rm_mu_w!(rm, mu, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
     old_tr = set_tracking_rm!(rm, cluster)
     old_to = set_turnover_rm!(rm, cluster)
@@ -41,34 +41,34 @@ function naive_risk(port::AbstractPortfolio, sigma, returns, cluster,
     return crisk
 end
 
-function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarSum)
+function herc_scalarise_risk_o(port, mu, sigma, returns, rm, cluster, ::ScalarSum)
     crisk = zero(eltype(returns))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
-        crisk += cluster_risk(port, sigma, returns, cluster, r) * scale
+        crisk += cluster_risk(port, mu, sigma, returns, cluster, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return crisk
 end
-function herc_scalarise_risk_o(port, sigma, returns, rm, cluster,
+function herc_scalarise_risk_o(port, mu, sigma, returns, rm, cluster,
                                scalarisation::ScalarLogSumExp)
     gamma = scalarisation.gamma
     crisk = zero(eltype(returns))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
-        crisk += cluster_risk(port, sigma, returns, cluster, r) * scale
+        crisk += cluster_risk(port, mu, sigma, returns, cluster, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return log(exp(crisk)) / gamma
 end
-function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarMax)
+function herc_scalarise_risk_o(port, mu, sigma, returns, rm, cluster, ::ScalarMax)
     crisk = -Inf
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
-        crisk_n = cluster_risk(port, sigma, returns, cluster, r) * scale
+        crisk_n = cluster_risk(port, mu, sigma, returns, cluster, r) * scale
         if crisk_n > crisk
             crisk = crisk_n
         end
@@ -76,35 +76,35 @@ function herc_scalarise_risk_o(port, sigma, returns, rm, cluster, ::ScalarMax)
     end
     return crisk
 end
-function herc_scalarise_risk_i(port, sigma, returns, rm, cluster, ::ScalarSum)
+function herc_scalarise_risk_i(port, mu, sigma, returns, rm, cluster, ::ScalarSum)
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
-        risk .+= naive_risk(port, sigma, returns, cluster, r) * scale
+        risk .+= naive_risk(port, mu, sigma, returns, cluster, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return risk
 end
-function herc_scalarise_risk_i(port, sigma, returns, rm, cluster,
+function herc_scalarise_risk_i(port, mu, sigma, returns, rm, cluster,
                                scalarisation::ScalarLogSumExp)
     gamma = scalarisation.gamma
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale * gamma
-        risk .+= naive_risk(port, sigma, returns, cluster, r) * scale
+        risk .+= naive_risk(port, mu, sigma, returns, cluster, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
     return log.(exp.(risk)) / gamma
 end
-function herc_scalarise_risk_i(port, sigma, returns, rm, cluster, ::ScalarMax)
+function herc_scalarise_risk_i(port, mu, sigma, returns, rm, cluster, ::ScalarMax)
     trisk = -Inf
     risk = zeros(eltype(returns), length(cluster))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
-        risk_n = naive_risk(port, sigma, returns, cluster, r) * scale
+        risk_n = naive_risk(port, mu, sigma, returns, cluster, r) * scale
         if sum(risk_n) > trisk
             risk .= risk_n
         end
@@ -115,9 +115,9 @@ end
 function herc_optimise(port::Portfolio,
                        rm_i::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
                        rm_o::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}},
-                       sigma_i::AbstractMatrix, sigma_o::AbstractMatrix,
-                       returns_i::AbstractMatrix, returns_o::AbstractMatrix,
-                       scalarisation_i::AbstractScalarisation,
+                       mu_i::AbstractVector, mu_o::AbstractVector, sigma_i::AbstractMatrix,
+                       sigma_o::AbstractMatrix, returns_i::AbstractMatrix,
+                       returns_o::AbstractMatrix, scalarisation_i::AbstractScalarisation,
                        scalarisation_o::AbstractScalarisation)
     nodes = to_tree(port.clusters)[2]
     heights = [i.height for i ∈ nodes]
@@ -133,10 +133,10 @@ function herc_optimise(port::Portfolio,
     for i ∈ eachindex(clusters)
         cidx = idx .== i
         clusters[i] = findall(cidx)
-        crisk[i] = herc_scalarise_risk_o(port, sigma_o, returns_o, rm_o, clusters[i],
+        crisk[i] = herc_scalarise_risk_o(port, mu_o, sigma_o, returns_o, rm_o, clusters[i],
                                          scalarisation_o)
-        risk[cidx] .= herc_scalarise_risk_i(port, sigma_i, returns_i, rm_i, clusters[i],
-                                            scalarisation_i)
+        risk[cidx] .= herc_scalarise_risk_i(port, mu_i, sigma_i, returns_i, rm_i,
+                                            clusters[i], scalarisation_i)
         weights[cidx] .*= risk[cidx]
     end
 

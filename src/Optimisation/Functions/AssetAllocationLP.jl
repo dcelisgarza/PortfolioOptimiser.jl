@@ -17,33 +17,23 @@ function optimise_allocation(port, label, tickers, latest_prices)
     solvers_tried = Dict()
 
     success = false
-    key = nothing
-    for (key, val) ∈ solvers
-        if haskey(val, :solver)
-            set_optimizer(model, val[:solver];
-                          add_bridges = if !haskey(val, :add_bridges)
-                              true
-                          else
-                              val[:add_bridges]
-                          end)
-        end
+    name = nothing
+    for solver ∈ solvers
+        name = solver.name
+        solver_i = solver.solver
+        params = solver.params
+        add_bridges = solver.add_bridges
+        check_sol = solver.check_sol
 
-        if haskey(val, :params)
-            for (attribute, value) ∈ val[:params]
-                set_attribute(model, attribute, value)
-            end
-        end
-
-        if haskey(val, :check_sol)
-            check_sol = val[:check_sol]
-        else
-            check_sol = (;)
+        set_optimizer(model, solver_i; add_bridges = add_bridges)
+        if !isnothing(params)
+            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
         end
 
         try
             JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, key => Dict(:jump_error => jump_error))
+            push!(solvers_tried, name => Dict(:jump_error => jump_error))
             continue
         end
 
@@ -57,22 +47,21 @@ function optimise_allocation(port, label, tickers, latest_prices)
         shares, cost, weights, available_funds = resolve_model(model, latest_prices)
 
         push!(solvers_tried,
-              key => Dict(:objective_val => objective_value(model),
-                          :term_status => term_status,
-                          :params => haskey(val, :params) ? val[:params] : missing,
-                          :available_funds => available_funds,
-                          :allocation => DataFrame(; tickers = tickers, shares = shares,
-                                                   cost = cost, weights = weights)))
+              name => Dict(:objective_val => objective_value(model),
+                           :term_status => term_status, :params => params,
+                           :available_funds => available_funds,
+                           :allocation => DataFrame(; tickers = tickers, shares = shares,
+                                                    cost = cost, weights = weights)))
     end
 
-    key = Symbol(string(key) * "_" * string(label))
+    name = Symbol(string(name) * "_" * string(label))
 
     return if success
         shares, cost, weights, available_funds = resolve_model(model, latest_prices)
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.lp_sub_allocation!))"
         @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
-        port.alloc_fail[key] = solvers_tried
+        port.alloc_fail[name] = solvers_tried
 
         (String[], Vector{eltype(latest_prices)}(undef, 0),
          Vector{eltype(latest_prices)}(undef, 0), zero(eltype(latest_prices)))

@@ -25,13 +25,15 @@ ret = [0.670643    1.94045   -0.0896267   0.851535    -0.268234
 
 # Instantiate portfolio instance.
 port = Portfolio(; ret = ret, assets = [:A, :B, :C, :D, :E],
-                 solvers = Dict(:PClGL => Dict(:solver => optimizer_with_attributes(Pajarito.Optimizer,
-                                                                                    "verbose" => false,
-                                                                                    "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
-                                                                                                                             MOI.Silent() => true),
-                                                                                    "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
-                                                                                                                                "verbose" => false,
-                                                                                                                                "max_step_fraction" => 0.75)))));
+                 solvers = PortOptSolver(; name = :PClGL,
+                                         solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                            "verbose" => false,
+                                                                            "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                     MOI.Silent() => true),
+                                                                            "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                        "verbose" => false,
+                                                                                                                        "max_step_fraction" => 0.75))));
+
 # Compute asset statistics.
 asset_statistics!(port)
 # Clusterise assets (for hierarchical optimisations).

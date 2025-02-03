@@ -84,7 +84,7 @@ function finilise_fees(port, weights)
 
     return fees
 end
-function optimise_portfolio_model(port, obj, type, class)
+function optimise_portfolio_model(port, type, class)
     solvers = port.solvers
     model = port.model
 
@@ -93,28 +93,17 @@ function optimise_portfolio_model(port, obj, type, class)
 
     success = false
     strtype = "_" * String(type)
-    for (key, val) ∈ solvers
-        key = Symbol(String(key) * strtype)
+    for solver ∈ solvers
+        name = solver.name
+        solver_i = solver.solver
+        params = solver.params
+        add_bridges = solver.add_bridges
+        check_sol = solver.check_sol
 
-        if haskey(val, :solver)
-            set_optimizer(model, val[:solver];
-                          add_bridges = if !haskey(val, :add_bridges)
-                              true
-                          else
-                              val[:add_bridges]
-                          end)
-        end
-
-        if haskey(val, :params)
-            for (attribute, value) ∈ val[:params]
-                set_attribute(model, attribute, value)
-            end
-        end
-
-        if haskey(val, :check_sol)
-            check_sol = val[:check_sol]
-        else
-            check_sol = (;)
+        key = Symbol(String(name) * strtype)
+        set_optimizer(model, solver_i; add_bridges = add_bridges)
+        if !isnothing(params)
+            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
         end
 
         try
@@ -141,8 +130,7 @@ function optimise_portfolio_model(port, obj, type, class)
         fees = finilise_fees(port, weights)
         push!(solvers_tried,
               key => Dict(:objective_val => objective_value(model),
-                          :term_status => term_status,
-                          :params => haskey(val, :params) ? val[:params] : missing,
+                          :term_status => term_status, :params => params,
                           :finite_weights => all_finite_weights,
                           :nonzero_weights => all_non_zero_weights,
                           :port => DataFrame(; tickers = port.assets, weights = weights),

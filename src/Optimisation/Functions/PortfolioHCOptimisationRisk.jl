@@ -35,10 +35,14 @@ end
 function unset_set_hc_rm_target!(args...)
     return nothing
 end
-function set_hc_rm_mu_w!(rm::RMMu, cluster)
+function set_hc_rm_mu_w!(rm::RMMu, mu, cluster)
     old_mu = rm.mu
-    if !(isnothing(rm.mu) || isempty(rm.mu))
-        rm.mu = view(rm.mu, cluster)
+    if isnothing(rm.mu) || isempty(rm.mu)
+        if !isempty(mu)
+            rm.mu = view(mu, cluster)
+        end
+    else
+        rm.mu = view(old_mu, cluster)
     end
     old_target = set_hc_rm_target!(rm, cluster)
     return old_mu, old_target
@@ -121,9 +125,10 @@ end
 function unset_custom_hc_rm!(args...)
     return nothing
 end
-function cluster_risk(port, sigma, returns, cluster, rm::Union{RiskMeasure, HCRiskMeasure})
+function cluster_risk(port, mu, sigma, returns, cluster,
+                      rm::Union{RiskMeasure, HCRiskMeasure})
     old_custom = set_custom_hc_rm!(rm, port, sigma, cluster)
-    old_mu, old_target = set_hc_rm_mu_w!(rm, cluster)
+    old_mu, old_target = set_hc_rm_mu_w!(rm, mu, cluster)
     old_sigma = set_hc_rm_sigma!(rm, sigma, cluster)
     old_tr = set_tracking_rm!(rm, cluster)
     old_to = set_turnover_rm!(rm, cluster)

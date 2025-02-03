@@ -407,13 +407,6 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
     end
     @variable(model, mad[1:T] .>= 0)
     we = rm.we
-    # if isnothing(we)
-    #     @expression(model, mad_risk, 2 * mean(mad))
-    # else
-    #     @expression(model, mad_risk, 2 * mean(mad, we))
-    # end
-    # @constraint(model, constr_mar_mad,
-    #             scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -mad)
     @expression(model, mar_mad, net_X .- dot(mu, w) .+ mad)
     if isnothing(we)
         @expression(model, mad_risk, mean(mad + mar_mad))

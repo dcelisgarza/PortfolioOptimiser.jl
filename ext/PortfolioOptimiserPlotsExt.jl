@@ -397,7 +397,8 @@ end
 function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
                                           returns::AbstractMatrix; alpha::Real = 0.05,
                                           kappa::Real = 0.3,
-                                          solvers::Union{<:AbstractDict, Nothing} = nothing,
+                                          solvers::Union{Nothing, PortOptSolver,
+                                                         <:AbstractVector{PortOptSolver}} = nothing,
                                           theme = :Dark2_5, kwargs_ret = (;),
                                           kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
     ret = returns * w
@@ -507,7 +508,8 @@ end
 function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix;
                                       alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                       a_sim::Int = 100, kappa::Real = 0.3,
-                                      solvers::Union{<:AbstractDict, Nothing} = nothing,
+                                      solvers::Union{Nothing, PortOptSolver,
+                                                     <:AbstractVector{PortOptSolver}} = nothing,
                                       points::Integer = ceil(Int,
                                                              4 * sqrt(size(returns, 1))),
                                       theme = :Paired_10, kwargs_h = (;),

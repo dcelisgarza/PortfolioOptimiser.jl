@@ -1,9 +1,10 @@
 @testset "WR" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = WR()
 
@@ -233,10 +234,11 @@ end
 
 @testset "RG" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = RG()
 
@@ -469,10 +471,11 @@ end
 
 @testset "CVaR" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = CVaR()
 
@@ -705,10 +708,11 @@ end
 
 @testset "CVaRRG" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = CVaRRG()
 
@@ -776,11 +780,12 @@ end
           5.283722170417929e-13, 0.09933234588429204]
     @test isapprox(w5.weights, wt)
 
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false,
-                                                               "max_step_fraction" => 0.75)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = ["verbose" => false,
+                                                "max_step_fraction" => 0.75])
+
     w6 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [0.025759606555272298, 0.02352898409486244, 4.274420636434058e-10,
           0.030973032935044754, 0.004266965926759625, 0.016564952535747083,
@@ -790,10 +795,10 @@ end
           0.04480467381032817, 2.1784100433961595e-9, 0.23106750435702164,
           9.688411074911182e-11, 0.09933234337534765]
     @test isapprox(w6.weights, wt, rtol = 1.0e-7)
-    portfolio.solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                               :check_sol => (allow_local = true,
-                                                              allow_almost = true),
-                                               :params => Dict("verbose" => false)))
+    portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                      check_sol = (; allow_local = true,
+                                                   allow_almost = true),
+                                      params = "verbose" => false)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -950,11 +955,13 @@ end
 
 @testset "EVaR" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
+
     asset_statistics!(portfolio)
     rm = EVaR()
 
@@ -1183,11 +1190,12 @@ end
 
 @testset "RLVaR" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
     rm = RLVaR()
 
@@ -1417,11 +1425,12 @@ end
 
 @testset "EVaR < RLVaR < WR" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1451,10 +1460,11 @@ end
 
 @testset "MDD" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = MDD()
 
@@ -1685,10 +1695,11 @@ end
 
 @testset "ADD" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = ADD()
 
@@ -1919,10 +1930,11 @@ end
 
 @testset "UCI" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = "verbose" => false))
     asset_statistics!(portfolio)
     rm = UCI()
 

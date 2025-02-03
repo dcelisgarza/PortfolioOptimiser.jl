@@ -3,6 +3,85 @@
 # SPDX-License-Identifier: MIT
 
 """
+    mutable struct PortOptSolver
+
+Structure for defining solver and solver parameters for solving [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+
+  - Functions and types which take a `PortOptSolver` also take a `<:AbstractVector{<:PortOptSolver}`.
+
+      + If a vector is provided, it will iterated over until a solution is accepted or the vector runs out, at which point the optimisation will be considered to have failed.
+
+See also: [`Portfolio`](@ref), [`RMSolvers`](@ref), [`OWAJTypes`](@ref).
+
+# Keyword Arguments
+
+  - `name::Union{Symbol, <:AbstractString} = ""`: optimiser name (for registering solutions).
+  - `solver::Any = nothing`: defines the solver to be used. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.`JuMP` optimiser factory [`optimizer_factory`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model).
+  - `check_sol::NamedTuple = (; allow_local = true, allow_almost = true)`: defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
+  - `params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing`:  defines solver-specific parameters/attributes.
+  - `add_bridges::Bool = true`: value of the `add_bridges` kwarg of [`JuMP.set_optimizer`](https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.set_optimizer).
+
+# Examples
+
+It's possible to define a single solver.
+
+```jldoctest solvers
+using JuMP, Clarabel, PortfolioOptimiser
+solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                        check_sol = (allow_local = true, allow_almost = true),
+                        params = "verbose" => false, add_bridges = false)
+
+# output
+
+PortOptSolver(:Clarabel, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), "verbose" => false, false)
+```
+
+Or a collection of solvers.
+
+```jldoctest solvers
+solvers = [PortOptSolver(; name = :Clarabel_1, solver = Clarabel.Optimizer,
+                         check_sol = (allow_local = true, allow_almost = true),
+                         params = ["verbose" => false, "max_step_fraction" => 0.8]),
+           # Provide solver with pre-attached attributes and no arguments 
+           # for the `JuMP.is_solved_and_feasible` function.
+           PortOptSolver(; name = :Clarabel_2,
+                         solver = JuMP.optimizer_with_attributes(Clarabel.Optimizer,
+                                                                 "max_step_fraction" => 0.75),
+                         # Do not add JuMP bridges to JuMP.Model()
+                         add_bridges = false)]
+
+# output
+
+2-element Vector{PortOptSolver}:
+ PortOptSolver(:Clarabel_1, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), ["verbose" => 0.0, "max_step_fraction" => 0.8], true)
+ PortOptSolver(:Clarabel_2, MathOptInterface.OptimizerWithAttributes(Clarabel.MOIwrapper.Optimizer, Pair{MathOptInterface.AbstractOptimizerAttribute, Any}[MathOptInterface.RawOptimizerAttribute("max_step_fraction") => 0.75]), (allow_local = true, allow_almost = true), nothing, false)
+```
+"""
+mutable struct PortOptSolver
+    name::Union{Symbol, <:AbstractString}
+    solver::Any
+    check_sol::NamedTuple
+    params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}}
+    add_bridges::Bool
+end
+function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any = nothing,
+                       check_sol::NamedTuple = (; allow_local = true, allow_almost = true),
+                       params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing,
+                       add_bridges::Bool = true)
+    return PortOptSolver(name, solver, check_sol, params, add_bridges)
+end
+function Base.isequal(A::PortOptSolver, B::PortOptSolver)
+    for property ∈ propertynames(A)
+        prop_A = getproperty(A, property)
+        prop_B = getproperty(B, property)
+        if !isequal(prop_A, prop_B)
+            return false
+        end
+    end
+    return true
+end
+
+"""
     abstract type AbstractRMSettings end
 
 Abstract type for subtyping risk measure settings.
@@ -123,13 +202,13 @@ abstract type AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasureSkew`](@ref), [`RiskMeasureOWA`](@ref), [`RiskMeasureMu`](@ref), [`RiskMeasureTarget`](@ref), [`calc_risk`](@ref), [`RMSettings`](@ref), [`set_rm`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasureSkew`](@ref), [`RiskMeasureOWA`](@ref), [`RiskMeasureMu`](@ref), [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
 
 # Implementation
 
 To ensure a risk measure can be used any of the above optimisation types, it must abide by a few rules.
 
-  - Implement `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
+  - Implement: `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
 
 ```julia
 struct MyRiskMeasure <: RiskMeasure
@@ -384,13 +463,13 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMeasureTarget`](@ref), [`HCRMSettings`](@ref), [`calc_risk`](@ref), [`set_rm_solvers!`](@ref), [`unset_rm_solvers!`](@ref).
+See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMeasureTarget`](@ref), [`HCRMSettings`](@ref), [`calc_risk`](@ref).
 
 # Implementation
 
 To ensure a risk measure can be used by the above optimisation types, it must abide by a few rules.
 
-  - Implement `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
+  - Implement: `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
 
 ```julia
 struct MyHCRiskMeasure <: HCRiskMeasure
@@ -500,7 +579,7 @@ See also: [`calc_risk`](@ref).
 
 # Implementation
 
-  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+  - Implement: [`calc_risk`](@ref) for the type. This will let the library use the risk function everywhere it needs to.
 
 ```julia
 struct MyNoOptRiskMeasure <: NoOptRiskMeasure
@@ -523,9 +602,11 @@ See also: [`RiskMeasure`](@ref), [`EVaR`](@ref), [`EDaR`](@ref), [`RLVaR`](@ref)
 
 # Implementation
 
-Concrete subtypes must contain the following properties:
+  - Concrete subtypes must contain the following properties:
 
-  - `solvers::Union{<:AbstractDict, Nothing}`: property to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+      + `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}`: (optional) instance or `AbstractVector` of [`PortOptSolver`](@ref).
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureSolvers <: RiskMeasure end
 
@@ -538,9 +619,11 @@ See also: [`HCRiskMeasure`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `solvers::Union{<:AbstractDict, Nothing}`: property to store [`JuMP`](https://github.com/jump-dev/JuMP.jl)-compatible solvers.
+      + `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}`: (optional) instance or `AbstractVector` of [`PortOptSolver`](@ref).
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type HCRiskMeasureSolvers <: HCRiskMeasure end
 
@@ -553,9 +636,11 @@ See also: [`RiskMeasure`](@ref), [`Variance`](@ref), [`SD`](@ref), [`WCVariance`
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `sigma::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` covariance matrix.
+      + `sigma::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` covariance matrix.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureSigma <: RiskMeasure end
 
@@ -568,10 +653,12 @@ See also: [`RiskMeasure`](@ref), [`Skew`](@ref), [`SSkew`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `skew::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N²` coskew matrix.
-  - `V::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+      + `skew::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N²` coskew matrix.
+      + `V::Union{<:AbstractMatrix, Nothing}`: property to store an `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureSkew <: RiskMeasure end
 
@@ -584,9 +671,11 @@ See also: [`RiskMeasure`](@ref), [`GMD`](@ref), [`TG`](@ref), [`TGRG`](@ref), [`
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `formulation::OWAFormulation`: property to store the formulation dispatch type.
+      + `formulation::OWAFormulation`: property to store the formulation dispatch type.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureOWA <: RiskMeasure end
 
@@ -599,10 +688,12 @@ See also: [`RiskMeasure`](@ref), [`RiskMeasureTarget`](@ref), [`MAD`](@ref), [`S
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
-  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+      + `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+      + `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureMu <: RiskMeasure end
 
@@ -615,10 +706,12 @@ See also: [`HCRiskMeasure`](@ref), [`FTCM`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
-  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+      + `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+      + `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type HCRiskMeasureMu <: HCRiskMeasure end
 
@@ -631,10 +724,12 @@ See also: [`NoOptRiskMeasure`](@ref), [`TCM`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+      + `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+      + `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type NoOptRiskMeasureMu <: NoOptRiskMeasure end
 
@@ -647,11 +742,13 @@ See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SLPM`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+      + `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+      + `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+      + `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type RiskMeasureTarget <: RiskMeasureMu end
 
@@ -664,11 +761,13 @@ See also: [`HCRiskMeasure`](@ref), [`TLPM`](@ref), [`FTLPM`](@ref).
 
 # Implementation
 
-Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
+  - Concrete subtypes must contain the following properties:
 
-  - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-  - `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+      + `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+      + `w::Union{<:AbstractWeights, Nothing}`: property to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
+      + `mu::Union{<:AbstractVector, Nothing}`: property to store an `N×1` expected returns vector.
+
+  - Ideally perform any necessary validation checks at instantiation and `setproperty!`.
 """
 abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
 
@@ -853,6 +952,7 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The Standard Deviation risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key, `:sd_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:sd_risk_ub`.
   - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
 
 # Functor
@@ -912,13 +1012,16 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
       + If `isnothing(we)`: computes the unweighted mean.
       + Else: computes the weighted mean.
-  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector (internal expected value).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector (internal expected value) via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
-      + In the functor: uses [`calc_ret_mu`](@ref).
+!!! warning
 
-      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use.
+    Using `w` to compute the MAD risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:mad_risk`. Alternatively, use the value of `mu` in both.
 
-          * If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The Mean Absolute Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mad_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:mad_risk_ub`.
 
 # Functor
 
@@ -950,7 +1053,7 @@ end
 """
     mutable struct SSD{T1 <: Real} <: RiskMeasureMu
 
-Measures and computes the portfolio Semi Standard Deviation (SD) below equal to or below the `target` return threshold.
+Measures and computes the portfolio Semi Standard Deviation (SD) equal to or below the mean return.
 
 ```math
 \\begin{align}
@@ -971,14 +1074,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector.
 
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `mu::Union{<:AbstractVector, Nothing} = nothing`: optional vector of expected returns.
+      + In the functor: uses [`calc_ret_mu`](@ref).
 
-      + If `nothing`: takes its value from the `mu` instance [`Portfolio`](@ref).
-      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use.
+
+          * If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
 
 # Functor
 
@@ -1296,7 +1399,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
@@ -1309,10 +1412,10 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 mutable struct EVaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
-              solvers::Union{<:AbstractDict, Nothing} = nothing)
+              solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EVaR{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1356,7 +1459,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
@@ -1370,10 +1473,10 @@ mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, Nothing} = nothing)
+               solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLVaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -1668,7 +1771,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
@@ -1681,10 +1784,10 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 mutable struct EDaR{T1 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EDaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
-              solvers::Union{<:AbstractDict, Nothing} = nothing)
+              solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -1740,7 +1843,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
@@ -1754,10 +1857,10 @@ mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     settings::RMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLDaR(; settings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
-               solvers::Union{<:AbstractDict, Nothing} = nothing)
+               solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLDaR{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -3226,7 +3329,7 @@ See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), 
 
   - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for exponential cone problems.
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}`: optional JuMP-compatible solvers for exponential cone problems.
 
 # Behaviour
 
@@ -3255,10 +3358,10 @@ edar_r = EDaR_r(; alpha = 0.025,  # 2.5 % significance level
 mutable struct EDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function EDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05,
-                solvers::Union{<:AbstractDict, Nothing} = nothing)
+                solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     return EDaR_r{typeof(alpha)}(settings, alpha, solvers)
 end
@@ -3312,7 +3415,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: significance level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{<:AbstractDict, Nothing}`: optional JuMP-compatible solvers for 3D power cone problems.
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}`: optional JuMP-compatible solvers for 3D power cone problems.
 
 # Behaviour
 
@@ -3344,10 +3447,10 @@ mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasureSolvers
     settings::HCRMSettings
     alpha::T1
     kappa::T2
-    solvers::Union{<:AbstractDict, Nothing}
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
 function RLDaR_r(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05, kappa = 0.3,
-                 solvers::Union{<:AbstractDict, Nothing} = nothing)
+                 solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
     return RLDaR_r{typeof(alpha), typeof(kappa)}(settings, alpha, kappa, solvers)
@@ -3596,42 +3699,54 @@ end
 """
     const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) with a `solvers` property because they require solving a [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+Risk measures that use `solvers`.
+
+See also: [`RiskMeasureSolvers`](@ref), [`HCRiskMeasureSolvers`](@ref).
 """
 const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
 
 """
     const RMSigma = Union{RiskMeasureSigma}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix via their `sigma` property.
+Risk measures that use `sigma`.
+
+See also: [`RiskMeasureSigma`](@ref).
 """
 const RMSigma = Union{RiskMeasureSigma}
 
 """
     const RMSkew = Union{RiskMeasureSkew}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N²` coskewness matrix via their `skew` property, and an `N×N` matrix of the negative spectral slices of the coskewness matrix via their `V` property.
+Risk measures that use `skew` and `V`.
+
+See also: [`RiskMeasureSkew`](@ref).
 """
 const RMSkew = Union{RiskMeasureSkew}
 
 """
     const RMOWA = Union{RiskMeasureOWA}
 
-Constant definint all concrete subtypes of [`RiskMeasure`](@ref) which use Ordered Weight Array formulations.
+Risk measures that use Ordered Weight Array formulations.
+
+See also: [`RiskMeasureOWA`](@ref).
 """
 const RMOWA = Union{RiskMeasureOWA}
 
 """
     const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+Risk measures that use `mu` and `w`.
+
+See also: [`RiskMeasureMu`](@ref), [`HCRiskMeasureMu`](@ref), [`NoOptRiskMeasureMu`](@ref), [`calc_ret_mu`](@ref).
 """
 const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
 """
     const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector of minimum acceptable returns via their `target` property, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
+Risk measures that use `target`, `mu` and `w`.
+
+See also: [`RiskMeasureTarget`](@ref), [`HCRiskMeasureTarget`](@ref), [`calc_target_ret_mu`](@ref).
 """
 const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
 
@@ -3705,4 +3820,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Q
        NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox,
        OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu,
        RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers, HCRiskMeasureSolvers,
-       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM
+       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM, PortOptSolver

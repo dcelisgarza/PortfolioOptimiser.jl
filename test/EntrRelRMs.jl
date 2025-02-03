@@ -9,19 +9,23 @@ l = 2.0
 
 @testset "ERM and RRM logs" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
+
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad())
 
-    solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                     :check_sol => (allow_local = true, allow_almost = true),
-                                     :params => Dict("verbose" => false, "max_iter" => 1)))
-    solvers_mip = Dict(:HiGHS => Dict(:solver => HiGHS.Optimizer,
-                                      :params => Dict("log_to_console" => false)))
+    solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                            check_sol = (; allow_local = true, allow_almost = true),
+                            params = ["verbose" => false, "max_iter" => 1])
+
+    solvers_mip = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
+                                check_sol = (; allow_local = true, allow_almost = true),
+                                params = "log_to_console" => false)
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
@@ -45,11 +49,12 @@ end
 
 @testset "EVaR ERM" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad(; rm = EVaR(), obj = Sharpe()))
 
@@ -74,11 +79,12 @@ end
 
 @testset "EDaR ERM" begin
     portfolio = Portfolio(; prices = prices,
-                          solvers = Dict(:Clarabel => Dict(:solver => Clarabel.Optimizer,
-                                                           :check_sol => (allow_local = true,
-                                                                          allow_almost = true),
-                                                           :params => Dict("verbose" => false,
-                                                                           "max_step_fraction" => 0.75))))
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = ["verbose" => false,
+                                                            "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad(; rm = EDaR(), obj = Sharpe()))
 
