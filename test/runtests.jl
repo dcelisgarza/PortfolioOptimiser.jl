@@ -1,17 +1,5 @@
 using SafeTestsets
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
-@safetestset "Objective scalarisation tests" begin
-    include("ObjectiveScalarisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
 @safetestset "HC optimisation" begin
     include("HCOptimisationTests.jl")
 end
@@ -102,4 +90,16 @@ end
 
 @safetestset "Risk measure tests" begin
     include("RiskMeasureTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
+end
+
+@safetestset "Objective scalarisation tests" begin
+    include("ObjectiveScalarisationTests.jl")
+end
+
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
 end
