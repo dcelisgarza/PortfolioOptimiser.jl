@@ -129,6 +129,31 @@ See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasur
 
 To ensure a risk measure can be used any of the above optimisation types, it must abide by a few rules.
 
+  - Implement `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
+
+```julia
+struct MyRiskMeasure <: RiskMeasure
+    # Fields of MyRiskMeasure
+end
+
+Base.iterate(S::MyRiskMeasure, state = 1) = state > 1 ? nothing : (S, state + 1)
+function Base.String(s::MyRiskMeasure)
+    return "MyRiskMeasure"
+end
+function Base.Symbol(::MyRiskMeasure)
+    return Symbol("MyRiskMeasure")
+end
+function Base.length(::MyRiskMeasure)
+    return 1
+end
+function Base.getindex(S::MyRiskMeasure, ::Any)
+    return S
+end
+function Base.view(S::MyRiskMeasure, ::Any)
+    return S
+end
+```
+
   - Include a `settings::RMSettings` field, [`RMSettings`](@ref).
 
 ```julia
@@ -359,6 +384,31 @@ See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMea
 # Implementation
 
 To ensure a risk measure can be used by the above optimisation types, it must abide by a few rules.
+
+  - Implement `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
+
+```julia
+struct MyHCRiskMeasure <: RiskMeasure
+    # Fields of MyHCRiskMeasure
+end
+
+Base.iterate(S::MyHCRiskMeasure, state = 1) = state > 1 ? nothing : (S, state + 1)
+function Base.String(s::MyHCRiskMeasure)
+    return "MyHCRiskMeasure"
+end
+function Base.Symbol(::MyHCRiskMeasure)
+    return Symbol("MyHCRiskMeasure")
+end
+function Base.length(::MyHCRiskMeasure)
+    return 1
+end
+function Base.getindex(S::MyHCRiskMeasure, ::Any)
+    return S
+end
+function Base.view(S::MyHCRiskMeasure, ::Any)
+    return S
+end
+```
 
   - Include a `settings::HCRMSettings` field, [`HCRMSettings`](@ref).
 
