@@ -3546,14 +3546,14 @@ const RMSolvers = Union{RiskMeasureSolvers, HCRiskMeasureSolvers}
 """
     const RMSigma = Union{RiskMeasureSigma}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix via the `sigma` property.
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N` covariance matrix via their `sigma` property.
 """
 const RMSigma = Union{RiskMeasureSigma}
 
 """
     const RMSkew = Union{RiskMeasureSkew}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N²` coskewness matrix via the `skew` property, and an `N×N` matrix of the negative spectral slices of the coskewness matrix.
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×N²` coskewness matrix via their `skew` property, and an `N×N` matrix of the negative spectral slices of the coskewness matrix via their `V` property.
 """
 const RMSkew = Union{RiskMeasureSkew}
 
@@ -3567,14 +3567,14 @@ const RMOWA = Union{RiskMeasureOWA}
 """
     const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use an `N×1` vector of asset expected returns via the `mu` property.
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
 """
 const RMMu = Union{RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu}
 
 """
     const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
 
-Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector of minimum acceptable returns via the `target` property.
+Constant defining all concrete subtypes of [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector of minimum acceptable returns via their `target` property, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
 """
 const RMTarget = Union{RiskMeasureTarget, HCRiskMeasureTarget}
 

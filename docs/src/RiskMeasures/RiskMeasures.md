@@ -60,18 +60,7 @@ RiskMeasureOWA
 RiskMeasureSkew
 ```
 
-## Support functions
-
-Some risk measures require the computation of certain statistics, these are performed by the following functions.
-
-```@docs
-PortfolioOptimiser.calc_ret_mu
-PortfolioOptimiser.calc_target_ret_mu
-```
-
-## Constants
-
-It is useful to group risk measures by their properties as well as their types. By defining constants which group various risk measure types with certain characteristics, we can facilitate their use in the many different optimisation types offered by [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). This makes adding new features easier and lowers the difficulty for defining customised behaviour.
+It is useful to group risk measures by their properties as well as their types. By defining constants which group various risk measure types with certain characteristics, we can facilitate their use in the many different optimisation types offered by [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/). This makes adding new features easier and simplifies the definition of customised behaviour.
 
 ```@docs
 PortfolioOptimiser.RMSolvers
@@ -80,6 +69,15 @@ PortfolioOptimiser.RMSkew
 PortfolioOptimiser.RMOWA
 PortfolioOptimiser.RMMu
 PortfolioOptimiser.RMTarget
+```
+
+## Support functions
+
+Some risk measures require the computation of certain statistics, these are performed by the following functions.
+
+```@docs
+PortfolioOptimiser.calc_ret_mu
+PortfolioOptimiser.calc_target_ret_mu
 ```
 
 ## Dispersion risk measures
