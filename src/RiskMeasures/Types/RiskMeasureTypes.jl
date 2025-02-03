@@ -393,7 +393,7 @@ To ensure a risk measure can be used by the above optimisation types, it must ab
   - Implement `Base.iterate`, `Base.Symbol`, `Base.length`, `Base.getindex`, and `Base.view`.
 
 ```julia
-struct MyHCRiskMeasure <: RiskMeasure
+struct MyHCRiskMeasure <: HCRiskMeasure
     # Fields of MyHCRiskMeasure
 end
 
@@ -429,6 +429,60 @@ end
 ```julia
 function calc_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
     # Risk measure calculation
+end
+```
+
+  - If a risk measure is to be compatible with hierarchical optimisations that take risk measures as parameters, and it contains a field/fields which can/must be indexed/computed per asset, like a vector or matrix, it must implement [`set_custom_hc_rm!`](@ref) and [`unset_custom_hc_rm!`](@ref) which dispatches on the custom risk measure.
+
+```julia
+struct MyHCRiskMeasure{T1, T2, T3} <: HCRiskMeasure
+    # Fields containing asset information (computable or indexable).
+    indexable_vector::Vector{T1}
+    indexable_matrix::Matrix{T1}
+    computable_vector::Vector{T1}
+    computable_matrix::Matrix{T1}
+    computable_vector_args::T2
+    computable_matrix_args::T3
+end
+
+# We have some computable fields, so we need to define the function to do so.
+function compute_MyRiskMeasure_vec_mtx!(rm::MyHCRiskMeasure, args...)
+    # Compute vector and matrix
+    new_computable_vector = ...
+    new_computable_matrix = ...
+
+    rm.computable_vector = new_computable_vector
+    rm.computable_matrix = new_computable_matrix
+
+    return nothing
+end
+
+# port is the portfolio, sigma is the covariance matrix, cluster are the indices defining the cluster.
+function set_custom_hc_rm!(rm::MyHCRiskMeasure, port, sigma, cluster)
+    old_i_vector = rm.indexable_vector
+    old_i_matrix = rm.indexable_matrix
+    old_c_vector = rm.computable_vector
+    old_c_matrix = rm.computable_matrix
+
+    ###
+    ###
+    # These can be placed inside if statements that condition the indexing
+    rm.indexable_vector = rm.indexable_vector[cluster]
+    rm.indexable_matrix = rm.indexable_matrix[cluster, cluster]
+    ###
+    ###
+
+    compute_MyRiskMeasure_vec_mtx!(rm, port, sigma, cluster)
+
+    return Tuple(old_i_vector, old_i_matrix, old_c_vector, old_c_matrix)
+end
+function unset_custom_hc_rm!(rm::MyHCRiskMeasure, old_custom)
+    rm.indexable_vector = old_custom[1]
+    rm.indexable_matrix = old_custom[2]
+    rm.computable_vector = old_custom[3]
+    rm.computable_matrix = old_custom[4]
+
+    return nothing
 end
 ```
 """
@@ -595,9 +649,8 @@ See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SLPM`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-    - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-    - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-
+  - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
   - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
 """
 abstract type RiskMeasureTarget <: RiskMeasureMu end
@@ -613,9 +666,8 @@ See also: [`HCRiskMeasure`](@ref), [`TLPM`](@ref), [`FTLPM`](@ref).
 
 Concrete subtypes must contain the following properties, and ideally perform any necessary validation checks at instantiation and with `setproperty!`:
 
-    - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-    - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
-
+  - `target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}`: scalar or `N×1` minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `w::Union{<:AbstractWeights, Nothing}`: field to store a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean.
   - `mu::Union{<:AbstractVector, Nothing}`: field to store an `N×1` expected returns vector.
 """
 abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
