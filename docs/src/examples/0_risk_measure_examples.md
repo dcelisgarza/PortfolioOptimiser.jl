@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/0_risk_measure_examples.jl"
 ```
@@ -182,6 +181,76 @@ port.model[:sd_risk_ub]
 w2 = optimise!(port, HRP(; rm = rm))
 ````
 
-* * *
+# Mean Absolute Deviation, [`MAD`](@ref)
+
+````@example 0_risk_measure_examples
+# Setting the mean absolute deviation upper bound to 10 (it's so high it has no effect on the optimisation).
+rm = MAD(; settings = RMSettings(; ub = 10))
+w1 = optimise!(port, Trad(; rm = rm, str_names = true))
+r1 = calc_risk(port; rm = rm)
+# As a functor.
+isapprox(r1, rm(port.returns, w1.weights))
+# The value of :mad_risk is consistent with the risk calculation.
+isapprox(r1, value(port.model[:mad_risk]))
+# MAD risk is a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr)
+typeof(port.model[:mad_risk])
+# mad_risk <= 10
+port.model[:mad_risk_ub]
+# `w` has no effect on the optimisation, but can lead to inconsistent values between the optimisation and functor.
+ew1 = eweights(1:size(port.returns, 1), 0.5; scale = true)
+rm = MAD(; w = ew1)
+w2 = optimise!(port, Trad(; rm = rm, str_names = true))
+# No effect int he optimisation.
+isequal(w1.weights, w2.weights)
+# Risk is not consistent with the one in `:mad_risk`, because `w` is not used in the optimisation.
+r2 = calc_risk(port; rm = rm)
+isapprox(r2, value(port.model[:mad_risk]))
+# In order to make them consistent, we can compute the value of `mu` using `w`.
+asset_statistics!(port; mu_type = MuSimple(; w = ew1))
+w3 = optimise!(port, Trad(; rm = rm, str_names = true))
+isapprox(w1.weights, w3.weights)
+r3 = calc_risk(port; rm = rm)
+isapprox(r3, value(port.model[:mad_risk]))
+# Alternatively we can provide this value of `mu` to the risk measure, which takes precedence over the value in `port`. We reset the asset statistics.
+rm = MAD(; mu = port.mu)
+# Reset the asset statistics to show that the value in `rm` takes precedence.
+asset_statistics!(port)
+w4 = optimise!(port, Trad(; rm = rm, str_names = true))
+r4 = calc_risk(port; rm = rm)
+isapprox(r4, value(port.model[:mad_risk]))
+# Using the value of `mu` leads to the same results as using the `w` used to compute it.
+isapprox(w3.weights, w4.weights)
+isapprox(r3, r4)
+# We can use a different weights vector for the expected value of the absolute deviations.
+ew2 = eweights(1:size(port.returns, 1), 0.7; scale = true)
+rm = MAD(; we = ew2)
+w5 = optimise!(port, Trad(; rm = rm, str_names = true))
+r5 = calc_risk(port; rm = rm)
+isapprox(r5, value(port.model[:mad_risk]))
+# We can use both.
+asset_statistics!(port; mu_type = MuSimple(; w = ew1))
+rm = MAD(; mu = port.mu, we = ew2)
+w6 = optimise!(port, Trad(; rm = rm, str_names = true))
+r6 = calc_risk(port; rm = rm)
+isapprox(r6, value(port.model[:mad_risk]))
+
+# Hierarchical optimisation
+asset_statistics!(port)
+rm = MAD()
+w6 = optimise!(port, HRP(; rm = rm))
+r6 = calc_risk(port; rm = rm)
+# Using `w`.
+rm = MAD(; w = ew1)
+w7 = optimise!(port, HRP(; rm = rm))
+r7 = calc_risk(port; rm = rm)
+# Using `mu` isntead.
+asset_statistics!(port; mu_type = MuSimple(; w = ew1))
+rm = MAD(; mu = port.mu)
+w8 = optimise!(port, HRP(; rm = rm))
+r8 = calc_risk(port; rm = rm)
+````
+
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

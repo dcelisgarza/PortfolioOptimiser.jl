@@ -92,6 +92,7 @@ These measure how far the returns deviate from the mean in both the positive and
 PortfolioOptimiser.VarianceFormulation
 Quad
 SOC
+RSOC
 Variance
 SD
 MAD

@@ -798,7 +798,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`Variance`](@ref).
+See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`RSOC`](@ref), [`Variance`](@ref).
 
 # Behaviour
 
@@ -831,14 +831,15 @@ Where:
   - ``\\sigma^2``: is the portfolio variance.
   - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as an [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
 
-See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Variance`](@ref).
 
 # Behaviour
 
   - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
   - Defines a standard deviation variable `dev`.
-  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `sd_risk = dev^2`.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dev^2`.
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - Requires a solver capable of handling quadratic expressions.
   - Often more numerically stable than direct quadratic formulation.
   - Better scaling properties for large portfolios.
   - Compatible with specialised conic solvers.
@@ -848,6 +849,42 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
 # Examples
 """
 struct SOC <: VarianceFormulation end
+
+"""
+    struct RSOC <: VarianceFormulation end
+
+Rotated Second-Order Cone (RSOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\dfrac{v}{T-1}\\nonumber\\\\
+\\textrm{s.t.} &\\qquad \\bm{y} = (\\mathbf{X} - \\bm{\\mu}^\\intercal) \\bm{w}\\nonumber\\\\
+               &\\qquad (v,\\, 0.5,\\, \\bm{y}) \\in \\mathcal{K}_{\\textrm{rsoc}}
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\bm{v}``: is the portfolio variance.
+  - ``T``: is the number of observations.
+  - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return.
+  - ``\\bm{\\mu}``: is the `N×1` vector of expected asset returns.
+  - ``\\mathcal{K}_{\\textrm{rsoc}}``: is the [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone). Which in this formulation represents the sum of squares of a vector.
+
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Variance`](@ref).
+
+# Behaviour
+
+  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
+
+  - Uses a a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
+  - Defines a standard deviation variable `dev`.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = tvariance`.
+  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
+  - Requires a solver capable of handling quadratic expressions.
+  - Performance may degrade for large portfolios.
+"""
 struct RSOC <: VarianceFormulation end
 
 """
@@ -952,13 +989,13 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), 
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Standard Deviation risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key, `:sd_risk`.
+  - The SD risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key, `:sd_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with key, `:sd_risk_ub`.
   - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
 
 # Functor
 
-  - `(sd::SD)(w::AbstractVector)`: computes the Standard Deviation of an `N×1` vector of asset weights.
+  - `(sd::SD)(w::AbstractVector)`: computes the SD risk of an `N×1` vector of asset weights.
 
 # Examples
 """
@@ -1021,12 +1058,12 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Mean Absolute Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mad_risk`.
+  - The MAD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mad_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with key, `:mad_risk_ub`.
 
 # Functor
 
-  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Mean Absolute Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the MAD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -1083,12 +1120,12 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Semi Standard Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
+  - The SSD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with key, `:ssd_risk_ub`.
 
 # Functor
 
-  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Semi Standard Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SSD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -1135,23 +1172,22 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-
   - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
 !!! warning
 
-    Using `w` to compute the SSD risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:ssd_risk`. Alternatively, use the value of `mu` in both.
+    Using `w` to compute the FLPM risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:flpm_risk`. Alternatively, use the value of `mu` in both.
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Semi Standard Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:ssd_risk_ub`.
+  - The FLPM risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:flpm_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:flpm_risk_ub`.
 
 # Functor
 
-  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Semi Standard Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the FLPM risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -1200,28 +1236,24 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FL
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+!!! warning
 
-      + If `isinf(target)`:
+    Using `w` to compute the SLPM risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:slpm_risk`. Alternatively, use the value of `mu` in both.
 
-          * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-              - If `isinf(mu)`: it takes its value from the `mu` property of the [`Portfolio`](@ref) instance.
-
-          * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
-
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `mu::Union{<:Real, AbstractVector{<:Real}} = 0.0`: optional minimum return target.
-
-      + If `isinf(mu)`: takes its value from the `mu` instance [`Portfolio`](@ref).
-      + If `isa(mu, Real)`: sets the expected returns vector to this value.
-      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+  - The SLPM risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:slpm_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:slpm_risk_ub`.
 
 # Functor
 
-  - `(slpm::SLPM)(x::AbstractVector)`: computes the Second Lower Partial Moment of a `T×1` vector of portfolio returns `x`.
+  - `(slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SLPM risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+
+      + `fees`: must be consistent with the returns frequency.
 
 # Examples
 """
