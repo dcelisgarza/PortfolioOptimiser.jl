@@ -2,7 +2,7 @@
 
 This contains the documentation for all available [`RiskMeasure`](@ref) subtypes.
 
-## Dispersion [`RiskMeasure`](@ref)
+## Dispersion
 
 These measure the spread of the returns distribution.
 
@@ -24,7 +24,7 @@ BDVariance
 WCVariance
 ```
 
-## Downside Dispersion [`RiskMeasure`](@ref)
+## Downside dispersion
 
 These measure how far the returns deviate from the mean in the negative direction.
 
@@ -36,19 +36,20 @@ SKurt
 SSkew
 ```
 
-## Downside [`RiskMeasure`](@ref)
+## Downside
 
 These measure different aspects of the tail (negative side) of the returns distribution.
 
 ```@docs
 WR
 CVaR
+DRCVaR
 EVaR
 RLVaR
 TG
 ```
 
-## Drawdown [`RiskMeasure`](@ref)
+## Drawdown
 
 These measure the drops in portfolio value from local maxima to subsequent local minima.
 
@@ -61,15 +62,15 @@ EDaR
 RLDaR
 ```
 
-## Linear moments (L-moments) [`RiskMeasure`](@ref)
+## Linear moments
 
-These measure different combinations of linear moments of the returns distribution.
+These measure different combinations of linear moments (L-moments) of the returns distribution.
 
 ```@docs
 OWA
 ```
 
-## Tracking and Turnover [`RiskMeasure`](@ref)
+## Tracking and Turnover
 
 These measure how far a portfolio deviates from a benchmark.
 

@@ -20,7 +20,7 @@ RMSettings
 HCRMSettings
 ```
 
-## Ordered Weight Array settings
+## Ordered Weight Array
 
 Certain risk measures make use of Ordered Weight Array formulations in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) implements two formulations.
 
@@ -44,7 +44,7 @@ Ellipse
 NoWC
 ```
 
-## Tracking and Turnover settings
+## Tracking and Turnover
 
 ```@docs
 PortfolioOptimiser.AbstractTR
@@ -97,4 +97,6 @@ Some risk measures require the computation of certain statistics, these are perf
 ```@docs
 PortfolioOptimiser.calc_ret_mu
 PortfolioOptimiser.calc_target_ret_mu
+PortfolioOptimiser.ERM
+PortfolioOptimiser.RRM
 ```

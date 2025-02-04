@@ -177,7 +177,7 @@ See also: [`OWAExact`](@ref), [`RiskMeasureOWA`](@ref).
 
 # Behaviour
 
-  - Uses [3D Power Cones](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone).
+  - Uses [`PowerCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) constraints.
 
 # Examples
 """
@@ -815,7 +815,7 @@ struct Quad <: VarianceFormulation end
 """
     struct SOC <: VarianceFormulation end
 
-Second-Order Cone (SOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
+Second-Order Cone (SOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
 
 ```math
 \\begin{align}
@@ -829,13 +829,13 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{G}``: is a suitable factorisation of the `N×N` covariance matrix, such as the square root matrix, or the Cholesky factorisation.
   - ``\\sigma^2``: is the portfolio variance.
-  - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as an [MOI.SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
+  - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as an [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
 
 See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Variance`](@ref).
 
 # Behaviour
 
-  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
   - Defines a standard deviation variable `dev`.
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dev^2`.
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
@@ -876,9 +876,8 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Varian
 
 # Behaviour
 
-  - Uses a [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraint.
-
-  - Uses a a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Uses [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraints.
   - Defines a standard deviation variable `dev`.
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = tvariance`.
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
@@ -1301,9 +1300,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The WR risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:wr_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:wr_risk_ub`.
+
 # Functor
 
-  - `(wr::WR)(x::AbstractVector)`: computes the Worst Realisation of a `T×1` vector of portfolio returns `x`.
+  - `(wr::WR)(x::AbstractVector)`: computes the WR risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1345,9 +1349,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The CVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cvar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:cvar_risk_ub`.
+
 # Functor
 
-  - `(cvar::CVaR)(x::AbstractVector)`: computes the Conditional Value at Risk of a `T×1` vector of portfolio returns `x`.
+  - `(cvar::CVaR)(x::AbstractVector)`: computes the CVaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1377,6 +1386,8 @@ function (cvar::CVaR)(x::AbstractVector)
     return var - sum_var / aT
 end
 
+"""
+"""
 mutable struct DRCVaR{T1, T2, T3} <: RiskMeasure
     settings::RMSettings
     l::T1
@@ -1411,6 +1422,7 @@ end
 
 Measures and computes the portfolio Entropic Value at Risk (EVaR). It is the upper bound of the Chernoff inequality for the [`VaR`](@ref) and [`CVaR`](@ref).
 
+  - Uses [`ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone) constraints.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
 
 ```math
@@ -1433,13 +1445,18 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments.
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The EVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:evar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:evar_risk_ub`.
+
 # Functor
 
-  - `(evar::EVaR)(x::AbstractVector)`: computes the Entropic Value at Risk of a `T×1` vector of portfolio returns `x`.
+  - `(evar::EVaR)(x::AbstractVector)`: computes the EVaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1468,6 +1485,7 @@ end
 
 Measures and computes the portfolio Relativistic Value at Risk (RLVaR). It is a generalisation of the [`EVaR`](@ref).
 
+  - Uses [`PowerCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) constraints.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EVaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{WR}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EVaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLVaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{WR}(\\bm{X})``
@@ -1493,13 +1511,18 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The RLVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rlvar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:rlvar_risk_ub`.
+
 # Functor
 
-  - `(rlvar::RLVaR)(x::AbstractVector)`: computes the Relativistic Value at Risk of a `T×1` vector of portfolio returns `x`.
+  - `(rlvar::RLVaR)(x::AbstractVector)`: computes the RLVaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1549,9 +1572,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The MDD is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mdd_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:mdd_risk_ub`.
+
 # Functor
 
-  - `(mdd::MDD)(x::AbstractVector)`: computes the Maximum Drawdown of uncompounded returns of a `T×1` vector of portfolio returns `x`.
+  - `(mdd::MDD)(x::AbstractVector)`: computes the MDD of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1602,9 +1630,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The ADD is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:add_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:add_risk_ub`.
+
 # Functor
 
-  - `(add::ADD)(x::AbstractVector)`: computes the Average Drawdown of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
+  - `(add::ADD)(x::AbstractVector)`: computes the ADD of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1680,9 +1713,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The CDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cdar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:cdar_risk_ub`.
+
 # Functor
 
-  - `(cdar::CDaR)(x::AbstractVector)`: computes the Conditional Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
+  - `(cdar::CDaR)(x::AbstractVector)`: computes the CDaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1747,9 +1785,14 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The UCI is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:uci_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:uci_risk_ub`.
+
 # Functor
 
-  - `(uci::UCI)(x::AbstractVector)`: computes the Ulcer Index of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
+  - `(uci::UCI)(x::AbstractVector)`: computes the UCI of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1783,6 +1826,7 @@ end
 
 Measures and computes the portfolio Entropic Drawdown at Risk of uncompounded cumulative returns (EDaR). It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
 
+  - Uses [`ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone) constraints.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
 
 ```math
@@ -1805,13 +1849,18 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
-  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments.
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The EDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:edar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:edar_risk_ub`.
+
 # Functor
 
-  - `(edar::EDaR)(x::AbstractVector)`: computes the Entropic Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
+  - `(edar::EDaR)(x::AbstractVector)`: computes the EDaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1850,8 +1899,9 @@ end
 """
     mutable struct RLDaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
 
-Measures and computes the portfolio Relativistic Drawdown at Risk of uncompounded cumulative returns (RLVaR). It is a generalisation of the [`EDaR`](@ref).
+Measures and computes the portfolio Relativistic Drawdown at Risk of uncompounded cumulative returns (RLDaR). It is a generalisation of the [`EDaR`](@ref).
 
+  - Uses [`PowerCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) constraints.
   - ``\\mathrm{DaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD}(\\bm{X})``
@@ -1877,13 +1927,18 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 
   - `alpha::T1 = 0.05`: significance level, `alpha ∈ (0, 1)`.
   - `kappa::T1 = 0.3`: relativistic deformation level, `kappa ∈ (0, 1)`.
-  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments. In order to solve the problem, a solver must be compatible with [`MOI.ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing`: optional abstract dictionary containing the solvers, their settings, solution criteria, and other arguments.
 
       + If `isnothing(solvers)`: it takes its value from the `solvers` property of the instance of [`Portfolio`](@ref).
 
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The RLDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rldar_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:rldar_risk_ub`.
+
 # Functor
 
-  - `(rlvar::RLDaR)(x::AbstractVector)`: computes the Relativistic Drawdown at Risk of uncompounded cumulative returns of a `T×1` vector of portfolio returns `x`.
+  - `(rldar::RLDaR)(x::AbstractVector)`: computes the RLDaR of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -1944,13 +1999,22 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtos
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
-
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` cokurtosis matrix.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional, functor-exclusive) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: (optional, [`set_rm`](@ref) exclusive) `N²×N²` cokurtosis matrix.
 
       + If `nothing`: takes its value from the `kurt` instance [`Portfolio`](@ref).
       + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
+
+!!! warning
+
+    Using `w` to compute the Kurt risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `kurt` in the instance of [`Portfolio`](@ref) used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:kurt_risk`.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - Uses [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
+  - The Kurt risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:kurt_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:kurt_risk_ub`.
 
 # Functor
 
@@ -2006,14 +2070,22 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosi
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector (internal expected value).
-
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: optional `N²×N²` semi cokurtosis matrix.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional, functor-exclusive) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `kt::Union{<:AbstractMatrix, Nothing} = nothing`: (optional, [`set_rm`](@ref) exclusive) `N²×N²` cokurtosis matrix.
 
       + If `nothing`: takes its value from the `skurt` instance [`Portfolio`](@ref).
       + `kt` has no effect in optimisations that don't use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models, because the kurtosis is computed from the returns vector.
+
+!!! warning
+
+    Using `w` to compute the Kurt risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `skurt` in the instance of [`Portfolio`](@ref) used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:skurt_risk`.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - Uses [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
+  - The Kurt risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:skurt_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:skurt_risk_ub`.
 
 # Functor
 
@@ -2049,27 +2121,34 @@ end
 """
     mutable struct RG{T1 <: Real} <: RiskMeasure
 
-# Description
+Measures and computes the portfolio Range (RG). It is the difference between the best and worst return.
 
-Defines the Range.
+```math
+\\begin{align}
+\\mathrm{RG}(\\bm{X}) &= \\max(\\bm{X}) - \\min(\\bm{X})\\,.
+\\end{align}
+```
 
-  - Measures the best and worst returns, ``\\left[\\mathrm{WR}(\\bm{X}),\\, \\mathrm{WR}(-\\bm{X})\\right]``.
+Where:
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::RG, ::AbstractVector)`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
 
-# Properties
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`WR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+# Keyword Arguments
+
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The RG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rg_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:rg_risk_ub`.
+
+# Functor
+
+  - `(rg::RG)(x::AbstractVector)`: computes the RG risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
-
-```@example
-# Default settings
-rg = RG()
-
-# Custom settings
-rg = RG(; settings = RMSettings(; ub = 0.5))
-```
 """
 struct RG <: RiskMeasure
     settings::RMSettings
@@ -2078,9 +2157,11 @@ function RG(; settings::RMSettings = RMSettings())
     return RG(settings)
 end
 function (rg::RG)(x::AbstractVector)
-    T = length(x)
-    w = owa_rg(T)
-    return dot(w, sort!(x))
+    lo, hi = extrema(x)
+    return hi - lo
+    # T = length(x)
+    # w = owa_rg(T)
+    # return dot(w, sort!(x))
 end
 
 """
@@ -3348,6 +3429,7 @@ end
 
 Entropic Drawdown at Risk risk measure for compounded cumulative returns.
 
+  - Uses [`ExponentialCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone) constraints.
   - It is the upper bound of the Chernoff inequality for the [`DaR`](@ref) and [`CDaR`](@ref).
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
 
@@ -3429,9 +3511,9 @@ end
 
 # Description
 
-Relativistic Drawdown at Risk risk measure for compounded cumulative returns.
+Relativistic Drawdown at Risk risk measure for compounded cumulative returns. It is a generalisation of the [`EDaR_r`](@ref).
 
-  - It is a generalisation of the [`EDaR`](@ref).
+  - Uses [`PowerCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) constraints.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{CDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha) \\leq \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\leq \\mathrm{MDD_{r}}(\\bm{X})``.
   - ``\\lim\\limits_{\\kappa \\to 0} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{EDaR_{r}}(\\bm{X},\\, \\alpha)``
   - ``\\lim\\limits_{\\kappa \\to 1} \\mathrm{RLDaR_{r}}(\\bm{X},\\, \\alpha,\\, \\kappa) \\approx \\mathrm{MDD_{r}}(\\bm{X})``

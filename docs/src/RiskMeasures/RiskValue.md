@@ -6,6 +6,4 @@ There are similarly named higher level functions that operate at the level of [`
 
 ```@docs
 calc_risk
-PortfolioOptimiser.ERM
-PortfolioOptimiser.RRM
 ```
