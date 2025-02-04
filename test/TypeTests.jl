@@ -179,4 +179,27 @@ l = 2.0
 
     @test_throws AssertionError portfolio.w_min = 1:21
     @test_throws AssertionError portfolio.w_max = 1:21
+
+    @test_throws AssertionError Sharpe(rf = -1, ohf = -1)
+    rm = Sharpe()
+    @test_throws AssertionError rm.ohf = -1
+
+    @test_throws AssertionError ScalarLogSumExp(gamma = -1)
+    sc = ScalarLogSumExp()
+    @test_throws AssertionError sc.gamma = -1
+
+    @test_throws AssertionError SchurParams(; gamma = -1)
+    @test_throws AssertionError SchurParams(; gamma = 2)
+    @test_throws AssertionError SchurParams(; prop_coef = -1)
+    @test_throws AssertionError SchurParams(; prop_coef = 2)
+    @test_throws AssertionError SchurParams(; tol = 0)
+    @test_throws AssertionError SchurParams(; max_iter = 0)
+
+    scp = SchurParams()
+    @test_throws AssertionError scp.gamma = -1
+    @test_throws AssertionError scp.gamma = 2
+    @test_throws AssertionError scp.prop_coef = -1
+    @test_throws AssertionError scp.prop_coef = 2
+    @test_throws AssertionError scp.tol = 0
+    @test_throws AssertionError scp.max_iter = 0
 end
