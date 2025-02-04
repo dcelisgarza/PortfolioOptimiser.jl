@@ -848,6 +848,7 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`Variance`](@ref).
 # Examples
 """
 struct SOC <: VarianceFormulation end
+struct RSOC <: VarianceFormulation end
 
 """
     mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasureSigma
@@ -3814,11 +3815,12 @@ function calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
 end
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
-       SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR,
-       Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew, Variance,
-       SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal,
-       BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC, TrackingRM, TurnoverRM,
-       NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis, OWAApprox,
-       OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu, NoOptRiskMeasureMu,
-       RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers, HCRiskMeasureSolvers,
-       RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM, PortOptSolver
+       RSOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR,
+       RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
+       Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
+       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC, TrackingRM,
+       TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis,
+       OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
+       NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
+       HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,
+       PortOptSolver

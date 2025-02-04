@@ -74,32 +74,30 @@ function set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub, key)
     if isinf(ub)
         return nothing
     end
-
     k = model[:k]
     scale_constr = model[:scale_constr]
     model[Symbol("$(key)_ub")] = @constraint(model,
                                              scale_constr * rm_risk .<=
                                              scale_constr * ub * k)
-
     return nothing
 end
-function calc_variance_risk(::SDP, ::Any, model, sigma)
+function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any)
     W = model[:W]
     @expression(model, variance_risk, tr(sigma * W))
     return nothing
 end
-function calc_variance_risk(::SDP, model::JuMP.Model, sigma, count::Integer)
+function setup_variance_risk(::SDP, model::JuMP.Model, count::Integer)
     @expression(model, variance_risk[1:count], zero(AffExpr))
     return nothing
 end
-function calc_variance_risk(::SDP, ::Any, model, sigma, idx::Integer)
+function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any, idx::Integer)
     W = model[:W]
-    variance_risk = model[:variance_risk]
-    add_to_expression!(variance_risk[idx], tr(sigma * W))
+    variance_risk = model[:variance_risk][idx]
+    add_to_expression!(variance_risk, tr(sigma * W))
     return nothing
 end
-function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model,
-                            sigma::AbstractMatrix)
+function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model, ::Any,
+                            sigma::AbstractMatrix, ::Any)
     scale_constr = model[:scale_constr]
     w = model[:w]
     G = sqrt(sigma)
@@ -109,14 +107,13 @@ function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model,
                 [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
-function calc_variance_risk(::Union{NoAdj, IP}, model::JuMP.Model, sigma::AbstractMatrix,
-                            count::Integer)
+function setup_variance_risk(::Union{NoAdj, IP}, model::JuMP.Model, count::Integer)
     @variable(model, dev[1:count])
     @expression(model, variance_risk[1:count], zero(QuadExpr))
     return nothing
 end
-function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model,
-                            sigma::AbstractMatrix, idx::Integer)
+function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model, ::Any,
+                            sigma::AbstractMatrix, ::Any, idx::Integer)
     scale_constr = model[:scale_constr]
     w = model[:w]
     dev = model[:dev][idx]
@@ -129,7 +126,7 @@ function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model,
                                                          SecondOrderCone())
     return nothing
 end
-function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model, sigma)
+function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model, ::Any, sigma, ::Any)
     scale_constr = model[:scale_constr]
     w = model[:w]
     G = sqrt(sigma)
@@ -139,8 +136,8 @@ function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model, sigma)
                 [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
-function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model::JuMP.Model,
-                            sigma::AbstractMatrix, idx::Integer)
+function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model::JuMP.Model, ::Any,
+                            sigma::AbstractMatrix, ::Any, idx::Integer)
     scale_constr = model[:scale_constr]
     w = model[:w]
     dev = model[:dev][idx]
@@ -151,6 +148,61 @@ function calc_variance_risk(::Union{NoAdj, IP}, ::Quad, model::JuMP.Model,
                                                          [scale_constr * dev;
                                                           scale_constr * G * w] ∈
                                                          SecondOrderCone())
+    return nothing
+end
+function calc_variance_risk(::Union{NoAdj, IP}, ::RSOC, model, mu, sigma, returns)
+    T = size(returns, 1)
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    G = sqrt(sigma)
+    @variables(model, begin
+                   tvariance
+                   dev
+               end)
+    @expressions(model, begin
+                     variance, net_X .- dot(mu, w)
+                     variance_risk, tvariance / (T - one(T))
+                 end)
+    @constraints(model,
+                 begin
+                     constr_dev_soc,
+                     [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone()
+                     constr_variance_rsoc,
+                     [scale_constr * tvariance; 0.5; scale_constr * variance] in
+                     RotatedSecondOrderCone()
+                 end)
+    return nothing
+end
+function calc_variance_risk(::Union{NoAdj, IP}, ::RSOC, model::JuMP.Model, mu,
+                            sigma::AbstractMatrix, returns, idx::Integer)
+    T = size(returns, 1)
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    get_net_portfolio_returns(model, returns)
+    net_X = model[:net_X]
+    variance_risk = model[:variance_risk][idx]
+    dev = model[:dev][idx]
+    G = sqrt(sigma)
+    tvariance = model[Symbol("tvariance_$(idx)")] = @variable(model)
+    variance = model[Symbol("variance_$(idx)")] = @expression(model, net_X .- dot(mu, w))
+    model[Symbol("constr_dev_soc_$(idx)")], model[Symbol("constr_variance_rsoc_$(idx)")] = @constraints(model,
+                                                                                                        begin
+                                                                                                            [scale_constr *
+                                                                                                             dev
+                                                                                                             scale_constr *
+                                                                                                             G *
+                                                                                                             w] ∈
+                                                                                                            SecondOrderCone()
+                                                                                                            [scale_constr *
+                                                                                                             tvariance
+                                                                                                             0.5;
+                                                                                                             scale_constr *
+                                                                                                             variance] in
+                                                                                                            RotatedSecondOrderCone()
+                                                                                                        end)
+    add_to_expression!(variance_risk, inv(T - one(T)), tvariance)
     return nothing
 end
 function variance_risk_bounds_expr(::SDP, model)
@@ -171,8 +223,8 @@ set_rm(port, rm::RiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
 set_rm(port, rm::AbstractVector{<:RiskMeasure}, type::Union{Trad, RB, NOC}; kwargs...)
 ```
 """
-function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
-                sigma::AbstractMatrix{<:Real},
+function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC}; mu::AbstractVector{<:Real},
+                sigma::AbstractMatrix{<:Real}, returns::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
     use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
@@ -185,7 +237,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
         sigma = rm.sigma
     end
     adjacency_constraint = get_ntwk_clust_type(port)
-    calc_variance_risk(adjacency_constraint, rm.formulation, model, sigma)
+    calc_variance_risk(adjacency_constraint, rm.formulation, model, mu, sigma, returns)
     variance_risk = model[:variance_risk]
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
     ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
@@ -194,12 +246,13 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC};
     return nothing
 end
 function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC};
-                sigma::AbstractMatrix{<:Real},
+                mu::AbstractVector{<:Real}, sigma::AbstractMatrix{<:Real},
+                returns::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
     adjacency_constraint = get_ntwk_clust_type(port)
     count = length(rms)
-    calc_variance_risk(adjacency_constraint, model, sigma, count)
+    setup_variance_risk(adjacency_constraint, model, count)
     variance_risk = model[:variance_risk]
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
     for (i, rm) ∈ pairs(rms)
@@ -214,7 +267,8 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
         else
             sigma
         end
-        calc_variance_risk(adjacency_constraint, rm.formulation, model, sigma_i, i)
+        calc_variance_risk(adjacency_constraint, rm.formulation, model, mu, sigma_i,
+                           returns, i)
         ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
         set_rm_risk_upper_bound(type, model, var_bound_expr[i], ub, "$(var_bound_key)_$(i)")
         set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
@@ -451,32 +505,49 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     end
     return nothing
 end
-function semi_variance_risk(::Quad, model::JuMP.Model, svariance, iTm1)
-    @expression(model, svariance_risk, dot(svariance, svariance) * iTm1)
+function semi_variance_risk(::Quad, model::JuMP.Model, iTm1)
+    svariance = model[:svariance]
+    @expression(model, svariance_risk, iTm1 * dot(svariance, svariance))
     return nothing
 end
-function semi_variance_risk(::Quad, ::Any, svariance, svariance_risk, iTm1)
+function semi_variance_risk(::Quad, model, iTm1, i)
+    svariance = view(model[:svariance], :, i)
+    svariance_risk = model[:svariance_risk][i]
     add_to_expression!(svariance_risk, iTm1, dot(svariance, svariance))
     return nothing
 end
-function semi_variance_risk(::SOC, model::JuMP.Model, svariance, iTm1)
+function semi_variance_risk(::RSOC, model::JuMP.Model, iTm1)
     scale_constr = model[:scale_constr]
+    svariance = model[:svariance]
     @variable(model, tsvariance)
-    @constraint(model, constr_svariance_soc,
+    @constraint(model, constr_svariance_rsoc,
                 [scale_constr * tsvariance; 0.5; scale_constr * svariance] in
                 RotatedSecondOrderCone())
-    @expression(model, svariance_risk, tsvariance * iTm1)
+    @expression(model, svariance_risk, iTm1 * tsvariance)
     return nothing
 end
-function semi_variance_risk(::SOC, model, svariance, svariance_risk, iTm1, i)
+function semi_variance_risk(::RSOC, model, iTm1, i)
     scale_constr = model[:scale_constr]
+    svariance = view(model[:svariance], :, i)
+    svariance_risk = model[:svariance_risk][i]
     model[Symbol("tsvariance_$(i)")] = tsvariance = @variable(model)
-    model[Symbol("constr_svariance_soc_$(i)")] = @constraint(model,
-                                                             [scale_constr * tsvariance;
-                                                              0.5;
-                                                              scale_constr * svariance] in
-                                                             RotatedSecondOrderCone())
+    model[Symbol("constr_svariance_rsoc_$(i)")] = @constraint(model,
+                                                              [scale_constr * tsvariance;
+                                                               0.5;
+                                                               scale_constr * svariance] in
+                                                              RotatedSecondOrderCone())
     add_to_expression!(svariance_risk, iTm1, tsvariance)
+    return nothing
+end
+function semi_variance_risk(::SOC, model::JuMP.Model, iTm1)
+    svar = model[:svar]
+    @expression(model, svariance_risk, iTm1 * svar^2)
+    return nothing
+end
+function semi_variance_risk(::SOC, model, iTm1, i)
+    svar = model[:svar][i]
+    svariance_risk = model[:svariance_risk][i]
+    add_to_expression!(svariance_risk, iTm1, svar^2)
     return nothing
 end
 function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
@@ -484,33 +555,29 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
     if !(isnothing(rm.mu) || isempty(rm.mu))
         mu = rm.mu
     end
-    @variable(model, svariance[1:T] .>= 0)
-    #! Can't constrain upper bound to svariance, need sdev.
-    # @variables(model, begin
-    #                ssd[1:T] .>= 0
-    #                sdev
-    #            end)
-    # @expression(model, sdev_risk, sdev / sqrt(T - 1))
-    # @constraints(model,
-    #              begin
-    #                  constr_ssd_mar,
-    #                  scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -ssd
-    #                  constr_sdev_soc,
-    #                  [scale_constr * sdev; scale_constr * ssd] ∈ SecondOrderCone()
-    #              end)
-
-    semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
-    @constraint(model, constr_svariance_mar,
-                scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance)
+    @variables(model, begin
+                   svariance[1:T] .>= 0
+                   svar
+               end)
+    Tm1 = T - one(T)
+    iTm1 = inv(Tm1)
+    srtTm1 = sqrt(Tm1)
+    semi_variance_risk(rm.formulation, model, iTm1)
+    @constraints(model,
+                 begin
+                     constr_svariance_mar,
+                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance
+                     constr_svar_soc,
+                     [scale_constr * svar; scale_constr * svariance] ∈ SecondOrderCone()
+                 end)
     svariance_risk = model[:svariance_risk]
-    set_rm_risk_upper_bound(type, model, svariance_risk, rm.settings.ub, "svariance_risk")
+    set_rm_risk_upper_bound(type, model, svar, sqrt(rm.settings.ub) * srtTm1, "svar_risk")
     set_risk_expression(model, svariance_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
@@ -521,13 +588,17 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    iTm1 = inv(T - 1)
+    Tm1 = T - one(T)
+    iTm1 = inv(Tm1)
+    srtTm1 = sqrt(Tm1)
     count = length(rms)
-    @variable(model, svariance[1:T, 1:count] .>= 0)
+    @variables(model, begin
+                   svariance[1:T, 1:count] .>= 0
+                   svar[1:count]
+               end)
     @expression(model, svariance_risk[1:count], zero(QuadExpr))
     for (i, rm) ∈ pairs(rms)
         mu_i = if !(isnothing(rm.mu) || isempty(rm.mu))
@@ -540,10 +611,14 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                                                                  (net_X .- dot(mu_i, w)) .>=
                                                                  scale_constr *
                                                                  -view(svariance, :, i))
-        semi_variance_risk(rm.formulation, model, view(svariance, :, i), svariance_risk[i],
-                           iTm1, i)
-        set_rm_risk_upper_bound(type, model, svariance_risk[i], rm.settings.ub,
-                                "svariance_risk_$(i)")
+        model[Symbol("constr_svar_soc_$(i)")] = @constraint(model,
+                                                            [scale_constr * svar[i];
+                                                             scale_constr *
+                                                             view(svariance, :, i)] ∈
+                                                            SecondOrderCone())
+        semi_variance_risk(rm.formulation, model, iTm1, i)
+        set_rm_risk_upper_bound(type, model, svar[i], sqrt(rm.settings.ub) * srtTm1,
+                                "svar_$(i)")
         set_risk_expression(model, svariance_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
@@ -553,7 +628,6 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -561,19 +635,19 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
         mu = rm.mu
     end
     @variables(model, begin
-                   ssd[1:T] .>= 0
-                   sdev
+                   tssd[1:T] .>= 0
+                   ssd
                end)
-    @expression(model, sdev_risk, sdev / sqrt(T - 1))
+    @expression(model, ssd_risk, ssd / sqrt(T - one(T)))
     @constraints(model,
                  begin
-                     constr_ssd_mar,
-                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -ssd
-                     constr_sdev_soc,
-                     [scale_constr * sdev; scale_constr * ssd] ∈ SecondOrderCone()
+                     constr_tssd_mar,
+                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -tssd
+                     constr_ssd_soc,
+                     [scale_constr * ssd; scale_constr * tssd] ∈ SecondOrderCone()
                  end)
-    set_rm_risk_upper_bound(type, model, sdev_risk, rm.settings.ub, "sdev_risk")
-    set_risk_expression(model, sdev_risk, rm.settings.scale, rm.settings.flag)
+    set_rm_risk_upper_bound(type, model, ssd_risk, rm.settings.ub, "ssd_risk")
+    set_risk_expression(model, ssd_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
 end
@@ -582,42 +656,41 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    iTm1 = inv(sqrt(T - 1))
+    iTm1 = inv(sqrt(T - one(T)))
     count = length(rms)
-    @variable(model, ssd[1:T, 1:count] .>= 0)
-    @variable(model, sdev[1:count])
-    @expression(model, sdev_risk[1:count], zero(AffExpr))
+    @variable(model, tssd[1:T, 1:count] .>= 0)
+    @variable(model, ssd[1:count])
+    @expression(model, ssd_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
         mu_i = if !(isnothing(rm.mu) || isempty(rm.mu))
             rm.mu
         else
             mu
         end
-        model[Symbol("constr_ssd_mar_$(i)")], model[Symbol("constr_sdev_soc_$(i)")] = @constraints(model,
+        model[Symbol("constr_tssd_mar_$(i)")], model[Symbol("constr_ssd_soc_$(i)")] = @constraints(model,
                                                                                                    begin
                                                                                                        scale_constr *
                                                                                                        (net_X .-
                                                                                                         dot(mu_i,
                                                                                                             w)) .>=
                                                                                                        scale_constr *
-                                                                                                       -view(ssd,
+                                                                                                       -view(tssd,
                                                                                                              :,
                                                                                                              i)
                                                                                                        [scale_constr *
-                                                                                                        sdev[i]
+                                                                                                        ssd[i]
                                                                                                         scale_constr *
-                                                                                                        view(ssd,
+                                                                                                        view(tssd,
                                                                                                              :,
                                                                                                              i)] ∈
                                                                                                        SecondOrderCone()
                                                                                                    end)
-        add_to_expression!(sdev_risk[i], iTm1, sdev[i])
-        set_rm_risk_upper_bound(type, model, sdev_risk[i], rm.settings.ub, "sdev_risk_$(i)")
-        set_risk_expression(model, sdev_risk[i], rm.settings.scale, rm.settings.flag)
+        add_to_expression!(ssd_risk[i], iTm1, ssd[i])
+        set_rm_risk_upper_bound(type, model, ssd_risk[i], rm.settings.ub, "ssd_risk_$(i)")
+        set_risk_expression(model, ssd_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
@@ -692,7 +765,7 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
                    slpm[1:T] .>= 0
                    tslpm
                end)
-    @expression(model, slpm_risk, tslpm / sqrt(T - 1))
+    @expression(model, slpm_risk, tslpm / sqrt(T - one(T)))
     @constraints(model,
                  begin
                      constr_slpm, scale_constr * slpm .>= scale_constr * (target .- net_X)
@@ -712,7 +785,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    iTm1 = sqrt(inv(T - 1))
+    iTm1 = sqrt(inv(T - one(T)))
     count = length(rms)
     @variables(model, begin
                    slpm[1:T, 1:count] .>= 0
@@ -2776,7 +2849,7 @@ function set_rm(port::Portfolio, rm::TrackingRM, type::Union{Trad, RB, NOC};
     net_X = model[:net_X]
     T = size(returns, 1)
     @variable(model, t_tracking_risk)
-    @expression(model, tracking_risk, t_tracking_risk / sqrt(T - 1))
+    @expression(model, tracking_risk, t_tracking_risk / sqrt(T - one(T)))
     tracking = rm.tr
     benchmark = tracking_error_benchmark(tracking, returns)
     @expression(model, tracking_error_rm, net_X .- benchmark * k)
@@ -2796,7 +2869,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TrackingRM},
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
     T = size(returns, 1)
-    iTm1 = inv(sqrt(T - 1))
+    iTm1 = inv(sqrt(T - one(T)))
     count = length(rms)
     @variable(model, t_tracking_risk[1:count])
     @expression(model, tracking_risk[1:count], zero(AffExpr))

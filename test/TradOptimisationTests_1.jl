@@ -984,6 +984,24 @@ end
     rm.settings.ub = r1
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test abs(calc_risk(portfolio; rm = rm) - r1) <= 1e-11
+
+    rm = Variance(;)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
+
+    rm = Variance(; formulation = RSOC())
+    w2 = optimise!(portfolio, Trad(; rm = rm))
+    risk2 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights, rtol = 1e-4)
+
+    rm.settings.ub = risk2
+    w3 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    @test isapprox(w2.weights, w3.weights, rtol = 5e-3)
+    @test abs(calc_risk(portfolio; rm = rm) - risk2) < 1e-10
+
+    rm.settings.ub = risk2 * 1.01
+    w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test isapprox(w2.weights, w3.weights, rtol = 5e-3)
+    @test abs(calc_risk(portfolio; rm = rm) - risk2 * 1.01) < 1e-10
 end
 
 @testset "Approx Kelly Formulations, non SD rm" begin

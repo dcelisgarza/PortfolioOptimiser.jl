@@ -1,4 +1,4 @@
-@testset "SD vec" begin
+@testset "SD and Variance vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -208,6 +208,40 @@
     @test isapprox(w10.weights, wt)
     @test isapprox(r10, riskt)
     @test isapprox(ret10, rett)
+
+    rm = Variance(;)
+    w1 = optimise!(portfolio, Trad(; rm = rm))
+
+    rm = Variance(; formulation = RSOC())
+    w2 = optimise!(portfolio, Trad(; rm = rm))
+    risk2 = calc_risk(portfolio; rm = rm)
+    @test isapprox(w1.weights, w2.weights, rtol = 5e-4)
+
+    rm.settings.ub = risk2
+    w3 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    @test isapprox(w2.weights, w3.weights, rtol = 5e-3)
+    @test abs(calc_risk(portfolio; rm = rm) - risk2) < 1e-10
+
+    rm.settings.ub = risk2 * 1.05
+    w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm) - risk2 * 1.05) < 1e-10
+
+    rm = Variance(; formulation = RSOC(), settings = RMSettings(; scale = 2))
+    w1 = optimise!(portfolio, Trad(; rm = rm))
+    r1 = calc_risk(portfolio; rm = rm)
+
+    rm = [[Variance(; formulation = RSOC()), Variance(; formulation = RSOC())]]
+    w2 = optimise!(portfolio, Trad(; rm = rm))
+    @test isapprox(w1.weights, w2.weights, rtol = 5e-3)
+
+    rm[1][1].settings.ub = r1
+    w3 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    @test isapprox(w1.weights, w3.weights, rtol = 5e-3)
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    rm[1][1].settings.ub = r1 * 1.01
+    w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1 * 1.01) < 1e-9
 end
 
 @testset "MAD vec" begin
@@ -856,6 +890,134 @@ end
     portfolio.mu_l = ret2
     w8 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w8.weights) >= ret2
+end
+
+@testset "SVariance" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = [PortOptSolver(; name = :Clarabel,
+                                                   solver = Clarabel.Optimizer,
+                                                   check_sol = (; allow_local = true,
+                                                                allow_almost = true),
+                                                   params = ["verbose" => false,
+                                                             "max_step_fraction" => 0.75])])
+
+    asset_statistics!(portfolio)
+
+    w1 = optimise!(portfolio,
+                   Trad(; obj = MinRisk(),
+                        rm = SVariance(; settings = RMSettings(; scale = 2))))
+    r1 = calc_risk(portfolio; rm = SVariance())
+    w2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = [[SVariance(), SVariance()]]))
+    @test isapprox(w1.weights, w2.weights, rtol = 5e-5)
+
+    w3 = optimise!(portfolio,
+                   Trad(; obj = Sharpe(; rf = rf),
+                        rm = SVariance(; settings = RMSettings(; scale = 2))))
+    r3 = calc_risk(portfolio; rm = SVariance())
+    w4 = optimise!(portfolio,
+                   Trad(; obj = Sharpe(; rf = rf), rm = [[SVariance(), SVariance()]]))
+    @test isapprox(w3.weights, w4.weights, rtol = 5e-5)
+
+    rm = SVariance(; formulation = SOC())
+    rm.settings.ub = r1
+    w5 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    w6 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    rm = [[SVariance(), SVariance()]]
+    rm[1][2].settings.ub = r1
+    w7 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    w8 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    r8 = calc_risk(portfolio; rm = SVariance())
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    w9 = optimise!(portfolio,
+                   Trad(; obj = MinRisk(),
+                        rm = SVariance(; formulation = RSOC(),
+                                       settings = RMSettings(; scale = 2))))
+    @test isapprox(w1.weights, w9.weights)
+    r9 = calc_risk(portfolio; rm = SVariance())
+    w10 = optimise!(portfolio,
+                    Trad(; obj = MinRisk(),
+                         rm = [[SVariance(; formulation = RSOC()),
+                                SVariance(; formulation = RSOC())]]))
+    @test isapprox(w9.weights, w10.weights, rtol = 5e-5)
+    @test isapprox(w2.weights, w10.weights, rtol = 5e-5)
+
+    w11 = optimise!(portfolio,
+                    Trad(; obj = Sharpe(; rf = rf),
+                         rm = SVariance(; formulation = RSOC(),
+                                        settings = RMSettings(; scale = 2))))
+    @test isapprox(w3.weights, w11.weights, rtol = 5e-6)
+    r11 = calc_risk(portfolio; rm = SVariance(; formulation = RSOC()))
+    w12 = optimise!(portfolio,
+                    Trad(; obj = Sharpe(; rf = rf),
+                         rm = [[SVariance(; formulation = RSOC()),
+                                SVariance(; formulation = RSOC())]]))
+    @test isapprox(w11.weights, w12.weights, rtol = 5e-5)
+    @test isapprox(w4.weights, w12.weights, rtol = 5e-6)
+
+    rm = SVariance(; formulation = RSOC())
+    rm.settings.ub = r9
+    w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    rm = [[SVariance(; formulation = RSOC()), SVariance(; formulation = RSOC())]]
+    rm[1][2].settings.ub = r1
+    w15 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    w16 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    w17 = optimise!(portfolio,
+                    Trad(; obj = MinRisk(),
+                         rm = SVariance(; formulation = Quad(),
+                                        settings = RMSettings(; scale = 2))))
+    @test isapprox(w1.weights, w17.weights, rtol = 5e-5)
+    r17 = calc_risk(portfolio; rm = SVariance())
+    w18 = optimise!(portfolio,
+                    Trad(; obj = MinRisk(),
+                         rm = [[SVariance(; formulation = Quad()),
+                                SVariance(; formulation = Quad())]]))
+    @test isapprox(w17.weights, w18.weights, rtol = 5e-5)
+    @test isapprox(w2.weights, w18.weights, rtol = 5e-5)
+
+    w19 = optimise!(portfolio,
+                    Trad(; obj = Sharpe(; rf = rf),
+                         rm = SVariance(; formulation = Quad(),
+                                        settings = RMSettings(; scale = 2))))
+    @test isapprox(w3.weights, w19.weights, rtol = 5e-6)
+    r19 = calc_risk(portfolio; rm = SVariance(; formulation = Quad()))
+    w20 = optimise!(portfolio,
+                    Trad(; obj = Sharpe(; rf = rf),
+                         rm = [[SVariance(; formulation = Quad()),
+                                SVariance(; formulation = Quad())]]))
+    @test isapprox(w19.weights, w20.weights, rtol = 5e-5)
+    @test isapprox(w4.weights, w20.weights, rtol = 5e-6)
+
+    rm = SVariance(; formulation = Quad())
+    rm.settings.ub = r17
+    w21 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    w22 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm, str_names = true))
+    @test abs(calc_risk(portfolio; rm = rm) - r1) < 1e-10
+
+    rm = [[SVariance(; formulation = Quad()), SVariance(; formulation = Quad())]]
+    rm[1][2].settings.ub = r1
+    w23 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
+
+    w24 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
+    @test abs(calc_risk(portfolio; rm = rm[1][1]) - r1) < 1e-10
 end
 
 @testset "WR settings" begin
