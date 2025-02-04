@@ -1,4 +1,4 @@
-# Measures
+# Generalities
 
 Risk measures are the backbone of portfolio optimisation. They allow for the quantification of risk in different ways. This section describes the various risk measures included in [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl).
 
@@ -7,8 +7,6 @@ We go into detail on their use, characteristics, compatibility, formulations, fu
 This is meant to be not only an API reference but a tutorial and how-to guide on creating custom functionality.
 
 ## Settings
-
-### Upper bounds and multiple risk measures simultaneously
 
 Portfolio Optimisation has typically limited itself to using a single risk measure. However, some risk measures can/must use internal parameters in order to compute the risk. There is nothing preventing us from using multiple measures simultaneously, or even multiple instances of the same risk measure with different hyperparameters. This can be achieved via multiple objective optimisation (not currently supported, but may in the future), or a scalarisation procedure [`PortfolioOptimiser.AbstractScalarisation`](@ref). Each instance's contribution to the overall risk expression is tunable via a weight parameter (called `scale` for disambiguation purposes).
 
@@ -22,7 +20,7 @@ RMSettings
 HCRMSettings
 ```
 
-### Ordered Weight Array settings
+## Ordered Weight Array settings
 
 Certain risk measures make use of Ordered Weight Array formulations in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl/) implements two formulations.
 
@@ -35,6 +33,27 @@ We therefore provide a structure for dispatching the exact method, and a structu
 PortfolioOptimiser.OWAFormulation
 OWAExact
 OWAApprox
+```
+
+## Worst Case Variance
+
+```@docs
+PortfolioOptimiser.WorstCaseSet
+Box
+Ellipse
+NoWC
+```
+
+## Tracking and Turnover settings
+
+```@docs
+PortfolioOptimiser.AbstractTR
+PortfolioOptimiser.TrackingErr
+TrackRet
+TrackWeight
+NoTracking
+TR
+NoTR
 ```
 
 ## Abstract types
@@ -78,149 +97,4 @@ Some risk measures require the computation of certain statistics, these are perf
 ```@docs
 PortfolioOptimiser.calc_ret_mu
 PortfolioOptimiser.calc_target_ret_mu
-```
-
-## Dispersion risk measures
-
-These measure the spread of the returns distribution.
-
-### Full dispersion risk measures
-
-These measure how far the returns deviate from the mean in both the positive and negative directions.
-
-```@docs
-PortfolioOptimiser.VarianceFormulation
-Quad
-SOC
-RSOC
-Variance
-SD
-MAD
-Kurt
-RG
-CVaRRG
-TGRG
-GMD
-Skew
-BDVariance
-WCVariance
-TCM
-FTCM
-```
-
-## Tracking and turnover risk measures
-
-```@docs
-PortfolioOptimiser.AbstractTR
-PortfolioOptimiser.TrackingErr
-TrackRet
-TrackWeight
-NoTracking
-TR
-NoTR
-```
-
-## Downside dispersion risk measures
-
-These measure how far the returns deviate from the mean in the negative direction.
-
-```@docs
-SSD
-FLPM
-SLPM
-TLPM
-FTLPM
-SKurt
-SSkew
-Kurtosis
-SKurtosis
-```
-
-## Worst case variance
-
-```@docs
-PortfolioOptimiser.WorstCaseSet
-Box
-Ellipse
-NoWC
-```
-
-## Downside risk measures
-
-These measure different aspects of the tail (negative side) of the returns distribution.
-
-```@docs
-WR
-CVaR
-EVaR
-RLVaR
-TG
-```
-
-## Drawdown risk measures
-
-These measure the drops in portfolio value from local maxima to subsequent local minima.
-
-```@docs
-MDD
-ADD
-UCI
-CDaR
-EDaR
-RLDaR
-```
-
-## Linear moments (L-moments)
-
-This is used to measure linear moments of the returns distribution.
-
-```@docs
-OWA
-```
-
-## Hierarchical risk measures
-
-These risk measures are compatible with . Different risk measures account for different aspects of the returns.
-
-## Dispersion hierarchical risk measures
-
-These measure the characteristics of the returns distribution.
-
-## Downside dispersion hierarchical risk measures
-
-These measure how far the returns deviate from the mean in the negative direction.
-
-```@docs
-SVariance
-```
-
-## Downside hierarchical risk measures
-
-These measure different aspects of the tail (negative side) of the returns distribution.
-
-```@docs
-VaR
-```
-
-## Drawdown hierarchical risk measures
-
-These measure the drops in portfolio value from local maxima to subsequent local minima.
-
-```@docs
-DaR
-DaR_r
-MDD_r
-ADD_r
-UCI_r
-CDaR_r
-EDaR_r
-RLDaR_r
-```
-
-## Equal risk contribution
-
-This assumes the risk is equally distributed among the variables.
-
-```@docs
-Equal
 ```

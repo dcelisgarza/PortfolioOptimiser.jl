@@ -2815,6 +2815,8 @@ function TrackRet(; err::Real = 0.0, w::AbstractVector{<:Real} = Vector{Float64}
     return TrackRet{typeof(err), typeof(w)}(err, w)
 end
 
+"""
+"""
 mutable struct TrackingRM <: RiskMeasure
     settings::RMSettings
     tr::Union{TrackWeight, TrackRet}
@@ -2830,6 +2832,8 @@ function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Re
     return norm(X * w - benchmark .- fees) / sqrt(T - 1)
 end
 
+"""
+"""
 mutable struct TurnoverRM <: RiskMeasure
     settings::RMSettings
     tr::TR
