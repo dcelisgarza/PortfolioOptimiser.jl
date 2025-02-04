@@ -1073,19 +1073,23 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
-  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector.
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
-      + In the functor: uses [`calc_ret_mu`](@ref).
+!!! warning
 
-      + In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: provides the expected returns vector to use.
+    Using `w` to compute the SSD risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:ssd_risk`. Alternatively, use the value of `mu` in both.
 
-          * If `nothing`: takes its value from the instance [`Portfolio`](@ref), the specific property depends on the [`PortClass`](@ref) parameter of the [`OptimType`](@ref) used.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The Semi Standard Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:ssd_risk_ub`.
 
 # Functor
 
-  - `(ssd::SSD)(x::AbstractVector)`: computes the Semi Standard Deviation of a `T×1` vector of portfolio returns `x`.
+  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Semi Standard Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+
+      + `fees`: must be consistent with the returns frequency.
 
 # Examples
 """
@@ -1131,27 +1135,24 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SL
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Must be in the same frequency as the returns.
+  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
-      + If `isinf(target)`:
+!!! warning
 
-          * In optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models: it is set to be equal to the dot product of the expected returns vector and weights. The expected returns vector takes its value from `mu`.
+    Using `w` to compute the SSD risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:ssd_risk`. Alternatively, use the value of `mu` in both.
 
-              - If `isinf(mu)`: it takes its value from the `mu` property of the [`Portfolio`](@ref) instance.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-          * When using the functor: it is set to the expected value of the returns vector, which is computed using `w`.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for computing the expected value of the returns vector.
-
-      + `w` has no effect in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. However, it can be taken into account if `mu` paramter is computed with the [`MuSimple`](@ref) estimator using a weights vector.
-  - `mu::Union{<:Real, AbstractVector{<:Real}} = 0.0`: optional minimum return target.
-
-      + If `isinf(mu)`: takes its value from the `mu` instance [`Portfolio`](@ref).
-      + If `isa(mu, Real)`: sets the expected returns vector to this value.
-      + Only used in optimisations using [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. Other optimisations, as well as the risk calculation, compute its value via the functor.
+  - The Semi Standard Deviation risk is defined as a [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:ssd_risk_ub`.
 
 # Functor
 
-  - `(flpm::FLPM)(x::AbstractVector)`: computes the First Lower Partial Moment of a `T×1` vector of portfolio returns `x`.
+  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the Semi Standard Deviation of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+
+      + `fees`: must be consistent with the returns frequency.
 
 # Examples
 """

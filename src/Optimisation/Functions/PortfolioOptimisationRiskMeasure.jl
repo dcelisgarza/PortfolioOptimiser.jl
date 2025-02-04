@@ -492,6 +492,20 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
         mu = rm.mu
     end
     @variable(model, svariance[1:T] .>= 0)
+    #! Can't constrain upper bound to svariance, need sdev.
+    # @variables(model, begin
+    #                ssd[1:T] .>= 0
+    #                sdev
+    #            end)
+    # @expression(model, sdev_risk, sdev / sqrt(T - 1))
+    # @constraints(model,
+    #              begin
+    #                  constr_ssd_mar,
+    #                  scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -ssd
+    #                  constr_sdev_soc,
+    #                  [scale_constr * sdev; scale_constr * ssd] ∈ SecondOrderCone()
+    #              end)
+
     semi_variance_risk(rm.formulation, model, svariance, inv(T - 1))
     @constraint(model, constr_svariance_mar,
                 scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance)
@@ -607,8 +621,23 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     end
     return nothing
 end
+"""
+"""
+function calc_rm_target(rm, mu, w, k)
+    target = rm.target
+    return if isnothing(target) || isa(target, AbstractVector) && isempty(target)
+        mu_i = rm.mu
+        if isnothing(mu_i) || isempty(mu_i)
+            dot(mu, w)
+        else
+            dot(mu_i, w)
+        end
+    else
+        target * k
+    end
+end
 function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RB, NOC};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+                returns::AbstractMatrix{<:Real}, mu::AbstractVector{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
@@ -616,17 +645,7 @@ function set_rm(port::Portfolio, rm::FLPM, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    target = rm.target
-    target = if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        mu = rm.mu
-        if isnothing(mu) || isempty(mu)
-            dot(port.mu, w)
-        else
-            dot(mu, w)
-        end
-    else
-        target * k
-    end
+    target = calc_rm_target(rm, mu, w, k)
     @variable(model, flpm[1:T] .>= 0)
     @expression(model, flpm_risk, sum(flpm) / T)
     @constraint(model, constr_flpm,
@@ -649,17 +668,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     @variable(model, flpm[1:T, 1:count] .>= 0)
     @expression(model, flpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        target = rm.target
-        target = if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-            mu_i = rm.mu
-            if isnothing(mu_i) || isempty(mu_i)
-                dot(mu, w)
-            else
-                dot(mu_i, w)
-            end
-        else
-            target * k
-        end
+        target = calc_rm_target(rm, mu, w, k)
         add_to_expression!(flpm_risk[i], iT, sum(view(flpm, :, i)))
         model[Symbol("constr_flpm_$(i)")] = @constraint(model,
                                                         scale_constr * view(flpm, :, i) .>=
@@ -670,7 +679,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:FLPM}, type::Union{Trad, 
     return nothing
 end
 function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
-                returns::AbstractMatrix{<:Real}, kwargs...)
+                returns::AbstractMatrix{<:Real}, mu::AbstractVector{<:Real}, kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
@@ -678,17 +687,7 @@ function set_rm(port::Portfolio, rm::SLPM, type::Union{Trad, RB, NOC};
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    target = rm.target
-    target = if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-        mu = rm.mu
-        if isnothing(mu) || isempty(mu)
-            dot(port.mu, w)
-        else
-            dot(mu, w)
-        end
-    else
-        target * k
-    end
+    target = calc_rm_target(rm, mu, w, k)
     @variables(model, begin
                    slpm[1:T] .>= 0
                    tslpm
@@ -721,17 +720,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SLPM}, type::Union{Trad, 
                end)
     @expression(model, slpm_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        target = rm.target
-        target = if isnothing(target) || isa(target, AbstractVector) && isempty(target)
-            mu_i = rm.mu
-            if isnothing(mu_i) || isempty(mu_i)
-                dot(mu, w)
-            else
-                dot(mu_i, w)
-            end
-        else
-            target * k
-        end
+        target = calc_rm_target(rm, mu, w, k)
         add_to_expression!(slpm_risk[i], iTm1, tslpm[i])
         model[Symbol("constr_slpm_$(i)")], model[Symbol("constr_slpm_soc_$(i)")] = @constraints(model,
                                                                                                 begin

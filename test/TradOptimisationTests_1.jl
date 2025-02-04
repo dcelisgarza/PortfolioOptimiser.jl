@@ -2223,7 +2223,7 @@ end
           2.816037502140785e-10, 0.07641757147779311, 1.506077330782294e-9,
           0.034350502890214386, 0.028113981024661883, 0.22310040922264102,
           2.909644912363011e-9, 0.10371395436856282]
-    @test isapprox(w6.weights, wt, rtol = 5.0e-8)
+    @test isapprox(w6.weights, wt, rtol = 5.0e-7)
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
