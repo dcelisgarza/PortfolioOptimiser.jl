@@ -1379,7 +1379,7 @@ function (cvar::CVaR)(x::AbstractVector)
     aT = alpha * length(x)
     idx = ceil(Int, aT)
     var = -partialsort!(x, idx)
-    sum_var = 0.0
+    sum_var = zero(eltype(x))
     for i ∈ 1:(idx - 1)
         sum_var += x[i] + var
     end
@@ -1410,7 +1410,7 @@ function (drcvar::DRCVaR)(x::AbstractVector)
     aT = alpha * length(x)
     idx = ceil(Int, aT)
     var = -partialsort!(x, idx)
-    sum_var = 0.0
+    sum_var = zero(eltype(x))
     for i ∈ 1:(idx - 1)
         sum_var += x[i] + var
     end
@@ -1592,7 +1592,7 @@ end
 function (mdd::MDD)(x::AbstractVector)
     pushfirst!(x, 1)
     cs = cumsum(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     for i ∈ cs
         if i > peak
@@ -1654,7 +1654,7 @@ function (add::ADD)(x::AbstractVector)
     w = add.w
     pushfirst!(x, 1)
     cs = cumsum(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     if isnothing(w)
         for i ∈ cs
@@ -1756,7 +1756,7 @@ function (cdar::CDaR)(x::AbstractVector)
     popfirst!(x)
     popfirst!(dd)
     var = -partialsort!(dd, idx)
-    sum_var = 0.0
+    sum_var = zero(eltype(x))
     for i ∈ 1:(idx - 1)
         sum_var += dd[i] + var
     end
@@ -1806,7 +1806,7 @@ function (uci::UCI)(x::AbstractVector)
     T = length(x)
     pushfirst!(x, 1)
     cs = cumsum(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     for i ∈ cs
         if i > peak
@@ -2159,9 +2159,6 @@ end
 function (rg::RG)(x::AbstractVector)
     lo, hi = extrema(x)
     return hi - lo
-    # T = length(x)
-    # w = owa_rg(T)
-    # return dot(w, sort!(x))
 end
 
 """
@@ -2208,9 +2205,31 @@ function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (cvarrg::CVaRRG)(x::AbstractVector)
-    T = length(x)
-    w = owa_rcvar(T; alpha = cvarrg.alpha, beta = cvarrg.beta)
-    return dot(w, sort!(x))
+    # T = length(x)
+    # w = owa_rcvar(T; alpha = cvarrg.alpha, beta = cvarrg.beta)
+    # return dot(w, sort!(x))
+
+    alpha = cvarrg.alpha
+    aT = alpha * length(x)
+    idx = ceil(Int, aT)
+    var = -partialsort!(x, idx)
+    sum_var = zero(eltype(x))
+    for i ∈ 1:(idx - 1)
+        sum_var += x[i] + var
+    end
+    loss = var - sum_var / aT
+
+    beta = cvarrg.beta
+    aT = beta * length(x)
+    idx = ceil(Int, aT)
+    var = -partialsort!(x, idx; rev = true)
+    sum_var = zero(eltype(x))
+    for i ∈ 1:(idx - 1)
+        sum_var += x[i] + var
+    end
+    gain = var - sum_var / aT
+
+    return loss - gain
 end
 
 """
@@ -3187,13 +3206,13 @@ end
 function (mdd_r::MDD_r)(x::AbstractVector)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     for i ∈ cs
         if i > peak
             peak = i
         end
-        dd = 1 - i / peak
+        dd = one(eltype(x)) - i / peak
         if dd > val
             val = dd
         end
@@ -3250,14 +3269,14 @@ function (add_r::ADD_r)(x::AbstractVector)
     w = add_r.w
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     if isnothing(w)
         for i ∈ cs
             if i > peak
                 peak = i
             end
-            dd = 1 - i / peak
+            dd = one(eltype(x)) - i / peak
             if dd > 0
                 val += dd
             end
@@ -3270,7 +3289,7 @@ function (add_r::ADD_r)(x::AbstractVector)
             if i > peak
                 peak = i
             end
-            dd = 1 - i / peak
+            dd = one(eltype(x)) - i / peak
             if dd > 0
                 wi = isone(idx) ? 1 : w[idx - 1]
                 val += dd * wi
@@ -3356,7 +3375,7 @@ function (cdar_r::CDaR_r)(x::AbstractVector)
     popfirst!(dd)
     idx = ceil(Int, aT)
     var = -partialsort!(dd, idx)
-    sum_var = 0.0
+    sum_var = zero(eltype(x))
     for i ∈ 1:(idx - 1)
         sum_var += dd[i] + var
     end
@@ -3408,13 +3427,13 @@ function (uci_r::UCI_r)(x::AbstractVector)
     T = length(x)
     x .= pushfirst!(x, 0) .+ 1
     cs = cumprod(x)
-    val = 0.0
+    val = zero(eltype(x))
     peak = -Inf
     for i ∈ cs
         if i > peak
             peak = i
         end
-        dd = 1 - i / peak
+        dd = one(eltype(x)) - i / peak
         if dd > 0
             val += dd^2
         end
