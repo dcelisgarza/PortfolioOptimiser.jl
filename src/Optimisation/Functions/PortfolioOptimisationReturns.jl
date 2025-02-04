@@ -83,7 +83,8 @@ function return_constraints(port, obj, kelly::NoKelly, mu, args...)
 
     return nothing
 end
-function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly_approx_idx)
+function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
+                            kelly_approx_idx)
     if isempty(mu)
         return nothing
     end
@@ -96,7 +97,8 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, ::Any, kelly_
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
         if !haskey(model, :variance_risk)
-            calc_variance_risk(get_ntwk_clust_type(port), kelly.formulation, model, sigma)
+            calc_variance_risk(get_ntwk_clust_type(port), kelly.formulation, model, mu,
+                               sigma, returns)
         end
         variance_risk = model[:variance_risk]
         @expression(model, ret, dot(mu, w) - fees - 0.5 * variance_risk)
@@ -118,7 +120,7 @@ function return_constraints(port, obj::Sharpe, kelly::AKelly, mu, sigma, returns
 end
 function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
                                           adjacency_constraint::Union{NoAdj, IP}, mu, sigma,
-                                          ::Any, kelly_approx_idx)
+                                          returns, kelly_approx_idx)
     if isempty(mu)
         return nothing
     end
@@ -139,7 +141,8 @@ function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
         if !haskey(model, :variance_risk)
-            calc_variance_risk(adjacency_constraint, kelly.formulation, model, sigma)
+            calc_variance_risk(adjacency_constraint, kelly.formulation, model, mu, sigma,
+                               returns)
         end
         dev = model[:dev]
         @constraint(model, constr_sr_akelly_ret,

@@ -351,36 +351,34 @@ function calc_risk(rm::Union{WR, VaR, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, 
                              EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
                              RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, TCM, FTCM,
                              Skewness, SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
-                   X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
-    fees = if isnothing(fees)
-        calc_fees(w, long_fees, short_fees, rebalance)
-    else
-        zero(eltype(w))
+                   X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
+                   kwargs...)
+    if isnothing(fees)
+        fees = calc_fees(w, long_fees, short_fees, rebalance)
     end
     return rm(X * w .- fees)
 end
 function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
-                   scale::Bool = false, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
-    fees = if isnothing(fees)
-        calc_fees(w, long_fees, short_fees, rebalance)
-    else
-        zero(eltype(w))
+                   scale::Bool = false,
+                   long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
+                   kwargs...)
+    if isnothing(fees)
+        fees = calc_fees(w, long_fees, short_fees, rebalance)
     end
     return rm(X, w, fees; scale = scale)
 end
 function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, TrackingRM},
                    w::AbstractVector; X::AbstractMatrix,
-                   long_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees = nothing, kwargs...)
-    fees = if isnothing(fees)
-        calc_fees(w, long_fees, short_fees, rebalance)
-    else
-        zero(eltype(w))
+                   long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
+                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
+                   kwargs...)
+    if isnothing(fees)
+        fees = calc_fees(w, long_fees, short_fees, rebalance)
     end
     return rm(X, w, fees)
 end
