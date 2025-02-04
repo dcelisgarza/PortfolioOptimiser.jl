@@ -862,32 +862,18 @@ function calc_intra_weights(port::Portfolio, internal_args)
     w = zeros(eltype(port.returns), size(port.returns, 2), k)
     cfails = Dict{Int, Dict}()
 
-    flag = isa(internal_args, AbstractVector)
-    if !flag
-        rm = internal_args.type.rm
-        special_rm_idx = find_special_rm(rm)
-        (; kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
-        kurt_flag = !isempty(kurt_idx)
-        skurt_flag = !isempty(skurt_idx)
-        skew_flag = !isempty(skew_idx)
-        sskew_flag = !isempty(sskew_idx)
-        wc_flag = !isempty(wc_idx)
-    end
+    rm = internal_args.type.rm
+    special_rm_idx = find_special_rm(rm)
+    (; kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
+    kurt_flag = !isempty(kurt_idx)
+    skurt_flag = !isempty(skurt_idx)
+    skew_flag = !isempty(skew_idx)
+    sskew_flag = !isempty(sskew_idx)
+    wc_flag = !isempty(wc_idx)
 
     N = size(port.returns, 2)
 
     for i ∈ 1:k
-        if flag
-            rm = internal_args[i].type.rm
-            special_rm_idx = find_special_rm(rm)
-            (; kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
-            kurt_flag = !isempty(kurt_idx)
-            skurt_flag = !isempty(skurt_idx)
-            skew_flag = !isempty(skew_idx)
-            sskew_flag = !isempty(sskew_idx)
-            wc_flag = !isempty(wc_idx)
-        end
-
         cidx = idx .== i
 
         if any((kurt_flag, skurt_flag, skew_flag, sskew_flag, wc_flag))

@@ -962,12 +962,12 @@ end
     @test isapprox(w4.weights, w12.weights, rtol = 5e-6)
 
     rm = SVariance(; formulation = RSOC())
-    rm.settings.ub = r9
+    rm.settings.ub = r9 * 1.01
     w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm, str_names = true))
-    @test abs(calc_risk(portfolio; rm = rm) - r9) < 1e-10
+    @test abs(calc_risk(portfolio; rm = rm) - r9 * 1.01) < 1e-10
 
     w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm, str_names = true))
-    @test abs(calc_risk(portfolio; rm = rm) - r9) < 1e-10
+    @test abs(calc_risk(portfolio; rm = rm) - r9 * 1.01) < 1e-10
 
     rm = [[SVariance(; formulation = RSOC()), SVariance(; formulation = RSOC())]]
     rm[1][2].settings.ub = r1 * 1.01
@@ -1004,12 +1004,12 @@ end
     @test isapprox(w4.weights, w20.weights, rtol = 5e-6)
 
     rm = SVariance(; formulation = Quad())
-    rm.settings.ub = r17
+    rm.settings.ub = r17 * 1.01
     w21 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm, str_names = true))
-    @test abs(calc_risk(portfolio; rm = rm) - r17) < 1e-10
+    @test abs(calc_risk(portfolio; rm = rm) - r17 * 1.01) < 1e-10
 
     w22 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm, str_names = true))
-    @test abs(calc_risk(portfolio; rm = rm) - r17) < 1e-10
+    @test abs(calc_risk(portfolio; rm = rm) - r17 * 1.01) < 1e-10
 
     rm = [[SVariance(; formulation = Quad()), SVariance(; formulation = Quad())]]
     rm[1][2].settings.ub = r1

@@ -612,12 +612,12 @@ end
 ```
 """
 mutable struct NCO <: HCOptimType
-    internal::Union{AbstractVector{<:NCOArgs}, NCOArgs}
+    internal::NCOArgs
     external::NCOArgs
     finaliser::HCOptWeightFinaliser
 end
-function NCO(; internal::Union{AbstractVector{<:NCOArgs}, NCOArgs} = NCOArgs(;),
-             external::NCOArgs = internal, finaliser::HCOptWeightFinaliser = HWF())
+function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
+             finaliser::HCOptWeightFinaliser = HWF())
     return NCO(internal, external, finaliser)
 end
 function Base.getproperty(nco::NCO, sym::Symbol)
