@@ -141,7 +141,7 @@ end
 
 """
 ```julia
-owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
+owa_cvarrg(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
 ```
 
 Compute the OWA weights for the CVaR Range of a returns series [^OWA].
@@ -150,16 +150,16 @@ Compute the OWA weights for the CVaR Range of a returns series [^OWA].
 
 # Outputs
 """
-function owa_rcvar(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
+function owa_cvarrg(T::Integer; alpha::Real = 0.05, beta::Real = alpha)
     w = owa_cvar(T, alpha) .- reverse(owa_cvar(T, beta))
     return w
 end
 
 """
 ```julia
-owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real}, weights_a::AbstractVector{<:Real};
-           betas::AbstractVector{<:Real} = alphas,
-           weights_b::AbstractVector{<:Real} = weights_b)
+owa_wcvarrg(T::Integer, alphas::AbstractVector{<:Real}, weights_a::AbstractVector{<:Real};
+            betas::AbstractVector{<:Real} = alphas,
+            weights_b::AbstractVector{<:Real} = weights_b)
 ```
 
 Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a returns series [^OWA].
@@ -173,10 +173,10 @@ Compute the OWA weights for the Weighted Conditional Value at Risk (WCVaR) of a 
 
 # Outputs
 """
-function owa_rwcvar(T::Integer, alphas::AbstractVector{<:Real},
-                    weights_a::AbstractVector{<:Real},
-                    betas::AbstractVector{<:Real} = alphas,
-                    weights_b::AbstractVector{<:Real} = weights_a)
+function owa_wcvarrg(T::Integer, alphas::AbstractVector{<:Real},
+                     weights_a::AbstractVector{<:Real},
+                     betas::AbstractVector{<:Real} = alphas,
+                     weights_b::AbstractVector{<:Real} = weights_a)
     w = owa_wcvar(T, alphas, weights_a) .- reverse(owa_wcvar(T, betas, weights_b))
 
     return w
@@ -184,8 +184,8 @@ end
 
 """
 ```julia
-owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
-        beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
+owa_tgrg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05, a_sim::Integer = 100,
+         beta_i::Real = alpha_i, beta::Real = alpha, b_sim::Integer = a_sim)
 ```
 
 Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
@@ -194,9 +194,9 @@ Compute the OWA weights for the Tail Gini Range of a returns series [^OWA].
 
 # Outputs
 """
-function owa_rtg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05,
-                 a_sim::Integer = 100, beta_i::Real = alpha_i, beta::Real = alpha,
-                 b_sim::Integer = a_sim)
+function owa_tgrg(T::Integer; alpha_i::Real = 0.0001, alpha::Real = 0.05,
+                  a_sim::Integer = 100, beta_i::Real = alpha_i, beta::Real = alpha,
+                  b_sim::Integer = a_sim)
     w = owa_tg(T; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim) .-
         reverse(owa_tg(T; alpha_i = beta_i, alpha = beta, a_sim = b_sim))
 
@@ -447,5 +447,5 @@ function owa_l_moment_crm(T::Integer; k::Integer = 2, type::OWATypes = CRRA())
     return owa_l_moment_crm(type, T, k, weights)
 end
 
-export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_rcvar, owa_rwcvar, owa_rtg,
-       owa_l_moment, owa_l_moment_crm
+export owa_gmd, owa_cvar, owa_wcvar, owa_tg, owa_wr, owa_rg, owa_cvarrg, owa_wcvarrg,
+       owa_tgrg, owa_l_moment, owa_l_moment_crm

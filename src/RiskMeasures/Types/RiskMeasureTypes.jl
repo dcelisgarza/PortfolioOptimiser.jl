@@ -1088,21 +1088,21 @@ function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
 end
 
 """
-    mutable struct SSD{T1 <: Real} <: RiskMeasureMu
+    mutable struct SSD <: RiskMeasureMu
 
 Measures and computes the portfolio Semi Standard Deviation (SD) equal to or below the mean return.
 
 ```math
 \\begin{align}
-\\mathrm{SSD}(\\bm{X}) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SSD}(\\bm{X}) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, 0\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
 Where:
 
+  - ``\\bm{X}``: is the vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
-  - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
 See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -1162,8 +1162,9 @@ Measures and computes the portfolio First Lower Partial Moment (FLPM). Measures 
 
 Where:
 
-  - ``T``: is the number of observations.
+  - ``\\bm{X}``: is the vector of portfolio returns.
   - ``r``: is the minimum acceptable return.
+  - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
 See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -1226,8 +1227,9 @@ Measures and computes the portfolio Second Lower Partial Moment (SLPM). Measures
 
 Where:
 
-  - ``T``: is the number of observations.
+  - ``\\bm{X}``: is the vector of portfolio returns.
   - ``r``: is the minimum acceptable return.
+  - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
 See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -1336,9 +1338,9 @@ Measures and computes the portfolio Conditional Value at Risk (CVaR). Also known
 
 Where:
 
-  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
   - ``\\bm{X}``: is the vector of portfolio returns.
   - ``\\alpha``: is the significance level.
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
@@ -1979,7 +1981,7 @@ end
 """
     mutable struct Kurt <: RiskMeasureMu
 
-Measures and computes the portfolio Square Root Kurtosis.
+Measures and computes the portfolio Square Root Kurtosis (Kurt).
 
 ```math
 \\begin{align}
@@ -1989,6 +1991,7 @@ Measures and computes the portfolio Square Root Kurtosis.
 
 Where:
 
+  - ``\\bm{X}``: is the vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
@@ -2049,19 +2052,19 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasureMu
 
-Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the mean portfolio returns.
+Measures and computes the portfolio Square Root Semi Kurtosis (SKurt). Measures the kurtosis equal to or below the mean portfolio returns.
 
 ```math
 \\begin{align}
-\\mathrm{SKurt}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r \\right)^{4} \\right)^{1/2}\\,.
+\\mathrm{SKurt}(\\bm{X}) &= \\left(\\dfrac{1}{T} \\sum\\limits_{t=1}^{T} \\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, 0 \\right)^{4} \\right)^{1/2}\\,.
 \\end{align}
 ```
 
 Where:
 
+  - ``\\bm{X}``: is the vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
-  - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
 See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -2246,10 +2249,15 @@ Measures and computes the portfolio Gini Mean Difference (GMD).
 
 See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_gmd`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Properties
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The GMD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:gmd_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:gmd_risk_ub`.
 
 # Examples
 """
@@ -2270,13 +2278,11 @@ end
 """
     mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasureOWA
 
-# Description
+Measures and computes the portfolio Tail Gini (TG).
 
-Defines the Tail Gini Difference.
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tg`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
-
-# Properties
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2284,27 +2290,12 @@ See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [
   - `alpha::T2 = 0.05`: end value of the significance level of CVaR losses, `0 < alpha_i < alpha < 1`.
   - `a_sim::T3 = 100`: number of CVaRs to approximate the Tail Gini losses, `a_sim > 0`.
 
-# Behaviour
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-## Validation
-
-  - When setting `alpha_i` at construction or runtime, `0 < alpha_i < alpha < 1`.
-  - When setting `alpha` at construction or runtime, `0 < alpha_i < alpha < 1`.
-  - When setting `a_sim` at construction or runtime, `a_sim > 0`.
+  - The TG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tg_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:tg_risk_ub`.
 
 # Examples
-
-```@example
-# Default settings
-tg = TG()
-
-# Use full risk measure formulation with custom parameters
-tg = TG(; alpha = 0.07, owa = OWASettings(; approx = false))
-
-# Use more p-norms and constrain risk without adding it to the problem's risk expression
-tg = TG(; settings = RMSettings(; flag = false, ub = 0.1),
-        owa = OWASettings(; p = Float64[1, 2, 4, 8, 16, 32, 64, 128]))
-```
 """
 mutable struct TG{T1, T2, T3} <: RiskMeasureOWA
     settings::RMSettings
@@ -2338,17 +2329,27 @@ function (tg::TG)(x::AbstractVector)
 end
 
 """
-    mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasureOWA
+    mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, 
+                        T4 <: Real, T5 <: Real, T6 <: Integer} <: RiskMeasureOWA
 
-# Description
+Measures and computes the portfolio Tail Gini Range (TGRG). It is the difference between the Head Gini and Tail Gini.
 
-Defines the Tail Gini Difference Range.
+```math
+\\begin{align}
+\\mathrm{TGRG}(\\bm{X},\\, \\alpha,\\, \\beta) &= \\mathrm{TG}(\\bm{X},\\,\\alpha) - \\mathrm{TG}(-\\bm{X},\\,\\beta)\\,.
+\\end{align}
+```
 
-  - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
+Where:
 
-See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
+  - ``\\mathrm{TG}``: is the Tail Gini defined in [`TG`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level of losses.
+  - ``\\beta``: is the significance level of gains.
 
-# Properties
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tgrg`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `formulation::OWAFormulation = OWAApprox()`: OWA risk measure settings.
@@ -2359,16 +2360,10 @@ See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [
   - `beta::T5 = 0.05`: end value of the significance level of CVaR gains, `0 < beta_i < beta < 1`.
   - `b_sim::T6 = 100`: number of CVaRs to approximate the Tail Gini gains, `b_sim > 0`.
 
-# Behaviour
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-## Validation
-
-  - When setting `alpha_i` at construction or runtime, `0 < alpha_i < alpha < 1`.
-  - When setting `alpha` at construction or runtime, `0 < alpha_i < alpha < 1`.
-  - When setting `a_sim` at construction or runtime, `a_sim > 0`.
-  - When setting `beta_i` at construction or runtime, `0 < beta_i < beta < 1`.
-  - When setting `beta` at construction or runtime, `0 < beta_i < beta < 1`.
-  - When setting `b_sim` at construction or runtime, `b_sim > 0`.
+  - The TGRG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tgrg_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:tgrg_risk_ub`.
 
 # Examples
 """
@@ -2412,8 +2407,8 @@ function Base.setproperty!(obj::TGRG, sym::Symbol, val)
 end
 function (tgrg::TGRG)(x::AbstractVector)
     T = length(x)
-    w = owa_rtg(T; alpha_i = tgrg.alpha_i, alpha = tgrg.alpha, a_sim = tgrg.a_sim,
-                beta_i = tgrg.beta_i, beta = tgrg.beta, b_sim = tgrg.b_sim)
+    w = owa_tgrg(T; alpha_i = tgrg.alpha_i, alpha = tgrg.alpha, a_sim = tgrg.a_sim,
+                 beta_i = tgrg.beta_i, beta = tgrg.beta, b_sim = tgrg.b_sim)
     return dot(w, sort!(x))
 end
 
@@ -2457,13 +2452,7 @@ struct BDVIneq <: BDVarianceFormulation end
 """
     struct BDVariance <: RiskMeasure
 
-# Description
-
-Define the Brownian Distance Variance.
-
-  - Measures linear and non-linear relationships between variables.
-
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::BDVariance, ::AbstractVector)`](@ref).
+Measures and computes the portfolio Brownian Distance Variance (BDVariance). It captures linear and non-linear codependence between assets.
 
 ```math
 \\begin{align}
@@ -2476,18 +2465,25 @@ b_{i,\\,j} &= \\lVert Y_{i} - Y_{j} \\rVert_{2}, \\quad \\forall i,\\, j = 1,\\,
 \\end{align}
 ```
 
-where:
+Where:
 
-  - ``\\bm{X}`` and ``\\bm{Y}`` are random variables, they are equal in this case as they are the portfolio returns.
-  - ``a_{i,\\,j}`` and ``b_{i,\\,j}`` are entries of a distance matrix where ``i`` and ``j`` are points in time. Each entry is defined as the Euclidean distance ``\\lVert \\cdot \\rVert_{2}`` between the value of the random variable at time ``i`` and its value at time ``j``.
-  - ``\\bar{a}_{i,\\,\\cdot}`` and ``\\bar{b}_{i,\\,\\cdot}`` are the ``i``-th row means of their respective matrices.
-  - ``\\bar{a}_{\\cdot,\\,j}`` and ``\\bar{b}_{\\cdot,\\,j}`` are the ``j``-th column means of their respective matrices.
-  - ``\\bar{a}_{\\cdot,\\,\\cdot}`` and ``\\bar{b}_{\\cdot,\\,\\cdot}`` are the grand means of their respective matrices.
-  - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` are doubly centered distances.
+  - ``\\bm{X}`` and ``\\bm{Y}`` : are random variables, they are equal in this case as they are the portfolio returns.
+  - ``a_{i,\\,j}`` and ``b_{i,\\,j}`` : are entries of a distance matrix where ``i`` and ``j`` are points in time. Each entry is defined as the Euclidean distance ``\\lVert \\cdot \\rVert_{2}`` between the value of the random variable at time ``i`` and its value at time ``j``.
+  - ``\\bar{a}_{i\\,\\cdot}`` and ``\\bar{b}_{i\\,\\cdot}`` : are the ``i``-th row means of their respective matrices.
+  - ``\\bar{a}_{\\cdot\\,j}`` and ``\\bar{b}_{\\cdot\\,j}`` : are the ``j``-th column means of their respective matrices.
+  - ``\\bar{a}_{\\cdot\\,\\cdot}`` and ``\\bar{b}_{\\cdot\\,\\cdot}`` : are the grand means of their respective matrices.
+  - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` : are doubly centered distances.
 
-# Properties
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The BDVariance risk is defined as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) with the key, `:bdvariance_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:bdvariance_risk_ub`.
 
 # Examples
 """
@@ -2510,61 +2506,38 @@ function (bdvariance::BDVariance)(x::AbstractVector)
 end
 
 """
-    struct Skew <: RiskMeasureSkew
+    mutable struct Skew <: RiskMeasureSkew
 
-# Description
-
-Define the Quadratic Skewness.
+Measures and computes the portfolio Quadratic Skewness (Skew).
 
 ```math
 \\begin{align}
-\\nu &= \\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\\\
+\\nu &= \\left(\\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\right)^{1/2}\\\\
 \\end{align}
 ```
 
 Where:
 
-  - ``\\bm{w}`` is the vector of asset weights.
-  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of the coskewness.
+  - ``\\bm{w}``: is the vector of asset weights.
+  - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the coskewness.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::Skew, ::AbstractVector)`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Properties
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom coskewness matrix.
-  - `V::Union{Nothing, <:AbstractMatrix}`: optional `Na×Na` custom sum of the symmetric negative spectral slices of the coskewness.
 
-# Behaviour
+  - `skew::Union{<:AbstractMatrix, Nothing}`: (optional) `N×N²` custom coskewness matrix.
 
-## Coskewness matrix usage
+      + If `isnothing(skew)`: takes its value from the `skew` property of the instance of [`Portfolio`](@ref).
+  - `V::Union{Nothing, <:AbstractMatrix}`: (optional) `Na×Na` custom sum of the symmetric negative spectral slices of the coskewness.
 
-  - If `skew` is `nothing`:
+      + If `isnothing(V)`: takes its value from the `V` property of the instance of [`Portfolio`](@ref).
 
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With : uses the portfolio coskewness matrix `skew` to generate the `V` matrix.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - If `skew` provided:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With : uses the custom coskew matrix to generate the `V` matrix.
-
-## `V` matrix
-
-  - If `V` is `nothing`:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `V` matrix.
-      + With : no effect.
-
-  - If `V` provided:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
-      + With : no effect.
-
-## Validation
-
-  - When setting `skew` at construction or runtime, the matrix must have dimensions (`N×N²`).
-  - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
+  - The Skew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:skew_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:skew_risk_ub`.
 
 # Examples
 """
@@ -2601,61 +2574,38 @@ function (skew::Skew)(w::AbstractVector)
 end
 
 """
-    struct SSkew <: RiskMeasureSkew
+    mutable struct SSkew <: RiskMeasureSkew
 
-# Description
-
-Define the Quadratic Semi Skewness.
+Measures and computes the portfolio Quadratic Semi Skewness (SSkew).
 
 ```math
 \\begin{align}
-\\nu &= \\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\\\
+\\nu &= \\left(\\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\right)^{1/2}\\\\
 \\end{align}
 ```
 
 Where:
 
-  - ``\\bm{w}`` is the vector of asset weights.
-  - ``\\mathbf{V}`` is the sum of the symmetric negative spectral slices of the semicoskewness.
+  - ``\\bm{w}``: is the vector of asset weights.
+  - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the semi coskewness.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::SSkew, ::AbstractVector)`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Properties
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
-  - `skew::Union{<:AbstractMatrix, Nothing}`: optional `N×N²` custom semi coskewness matrix.
-  - `V::Union{Nothing, <:AbstractMatrix}`: optional `Na×Na` custom sum of the symmetric negative spectral slices of the semi coskewness.
 
-# Behaviour
+  - `skew::Union{<:AbstractMatrix, Nothing}`: (optional) `N×N²` custom semi coskewness matrix.
 
-## Coskewness matrix usage
+      + If `isnothing(skew)`: takes its value from the `sskew` property of the instance of [`Portfolio`](@ref).
+  - `V::Union{Nothing, <:AbstractMatrix}`: (optional) `Na×Na` custom sum of the symmetric negative spectral slices of the semi coskewness.
 
-  - If `skew` is `nothing`:
+      + If `isnothing(V)`: takes its value from the `SV` property of the instance of [`Portfolio`](@ref).
 
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With : uses the portfolio semi coskewness matrix `sskew` to generate the `V` matrix.
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - If `skew` provided:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): no effect.
-      + With : uses the custom semi coskew matrix to generate the `V` matrix.
-
-## `V` matrix
-
-  - If `V` is `nothing`:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the portfolio `SV` matrix.
-      + With : no effect.
-
-  - If `V` provided:
-
-      + With [`Portfolio`](@ref)/[`calc_risk`](@ref): uses the custom `V` matrix.
-      + With : no effect.
-
-## Validation
-
-  - When setting `skew` at construction or runtime, the matrix must have dimensions (`N×N²`).
-  - When setting `V` at construction or runtime, the matrix must be square (`N×N`).
+  - The SSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:sskew_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:sskew_risk_ub`.
 
 # Examples
 """

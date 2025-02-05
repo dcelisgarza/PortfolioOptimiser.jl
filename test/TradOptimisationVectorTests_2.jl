@@ -1695,17 +1695,17 @@ end
 
     rm = [[TGRG(; formulation = OWAApprox()), TGRG(; formulation = OWAExact())]]
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
-    @test all(value.(portfolio.model[:rtga][:, 1]) .== 0)
-    @test all(value.(portfolio.model[:rtga][:, 2]) .!= 0)
-    @test value(portfolio.model[:rltg_t][1]) != 0
-    @test value(portfolio.model[:rltg_t][2]) == 0
+    @test all(value.(portfolio.model[:tgrga][:, 1]) .== 0)
+    @test all(value.(portfolio.model[:tgrga][:, 2]) .!= 0)
+    @test value(portfolio.model[:tgrg_l_t][1]) != 0
+    @test value(portfolio.model[:tgrg_l_t][2]) == 0
 
     rm = [[TGRG(; formulation = OWAExact()), TGRG(; formulation = OWAApprox())]]
     w11 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
-    @test all(value.(portfolio.model[:rtga][:, 1]) .!= 0)
-    @test all(value.(portfolio.model[:rtga][:, 2]) .== 0)
-    @test value(portfolio.model[:rltg_t][1]) == 0
-    @test value(portfolio.model[:rltg_t][2]) != 0
+    @test all(value.(portfolio.model[:tgrga][:, 1]) .!= 0)
+    @test all(value.(portfolio.model[:tgrga][:, 2]) .== 0)
+    @test value(portfolio.model[:tgrg_l_t][1]) == 0
+    @test value(portfolio.model[:tgrg_l_t][2]) != 0
 end
 
 @testset "OWA vec" begin

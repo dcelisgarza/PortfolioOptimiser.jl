@@ -15,7 +15,7 @@ l = 2.0
 end
 
 @testset "OWA WCVaRRG" begin
-    w1 = owa_rtg(100)
+    w1 = owa_tgrg(100)
     alpha_i = 0.0001
     alpha = 0.05
     a_sim = 100
@@ -28,7 +28,7 @@ end
         w[i] = (alphas[i + 1] - alphas[i - 1]) * alphas[i] / alphas[n]^2
     end
     w[n] = (alphas[n] - alphas[n - 1]) / alphas[n]
-    w2 = owa_rwcvar(100, alphas, w)
+    w2 = owa_wcvarrg(100, alphas, w)
     @test isapprox(w1, w2)
 end
 
