@@ -3,11 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 """
-    ERM(x::AbstractVector, z::Real = 1.0, α::Real = 0.05)
+    ERM(x::AbstractVector{<:Real}, z::Real = 1.0, α::Real = 0.05)
 
-# Description
-
-Compute the Entropic Risk Measure.
+Computes the Entropic Risk Measure.
 
 ```math
 \\begin{align}
@@ -17,13 +15,15 @@ Compute the Entropic Risk Measure.
 
 Where:
 
-  - ``M_{\\bm{X}}\\left(t\\right)`` is the moment generating function of ``\\bm{X}``.
-  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
+  - ``z``: is the entropic moment.
+  - ``M_{\\bm{X}}\\left(t\\right)``: is the moment generating function of ``\\bm{X}``.
+  - ``\\alpha``: is the significance parameter, ``\\alpha \\in (0,\\,1)``.
 
-# Inputs
+# Positional Arguments
 
-  - `x::AbstractVector`: `T×1` returns vector.
-  - `z::Real = 1.0`: entropic moment, can be obtained from [`get_z_from_model`](@ref) and [`get_z`](@ref) after optimising a [`Portfolio`](@ref).
+  - `x::AbstractVector`: `T×1` vector of portfolio returns.
+  - `z::Real = 1.0`: entropic moment.
   - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
 
 # Outputs
@@ -31,34 +31,21 @@ Where:
   - `er::Real`: entropic risk.
 
 # Examples
-
-```@example
-# Sample returns vector
-returns = [0.05, -0.03, 0.02, -0.01, 0.04]
-
-# Calculate the entropic risk measure with default parameters
-er1 = ERM(returns, 2.3, 0.03)
-
-# Calculate with a 2.3 entropic moment and 3 % significance parameter
-er2 = ERM(returns, 2.3, 0.03)
-```
 """
-function ERM(x::AbstractVector, z::Real = 1.0, alpha::Real = 0.05)
+function ERM(x::AbstractVector{<:Real}, z::Real = 1.0, alpha::Real = 0.05)
     val = mean(exp.(-x / z))
     val = z * log(val / alpha)
     return val
 end
 
 """
-    ERM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05)
+    ERM(x::AbstractVector{<:Real}, solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}, alpha::Real = 0.05)
 
-# Description
-
-Compute the Entropic Risk Measure.
+Computes the Entropic Risk Measure.
 
 ```math
 \\begin{align}
-\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha) &= 
+\\mathrm{ERM}(\\bm{X}, \\,\\alpha) &= 
     \\begin{cases}
         \\underset{z,\\, t,\\, u}{\\inf} & t + z \\ln\\left(\\dfrac{1}{\\alpha T}\\right)\\\\
         \\mathrm{s.t.} & z \\geq \\sum\\limits_{i=1}^{T} u_{i}\\nonumber\\\\
@@ -70,16 +57,21 @@ Compute the Entropic Risk Measure.
 
 Where:
 
-  - ``M_{\\bm{X}}\\left(t\\right)`` is the moment generating function of ``\\bm{X}``.
-  - ``\\mathcal{K}_{\\mathrm{exp}}`` is the exponential cone.
-  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
+  - ``\\alpha``: is the significance parameter, ``\\alpha \\in (0,\\,1)``.
+  - ``z``: is the entropic moment.
+  - ``t`` and ``\\bm{u}``: are auxiliary variables for modelling the moment generating function.
+  - ``T``: is the number of observations.
+  - ``X_{i}``: is the `i`-th entry of the portfolio returns vector.
+  - ``M_{\\bm{X}}\\left(t\\right)``: is the moment generating function of ``\\bm{X}``.
+  - ``\\mathcal{K}_{\\mathrm{exp}}``: is the [ExponentialCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-See also: [`EVaR`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`EVaR`](@ref), [`EDaR`](@ref), [`calc_risk(::EDaR, ::AbstractVector)`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`EDaR_r`](@ref).
+See also: [`EVaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk`](@ref).
 
 # Inputs
 
-  - `x::AbstractVector`: `T×1` returns vector.
-  - `solvers::AbstractDict`: JuMP-compatible solvers for exponential cone problems.
+  - `x::AbstractVector`: `T×1` vector of portfolio returns.
+  - `solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}`: instance or `AbstractVector` of [`PortOptSolver`](@ref) which supports [ExponentialCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone) constraints.
   - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
 
 # Behaviour
@@ -95,19 +87,8 @@ See also: [`EVaR`](@ref), [`calc_risk(::EVaR, ::AbstractVector)`](@ref), [`EVaR`
   - `er::Real`: entropic risk.
 
 # Examples
-
-```@example
-# Sample returns vector
-returns = [0.05, -0.03, 0.02, -0.01, 0.04]
-
-# Calculate the entropic risk measure with default parameters
-er1 = ERM(returns, Dict("solver" => my_solver))
-
-# Calculate with a 3 % significance parameter
-er2 = ERM(returns, Dict("solver" => my_solver), 0.03)
-```
 """
-function ERM(x::AbstractVector,
+function ERM(x::AbstractVector{<:Real},
              solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
              alpha::Real = 0.05)
     model = JuMP.Model()
@@ -139,9 +120,7 @@ end
 """
     RRM(x::AbstractVector, solvers::AbstractDict, α::Real = 0.05, κ::Real = 0.3)
 
-# Description
-
-Compute the Relativistic Risk Measure. Used in [`RLVaR`](@ref), [`RLDaR`](@ref) and [`RLDaR_r`](@ref).
+Computes the Relativistic Risk Measure.
 
 ```math
 \\begin{align}
@@ -160,16 +139,20 @@ Compute the Relativistic Risk Measure. Used in [`RLVaR`](@ref), [`RLDaR`](@ref) 
 
 Where:
 
-  - ``\\mathcal{P}_3^{\\alpha,\\, 1-\\alpha}`` is the 3D power cone.
-  - ``\\alpha \\in (0,\\,1)`` is the significance parameter.
-  - ``\\kappa \\in (0,\\,1)`` is the relativistic deformation parameter.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
+  - ``\\alpha``: is the significance parameter, ``\\alpha \\in (0,\\,1)``.
+  - ``\\kappa``: is the relativistic deformation parameter, ``\\kappa \\in (0,\\,1)``.
+  - ``z``: is the relativistic moment.
+  - ``t``, ``\\psi``, ``\\theta``, ``\\varepsilon``, and ``\\omega``: are auxiliary variables for modelling the relativistic deformation of the moment generating function.
+  - ``T``: is the number of observations.
+  - ``\\mathcal{P}_3^{c,\\, 1-c}``: is the [PowerCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) parametrised by ``c \\in (0,\\,1)``.
 
-See also: [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`RLVaR`](@ref), [`RLDaR`](@ref), [`calc_risk(::RLDaR, ::AbstractVector)`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`RLDaR_r`](@ref).
+See also: [`RLVaR`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref).
 
 # Inputs
 
-  - `x::AbstractVector`: `T×1` returns vector.
-  - `solvers::AbstractDict`: JuMP-compatible solvers for 3D power cone problems.
+  - `x::AbstractVector`: `T×1` vector of portfolio returns.
+  - `solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}`: instance or `AbstractVector` of [`PortOptSolver`](@ref) which supports [ExponentialCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) constraints.
   - `α::Real = 0.05`: significance level, `α ∈ (0, 1)`.
   - `κ::Real = 0.3`: relativistic deformation parameter, `κ ∈ (0, 1)`.
 
@@ -186,17 +169,6 @@ See also: [`RLVaR`](@ref), [`calc_risk(::RLVaR, ::AbstractVector)`](@ref), [`RLV
   - `rlr::Real`: relativistic risk.
 
 # Examples
-
-```@example
-# Sample returns vector
-returns = [0.05, -0.03, 0.02, -0.01, 0.04]
-
-# Calculate the relativistic risk with default parameters
-rlr1 = RRM(returns, Dict("solver" => my_solver))
-
-# Calculate with a 3 % significance parameter and 80 % deformation parameter
-rlr2 = RRM(returns, Dict("solver" => my_solver), 0.03, 0.8)
-```
 """
 function RRM(x::AbstractVector,
              solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
@@ -252,7 +224,7 @@ function RRM(x::AbstractVector,
                          [i = 1:T], [nu[i], 1, z[i]] ∈ MOI.PowerCone(invopk)
                          [i = 1:T], [z[i], 1, tau[i]] ∈ MOI.PowerCone(omk)
                      end)
-        @expression(model, risk, -transpose(z) * x)
+        @expression(model, risk, -dot(z, x))
         @objective(model, Max, risk)
         success, solvers_tried = optimise_JuMP_model(model, solvers)
         if success

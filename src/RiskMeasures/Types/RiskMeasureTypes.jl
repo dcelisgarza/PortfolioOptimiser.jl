@@ -1100,7 +1100,7 @@ Measures and computes the portfolio Semi Standard Deviation (SD) equal to or bel
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
@@ -1162,7 +1162,7 @@ Measures and computes the portfolio First Lower Partial Moment (FLPM). Measures 
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``r``: is the minimum acceptable return.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
@@ -1227,7 +1227,7 @@ Measures and computes the portfolio Second Lower Partial Moment (SLPM). Measures
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``r``: is the minimum acceptable return.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
@@ -1294,7 +1294,7 @@ Measures and computes the portfolio Worst Realization/Return (WR). It is the abs
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
@@ -1338,7 +1338,7 @@ Measures and computes the portfolio Conditional Value at Risk (CVaR). Also known
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
   - ``T``: is the number of observations.
@@ -1437,7 +1437,7 @@ Where:
 
   - ``\\mathrm{ERM}(\\bm{X},\\, z, \\,\\alpha)`` is the entropic risk measure as defined in [`ERM`](@ref).
   - ``z``: is the entropic value at risk.
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
 See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -1501,7 +1501,7 @@ Measures and computes the portfolio Relativistic Value at Risk (RLVaR). It is a 
 Where:
 
   - ``\\mathrm{RRM}(\\bm{X},\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
@@ -1566,7 +1566,7 @@ Measures and computes the portfolio Maximum Drawdown of uncompounded cumulative 
 Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X})`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
@@ -1624,7 +1624,7 @@ Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X}, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`DaR`](@ref).
   - ``T``: is the number of observations.
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
@@ -1704,7 +1704,7 @@ Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`DaR`](@ref).
   - ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` is the Drawdown at Risk of uncompounded cumulative returns as defined in [`DaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
   - ``T``: is the number of observations.
 
@@ -1779,7 +1779,7 @@ Measures and computes the portfolio Ulcer Index of uncompounded cumulative retur
 Where:
 
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`DaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
@@ -1841,7 +1841,7 @@ Where:
 
   - ``\\mathrm{ERM}(\\mathrm{DD_{a}}(\\bm{X}),\\, z, \\,\\alpha)`` is the Entropic Risk Measure as defined in [`ERM`](@ref), using the Drawdown of uncompounded cumulative returns as defined in [`DaR`](@ref).
   - ``z``: is the entropic drawdown at risk.
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
 See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
@@ -1917,7 +1917,7 @@ Measures and computes the portfolio Relativistic Drawdown at Risk of uncompounde
 Where:
 
   - ``\\mathrm{RRM}(\\mathrm{DD_{a}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref), using the Drawdown of uncompounded cumulative returns as defined in [`DaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
@@ -1991,7 +1991,7 @@ Measures and computes the portfolio Square Root Kurtosis (Kurt).
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
@@ -2062,7 +2062,7 @@ Measures and computes the portfolio Square Root Semi Kurtosis (SKurt). Measures 
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
@@ -2134,7 +2134,7 @@ Measures and computes the portfolio Range (RG). It is the difference between the
 
 Where:
 
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
 See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`WR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
@@ -2178,7 +2178,7 @@ Measures and computes the portfolio Conditional Value at Risk Range (CVaRRG). It
 Where:
 
   - ``\\mathrm{CVaR}(\\bm{X},\\, \\alpha)``: is the Conditional Value at Risk as defined in [`CVaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
@@ -2343,7 +2343,7 @@ Measures and computes the portfolio Tail Gini Range (TGRG). It is the difference
 Where:
 
   - ``\\mathrm{TG}``: is the Tail Gini defined in [`TG`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
@@ -2913,7 +2913,7 @@ end
 Where:
 
   - ``\\mathrm{CVaR}(\\bm{X},\\, \\alpha)``: is the Conditional Value at Risk as defined in [`CVaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
@@ -2986,7 +2986,7 @@ Measures and computes the portfolio Value at Risk Range (VaRRG). It measures the
 Where:
 
   - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
-  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
