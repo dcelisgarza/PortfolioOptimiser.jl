@@ -10,7 +10,19 @@ Pages = ["ParameterEstimation/Types/WorstCaseTypes.jl",
 "ParameterEstimation/Functions/WorstCaseFunctions.jl"]
 ```
 
+```@docs
+PortfolioOptimiser.WorstCaseSet
+Box
+Ellipse
+NoWC
+```
+
 ## Private
+
+```@docs
+PortfolioOptimiser.WCSetMuSigma
+PortfolioOptimiser.WCSetMu
+```
 
 ```@autodocs
 Modules = [PortfolioOptimiser]

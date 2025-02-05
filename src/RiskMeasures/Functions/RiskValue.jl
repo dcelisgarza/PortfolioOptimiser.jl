@@ -39,7 +39,9 @@ function ERM(x::AbstractVector{<:Real}, z::Real = 1.0, alpha::Real = 0.05)
 end
 
 """
-    ERM(x::AbstractVector{<:Real}, solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}}, alpha::Real = 0.05)
+    ERM(x::AbstractVector{<:Real},
+             solvers::Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
+             alpha::Real = 0.05)
 
 Computes the Entropic Risk Measure.
 
@@ -354,8 +356,8 @@ function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, Track
     end
     return rm(X, w, fees)
 end
-function calc_risk(rm::Union{SD, Variance, Skew, SSkew, TurnoverRM}, w::AbstractVector;
-                   kwargs...)
+function calc_risk(rm::Union{SD, Variance, WCVariance, Skew, SSkew, TurnoverRM},
+                   w::AbstractVector; kwargs...)
     return rm(w)
 end
 

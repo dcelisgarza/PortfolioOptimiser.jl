@@ -1150,7 +1150,7 @@ function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
 end
 
 """
-    mutable struct FLPM{T1 <: Real} <: RiskMeasureTarget
+    mutable struct FLPM <: RiskMeasureTarget
 
 Measures and computes the portfolio First Lower Partial Moment (FLPM). Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Omega ratio.
 
@@ -1215,7 +1215,7 @@ function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
 end
 
 """
-    mutable struct SLPM{T1 <: Real} <: RiskMeasureTarget
+    mutable struct SLPM <: RiskMeasureTarget
 
 Measures and computes the portfolio Second Lower Partial Moment (SLPM). Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Sortino ratio.
 
@@ -2050,7 +2050,7 @@ function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0; scale::B
 end
 
 """
-    mutable struct SKurt{T1 <: Real} <: RiskMeasureMu
+    mutable struct SKurt <: RiskMeasureMu
 
 Measures and computes the portfolio Square Root Semi Kurtosis (SKurt). Measures the kurtosis equal to or below the mean portfolio returns.
 
@@ -2122,7 +2122,7 @@ function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0;
 end
 
 """
-    mutable struct RG{T1 <: Real} <: RiskMeasure
+    mutable struct RG <: RiskMeasure
 
 Measures and computes the portfolio Range (RG). It is the difference between the best and worst return.
 
@@ -2201,7 +2201,7 @@ See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@
 
 # Examples
 """
-mutable struct CVaRRG{T1, T2} <: RiskMeasure
+mutable struct CVaRRG{T1 <: Real, T2 <: Real} <: RiskMeasure
     settings::RMSettings
     alpha::T1
     beta::T2
@@ -2297,7 +2297,7 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 
 # Examples
 """
-mutable struct TG{T1, T2, T3} <: RiskMeasureOWA
+mutable struct TG{T1 <: Real, T2 <: Real, T3 <: Integer} <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
     alpha_i::T1
@@ -2367,7 +2367,8 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 
 # Examples
 """
-mutable struct TGRG{T1, T2, T3, T4, T5, T6} <: RiskMeasureOWA
+mutable struct TGRG{T1 <: Real, T2 <: Real, T3 <: Integer, T4 <: Real, T5 <: Real,
+                    T6 <: Integer} <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
     alpha_i::T1
@@ -2642,7 +2643,7 @@ function (sskew::SSkew)(w::AbstractVector)
 end
 
 """
-    mutable struct SVariance{T1 <: Real} <: RiskMeasureMu
+    mutable struct SVariance <: RiskMeasureMu
 
 # Description
 
@@ -2707,7 +2708,13 @@ abstract type WorstCaseSet end
 Abstract type for subtyping worst case mean variance set types.
 """
 abstract type WorstCaseSet end
+
+"""
+"""
 abstract type WCSetMuSigma <: WorstCaseSet end
+
+"""
+"""
 abstract type WCSetMu <: WorstCaseSet end
 
 """
@@ -2749,25 +2756,84 @@ function NoWC(; formulation::VarianceFormulation = SOC())
 end
 
 """
-    mutable struct WCVariance{T1} <: RiskMeasureSigma
+    mutable struct WCVariance{T1<:Real} <: RiskMeasureSigma
+
+Measures and computes the portfolio Variance with uncertainty sets.
+
+  - Only has an effect on optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. It otherwise acts the same as the [`Variance`](@ref) except for the fact that it always gets its value from the `cov` property of the [`Portfolio`](@ref) instance.
+
+```math
+\\begin{align}
+\\mathrm{Variance}(\\bm{w},\\, \\mathbf{\\Sigma}) &= \\bm{w}^\\intercal \\, \\mathbf{\\Sigma}\\, \\bm{w}\\,.
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
+
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`WCSetMuSigma`](@ref), [`Box`](@ref), [`Ellipse`](@ref), [`Portfolio`](@ref), [`wc_statistics!`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
+
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+
+  - `wc_set::WCSetMuSigma = Box()`: uncertainty set apply to the variance in the optimisation.
+
+      + If `isa(wc_set, Box)`: uses `cov_l` and `cov_u`, either from the risk measure, or their corresponding instance of [`Portfolio`](@ref).
+      + If `isa(wc_set, Ellipse)`: uses `cov_sigma` and `k_sigma`, either from the risk measure, or their corresponding instance of [`Portfolio`](@ref).
+  - `sigma::Union{<:AbstractMatrix, Nothing} = nothing`: (optional) `N×N` covariance matrix.
+
+      + If `nothing`: takes its value from the `cov` property of the instance [`Portfolio`](@ref).
+  - `cov_l::Union{AbstractMatrix{<:Real}, Nothing}` = nothing: `N×N` lower percentile of the covariance matrix of the [`Box`](@ref) uncertainty set.
+
+      + If `nothing`: takes its value from the `cov_l` property of the instance of [`Portfolio`](@ref).
+  - `cov_u::Union{AbstractMatrix{<:Real}, Nothing}` = nothing: `N×N` upper percentile of the covariance matrix of the [`Box`](@ref) uncertainty set.
+
+      + If `nothing`: takes its value from the `cov_u` property of the instance of [`Portfolio`](@ref).
+  - `cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}` = nothing: `N²×N²` covariance matrix of the estimation errors of the covariance of the [`Ellipse`](@ref) uncertainty set.
+
+      + If `nothing`: takes its value from the `cov_sigma` property of the instance of [`Portfolio`](@ref).
+  - `k_sigma::T1 = Inf`: square root of the size of the [`Ellipse`](@ref) uncertainty set.
+
+      + If `nothing`: takes its value from the `k_sigma` property of the instance of [`Portfolio`](@ref).
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The WCVariance risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:wcvariance_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:wcvariance_risk_ub`.
+
+# Functor
+
+  - `(variance::WCVariance)(w::AbstractVector)`: computes the WCVariance of an `N×1` vector of asset weights.
 """
-mutable struct WCVariance{T1} <: RiskMeasureSigma
+mutable struct WCVariance{T1 <: Real} <: RiskMeasureSigma
     settings::RMSettings
     wc_set::WCSetMuSigma
-    sigma::Union{<:AbstractMatrix, Nothing}
-    cov_l::Union{AbstractMatrix{<:Real}, Nothing}
-    cov_u::Union{AbstractMatrix{<:Real}, Nothing}
-    cov_sigma::Union{AbstractMatrix{<:Real}, Nothing}
+    sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
+    cov_l::Union{<:AbstractMatrix{<:Real}, Nothing}
+    cov_u::Union{<:AbstractMatrix{<:Real}, Nothing}
+    cov_sigma::Union{<:AbstractMatrix{<:Real}, Nothing}
     k_sigma::T1
 end
 function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WCSetMuSigma = Box(),
                     sigma::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
-                    cov_l::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
-                    cov_u::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_l::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
+                    cov_u::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     k_sigma::Real = Inf)
     if !isnothing(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
+    end
+    if !isnothing(cov_l)
+        @smart_assert(size(cov_l, 1) == size(cov_l, 2))
+    end
+    if !isnothing(cov_u)
+        @smart_assert(size(cov_u, 1) == size(cov_u, 2))
+    end
+    if !isnothing(cov_sigma)
+        @smart_assert(size(cov_sigma, 1) == size(cov_sigma, 2))
     end
     return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_sigma,
                                        k_sigma)
@@ -2780,6 +2846,10 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
+function (wcvariance::WCVariance)(w::AbstractVector)
+    return dot(w, wcvariance.sigma, w)
+end
+
 # ### Turnover and rebalance
 
 """
@@ -3412,7 +3482,7 @@ function (cdar_r::CDaR_r)(x::AbstractVector)
 end
 
 """
-    mutable struct UCI_r{T1 <: Real} <: HCRiskMeasure
+    mutable struct UCI_r <: HCRiskMeasure
 
 # Description
 
@@ -3555,7 +3625,7 @@ function (edar_r::EDaR_r)(x::AbstractVector)
 end
 
 """
-    mutable struct RLDaR_r{T1 <: Real} <: HCRiskMeasureSolvers
+    mutable struct RLDaR_r{T1 <: Real, T2 <: Real} <: HCRiskMeasureSolvers
 
 # Description
 
@@ -3784,7 +3854,7 @@ function (skewness::Skewness)(x::AbstractVector)
     return sum(dot(val, val) * val) / T / sigma^3
 end
 
-mutable struct SSkewness{T1} <: HCRiskMeasure
+mutable struct SSkewness{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
     mean_w::Union{AbstractWeights, Nothing}
@@ -3836,9 +3906,9 @@ function (kurtosis::Kurtosis)(x::AbstractVector)
     return dot(val, val)^2 / T / sigma^4
 end
 """
-    mutable struct SKurtosis{T1} <: HCRiskMeasure
+    mutable struct SKurtosis{T1 <: Real} <: HCRiskMeasure
 """
-mutable struct SKurtosis{T1} <: HCRiskMeasure
+mutable struct SKurtosis{T1 <: Real} <: HCRiskMeasure
     settings::HCRMSettings
     target::T1
     mean_w::Union{AbstractWeights, Nothing}
@@ -3989,4 +4059,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Q
        SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
        NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
        HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,
-       PortOptSolver
+       PortOptSolver, RMSolvers, RMSigma, RMSkew, RMOWA, RMMu, RMTarget

@@ -376,8 +376,7 @@ function calc_wcvariance_risk(::Ellipse, model, sigma, cov_l, cov_u, cov_sigma, 
                                                                SecondOrderCone())
     return nothing
 end
-function set_rm(port, rm::WCVariance, type::Union{Trad, RB, NOC};
-                sigma::AbstractMatrix{<:Real}, kwargs...)
+function set_rm(port, rm::WCVariance, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     SDP_constraints(model, type)
     sigma, cov_l, cov_u, cov_sigma, k_sigma = choose_wc_stats_port_rm(port, rm)
