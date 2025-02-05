@@ -347,8 +347,8 @@ function calc_fees(w::AbstractVector, long_fees::Union{AbstractVector{<:Real}, R
     rebal_fees = calc_fees(w, rebalance)
     return long_fees + short_fees + rebal_fees
 end
-function calc_risk(rm::Union{WR, VaR, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR, UCI,
-                             EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
+function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR,
+                             UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
                              RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, TCM, FTCM,
                              Skewness, SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
                    X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,

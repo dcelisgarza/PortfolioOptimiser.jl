@@ -902,7 +902,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -976,7 +976,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1105,7 +1105,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1166,7 +1166,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1230,7 +1230,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1438,7 +1438,7 @@ Where:
   - ``\\bm{X}``: is the vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1503,7 +1503,7 @@ Where:
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1842,7 +1842,7 @@ Where:
   - ``\\bm{X}``: is the vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1919,7 +1919,7 @@ Where:
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1993,7 +1993,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2049,7 +2049,7 @@ end
 """
     mutable struct SKurt{T1 <: Real} <: RiskMeasureMu
 
-Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the `target` return threshold.
+Measures and computes the portfolio Square Root Semi Kurtosis. Measures the kurtosis equal to or below the mean portfolio returns.
 
 ```math
 \\begin{align}
@@ -2064,7 +2064,7 @@ Where:
   - ``r``: is the minimum acceptable return.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2164,26 +2164,37 @@ end
 """
     mutable struct CVaRRG{T1 <: Real, T2 <: Real} <: RiskMeasure
 
-# Description
+Measures and computes the portfolio Conditional Value at Risk Range (CVaRRG). It measures the difference between the weighted average of all head gains up to the Value at Risk for gains, which is the threshold above or equal to which are the best `beta %` of portfolio returns. And the weighted average of all tail losses up to the Value at Risk, which is the threshold below or equal to which are the worst `alpha %` of portfolio returns.
 
-Defines the Conditional Value at Risk Range.
+```math
+\\begin{align}
+\\mathrm{CVaRRG}(\\bm{X},\\, \\alpha,\\,\\beta) &= \\mathrm{CVaR}(\\bm{X},\\, \\alpha) - \\mathrm{CVaR}(-\\bm{X},\\, \\beta)
+\\end{align}
+```
 
-  - Measures the range between the expected loss in the worst `alpha %` of cases and expected gain in the best `beta %` of cases, ``\\left[\\mathrm{CVaR}(\\bm{X},\\, \\alpha),\\, \\mathrm{CVaR}(-\\bm{X},\\, \\beta)\\right]``.
+Where:
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::CVaRRG, ::AbstractVector)`](@ref), [`CVaR`](@ref), [`RG`](@ref).
+  - ``\\mathrm{CVaR}(\\bm{X},\\, \\alpha)``: is the Conditional Value at Risk as defined in [`CVaR`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level of losses.
+  - ``\\beta``: is the significance level of gains.
 
-# Properties
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`CVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
   - `alpha::T1 = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
-  - `alpha::T2 = 0.05`: significance level of gains, `beta ∈ (0, 1)`.
+  - `beta::T1 = 0.05`: significance level of gains, `beta ∈ (0, 1)`.
 
-# Behaviour
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-## Validation
+  - The CVaRRG is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cvarrg_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with key, `:cvarrg_risk_ub`.
 
-  - When setting `alpha` at construction or runtime, `alpha ∈ (0, 1)`.
-  - When setting `beta` at construction or runtime, `beta ∈ (0, 1)`.
+# Functor
+
+  - `(cvarrg::CVaRRG)(x::AbstractVector)`: computes the CVaRRG of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -2205,10 +2216,6 @@ function Base.setproperty!(obj::CVaRRG, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (cvarrg::CVaRRG)(x::AbstractVector)
-    # T = length(x)
-    # w = owa_rcvar(T; alpha = cvarrg.alpha, beta = cvarrg.beta)
-    # return dot(w, sort!(x))
-
     alpha = cvarrg.alpha
     aT = alpha * length(x)
     idx = ceil(Int, aT)
@@ -2233,13 +2240,11 @@ function (cvarrg::CVaRRG)(x::AbstractVector)
 end
 
 """
-    struct GMD <: RiskMeasureOWA
+    mutable struct GMD <: RiskMeasureOWA
 
-# Description
+Measures and computes the portfolio Gini Mean Difference (GMD).
 
-Defines the Gini Mean Difference.
-
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::GMD, ::AbstractVector)`](@ref).
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_gmd`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Properties
 
@@ -2248,7 +2253,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
 # Examples
 """
-struct GMD <: RiskMeasureOWA
+mutable struct GMD <: RiskMeasureOWA
     settings::RMSettings
     formulation::OWAFormulation
 end
@@ -2269,7 +2274,7 @@ end
 
 Defines the Tail Gini Difference.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
+See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TG, ::AbstractVector)`](@ref).
 
 # Properties
 
@@ -2341,7 +2346,7 @@ Defines the Tail Gini Difference Range.
 
   - Measures the range between the worst `alpha %` tail gini of cases and best `beta %` tail gini of cases, ``\\left[\\mathrm{TG}(\\bm{X},\\, \\alpha),\\, \\mathrm{TG}(-\\bm{X},\\, \\beta)\\right]``.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
+See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::TGRG, ::AbstractVector)`](@ref), [`TG`](@ref).
 
 # Properties
 
@@ -2421,7 +2426,7 @@ Defines the generic Ordered Weight Array.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
+See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
 # Properties
 
@@ -2949,6 +2954,19 @@ end
 """
     mutable struct VaR{T1 <: Real} <: HCRiskMeasure
 
+```math
+\\begin{align}
+\\mathrm{CVaRRG}(\\bm{X},\\, \\alpha,\\,\\beta) &= \\mathrm{CVaR}(\\bm{X},\\, \\alpha) - \\mathrm{CVaR}(-\\bm{X},\\, \\beta)
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathrm{CVaR}(\\bm{X},\\, \\alpha)``: is the Conditional Value at Risk as defined in [`CVaR`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level of losses.
+  - ``\\beta``: is the significance level of gains.
+
 # Description
 
 Defines the Value at Risk.
@@ -3002,6 +3020,67 @@ end
 function (var::VaR)(x::AbstractVector)
     alpha = var.alpha
     return -partialsort!(x, ceil(Int, alpha * length(x)))
+end
+
+"""
+    mutable struct VaRRG{T1 <: Real, T2 <: Real} <: HCRiskMeasure
+
+Measures and computes the portfolio Value at Risk Range (VaRRG). It measures the difference between the threshold above or equal to which are the best `beta %` of portfolio returns. And the threshold below or equal to which are the worst `alpha %` of portfolio returns.
+
+```math
+\\begin{align}
+\\mathrm{VaRRG}(\\bm{X},\\, \\alpha,\\,\\beta) &= \\mathrm{VaR}(\\bm{X},\\, \\alpha) - \\mathrm{VaR}(-\\bm{X},\\, \\beta)
+\\end{align}
+```
+
+Where:
+
+  - ``\\mathrm{VaR}(\\bm{X},\\, \\alpha)``: is the Value at Risk as defined in [`VaR`](@ref).
+  - ``\\bm{X}``: is the vector of portfolio returns.
+  - ``\\alpha``: is the significance level of losses.
+  - ``\\beta``: is the significance level of gains.
+
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+  - `alpha::T1 = 0.05`: significance level of losses, `alpha ∈ (0, 1)`.
+  - `beta::T1 = 0.05`: significance level of gains, `beta ∈ (0, 1)`.
+
+# Functor
+
+  - `(varrg::VaRRG)(x::AbstractVector)`: computes the VaRRG of a `T×1` vector of portfolio returns `x`.
+
+# Examples
+"""
+mutable struct VaRRG{T1 <: Real, T2 <: Real} <: HCRiskMeasure
+    settings::HCRMSettings
+    alpha::T1
+    beta::T2
+end
+function VaRRG(; settings::HCRMSettings = HCRMSettings(), alpha::Real = 0.05,
+               beta::Real = 0.05)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    @smart_assert(zero(beta) < beta < one(beta))
+    return VaRRG{typeof(alpha), typeof(beta)}(settings, alpha, beta)
+end
+function Base.setproperty!(obj::VaRRG, sym::Symbol, val)
+    if sym ∈ (:alpha, :beta)
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+function (var::VaRRG)(x::AbstractVector)
+    T = length(x)
+
+    alpha = var.alpha
+    loss = -partialsort!(x, ceil(Int, alpha * T))
+
+    beta = var.beta
+    gain = -partialsort!(x, ceil(Int, beta * T); rev = true)
+
+    return loss - gain
 end
 
 """
@@ -3954,10 +4033,10 @@ end
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
        RSOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR,
        RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-       Variance, SVariance, VaR, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r, RLDaR_r,
-       Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC, TrackingRM,
-       TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis, SKurtosis,
-       OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
+       Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
+       RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC,
+       TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
+       SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
        NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
        HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,
        PortOptSolver

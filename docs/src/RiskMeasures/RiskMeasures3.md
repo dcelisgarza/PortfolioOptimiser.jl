@@ -7,6 +7,7 @@ This contains the documentation for all available [`HCRiskMeasure`](@ref) subtyp
 These measure the spread of the returns distribution.
 
 ```@docs
+VaRRG
 FTCM
 ```
 
