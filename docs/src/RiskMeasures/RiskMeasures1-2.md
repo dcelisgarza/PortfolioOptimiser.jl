@@ -26,23 +26,6 @@ SOC
 RSOC
 ```
 
-## [`TrackingRM`](@ref)
-
-```@docs
-PortfolioOptimiser.TrackingErr
-NoTracking
-TrackRet
-TrackWeight
-```
-
-## [`TurnoverRM`](@ref)
-
-```@docs
-PortfolioOptimiser.AbstractTR
-NoTR
-TR
-```
-
 ## [`RMMu`](@ref)
 
 ```@docs

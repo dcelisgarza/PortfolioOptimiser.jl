@@ -791,6 +791,11 @@ Explicit quadratic formulation for the [`Variance`](@ref) and [`SVariance`](@ref
 
 See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`RSOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
 
+# General Behaviour
+
+  - No additional variables or constraints introduced.
+  - Performance may degrade for large portfolios.
+
 # [`Variance`](@ref)
 
 ```math
@@ -807,10 +812,6 @@ Where:
 ## Behaviour
 
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dot(w, sigma, w)`.
-  - Not compatible with [`NOC`](@ref) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - No additional variables or constraints introduced.
-  - Requires a solver capable of handling quadratic expressions.
-  - Performance may degrade for large portfolios.
 
 ## Examples
 
@@ -831,6 +832,10 @@ Where:
   - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
+
+## Behaviour
+
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = dot(svariance, svariance)/(T-1)`.
 """
 struct Quad <: VarianceFormulation end
 
@@ -840,6 +845,14 @@ struct Quad <: VarianceFormulation end
 Second-Order Cone (SOC) formulation for the [`Variance`](@ref) and [`SVariance`](@ref). Formulates the quadratic variance/semi variance expression using a [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
 
 See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
+
+# General Behaviour
+
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Often more numerically stable than direct quadratic formulation.
+  - Better scaling properties for large portfolios.
+  - Compatible with specialised conic solvers.
+  - Particularly effective for large-scale problems.
 
 # [`Variance`](@ref)
 
@@ -859,16 +872,7 @@ Where:
 
 ## Behaviour
 
-  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
-  - Defines a standard deviation variable `dev`.
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dev^2`.
-  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - Requires a solver capable of handling quadratic expressions.
-  - Often more numerically stable than direct quadratic formulation.
-  - Better scaling properties for large portfolios.
-  - Compatible with specialised conic solvers.
-  - May introduce more variables but often leads to better solution times.
-  - Particularly effective for large-scale problems.
 
 ## Examples
 
@@ -890,6 +894,10 @@ Where:
   - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
+
+## Behaviour
+
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = sdev^2/(T-1)`.
 """
 struct SOC <: VarianceFormulation end
 
@@ -899,6 +907,13 @@ struct SOC <: VarianceFormulation end
 Rotated Second-Order Cone (RSOC) formulation for the [`Variance`](@ref) and [`SVariance`](@ref). Formulates the quadratic variance/semi variance expression using a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
 
 See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
+
+# General Behaviour
+
+  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
+  - Uses [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraints.
+  - Compatible with specialised conic solvers.
+  - Performance may degrade for large portfolios.
 
 # [`Variance`](@ref)
 
@@ -921,13 +936,8 @@ Where:
 
 ## Behaviour
 
-  - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
-  - Uses [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraints.
-  - Defines a standard deviation variable `dev`.
-  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = tvariance`.
-  - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
-  - Requires a solver capable of handling quadratic expressions.
-  - Performance may degrade for large portfolios.
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = tvariance/(T-1)`.
+  - Because it is not bound by the covariance matrix, when providing the upper bound, the upper bound must be computed with the default [`PortCovCor`](@ref).
 
 ## Examples
 
@@ -949,6 +959,11 @@ Where:
   - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
+
+## Behaviour
+
+  - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = tsvariance/(T-1)`.
+  - Because it is not bound by the covariance matrix, when providing the upper bound, the upper bound must be computed with the default [`PortCovCor`](@ref) using the default [`CovSemi`](@ref) estimator.
 """
 struct RSOC <: VarianceFormulation end
 
@@ -980,20 +995,20 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Port
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Variance risk is defined as the key `:variance_risk`.
+## [`NoAdj`](@ref), [`IP`](@ref) network and cluster constraints
 
-  - [`NoAdj`](@ref), [`IP`](@ref) network and cluster constraints.
+  - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
+  - Requires a solver capable of handling quadratic expressions.
+  - Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+  - If it exists, the upper bound is defined via the portfolio standard deviation with the key, `:dev_ub`.
 
-      + Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
-      + Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
-      + Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
-      + If it exists, the upper bound is defined via the portfolio standard deviation with the key, `:dev_ub`.
-  - [`SDP`](@ref) network and/or cluster constraints.
+## [`SDP`](@ref) network and/or cluster constraints
 
-      + Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
-      + Defines the variance risk, `:variance_risk`, as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
-      + Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
-      + If it exists, the upper bound is defined via the portfolio variance with the key, `:variance_risk_ub`.
+  - Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
+  - Defines the variance risk, `:variance_risk`, as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
+  - Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:variance_risk_ub`.
 
 # Functor
 

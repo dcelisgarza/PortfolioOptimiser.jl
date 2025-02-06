@@ -1,5 +1,18 @@
 # Constraints
 
+```@docs
+PortfolioOptimiser.TrackingErr
+NoTracking
+TrackRet
+TrackWeight
+```
+
+```@docs
+PortfolioOptimiser.AbstractTR
+NoTR
+TR
+```
+
 ## Public
 
 ```@autodocs

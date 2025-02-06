@@ -538,14 +538,14 @@ function semi_variance_risk(::RSOC, model, iTm1, i)
     return nothing
 end
 function semi_variance_risk(::SOC, model::JuMP.Model, iTm1)
-    svar = model[:svar]
-    @expression(model, svariance_risk, iTm1 * svar^2)
+    sdev = model[:sdev]
+    @expression(model, svariance_risk, iTm1 * sdev^2)
     return nothing
 end
 function semi_variance_risk(::SOC, model, iTm1, i)
-    svar = model[:svar][i]
+    sdev = model[:sdev][i]
     svariance_risk = model[:svariance_risk][i]
-    add_to_expression!(svariance_risk, iTm1, svar^2)
+    add_to_expression!(svariance_risk, iTm1, sdev^2)
     return nothing
 end
 function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
@@ -561,7 +561,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     end
     @variables(model, begin
                    svariance[1:T] .>= 0
-                   svar
+                   sdev
                end)
     Tm1 = T - one(T)
     iTm1 = inv(Tm1)
@@ -572,10 +572,10 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
                      constr_svariance_mar,
                      scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance
                      constr_svar_soc,
-                     [scale_constr * svar; scale_constr * svariance] ∈ SecondOrderCone()
+                     [scale_constr * sdev; scale_constr * svariance] ∈ SecondOrderCone()
                  end)
     svariance_risk = model[:svariance_risk]
-    set_rm_risk_upper_bound(type, model, svar, sqrt(rm.settings.ub) * srtTm1, "svar_risk")
+    set_rm_risk_upper_bound(type, model, sdev, sqrt(rm.settings.ub) * srtTm1, "svar_risk")
     set_risk_expression(model, svariance_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
@@ -595,7 +595,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     count = length(rms)
     @variables(model, begin
                    svariance[1:T, 1:count] .>= 0
-                   svar[1:count]
+                   sdev[1:count]
                end)
     @expression(model, svariance_risk[1:count], zero(QuadExpr))
     for (i, rm) ∈ pairs(rms)
@@ -610,12 +610,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                                                                  scale_constr *
                                                                  -view(svariance, :, i))
         model[Symbol("constr_svar_soc_$(i)")] = @constraint(model,
-                                                            [scale_constr * svar[i];
+                                                            [scale_constr * sdev[i];
                                                              scale_constr *
                                                              view(svariance, :, i)] ∈
                                                             SecondOrderCone())
         semi_variance_risk(rm.formulation, model, iTm1, i)
-        set_rm_risk_upper_bound(type, model, svar[i], sqrt(rm.settings.ub) * srtTm1,
+        set_rm_risk_upper_bound(type, model, sdev[i], sqrt(rm.settings.ub) * srtTm1,
                                 "svar_$(i)")
         set_risk_expression(model, svariance_risk[i], rm.settings.scale, rm.settings.flag)
     end
