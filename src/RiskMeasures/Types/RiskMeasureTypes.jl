@@ -887,7 +887,7 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Varian
 struct RSOC <: VarianceFormulation end
 
 """
-    mutable struct Variance{T1 <: Union{<:AbstractMatrix, Nothing}} <: RiskMeasureSigma
+    mutable struct Variance <: RiskMeasureSigma
 
 Measures and computes the portfolio Variance (Variance).
 
@@ -921,13 +921,13 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Port
       + Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
       + Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
       + Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
-      + If it exists, the upper bound is defined via the portfolio standard deviation with key, `:dev_ub`.
+      + If it exists, the upper bound is defined via the portfolio standard deviation with the key, `:dev_ub`.
   - [`SDP`](@ref) network and/or cluster constraints.
 
       + Requires a solver that supports [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
       + Defines the variance risk, `:variance_risk`, as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr).
       + Compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) are strictly convex.
-      + If it exists, the upper bound is defined via the portfolio variance with key, `:variance_risk_ub`.
+      + If it exists, the upper bound is defined via the portfolio variance with the key, `:variance_risk_ub`.
 
 # Functor
 
@@ -989,7 +989,7 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The SD risk is defined as a [`VariableRef`](https://jump.dev/JuMP.jl/stable/api/JuMP/#VariableRef) with the key, `:sd_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:sd_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:sd_risk_ub`.
   - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
 
 # Functor
@@ -1058,7 +1058,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The MAD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mad_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:mad_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:mad_risk_ub`.
 
 # Functor
 
@@ -1120,7 +1120,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The SSD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:ssd_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:ssd_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:ssd_risk_ub`.
 
 # Functor
 
@@ -1183,7 +1183,7 @@ See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref)
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The FLPM risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:flpm_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:flpm_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:flpm_risk_ub`.
 
 # Functor
 
@@ -1248,7 +1248,7 @@ See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref)
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The SLPM risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:slpm_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:slpm_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:slpm_risk_ub`.
 
 # Functor
 
@@ -1305,7 +1305,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The WR risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:wr_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:wr_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:wr_risk_ub`.
 
 # Functor
 
@@ -1354,7 +1354,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Va
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The CVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cvar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:cvar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:cvar_risk_ub`.
 
 # Functor
 
@@ -1454,7 +1454,7 @@ See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The EVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:evar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:evar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:evar_risk_ub`.
 
 # Functor
 
@@ -1520,7 +1520,7 @@ See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The RLVaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rlvar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:rlvar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:rlvar_risk_ub`.
 
 # Functor
 
@@ -1577,7 +1577,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The MDD is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:mdd_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:mdd_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:mdd_risk_ub`.
 
 # Functor
 
@@ -1635,7 +1635,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The ADD is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:add_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:add_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:add_risk_ub`.
 
 # Functor
 
@@ -1718,7 +1718,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The CDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cdar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:cdar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:cdar_risk_ub`.
 
 # Functor
 
@@ -1790,7 +1790,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`Da
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The UCI is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:uci_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:uci_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:uci_risk_ub`.
 
 # Functor
 
@@ -1858,7 +1858,7 @@ See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The EDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:edar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:edar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:edar_risk_ub`.
 
 # Functor
 
@@ -1936,7 +1936,7 @@ See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The RLDaR is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rldar_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:rldar_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:rldar_risk_ub`.
 
 # Functor
 
@@ -2017,7 +2017,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurt
 
   - Uses [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
   - The Kurt risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:kurt_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:kurt_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:kurt_risk_ub`.
 
 # Functor
 
@@ -2088,7 +2088,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurto
 
   - Uses [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
   - The Kurt risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:skurt_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:skurt_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:skurt_risk_ub`.
 
 # Functor
 
@@ -2145,7 +2145,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`WR
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The RG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:rg_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:rg_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:rg_risk_ub`.
 
 # Functor
 
@@ -2193,7 +2193,7 @@ See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The CVaRRG is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:cvarrg_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:cvarrg_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:cvarrg_risk_ub`.
 
 # Functor
 
@@ -2257,7 +2257,7 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The GMD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:gmd_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:gmd_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:gmd_risk_ub`.
 
 # Examples
 """
@@ -2293,7 +2293,7 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The TG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tg_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:tg_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:tg_risk_ub`.
 
 # Examples
 """
@@ -2363,7 +2363,7 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The TGRG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tgrg_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:tgrg_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:tgrg_risk_ub`.
 
 # Examples
 """
@@ -2484,7 +2484,7 @@ See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The BDVariance risk is defined as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) with the key, `:bdvariance_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:bdvariance_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:bdvariance_risk_ub`.
 
 # Examples
 """
@@ -2538,7 +2538,7 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The Skew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:skew_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:skew_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:skew_risk_ub`.
 
 # Examples
 """
@@ -2606,7 +2606,7 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The SSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:sskew_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:sskew_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:sskew_risk_ub`.
 
 # Examples
 """
@@ -2756,7 +2756,7 @@ function NoWC(; formulation::VarianceFormulation = SOC())
 end
 
 """
-    mutable struct WCVariance{T1<:Real} <: RiskMeasureSigma
+    mutable struct WCVariance{T1 <: Real} <: RiskMeasureSigma
 
 Measures and computes the portfolio Variance with uncertainty sets.
 
@@ -2802,7 +2802,7 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
   - The WCVariance risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:wcvariance_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with key, `:wcvariance_risk_ub`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:wcvariance_risk_ub`.
 
 # Functor
 
