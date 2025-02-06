@@ -575,7 +575,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
                      [scale_constr * sdev; scale_constr * svariance] ∈ SecondOrderCone()
                  end)
     svariance_risk = model[:svariance_risk]
-    set_rm_risk_upper_bound(type, model, sdev, sqrt(rm.settings.ub) * srtTm1, "svar_risk")
+    set_rm_risk_upper_bound(type, model, sdev, sqrt(rm.settings.ub) * srtTm1, "sdev_")
     set_risk_expression(model, svariance_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
@@ -616,7 +616,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                                                             SecondOrderCone())
         semi_variance_risk(rm.formulation, model, iTm1, i)
         set_rm_risk_upper_bound(type, model, sdev[i], sqrt(rm.settings.ub) * srtTm1,
-                                "svar_$(i)")
+                                "sdev_$(i)")
         set_risk_expression(model, svariance_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
@@ -2753,32 +2753,32 @@ function set_rm(port::Portfolio, rm::BDVariance, type::Union{Trad, RB, NOC};
     set_risk_expression(model, bdvariance_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rm::Skew, type::Union{Trad, RB, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::NQSkew, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    @variable(model, t_skew)
+    @variable(model, t_nqskew)
     V = if (isnothing(rm.V) || isempty(rm.V))
         port.V
     else
         rm.V
     end
     G = real(sqrt(V))
-    @constraint(model, constr_skew_soc,
-                [scale_constr * t_skew; scale_constr * G * w] ∈ SecondOrderCone())
-    @expression(model, skew_risk, t_skew^2)
-    set_rm_risk_upper_bound(type, model, t_skew, rm.settings.ub, "skew_risk")
-    set_risk_expression(model, skew_risk, rm.settings.scale, rm.settings.flag)
+    @constraint(model, constr_nqskew_soc,
+                [scale_constr * t_nqskew; scale_constr * G * w] ∈ SecondOrderCone())
+    @expression(model, nqskew_risk, t_nqskew^2)
+    set_rm_risk_upper_bound(type, model, t_nqskew, sqrt(rm.settings.ub), "t_nqskew")
+    set_risk_expression(model, nqskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, RB, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:NQSkew}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
     count = length(rms)
-    @variable(model, t_skew[1:count])
-    @expression(model, skew_risk, t_skew .^ 2)
+    @variable(model, t_nqskew[1:count])
+    @expression(model, nqskew_risk, t_nqskew .^ 2)
     for (i, rm) ∈ pairs(rms)
         V = if (isnothing(rm.V) || isempty(rm.V))
             port.V
@@ -2786,41 +2786,42 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:Skew}, type::Union{Trad, 
             rm.V
         end
         G = real(sqrt(V))
-        model[Symbol("constr_skew_soc_$(i)")] = @constraint(model,
-                                                            [scale_constr * t_skew[i];
-                                                             scale_constr * G * w] ∈
-                                                            SecondOrderCone())
-        set_rm_risk_upper_bound(type, model, t_skew[i], rm.settings.ub, "skew_risk_$(i)")
-        set_risk_expression(model, skew_risk[i], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_nqskew_soc_$(i)")] = @constraint(model,
+                                                              [scale_constr * t_nqskew[i];
+                                                               scale_constr * G * w] ∈
+                                                              SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, t_nqskew[i], sqrt(rm.settings.ub),
+                                "t_nqskew_$(i)")
+        set_risk_expression(model, nqskew_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
-function set_rm(port::Portfolio, rm::SSkew, type::Union{Trad, RB, NOC}; kwargs...)
+function set_rm(port::Portfolio, rm::NQSSkew, type::Union{Trad, RB, NOC}; kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
-    @variable(model, t_sskew)
+    @variable(model, t_nqsskew)
     SV = if (isnothing(rm.V) || isempty(rm.V))
         port.SV
     else
         rm.V
     end
     G = real(sqrt(SV))
-    @constraint(model, constr_sskew_soc,
-                [scale_constr * t_sskew; scale_constr * G * w] ∈ SecondOrderCone())
-    @expression(model, sskew_risk, t_sskew^2)
-    set_rm_risk_upper_bound(type, model, t_sskew, rm.settings.ub, "sskew_risk")
-    set_risk_expression(model, sskew_risk, rm.settings.scale, rm.settings.flag)
+    @constraint(model, constr_nqsskew_soc,
+                [scale_constr * t_nqsskew; scale_constr * G * w] ∈ SecondOrderCone())
+    @expression(model, nqsskew_risk, t_nqsskew^2)
+    set_rm_risk_upper_bound(type, model, t_nqsskew, sqrt(rm.settings.ub), "t_nqsskew")
+    set_risk_expression(model, nqsskew_risk, rm.settings.scale, rm.settings.flag)
     return nothing
 end
-function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad, RB, NOC};
+function set_rm(port::Portfolio, rms::AbstractVector{<:NQSSkew}, type::Union{Trad, RB, NOC};
                 kwargs...)
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
     count = length(rms)
-    @variable(model, t_sskew[1:count])
-    @expression(model, sskew_risk, t_sskew .^ 2)
+    @variable(model, t_nqsskew[1:count])
+    @expression(model, nqsskew_risk, t_nqsskew .^ 2)
     for (i, rm) ∈ pairs(rms)
         V = if (isnothing(rm.V) || isempty(rm.V))
             port.SV
@@ -2828,15 +2829,101 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSkew}, type::Union{Trad,
             rm.V
         end
         G = real(sqrt(V))
-        model[Symbol("constr_sskew_soc_$(i)")] = @constraint(model,
-                                                             [scale_constr * t_sskew[i];
-                                                              scale_constr * G * w] ∈
-                                                             SecondOrderCone())
-        set_rm_risk_upper_bound(type, model, t_sskew[i], rm.settings.ub, "sskew_risk_$(i)")
-        set_risk_expression(model, sskew_risk[i], rm.settings.scale, rm.settings.flag)
+        model[Symbol("constr_nqsskew_soc_$(i)")] = @constraint(model,
+                                                               [scale_constr * t_nqsskew[i];
+                                                                scale_constr * G * w] ∈
+                                                               SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, t_nqsskew[i], sqrt(rm.settings.ub),
+                                "t_nqsskew_$(i)")
+        set_risk_expression(model, nqsskew_risk[i], rm.settings.scale, rm.settings.flag)
     end
     return nothing
 end
+######
+function set_rm(port::Portfolio, rm::NSkew, type::Union{Trad, RB, NOC}; kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    @variable(model, nskew_risk)
+    V = if (isnothing(rm.V) || isempty(rm.V))
+        port.V
+    else
+        rm.V
+    end
+    G = real(sqrt(V))
+    @constraint(model, constr_nskew_soc,
+                [scale_constr * nskew_risk; scale_constr * G * w] ∈ SecondOrderCone())
+    set_rm_risk_upper_bound(type, model, nskew_risk, rm.settings.ub, "nskew_risk")
+    set_risk_expression(model, nskew_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:NSkew}, type::Union{Trad, RB, NOC};
+                kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    count = length(rms)
+    @variable(model, nskew_risk[1:count])
+    for (i, rm) ∈ pairs(rms)
+        V = if (isnothing(rm.V) || isempty(rm.V))
+            port.V
+        else
+            rm.V
+        end
+        G = real(sqrt(V))
+        model[Symbol("constr_nskew_soc_$(i)")] = @constraint(model,
+                                                             [scale_constr * nskew_risk[i];
+                                                              scale_constr * G * w] ∈
+                                                             SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, nskew_risk[i], rm.settings.ub,
+                                "nskew_risk_$(i)")
+        set_risk_expression(model, nskew_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port::Portfolio, rm::NSSkew, type::Union{Trad, RB, NOC}; kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    @variable(model, nsskew_risk)
+    SV = if (isnothing(rm.V) || isempty(rm.V))
+        port.SV
+    else
+        rm.V
+    end
+    G = real(sqrt(SV))
+    @constraint(model, constr_nsskew_soc,
+                [scale_constr * nsskew_risk; scale_constr * G * w] ∈ SecondOrderCone())
+    set_rm_risk_upper_bound(type, model, nsskew_risk, rm.settings.ub, "nsskew_risk")
+    set_risk_expression(model, nsskew_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port::Portfolio, rms::AbstractVector{<:NSSkew}, type::Union{Trad, RB, NOC};
+                kwargs...)
+    model = port.model
+    scale_constr = model[:scale_constr]
+    w = model[:w]
+    count = length(rms)
+    @variable(model, nsskew_risk[1:count])
+    for (i, rm) ∈ pairs(rms)
+        V = if (isnothing(rm.V) || isempty(rm.V))
+            port.SV
+        else
+            rm.V
+        end
+        G = real(sqrt(V))
+        model[Symbol("constr_nsskew_soc_$(i)")] = @constraint(model,
+                                                              [scale_constr *
+                                                               nsskew_risk[i]
+                                                               scale_constr * G * w] ∈
+                                                              SecondOrderCone())
+        set_rm_risk_upper_bound(type, model, nsskew_risk[i], rm.settings.ub,
+                                "nsskew_risk_$(i)")
+        set_risk_expression(model, nsskew_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+######
 function set_rm(port::Portfolio, rm::TrackingRM, type::Union{Trad, RB, NOC};
                 returns::AbstractMatrix{<:Real}, kwargs...)
     model = port.model

@@ -30,8 +30,8 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 
     rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RLVaR(), MDD(), ADD(),
            CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), CVaRRG(), TG(),
-           TGRG(), OWA(), BDVariance(), Skew(), SSkew(), Variance(), Equal(), VaR(), DaR(),
-           DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
+           TGRG(), OWA(), BDVariance(), NQSkew(), NQSSkew(), Variance(), Equal(), VaR(),
+           DaR(), DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
         r = calc_risk(portfolio, :Trad; rm = rm)

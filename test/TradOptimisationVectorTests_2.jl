@@ -2173,7 +2173,7 @@ end
     @test value(portfolio.model[:owa_t][2]) != 0
 end
 
-@testset "Skew vec" begin
+@testset "NQSkew vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -2182,7 +2182,7 @@ end
                                                   params = ["verbose" => false,
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
-    rm = Skew()
+    rm = NQSkew()
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = [[rm]], kelly = NoKelly(), obj = obj))
@@ -2206,7 +2206,7 @@ end
     @test isapprox(w2.weights, wt, rtol = 5.0e-5)
 end
 
-@testset "SSkew vec" begin
+@testset "NQSSkew vec" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -2215,7 +2215,7 @@ end
                                                   params = ["verbose" => false,
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
-    rm = SSkew()
+    rm = NQSSkew()
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = [[rm]], kelly = NoKelly(), obj = obj))
@@ -2228,7 +2228,7 @@ end
           4.5083144725397534e-7, 0.026586616541717394, 2.6481651179988687e-5,
           0.013510133781810273, 3.2563765357090695e-6, 0.21130849297469684,
           6.622336342182562e-7, 0.1207744357455529]
-    riskt = 0.0033523757385970935
+    riskt = 0.0033523757385970935^2
     rett = 0.0003452673005217105
     @test isapprox(w1.weights, wt)
     @test isapprox(r1, riskt)
@@ -2239,7 +2239,7 @@ end
     @test isapprox(w2.weights, wt, rtol = 0.0001)
 end
 
-@testset "Add Skew and SSkew to SD" begin
+@testset "Add NQSkew and NQSSkew to SD" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -2248,14 +2248,14 @@ end
                                                   params = "verbose" => false))
     asset_statistics!(portfolio)
 
-    rm = Skew(; settings = RMSettings(; scale = 1.0))
+    rm = NQSkew(; settings = RMSettings(; scale = 1.0))
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     rm.settings.scale = 0.99
     w2 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     @test isapprox(w1.weights, w2.weights, rtol = 5e-6)
 
-    rm = SSkew(; settings = RMSettings(; scale = 1.0))
+    rm = NQSSkew(; settings = RMSettings(; scale = 1.0))
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     rm.settings.scale = 0.99

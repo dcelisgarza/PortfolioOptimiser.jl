@@ -39,9 +39,9 @@ function find_special_rm(rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMe
             push!(kurt_idx, 1)
         elseif isa(rm, SKurt)
             push!(skurt_idx, 1)
-        elseif isa(rm, Skew)
+        elseif isa(rm, NQSkew) || isa(rm, NSkew)
             push!(skew_idx, 1)
-        elseif isa(rm, SSkew)
+        elseif isa(rm, NQSSkew) || isa(rm, NSSkew)
             push!(sskew_idx, 1)
         elseif isa(rm, WCVariance)
             push!(wc_idx, 1)
@@ -68,9 +68,9 @@ function find_special_rm(rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMe
                 push!(kurt_idx, i)
             elseif isa(r, SKurt)
                 push!(skurt_idx, i)
-            elseif isa(r, Skew)
+            elseif isa(r, NQSkew)
                 push!(skew_idx, i)
-            elseif isa(r, SSkew)
+            elseif isa(r, NQSSkew)
                 push!(sskew_idx, i)
             elseif isa(r, WCVariance)
                 push!(wc_idx, i)
@@ -140,10 +140,10 @@ function set_kt_rm!(val::Union{Val{true}, Val{false}}, rm, port, kt_idx, idx, ol
     end
     return nothing
 end
-function get_skew(::Skew, port, cluster, idx)
+function get_skew(::Union{NQSkew, NSkew}, port, cluster, idx)
     return view(port.skew, cluster, idx)
 end
-function get_skew(::SSkew, port, cluster, idx)
+function get_skew(::Union{NQSSkew, NSSkew}, port, cluster, idx)
     return view(port.sskew, cluster, idx)
 end
 function gen_cluster_skew_sskew(args...)

@@ -356,8 +356,8 @@ function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, Track
     end
     return rm(X, w, fees)
 end
-function calc_risk(rm::Union{SD, Variance, WCVariance, Skew, SSkew, TurnoverRM},
-                   w::AbstractVector; kwargs...)
+function calc_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, NSSkew,
+                             TurnoverRM}, w::AbstractVector; kwargs...)
     return rm(w)
 end
 

@@ -76,7 +76,7 @@ function filter_best(assets, rms, best, cov_type, cor_type)
         hp = Portfolio(; prices = prices[Symbol.(assets_best)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
-                          set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
+                          set_skew = isa(rm, NQSkew) ? true : false, set_sskew = false)
         cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
         w = optimise!(hp, HERC(; rm = rm))
 
@@ -96,7 +96,7 @@ end
 # Now we can define the parameters for our filtering procedure.
 
 ## Risk measures.
-rms = [SD(), SSD(), CVaR(), CDaR(), Skew()]
+rms = [SD(), SSD(), CVaR(), CDaR(), NQSkew()]
 
 ## Lets say we want to have 50% of all stocks at the end.
 best = 0.5
@@ -156,7 +156,7 @@ function filter_worst(assets, rms, best, cov_type, cor_type)
         hp = Portfolio(; prices = prices[Symbol.(assets_worst)])
         asset_statistics!(hp; cov_type = covcor_type, cor_type = covcor_type,
                           set_kurt = false, set_skurt = false, set_mu = false,
-                          set_skew = isa(rm, Skew) ? true : false, set_sskew = false)
+                          set_skew = isa(rm, NQSkew) ? true : false, set_sskew = false)
         cluster_assets!(hp; clust_opt = ClustOpt(; k_method = StdSilhouette()))
         w = optimise!(hp, HERC(; rm = rm))
 
@@ -176,7 +176,7 @@ end
 # Now we can define the parameters for our filtering procedures.
 
 ## Risk measures.
-rms = [SD(), SSD(), CVaR(), CDaR(), Skew()]
+rms = [SD(), SSD(), CVaR(), CDaR(), NQSkew()]
 
 ## Lets say we want to have 50% of all stocks at the end, 30% of the best, and 20% of the worst.
 best = 0.3
