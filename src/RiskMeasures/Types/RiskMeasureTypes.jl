@@ -774,7 +774,9 @@ abstract type HCRiskMeasureTarget <: HCRiskMeasureMu end
 """
     abstract type VarianceFormulation end
 
-Abstract type for implementing various formulations of the [`Variance`](@ref) in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+Abstract type for implementing various formulations of the [`Variance`](@ref) and [`SVariance`](@ref) in optimisations which use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+
+# [`Variance`](@ref)
 
   - If either `network_adj` or `cluster_adj` property of the [`Portfolio`](@ref) instance is [`SDP`](@ref), the formulation has no effect because this constraint type requires a [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) formulation of the variance.
 
@@ -785,7 +787,11 @@ abstract type VarianceFormulation end
 """
     struct Quad <: VarianceFormulation end
 
-Explicit quadratic formulation for the [`Variance`](@ref) as an optimisation model.
+Explicit quadratic formulation for the [`Variance`](@ref) and [`SVariance`](@ref) as an optimisation model.
+
+See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`RSOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
+
+# [`Variance`](@ref)
 
 ```math
 \\begin{align}
@@ -798,9 +804,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`RSOC`](@ref), [`Variance`](@ref).
-
-# Behaviour
+## Behaviour
 
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `variance_risk = dot(w, sigma, w)`.
   - Not compatible with [`NOC`](@ref) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
@@ -808,14 +812,36 @@ See also: [`VarianceFormulation`](@ref), [`SOC`](@ref), [`RSOC`](@ref), [`Varian
   - Requires a solver capable of handling quadratic expressions.
   - Performance may degrade for large portfolios.
 
-# Examples
+## Examples
+
+# [`SVariance`](@ref)
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\dfrac{\\bm{y} \\cdot \\bm{y}}{T-1}\\nonumber\\\\
+\\textrm{s.t.} &\\qquad \\bm{y} \\geq \\bm{0}\\nonumber\\\\
+               &\\qquad (\\mathbf{X} - \\bm{\\mu}^\\intercal) \\bm{w} \\geq -\\bm{y}
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\mathbf{X}``: is the `T×N` matrix of asset returns.
+  - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
 """
 struct Quad <: VarianceFormulation end
 
 """
     struct SOC <: VarianceFormulation end
 
-Second-Order Cone (SOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
+Second-Order Cone (SOC) formulation for the [`Variance`](@ref) and [`SVariance`](@ref). Formulates the quadratic variance/semi variance expression using a [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) cone constraint.
+
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
+
+# [`Variance`](@ref)
 
 ```math
 \\begin{align}
@@ -831,9 +857,7 @@ Where:
   - ``\\sigma^2``: is the portfolio variance.
   - ``\\lVert \\cdot \\rVert_{2}``: is the L-2 norm, which is modelled as an [SecondOrderCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone).
 
-See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Variance`](@ref).
-
-# Behaviour
+## Behaviour
 
   - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
   - Defines a standard deviation variable `dev`.
@@ -846,14 +870,37 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`RSOC`](@ref), [`Varia
   - May introduce more variables but often leads to better solution times.
   - Particularly effective for large-scale problems.
 
-# Examples
+## Examples
+
+# [`SVariance`](@ref)
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\dfrac{v^{2}}{T-1}\\nonumber\\\\
+\\textrm{s.t.} &\\qquad \\bm{y} \\geq \\bm{0}\\nonumber\\\\
+               &\\qquad (\\mathbf{X} - \\bm{\\mu}^\\intercal) \\bm{w} \\geq -\\bm{y}\\nonumber\\\\
+               &\\qquad (v,\\, \\bm{y}) \\in \\mathcal{K}_{\\textrm{soc}}
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\mathbf{X}``: is the `T×N` matrix of asset returns.
+  - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
 """
 struct SOC <: VarianceFormulation end
 
 """
     struct RSOC <: VarianceFormulation end
 
-Rotated Second-Order Cone (RSOC) formulation for the [`Variance`](@ref). Reformulates the quadratic variance expression using a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
+Rotated Second-Order Cone (RSOC) formulation for the [`Variance`](@ref) and [`SVariance`](@ref). Formulates the quadratic variance/semi variance expression using a [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraint.
+
+See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Variance`](@ref), [`SVariance`](@ref).
+
+# [`Variance`](@ref)
 
 ```math
 \\begin{align}
@@ -872,9 +919,7 @@ Where:
   - ``\\bm{\\mu}``: is the `N×1` vector of expected asset returns.
   - ``\\mathcal{K}_{\\textrm{rsoc}}``: is the [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone). Which in this formulation represents the sum of squares of a vector.
 
-See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Variance`](@ref).
-
-# Behaviour
+## Behaviour
 
   - Uses [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/manual/constraints/#Second-order-cone-constraints) constraints.
   - Uses [`RotatedSecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Rotated-Second-Order-Cone) constraints.
@@ -883,6 +928,27 @@ See also: [`VarianceFormulation`](@ref), [`Quad`](@ref), [`SOC`](@ref), [`Varian
   - Not compatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
   - Requires a solver capable of handling quadratic expressions.
   - Performance may degrade for large portfolios.
+
+## Examples
+
+# [`SVariance`](@ref)
+
+```math
+\\begin{align}
+\\underset{\\bm{w}}{\\mathrm{opt}} &\\qquad \\dfrac{v}{T-1}\\nonumber\\\\
+\\textrm{s.t.} &\\qquad \\bm{y} \\geq \\bm{0}\\nonumber\\\\
+               &\\qquad (\\mathbf{X} - \\bm{\\mu}^\\intercal) \\bm{w} \\geq -\\bm{y}\\nonumber\\\\
+               &\\qquad (v,\\, 0.5,\\, \\bm{y}) \\in \\mathcal{K}_{\\textrm{rsoc}}
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\mathbf{X}``: is the `T×N` matrix of asset returns.
+  - ``\\bm{\\mu}``: is the `N×1` vector of expected returns.
+  - ``\\bm{w}``: is the `N×1` vector of asset weights.
+  - ``\\bm{y}``: is the `T×1` vector of deviations from the expected portfolio return that meets the minimum return threshold.
 """
 struct RSOC <: VarianceFormulation end
 
@@ -2807,6 +2873,8 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`
 # Functor
 
   - `(variance::WCVariance)(w::AbstractVector)`: computes the WCVariance of an `N×1` vector of asset weights.
+
+# Examples
 """
 mutable struct WCVariance{T1 <: Real} <: RiskMeasureSigma
     settings::RMSettings

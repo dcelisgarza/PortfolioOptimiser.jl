@@ -17,16 +17,30 @@ OWAExact
 OWAApprox
 ```
 
-## [`TrackingRM`](@ref) & [`TurnoverRM`](@ref)
+## [`Variance`](@ref) & [`SVariance`](@ref)
+
+```@docs
+PortfolioOptimiser.VarianceFormulation
+Quad
+SOC
+RSOC
+```
+
+## [`TrackingRM`](@ref)
+
+```@docs
+PortfolioOptimiser.TrackingErr
+NoTracking
+TrackRet
+TrackWeight
+```
+
+## [`TurnoverRM`](@ref)
 
 ```@docs
 PortfolioOptimiser.AbstractTR
-PortfolioOptimiser.TrackingErr
-TrackRet
-TrackWeight
-NoTracking
-TR
 NoTR
+TR
 ```
 
 ## [`RMMu`](@ref)

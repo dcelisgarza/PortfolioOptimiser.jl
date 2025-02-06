@@ -5,10 +5,6 @@ These measure the spread of the returns distribution.
 ## Variance
 
 ```@docs
-PortfolioOptimiser.VarianceFormulation
-Quad
-SOC
-RSOC
 Variance
 ```
 
