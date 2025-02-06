@@ -585,6 +585,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -598,14 +599,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SVariance},
                end)
     @expression(model, svariance_risk[1:count], zero(QuadExpr))
     for (i, rm) ∈ pairs(rms)
-        mu_i = if !(isnothing(rm.mu) || isempty(rm.mu))
-            rm.mu
-        else
-            mu
-        end
+        target = calc_rm_target(rm, mu, w, k)
         model[Symbol("constr_svariance_mar_$(i)")] = @constraint(model,
                                                                  scale_constr *
-                                                                 (net_X .- dot(mu_i, w)) .>=
+                                                                 (net_X .- target) .>=
                                                                  scale_constr *
                                                                  -view(svariance, :, i))
         model[Symbol("constr_svar_soc_$(i)")] = @constraint(model,
@@ -652,6 +649,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -661,17 +659,12 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:SSD}, type::Union{Trad, R
     @variable(model, ssd[1:count])
     @expression(model, ssd_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        mu_i = if !(isnothing(rm.mu) || isempty(rm.mu))
-            rm.mu
-        else
-            mu
-        end
+        target = calc_rm_target(rm, mu, w, k)
         model[Symbol("constr_tssd_mar_$(i)")], model[Symbol("constr_ssd_soc_$(i)")] = @constraints(model,
                                                                                                    begin
                                                                                                        scale_constr *
                                                                                                        (net_X .-
-                                                                                                        dot(mu_i,
-                                                                                                            w)) .>=
+                                                                                                        target) .>=
                                                                                                        scale_constr *
                                                                                                        -view(tssd,
                                                                                                              :,
