@@ -1171,9 +1171,9 @@ function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
 end
 
 """
-    mutable struct SSD <: RiskMeasureMu
+    mutable struct SSD <: RiskMeasureTarget
 
-Measures and computes the portfolio Semi Standard Deviation (SSD). Measures the standard deviation equal to or below the mean return.
+Measures and computes the portfolio Semi Standard Deviation (SSD). Measures the standard deviation equal to or below the target return.
 
 ```math
 \\begin{align}
@@ -1193,6 +1193,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
@@ -1213,20 +1214,22 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Examples
 """
-mutable struct SSD <: RiskMeasureMu
+mutable struct SSD <: RiskMeasureTarget
     settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SSD(; settings::RMSettings = RMSettings(),
+             target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing,
              w::Union{<:AbstractWeights, Nothing} = nothing,
              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return SSD(settings, w, mu)
+    return SSD(settings, target, w, mu)
 end
 function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    mu = calc_ret_mu(x, w, ssd)
+    mu = calc_target_ret_mu(x, w, ssd)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
     return sqrt(dot(val, val) / (T - 1))
@@ -1320,7 +1323,7 @@ See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref)
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
@@ -2896,9 +2899,9 @@ function (nsskew::NSSkew)(w::AbstractVector)
 end
 
 """
-    mutable struct SVariance <: RiskMeasureMu
+    mutable struct SVariance <: RiskMeasureTarget
 
-Measures and computes the portfolio Semi Variance (SVariance). Measures the variance equal to or below the mean return.
+Measures and computes the portfolio Semi Variance (SVariance). Measures the variance equal to or below the target return.
 
 ```math
 \\begin{align}
@@ -2918,6 +2921,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
@@ -2939,22 +2943,24 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Examples
 """
-mutable struct SVariance <: RiskMeasureMu
+mutable struct SVariance <: RiskMeasureTarget
     settings::RMSettings
     formulation::VarianceFormulation
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SVariance(; settings::RMSettings = RMSettings(),
                    formulation::VarianceFormulation = SOC(),
+                   target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing,
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return SVariance(settings, formulation, w, mu)
+    return SVariance(settings, formulation, target, w, mu)
 end
 function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    mu = calc_ret_mu(x, w, svariance)
+    mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
     return dot(val, val) / (T - 1)

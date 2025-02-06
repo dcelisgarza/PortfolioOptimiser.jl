@@ -553,12 +553,11 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    if !(isnothing(rm.mu) || isempty(rm.mu))
-        mu = rm.mu
-    end
+    target = calc_rm_target(rm, mu, w, k)
     @variables(model, begin
                    svariance[1:T] .>= 0
                    sdev
@@ -570,7 +569,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
     @constraints(model,
                  begin
                      constr_svariance_mar,
-                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -svariance
+                     scale_constr * (net_X .- target) .>= scale_constr * -svariance
                      constr_svar_soc,
                      [scale_constr * sdev; scale_constr * svariance] ∈ SecondOrderCone()
                  end)
@@ -626,12 +625,11 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    if !(isnothing(rm.mu) || isempty(rm.mu))
-        mu = rm.mu
-    end
+    target = calc_rm_target(rm, mu, w, k)
     @variables(model, begin
                    tssd[1:T] .>= 0
                    ssd
@@ -640,7 +638,7 @@ function set_rm(port::Portfolio, rm::SSD, type::Union{Trad, RB, NOC};
     @constraints(model,
                  begin
                      constr_tssd_mar,
-                     scale_constr * (net_X .- dot(mu, w)) .>= scale_constr * -tssd
+                     scale_constr * (net_X .- target) .>= scale_constr * -tssd
                      constr_ssd_soc,
                      [scale_constr * ssd; scale_constr * tssd] ∈ SecondOrderCone()
                  end)
