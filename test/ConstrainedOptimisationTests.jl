@@ -22,13 +22,11 @@ l = 2.0
     w1 = optimise!(portfolio, Trad())
     idx = w1.weights .>= portfolio.long_t - sqrt(eps())
     @test isapprox(sum(w1.weights[idx]), portfolio.budget)
-    println("MinRisk 1")
 
     portfolio.long_t = 0.47
     w2 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     idx = w2.weights .>= portfolio.long_t - sqrt(eps())
     @test isapprox(sum(w2.weights[idx]), portfolio.budget)
-    println("Sharpe 1")
 
     portfolio.short = true
     portfolio.long_t = 0.31
@@ -44,7 +42,6 @@ l = 2.0
     @test isapprox(sum(w3.weights[nidx][nidx2]), portfolio.short_budget, rtol = 1e-6)
     @test isapprox(sum(w3.weights[pidx][pidx2]), portfolio.budget - portfolio.short_budget,
                    rtol = 1e-6)
-    println("MinRisk 2")
 
     portfolio.long_t = 0.37
     portfolio.short_budget = -1
@@ -58,7 +55,6 @@ l = 2.0
     @test isapprox(sum(w4.weights[nidx][nidx2]), portfolio.short_budget, rtol = 5e-8)
     @test isapprox(sum(w4.weights[pidx][pidx2]), portfolio.budget - portfolio.short_budget,
                    rtol = 5e-9)
-    println("Sharpe 2")
 end
 
 @testset "Management fees" begin
