@@ -6,6 +6,57 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Long and short threshold constraints" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = PortOptSolver(; name = :PClGL,
+                                                  solver = optimizer_with_attributes(Pajarito.Optimizer,
+                                                                                     "verbose" => false,
+                                                                                     "oa_solver" => optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                                                              MOI.Silent() => true),
+                                                                                     "conic_solver" => optimizer_with_attributes(Clarabel.Optimizer,
+                                                                                                                                 "verbose" => false,
+                                                                                                                                 "max_step_fraction" => 0.75))))
+    asset_statistics!(portfolio)
+
+    portfolio.long_t = 0.23
+    w1 = optimise!(portfolio, Trad())
+    idx = w1.weights .>= portfolio.long_t - sqrt(eps())
+    @test isapprox(sum(w1.weights[idx]), portfolio.budget)
+
+    portfolio.long_t = 0.47
+    w2 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
+    idx = w2.weights .>= portfolio.long_t - sqrt(eps())
+    @test isapprox(sum(w2.weights[idx]), portfolio.budget)
+
+    portfolio.short = true
+    portfolio.long_t = 0.31
+    portfolio.short_budget = -1
+    portfolio.short_lb = -1
+    portfolio.short_t = -0.27
+
+    w3 = optimise!(portfolio, Trad(; obj = Utility()))
+    nidx = w3.weights .< 0
+    pidx = .!nidx
+    nidx2 = w3.weights[nidx] .<= portfolio.short_t + sqrt(eps())
+    pidx2 = w3.weights[pidx] .>= portfolio.long_t - sqrt(eps())
+    @test isapprox(sum(w3.weights[nidx][nidx2]), portfolio.short_budget, rtol = 1e-6)
+    @test isapprox(sum(w3.weights[pidx][pidx2]), portfolio.budget - portfolio.short_budget,
+                   rtol = 1e-6)
+
+    portfolio.long_t = 0.37
+    portfolio.short_budget = -1
+    portfolio.short_lb = -1
+    portfolio.short_t = -0.41
+    w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), str_names = true))
+    nidx = w4.weights .< 0
+    pidx = .!nidx
+    nidx2 = w4.weights[nidx] .<= portfolio.short_t + sqrt(eps())
+    pidx2 = w4.weights[pidx] .>= portfolio.long_t - sqrt(eps())
+    @test isapprox(sum(w4.weights[nidx][nidx2]), portfolio.short_budget, rtol = 5e-8)
+    @test isapprox(sum(w4.weights[pidx][pidx2]), portfolio.budget - portfolio.short_budget,
+                   rtol = 5e-9)
+end
+
 @testset "Management fees" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,

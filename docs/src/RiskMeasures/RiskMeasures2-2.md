@@ -20,12 +20,6 @@ SSD
 FLPM
 ```
 
-## Second Lower Partial Moment
-
-```@docs
-SLPM
-```
-
 ## Square Root Semi Kurtosis
 
 ```@docs

@@ -328,9 +328,8 @@ This type of optimisation is the traditional efficient frontier optimisation.
 
   - Downside dispersion.
     
-      + Semi standard deviation, [`SSD`](@ref).
+      + Semi standard deviation (Sortino ratio), [`SSD`](@ref).
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
-      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
       + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
@@ -406,9 +405,8 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
 
   - Downside dispersion.
     
-      + Semi standard deviation, [`SSD`](@ref).
+      + Semi standard deviation (Sortino ratio), [`SSD`](@ref).
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
-      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
       + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
@@ -499,9 +497,8 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
 
   - Downside dispersion.
     
-      + Semi standard deviation, [`SSD`](@ref).
+      + Semi standard deviation (Sortino ratio), [`SSD`](@ref).
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
-      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
       + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
@@ -566,9 +563,8 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
   - Downside dispersion.
     
       + Semi Variance, [`Variance`](@ref).
-      + Semi standard deviation, [`SSD`](@ref).
+      + Semi standard deviation (Sortino ratio), [`SSD`](@ref).
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
-      + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
       + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 

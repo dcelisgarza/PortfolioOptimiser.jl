@@ -28,10 +28,11 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
              0.23276849033778024, 0.02742352667080502, 0.1529564256640314,
              0.04740180533190617, 0.18166001933455683, 0.2039781842753333]
 
-    rms = [SD(), MAD(), SSD(), FLPM(), SLPM(), WR(), CVaR(), EVaR(), RLVaR(), MDD(), ADD(),
-           CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(), CVaRRG(), TG(),
-           TGRG(), OWA(), BDVariance(), NQSkew(), NQSSkew(), Variance(), Equal(), VaR(),
-           DaR(), DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(), RLDaR_r()]
+    rms = [SD(), MAD(), SSD(), FLPM(), SSD(; target = 0), WR(), CVaR(), EVaR(), RLVaR(),
+           MDD(), ADD(), CDaR(), UCI(), EDaR(), RLDaR(), Kurt(), SKurt(), GMD(), RG(),
+           CVaRRG(), TG(), TGRG(), OWA(), BDVariance(), NQSkew(), NQSSkew(), Variance(),
+           Equal(), VaR(), DaR(), DaR_r(), MDD_r(), ADD_r(), CDaR_r(), UCI_r(), EDaR_r(),
+           RLDaR_r()]
 
     for (risk, rm) ∈ zip(risks, rms)
         r = calc_risk(portfolio, :Trad; rm = rm)
@@ -42,7 +43,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 end
 
 @testset "Aux functions" begin
-    rm = [SD(), [FLPM()], [SLPM(), WR()]]
+    rm = [SD(), [FLPM()], [SSD(; target = 0), WR()]]
 
     rm1 = PortfolioOptimiser.get_first_rm(rm)
     rm2 = PortfolioOptimiser.get_rm_symbol(rm)

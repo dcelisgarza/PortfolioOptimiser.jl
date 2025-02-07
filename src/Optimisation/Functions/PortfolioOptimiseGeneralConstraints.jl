@@ -179,6 +179,8 @@ function MIP_constraints(port, allow_shorting::Bool = true)
 
     Flags for deciding whether the problem is MIP.
     =#
+    long_t = port.long_t
+    short_t = port.short_t
     card = port.card
     a_card_ineq = port.a_card_ineq
     b_card_ineq = port.b_card_ineq
@@ -187,12 +189,24 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     network_adj = port.network_adj
     cluster_adj = port.cluster_adj
 
+    long_t_flag = (isa(long_t, Real) && !iszero(long_t) ||
+                   isa(long_t, AbstractVector) &&
+                   (!isempty(long_t) || any(.!iszero(long_t))))
+    short_t_flag = (isa(short_t, Real) && !iszero(short_t) ||
+                    isa(short_t, AbstractVector) &&
+                    (!isempty(short_t) || any(.!iszero(short_t))))
     card_flag = size(port.returns, 2) > card > 0
     gcard_ineq_flag = !(isempty(a_card_ineq) || isempty(b_card_ineq))
     gcard_eq_flag = !(isempty(a_card_eq) || isempty(b_card_eq))
     ntwk_flag = isa(network_adj, IP)
     clst_flag = isa(cluster_adj, IP)
-    if !(card_flag || gcard_ineq_flag || gcard_eq_flag || ntwk_flag || clst_flag)
+    if !(long_t_flag ||
+         short_t_flag ||
+         card_flag ||
+         gcard_ineq_flag ||
+         gcard_eq_flag ||
+         ntwk_flag ||
+         clst_flag)
         return nothing
     end
 
@@ -219,14 +233,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         - Extra variables are needed.
     =#
     short = port.short
-    long_l = port.long_l
     long_ub = port.long_ub
-    short_l = port.short_l
     short_lb = port.short_lb
-    if (isa(short_l, Real) && !iszero(short_l) ||
-        isa(short_l, AbstractVector) && (!isempty(short_l) || any(.!iszero(short_l)))) &&
-       short &&
-       allow_shorting
+    if short_t_flag && short && allow_shorting
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -272,14 +281,14 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * w .<= scale_constr * is_invested_long .* long_ub
                          constr_w_mip_lb,
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
-                         constr_long_w_mip_lb,
+                         constr_long_w_mip_t,
                          scale_constr * w .>=
-                         scale_constr *
-                         (is_invested_long .* long_l - scale * (1 - is_invested_long_bool))
-                         constr_short_w_mip_ub,
+                         scale_constr * (is_invested_long .* long_t .-
+                                         scale * (1 .- is_invested_long_bool))
+                         constr_short_w_mip_t,
                          scale_constr * w .<=
-                         scale_constr * (is_invested_short .* short_l +
-                                         scale * (1 - is_invested_short_bool))
+                         scale_constr * (is_invested_short .* short_t .+
+                                         scale * (1 .- is_invested_short_bool))
                      end)
     else
         @variable(model, is_invested_bool[1:N], binary = true)
@@ -300,10 +309,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraint(model, constr_w_mip_ub,
                     scale_constr * w .<= scale_constr * is_invested .* long_ub)
-        if (isa(long_l, Real) && !iszero(long_l) ||
-            isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
-            @constraint(model, constr_long_w_mip_lb,
-                        scale_constr * w .>= scale_constr * is_invested .* long_l)
+        if long_t_flag
+            @constraint(model, constr_long_w_mip_t,
+                        scale_constr * w .>= scale_constr * is_invested .* long_t)
         end
         if short && allow_shorting
             @constraint(model, constr_w_mip_lb,
