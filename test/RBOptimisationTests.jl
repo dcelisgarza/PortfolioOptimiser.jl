@@ -198,7 +198,7 @@ end
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
-    rm = SLPM()
+    rm = SSD(; target = 0)
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))

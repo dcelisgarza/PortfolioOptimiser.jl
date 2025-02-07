@@ -738,7 +738,7 @@ abstract type NoOptRiskMeasureMu <: NoOptRiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use a scalar or an `N×1` vector specifying the minimum return threshold for classifying downside returns, a `T×1` [`AbstractWeights`](https://juliastats.org/StatsBase.jl/stable/weights/) vector for computing the weighted mean, and an `N×1` expected returns vector.
 
-See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SLPM`](@ref).
+See also: [`RiskMeasure`](@ref), [`FLPM`](@ref), [`SSD`](@ref), [`SVariance`](@ref).
 
 # Implementation
 
@@ -1173,11 +1173,11 @@ end
 """
     mutable struct SSD <: RiskMeasureTarget
 
-Measures and computes the portfolio Semi Standard Deviation (SSD). Measures the standard deviation equal to or below the target return.
+Measures and computes the portfolio Semi Standard Deviation (SSD). Measures the standard deviation equal to or below the `target` return. If the target return is the risk-free rate, the risk-adjusted return ratio of this risk measure is commonly known as the Sortino ratio.
 
 ```math
 \\begin{align}
-\\mathrm{SSD}(\\bm{X}) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, 0\\right)^{2}\\right)^{1/2}\\,.
+\\mathrm{SSD}(\\bm{X}) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - r,\\, 0\\right)^{2}\\right)^{1/2}\\,.
 \\end{align}
 ```
 
@@ -1185,6 +1185,7 @@ Where:
 
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``T``: is the number of observations.
+  - ``r``: is the minimum acceptable return.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
@@ -1253,7 +1254,7 @@ Where:
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1298,71 +1299,6 @@ function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     val = x .- target
     val = val[val .<= zero(eltype(val))]
     return -sum(val) / T
-end
-
-"""
-    mutable struct SLPM <: RiskMeasureTarget
-
-Measures and computes the portfolio Second Lower Partial Moment (SLPM). Measures the dispersion equal to or below the `target` return threshold. The risk-adjusted return ratio of this risk measure is commonly known as the Sortino ratio.
-
-```math
-\\begin{align}
-\\mathrm{SLPM}(\\bm{X},\\, r) &= \\left(\\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\max\\left(r - X_{t},\\, 0\\right)^{2}\\right)^{1/2}\\,.
-\\end{align}
-```
-
-Where:
-
-  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
-  - ``r``: is the minimum acceptable return.
-  - ``T``: is the number of observations.
-  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
-
-See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`FLPM`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
-
-# Keyword Arguments
-
-  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
-  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
-
-!!! warning
-
-    Using `w` to compute the SLPM risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:slpm_risk`. Alternatively, use the value of `mu` in both.
-
-# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
-
-  - The SLPM risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:slpm_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with the key, `:slpm_risk_ub`.
-
-# Functor
-
-  - `(slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SLPM risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
-
-      + `fees`: must be consistent with the returns frequency.
-
-# Examples
-"""
-mutable struct SLPM <: RiskMeasureTarget
-    settings::RMSettings
-    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
-    w::Union{<:AbstractWeights, Nothing}
-    mu::Union{<:AbstractVector{<:Real}, Nothing}
-end
-function SLPM(; settings::RMSettings = RMSettings(),
-              target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0,
-              w::Union{<:AbstractWeights, Nothing} = nothing,
-              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return SLPM(settings, target, w, mu)
-end
-function (slpm::SLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
-    T = length(x)
-    target = calc_target_ret_mu(x, w, slpm)
-    val = x .- target
-    val = val[val .<= zero(eltype(val))]
-    return sqrt(dot(val, val) / (T - 1))
 end
 
 """
@@ -4322,11 +4258,11 @@ function calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
 end
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
-       RSOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR,
-       RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, NQSkew, NQSSkew,
-       NSkew, NSSkew, Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r,
-       UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse,
-       NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
+       RSOC, SD, MAD, SSD, FLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR,
+       Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, NQSkew, NQSSkew, NSkew,
+       NSSkew, Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r,
+       EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC,
+       TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
        SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
        NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
        HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,

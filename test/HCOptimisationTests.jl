@@ -1562,7 +1562,7 @@ end
     @test isapprox(w19.weights, w4t)
     @test isapprox(w20.weights, w5t, rtol = 5.0e-5)
 
-    rm = SLPM(; target = rf)
+    rm = SSD(; target = rf)
     w21 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
     w22 = optimise!(portfolio,
@@ -2740,7 +2740,7 @@ end
           0.04026174326124142, 0.0812424078622927]
     @test isapprox(w4.weights, wt)
 
-    w5 = optimise!(portfolio, HRP(; rm = SLPM(; target = rf)))
+    w5 = optimise!(portfolio, HRP(; rm = SSD(; target = rf)))
     wt = [0.03752644591926642, 0.06162667128035028, 0.058061904976983145,
           0.02658920517037755, 0.056905956197316004, 0.06572780540966205,
           0.026284445157011994, 0.04570757302464124, 0.030832527351205462,
@@ -3074,7 +3074,7 @@ end
           0.08720431244438119]
     @test isapprox(w4.weights, wt)
 
-    w5 = optimise!(portfolio, HERC(; rm = SLPM(; target = rf)))
+    w5 = optimise!(portfolio, HERC(; rm = SSD(; target = rf)))
     wt = [0.07895203150464367, 0.07513349407323168, 0.06901069326760172,
           0.05594112932547382, 0.06763676613416904, 0.025518328924508955,
           0.030140432803640472, 0.08170116913851065, 0.021723048018546902,

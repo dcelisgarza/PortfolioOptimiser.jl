@@ -2167,7 +2167,7 @@ end
                                                                allow_almost = true),
                                                   params = "verbose" => false))
     asset_statistics!(portfolio)
-    rm = SLPM(; target = rf)
+    rm = SSD(; target = rf)
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))

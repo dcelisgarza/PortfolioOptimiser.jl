@@ -345,7 +345,7 @@ function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
     end
     return rm(X, w, fees; scale = scale)
 end
-function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, SLPM, TLPM, FTLPM, TrackingRM},
+function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, TrackingRM},
                    w::AbstractVector; X::AbstractMatrix,
                    long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
                    short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
