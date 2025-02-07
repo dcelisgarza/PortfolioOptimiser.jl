@@ -50,10 +50,16 @@ TGRG
 GMD
 ```
 
-## Quadratic Skewness
+## Negative Quadratic Skewness
 
 ```@docs
-Skew
+NQSkew
+```
+
+## Negative Skewness
+
+```@docs
+NSkew
 ```
 
 ## Brownian Distance Variance

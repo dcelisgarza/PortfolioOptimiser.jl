@@ -62,50 +62,50 @@ l = 2.0
                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, kelly = AKelly()))))
     @test isapprox(rm[2].kt, skt)
 
-    rm = Skew(; V = 2 * V)
+    rm = NQSkew(; V = 2 * V)
     w19 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].V, 2 * V)
-    rm = SSkew(; V = 2 * SV)
+    rm = NQSSkew(; V = 2 * SV)
     w20 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].V, 2 * SV)
 
-    rm = Skew(; skew = 2 * skew)
+    rm = NQSkew(; skew = 2 * skew)
     w19_1 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w19_1.weights, w19.weights, rtol = 1.0e-5)
-    rm = SSkew(; skew = 2 * sskew)
+    rm = NQSSkew(; skew = 2 * sskew)
     w20_1 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w20_1.weights, w20.weights)
 
-    rm = Skew(; V = 2 * V)
+    rm = NQSkew(; V = 2 * V)
     w21 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].V, 2 * V)
-    rm = SSkew(; V = 2 * SV)
+    rm = NQSSkew(; V = 2 * SV)
     w22 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].V, 2 * SV)
 
-    rm = Skew(; skew = 2 * skew)
+    rm = NQSkew(; skew = 2 * skew)
     w21_1 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w21_1.weights, w21.weights)
-    rm = SSkew(; skew = 2 * sskew)
+    rm = NQSSkew(; skew = 2 * sskew)
     w22_1 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w22_1.weights, w22.weights)
 
-    rm = Skew(; V = V)
+    rm = NQSkew(; V = V)
     w23 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].V, V)
-    rm = SSkew(; V = SV)
+    rm = NQSSkew(; V = SV)
     w24 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].V, SV)
 
-    rm = Skew(; skew = 2 * skew)
+    rm = NQSkew(; skew = 2 * skew)
     w23_1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w23_1.weights, w23.weights, rtol = 0.0001)
-    rm = SSkew(; skew = 2 * sskew)
+    rm = NQSSkew(; skew = 2 * sskew)
     w24_1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w24_1.weights, w24.weights, rtol = 5.0e-5)
@@ -124,14 +124,14 @@ l = 2.0
     w17 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = Kurt()))))
     w18 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = SKurt()))))
 
-    w25 = optimise!(portfolio, HRP(; rm = Skew()))
-    w26 = optimise!(portfolio, HRP(; rm = SSkew()))
+    w25 = optimise!(portfolio, HRP(; rm = NQSkew()))
+    w26 = optimise!(portfolio, HRP(; rm = NQSSkew()))
 
-    w27 = optimise!(portfolio, HERC(; rm = Skew()))
-    w28 = optimise!(portfolio, HERC(; rm = SSkew()))
+    w27 = optimise!(portfolio, HERC(; rm = NQSkew()))
+    w28 = optimise!(portfolio, HERC(; rm = NQSSkew()))
 
-    w29 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = Skew()))))
-    w30 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = SSkew()))))
+    w29 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = NQSkew()))))
+    w30 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = NQSSkew()))))
 
     w1t = [0.03360421525593201, 0.053460257098811775, 0.027429766590708997,
            0.04363053745921338, 0.05279180956461212, 0.07434468966041922,
@@ -351,50 +351,50 @@ end
                    NCO(; internal = NCOArgs(; type = Trad(; rm = rm, kelly = AKelly()))))
     @test isapprox(rm[2].kt, skt)
 
-    rm = [CVaR(), Skew(; V = 2 * V)]
+    rm = [CVaR(), NQSkew(; V = 2 * V)]
     w19 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].V, 2 * V)
-    rm = [CVaR(), SSkew(; V = 2 * SV)]
+    rm = [CVaR(), NQSSkew(; V = 2 * SV)]
     w20 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].V, 2 * SV)
 
-    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    rm = [CVaR(), NQSkew(; skew = 2 * skew)]
     w19_1 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w19_1.weights, w19.weights, rtol = 1.0e-2)
-    rm = SSkew(; skew = 2 * sskew)
+    rm = NSSkew(; skew = 2 * sskew)
     w20_1 = optimise!(portfolio, HRP(; rm = rm))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w20_1.weights, w20.weights, rtol = 0.25)
 
-    rm = [CVaR(), Skew(; V = 2 * V)]
+    rm = [CVaR(), NQSkew(; V = 2 * V)]
     w21 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].V, 2 * V)
-    rm = [CVaR(), SSkew(; V = 2 * SV)]
+    rm = [CVaR(), NQSSkew(; V = 2 * SV)]
     w22 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].V, 2 * SV)
 
-    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    rm = [CVaR(), NQSkew(; skew = 2 * skew)]
     w21_1 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w21_1.weights, w21.weights, rtol = 0.005)
-    rm = [CVaR(), SSkew(; skew = 2 * sskew)]
+    rm = [CVaR(), NQSSkew(; skew = 2 * sskew)]
     w22_1 = optimise!(portfolio, HERC(; rm = rm))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w22_1.weights, w22.weights, rtol = 0.0001)
 
-    rm = [CVaR(), Skew(; V = V)]
+    rm = [CVaR(), NQSkew(; V = V)]
     w23 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].V, V)
-    rm = [CVaR(), SSkew(; V = SV)]
+    rm = [CVaR(), NQSSkew(; V = SV)]
     w24 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].V, SV)
 
-    rm = [CVaR(), Skew(; skew = 2 * skew)]
+    rm = [CVaR(), NQSkew(; skew = 2 * skew)]
     w23_1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].skew, 2 * skew)
     @test isapprox(w23_1.weights, w23.weights)
-    rm = [CVaR(), SSkew(; skew = 2 * sskew)]
+    rm = [CVaR(), NQSSkew(; skew = 2 * sskew)]
     w24_1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = rm))))
     @test isapprox(rm[2].skew, 2 * sskew)
     @test isapprox(w24_1.weights, w24.weights, rtol = 5.0e-7)
@@ -416,16 +416,16 @@ end
     w18 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = [CVaR(), SKurt()]))))
 
-    w25 = optimise!(portfolio, HRP(; rm = [CVaR(), Skew()]))
-    w26 = optimise!(portfolio, HRP(; rm = [CVaR(), SSkew()]))
+    w25 = optimise!(portfolio, HRP(; rm = [CVaR(), NQSkew()]))
+    w26 = optimise!(portfolio, HRP(; rm = [CVaR(), NQSSkew()]))
 
-    w27 = optimise!(portfolio, HERC(; rm = [CVaR(), Skew()]))
-    w28 = optimise!(portfolio, HERC(; rm = [CVaR(), SSkew()]))
+    w27 = optimise!(portfolio, HERC(; rm = [CVaR(), NQSkew()]))
+    w28 = optimise!(portfolio, HERC(; rm = [CVaR(), NQSSkew()]))
 
     w29 = optimise!(portfolio,
-                    NCO(; internal = NCOArgs(; type = Trad(; rm = [CVaR(), Skew()]))))
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = [CVaR(), NQSkew()]))))
     w30 = optimise!(portfolio,
-                    NCO(; internal = NCOArgs(; type = Trad(; rm = [CVaR(), SSkew()]))))
+                    NCO(; internal = NCOArgs(; type = Trad(; rm = [CVaR(), NQSSkew()]))))
 
     w1t = [0.03191912278931461, 0.057356295271335865, 0.027105018721271124,
            0.05267914713061161, 0.058041971708577646, 0.0687270036161218,
@@ -2461,7 +2461,7 @@ end
     @test isapprox(w94.weights, w4t)
     @test isapprox(w95.weights, w5t, rtol = 5.0e-5)
 
-    rm = Skew()
+    rm = NQSkew()
     w96 = optimise!(portfolio,
                     NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
     w97 = optimise!(portfolio,
@@ -2516,7 +2516,7 @@ end
     @test isapprox(w99.weights, w4t)
     @test isapprox(w100.weights, w5t, rtol = 5.0e-7)
 
-    rm = SSkew()
+    rm = NQSSkew()
     w101 = optimise!(portfolio,
                      NCO(; internal = NCOArgs(; type = Trad(; rm = rm, obj = MinRisk()))))
     w102 = optimise!(portfolio,
@@ -2870,7 +2870,7 @@ end
           0.058022634756843806]
     @test isapprox(w17.weights, wt)
 
-    w18 = optimise!(portfolio, HRP(; rm = Skew()))
+    w18 = optimise!(portfolio, HRP(; rm = NSkew()))
     wt = [4.18164303203965e-6, 0.11905148244884775, 0.13754035964680367,
           4.18164303203965e-6, 0.13754035964680367, 1.658199358060021e-6,
           0.028721218707620826, 1.1383557170375464e-10, 8.355416012626526e-16,
@@ -2880,7 +2880,7 @@ end
           4.824826616435831e-11, 1.0059308456231142e-6]
     @test isapprox(w18.weights, wt, rtol = 5.0e-5)
 
-    w19 = optimise!(portfolio, HRP(; rm = SSkew()))
+    w19 = optimise!(portfolio, HRP(; rm = NSSkew()))
     wt = [0.03073561997154973, 0.06271788007944147, 0.059839304178611136,
           0.019020703463231065, 0.054114343500047124, 0.07478195087196789,
           0.015025906923294915, 0.037423537539572865, 0.02195663364580543,
@@ -3203,7 +3203,7 @@ end
           0.07089208493584212]
     @test isapprox(w17.weights, wt)
 
-    w18 = optimise!(portfolio, HERC(; rm = Skew()))
+    w18 = optimise!(portfolio, HERC(; rm = NSkew()))
     wt = [0.05013622008238557, 0.05843253495835018, 0.0326340699568634, 0.03810785845352964,
           0.04151978371454936, 0.020776349162705425, 0.014419467673840766,
           0.06450029254562262, 0.02337036891691671, 0.0768704564650501, 0.03525278374131375,
@@ -3212,7 +3212,7 @@ end
           0.06294077176658942, 0.036661874867119304, 0.0522091333460975]
     @test isapprox(w18.weights, wt)
 
-    w19 = optimise!(portfolio, HERC(; rm = SSkew()))
+    w19 = optimise!(portfolio, HERC(; rm = NSSkew()))
     wt = [0.06664919970362215, 0.065688537645969, 0.05827905623198537, 0.04923706156165528,
           0.055949261956495855, 0.030046317963353407, 0.027319842253653435,
           0.08126769722698507, 0.02377683386943261, 0.08094977263933717,

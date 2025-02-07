@@ -954,7 +954,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.01)
 end
 
-@testset "Skew" begin
+@testset "NQSkew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -964,7 +964,7 @@ end
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
-    rm = Skew()
+    rm = NQSkew()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))
@@ -996,7 +996,7 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.005)
 end
 
-@testset "SSkew" begin
+@testset "NQSSkew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -1006,7 +1006,7 @@ end
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
 
-    rm = SSkew()
+    rm = NQSSkew()
 
     portfolio.risk_budget = []
     w1 = optimise!(portfolio, RB(; rm = rm))

@@ -750,7 +750,7 @@ end
     riskt0 = 0.005418882634929856
     rett0 = 0.0004088880259308715
 
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = calc_risk(portfolio, :Trad; rm = rm)
     ret1 = dot(portfolio.mu, w1.weights)
@@ -770,7 +770,7 @@ end
     @test isapprox(r1, riskt)
     @test isapprox(ret1, rett)
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     w2 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = calc_risk(portfolio, :Trad; rm = rm[1][1])
     ret2 = dot(portfolio.mu, w2.weights)
@@ -801,7 +801,7 @@ end
     riskt0 = 0.00909392522496688
     rett0 = 0.0015869580721210722
 
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     w3 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = calc_risk(portfolio, :Trad; rm = rm)
     ret3 = dot(portfolio.mu, w3.weights)
@@ -821,7 +821,7 @@ end
     @test isapprox(r3, riskt)
     @test isapprox(ret3, rett)
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = calc_risk(portfolio, :Trad; rm = rm[1][1])
     ret4 = dot(portfolio.mu, w4.weights)
@@ -843,26 +843,26 @@ end
 
     # Risk upper bound
     obj = MaxRet()
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio, :Trad; rm = rm) <= r1 ||
           abs(calc_risk(portfolio, :Trad; rm = rm) - r1) < 5e-10
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     rm[1][2].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio, :Trad; rm = rm[1][2]) <= r2 ||
           abs(calc_risk(portfolio, :Trad; rm = rm[1][2]) - r2) < 5e-10
 
     obj = Sharpe(; rf = rf)
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     rm.settings.ub = r1
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio, :Trad; rm = rm) <= r1 ||
           abs(calc_risk(portfolio, :Trad; rm = rm) - r1) < 1e-9
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test calc_risk(portfolio, :Trad; rm = rm[1][2]) <= r2 ||
@@ -870,23 +870,23 @@ end
 
     # Ret lower bound
     obj = MinRisk()
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w5 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w5.weights) >= ret1
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     portfolio.mu_l = ret2
     w6 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w6.weights) >= ret2
 
     obj = Sharpe(; rf = rf)
-    rm = SLPM(; target = rf, settings = RMSettings(; scale = 2.0))
+    rm = SSD(; target = rf, settings = RMSettings(; scale = 2.0))
     portfolio.mu_l = ret1
     w7 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w7.weights) >= ret1
 
-    rm = [[SLPM(; target = rf), SLPM(; target = rf)]]
+    rm = [[SSD(; target = rf), SSD(; target = rf)]]
     portfolio.mu_l = ret2
     w8 = optimise!(portfolio, Trad(; rm = rm, obj = obj))
     @test dot(portfolio.mu, w8.weights) >= ret2

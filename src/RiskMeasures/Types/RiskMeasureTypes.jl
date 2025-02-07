@@ -649,7 +649,7 @@ abstract type RiskMeasureSigma <: RiskMeasure end
 
 Abstract type for subtyping [`RiskMeasure`](@ref) which can use an `N×N²` coskew matrix and `N×N` matrix that stores the sum of the symmetric negative spectral slices of the coskewness.
 
-See also: [`RiskMeasure`](@ref), [`Skew`](@ref), [`SSkew`](@ref).
+See also: [`RiskMeasure`](@ref), [`NQSkew`](@ref), [`NQSSkew`](@ref).
 
 # Implementation
 
@@ -937,7 +937,10 @@ Where:
 ## Behaviour
 
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = tvariance/(T-1)`.
-  - Because it is not bound by the covariance matrix, when providing the upper bound, the upper bound must be computed with the default [`PortCovCor`](@ref).
+
+!!! warning
+
+    Using `w` to compute the Variance risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:svariance_risk`. Alternatively, use the value of `mu` in both.
 
 ## Examples
 
@@ -963,7 +966,6 @@ Where:
 ## Behaviour
 
   - Produces a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) risk expression `svariance_risk = tsvariance/(T-1)`.
-  - Because it is not bound by the covariance matrix, when providing the upper bound, the upper bound must be computed with the default [`PortCovCor`](@ref) using the default [`CovSemi`](@ref) estimator.
 """
 struct RSOC <: VarianceFormulation end
 
@@ -1000,8 +1002,8 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Port
   - Requires a solver that supports [`SecondOrderCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Second-Order-Cone) constraints.
   - Requires a solver capable of handling quadratic expressions.
   - Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
-  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
   - If it exists, the upper bound is defined via the portfolio standard deviation with the key, `:dev_ub`.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
 
 ## [`SDP`](@ref) network and/or cluster constraints
 
@@ -1169,9 +1171,9 @@ function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
 end
 
 """
-    mutable struct SSD <: RiskMeasureMu
+    mutable struct SSD <: RiskMeasureTarget
 
-Measures and computes the portfolio Semi Standard Deviation (SD) equal to or below the mean return.
+Measures and computes the portfolio Semi Standard Deviation (SSD). Measures the standard deviation equal to or below the target return.
 
 ```math
 \\begin{align}
@@ -1191,6 +1193,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
@@ -1211,20 +1214,22 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Examples
 """
-mutable struct SSD <: RiskMeasureMu
+mutable struct SSD <: RiskMeasureTarget
     settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SSD(; settings::RMSettings = RMSettings(),
+             target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing,
              w::Union{<:AbstractWeights, Nothing} = nothing,
              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return SSD(settings, w, mu)
+    return SSD(settings, target, w, mu)
 end
 function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    mu = calc_ret_mu(x, w, ssd)
+    mu = calc_target_ret_mu(x, w, ssd)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
     return sqrt(dot(val, val) / (T - 1))
@@ -1318,7 +1323,7 @@ See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref)
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
-  - `target::T1 = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = 0.0`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
   - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
   - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
 
@@ -2102,7 +2107,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurt
 
 # Functor
 
-  - `(kurt::Kurt)(x::AbstractVector)`: computes the Square Root Kurtosis of a `T×1` vector of portfolio returns `x`.
+  - `(kurt::Kurt)(x::AbstractVector)`: computes the Kurt risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -2173,7 +2178,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurto
 
 # Functor
 
-  - `(skurt::SKurt)(x::AbstractVector)`: computes the Semi Square Root Kurtosis of a `T×1` vector of portfolio returns `x`.
+  - `(skurt::SKurt)(x::AbstractVector)`: computes the SKurt risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -2340,6 +2345,10 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
   - The GMD risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:gmd_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:gmd_risk_ub`.
 
+# Functor
+
+  - `(gmd::GMD)(x::AbstractVector)`: computes the GMD risk of a `T×1` vector of portfolio returns `x`.
+
 # Examples
 """
 mutable struct GMD <: RiskMeasureOWA
@@ -2375,6 +2384,10 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 
   - The TG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tg_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:tg_risk_ub`.
+
+# Functor
+
+  - `(tg::TG)(x::AbstractVector)`: computes the TG risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -2445,6 +2458,10 @@ See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`
 
   - The TGRG risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:tgrg_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:tgrg_risk_ub`.
+
+# Functor
+
+  - `(tgrg::TGRG)(x::AbstractVector)`: computes the TGRG risk of a `T×1` vector of portfolio returns `x`.
 
 # Examples
 """
@@ -2531,6 +2548,7 @@ end
 abstract type BDVarianceFormulation end
 struct BDVAbsVal <: BDVarianceFormulation end
 struct BDVIneq <: BDVarianceFormulation end
+
 """
     struct BDVariance <: RiskMeasure
 
@@ -2567,6 +2585,10 @@ See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@
   - The BDVariance risk is defined as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) with the key, `:bdvariance_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:bdvariance_risk_ub`.
 
+# Functor
+
+  - `(bdvariance::BDVariance)(x::AbstractVector)`: computes the BDVariance risk of a `T×1` vector of portfolio returns `x`.
+
 # Examples
 """
 struct BDVariance <: RiskMeasure
@@ -2588,9 +2610,154 @@ function (bdvariance::BDVariance)(x::AbstractVector)
 end
 
 """
-    mutable struct Skew <: RiskMeasureSkew
+    mutable struct NQSkew <: RiskMeasureSkew
 
-Measures and computes the portfolio Quadratic Skewness (Skew).
+Measures and computes the portfolio Negative Quadratic Skewness (NQSkew).
+
+```math
+\\begin{align}
+\\nu &= \\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\\\
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the vector of asset weights.
+  - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the coskewness.
+
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+  - `skew::Union{<:AbstractMatrix, Nothing}`: (optional) `N×N²` custom coskewness matrix.
+
+      + If `isnothing(skew)`: takes its value from the `skew` property of the instance of [`Portfolio`](@ref).
+  - `V::Union{Nothing, <:AbstractMatrix}`: (optional) `Na×Na` custom sum of the symmetric negative spectral slices of the coskewness.
+
+      + If `isnothing(V)`: takes its value from the `V` property of the instance of [`Portfolio`](@ref).
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The NQSkew risk is defined as an [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nqskew_risk = t_nqskew^2`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:t_nqskew_ub`.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+
+# Functor
+
+  - `(nqskew::NQSkew)(w::AbstractVector)`: computes the NQSkew risk of an `N×1` vector of asset weights.
+
+# Examples
+"""
+mutable struct NQSkew <: RiskMeasureSkew
+    settings::RMSettings
+    skew::Union{<:AbstractMatrix, Nothing}
+    V::Union{<:AbstractMatrix, Nothing}
+end
+function NQSkew(; settings::RMSettings = RMSettings(),
+                skew::Union{<:AbstractMatrix, Nothing} = nothing,
+                V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(skew)
+        @smart_assert(size(skew, 1)^2 == size(skew, 2))
+    end
+    if !isnothing(V)
+        @smart_assert(size(V, 1) == size(V, 2))
+    end
+    return NQSkew(settings, skew, V)
+end
+function Base.setproperty!(obj::NQSkew, sym::Symbol, val)
+    if sym == :skew
+        if !isnothing(val)
+            @smart_assert(size(val, 1)^2 == size(val, 2))
+        end
+    elseif sym == :V
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
+function (nqskew::NQSkew)(w::AbstractVector)
+    return dot(w, nqskew.V, w)
+end
+
+"""
+    mutable struct NQSSkew <: RiskMeasureSkew
+
+Measures and computes the portfolio Negative Quadratic Semi Skewness (NQSSkew).
+
+```math
+\\begin{align}
+\\nu &= \\bm{w}^{\\intercal} \\mathbf{V} \\bm{w}\\\\
+\\end{align}
+```
+
+Where:
+
+  - ``\\bm{w}``: is the vector of asset weights.
+  - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the semi coskewness.
+
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+
+# Keyword Arguments
+
+  - `settings::RMSettings = RMSettings()`: configuration settings for the risk measure.
+
+  - `skew::Union{<:AbstractMatrix, Nothing}`: (optional) `N×N²` custom semi coskewness matrix.
+
+      + If `isnothing(skew)`: takes its value from the `sskew` property of the instance of [`Portfolio`](@ref).
+  - `V::Union{Nothing, <:AbstractMatrix}`: (optional) `Na×Na` custom sum of the symmetric negative spectral slices of the semi coskewness.
+
+      + If `isnothing(V)`: takes its value from the `SV` property of the instance of [`Portfolio`](@ref).
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The NQSSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nqsskew_risk = t_nqsskew^2`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:t_nqsskew_ub`.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+
+# Functor
+
+  - `(nqsskew::NQSSkew)(w::AbstractVector)`: computes the NQSSkew risk of an `N×1` vector of asset weights.
+
+# Examples
+"""
+mutable struct NQSSkew <: RiskMeasureSkew
+    settings::RMSettings
+    skew::Union{<:AbstractMatrix, Nothing}
+    V::Union{Nothing, <:AbstractMatrix}
+end
+function NQSSkew(; settings::RMSettings = RMSettings(),
+                 skew::Union{<:AbstractMatrix, Nothing} = nothing,
+                 V::Union{<:AbstractMatrix, Nothing} = nothing)
+    if !isnothing(skew)
+        @smart_assert(size(skew, 1)^2 == size(skew, 2))
+    end
+    if !isnothing(V)
+        @smart_assert(size(V, 1) == size(V, 2))
+    end
+    return NQSSkew(settings, skew, V)
+end
+function Base.setproperty!(obj::NQSSkew, sym::Symbol, val)
+    if sym == :skew
+        if !isnothing(val)
+            @smart_assert(size(val, 1)^2 == size(val, 2))
+        end
+    elseif sym == :V
+        if !isnothing(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
+end
+function (nqsskew::NQSSkew)(w::AbstractVector)
+    return dot(w, nqsskew.V, w)
+end
+"""
+    mutable struct NSkew <: RiskMeasureSkew
+
+Measures and computes the portfolio Negative Skewness (NSkew).
 
 ```math
 \\begin{align}
@@ -2618,28 +2785,32 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The Skew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:skew_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with the key, `:skew_risk_ub`.
+  - The NQSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nskew_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:nskew_risk_ub`.
+
+# Functor
+
+  - `(nskew::NSkew)(w::AbstractVector)`: computes the NSkew risk of an `N×1` vector of asset weights.
 
 # Examples
 """
-mutable struct Skew <: RiskMeasureSkew
+mutable struct NSkew <: RiskMeasureSkew
     settings::RMSettings
     skew::Union{<:AbstractMatrix, Nothing}
     V::Union{<:AbstractMatrix, Nothing}
 end
-function Skew(; settings::RMSettings = RMSettings(),
-              skew::Union{<:AbstractMatrix, Nothing} = nothing,
-              V::Union{<:AbstractMatrix, Nothing} = nothing)
+function NSkew(; settings::RMSettings = RMSettings(),
+               skew::Union{<:AbstractMatrix, Nothing} = nothing,
+               V::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
     if !isnothing(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
-    return Skew(settings, skew, V)
+    return NSkew(settings, skew, V)
 end
-function Base.setproperty!(obj::Skew, sym::Symbol, val)
+function Base.setproperty!(obj::NSkew, sym::Symbol, val)
     if sym == :skew
         if !isnothing(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
@@ -2651,14 +2822,14 @@ function Base.setproperty!(obj::Skew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (skew::Skew)(w::AbstractVector)
-    return sqrt(dot(w, skew.V, w))
+function (nskew::NSkew)(w::AbstractVector)
+    return sqrt(dot(w, nskew.V, w))
 end
 
 """
-    mutable struct SSkew <: RiskMeasureSkew
+    mutable struct NSSkew <: RiskMeasureSkew
 
-Measures and computes the portfolio Quadratic Semi Skewness (SSkew).
+Measures and computes the portfolio Negative Semi Skewness (NSSkew).
 
 ```math
 \\begin{align}
@@ -2686,28 +2857,32 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
-  - The SSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:sskew_risk`.
-  - If it exists, the upper bound is defined via the portfolio variance with the key, `:sskew_risk_ub`.
+  - The NSSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nsskew_risk`.
+  - If it exists, the upper bound is defined via the portfolio variance with the key, `:nsskew_risk_ub`.
+
+# Functor
+
+  - `(nsskew::NSSkew)(w::AbstractVector)`: computes the NSSkew risk of an `N×1` vector of asset weights.
 
 # Examples
 """
-mutable struct SSkew <: RiskMeasureSkew
+mutable struct NSSkew <: RiskMeasureSkew
     settings::RMSettings
     skew::Union{<:AbstractMatrix, Nothing}
     V::Union{Nothing, <:AbstractMatrix}
 end
-function SSkew(; settings::RMSettings = RMSettings(),
-               skew::Union{<:AbstractMatrix, Nothing} = nothing,
-               V::Union{<:AbstractMatrix, Nothing} = nothing)
+function NSSkew(; settings::RMSettings = RMSettings(),
+                skew::Union{<:AbstractMatrix, Nothing} = nothing,
+                V::Union{<:AbstractMatrix, Nothing} = nothing)
     if !isnothing(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
     if !isnothing(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
-    return SSkew(settings, skew, V)
+    return NSSkew(settings, skew, V)
 end
-function Base.setproperty!(obj::SSkew, sym::Symbol, val)
+function Base.setproperty!(obj::NSSkew, sym::Symbol, val)
     if sym == :skew
         if !isnothing(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
@@ -2719,63 +2894,73 @@ function Base.setproperty!(obj::SSkew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (sskew::SSkew)(w::AbstractVector)
-    return sqrt(dot(w, sskew.V, w))
+function (nsskew::NSSkew)(w::AbstractVector)
+    return sqrt(dot(w, nsskew.V, w))
 end
 
 """
-    mutable struct SVariance <: RiskMeasureMu
+    mutable struct SVariance <: RiskMeasureTarget
 
-# Description
-
-Defines the Semi Variance.
+Measures and computes the portfolio Semi Variance (SVariance). Measures the variance equal to or below the target return.
 
 ```math
 \\begin{align}
-\\mathrm{SVariance}(\\bm{X}) &= \\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, r\\right)^{2}\\,.
+\\mathrm{SVariance}(\\bm{X}) &= \\dfrac{1}{T-1} \\sum\\limits_{t=1}^{T}\\min\\left(X_{t} - \\mathbb{E}(\\bm{X}),\\, 0\\right)^{2}\\,.
 \\end{align}
 ```
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::SVariance, ::AbstractVector)`](@ref).
+Where:
 
-# Properties
+  - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
+  - ``T``: is the number of observations.
+  - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
+  - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-  - `settings::HCRMSettings = HCRMSettings()`: configuration settings for the risk measure.
-  - `target::T1 = 0.0`: minimum return threshold for downside classification.
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: optional `T×1` vector of weights for expected return calculation.
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SSD`](@ref), [`NOC`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
-# Behaviour
+# Keyword Arguments
 
-  - If `w` is `nothing`: computes the unweighted mean portfolio return.
+  - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing`: minimum return threshold for classifying downside returns. Only returns equal to or below this value are considered in the calculation. Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref).
+  - `mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing`: (optional) `N×1` vector of weights for computing the expected value of the returns vector via [`calc_ret_mu`](@ref) or [`set_rm`](@ref).
+
+!!! warning
+
+    Using `w` to compute the SVariance risk of a portfolio optimised via an optimisation which uses [`JuMP`](https://github.com/jump-dev/JuMP.jl), you have to ensure that the value of `mu` used by the optimisation is consistent with the value of `w`---i.e. it was computed with [`MuSimple`](@ref) using `w`. Otherwise, the calculation will be inconsistent with the value of `:svariance_risk`. Alternatively, use the value of `mu` in both.
+
+# Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
+
+  - The SVariance risk is defined as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) with the key, `:svariance_risk`.
+  - If it exists, the upper bound is defined via the portfolio semi standard deviation with the key, `:sdev_ub`.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+
+# Functor
+
+  - `(svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SVariance risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+
+      + `fees`: must be consistent with the returns frequency.
 
 # Examples
-
-```@example
-# Default settings
-svariance = SVariance()
-
-# Custom configuration with specific target
-w = eweights(1:100, 0.3)  # Exponential weights for computing the portfolio mean return
-svariance = SVariance(; target = 0.02,  # 2 % return target
-                      settings = HCRMSettings(; scale = 2.0), w = w)
-```
 """
-mutable struct SVariance <: RiskMeasureMu
+mutable struct SVariance <: RiskMeasureTarget
     settings::RMSettings
     formulation::VarianceFormulation
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
 end
 function SVariance(; settings::RMSettings = RMSettings(),
                    formulation::VarianceFormulation = SOC(),
+                   target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing,
                    w::Union{<:AbstractWeights, Nothing} = nothing,
                    mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
-    return SVariance(settings, formulation, w, mu)
+    return SVariance(settings, formulation, target, w, mu)
 end
 function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     T = length(x)
-    mu = calc_ret_mu(x, w, svariance)
+    mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
     return dot(val, val) / (T - 1)
@@ -2841,7 +3026,9 @@ end
 
 Measures and computes the portfolio Variance with uncertainty sets.
 
-  - Only has an effect on optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models. It otherwise acts the same as the [`Variance`](@ref) except for the fact that it always gets its value from the `cov` property of the [`Portfolio`](@ref) instance.
+  - Only has an effect on optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
+  - It is not affected by [`VarianceFormulation`](@ref).
+  - It otherwise acts the same as the [`Variance`](@ref) except for the fact that it always gets its value from the `cov` property of the [`Portfolio`](@ref) instance.
 
 ```math
 \\begin{align}
@@ -2854,7 +3041,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`WCSetMuSigma`](@ref), [`Box`](@ref), [`Ellipse`](@ref), [`Portfolio`](@ref), [`wc_statistics!`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`WCSetMuSigma`](@ref), [`Box`](@ref), [`Ellipse`](@ref), [`Variance`](@ref), [`VarianceFormulation`](@ref), [`Portfolio`](@ref), [`wc_statistics!`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2882,12 +3069,13 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`
 
 # Behaviour in optimisations which take risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models
 
+  - Uses [`PSDCone`](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Positive-Semidefinite-Cone) constraints.
   - The WCVariance risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:wcvariance_risk`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:wcvariance_risk_ub`.
 
 # Functor
 
-  - `(variance::WCVariance)(w::AbstractVector)`: computes the WCVariance of an `N×1` vector of asset weights.
+  - `(variance::WCVariance)(w::AbstractVector)`: computes the WCVariance (which is equal to the variance) of an `N×1` vector of asset weights.
 
 # Examples
 """
@@ -4135,10 +4323,10 @@ end
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
        RSOC, SD, MAD, SSD, FLPM, SLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR,
-       RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, Skew, SSkew,
-       Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
-       RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC,
-       TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
+       RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, NQSkew, NQSSkew,
+       NSkew, NSSkew, Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r,
+       UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse,
+       NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
        SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
        NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
        HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,

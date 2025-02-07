@@ -32,8 +32,14 @@ SLPM
 SKurt
 ```
 
-## Quadratic Semi Skewness
+## Negative Quadratic Semi Skewness
 
 ```@docs
-SSkew
+NQSSkew
+```
+
+## Negative Semi Skewness
+
+```@docs
+NSSkew
 ```

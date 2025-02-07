@@ -1677,7 +1677,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "Skew" begin
+@testset "NQSkew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -1686,7 +1686,7 @@ end
                                                   params = ["verbose" => false,
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
-    rm = Skew()
+    rm = NQSkew()
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1699,7 +1699,7 @@ end
           2.0444083999934734e-6, 3.3398275530097316e-6, 0.1761574592680367,
           0.042496745295449355, 3.003590887382274e-6, 0.23119283730811144,
           6.400097708092224e-7, 0.1342194770175644]
-    riskt = 0.0016553752647584506
+    riskt = 0.0016553752647584506^2
     rett = 0.0001952238162305396
     @test isapprox(w1.weights, wt)
     @test isapprox(r1, riskt)
@@ -1736,7 +1736,7 @@ end
           1.7372316877202912e-9, 8.442316328795212e-10, 1.0963562745662281e-9,
           4.817849061444784e-9, 3.265347585344399e-9, 1.6553555721664495e-10,
           2.065124459768433e-9, 7.967994925566212e-10]
-    riskt = 0.004359096714830263
+    riskt = 0.004359096714830263^2
     rett = 0.0018073273748210176
     @test isapprox(w4.weights, wt)
     @test isapprox(r2, riskt)
@@ -1773,7 +1773,7 @@ end
           7.794962047253004e-11, 2.576929482481253e-10, 1.0413893099420468e-10,
           0.4452656653259548, 0.030604745504608514, 7.911667121694307e-10,
           7.65302298768296e-10, 1.0260740026129097e-9]
-    riskt = 0.0026438554509313934
+    riskt = 0.0026438554509313934^2
     rett = 0.001430936761062597
     @test isapprox(w7.weights, wt)
     @test isapprox(r3, riskt)
@@ -1810,7 +1810,7 @@ end
           2.513037392410736e-9, 3.917915725822589e-9, 2.580526408074827e-9,
           1.1101066522761444e-8, 8.941249329934282e-9, 4.941832479855464e-9,
           7.450502394466141e-9, 5.986441524548975e-9]
-    riskt = 0.009248238571500755
+    riskt = 0.009248238571500755^2
     rett = 0.001845375476375911
     @test isapprox(w10.weights, wt)
     @test isapprox(r4, riskt)
@@ -1910,7 +1910,7 @@ end
     @test dot(portfolio.mu, w20.weights) >= ret4
 end
 
-@testset "SSkew" begin
+@testset "NQSSkew" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
                                                   solver = Clarabel.Optimizer,
@@ -1919,7 +1919,7 @@ end
                                                   params = ["verbose" => false,
                                                             "max_step_fraction" => 0.75]))
     asset_statistics!(portfolio)
-    rm = SSkew()
+    rm = NQSSkew()
 
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1932,7 +1932,7 @@ end
           4.5083144725397534e-7, 0.026586616541717394, 2.6481651179988687e-5,
           0.013510133781810273, 3.2563765357090695e-6, 0.21130849297469684,
           6.622336342182562e-7, 0.1207744357455529]
-    riskt = 0.0033523757385970935
+    riskt = 0.0033523757385970935^2
     rett = 0.0003452673005217105
     @test isapprox(w1.weights, wt)
     @test isapprox(r1, riskt)
@@ -1969,7 +1969,7 @@ end
           1.1306139284291286e-9, 5.474184899333532e-10, 8.626694520801501e-10,
           3.0134685545194017e-9, 1.7815698693577572e-9, 2.7511504281534026e-11,
           1.0793332544397636e-9, 4.363226902165076e-10]
-    riskt = 0.006357306676201798
+    riskt = 0.006357306676201798^2
     rett = 0.0018007663766188612
     @test isapprox(w4.weights, wt)
     @test isapprox(r2, riskt)
@@ -2006,7 +2006,7 @@ end
           8.167541473284592e-11, 2.0913309558573752e-10, 8.113773847394304e-11,
           0.18702280875990515, 1.092428214335467e-9, 4.864627001832568e-10,
           5.959336285465247e-10, 4.530598274276326e-10]
-    riskt = 0.005659517059855914
+    riskt = 0.005659517059855914^2
     rett = 0.001675925645653581
     @test isapprox(w7.weights, wt)
     @test isapprox(r3, riskt)
@@ -2043,7 +2043,7 @@ end
           1.872626527112011e-9, 2.9205972291974916e-9, 1.926474965678272e-9,
           8.537390005950894e-9, 6.758217079193345e-9, 3.6864743538101396e-9,
           5.59084080436368e-9, 4.506979158597684e-9]
-    riskt = 0.013290076423637484
+    riskt = 0.013290076423637484^2
     rett = 0.0018453755187909182
     @test isapprox(w10.weights, wt)
     @test isapprox(r4, riskt)

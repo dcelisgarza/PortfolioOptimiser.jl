@@ -323,7 +323,7 @@ This type of optimisation is the traditional efficient frontier optimisation.
       + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
-      + Quadratic negative skewness, [`Skew`](@ref).
+      + Quadratic negative skewness, [`NQSkew`](@ref).
       + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
@@ -332,7 +332,7 @@ This type of optimisation is the traditional efficient frontier optimisation.
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
       + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
-      + Quadratic negative semi skewness, [`SSkew`](@ref).
+      + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
 #### Downside
 
@@ -401,7 +401,7 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
       + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
-      + Quadratic negative skewness, [`Skew`](@ref).
+      + Quadratic negative skewness, [`NQSkew`](@ref).
       + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
@@ -410,7 +410,7 @@ This type of optimisation requires a risk budget per asset or factor. The optimi
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
       + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
-      + Quadratic negative semi skewness, [`SSkew`](@ref).
+      + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
 #### Downside
 
@@ -494,7 +494,7 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
       + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
-      + Quadratic negative skewness, [`Skew`](@ref).
+      + Quadratic negative skewness, [`NQSkew`](@ref).
       + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
@@ -503,7 +503,7 @@ Near optimal centering utilise the weights of an optimised portfolio. It compute
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
       + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
-      + Quadratic negative semi skewness, [`SSkew`](@ref).
+      + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
 #### Downside
 
@@ -560,7 +560,7 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
       + Conditional value at risk range (CVaR range), [`CVaRRG`](@ref).
       + Tail Gini range, [`TGRG`](@ref).
       + Gini mean difference (GMD), [`GMD`](@ref).
-      + Quadratic negative skewness, [`Skew`](@ref).
+      + Quadratic negative skewness, [`NQSkew`](@ref).
       + Brownian distance variance (BDVariance), [`BDVariance`](@ref).
 
   - Downside dispersion.
@@ -570,7 +570,7 @@ Hierarchical equal risk parity optimisations use the hierarchical clustering rel
       + First lower partial moment (Omega ratio), [`FLPM`](@ref).
       + Second lower partial moment (Sortino ratio), [`SLPM`](@ref).
       + Square root semi kurtosis, [`SKurt`](@ref).
-      + Quadratic negative semi skewness, [`SSkew`](@ref).
+      + Quadratic negative semi skewness, [`NQSSkew`](@ref).
 
 #### Downside
 
