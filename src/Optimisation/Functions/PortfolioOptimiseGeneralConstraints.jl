@@ -219,12 +219,12 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         - Extra variables are needed.
     =#
     short = port.short
-    long_l = port.long_l
+    long_lb = port.long_lb
     long_ub = port.long_ub
-    short_l = port.short_l
+    short_ub = port.short_ub
     short_lb = port.short_lb
-    if (isa(short_l, Real) && !iszero(short_l) ||
-        isa(short_l, AbstractVector) && (!isempty(short_l) || any(.!iszero(short_l)))) &&
+    if (isa(short_ub, Real) && !iszero(short_ub) ||
+        isa(short_ub, AbstractVector) && (!isempty(short_ub) || any(.!iszero(short_ub)))) &&
        short &&
        allow_shorting
         scale = port.card_scale
@@ -275,10 +275,10 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          constr_long_w_mip_lb,
                          scale_constr * w .>=
                          scale_constr *
-                         (is_invested_long .* long_l - scale * (1 - is_invested_long_bool))
+                         (is_invested_long .* long_lb - scale * (1 - is_invested_long_bool))
                          constr_short_w_mip_ub,
                          scale_constr * w .<=
-                         scale_constr * (is_invested_short .* short_l +
+                         scale_constr * (is_invested_short .* short_ub +
                                          scale * (1 - is_invested_short_bool))
                      end)
     else
@@ -300,10 +300,10 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         end
         @constraint(model, constr_w_mip_ub,
                     scale_constr * w .<= scale_constr * is_invested .* long_ub)
-        if (isa(long_l, Real) && !iszero(long_l) ||
-            isa(long_l, AbstractVector) && (!isempty(long_l) || any(.!iszero(long_l))))
+        if (isa(long_lb, Real) && !iszero(long_lb) ||
+            isa(long_lb, AbstractVector) && (!isempty(long_lb) || any(.!iszero(long_lb))))
             @constraint(model, constr_long_w_mip_lb,
-                        scale_constr * w .>= scale_constr * is_invested .* long_l)
+                        scale_constr * w .>= scale_constr * is_invested .* long_lb)
         end
         if short && allow_shorting
             @constraint(model, constr_w_mip_lb,
