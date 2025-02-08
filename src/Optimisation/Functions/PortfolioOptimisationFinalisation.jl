@@ -56,7 +56,7 @@ function finilise_fees(port, weights)
         fees[:fees_fixed_long] = fees_fixed_long
     end
     if haskey(model, :fees_short)
-        fees_short = calc_fees(weights, fees.short, .<)
+        fees_short = calc_fees(weights, port.fees.short, .<)
         total_fees += fees_short
         fees[:fees_short] = fees_short
     end
