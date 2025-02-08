@@ -235,7 +235,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     short = port.short
     long_ub = port.long_ub
     short_lb = port.short_lb
-    if short_t_flag && short && allow_shorting
+    if short_t_flag && short && allow_shorting # (short_t_flag || fixed_short_fees_flag) && short && allow_shorting
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -281,6 +281,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * w .<= scale_constr * is_invested_long .* long_ub
                          constr_w_mip_lb,
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
+                         # if short_t_flag
                          constr_long_w_mip_t,
                          scale_constr * w .>=
                          scale_constr * (is_invested_long .* long_t .-
@@ -289,6 +290,15 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * w .<=
                          scale_constr * (is_invested_short .* short_t .+
                                          scale * (1 .- is_invested_short_bool))
+                         # end
+                         # if fixed_fees_flag
+                         # @expressions(model, 
+                         #     begin 
+                         #          fixed_long_fees, sum(long_fees_fixed .* is_invested_long)
+                         #          fixed_short_fees, sum(short_fees_fixed .* is_invested_short)
+                         #     end
+                         #  )
+                         # end
                      end)
     else
         @variable(model, is_invested_bool[1:N], binary = true)
@@ -313,6 +323,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
             @constraint(model, constr_long_w_mip_t,
                         scale_constr * w .>= scale_constr * is_invested .* long_t)
         end
+        # if fixed_long_fees
+        # @expression(model, fixed_long_fees, sum(long_fees_fixed .* is_invested))
+        # end
         if short && allow_shorting
             @constraint(model, constr_w_mip_lb,
                         scale_constr * w .>= scale_constr * is_invested .* short_lb)
