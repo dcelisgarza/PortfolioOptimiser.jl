@@ -1145,7 +1145,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Functor
 
-  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the MAD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)`: computes the MAD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -1163,7 +1163,7 @@ function MAD(; settings::RMSettings = RMSettings(),
              we::Union{<:AbstractWeights, Nothing} = nothing)
     return MAD(settings, w, mu, we)
 end
-function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)
+function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
     x = X * w .- fees
     mu = calc_ret_mu(x, w, mad)
     we = mad.we
@@ -1209,7 +1209,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Functor
 
-  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SSD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)`: computes the SSD risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -1274,7 +1274,7 @@ See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref)
 
 # Functor
 
-  - `(flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the FLPM risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)`: computes the FLPM risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -2062,7 +2062,8 @@ function Kurt(; settings::RMSettings = RMSettings(),
     end
     return Kurt(settings, w, mu, kt)
 end
-function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0; scale::Bool = false)
+function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
+                      scale::Bool = false)
     x = X * w .- fees
     T = length(x)
     mu = calc_ret_mu(x, w, kurt)
@@ -2133,7 +2134,7 @@ function SKurt(; settings::RMSettings = RMSettings(),
     end
     return SKurt(settings, w, mu, kt)
 end
-function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees = 0.0;
+function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
                         scale::Bool = false)
     x = X * w .- fees
     T = length(x)
@@ -2873,7 +2874,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Functor
 
-  - `(svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees = 0.0)`: computes the SVariance risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
+  - `(svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)`: computes the SVariance risk of a `T×N` returns matrix, a `N×1` vector of asset weights `w`, and fees `fees`.
 
       + `fees`: must be consistent with the returns frequency.
 
@@ -3057,6 +3058,31 @@ function (wcvariance::WCVariance)(w::AbstractVector)
     return dot(w, wcvariance.sigma, w)
 end
 
+mutable struct Fees
+    long::Union{<:Real, <:AbstractVector{<:Real}}
+    short::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
+end
+function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0)
+    @smart_assert(all(long .>= zero(long)))
+    @smart_assert(all(short .<= zero(short)))
+    @smart_assert(all(fixed_long .>= zero(fixed_long)))
+    @smart_assert(all(fixed_short .<= zero(fixed_short)))
+    return Fees(long, short, fixed_long, fixed_short)
+end
+function Base.setproperty!(fees::Fees, sym::Symbol, val)
+    if sym ∈ (:long, :fixed_long)
+        @smart_assert(all(val .>= zero(val)))
+    elseif sym ∈ (:short, :fixed_short)
+        @smart_assert(all(val .<= zero(val)))
+    end
+    return setfield!(fees, sym, val)
+end
+
 # ### Turnover and rebalance
 
 """
@@ -3119,16 +3145,13 @@ end
 mutable struct TrackWeight{T1 <: Real, T2 <: AbstractVector{<:Real}} <: TrackingErr
     err::T1
     w::T2
-    long_fees::Union{<:Real, <:AbstractVector{<:Real}}
-    short_fees::Union{<:Real, <:AbstractVector{<:Real}}
+    fees::Fees
     rebalance::AbstractTR
 end
 function TrackWeight(; err::Real = 0.0,
                      w::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
-                     long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                     short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                     rebalance::AbstractTR = NoTR())
-    return TrackWeight{typeof(err), typeof(w)}(err, w, long_fees, short_fees, rebalance)
+                     fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
+    return TrackWeight{typeof(err), typeof(w)}(err, w, fees, rebalance)
 end
 
 """
@@ -4266,4 +4289,4 @@ export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Q
        SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
        NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
        HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,
-       PortOptSolver, RMSolvers, RMSigma, RMSkew, RMOWA, RMMu, RMTarget
+       PortOptSolver, RMSolvers, RMSigma, RMSkew, RMOWA, RMMu, RMTarget, Fees

@@ -16,36 +16,33 @@ function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
 end
 function calc_fees(w::AbstractVector, rebalance::AbstractTR, latest_prices::AbstractVector)
     return if isa(rebalance, TR)
-        rebal_fees = rebalance.val
+        fees_rebal = rebalance.val
         benchmark = rebalance.w
-        if isa(rebal_fees, Real)
-            sum(rebal_fees * abs.(benchmark .- w) .* latest_prices)
+        if isa(fees_rebal, Real)
+            sum(fees_rebal * abs.(benchmark .- w) .* latest_prices)
         else
-            dot(rebal_fees, abs.(benchmark .- w) .* latest_prices)
+            dot(fees_rebal, abs.(benchmark .- w) .* latest_prices)
         end
     else
         zero(eltype(w))
     end
 end
-function calc_fees(w::AbstractVector, latest_prices::AbstractVector,
-                   long_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
+function calc_fees(w::AbstractVector, latest_prices::AbstractVector, fees::Fees = Fees(),
                    rebalance::AbstractTR = NoTR())
-    long_fees = calc_fees(w, long_fees, latest_prices, .>=)
-    short_fees = calc_fees(w, short_fees, latest_prices, .<)
-    rebal_fees = calc_fees(w, rebalance, latest_prices)
-    return long_fees + short_fees + rebal_fees
+    fees_long = calc_fees(w, fees.long, latest_prices, .>=)
+    fees_short = calc_fees(w, fees.short, latest_prices, .<)
+    fees_rebal = calc_fees(w, rebalance, latest_prices)
+    return fees_long + fees_short + fees_rebal
 end
 function setup_alloc_optim(port, weights, investment)
     short = port.short
     budget = port.budget
     short_budget = port.short_budget
     latest_prices = port.latest_prices
-    long_fees = port.long_fees
-    short_fees = port.short_fees
+    fees = port.fees
     rebalance = port.rebalance
 
-    fees = calc_fees(weights, latest_prices, long_fees, short_fees, rebalance)
+    fees = calc_fees(weights, latest_prices, fees, rebalance)
     investment -= fees
 
     long_idx = weights .>= zero(eltype(weights))

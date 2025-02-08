@@ -39,43 +39,43 @@ end
 function finilise_fees(port, weights)
     model = port.model
     fees = Dict{Symbol, eltype(weights)}()
-    long_fees = zero(eltype(weights))
-    short_fees = zero(eltype(weights))
-    rebal_fees = zero(eltype(weights))
+    fees_long = zero(eltype(weights))
+    fees_short = zero(eltype(weights))
+    fees_rebal = zero(eltype(weights))
     total_fees = zero(eltype(weights))
-    if haskey(model, :long_fees)
+    if haskey(model, :fees_long)
         idx = weights .>= zero(eltype(weights))
-        long_fees = port.long_fees
-        long_fees = if isa(long_fees, Real)
-            sum(long_fees * weights[idx])
+        fees_long = port.fees.long
+        fees_long = if isa(fees_long, Real)
+            sum(fees_long * weights[idx])
         else
-            dot(long_fees[idx], weights[idx])
+            dot(fees_long[idx], weights[idx])
         end
-        total_fees += long_fees
-        fees[:long_fees] = long_fees
+        total_fees += fees_long
+        fees[:fees_long] = fees_long
     end
-    if haskey(model, :short_fees)
+    if haskey(model, :fees_short)
         idx = weights .< zero(eltype(weights))
-        short_fees = port.short_fees
-        short_fees = if isa(short_fees, Real)
-            sum(short_fees * weights[idx])
+        fees_short = port.fees.short
+        fees_short = if isa(fees_short, Real)
+            sum(fees_short * weights[idx])
         else
-            dot(short_fees[idx], weights[idx])
+            dot(fees_short[idx], weights[idx])
         end
-        total_fees += short_fees
-        fees[:short_fees] = short_fees
+        total_fees += fees_short
+        fees[:fees_short] = fees_short
     end
-    if haskey(model, :rebalance_fees)
+    if haskey(model, :fees_rebalance)
         rebalance = port.rebalance
-        rebal_fees = rebalance.val
+        fees_rebal = rebalance.val
         benchmark = rebalance.w
-        rebal_fees = if isa(rebal_fees, Real)
-            sum(rebal_fees * abs.(benchmark .- weights))
+        fees_rebal = if isa(fees_rebal, Real)
+            sum(fees_rebal * abs.(benchmark .- weights))
         else
-            dot(rebal_fees, abs.(benchmark .- weights))
+            dot(fees_rebal, abs.(benchmark .- weights))
         end
-        total_fees += rebal_fees
-        fees[:rebal_fees] = rebal_fees
+        total_fees += fees_rebal
+        fees[:fees_rebal] = fees_rebal
     end
 
     if !iszero(total_fees)

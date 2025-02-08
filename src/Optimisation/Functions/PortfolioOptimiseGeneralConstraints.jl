@@ -171,6 +171,10 @@ function weight_constraints(port, allow_shorting::Bool = true)
 
     return nothing
 end
+function validate_nonzero_real_vector(val)
+    return (isa(val, Real) && !iszero(val) ||
+            isa(val, AbstractVector) && (!isempty(val) || any(.!iszero(val))))
+end
 function MIP_constraints(port, allow_shorting::Bool = true)
     #=
     # MIP constraints
@@ -189,22 +193,13 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     network_adj = port.network_adj
     cluster_adj = port.cluster_adj
 
-    # long_fixed_fees = port.long_fixed_fees
-    # short_fixed_fees = port.short_fixed_fees
-    # long_fixed_fees_flag = (isa(long_fixed_fees, Real) && !iszero(long_fixed_fees) ||
-    #                         isa(long_fixed_fees, AbstractVector) &&
-    #                         (!isempty(long_fixed_fees) || any(.!iszero(long_fixed_fees))))
-    # short_fixed_fees_flag = (isa(short_fixed_fees, Real) && !iszero(short_fixed_fees) ||
-    #                         isa(short_fixed_fees, AbstractVector) &&
-    #                         (!isempty(short_fixed_fees) || any(.!iszero(short_fixed_fees))))
-    # fixed_fees_flag = long_fixed_fees_flag || short_fixed_fees_flag
-
-    long_t_flag = (isa(long_t, Real) && !iszero(long_t) ||
-                   isa(long_t, AbstractVector) &&
-                   (!isempty(long_t) || any(.!iszero(long_t))))
-    short_t_flag = (isa(short_t, Real) && !iszero(short_t) ||
-                    isa(short_t, AbstractVector) &&
-                    (!isempty(short_t) || any(.!iszero(short_t))))
+    fees_fixed_long = port.fees.fixed_long
+    fees_fixed_short = port.fees.fixed_short
+    fees_fixed_long_flag = validate_nonzero_real_vector(fees_fixed_long)
+    fees_fixed_short_flag = validate_nonzero_real_vector(fees_fixed_short)
+    fees_fixed_flag = fees_fixed_long_flag || fees_fixed_short_flag
+    long_t_flag = validate_nonzero_real_vector(long_t)
+    short_t_flag = validate_nonzero_real_vector(short_t)
     card_flag = size(port.returns, 2) > card > 0
     gcard_ineq_flag = !(isempty(a_card_ineq) || isempty(b_card_ineq))
     gcard_eq_flag = !(isempty(a_card_eq) || isempty(b_card_eq))
@@ -247,7 +242,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     short_lb = port.short_lb
     # Separate this out into a function with the condition in the comment.
 
-    if short_t_flag && short && allow_shorting # (short_t_flag || fixed_fees_flag) && short && allow_shorting
+    if (short_t_flag || fees_fixed_flag) && short && allow_shorting
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -295,27 +290,27 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
                      end)
 
-        # if short_t_flag
-        @constraints(model,
-                     begin
-                         constr_long_w_mip_t,
-                         scale_constr * w .>=
-                         scale_constr * (is_invested_long .* long_t .-
-                                         scale * (1 .- is_invested_long_bool))
-                         constr_short_w_mip_t,
-                         scale_constr * w .<=
-                         scale_constr * (is_invested_short .* short_t .+
-                                         scale * (1 .- is_invested_short_bool))
-                     end)
-        # end
+        if short_t_flag
+            @constraints(model,
+                         begin
+                             constr_long_w_mip_t,
+                             scale_constr * w .>=
+                             scale_constr * (is_invested_long .* long_t .-
+                                             scale * (1 .- is_invested_long_bool))
+                             constr_short_w_mip_t,
+                             scale_constr * w .<=
+                             scale_constr * (is_invested_short .* short_t .+
+                                             scale * (1 .- is_invested_short_bool))
+                         end)
+        end
 
-        # if fixed_fees_flag
-        #     @expressions(model,
-        #                  begin
-        #                      fixed_long_fees, sum(fixed_long_fees .* is_invested_long)
-        #                      fixed_short_fees, -sum(fixed_short_fees .* is_invested_short)
-        #                  end)
-        # end
+        if fees_fixed_flag
+            @expressions(model,
+                         begin
+                             fees_fixed_long, sum(fees_fixed_long .* is_invested_long)
+                             fees_fixed_short, -sum(fees_fixed_short .* is_invested_short)
+                         end)
+        end
     else
         @variable(model, is_invested_bool[1:N], binary = true)
         if isa(k, Real)
@@ -339,9 +334,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
             @constraint(model, constr_long_w_mip_t,
                         scale_constr * w .>= scale_constr * is_invested .* long_t)
         end
-        # if fixed_long_fees_flag
-        #     @expression(model, fixed_long_fees, sum(fixed_long_fees .* is_invested))
-        # end
+        if fees_fixed_long_flag
+            @expression(model, fees_fixed_long, sum(fees_fixed_long .* is_invested))
+        end
         if short && allow_shorting
             @constraint(model, constr_w_mip_lb,
                         scale_constr * w .>= scale_constr * is_invested .* short_lb)
@@ -387,10 +382,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
 end
 function tracking_error_benchmark(tracking::TrackWeight, returns)
     w = tracking.w
-    long_fees = tracking.long_fees
-    short_fees = tracking.short_fees
+    fees = tracking.fees
     rebalance = tracking.rebalance
-    fees = calc_fees(w, long_fees, short_fees, rebalance)
+    fees = calc_fees(w, fees, rebalance)
     return returns * w .- fees
 end
 function tracking_error_benchmark(tracking::TrackRet, ::Any)
@@ -457,28 +451,25 @@ function turnover_constraints(port)
 
     return nothing
 end
-function management_fee(port)
+function management_fee(port, allow_shorting::Bool = true)
     short = port.short
-    long_fees = port.long_fees
-    short_fees = port.short_fees
+    fees_long = port.fees.long
+    fees_short = port.fees.short
     model = port.model
 
-    if !(isa(long_fees, Real) && iszero(long_fees) ||
-         isa(long_fees, AbstractVector) && (isempty(long_fees) || all(iszero.(long_fees))))
+    if validate_nonzero_real_vector(fees_long)
         long_w = model[:long_w]
-        @expression(model, long_fees, sum(long_fees .* long_w))
+        @expression(model, fees_long, sum(fees_long .* long_w))
     end
 
-    if short && !(isa(short_fees, Real) && iszero(short_fees) ||
-                  isa(short_fees, AbstractVector) &&
-                  (isempty(short_fees) || all(iszero.(short_fees))))
+    if short && allow_shorting && validate_nonzero_real_vector(fees_short)
         short_w = model[:short_w]
-        @expression(model, short_fees, sum(short_fees .* short_w))
+        @expression(model, fees_short, sum(fees_short .* short_w))
     end
 
     return nothing
 end
-function rebalance_fees(port)
+function rebalance_fee(port)
     rebalance = port.rebalance
     if isa(rebalance, NoTR) ||
        isa(rebalance.val, Real) && iszero(rebalance.val) ||
@@ -500,7 +491,7 @@ function rebalance_fees(port)
     @variable(model, t_rebalance[1:N])
     @expressions(model, begin
                      rebalance, w .- benchmark * k
-                     rebalance_fees, sum(val .* t_rebalance)
+                     fees_rebalance, sum(val .* t_rebalance)
                  end)
     @constraint(model, constr_rebalance[i = 1:N],
                 [scale_constr * t_rebalance[i]; scale_constr * rebalance[i]] ∈
@@ -513,14 +504,14 @@ function get_fees(model)
         return nothing
     end
     @expression(model, fees, zero(AffExpr))
-    if haskey(model, :long_fees)
-        add_to_expression!(fees, model[:long_fees])
+    if haskey(model, :fees_long)
+        add_to_expression!(fees, model[:fees_long])
     end
-    if haskey(model, :short_fees)
-        add_to_expression!(fees, model[:short_fees])
+    if haskey(model, :fees_short)
+        add_to_expression!(fees, model[:fees_short])
     end
-    if haskey(model, :rebalance_fees)
-        add_to_expression!(fees, model[:rebalance_fees])
+    if haskey(model, :fees_rebalance)
+        add_to_expression!(fees, model[:fees_rebalance])
     end
     return nothing
 end
