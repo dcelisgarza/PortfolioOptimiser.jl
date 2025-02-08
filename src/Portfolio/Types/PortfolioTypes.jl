@@ -1365,6 +1365,8 @@ function Base.deepcopy(port::Portfolio)
                      # Fees
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
+                     Union{<:Real, <:AbstractVector{<:Real}},
+                     Union{<:Real, <:AbstractVector{<:Real}},
                      # Rebalance cost
                      AbstractTR,
                      # Solution
