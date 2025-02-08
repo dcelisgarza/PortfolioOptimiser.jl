@@ -3082,6 +3082,16 @@ function Base.setproperty!(fees::Fees, sym::Symbol, val)
     end
     return setfield!(fees, sym, val)
 end
+function Base.isequal(A::Fees, B::Fees)
+    for property ∈ propertynames(A)
+        prop_A = getproperty(A, property)
+        prop_B = getproperty(B, property)
+        if !isequal(prop_A, prop_B)
+            return false
+        end
+    end
+    return true
+end
 
 # ### Turnover and rebalance
 
