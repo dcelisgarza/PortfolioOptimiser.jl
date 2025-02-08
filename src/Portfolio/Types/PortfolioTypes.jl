@@ -1448,7 +1448,7 @@ function Base.deepcopy(port::Portfolio)
                                               deepcopy(port.long_fees),
                                               deepcopy(port.short_fees),
                                               deepcopy(port.fixed_long_fees),
-                                              deepcopy(port.fixed_short_fee),
+                                              deepcopy(port.fixed_short_fees),
                                               # Rebalance cost
                                               deepcopy(port.rebalance),
                                               # Solution
