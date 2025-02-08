@@ -171,53 +171,6 @@ function weight_constraints(port, allow_shorting::Bool = true)
 
     return nothing
 end
-function long_short_bool(N, long_ub, short_lb, scale, scale_constr, model, w, k)
-    @variables(model, begin
-                   is_invested_long_bool[1:N], (binary = true)
-                   is_invested_short_bool[1:N], (binary = true)
-               end)
-    @expression(model, is_invested_bool, is_invested_long_bool + is_invested_short_bool)
-    if isa(k, Real)
-        @expressions(model, begin
-                         is_invested_long, is_invested_long_bool
-                         is_invested_short, is_invested_short_bool
-                     end)
-    else
-        @variables(model, begin
-                       is_invested_long_float[1:N] .>= 0
-                       is_invested_short_float[1:N] .>= 0
-                   end)
-        @constraints(model,
-                     begin
-                         constr_is_invested_long_float_ub, is_invested_long_float .<= k
-                         constr_is_invested_short_float_ub, is_invested_short_float .<= k
-                         constr_is_invested_long_float_decision_ub,
-                         is_invested_long_float .<= scale * is_invested_long_bool
-                         constr_is_invested_short_float_decision_ub,
-                         is_invested_short_float .<= scale * is_invested_short_bool
-                         constr_is_invested_long_float_decision_lb,
-                         is_invested_long_float .>=
-                         k .- scale * (1 .- is_invested_long_bool)
-                         constr_is_invested_short_float_decision_lb,
-                         is_invested_short_float .>=
-                         k .- scale * (1 .- is_invested_short_bool)
-                     end)
-
-        @expressions(model, begin
-                         is_invested_long, is_invested_long_float
-                         is_invested_short, is_invested_short_float
-                     end)
-    end
-    @constraints(model,
-                 begin
-                     constr_is_invested_bool_ub, is_invested_bool .<= 1
-                     constr_w_mip_ub,
-                     scale_constr * w .<= scale_constr * is_invested_long .* long_ub
-                     constr_w_mip_lb,
-                     scale_constr * w .>= scale_constr * is_invested_short .* short_lb
-                 end)
-    return nothing
-end
 function MIP_constraints(port, allow_shorting::Bool = true)
     #=
     # MIP constraints
@@ -296,11 +249,51 @@ function MIP_constraints(port, allow_shorting::Bool = true)
 
     if short_t_flag && short && allow_shorting # (short_t_flag || fixed_fees_flag) && short && allow_shorting
         scale = port.card_scale
-        long_short_bool(N, long_ub, short_lb, scale, scale_constr, model, w, k)
-        is_invested_long = model[:is_invested_long]
-        is_invested_long_bool = model[:is_invested_long_bool]
-        is_invested_short = model[:is_invested_short]
-        is_invested_short_bool = model[:is_invested_short_bool]
+        @variables(model, begin
+                       is_invested_long_bool[1:N], (binary = true)
+                       is_invested_short_bool[1:N], (binary = true)
+                   end)
+        @expression(model, is_invested_bool, is_invested_long_bool + is_invested_short_bool)
+        if isa(k, Real)
+            @expressions(model, begin
+                             is_invested_long, is_invested_long_bool
+                             is_invested_short, is_invested_short_bool
+                         end)
+        else
+            @variables(model, begin
+                           is_invested_long_float[1:N] .>= 0
+                           is_invested_short_float[1:N] .>= 0
+                       end)
+            @constraints(model,
+                         begin
+                             constr_is_invested_long_float_ub, is_invested_long_float .<= k
+                             constr_is_invested_short_float_ub,
+                             is_invested_short_float .<= k
+                             constr_is_invested_long_float_decision_ub,
+                             is_invested_long_float .<= scale * is_invested_long_bool
+                             constr_is_invested_short_float_decision_ub,
+                             is_invested_short_float .<= scale * is_invested_short_bool
+                             constr_is_invested_long_float_decision_lb,
+                             is_invested_long_float .>=
+                             k .- scale * (1 .- is_invested_long_bool)
+                             constr_is_invested_short_float_decision_lb,
+                             is_invested_short_float .>=
+                             k .- scale * (1 .- is_invested_short_bool)
+                         end)
+
+            @expressions(model, begin
+                             is_invested_long, is_invested_long_float
+                             is_invested_short, is_invested_short_float
+                         end)
+        end
+        @constraints(model,
+                     begin
+                         constr_is_invested_bool_ub, is_invested_bool .<= 1
+                         constr_w_mip_ub,
+                         scale_constr * w .<= scale_constr * is_invested_long .* long_ub
+                         constr_w_mip_lb,
+                         scale_constr * w .>= scale_constr * is_invested_short .* short_lb
+                     end)
 
         # if short_t_flag
         @constraints(model,
