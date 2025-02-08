@@ -51,13 +51,13 @@ function optimise!(port::Portfolio, type::RB)
     rb_opt_constraints(port, class, w_ini)
     # Weight constraints
     weight_constraints(port, false)
-    MIP_constraints(port, false)
+    MIP_constraints(port)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
     # Fees
-    management_fee(port, false)
+    management_fee(port)
     rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]
@@ -86,13 +86,13 @@ function optimise!(port::Portfolio, type::RRB)
     initial_w(port, w_ini)
     set_k(port, nothing)
     weight_constraints(port, false)
-    MIP_constraints(port, false)
+    MIP_constraints(port)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
     # Fees
-    management_fee(port, false)
+    management_fee(port)
     rebalance_fee(port)
     # Risk
     rrb_opt_constraints(port, version, sigma)
@@ -122,7 +122,7 @@ function optimise!(port::Portfolio, type::NOC)
     # Weight constraints
     weight_constraints(port, false)
     if flag
-        MIP_constraints(port, false)
+        MIP_constraints(port)
         SDP_network_cluster_constraints(port, nothing)
         # Tracking
         tracking_error_constraints(port, returns)
@@ -132,7 +132,7 @@ function optimise!(port::Portfolio, type::NOC)
         custom_obj = NoCustomObjective()
     end
     # Fees
-    management_fee(port, false)
+    management_fee(port)
     rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]

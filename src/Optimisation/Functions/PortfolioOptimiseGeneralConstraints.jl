@@ -175,7 +175,7 @@ function validate_nonzero_real_vector(val)
     return (isa(val, Real) && !iszero(val) ||
             isa(val, AbstractVector) && (!isempty(val) || any(.!iszero(val))))
 end
-function MIP_constraints(port, allow_shorting::Bool = true)
+function MIP_constraints(port)
     #=
     # MIP constraints
 
@@ -237,12 +237,11 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     - `k` is a variable if the objective is [`Sharpe`](@ref).
         - Extra variables are needed.
     =#
-    short = port.short
     long_ub = port.long_ub
     short_lb = port.short_lb
     # Separate this out into a function with the condition in the comment.
 
-    if (short_t_flag || fees_fixed_flag) && short && allow_shorting
+    if (short_t_flag || fees_fixed_flag) && haskey(model, :short_w)
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -337,7 +336,7 @@ function MIP_constraints(port, allow_shorting::Bool = true)
         if fees_fixed_long_flag
             @expression(model, fees_fixed_long, sum(fees_fixed_long .* is_invested))
         end
-        if short && allow_shorting
+        if haskey(model, :short_w)
             @constraint(model, constr_w_mip_lb,
                         scale_constr * w .>= scale_constr * is_invested .* short_lb)
         end
@@ -451,8 +450,7 @@ function turnover_constraints(port)
 
     return nothing
 end
-function management_fee(port, allow_shorting::Bool = true)
-    short = port.short
+function management_fee(port)
     fees_long = port.fees.long
     fees_short = port.fees.short
     model = port.model
@@ -462,9 +460,11 @@ function management_fee(port, allow_shorting::Bool = true)
         @expression(model, fees_long, sum(fees_long .* long_w))
     end
 
-    if short && allow_shorting && validate_nonzero_real_vector(fees_short)
-        short_w = model[:short_w]
-        @expression(model, fees_short, sum(fees_short .* short_w))
+    if haskey(model, :short_w)
+        if validate_nonzero_real_vector(fees_short)
+            short_w = model[:short_w]
+            @expression(model, fees_short, sum(fees_short .* short_w))
+        end
     end
 
     return nothing
@@ -509,6 +509,12 @@ function get_fees(model)
     end
     if haskey(model, :fees_short)
         add_to_expression!(fees, model[:fees_short])
+    end
+    if haskey(model, :fees_fixed_long)
+        add_to_expression!(fees, model[:fees_fixed_long])
+    end
+    if haskey(model, :fees_fixed_short)
+        add_to_expression!(fees, model[:fees_fixed_short])
     end
     if haskey(model, :fees_rebalance)
         add_to_expression!(fees, model[:fees_rebalance])

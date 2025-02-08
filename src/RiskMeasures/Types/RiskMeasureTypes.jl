@@ -3063,16 +3063,18 @@ mutable struct Fees
     short::Union{<:Real, <:AbstractVector{<:Real}}
     fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
     fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
+    tol_kwargs::NamedTuple
 end
 function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
               short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
               fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0)
+              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              tol_kwargs::NamedTuple = (; atol = 1e-8))
     @smart_assert(all(long .>= zero(long)))
     @smart_assert(all(short .<= zero(short)))
     @smart_assert(all(fixed_long .>= zero(fixed_long)))
     @smart_assert(all(fixed_short .<= zero(fixed_short)))
-    return Fees(long, short, fixed_long, fixed_short)
+    return Fees(long, short, fixed_long, fixed_short, tol_kwargs)
 end
 function Base.setproperty!(fees::Fees, sym::Symbol, val)
     if sym ∈ (:long, :fixed_long)

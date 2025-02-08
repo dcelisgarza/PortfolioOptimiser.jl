@@ -43,37 +43,31 @@ function finilise_fees(port, weights)
     fees_short = zero(eltype(weights))
     fees_rebal = zero(eltype(weights))
     total_fees = zero(eltype(weights))
+
     if haskey(model, :fees_long)
-        idx = weights .>= zero(eltype(weights))
-        fees_long = port.fees.long
-        fees_long = if isa(fees_long, Real)
-            sum(fees_long * weights[idx])
-        else
-            dot(fees_long[idx], weights[idx])
-        end
+        fees_long = calc_fees(weights, port.fees.long, .>=)
         total_fees += fees_long
         fees[:fees_long] = fees_long
     end
+    if haskey(model, :fees_fixed_long)
+        fees_fixed_long = calc_fixed_fees(weights, port.fees.fixed_long,
+                                          port.fees.tol_kwargs, .>=)
+        total_fees += fees_fixed_long
+        fees[:fees_fixed_long] = fees_fixed_long
+    end
     if haskey(model, :fees_short)
-        idx = weights .< zero(eltype(weights))
-        fees_short = port.fees.short
-        fees_short = if isa(fees_short, Real)
-            sum(fees_short * weights[idx])
-        else
-            dot(fees_short[idx], weights[idx])
-        end
+        fees_short = calc_fees(weights, fees.short, .<)
         total_fees += fees_short
         fees[:fees_short] = fees_short
     end
+    if haskey(model, :fees_fixed_short)
+        fees_fixed_short = -calc_fixed_fees(weights, port.fees.fixed_short,
+                                            port.fees.tol_kwargs, .<)
+        total_fees += fees_fixed_short
+        fees[:fees_fixed_short] = fees_fixed_short
+    end
     if haskey(model, :fees_rebalance)
-        rebalance = port.rebalance
-        fees_rebal = rebalance.val
-        benchmark = rebalance.w
-        fees_rebal = if isa(fees_rebal, Real)
-            sum(fees_rebal * abs.(benchmark .- weights))
-        else
-            dot(fees_rebal, abs.(benchmark .- weights))
-        end
+        fees_rebal = calc_fees(weights, port.rebalance)
         total_fees += fees_rebal
         fees[:fees_rebal] = fees_rebal
     end

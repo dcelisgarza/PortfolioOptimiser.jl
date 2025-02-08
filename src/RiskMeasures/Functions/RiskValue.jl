@@ -315,9 +315,11 @@ function calc_fees(w::AbstractVector, rebalance::AbstractTR)
 end
 function calc_fees(w::AbstractVector, fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
     fees_long = calc_fees(w, fees.long, .>=)
+    fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
     fees_short = calc_fees(w, fees.short, .<)
+    fees_fixed_short = -calc_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
     fees_rebal = calc_fees(w, rebalance)
-    return fees_long + fees_short + fees_rebal
+    return fees_long + fees_fixed_long + fees_short + fees_fixed_short + fees_rebal
 end
 function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR,
                              UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
