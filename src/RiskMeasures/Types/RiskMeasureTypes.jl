@@ -61,7 +61,7 @@ mutable struct PortOptSolver
     name::Union{Symbol, <:AbstractString}
     solver::Any
     check_sol::NamedTuple
-    params::Union{Nothing, Pair, <:AbstractVector{Pair}}
+    params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}}
     add_bridges::Bool
 end
 function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any = nothing,
