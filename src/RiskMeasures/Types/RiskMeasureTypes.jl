@@ -66,7 +66,7 @@ mutable struct PortOptSolver
 end
 function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any = nothing,
                        check_sol::NamedTuple = (; allow_local = true, allow_almost = true),
-                       params::Union{Nothing, Pair, <:AbstractVector{Pair}} = nothing,
+                       params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing,
                        add_bridges::Bool = true)
     return PortOptSolver(name, solver, check_sol, params, add_bridges)
 end
