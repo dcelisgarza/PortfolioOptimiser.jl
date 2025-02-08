@@ -66,10 +66,10 @@ portfolio = Portfolio(; prices = prices,
                                               check_sol = (allow_local = true,
                                                            allow_almost = true),
                                               # (Optional) Solver-specific attributes.
-                                              params = ["verbose" => false,
+                                              params = Dict("verbose" => false,
                                                         "max_step_fraction" => 0.75,
                                                         "tol_gap_abs" => 1e-9,
-                                                        "tol_gap_rel" => 1e-9]),
+                                                        "tol_gap_rel" => 1e-9)),
                       # Discrete solvers (for discrete allocation).
                       alloc_solvers = PortOptSolver(
                                                     # Key-value pair for the solver, solution acceptance 

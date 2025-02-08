@@ -4,7 +4,7 @@
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = WR()
 
@@ -238,7 +238,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = RG()
 
@@ -475,7 +475,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = CVaR()
 
@@ -712,7 +712,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = CVaRRG()
 
@@ -798,7 +798,7 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = "verbose" => false)
+                                      params = Dict("verbose" => false))
 
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1464,7 +1464,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = MDD()
 
@@ -1699,7 +1699,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = ADD()
 
@@ -1934,7 +1934,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = UCI()
 

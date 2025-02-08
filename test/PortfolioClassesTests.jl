@@ -15,7 +15,7 @@ l = 2.0
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
 
     asset_statistics!(portfolio)
 

@@ -4,7 +4,7 @@
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
 
     asset_statistics!(portfolio)
     N = size(portfolio.returns, 2)
@@ -43,7 +43,7 @@ end
                           solvers = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "log_to_console" => false))
+                                                  params = Dict("log_to_console" => false)))
 
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad())
@@ -74,7 +74,7 @@ end
                          PortOptSolver(; name = :Clarabel2, solver = Clarabel.Optimizer,
                                        check_sol = (; allow_local = true,
                                                     allow_almost = true),
-                                       params = "verbose" => false)]
+                                       params = Dict("verbose" => false))]
 
     optimise!(portfolio, Trad(; rm = SD()))
     @test !isempty(portfolio.fail)
@@ -88,7 +88,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = Variance()
 
@@ -320,7 +320,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1010,7 +1010,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -1171,7 +1171,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
 
     rm = SD()
@@ -1463,7 +1463,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = MAD()
 
@@ -1697,7 +1697,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = SSD()
 
@@ -1931,7 +1931,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = FLPM(; target = rf)
 
@@ -2165,7 +2165,7 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = "verbose" => false))
+                                                  params = Dict("verbose" => false)))
     asset_statistics!(portfolio)
     rm = SSD(; target = rf)
 
