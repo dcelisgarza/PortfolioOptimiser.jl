@@ -1,5 +1,49 @@
 using SafeTestsets
 
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation rm vector" begin
+    include("TradOptimisationVectorTests.jl")
+end
+
+@safetestset "NOC optimisation" begin
+    include("NOCOptimisationTests.jl")
+end
+
+@safetestset "Entropic and Relativistic RM tests" begin
+    include("EntrRelRMs.jl")
+end
+
+@safetestset "Constraint Functions" begin
+    include("ConstraintTests.jl")
+end
+
+@safetestset "Factor Stats tests" begin
+    include("FactorStatsTest.jl")
+end
+
+@safetestset "WC Stats tests" begin
+    include("WCStatsTest.jl")
+end
+
+@safetestset "Clustering tests" begin
+    include("ClusteringTests.jl")
+end
+
+@safetestset "DBHT Clustering" begin
+    include("DBHTClusteringTests.jl")
+end
+
+@safetestset "Network constraint tests" begin
+    include("NetworkConstraintTests.jl")
+end
+
+@safetestset "BL Stats tests" begin
+    include("BLStatsTests.jl")
+end
+
 @safetestset "Type tests" begin
     include("TypeTests.jl")
 end
@@ -58,48 +102,4 @@ end
 
 @safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation rm vector" begin
-    include("TradOptimisationVectorTests.jl")
-end
-
-@safetestset "NOC optimisation" begin
-    include("NOCOptimisationTests.jl")
-end
-
-@safetestset "Entropic and Relativistic RM tests" begin
-    include("EntrRelRMs.jl")
-end
-
-@safetestset "Constraint Functions" begin
-    include("ConstraintTests.jl")
-end
-
-@safetestset "Factor Stats tests" begin
-    include("FactorStatsTest.jl")
-end
-
-@safetestset "WC Stats tests" begin
-    include("WCStatsTest.jl")
-end
-
-@safetestset "Clustering tests" begin
-    include("ClusteringTests.jl")
-end
-
-@safetestset "DBHT Clustering" begin
-    include("DBHTClusteringTests.jl")
-end
-
-@safetestset "Network constraint tests" begin
-    include("NetworkConstraintTests.jl")
-end
-
-@safetestset "BL Stats tests" begin
-    include("BLStatsTests.jl")
 end

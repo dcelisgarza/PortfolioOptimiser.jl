@@ -69,14 +69,14 @@ end
     asset_statistics!(portfolio)
 
     obj = MinRisk()
-    portfolio.long_fees = 0
+    portfolio.fees.long = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
+    portfolio.fees.long = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
     @test isapprox(w1.weights, w2.weights)
-    portfolio.long_fees = 1e-3
+    portfolio.fees.long = 1e-3
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e0
+    portfolio.fees.long = 1e0
     w4 = optimise!(portfolio, Trad(; obj = obj))
 
     @test isapprox(w1.weights, w2.weights)
@@ -84,20 +84,20 @@ end
     @test isapprox(w1.weights, w4.weights)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = 0
+    portfolio.fees.long = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
+    portfolio.fees.long = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-6
+    portfolio.fees.long = 1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-3
+    portfolio.fees.long = 1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = maximum(portfolio.mu) * 0.9275
+    portfolio.fees.long = maximum(portfolio.mu) * 0.9275
     w5 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = maximum(portfolio.mu)
+    portfolio.fees.long = maximum(portfolio.mu)
     w6 = optimise!(portfolio, Trad(; obj = obj))
     @test isempty(w6)
-    portfolio.long_fees = 0
+    portfolio.fees.long = 0
     we = optimise!(portfolio, Trad(; obj = MaxRet()))
 
     @test isapprox(w1.weights, w2.weights)
@@ -111,26 +111,26 @@ end
     @test isapprox(w5.weights, we.weights, rtol = 5.0e-6)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = zeros(20)
-    portfolio.short_fees = zeros(20)
+    portfolio.fees.long = zeros(20)
+    portfolio.fees.short = zeros(20)
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees[5] = 10
+    portfolio.fees.long[5] = 10
     w2 = optimise!(portfolio, Trad(; obj = obj))
     @test w1.weights[5] / w2.weights[5] >= 1e8
 
     portfolio.short = true
     obj = MinRisk()
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-6
-    portfolio.short_fees = -1e-6
+    portfolio.fees.long = 1e-6
+    portfolio.fees.short = -1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-3
-    portfolio.short_fees = -1e-3
+    portfolio.fees.long = 1e-3
+    portfolio.fees.short = -1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
 
     @test isapprox(w1.weights, w2.weights)
@@ -138,27 +138,27 @@ end
     @test isapprox(w1.weights, w4.weights)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 5e-7
-    portfolio.short_fees = -5e-7
+    portfolio.fees.long = 5e-7
+    portfolio.fees.short = -5e-7
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-4
-    portfolio.short_fees = -1e-4
+    portfolio.fees.long = 1e-4
+    portfolio.fees.short = -1e-4
     w4 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = maximum(portfolio.mu) * 0.9
-    portfolio.short_fees = -maximum(portfolio.mu) * 0.9
+    portfolio.fees.long = maximum(portfolio.mu) * 0.9
+    portfolio.fees.short = -maximum(portfolio.mu) * 0.9
     w5 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = maximum(portfolio.mu) * 0.9
-    portfolio.short_fees = -maximum(portfolio.mu)
+    portfolio.fees.long = maximum(portfolio.mu) * 0.9
+    portfolio.fees.short = -maximum(portfolio.mu)
     w6 = optimise!(portfolio, Trad(; obj = obj))
     @test isempty(w6)
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     we = optimise!(portfolio, Trad(; obj = MaxRet()))
 
     @test isapprox(w1.weights, w2.weights)
@@ -172,15 +172,15 @@ end
     @test isapprox(w5.weights, we.weights, rtol = 5.0e-6)
 
     obj = MinRisk()
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = -1e-6
+    portfolio.fees.short = -1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = -1e-3
+    portfolio.fees.short = -1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
 
     @test isapprox(w1.weights, w2.weights)
@@ -188,19 +188,19 @@ end
     @test isapprox(w1.weights, w4.weights)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = -1e-6
+    portfolio.fees.short = -1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = -1e-3
+    portfolio.fees.short = -1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = -maximum(portfolio.mu) * 6.25
+    portfolio.fees.short = -maximum(portfolio.mu) * 6.25
     w5 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.short_fees = 0
+    portfolio.fees.short = 0
     w6 = optimise!(portfolio, Trad(; obj = MaxRet()))
 
     @test isapprox(w1.weights, w2.weights)
@@ -213,15 +213,15 @@ end
     @test isapprox(w5.weights, w6.weights, rtol = 5.0e-5)
 
     obj = MinRisk()
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-6
+    portfolio.fees.long = 1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-3
+    portfolio.fees.long = 1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
 
     @test isapprox(w1.weights, w2.weights)
@@ -229,17 +229,17 @@ end
     @test isapprox(w1.weights, w4.weights)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = 0
-    portfolio.short_fees = 0
+    portfolio.fees.long = 0
+    portfolio.fees.short = 0
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = Float64[]
-    portfolio.short_fees = Float64[]
+    portfolio.fees.long = Float64[]
+    portfolio.fees.short = Float64[]
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-6
+    portfolio.fees.long = 1e-6
     w3 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = 1e-3
+    portfolio.fees.long = 1e-3
     w4 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees = maximum(portfolio.mu) * 1.05
+    portfolio.fees.long = maximum(portfolio.mu) * 1.05
     w5 = optimise!(portfolio, Trad(; obj = obj))
     we = optimise!(portfolio, Trad(; obj = MaxRet()))
 
@@ -253,11 +253,11 @@ end
     @test isapprox(w5.weights, we.weights, rtol = 5.0e-5)
 
     obj = Sharpe(; rf = rf)
-    portfolio.long_fees = zeros(20)
-    portfolio.short_fees = zeros(20)
+    portfolio.fees.long = zeros(20)
+    portfolio.fees.short = zeros(20)
     w1 = optimise!(portfolio, Trad(; obj = obj))
-    portfolio.long_fees[5] = 10
-    portfolio.short_fees[15] = 10
+    portfolio.fees.long[5] = 10
+    portfolio.fees.short[15] = 10
     w2 = optimise!(portfolio, Trad(; obj = obj))
     @test w1.weights[5] / w2.weights[5] >= 1e7
     @test w1.weights[15] / w2.weights[15] >= 30

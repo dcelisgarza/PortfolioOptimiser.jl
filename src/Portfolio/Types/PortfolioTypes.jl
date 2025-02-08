@@ -311,12 +311,11 @@ mutable struct Portfolio{
                          # Cardinality
                          T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_a_card_eq,
                          T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq, T_b_eq, T_tracking,
-                         T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_long_fees,
-                         T_short_fees, T_fixed_long_fees, T_fixed_short_fees, T_rebalance,
-                         T_constraint_scale, T_scale_obj, T_model, T_solvers, T_optimal,
-                         T_fail, T_limits, T_frontier, T_alloc_model, T_alloc_solvers,
-                         T_alloc_optimal, T_alloc_leftover, T_alloc_fail} <:
-               AbstractPortfolio
+                         T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_fees,
+                         T_rebalance, T_constraint_scale, T_scale_obj, T_model, T_solvers,
+                         T_optimal, T_fail, T_limits, T_frontier, T_alloc_model,
+                         T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
+                         T_alloc_fail} <: AbstractPortfolio
     # Assets and factors
     assets::T_assets
     timestamps::T_timestamps
@@ -406,10 +405,7 @@ mutable struct Portfolio{
     l1::T_l1
     l2::T_l2
     # Fees
-    long_fees::T_long_fees
-    short_fees::T_short_fees
-    fixed_long_fees::T_fixed_long_fees
-    fixed_short_fees::T_fixed_short_fees
+    fees::T_fees
     # Rebalance cost
     rebalance::T_rebalance
     # Solution
@@ -480,6 +476,12 @@ function factor_risk_budget_assert(risk_budget, n::Integer, name = "")
         end
     end
     return risk_budget
+end
+function real_or_vector_len_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Integer,
+                                   name = "")
+    if isa(x, AbstractVector) && !isempty(x)
+        @smart_assert(length(x) == n, "Length of $name must be equal to $n")
+    end
 end
 function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Integer,
                                name = "", f = >=, val = 0.0)
@@ -802,11 +804,7 @@ function Portfolio(;
                    # Regularisation
                    l1::Real = 0.0, l2::Real = 0.0,
                    # Fees
-                   long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                   short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                   fixed_long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                   fixed_short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-                   rebalance::AbstractTR = NoTR(),
+                   fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
                    # Solution
                    scale_constr::Real = 1.0, scale_obj::Real = 1.0,
                    model::JuMP.Model = JuMP.Model(),
@@ -923,12 +921,10 @@ function Portfolio(;
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
     # Fees
-    real_or_vector_assert(long_fees, N, :long_fees, >=, zero(eltype(long_fees)))
-    real_or_vector_assert(short_fees, N, :short_fees, <=, zero(eltype(short_fees)))
-    real_or_vector_assert(fixed_long_fees, N, :fixed_long_fees, >=,
-                          zero(eltype(fixed_long_fees)))
-    real_or_vector_assert(fixed_short_fees, N, :fixed_short_fees, <=,
-                          zero(eltype(fixed_short_fees)))
+    real_or_vector_len_assert(fees.long, N, :fees_long)
+    real_or_vector_len_assert(fees.short, N, :fees_short)
+    real_or_vector_len_assert(fees.fixed_long, N, :fees_fixed_long)
+    real_or_vector_len_assert(fees.fixed_short, N, :fees_fixed_short)
 
     tr_assert(rebalance, N)
     # Constraint and objective scales
@@ -979,10 +975,7 @@ function Portfolio(;
                      # Regularisation
                      typeof(l1), typeof(l2),
                      # Fees
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
+                     typeof(fees),
                      # Rebalance cost
                      AbstractTR,
                      # Solution
@@ -1080,10 +1073,7 @@ function Portfolio(;
                                                                                         l1,
                                                                                         l2,
                                                                                         # Fees
-                                                                                        long_fees,
-                                                                                        short_fees,
-                                                                                        fixed_long_fees,
-                                                                                        fixed_short_fees,
+                                                                                        fees,
                                                                                         # Rebalance cost
                                                                                         rebalance,
                                                                                         # Solution
@@ -1296,12 +1286,12 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                 @smart_assert(length(val.w) == size(port.returns, 2))
             end
         end
-    elseif sym ∈ (:long_fees, :fixed_long_fees)
+    elseif sym == :fees
         N = size(port.returns, 2)
-        real_or_vector_assert(val, N, sym, >=, zero(eltype(val)))
-    elseif sym ∈ (:short_fees, :fixed_short_fees)
-        N = size(port.returns, 2)
-        real_or_vector_assert(val, N, sym, <=, zero(eltype(val)))
+        real_or_vector_len_assert(port.fees.long, N, :fees_long)
+        real_or_vector_len_assert(port.fees.short, N, :fees_short)
+        real_or_vector_len_assert(port.fees.fixed_long, N, :fees_fixed_long)
+        real_or_vector_len_assert(port.fees.fixed_short, N, :fees_fixed_short)
     elseif sym ∈ (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))
     else
@@ -1363,10 +1353,7 @@ function Base.deepcopy(port::Portfolio)
                      # Regularisation
                      typeof(port.l1), typeof(port.l2),
                      # Fees
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
-                     Union{<:Real, <:AbstractVector{<:Real}},
+                     typeof(port.fees),
                      # Rebalance cost
                      AbstractTR,
                      # Solution
@@ -1447,10 +1434,7 @@ function Base.deepcopy(port::Portfolio)
                                               # Regularisation
                                               deepcopy(port.l1), deepcopy(port.l2),
                                               # Fees
-                                              deepcopy(port.long_fees),
-                                              deepcopy(port.short_fees),
-                                              deepcopy(port.fixed_long_fees),
-                                              deepcopy(port.fixed_short_fees),
+                                              deepcopy(port.fees),
                                               # Rebalance cost
                                               deepcopy(port.rebalance),
                                               # Solution

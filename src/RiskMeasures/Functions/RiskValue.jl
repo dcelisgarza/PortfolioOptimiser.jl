@@ -302,58 +302,44 @@ function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
 end
 function calc_fees(w::AbstractVector, rebalance::AbstractTR)
     return if isa(rebalance, TR)
-        rebal_fees = rebalance.val
+        fees_rebal = rebalance.val
         benchmark = rebalance.w
-        if isa(rebal_fees, Real)
-            sum(rebal_fees * abs.(benchmark .- w))
+        if isa(fees_rebal, Real)
+            sum(fees_rebal * abs.(benchmark .- w))
         else
-            dot(rebal_fees, abs.(benchmark .- w))
+            dot(fees_rebal, abs.(benchmark .- w))
         end
     else
         zero(eltype(w))
     end
 end
-function calc_fees(w::AbstractVector, long_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, Real} = 0,
-                   rebalance::AbstractTR = NoTR())
-    long_fees = calc_fees(w, long_fees, .>=)
-    short_fees = calc_fees(w, short_fees, .<)
-    rebal_fees = calc_fees(w, rebalance)
-    return long_fees + short_fees + rebal_fees
+function calc_fees(w::AbstractVector, fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
+    fees_long = calc_fees(w, fees.long, .>=)
+    fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
+    fees_short = calc_fees(w, fees.short, .<)
+    fees_fixed_short = -calc_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
+    fees_rebal = calc_fees(w, rebalance)
+    return fees_long + fees_fixed_long + fees_short + fees_fixed_short + fees_rebal
 end
 function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR,
                              UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
                              RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, TCM, FTCM,
                              Skewness, SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
-                   X::AbstractMatrix, long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
+                   X::AbstractMatrix, fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
                    kwargs...)
-    if isnothing(fees)
-        fees = calc_fees(w, long_fees, short_fees, rebalance)
-    end
+    fees = calc_fees(w, fees, rebalance)
     return rm(X * w .- fees)
 end
 function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
-                   scale::Bool = false,
-                   long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
+                   scale::Bool = false, fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
                    kwargs...)
-    if isnothing(fees)
-        fees = calc_fees(w, long_fees, short_fees, rebalance)
-    end
+    fees = calc_fees(w, fees, rebalance)
     return rm(X, w, fees; scale = scale)
 end
 function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, TrackingRM},
-                   w::AbstractVector; X::AbstractMatrix,
-                   long_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   short_fees::Union{AbstractVector{<:Real}, <:Real} = 0,
-                   rebalance::AbstractTR = NoTR(), fees::Union{Nothing, <:Real} = nothing,
-                   kwargs...)
-    if isnothing(fees)
-        fees = calc_fees(w, long_fees, short_fees, rebalance)
-    end
+                   w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(),
+                   rebalance::AbstractTR = NoTR(), kwargs...)
+    fees = calc_fees(w, fees, rebalance)
     return rm(X, w, fees)
 end
 function calc_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, NSSkew,

@@ -85,18 +85,13 @@ end
 function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
                                                    w::AbstractVector, X::AbstractMatrix;
                                                    rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
-                                                   delta::Real = 1e-6,
-                                                   long_fees::Union{AbstractVector{<:Real},
-                                                                    Real} = 0,
-                                                   short_fees::Union{AbstractVector{<:Real},
-                                                                     Real} = 0,
+                                                   delta::Real = 1e-6, fees::Fees = Fees(),
                                                    rebalance::PortfolioOptimiser.AbstractTR = NoTR(),
                                                    percentage::Bool = false,
                                                    erc_line::Bool = true, t_factor = 252,
                                                    marginal::Bool = false, kwargs_bar = (;),
                                                    kwargs_line = (;))
-    rc = risk_contribution(rm, w; X = X, delta = delta, marginal = marginal,
-                           long_fees = long_fees, short_fees = short_fees,
+    rc = risk_contribution(rm, w; X = X, delta = delta, marginal = marginal, fees = fees,
                            rebalance = rebalance)
 
     DDs = (DaR, MDD, ADD, CDaR, EDaR, RLDaR, UCI, DaR_r, MDD_r, ADD_r, CDaR_r, EDaR_r,
@@ -151,8 +146,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
         if percentage
             erc = 1 / length(rc)
         else
-            erc = calc_risk(rm, w; X = X, long_fees = long_fees, short_fees = short_fees,
-                            rebalance = rebalance)
+            erc = calc_risk(rm, w; X = X, fees = fees, rebalance = rebalance)
 
             erc /= length(rc)
 
@@ -189,8 +183,7 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
                                                     percentage = percentage,
                                                     erc_line = erc_line,
                                                     t_factor = t_factor, delta = delta,
-                                                    long_fees = port.long_fees,
-                                                    short_fees = port.short_fees,
+                                                    fees = port.fees,
                                                     rebalance = port.rebalance,
                                                     marginal = marginal,
                                                     kwargs_bar = kwargs_bar,

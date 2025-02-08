@@ -68,8 +68,9 @@ l = 2.0
                           cluster_adj = SDP(; A = A))
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
                           cluster_adj = IP(; A = A))
-    portfolio = Portfolio(; prices = prices, f_prices = factors, long_fees = fill(1, N),
-                          short_fees = fill(-3, N), bl_bench_weights = 2 * (1:N),
+    portfolio = Portfolio(; prices = prices, f_prices = factors,
+                          fees = Fees(; long = fill(1, N), short = fill(-3, N)),
+                          bl_bench_weights = 2 * (1:N),
                           rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
                           tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
@@ -83,8 +84,8 @@ l = 2.0
                           cov_u = cov_u, cov_mu = cov_mu, cov_sigma = cov_sigma,
                           d_mu = fill(inv(9 * N), N), V = V, SV = SV)
     portfolio.returns = 2 * portfolio.returns
-    @test portfolio.long_fees == fill(1, N)
-    @test portfolio.short_fees == fill(-3, N)
+    @test portfolio.fees.long == fill(1, N)
+    @test portfolio.fees.short == fill(-3, N)
     @test portfolio.rebalance.val == 3
     @test portfolio.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5

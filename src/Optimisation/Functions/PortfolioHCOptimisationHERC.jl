@@ -3,23 +3,26 @@
 # SPDX-License-Identifier: MIT
 
 function get_cluster_fees(port, cluster)
-    long_fees = port.long_fees
+    fees_long = port.fees.long
     rebalance = port.rebalance
 
-    if isa(long_fees, AbstractVector) && !(isempty(long_fees) || all(iszero.(long_fees)))
-        long_fees = long_fees[cluster]
+    fees = if isa(fees_long, AbstractVector) &&
+              !(isempty(fees_long) || all(iszero.(fees_long)))
+        Fees(; long = view(fees_long, cluster))
+    else
+        Fees(; long = fees_long)
     end
 
     if isa(rebalance, TR)
-        rebal_fees = rebalance.val
+        fees_rebal = rebalance.val
         benchmark = rebalance.w
-        if isa(rebal_fees, AbstractVector)
-            rebal_fees = rebal_fees[cluster]
+        if isa(fees_rebal, AbstractVector)
+            fees_rebal = view(fees_rebal, cluster)
         end
-        rebalance = TR(; val = rebal_fees, w = benchmark[cluster])
+        rebalance = TR(; val = fees_rebal, w = view(benchmark, cluster))
     end
 
-    return long_fees, rebalance
+    return fees, rebalance
 end
 function naive_risk(port::AbstractPortfolio, mu, sigma, returns, cluster,
                     rm::Union{RiskMeasure, HCRiskMeasure})
@@ -29,9 +32,9 @@ function naive_risk(port::AbstractPortfolio, mu, sigma, returns, cluster,
     old_tr = set_tracking_rm!(rm, cluster)
     old_to = set_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
-    clong_fees, crebalance = get_cluster_fees(port, cluster)
+    cfees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = naive_risk(rm, cret, clong_fees, crebalance)
+    crisk = naive_risk(rm, cret, cfees, crebalance)
     unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)

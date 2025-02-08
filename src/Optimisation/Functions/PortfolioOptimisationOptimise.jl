@@ -24,7 +24,7 @@ function optimise!(port::Portfolio, type::Trad)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fees(port)
+    rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -51,14 +51,14 @@ function optimise!(port::Portfolio, type::RB)
     rb_opt_constraints(port, class, w_ini)
     # Weight constraints
     weight_constraints(port, false)
-    MIP_constraints(port, false)
+    MIP_constraints(port)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fees(port)
+    rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -86,14 +86,14 @@ function optimise!(port::Portfolio, type::RRB)
     initial_w(port, w_ini)
     set_k(port, nothing)
     weight_constraints(port, false)
-    MIP_constraints(port, false)
+    MIP_constraints(port)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
     tracking_error_constraints(port, returns)
     turnover_constraints(port)
     # Fees
     management_fee(port)
-    rebalance_fees(port)
+    rebalance_fee(port)
     # Risk
     rrb_opt_constraints(port, version, sigma)
     # Returns
@@ -122,7 +122,7 @@ function optimise!(port::Portfolio, type::NOC)
     # Weight constraints
     weight_constraints(port, false)
     if flag
-        MIP_constraints(port, false)
+        MIP_constraints(port)
         SDP_network_cluster_constraints(port, nothing)
         # Tracking
         tracking_error_constraints(port, returns)
@@ -133,7 +133,7 @@ function optimise!(port::Portfolio, type::NOC)
     end
     # Fees
     management_fee(port)
-    rebalance_fees(port)
+    rebalance_fee(port)
     # Risk
     kelly_approx_idx = Int[]
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
@@ -202,18 +202,17 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad
     w1 = fl.w_min
     w2 = fl.w_max
 
-    long_fees = port.long_fees
-    short_fees = port.short_fees
+    fees = port.fees
     rebalance = port.rebalance
 
-    fees1 = calc_fees(w1, long_fees, short_fees, rebalance)
-    fees2 = calc_fees(w2, long_fees, short_fees, rebalance)
     if isa(kelly, NoKelly)
-        ret1 = dot(mu, w1) - fees1
-        ret2 = dot(mu, w2) - fees2
+        ret1 = dot(mu, w1) - calc_fees(w1, fees, rebalance)
+        ret2 = dot(mu, w2) - calc_fees(w2, fees, rebalance)
     else
-        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) - fees1
-        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) - fees2
+        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) -
+               calc_fees(w1, fees, rebalance)
+        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) -
+               calc_fees(w2, fees, rebalance)
     end
 
     rm_i = get_first_rm(rm)
@@ -223,8 +222,8 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm_i, port.solvers,
                                                                         sigma, port.V,
                                                                         port.SV)
-    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees1 = fees1,
-                               fees2 = fees2)
+    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees = fees,
+                               rebalance = rebalance)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -264,8 +263,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad
         if isempty(w)
             continue
         end
-        rk = calc_risk(rm_i, w.weights; X = returns, long_fees = long_fees,
-                       short_fees = short_fees, rebalance = rebalance)
+        rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
@@ -275,8 +273,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad
     w = optimise!(port, type)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(rm_i, w.weights; X = returns, long_fees = long_fees,
-                       short_fees = short_fees, rebalance = rebalance)
+        rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         i += 1
