@@ -240,8 +240,10 @@ function optimise_JuMP_model(model, solvers)
         check_sol = solver.check_sol
 
         set_optimizer(model, solver_i; add_bridges = add_bridges)
-        if !isnothing(params)
-            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
+        if !isnothing(params) && !isempty(params)
+            for (k, v) ∈ params
+                set_attribute(model, k, v)
+            end
         end
 
         try
@@ -251,16 +253,15 @@ function optimise_JuMP_model(model, solvers)
             continue
         end
 
-        if is_solved_and_feasible(model; check_sol...)
-            sucess = true
+        try
+            assert_is_solved_and_feasible(model; check_sol...)
+            success = true
             break
-        else
-            term_status = termination_status(model)
+        catch err
+            push!(solvers_tried,
+                  name => Dict(:objective_val => objective_value(model), :err => err,
+                               :params => params))
         end
-
-        push!(solvers_tried,
-              name => Dict(:objective_val => objective_value(model),
-                           :term_status => term_status, :params => params))
     end
 
     return sucess, solvers_tried

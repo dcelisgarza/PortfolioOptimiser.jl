@@ -12,8 +12,8 @@ l = 2.0
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     rm = [SD(), [CVaR()], [FLPM(), FLPM()]]

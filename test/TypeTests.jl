@@ -15,8 +15,8 @@ l = 2.0
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     @test_throws AssertionError portfolio.max_num_assets_kurt = -1
     @test portfolio.max_num_assets_kurt == 0

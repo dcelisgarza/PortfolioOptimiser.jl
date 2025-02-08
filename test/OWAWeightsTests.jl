@@ -35,7 +35,7 @@ end
 @testset "OWA L-Moment" begin
     solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                             check_sol = (; allow_local = true, allow_almost = true),
-                            params = ["verbose" => false, "max_step_fraction" => 0.75])
+                            params = Dict("verbose" => false, "max_step_fraction" => 0.75))
 
     w1 = owa_l_moment_crm(200; k = 2, type = CRRA(; g = 0.25))
     w2 = owa_l_moment_crm(200; k = 4, type = CRRA(; g = 0.25))
@@ -75,7 +75,7 @@ end
                            type = MinSqDist(; max_phi = 0.75, solvers = solvers))
 
     solvers = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
-                            params = "log_to_console" => false)
+                            params = Dict("log_to_console" => false))
 
     w25 = owa_l_moment_crm(200; k = 4, type = MinSumSq(; max_phi = 0.75, solvers = solvers))
 

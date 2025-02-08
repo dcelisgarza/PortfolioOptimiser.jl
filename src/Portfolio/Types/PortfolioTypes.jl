@@ -312,10 +312,11 @@ mutable struct Portfolio{
                          T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_a_card_eq,
                          T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq, T_b_eq, T_tracking,
                          T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_long_fees,
-                         T_short_fees, T_rebalance, T_constraint_scale, T_scale_obj,
-                         T_model, T_solvers, T_optimal, T_fail, T_limits, T_frontier,
-                         T_alloc_model, T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
-                         T_alloc_fail} <: AbstractPortfolio
+                         T_short_fees, T_fixed_long_fees, T_fixed_short_fees, T_rebalance,
+                         T_constraint_scale, T_scale_obj, T_model, T_solvers, T_optimal,
+                         T_fail, T_limits, T_frontier, T_alloc_model, T_alloc_solvers,
+                         T_alloc_optimal, T_alloc_leftover, T_alloc_fail} <:
+               AbstractPortfolio
     # Assets and factors
     assets::T_assets
     timestamps::T_timestamps
@@ -407,6 +408,8 @@ mutable struct Portfolio{
     # Fees
     long_fees::T_long_fees
     short_fees::T_short_fees
+    fixed_long_fees::T_fixed_long_fees
+    fixed_short_fees::T_fixed_short_fees
     # Rebalance cost
     rebalance::T_rebalance
     # Solution
@@ -801,6 +804,8 @@ function Portfolio(;
                    # Fees
                    long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                    short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                   fixed_long_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+                   fixed_short_fees::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
                    rebalance::AbstractTR = NoTR(),
                    # Solution
                    scale_constr::Real = 1.0, scale_obj::Real = 1.0,
@@ -920,6 +925,11 @@ function Portfolio(;
     # Fees
     real_or_vector_assert(long_fees, N, :long_fees, >=, zero(eltype(long_fees)))
     real_or_vector_assert(short_fees, N, :short_fees, <=, zero(eltype(short_fees)))
+    real_or_vector_assert(fixed_long_fees, N, :fixed_long_fees, >=,
+                          zero(eltype(fixed_long_fees)))
+    real_or_vector_assert(fixed_short_fees, N, :fixed_short_fees, <=,
+                          zero(eltype(fixed_short_fees)))
+
     tr_assert(rebalance, N)
     # Constraint and objective scales
     @smart_assert(scale_constr > zero(scale_constr))
@@ -969,6 +979,8 @@ function Portfolio(;
                      # Regularisation
                      typeof(l1), typeof(l2),
                      # Fees
+                     Union{<:Real, <:AbstractVector{<:Real}},
+                     Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
                      Union{<:Real, <:AbstractVector{<:Real}},
                      # Rebalance cost
@@ -1070,6 +1082,8 @@ function Portfolio(;
                                                                                         # Fees
                                                                                         long_fees,
                                                                                         short_fees,
+                                                                                        fixed_long_fees,
+                                                                                        fixed_short_fees,
                                                                                         # Rebalance cost
                                                                                         rebalance,
                                                                                         # Solution
@@ -1282,10 +1296,10 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                 @smart_assert(length(val.w) == size(port.returns, 2))
             end
         end
-    elseif sym == :long_fees
+    elseif sym ∈ (:long_fees, :fixed_long_fees)
         N = size(port.returns, 2)
         real_or_vector_assert(val, N, sym, >=, zero(eltype(val)))
-    elseif sym == :short_fees
+    elseif sym ∈ (:short_fees, :fixed_short_fees)
         N = size(port.returns, 2)
         real_or_vector_assert(val, N, sym, <=, zero(eltype(val)))
     elseif sym ∈ (:scale_constr, :scale_obj)
@@ -1433,6 +1447,8 @@ function Base.deepcopy(port::Portfolio)
                                               # Fees
                                               deepcopy(port.long_fees),
                                               deepcopy(port.short_fees),
+                                              deepcopy(port.fixed_long_fees),
+                                              deepcopy(port.fixed_short_fee),
                                               # Rebalance cost
                                               deepcopy(port.rebalance),
                                               # Solution
