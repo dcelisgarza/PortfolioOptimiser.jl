@@ -231,7 +231,7 @@ Internal function to optimise an OWA JuMP model.
 function optimise_JuMP_model(model, solvers)
     solvers_tried = Dict()
 
-    sucess = false
+    success = false
     for solver ∈ solvers
         name = solver.name
         solver_i = solver.solver
@@ -264,7 +264,7 @@ function optimise_JuMP_model(model, solvers)
         end
     end
 
-    return sucess, solvers_tried
+    return success, solvers_tried
 end
 
 """
