@@ -189,6 +189,16 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     network_adj = port.network_adj
     cluster_adj = port.cluster_adj
 
+    # long_fixed_fees = port.long_fixed_fees
+    # short_fixed_fees = port.short_fixed_fees
+    # long_fixed_fees_flag = (isa(long_fixed_fees, Real) && !iszero(long_fixed_fees) ||
+    #                         isa(long_fixed_fees, AbstractVector) &&
+    #                         (!isempty(long_fixed_fees) || any(.!iszero(long_fixed_fees))))
+    # short_fixed_fees_flag = (isa(short_fixed_fees, Real) && !iszero(short_fixed_fees) ||
+    #                         isa(short_fixed_fees, AbstractVector) &&
+    #                         (!isempty(short_fixed_fees) || any(.!iszero(short_fixed_fees))))
+    # fixed_fees_flag = long_fixed_fees_flag || short_fixed_fees_flag
+
     long_t_flag = (isa(long_t, Real) && !iszero(long_t) ||
                    isa(long_t, AbstractVector) &&
                    (!isempty(long_t) || any(.!iszero(long_t))))
@@ -235,7 +245,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
     short = port.short
     long_ub = port.long_ub
     short_lb = port.short_lb
-    if short_t_flag && short && allow_shorting
+    # Separate this out into a function with the condition in the comment.
+
+    if short_t_flag && short && allow_shorting # (short_t_flag || fixed_fees_flag) && short && allow_shorting
         scale = port.card_scale
         @variables(model, begin
                        is_invested_long_bool[1:N], (binary = true)
@@ -281,6 +293,11 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * w .<= scale_constr * is_invested_long .* long_ub
                          constr_w_mip_lb,
                          scale_constr * w .>= scale_constr * is_invested_short .* short_lb
+                     end)
+
+        # if short_t_flag
+        @constraints(model,
+                     begin
                          constr_long_w_mip_t,
                          scale_constr * w .>=
                          scale_constr * (is_invested_long .* long_t .-
@@ -290,6 +307,15 @@ function MIP_constraints(port, allow_shorting::Bool = true)
                          scale_constr * (is_invested_short .* short_t .+
                                          scale * (1 .- is_invested_short_bool))
                      end)
+        # end
+
+        # if fixed_fees_flag
+        #     @expressions(model,
+        #                  begin
+        #                      fixed_long_fees, sum(fixed_long_fees .* is_invested_long)
+        #                      fixed_short_fees, -sum(fixed_short_fees .* is_invested_short)
+        #                  end)
+        # end
     else
         @variable(model, is_invested_bool[1:N], binary = true)
         if isa(k, Real)
@@ -313,6 +339,9 @@ function MIP_constraints(port, allow_shorting::Bool = true)
             @constraint(model, constr_long_w_mip_t,
                         scale_constr * w .>= scale_constr * is_invested .* long_t)
         end
+        # if fixed_long_fees_flag
+        #     @expression(model, fixed_long_fees, sum(fixed_long_fees .* is_invested))
+        # end
         if short && allow_shorting
             @constraint(model, constr_w_mip_lb,
                         scale_constr * w .>= scale_constr * is_invested .* short_lb)
