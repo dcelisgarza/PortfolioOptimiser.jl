@@ -898,8 +898,8 @@ end
                                                    solver = Clarabel.Optimizer,
                                                    check_sol = (; allow_local = true,
                                                                 allow_almost = true),
-                                                   params = ["verbose" => false,
-                                                             "max_step_fraction" => 0.75])])
+                                                   params = Dict("verbose" => false,
+                                                                 "max_step_fraction" => 0.75))])
 
     asset_statistics!(portfolio)
 
@@ -1639,9 +1639,9 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 500]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 500)))
 
     asset_statistics!(portfolio)
 
@@ -1849,8 +1849,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -2263,8 +2263,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
 
     obj = MinRisk()

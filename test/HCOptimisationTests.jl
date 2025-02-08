@@ -15,8 +15,8 @@ l = 2.0
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
                       set_skurt = false)
@@ -303,8 +303,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio; set_mu = false, set_cov = false, set_kurt = false,
                       set_skurt = false)
@@ -597,8 +597,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -671,8 +671,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
     N = size(portfolio.returns, 2)
@@ -744,8 +744,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -1130,9 +1130,9 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 1]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 1)))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -1165,8 +1165,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio; cor_type = PortCovCor(; ce = CovLTD()))
     cluster_assets!(portfolio)
@@ -1273,8 +1273,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -1336,8 +1336,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -1784,8 +1784,8 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.65])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.65))
 
     rm = RLVaR()
     w41 = optimise!(portfolio,
@@ -1845,8 +1845,8 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.75])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.75))
 
     rm = MDD()
     w46 = optimise!(portfolio,
@@ -2576,8 +2576,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()
@@ -2644,8 +2644,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -2693,8 +2693,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -3026,8 +3026,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT()
@@ -3360,8 +3360,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = DBHT(; root_type = EqualDBHT())
@@ -3480,8 +3480,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     cluster_assets!(portfolio)
@@ -3539,8 +3539,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     clust_alg = HAC()

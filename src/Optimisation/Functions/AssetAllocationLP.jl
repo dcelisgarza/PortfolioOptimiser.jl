@@ -13,7 +13,6 @@ end
 function optimise_allocation(port, label, tickers, latest_prices)
     model = port.alloc_model
     solvers = port.alloc_solvers
-    term_status = termination_status(model)
     solvers_tried = Dict()
 
     success = false
@@ -26,8 +25,10 @@ function optimise_allocation(port, label, tickers, latest_prices)
         check_sol = solver.check_sol
 
         set_optimizer(model, solver_i; add_bridges = add_bridges)
-        if !isnothing(params)
-            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
+        if !isnothing(params) && !isempty(params)
+            for (k, v) ∈ params
+                set_attribute(model, k, v)
+            end
         end
 
         try
@@ -37,21 +38,19 @@ function optimise_allocation(port, label, tickers, latest_prices)
             continue
         end
 
-        if is_solved_and_feasible(model; check_sol...)
+        try
+            assert_is_solved_and_feasible(model; check_sol...)
             success = true
             break
-        else
-            term_status = termination_status(model)
+        catch err
+            shares, cost, weights, available_funds = resolve_model(model, latest_prices)
+            push!(solvers_tried,
+                  name => Dict(:objective_val => objective_value(model), :err => err,
+                               :params => params, :available_funds => available_funds,
+                               :allocation => DataFrame(; tickers = tickers,
+                                                        shares = shares, cost = cost,
+                                                        weights = weights)))
         end
-
-        shares, cost, weights, available_funds = resolve_model(model, latest_prices)
-
-        push!(solvers_tried,
-              name => Dict(:objective_val => objective_value(model),
-                           :term_status => term_status, :params => params,
-                           :available_funds => available_funds,
-                           :allocation => DataFrame(; tickers = tickers, shares = shares,
-                                                    cost = cost, weights = weights)))
     end
 
     name = Symbol(string(name) * "_" * string(label))

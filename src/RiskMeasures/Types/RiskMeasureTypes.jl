@@ -7,7 +7,7 @@
 
 Structure for defining solver and solver parameters for solving [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-  - Functions and types which take a `PortOptSolver` also take a `<:AbstractVector{<:PortOptSolver}`.
+  - Functions and types which take a `PortOptSolver` also take a `<:AbstractVector{PortOptSolver}`.
 
       + If a vector is provided, it will iterated over until a solution is accepted or the vector runs out, at which point the optimisation will be considered to have failed.
 
@@ -18,7 +18,7 @@ See also: [`Portfolio`](@ref), [`RMSolvers`](@ref), [`OWAJTypes`](@ref).
   - `name::Union{Symbol, <:AbstractString} = ""`: optimiser name (for registering solutions).
   - `solver::Any = nothing`: defines the solver to be used. One can also use [`JuMP.optimizer_with_attributes`](https://jump.dev/JuMP.jl/stable/api/JuMP/#optimizer_with_attributes) to direcly provide a solver with attributes already attached.`JuMP` optimiser factory [`optimizer_factory`](https://jump.dev/JuMP.jl/stable/api/JuMP/#Model).
   - `check_sol::NamedTuple = (; allow_local = true, allow_almost = true)`: defines the keyword arguments passed on to [`JuMP.is_solved_and_feasible`](https://jump.dev/JuMP.jl/stable/api/JuMP/#is_solved_and_feasible) for accepting/rejecting solutions.
-  - `params::Union{Nothing, <:Pair, <:AbstractVector{<:Pair}} = nothing`:  defines solver-specific parameters/attributes.
+  - `solvers::Union{Nothing, <:AbstractDict} = nothing`:  defines solver-specific parameters/attributes.
   - `add_bridges::Bool = true`: value of the `add_bridges` kwarg of [`JuMP.set_optimizer`](https://jump.dev/JuMP.jl/stable/api/JuMP/#JuMP.set_optimizer).
 
 # Examples
@@ -29,11 +29,11 @@ It's possible to define a single solver.
 using JuMP, Clarabel, PortfolioOptimiser
 solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                         check_sol = (allow_local = true, allow_almost = true),
-                        params = "verbose" => false, add_bridges = false)
+                        params = Dict("verbose" => false), add_bridges = false)
 
 # output
 
-PortOptSolver(:Clarabel, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), "verbose" => false, false)
+PortOptSolver(:Clarabel, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), Dict{String, Bool}("verbose" => 0), false)
 ```
 
 Or a collection of solvers.
@@ -41,7 +41,7 @@ Or a collection of solvers.
 ```jldoctest solvers
 solvers = [PortOptSolver(; name = :Clarabel_1, solver = Clarabel.Optimizer,
                          check_sol = (allow_local = true, allow_almost = true),
-                         params = ["verbose" => false, "max_step_fraction" => 0.8]),
+                         params = Dict("verbose" => false, "max_step_fraction" => 0.8)),
            # Provide solver with pre-attached attributes and no arguments 
            # for the `JuMP.is_solved_and_feasible` function.
            PortOptSolver(; name = :Clarabel_2,
@@ -53,7 +53,7 @@ solvers = [PortOptSolver(; name = :Clarabel_1, solver = Clarabel.Optimizer,
 # output
 
 2-element Vector{PortOptSolver}:
- PortOptSolver(:Clarabel_1, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), ["verbose" => 0.0, "max_step_fraction" => 0.8], true)
+ PortOptSolver(:Clarabel_1, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), Dict{String, Real}("verbose" => false, "max_step_fraction" => 0.8), true)
  PortOptSolver(:Clarabel_2, MathOptInterface.OptimizerWithAttributes(Clarabel.MOIwrapper.Optimizer, Pair{MathOptInterface.AbstractOptimizerAttribute, Any}[MathOptInterface.RawOptimizerAttribute("max_step_fraction") => 0.75]), (allow_local = true, allow_almost = true), nothing, false)
 ```
 """

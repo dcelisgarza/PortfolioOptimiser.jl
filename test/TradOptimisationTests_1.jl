@@ -56,10 +56,10 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.75,
-                                                "max_iter" => 100,
-                                                "equilibrate_max_iter" => 20])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.75,
+                                                    "max_iter" => 100,
+                                                    "equilibrate_max_iter" => 20))
 
     rm = [[OWA(; formulation = OWAExact()), OWA(; formulation = OWAApprox())]]
     optimise!(portfolio, Trad(; rm = rm))
@@ -70,7 +70,7 @@ end
     portfolio.solvers = [PortOptSolver(; name = :Clarabel1, solver = Clarabel.Optimizer,
                                        check_sol = (; allow_local = true,
                                                     allow_almost = true),
-                                       params = ["verbose" => false, "max_iter" => 1]),
+                                       params = Dict("verbose" => false, "max_iter" => 1)),
                          PortOptSolver(; name = :Clarabel2, solver = Clarabel.Optimizer,
                                        check_sol = (; allow_local = true,
                                                     allow_almost = true),

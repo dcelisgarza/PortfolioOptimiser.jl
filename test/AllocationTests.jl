@@ -9,11 +9,11 @@ l = 2.0
 @testset "Allocation" begin
     solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                             check_sol = (; allow_local = true, allow_almost = true),
-                            params = ["verbose" => false, "max_step_fraction" => 0.75])
+                            params = Dict("verbose" => false, "max_step_fraction" => 0.75))
 
     alloc_solvers = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
                                   check_sol = (allow_local = true, allow_almost = true),
-                                  params = "log_to_console" => false)
+                                  params = Dict("log_to_console" => false))
 
     portfolio = Portfolio(; prices = prices, solvers = solvers,
                           alloc_solvers = alloc_solvers)
@@ -79,8 +79,8 @@ l = 2.0
     portfolio.alloc_solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                             check_sol = (; allow_local = true,
                                                          allow_almost = true),
-                                            params = ["verbose" => false,
-                                                      "max_step_fraction" => 0.75])
+                                            params = Dict("verbose" => false,
+                                                          "max_step_fraction" => 0.75))
     w20 = allocate!(portfolio; type = LP(), investment = 1e6)
     @test !is_solved_and_feasible(portfolio.alloc_model)
 

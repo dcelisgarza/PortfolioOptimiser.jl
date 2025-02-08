@@ -13,19 +13,19 @@ l = 2.0
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad())
 
     solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                             check_sol = (; allow_local = true, allow_almost = true),
-                            params = ["verbose" => false, "max_iter" => 1])
+                            params = Dict("verbose" => false, "max_iter" => 1))
 
     solvers_mip = PortOptSolver(; name = :HiGHS, solver = HiGHS.Optimizer,
                                 check_sol = (; allow_local = true, allow_almost = true),
-                                params = "log_to_console" => false)
+                                params = Dict("log_to_console" => false))
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
@@ -53,8 +53,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad(; rm = EVaR(), obj = Sharpe()))
 
@@ -83,8 +83,8 @@ end
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
                                                   solver = Clarabel.Optimizer,
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     optimise!(portfolio, Trad(; rm = EDaR(), obj = Sharpe()))
 
