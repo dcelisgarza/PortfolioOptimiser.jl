@@ -84,11 +84,22 @@ function finilise_fees(port, weights)
 
     return fees
 end
+function push_solvers_tried!(port, type, class, solvers_tried, key, err, all_finite_weights,
+                             all_non_zero_weights)
+    model = port.model
+    weights = cleanup_weights(port, type, class)
+    fees = finilise_fees(port, weights)
+    return push!(solvers_tried,
+                 key => Dict(:objective_val => objective_value(model), :err => err,
+                             :params => params, :finite_weights => all_finite_weights,
+                             :nonzero_weights => all_non_zero_weights,
+                             :port => DataFrame(; tickers = port.assets, weights = weights),
+                             :fees => fees))
+end
 function optimise_portfolio_model(port, type, class)
     solvers = port.solvers
     model = port.model
 
-    term_status = termination_status(model)
     solvers_tried = Dict()
 
     success = false
@@ -102,8 +113,10 @@ function optimise_portfolio_model(port, type, class)
 
         key = Symbol(String(name) * strtype)
         set_optimizer(model, solver_i; add_bridges = add_bridges)
-        if !isnothing(params)
-            set_attribute.(model, getindex.(params, 1), getindex.(params, 2))
+        if !isnothing(params) && !isempty(params)
+            for (k, v) ∈ params
+                set_attribute(model, k, v)
+            end
         end
 
         try
@@ -117,24 +130,20 @@ function optimise_portfolio_model(port, type, class)
         all_non_zero_weights = !all(isapprox.(abs.(value.(model[:w])),
                                               zero(eltype(port.returns))))
 
-        if is_solved_and_feasible(model; check_sol...) &&
-           all_finite_weights &&
-           all_non_zero_weights
-            success = true
-            break
-        else
-            term_status = termination_status(model)
+        try
+            assert_is_solved_and_feasible(model; check_sol...)
+            if all_finite_weights && all_non_zero_weights
+                success = true
+                break
+            end
+        catch err
+            push_solvers_tried!(port, type, class, solvers_tried, key, err,
+                                all_finite_weights, all_non_zero_weights)
         end
 
-        weights = cleanup_weights(port, type, class)
-        fees = finilise_fees(port, weights)
-        push!(solvers_tried,
-              key => Dict(:objective_val => objective_value(model),
-                          :term_status => term_status, :params => params,
-                          :finite_weights => all_finite_weights,
-                          :nonzero_weights => all_non_zero_weights,
-                          :port => DataFrame(; tickers = port.assets, weights = weights),
-                          :fees => fees))
+        err = solution_summary(model)
+        push_solvers_tried!(port, type, class, solvers_tried, key, err, all_finite_weights,
+                            all_non_zero_weights)
     end
 
     return if success

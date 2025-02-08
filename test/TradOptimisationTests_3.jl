@@ -241,8 +241,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = EDaR()
 
@@ -476,8 +476,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = RLDaR()
 
@@ -711,8 +711,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
 
     obj = MinRisk()
@@ -750,8 +750,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = Kurt()
 
@@ -983,8 +983,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)),
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
     rm = Kurt()
@@ -1220,8 +1220,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = SKurt()
 
@@ -1451,8 +1451,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)),
                           max_num_assets_kurt = 1)
     asset_statistics!(portfolio)
     rm = SKurt()
@@ -1683,8 +1683,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = NQSkew()
 
@@ -1916,8 +1916,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = NQSSkew()
 
@@ -2149,8 +2149,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
     asset_statistics!(portfolio)
     rm = BDVariance()
 
@@ -2258,8 +2258,8 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.99])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.99))
 
     w9 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [1.4043980975143159e-9, 1.0689935206604866e-8, 1.9130097739429034e-9,
@@ -2274,8 +2274,8 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.75])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.75))
 
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))

@@ -4,10 +4,10 @@
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 100,
-                                                            "equilibrate_max_iter" => 20]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 100,
+                                                                "equilibrate_max_iter" => 20)))
 
     asset_statistics!(portfolio)
     rm = GMD(; formulation = OWAExact())
@@ -486,10 +486,10 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 100,
-                                                            "equilibrate_max_iter" => 20]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 100,
+                                                                "equilibrate_max_iter" => 20)))
     asset_statistics!(portfolio)
     rm = TG(; formulation = OWAExact())
 
@@ -965,10 +965,10 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 150,
-                                                            "equilibrate_max_iter" => 20]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 150,
+                                                                "equilibrate_max_iter" => 20)))
 
     asset_statistics!(portfolio)
     rm = TGRG(; formulation = OWAExact())
@@ -1277,10 +1277,10 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.65,
-                                                "max_iter" => 200,
-                                                "equilibrate_max_iter" => 20])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.65,
+                                                    "max_iter" => 200,
+                                                    "equilibrate_max_iter" => 20))
 
     w26 = optimise!(portfolio, Trad(; rm = rm, kelly = EKelly(), obj = obj))
     wt = [1.1021014280037167e-10, 0.07451709909662046, 1.4914922139122829e-10,
@@ -1296,10 +1296,10 @@ end
     portfolio.solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                                       check_sol = (; allow_local = true,
                                                    allow_almost = true),
-                                      params = ["verbose" => false,
-                                                "max_step_fraction" => 0.75,
-                                                "max_iter" => 150,
-                                                "equilibrate_max_iter" => 20])
+                                      params = Dict("verbose" => false,
+                                                    "max_step_fraction" => 0.75,
+                                                    "max_iter" => 150,
+                                                    "equilibrate_max_iter" => 20))
 
     obj = Sharpe(; rf = rf)
     w27 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
@@ -1461,10 +1461,10 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 100,
-                                                            "equilibrate_max_iter" => 20]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 100,
+                                                                "equilibrate_max_iter" => 20)))
     asset_statistics!(portfolio)
     rm = OWA(; formulation = OWAExact())
 
@@ -1940,10 +1940,10 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75,
-                                                            "max_iter" => 100,
-                                                            "equilibrate_max_iter" => 20]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75,
+                                                                "max_iter" => 100,
+                                                                "equilibrate_max_iter" => 20)))
     asset_statistics!(portfolio)
     rm = OWA(; w = owa_tg(200), formulation = OWAExact())
 
@@ -2421,8 +2421,8 @@ end
                                                   solver = Clarabel.Optimizer,
                                                   check_sol = (; allow_local = true,
                                                                allow_almost = true),
-                                                  params = ["verbose" => false,
-                                                            "max_step_fraction" => 0.75]))
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_skew = false,
                       set_sskew = false)
