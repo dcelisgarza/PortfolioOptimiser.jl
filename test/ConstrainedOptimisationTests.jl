@@ -238,6 +238,8 @@ l = 2.0
     w2 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
     w2a = allocate!(portfolio; investment = 1000 - fees)
     cost2 = sum(w2a[!, :cost])
+    display(w1a)
+    display(w2a)
     @test w1a == w2a
 
     portfolio.fees.fixed_long = 5.7
@@ -250,6 +252,8 @@ l = 2.0
     w4 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
     w4a = allocate!(portfolio; investment = 1000 - fees)
     cost4 = sum(w4a[!, :cost])
+    display(w3a)
+    display(w4a)
     @test w3a == w4a
 
     # portfolio.short = true
