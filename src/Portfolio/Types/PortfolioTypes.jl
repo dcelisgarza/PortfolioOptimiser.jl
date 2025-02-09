@@ -1179,18 +1179,24 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                                  port.budget_ub, port.short, port.short_t, port.short_lb,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :long_ub
         N = size(port.returns, 2)
         long_short_budget_assert(N, port.long_t, val, port.budget_lb, port.budget,
                                  port.budget_ub, port.short, port.short_t, port.short_lb,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :budget_lb
         N = size(port.returns, 2)
         long_short_budget_assert(N, port.long_t, port.long_ub, val, port.budget,
                                  port.budget_ub, port.short, port.short_t, port.short_lb,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
+        if isinf(val) && isinf(port.budget) && isinf(port.budget_ub)
+            port.budget = one(port.budget)
+        end
     elseif sym == :budget
         N = size(port.returns, 2)
         val = long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb, val,
@@ -1204,23 +1210,33 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
                                  val, port.short, port.short_t, port.short_lb,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
+        if isinf(val) && isinf(port.budget) && isinf(port.budget_lb)
+            port.budget = one(port.budget)
+        end
     elseif sym == :short_t
         N = size(port.returns, 2)
         long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb, port.budget,
                                  port.budget_ub, port.short, val, port.short_lb,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :short_lb
         N = size(port.returns, 2)
         long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb, port.budget,
                                  port.budget_ub, port.short, port.short_t, val,
                                  port.short_budget_ub, port.short_budget,
                                  port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :short_budget_ub
         N = size(port.returns, 2)
         long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb, port.budget,
                                  port.budget_ub, port.short, port.short_t, port.short_lb,
                                  val, port.short_budget, port.short_budget_lb)
+        val = convert(typeof(getfield(port, sym)), val)
+        if isinf(val) && isinf(port.short_budget) && isinf(port.short_budget_lb)
+            port.short_budget = -0.2 * one(port.short_budget)
+        end
     elseif sym == :short_budget
         N = size(port.returns, 2)
         val = long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb,
@@ -1233,6 +1249,10 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         long_short_budget_assert(N, port.long_t, port.long_ub, port.budget_lb, port.budget,
                                  port.budget_ub, port.short, port.short_t, port.short_lb,
                                  port.short_budget_ub, port.short_budget, val)
+        val = convert(typeof(getfield(port, sym)), val)
+        if isinf(val) && isinf(port.short_budget) && isinf(port.short_budget_ub)
+            port.short_budget = -0.2 * one(port.short_budget)
+        end
     elseif sym == :a_card_ineq
         N = size(port.returns, 2)
         linear_constraint_assert(val, port.b_card_ineq, N, "card_ineq")
@@ -1268,12 +1288,15 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
     elseif sym == :tracking
         T, N = size(port.returns)
         tracking_assert(val, T, N)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :turnover
         N = size(port.returns, 2)
         tr_assert(val, N)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:network_adj, :cluster_adj)
         N = size(port.returns, 2)
         adj_assert(val, N)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, TR)
             if isa(val.val, Real)
@@ -1292,8 +1315,10 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         real_or_vector_len_assert(port.fees.short, N, :fees_short)
         real_or_vector_len_assert(port.fees.fixed_long, N, :fees_fixed_long)
         real_or_vector_len_assert(port.fees.fixed_short, N, :fees_fixed_short)
+        val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))
+        val = convert(typeof(getfield(port, sym)), val)
     else
         if (isa(getfield(port, sym), AbstractArray) && isa(val, AbstractArray)) ||
            (isa(getfield(port, sym), Real) && isa(val, Real))

@@ -139,8 +139,26 @@ l = 2.0
     @test portfolio.tracking.w == fill(inv(100 * M), M)
     @test portfolio.kurt == kurt
     @test portfolio.skurt == skurt
-
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
+    @test_throws AssertionError Portfolio(; prices = prices, long_t = fill(0, 19))
+    @test_throws AssertionError Portfolio(; prices = prices, long_t = -1)
+    portfolio = Portfolio(; prices = prices, budget = Inf)
+    @test isone(portfolio.budget)
+    portfolio = Portfolio(; prices = prices, budget = Inf, budget_lb = 1.3, budget_ub = 1.5)
+    @test isinf(portfolio.budget)
+    @test portfolio.budget_lb == 1.3
+    @test portfolio.budget_ub == 1.5
+    @test_throws AssertionError portfolio.budget_lb = 1.6
+    @test_throws AssertionError portfolio.budget_ub = 1.2
+    portfolio.budget_ub = 1.5
+    @test_throws AssertionError portfolio.budget_lb = 1.6
+    portfolio.budget_lb = Inf
+    portfolio.budget_ub = Inf
+    @test isone(portfolio.budget)
+
+    portfolio = Portfolio(; prices = prices)
+    portfolio.budget = Inf
+    @assert isone(portfolio.budget)
 
     A = [0 1 0;
          1 0 0;
