@@ -3,14 +3,25 @@
 # SPDX-License-Identifier: MIT
 
 function get_cluster_fees(port, cluster)
-    fees_long = port.fees.long
+    fees = port.fees
+    fees_long = fees.long
+    fees_fixed_long = fees.fixed_long
     rebalance = port.rebalance
+    flag = false
 
-    fees = if isa(fees_long, AbstractVector) &&
-              !(isempty(fees_long) || all(iszero.(fees_long)))
-        Fees(; long = view(fees_long, cluster))
-    else
-        Fees(; long = fees_long)
+    if isa(fees_long, AbstractVector) && !(isempty(fees_long) || all(iszero.(fees_long)))
+        fees_long = view(fees_long, cluster)
+        flag = true
+    end
+
+    if isa(fees_fixed_long, AbstractVector) &&
+       !(isempty(fees_fixed_long) || all(iszero.(fees_fixed_long)))
+        fees_fixed_long = view(fees_fixed_long, cluster)
+        flag = true
+    end
+
+    if flag
+        fees = Fees(; long = fees_long, fixed_long = fees_fixed_long)
     end
 
     if isa(rebalance, TR)

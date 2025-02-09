@@ -313,13 +313,27 @@ function calc_fees(w::AbstractVector, rebalance::AbstractTR)
         zero(eltype(w))
     end
 end
+function calc_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
+                         tol_kwargs::NamedTuple, op::Function)
+    return if isa(fees, Real) && !iszero(fees)
+        idx1 = op(w, zero(eltype(w)))
+        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
+        fees * sum(idx2)
+    elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
+        idx1 = op(w, zero(eltype(w)))
+        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
+        sum(fees[idx1][idx2])
+    else
+        zero(eltype(w))
+    end
+end
 function calc_fees(w::AbstractVector, fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
     fees_long = calc_fees(w, fees.long, .>=)
-    fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
     fees_short = calc_fees(w, fees.short, .<)
+    fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
     fees_fixed_short = -calc_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
     fees_rebal = calc_fees(w, rebalance)
-    return fees_long + fees_fixed_long + fees_short + fees_fixed_short + fees_rebal
+    return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
 end
 function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR,
                              UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
@@ -347,4 +361,4 @@ function calc_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, N
     return rm(w)
 end
 
-export calc_risk, cumulative_returns, drawdown
+export calc_risk, cumulative_returns, drawdown, calc_fees, calc_fixed_fees

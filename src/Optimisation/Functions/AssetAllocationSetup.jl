@@ -2,8 +2,8 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
-                   latest_prices::AbstractVector, op::Function)
+function calc_fees(w::AbstractVector, latest_prices::AbstractVector,
+                   fees::Union{AbstractVector{<:Real}, Real}, op::Function)
     return if isa(fees, Real) && !iszero(fees)
         idx = op(w, zero(eltype(w)))
         sum(fees * w[idx] .* latest_prices[idx])
@@ -14,21 +14,7 @@ function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
         zero(eltype(w))
     end
 end
-function calc_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
-                         tol_kwargs::NamedTuple, op::Function)
-    return if isa(fees, Real) && !iszero(fees)
-        idx1 = op(w, zero(eltype(w)))
-        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
-        fees * sum(idx2)
-    elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
-        idx1 = op(w, zero(eltype(w)))
-        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
-        sum(fees[idx1][idx2])
-    else
-        zero(eltype(w))
-    end
-end
-function calc_fees(w::AbstractVector, rebalance::AbstractTR, latest_prices::AbstractVector)
+function calc_fees(w::AbstractVector, latest_prices::AbstractVector, rebalance::AbstractTR)
     return if isa(rebalance, TR)
         fees_rebal = rebalance.val
         benchmark = rebalance.w
@@ -43,12 +29,12 @@ function calc_fees(w::AbstractVector, rebalance::AbstractTR, latest_prices::Abst
 end
 function calc_fees(w::AbstractVector, latest_prices::AbstractVector, fees::Fees = Fees(),
                    rebalance::AbstractTR = NoTR())
-    fees_long = calc_fees(w, fees.long, latest_prices, .>=)
+    fees_long = calc_fees(w, latest_prices, fees.long, .>=)
+    fees_short = calc_fees(w, latest_prices, fees.short, .<)
     fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
-    fees_short = calc_fees(w, fees.short, latest_prices, .<)
     fees_fixed_short = -calc_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
-    fees_rebal = calc_fees(w, rebalance, latest_prices)
-    return fees_long + fees_fixed_long + fees_short + fees_fixed_short + fees_rebal
+    fees_rebal = calc_fees(w, latest_prices, rebalance)
+    return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
 end
 function setup_alloc_optim(port, weights, investment)
     short = port.short

@@ -39,9 +39,6 @@ end
 function finilise_fees(port, weights)
     model = port.model
     fees = Dict{Symbol, eltype(weights)}()
-    fees_long = zero(eltype(weights))
-    fees_short = zero(eltype(weights))
-    fees_rebal = zero(eltype(weights))
     total_fees = zero(eltype(weights))
 
     if haskey(model, :fees_long)
@@ -49,16 +46,16 @@ function finilise_fees(port, weights)
         total_fees += fees_long
         fees[:fees_long] = fees_long
     end
+    if haskey(model, :fees_short)
+        fees_short = calc_fees(weights, port.fees.short, .<)
+        total_fees += fees_short
+        fees[:fees_short] = fees_short
+    end
     if haskey(model, :fees_fixed_long)
         fees_fixed_long = calc_fixed_fees(weights, port.fees.fixed_long,
                                           port.fees.tol_kwargs, .>=)
         total_fees += fees_fixed_long
         fees[:fees_fixed_long] = fees_fixed_long
-    end
-    if haskey(model, :fees_short)
-        fees_short = calc_fees(weights, port.fees.short, .<)
-        total_fees += fees_short
-        fees[:fees_short] = fees_short
     end
     if haskey(model, :fees_fixed_short)
         fees_fixed_short = -calc_fixed_fees(weights, port.fees.fixed_short,
