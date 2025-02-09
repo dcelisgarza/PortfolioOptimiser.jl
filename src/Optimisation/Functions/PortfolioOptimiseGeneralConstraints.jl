@@ -205,7 +205,8 @@ function MIP_constraints(port)
     gcard_eq_flag = !(isempty(a_card_eq) || isempty(b_card_eq))
     ntwk_flag = isa(network_adj, IP)
     clst_flag = isa(cluster_adj, IP)
-    if !(long_t_flag ||
+    if !(fees_fixed_flag ||
+         long_t_flag ||
          short_t_flag ||
          card_flag ||
          gcard_ineq_flag ||

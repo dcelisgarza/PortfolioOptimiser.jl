@@ -92,16 +92,9 @@ function greedy_allocation!(port, port_key, investment, rounding)
     weights = port.optimal[port_key].weights
     tickers = port.assets
     latest_prices = port.latest_prices
-    long_idx, short_idx, long_investment, short_investment = setup_alloc_optim(port,
-                                                                               weights,
-                                                                               investment)
-
-    long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = greedy_sub_allocation!(tickers[long_idx],
-                                                                                                                             weights[long_idx],
-                                                                                                                             latest_prices[long_idx],
-                                                                                                                             long_investment,
-                                                                                                                             rounding,
-                                                                                                                             investment)
+    long_idx, short_idx, long_investment, short_investment, investment = setup_alloc_optim(port,
+                                                                                           weights,
+                                                                                           investment)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = greedy_sub_allocation!(tickers[short_idx],
                                                                                                                                    -weights[short_idx],
@@ -109,6 +102,13 @@ function greedy_allocation!(port, port_key, investment, rounding)
                                                                                                                                    short_investment,
                                                                                                                                    rounding,
                                                                                                                                    investment)
+    long_investment = adjust_investment_leftover(port, long_investment, short_leftover)
+    long_tickers, long_shares, long_latest_prices, long_cost, long_allocated_weights, long_leftover = greedy_sub_allocation!(tickers[long_idx],
+                                                                                                                             weights[long_idx],
+                                                                                                                             latest_prices[long_idx],
+                                                                                                                             long_investment,
+                                                                                                                             rounding,
+                                                                                                                             investment)
 
     combine_allocations!(port, key, long_tickers, short_tickers, long_shares, short_shares,
                          long_latest_prices, short_latest_prices, long_cost, short_cost,

@@ -1,5 +1,13 @@
 using SafeTestsets
 
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
+end
+
+@safetestset "Constrained optimisation" begin
+    include("ConstrainedOptimisationTests.jl")
+end
+
 @safetestset "Type tests" begin
     include("TypeTests.jl")
 end
@@ -44,10 +52,6 @@ end
     include("WCOptimisationTests.jl")
 end
 
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
 @safetestset "RRB optimisation" begin
     include("RRBOptimisationTests.jl")
 end
@@ -58,10 +62,6 @@ end
 
 @safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
-end
-
-@safetestset "Constrained optimisation" begin
-    include("ConstrainedOptimisationTests.jl")
 end
 
 @safetestset "Trad optimisation rm vector" begin

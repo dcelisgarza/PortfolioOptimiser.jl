@@ -70,7 +70,7 @@ l = 2.0
 
     @test isapprox(sum(w19.cost), 1e6 * sum(w9_2.weights), rtol = 5.0e-5)
     @test isapprox(sum(w19.cost[w19.cost .>= 0]),
-                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 1e-5)
+                   1e6 * sum(w9_2.weights[w9_2.weights .>= 0]), rtol = 5e-5)
     @test isapprox(sum(w19.cost[w19.cost .< 0]), 1e6 * sum(w9_2.weights[w9_2.weights .< 0]),
                    rtol = 0.0005)
     @test isapprox(sum(w19.cost), 1e6 * portfolio.budget, rtol = 5.0e-5)

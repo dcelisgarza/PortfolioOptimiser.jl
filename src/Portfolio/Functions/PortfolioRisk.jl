@@ -33,6 +33,11 @@ function calc_risk(port::AbstractPortfolio, key = :Trad; X::AbstractMatrix = por
     return risk
 end
 
+function calc_fees(port::AbstractPortfolio, key = :Trad;
+                   latest_prices::AbstractVector = port.latest_prices)
+    return calc_fees(port.optimal[key].weights, latest_prices, port.fees, port.rebalance)
+end
+
 """
 ```
 risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,

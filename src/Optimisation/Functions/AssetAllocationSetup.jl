@@ -44,8 +44,7 @@ function setup_alloc_optim(port, weights, investment)
     fees = port.fees
     rebalance = port.rebalance
 
-    fees = calc_fees(weights, latest_prices, fees, rebalance)
-    investment -= fees
+    investment -= calc_fees(weights, latest_prices, fees, rebalance)
 
     long_idx = weights .>= zero(eltype(weights))
 
@@ -62,5 +61,16 @@ function setup_alloc_optim(port, weights, investment)
 
     long_investment = investment * long_budget
 
-    return long_idx, short_idx, long_investment, short_investment
+    return long_idx, short_idx, long_investment, short_investment, investment
+end
+function adjust_investment_leftover(port, long_investment, short_leftover)
+    if iszero(short_leftover)
+        return long_investment
+    end
+    budget = port.budget
+    return if budget >= one(budget)
+        long_investment - short_leftover
+    elseif budget < one(budget)
+        long_investment + short_leftover
+    end
 end
