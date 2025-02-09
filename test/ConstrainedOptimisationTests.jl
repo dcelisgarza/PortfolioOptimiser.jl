@@ -238,9 +238,10 @@ l = 2.0
     w2 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
     w2a = allocate!(portfolio; investment = 1000 - fees)
     cost2 = sum(w2a[!, :cost])
-    display(w1a)
-    display(w2a)
-    @test w1a == w2a
+    @test isapprox(w1a.shares, w2a.shares)
+    @test isapprox(w1a.price, w2a.price)
+    @test isapprox(w1a.cost, w2a.cost)
+    @test isapprox(w1a.weights, w2a.weights)
 
     portfolio.fees.fixed_long = 5.7
     w3 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
@@ -252,9 +253,11 @@ l = 2.0
     w4 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
     w4a = allocate!(portfolio; investment = 1000 - fees)
     cost4 = sum(w4a[!, :cost])
-    display(w3a)
-    display(w4a)
-    @test w3a == w4a
+
+    @test isapprox(w3a.shares, w4a.shares)
+    @test isapprox(w3a.price, w4a.price)
+    @test isapprox(w3a.cost, w4a.cost)
+    @test isapprox(w3a.weights, w4a.weights)
 
     # portfolio.short = true
     # portfolio.short_budget=-1

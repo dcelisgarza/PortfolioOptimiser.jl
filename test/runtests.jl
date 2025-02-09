@@ -1,11 +1,11 @@
 using SafeTestsets
 
-@safetestset "Allocation tests" begin
-    include("AllocationTests.jl")
-end
-
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
+end
+
+@safetestset "Allocation tests" begin
+    include("AllocationTests.jl")
 end
 
 @safetestset "Type tests" begin
