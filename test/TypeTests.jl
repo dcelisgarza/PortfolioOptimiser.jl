@@ -8,7 +8,7 @@ factors = TimeArray(CSV.File(factors_path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
-@testset "Portfolio" begin
+@testset "Type tests" begin
     portfolio = Portfolio(; prices = prices, short = true, budget = 3.0,
                           short_budget = -0.5, long_ub = 1.0, short_lb = -0.3,
                           solvers = PortOptSolver(; name = :Clarabel,
@@ -142,6 +142,7 @@ l = 2.0
     @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
     @test_throws AssertionError Portfolio(; prices = prices, long_t = fill(0, 19))
     @test_throws AssertionError Portfolio(; prices = prices, long_t = -1)
+    @test_throws AssertionError Portfolio(; prices = prices, long_t = fill(-1, 20))
     portfolio = Portfolio(; prices = prices, budget = Inf)
     @test isone(portfolio.budget)
     portfolio = Portfolio(; prices = prices, budget = Inf, budget_lb = 1.3, budget_ub = 1.5)
@@ -155,6 +156,22 @@ l = 2.0
     portfolio.budget_lb = Inf
     portfolio.budget_ub = Inf
     @test isone(portfolio.budget)
+    @test_throws AssertionError Portfolio(; prices = prices, budget = Inf, budget_lb = 1.7,
+                                          budget_ub = 1.3)
+    portfolio = Portfolio(; prices = prices, short = true, short_budget = Inf,
+                          short_budget_lb = -0.5, short_budget_ub = -0.3)
+    @test isinf(portfolio.short_budget)
+    @test portfolio.short_budget_lb == -0.5
+    @test portfolio.short_budget_ub == -0.3
+    portfolio = Portfolio(; prices = prices, short = true, budget = Inf, budget_lb = 0.7,
+                          budget_ub = 1.3, short_budget = Inf, short_budget_lb = -0.5,
+                          short_budget_ub = -0.3)
+    @test portfolio.budget == Inf
+    @test portfolio.budget_lb == 0.7
+    @test portfolio.budget_ub == 1.3
+    @test portfolio.short_budget == Inf
+    @test portfolio.short_budget_lb == -0.5
+    @test portfolio.short_budget_ub == -0.3
 
     portfolio = Portfolio(; prices = prices)
     portfolio.budget = Inf
@@ -206,6 +223,8 @@ l = 2.0
     @test_throws AssertionError ScalarLogSumExp(gamma = -1)
     sc = ScalarLogSumExp()
     @test_throws AssertionError sc.gamma = -1
+    sc.gamma = 1
+    @test sc.gamma == 1
 
     @test_throws AssertionError SchurParams(; gamma = -1)
     @test_throws AssertionError SchurParams(; gamma = 2)
@@ -221,4 +240,82 @@ l = 2.0
     @test_throws AssertionError scp.prop_coef = 2
     @test_throws AssertionError scp.tol = 0
     @test_throws AssertionError scp.max_iter = 0
+    scp.tol = 1e-6
+    @test scp.tol == 1e-6
+
+    class = FM()
+    @test_throws AssertionError class.type = 3
+    class.type = 2
+    @test class.type == 2
+    class.type = 1
+    @test class.type == 1
+
+    class = BL()
+    @test_throws AssertionError class.type = 3
+    class.type = 2
+    @test class.type == 2
+    class.type = 1
+    @test class.type == 1
+
+    class = BLFM()
+    @test_throws AssertionError class.type = 4
+    class.type = 3
+    @test class.type == 3
+    class.type = 2
+    @test class.type == 2
+    class.type = 1
+    @test class.type == 1
+
+    root_type = NCO(;
+                    internal = NCOArgs(;
+                                       type = NCO(;
+                                                  internal = NCOArgs(;
+                                                                     type = NCO(;
+                                                                                internal = NCOArgs(;
+                                                                                                   type = Trad(;
+                                                                                                               obj = MinRisk(),
+                                                                                                               rm = SD())),
+                                                                                external = NCOArgs(;
+                                                                                                   type = Trad(;
+                                                                                                               obj = Utility(),
+                                                                                                               rm = MAD())))),
+                                                  external = NCOArgs(;
+                                                                     type = NCO(;
+                                                                                internal = NCOArgs(;
+                                                                                                   type = Trad(;
+                                                                                                               obj = Sharpe(),
+                                                                                                               rm = Kurt())),
+                                                                                external = NCOArgs(;
+                                                                                                   type = Trad(;
+                                                                                                               obj = MaxRet(),
+                                                                                                               rm = RG())))))),
+                    external = NCOArgs(; type = Trad(; rm = SSD())))
+
+    @test isa(root_type.rm, SD)
+    @test isa(root_type.rm_o, SSD)
+    @test isa(root_type.internal.type.internal.type.rm, SD)
+    @test isa(root_type.internal.type.internal.type.rm_o, MAD)
+    @test isa(root_type.internal.type.internal.type.internal.type.rm, SD)
+    @test isa(root_type.internal.type.internal.type.external.type.rm, MAD)
+    @test isa(root_type.internal.type.external.type.rm, Kurt)
+    @test isa(root_type.internal.type.external.type.rm_o, RG)
+    @test isa(root_type.internal.type.external.type.internal.type.rm, Kurt)
+    @test isa(root_type.internal.type.external.type.external.type.rm, RG)
+
+    rm = Sharpe()
+    @test_throws AssertionError rm.rf = -0.1
+    rm.rf = 0.0001
+    @test rm.rf == 0.0001
+    @test_throws AssertionError rm.ohf = -0.1
+    rm.ohf = 0.0001
+    @test rm.ohf == 0.0001
+
+    A = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                      check_sol = (; allow_local = true, allow_almost = true),
+                      params = Dict("verbose" => false, "max_step_fraction" => 0.75))
+    B = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                      check_sol = (; allow_local = true, allow_almost = true),
+                      params = Dict("verbose" => false, "max_step_fraction" => 0.76))
+
+    @test A != B
 end

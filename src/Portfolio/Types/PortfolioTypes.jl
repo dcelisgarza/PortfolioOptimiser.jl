@@ -487,7 +487,7 @@ function real_or_vector_assert(x::Union{<:Real, AbstractVector{<:Real}}, n::Inte
                                name = "", f = >=, val = 0.0)
     if isa(x, AbstractVector) && !isempty(x)
         @smart_assert(length(x) == n, "Length of $name must be equal to $n")
-        @smart_assert(all(f.(x, val)), "Value of $name, $x $(Symbol(f)) $val")
+        @smart_assert(all(f.(x, val)), "Value of $name, all($x .$(Symbol(f)) $val) = false")
     elseif isa(x, Real)
         @smart_assert(f(x, val), "Value of $name, $x $(Symbol(f)) $val")
     end
@@ -591,8 +591,9 @@ function long_short_budget_assert(N, long_t, long_ub, budget_lb, budget, budget_
 
         short_budget, short_budget_flag = set_default_budget(short_budget,
                                                              -0.2 * one(short_budget),
-                                                             budget_lb_flag, budget_flag,
-                                                             budget_ub_flag)
+                                                             short_budget_lb_flag,
+                                                             short_budget_flag,
+                                                             short_budget_ub_flag)
         if short_budget_flag
             short_budget_assert(budget_flag, budget_lb_flag, budget_ub_flag, budget_lb,
                                 budget, budget_ub, short_budget, long_ub, short_lb,

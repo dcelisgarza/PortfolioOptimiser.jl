@@ -53,7 +53,7 @@ function FM(; type::Integer = 1)
 end
 function Base.setproperty!(obj::FM, sym::Symbol, val)
     if sym == :type
-        @smart_assert(sym ∈ (1, 2))
+        @smart_assert(val ∈ (1, 2))
     end
     return setfield!(obj, sym, val)
 end
@@ -74,7 +74,7 @@ function BL(; type::Integer = 1)
 end
 function Base.setproperty!(obj::BL, sym::Symbol, val)
     if sym == :type
-        @smart_assert(sym ∈ (1, 2))
+        @smart_assert(val ∈ (1, 2))
     end
     return setfield!(obj, sym, val)
 end
@@ -95,7 +95,7 @@ function BLFM(; type::Integer = 1)
 end
 function Base.setproperty!(obj::BLFM, sym::Symbol, val)
     if sym == :type
-        @smart_assert(sym ∈ (1, 2, 3))
+        @smart_assert(val ∈ (1, 2, 3))
     end
     return setfield!(obj, sym, val)
 end

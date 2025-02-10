@@ -142,6 +142,7 @@ function Base.setproperty!(obj::ScalarLogSumExp, sym::Symbol, val)
     if sym == :gamma
         @smart_assert(zero(val) <= val)
     end
+    val = convert(typeof(getfield(obj, sym)), val)
     return setfield!(obj, sym, val)
 end
 

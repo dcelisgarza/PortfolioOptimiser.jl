@@ -1,15 +1,15 @@
 using SafeTestsets
 
+@safetestset "Type tests" begin
+    include("TypeTests.jl")
+end
+
 @safetestset "Constrained optimisation" begin
     include("ConstrainedOptimisationTests.jl")
 end
 
 @safetestset "Allocation tests" begin
     include("AllocationTests.jl")
-end
-
-@safetestset "Type tests" begin
-    include("TypeTests.jl")
 end
 
 @safetestset "OWA Weights" begin

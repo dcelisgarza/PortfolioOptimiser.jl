@@ -49,11 +49,12 @@ mutable struct Sharpe{T1 <: Real, T2 <: Real} <: ObjectiveFunction
     ohf::T2
 end
 function Sharpe(; rf::Real = 0.0, ohf::Real = 1.0)
+    @smart_assert(rf >= zero(ohf))
     @smart_assert(ohf >= zero(ohf))
     return Sharpe{typeof(rf), typeof(ohf)}(rf, ohf)
 end
 function Base.setproperty!(obj::Sharpe, sym::Symbol, val)
-    if sym == :ohf
+    if sym ∈ (:rf, :ohf)
         @smart_assert(val >= zero(val))
     end
     return setfield!(obj, sym, val)

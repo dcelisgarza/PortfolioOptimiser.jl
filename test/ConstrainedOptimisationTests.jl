@@ -6,6 +6,63 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
 rf = 1.0329^(1 / 252) - 1
 l = 2.0
 
+@testset "Budget bounds" begin
+    portfolio = Portfolio(; prices = prices, budget = Inf, long_ub = 1.3, budget_lb = 1.3,
+                          budget_ub = 1.5,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    w1 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w1.weights) >= 1.3
+
+    portfolio.budget_lb = Inf
+    w2 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w2.weights)
+
+    portfolio.long_ub = sum(w2.weights) / 2
+    portfolio.budget_ub = sum(w2.weights) / 2
+    w3 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w3.weights)
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w4 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w4.weights) >= 1.3
+
+    portfolio.budget = Inf
+    portfolio.budget_ub = 1.5
+    portfolio.budget_lb = 1.3
+    portfolio.long_ub = 1.3
+
+    obj = Sharpe(; rf = rf)
+    w5 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w5.weights) >= 1.3
+
+    portfolio.budget_lb = Inf
+    w6 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w6.weights)
+
+    portfolio.long_ub = sum(w6.weights) / 2
+    portfolio.budget_ub = sum(w6.weights) / 2
+    w7 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w7.weights)
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w8 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w8.weights) >= 1.3
+end
+
 @testset "Management fees" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
