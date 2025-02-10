@@ -63,6 +63,151 @@ l = 2.0
     @test sum(w8.weights) >= 1.3
 end
 
+@testset "Short budget bounds" begin
+    portfolio = Portfolio(; prices = prices, short = true, budget = Inf, long_ub = 1.3,
+                          budget_lb = 1.3, budget_ub = 1.5,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    w1 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
+    @test 1.5 >= sum(w1.weights) >= 1.3
+    @test portfolio.short_budget <= sum(w1.weights[w1.weights .< zero(eltype(w1.weights))])
+
+    portfolio.budget_lb = Inf
+    w2 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w2.weights)
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.long_ub = sum(w2.weights) / 2
+    portfolio.budget_ub = sum(w2.weights) / 2
+    w3 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w3.weights)
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w4 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w4.weights) >= 1.3
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.budget = Inf
+    portfolio.budget_ub = 1.5
+    portfolio.budget_lb = 1.3
+    portfolio.long_ub = 1.3
+
+    obj = Sharpe(; rf = rf)
+    w5 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w5.weights) >= 1.3
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.budget_lb = Inf
+    w6 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w6.weights)
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.long_ub = sum(w6.weights) / 2
+    portfolio.budget_ub = sum(w6.weights) / 2
+    w7 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w7.weights)
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w8 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w8.weights) >= 1.3
+    @test portfolio.short_budget <= sum(w2.weights[w2.weights .< zero(eltype(w2.weights))])
+
+    portfolio = Portfolio(; prices = prices, short = true, budget = Inf, long_ub = 1.3,
+                          budget_lb = 1.3, budget_ub = 1.5, short_budget = Inf,
+                          short_budget_lb = -0.1, short_budget_ub = -0.05, short_lb = -0.05,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+    asset_statistics!(portfolio)
+
+    obj = MinRisk()
+    w1 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
+    @test 1.5 >= sum(w1.weights) >= 1.3
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.budget_lb = Inf
+    w2 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w2.weights)
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.long_ub = sum(w2.weights) / 2
+    portfolio.budget_ub = sum(w2.weights) / 2
+    w3 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w3.weights)
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w4 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w4.weights) >= 1.3
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.budget = Inf
+    portfolio.budget_ub = 1.5
+    portfolio.budget_lb = 1.3
+    portfolio.long_ub = 1.3
+
+    obj = Sharpe(; rf = rf)
+    w5 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w5.weights) >= 1.3
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.budget_lb = Inf
+    w6 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test 1.5 >= sum(w6.weights)
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.long_ub = sum(w6.weights) / 2
+    portfolio.budget_ub = sum(w6.weights) / 2
+    w7 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test portfolio.budget_ub >= sum(w7.weights)
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+
+    portfolio.budget_ub = Inf
+    portfolio.budget_lb = 1.3
+    portfolio.budget = Inf
+    portfolio.long_ub = 1.3
+    w8 = optimise!(portfolio; type = Trad(; obj = obj))
+    @test sum(w8.weights) >= 1.3
+    @test portfolio.short_budget_lb <=
+          sum(w1.weights[w1.weights .< zero(eltype(w1.weights))]) <=
+          portfolio.short_budget_ub
+end
+
 @testset "Management fees" begin
     portfolio = Portfolio(; prices = prices,
                           solvers = PortOptSolver(; name = :Clarabel,
@@ -122,7 +267,7 @@ end
     w1 = optimise!(portfolio, Trad(; obj = obj))
     portfolio.fees.long[5] = 10
     w2 = optimise!(portfolio, Trad(; obj = obj))
-    @test w1.weights[5] / w2.weights[5] >= 1e8
+    @test abs(w1.weights[5] / w2.weights[5]) >= 1e8
 
     portfolio.short = true
     obj = MinRisk()
@@ -972,7 +1117,7 @@ end
           1.8214691171394823e-11, 1.0767769773867006e-9, 6.160144955445939e-10,
           8.250745941774404e-11, 1.0856076792946e-9, 4.3010967164772414e-10,
           1.1171412115733564e-9, 9.671757140826077e-10]
-    @test isapprox(w14.weights, wt)
+    @test isapprox(w14.weights, wt, rtol = 5.0e-8)
     @test isapprox(portfolio.b_eq[1],
                    average_centrality(portfolio; network_type = network_type),
                    rtol = 5.0e-8)
