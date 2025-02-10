@@ -127,25 +127,41 @@ function opt_weight_bounds(::Any, w_min, w_max, weights, finaliser::HWF)
     return weights
 end
 function finalise_weights(type::HCOptimType, port, weights, w_min, w_max, finaliser)
-    stype = Symbol(type)
+    key = type.key == :auto ? String(type) : String(type.key)
     weights = opt_weight_bounds(port, w_min, w_max, weights, finaliser)
     weights ./= sum(weights)
-    port.optimal[stype] = if any(.!isfinite.(weights)) || all(iszero.(weights))
-        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
-        DataFrame()
+    if any(.!isfinite.(weights)) || all(iszero.(weights))
+        fees = calc_fees(weights, port.fees, port.rebalance)
+        if !isempty(fees)
+            port.fail[Symbol("$(key)_fees")] = fees
+        end
+        port.fail[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
+        port.optimal[Symbol(key)] = DataFrame()
     else
-        DataFrame(; tickers = port.assets, weights = weights)
+        fees = calc_fees(weights, port.fees, port.rebalance)
+        if !isempty(fees)
+            port.optimal[Symbol("$(key)_fees")] = fees
+        end
+        port.optimal[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
     end
-    return port.optimal[stype]
+    return port.optimal[Symbol(key)]
 end
 function finalise_weights(type::NCO, port, weights, w_min, w_max, finaliser)
-    stype = Symbol(type)
+    key = type.key == :auto ? String(type) : String(type.key)
     weights = opt_weight_bounds(port, w_min, w_max, weights, finaliser)
-    port.optimal[stype] = if any(.!isfinite.(weights)) || all(iszero.(weights))
-        port.fail[:port] = DataFrame(; tickers = port.assets, weights = weights)
-        DataFrame()
+    if any(.!isfinite.(weights)) || all(iszero.(weights))
+        fees = calc_fees(weights, port.fees, port.rebalance)
+        if !isempty(fees)
+            port.fail[Symbol("$(key)_fees")] = fees
+        end
+        port.fail[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
+        port.optimal[Symbol(key)] = DataFrame()
     else
-        DataFrame(; tickers = port.assets, weights = weights)
+        fees = calc_fees(weights, port.fees, port.rebalance)
+        if !isempty(fees)
+            port.optimal[Symbol("$(key)_fees")] = fees
+        end
+        port.optimal[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
     end
-    return port.optimal[stype]
+    return port.optimal[Symbol(key)]
 end

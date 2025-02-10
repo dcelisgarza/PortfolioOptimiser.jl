@@ -68,11 +68,9 @@ function finilise_fees(port, weights)
         total_fees += fees_rebal
         fees[:fees_rebal] = fees_rebal
     end
-
     if !iszero(total_fees)
         fees[:total_fees] = total_fees
     end
-
     return fees
 end
 function push_solvers_tried!(port, type, class, solvers_tried, key, err, all_finite_weights,
@@ -90,19 +88,19 @@ end
 function optimise_portfolio_model(port, type, class)
     solvers = port.solvers
     model = port.model
+    key = type.key == :auto ? String(type) : String(type.key)
 
     solvers_tried = Dict()
 
     success = false
-    strtype = "_" * String(type)
     for solver ∈ solvers
-        name = solver.name
+        name = String(solver.name)
         solver_i = solver.solver
         params = solver.params
         add_bridges = solver.add_bridges
         check_sol = solver.check_sol
 
-        key = Symbol(String(name) * strtype)
+        solution_key = Symbol("$(key)_$(name)")
         set_optimizer(model, solver_i; add_bridges = add_bridges)
         if !isnothing(params) && !isempty(params)
             for (k, v) ∈ params
@@ -113,7 +111,7 @@ function optimise_portfolio_model(port, type, class)
         try
             JuMP.optimize!(model)
         catch jump_error
-            push!(solvers_tried, key => Dict(:JuMP_error => jump_error))
+            push!(solvers_tried, solution_key => Dict(:JuMP_error => jump_error))
             continue
         end
 
@@ -128,13 +126,13 @@ function optimise_portfolio_model(port, type, class)
                 break
             end
         catch err
-            push_solvers_tried!(port, type, class, solvers_tried, key, err,
+            push_solvers_tried!(port, type, class, solvers_tried, solution_key, err,
                                 all_finite_weights, all_non_zero_weights)
         end
 
         err = solution_summary(model)
-        push_solvers_tried!(port, type, class, solvers_tried, key, err, all_finite_weights,
-                            all_non_zero_weights)
+        push_solvers_tried!(port, type, class, solvers_tried, solution_key, err,
+                            all_finite_weights, all_non_zero_weights)
     end
 
     return if success
@@ -144,12 +142,12 @@ function optimise_portfolio_model(port, type, class)
         weights = cleanup_weights(port, type, class)
         fees = finilise_fees(port, weights)
         if !isempty(fees)
-            port.optimal[Symbol(String(type) * "_fees")] = fees
+            port.optimal[Symbol("$(key)_fees")] = fees
         end
-        port.optimal[Symbol(type)] = DataFrame(; tickers = port.assets, weights = weights)
+        port.optimal[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
     else
         @warn("Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         port.fail = solvers_tried
-        port.optimal[Symbol(type)] = DataFrame()
+        port.optimal[Symbol(key)] = DataFrame()
     end
 end

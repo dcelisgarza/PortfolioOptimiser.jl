@@ -445,11 +445,12 @@ end
     @test isapprox(w1a.cost, w2a.cost)
     @test isapprox(w1a.weights, w2a.weights)
 
-    portfolio.fees.fixed_long = 5.7
+    T = size(portfolio.returns, 1)
+    portfolio.fees.fixed_long = 5.7 / T
     w3 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))
     w3a = allocate!(portfolio; investment = 1000)
     cost3 = sum(w3a[!, :cost])
-    fees = calc_fees(portfolio)
+    fees = calc_fees(portfolio) * T
 
     portfolio.fees.fixed_long = 0
     w4 = optimise!(portfolio; type = Trad(; obj = obj, str_names = true))

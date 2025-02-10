@@ -200,7 +200,7 @@ opt_type = Trad(; rm = [MAD(), CVaR(), CVaR(; alpha = 0.2)])
 opt_type = Trad(; rm = [MAD(), [CVaR(), CVaR(; alpha = 0.2)]])
 ```
 """
-mutable struct Trad{T1} <: OptimType
+mutable struct Trad{T1 <: AbstractVector{<:Real}} <: OptimType
     rm::Union{AbstractVector, <:RiskMeasure}
     obj::ObjectiveFunction
     kelly::RetType
@@ -210,6 +210,7 @@ mutable struct Trad{T1} <: OptimType
     custom_obj::CustomObjective
     scalarisation::AbstractScalarisation
     str_names::Bool
+    key::Union{Symbol, <:AbstractString}
 end
 function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
               obj::ObjectiveFunction = MinRisk(), kelly::RetType = NoKelly(),
@@ -217,9 +218,10 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
               w_ini::AbstractVector = Vector{Float64}(undef, 0),
               custom_constr::CustomConstraint = NoCustomConstraint(),
               custom_obj::CustomObjective = NoCustomObjective(),
-              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
+              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false,
+              key::Union{Symbol, <:AbstractString} = :auto)
     return Trad{typeof(w_ini)}(rm, obj, kelly, class, w_ini, custom_constr, custom_obj,
-                               scalarisation, str_names)
+                               scalarisation, str_names, key)
 end
 
 """
@@ -284,15 +286,17 @@ mutable struct RB{T1} <: OptimType
     custom_obj::CustomObjective
     scalarisation::AbstractScalarisation
     str_names::Bool
+    key::Union{Symbol, <:AbstractString}
 end
 function RB(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
             kelly::RetType = NoKelly(), class::PortClass = Classic(),
             w_ini::AbstractVector = Vector{Float64}(undef, 0),
             custom_constr::CustomConstraint = NoCustomConstraint(),
             custom_obj::CustomObjective = NoCustomObjective(),
-            scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
+            scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false,
+            key::Union{Symbol, <:AbstractString} = :auto)
     return RB{typeof(w_ini)}(rm, kelly, class, w_ini, custom_constr, custom_obj,
-                             scalarisation, str_names)
+                             scalarisation, str_names, key)
 end
 
 """
@@ -379,14 +383,16 @@ mutable struct RRB{T1} <: OptimType
     custom_constr::CustomConstraint
     custom_obj::CustomObjective
     str_names::Bool
+    key::Union{Symbol, <:AbstractString}
 end
 function RRB(; version::RRBVersion = BasicRRB(), kelly::RetType = NoKelly(),
              class::PortClass = Classic(),
              w_ini::AbstractVector = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
-             custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false,)
+             custom_obj::CustomObjective = NoCustomObjective(), str_names::Bool = false,
+             key::Union{Symbol, <:AbstractString} = :auto)
     return RRB{typeof(w_ini)}(version, kelly, class, w_ini, custom_constr, custom_obj,
-                              str_names)
+                              str_names, key)
 end
 function Base.getproperty(obj::RRB, sym::Symbol)
     return if sym == :rm
@@ -454,6 +460,7 @@ mutable struct NOC{T1, T2, T3, T4, T5, T6, T7, T8} <: OptimType
     custom_obj::CustomObjective
     scalarisation::AbstractScalarisation
     str_names::Bool
+    key::Union{Symbol, <:AbstractString}
 end
 function NOC(; flag::Bool = true, bins::Real = 20.0,
              w_opt::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
@@ -468,7 +475,8 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              w_ini::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
              custom_constr::CustomConstraint = NoCustomConstraint(),
              custom_obj::CustomObjective = NoCustomObjective(),
-             scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false)
+             scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false,
+             key::Union{Symbol, <:AbstractString} = :auto)
     return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_opt_ini),
                typeof(w_min_ini), typeof(w_max_ini), typeof(w_ini)}(flag, bins, w_opt,
                                                                     w_min, w_max, w_opt_ini,
@@ -477,7 +485,7 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
                                                                     w_ini, custom_constr,
                                                                     custom_obj,
                                                                     scalarisation,
-                                                                    str_names)
+                                                                    str_names, key)
 end
 
 abstract type HCOptWeightFinaliser end
@@ -509,12 +517,14 @@ mutable struct HRP <: HCOptimType
     class::PortClass
     scalarisation::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
+    key::Union{Symbol, <:AbstractString}
 end
 function HRP(; rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = Variance(),
              class::PortClass = Classic(),
              scalarisation::AbstractScalarisation = ScalarSum(),
-             finaliser::HCOptWeightFinaliser = HWF())
-    return HRP(rm, class, scalarisation, finaliser)
+             finaliser::HCOptWeightFinaliser = HWF(),
+             key::Union{Symbol, <:AbstractString} = :auto)
+    return HRP(rm, class, scalarisation, finaliser, key)
 end
 
 mutable struct SchurParams{T1, T2, T3, T4}
@@ -552,10 +562,12 @@ mutable struct SchurHRP <: HCOptimType
     params::Union{AbstractVector, <:SchurParams}
     class::PortClass
     finaliser::HCOptWeightFinaliser
+    key::Union{Symbol, <:AbstractString}
 end
 function SchurHRP(; params::Union{AbstractVector, <:SchurParams} = SchurParams(),
-                  class::PortClass = Classic(), finaliser::HCOptWeightFinaliser = HWF())
-    return SchurHRP(params, class, finaliser)
+                  class::PortClass = Classic(), finaliser::HCOptWeightFinaliser = HWF(),
+                  key::Union{Symbol, <:AbstractString} = :auto)
+    return SchurHRP(params, class, finaliser, key)
 end
 
 """
@@ -571,14 +583,16 @@ mutable struct HERC <: HCOptimType
     scalarisation::AbstractScalarisation
     scalarisation_o::AbstractScalarisation
     finaliser::HCOptWeightFinaliser
+    key::Union{Symbol, <:AbstractString}
 end
 function HERC(; rm::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = Variance(),
               rm_o::Union{AbstractVector, <:Union{RiskMeasure, HCRiskMeasure}} = rm,
               class::PortClass = Classic(), class_o::PortClass = class,
               scalarisation::AbstractScalarisation = ScalarSum(),
               scalarisation_o::AbstractScalarisation = scalarisation,
-              finaliser::HCOptWeightFinaliser = HWF())
-    return HERC(rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser)
+              finaliser::HCOptWeightFinaliser = HWF(),
+              key::Union{Symbol, <:AbstractString} = :auto)
+    return HERC(rm, rm_o, class, class_o, scalarisation, scalarisation_o, finaliser, key)
 end
 
 abstract type AbstractNCOModify end
@@ -616,20 +630,22 @@ mutable struct NCO <: HCOptimType
     internal::NCOArgs
     external::NCOArgs
     finaliser::HCOptWeightFinaliser
+    key::Union{Symbol, <:AbstractString}
 end
 function NCO(; internal::NCOArgs = NCOArgs(;), external::NCOArgs = internal,
-             finaliser::HCOptWeightFinaliser = HWF())
-    return NCO(internal, external, finaliser)
+             finaliser::HCOptWeightFinaliser = HWF(),
+             key::Union{Symbol, <:AbstractString} = :auto)
+    return NCO(internal, external, finaliser, key)
 end
 function Base.getproperty(nco::NCO, sym::Symbol)
     if sym ∈
        (:rm, :obj, :kelly, :class, :scalarisation, :w_ini, :custom_constr, :custom_obj,
-        :str_names)
+        :str_names, :key)
         type = nco.internal.type
         isa(type, NCO) ? getproperty(type, sym) : getfield(type, sym)
     elseif sym ∈
            (:rm_o, :obj_o, :kelly_o, :class_o, :scalarisation_o, :w_ini_o, :custom_constr_o,
-            :custom_obj_o, :str_names_o)
+            :custom_obj_o, :str_names_o, :key_o)
         type = nco.external.type
         if isa(type, NCO)
             getproperty(type, sym)

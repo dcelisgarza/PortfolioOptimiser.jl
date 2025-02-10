@@ -92,9 +92,9 @@ function greedy_allocation!(port, port_key, investment, rounding)
     weights = port.optimal[port_key].weights
     tickers = port.assets
     latest_prices = port.latest_prices
-    long_idx, short_idx, long_investment, short_investment, investment = setup_alloc_optim(port,
-                                                                                           weights,
-                                                                                           investment)
+    long_idx, short_idx, long_investment, short_investment, investment, fees = setup_alloc_optim(port,
+                                                                                                 weights,
+                                                                                                 investment)
 
     short_tickers, short_shares, short_latest_prices, short_cost, short_allocated_weights, short_leftover = greedy_sub_allocation!(tickers[short_idx],
                                                                                                                                    -weights[short_idx],
@@ -117,6 +117,7 @@ function greedy_allocation!(port, port_key, investment, rounding)
     idx = [findfirst(x -> x == t, port.alloc_optimal[key].tickers) for t ∈ tickers]
     port.alloc_optimal[key] = port.alloc_optimal[key][idx, :]
     port.alloc_leftover[key] = long_leftover + short_leftover
+    port.alloc_optimal[Symbol("$(key)_fees")] = fees
 
     return port.alloc_optimal[key]
 end
