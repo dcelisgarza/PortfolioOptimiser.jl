@@ -1504,6 +1504,29 @@ function (evar::EVaR)(x::AbstractVector)
     return ERM(x, evar.solvers, evar.alpha)
 end
 
+mutable struct EVaRRG{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
+    settings::RMSettings
+    alpha::T1
+    beta::T2
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
+end
+function EVaRRG(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
+                beta::Real = 0.05,
+                solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    @smart_assert(zero(beta) < beta < one(beta))
+    return EVaRRG{typeof(alpha), typeof(beta)}(settings, alpha, beta, solvers)
+end
+function Base.setproperty!(obj::EVaRRG, sym::Symbol, val)
+    if sym ∈ (:alpha, :beta)
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+function (evarrg::EVaRRG)(x::AbstractVector)
+    return ERM(x, evarrg.solvers, evarrg.alpha) + ERM(-x, evarrg.solvers, evarrg.beta)
+end
+
 """
     mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
 
@@ -1556,7 +1579,7 @@ mutable struct RLVaR{T1 <: Real, T2 <: Real} <: RiskMeasureSolvers
     kappa::T2
     solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
 end
-function RLVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05, kappa = 0.3,
+function RLVaR(; settings::RMSettings = RMSettings(), alpha::Real = 0.05, kappa::Real = 0.3,
                solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
     @smart_assert(zero(alpha) < alpha < one(alpha))
     @smart_assert(zero(kappa) < kappa < one(kappa))
@@ -1570,6 +1593,39 @@ function Base.setproperty!(obj::RLVaR, sym::Symbol, val)
 end
 function (rlvar::RLVaR)(x::AbstractVector)
     return RRM(x, rlvar.solvers, rlvar.alpha, rlvar.kappa)
+end
+
+mutable struct RLVaRRG{T1 <: Real, T2 <: Real, T3 <: Real, T4 <: Real} <: RiskMeasureSolvers
+    settings::RMSettings
+    alpha::T1
+    kappa_a::T2
+    beta::T1
+    kappa_b::T2
+    solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}}
+end
+function RLVaRRG(; settings::RMSettings = RMSettings(), alpha::Real = 0.05,
+                 kappa_a::Real = 0.3, beta::Real = 0.05, kappa_b::Real = 0.3,
+                 solvers::Union{Nothing, PortOptSolver, <:AbstractVector{PortOptSolver}} = nothing)
+    @smart_assert(zero(alpha) < alpha < one(alpha))
+    @smart_assert(zero(kappa_a) < kappa_a < one(kappa_a))
+    @smart_assert(zero(beta) < beta < one(beta))
+    @smart_assert(zero(kappa_b) < kappa_b < one(kappa_b))
+    return RLVaRRG{typeof(alpha), typeof(kappa_a), typeof(beta), typeof(kappa_b)}(settings,
+                                                                                  alpha,
+                                                                                  kappa_a,
+                                                                                  beta,
+                                                                                  kappa_b,
+                                                                                  solvers)
+end
+function Base.setproperty!(obj::RLVaRRG, sym::Symbol, val)
+    if sym ∈ (:alpha, :kappa_a, :beta, :kappa_b)
+        @smart_assert(zero(val) < val < one(val))
+    end
+    return setfield!(obj, sym, val)
+end
+function (rlvarrg::RLVaRRG)(x::AbstractVector)
+    return RRM(x, rlvarrg.solvers, rlvarrg.alpha, rlvarrg.kappa_a) +
+           RRM(-x, rlvarrg.solvers, rlvarrg.beta, rlvarrg.kappa_b)
 end
 
 """
@@ -3333,16 +3389,13 @@ function Base.setproperty!(obj::VaRRG, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (var::VaRRG)(x::AbstractVector)
+function (varrg::VaRRG)(x::AbstractVector)
     T = length(x)
-
-    alpha = var.alpha
+    alpha = varrg.alpha
+    beta = varrg.beta
     loss = -partialsort!(x, ceil(Int, alpha * T))
-
-    beta = var.beta
-    gain = -partialsort!(x, ceil(Int, beta * T); rev = true)
-
-    return loss - gain
+    gain = partialsort!(x, ceil(Int, beta * T); rev = true)
+    return loss + gain
 end
 
 """
@@ -4293,12 +4346,12 @@ function calc_target_ret_mu(x::AbstractVector, w::AbstractVector, rm::RMTarget)
 end
 
 export RiskMeasure, HCRiskMeasure, NoOptRiskMeasure, RMSettings, HCRMSettings, Quad, SOC,
-       RSOC, SD, MAD, SSD, FLPM, WR, CVaR, EVaR, RLVaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR,
-       Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, NQSkew, NQSSkew, NSkew,
-       NSSkew, Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r,
-       EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box, Ellipse, NoWC,
-       TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR, Kurtosis,
-       SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu, HCRiskMeasureMu,
-       NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget, RiskMeasureSolvers,
-       HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM, FTCM, FTLPM,
-       PortOptSolver, RMSolvers, RMSigma, RMSkew, RMOWA, RMMu, RMTarget, Fees
+       RSOC, SD, MAD, SSD, FLPM, WR, CVaR, EVaR, EVaRRG, RLVaR, RLVaRRG, MDD, ADD, CDaR,
+       UCI, EDaR, RLDaR, Kurt, SKurt, RG, CVaRRG, GMD, TG, TGRG, OWA, BDVariance, NQSkew,
+       NQSSkew, NSkew, NSSkew, Variance, SVariance, VaR, VaRRG, DaR, DaR_r, MDD_r, ADD_r,
+       CDaR_r, UCI_r, EDaR_r, RLDaR_r, Equal, BDVAbsVal, BDVIneq, WCVariance, DRCVaR, Box,
+       Ellipse, NoWC, TrackingRM, TurnoverRM, NoTracking, TrackWeight, TrackRet, NoTR, TR,
+       Kurtosis, SKurtosis, OWAApprox, OWAExact, RiskMeasureSigma, RiskMeasureMu,
+       HCRiskMeasureMu, NoOptRiskMeasureMu, RiskMeasureTarget, HCRiskMeasureTarget,
+       RiskMeasureSolvers, HCRiskMeasureSolvers, RiskMeasureOWA, RiskMeasureSkew, TCM, TLPM,
+       FTCM, FTLPM, PortOptSolver, RMSolvers, RMSigma, RMSkew, RMOWA, RMMu, RMTarget, Fees

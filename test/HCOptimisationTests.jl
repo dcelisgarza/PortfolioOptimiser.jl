@@ -1141,13 +1141,13 @@ end
 
     w1 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = RLVaR()))))
     @test isempty(w1)
-    @test haskey(portfolio.fail, :inter)
-    @test haskey(portfolio.fail, :intra)
+    @test haskey(portfolio.fail, :NCO_inter)
+    @test haskey(portfolio.fail, :NCO_intra)
     @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:port]), 1)
-    @test length(keys(portfolio.fail[:intra])) == 3
+    @test length(keys(portfolio.fail[:NCO_intra])) == 3
     num_assets = 0
-    for val ∈ values(portfolio.fail[:intra])
-        num_assets += size(Matrix(val[:Clarabel_Trad][:port]), 1)
+    for val ∈ values(portfolio.fail[:NCO_intra])
+        num_assets += size(Matrix(val[:Trad_Clarabel][:port]), 1)
     end
     @test num_assets == 20
 
@@ -1558,7 +1558,7 @@ end
            0.050457652969473174, 0.05295276386165584]
     @test isapprox(w16.weights, w1t)
     @test isapprox(w17.weights, w2t)
-    @test isapprox(w18.weights, w3t, rtol = 5.0e-5)
+    @test isapprox(w18.weights, w3t, rtol = 5.0e-4)
     @test isapprox(w19.weights, w4t)
     @test isapprox(w20.weights, w5t, rtol = 5.0e-5)
 

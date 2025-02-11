@@ -864,7 +864,7 @@ function set_rm_stats!(port::Portfolio, rm, cluster, cidx, idx_sq, Nc, special_r
     return NCOOldStats(old_covs, old_kurts, old_skurts, old_Vs, old_skews, old_SVs,
                        old_sskews, old_wc_rms, old_trs, old_tos, old_mus, old_targets)
 end
-function calc_intra_weights(port::Portfolio, internal_args)
+function calc_intra_weights(port::Portfolio, internal_args, key)
     k = port.k
     idx = cutree(port.clusters; k = k)
     w = zeros(eltype(port.returns), size(port.returns, 2), k)
@@ -909,7 +909,8 @@ function calc_intra_weights(port::Portfolio, internal_args)
         end
     end
     if !isempty(cfails)
-        port.fail[:intra] = cfails
+        key = key == :auto ? :NCO_intra : Symbol("$(String(key))_intra")
+        port.fail[key] = cfails
     end
     return w
 end
@@ -1294,7 +1295,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
 
     return w, inter_port.fail
 end
-function calc_inter_weights(port::Portfolio, wi, external_args)
+function calc_inter_weights(port::Portfolio, wi, external_args, key)
     rm = external_args.type.rm
     special_rm_idx = find_special_rm(rm)
     old_stats = set_rm_stats!(port, rm, wi, special_rm_idx)
@@ -1303,13 +1304,14 @@ function calc_inter_weights(port::Portfolio, wi, external_args)
 
     w = wi * cw
     if !isempty(cfail)
-        port.fail[:inter] = cfail
+        key = key == :auto ? :NCO_inter : Symbol("$(String(key))_inter")
+        port.fail[key] = cfail
     end
 
     return w
 end
 function nco_optimise(port, type)
-    wi = calc_intra_weights(port, type.internal)
-    w = calc_inter_weights(port, wi, type.external)
+    wi = calc_intra_weights(port, type.internal, type.key)
+    w = calc_inter_weights(port, wi, type.external, type.key)
     return w
 end

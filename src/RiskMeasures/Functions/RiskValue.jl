@@ -335,12 +335,12 @@ function calc_fees(w::AbstractVector, fees::Fees = Fees(), rebalance::AbstractTR
     fees_rebal = calc_fees(w, rebalance)
     return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
 end
-function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, RLVaR, DaR, MDD, ADD, CDaR,
-                             UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r, CDaR_r, UCI_r, EDaR_r,
-                             RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA, BDVariance, TCM, FTCM,
-                             Skewness, SSkewness, Kurtosis, SKurtosis}, w::AbstractVector;
-                   X::AbstractMatrix, fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
-                   kwargs...)
+function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, EVaRRG, RLVaR, RLVaRRG,
+                             DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r,
+                             CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA,
+                             BDVariance, TCM, FTCM, Skewness, SSkewness, Kurtosis,
+                             SKurtosis}, w::AbstractVector; X::AbstractMatrix,
+                   fees::Fees = Fees(), rebalance::AbstractTR = NoTR(), kwargs...)
     fees = calc_fees(w, fees, rebalance)
     return rm(X * w .- fees)
 end
