@@ -45,7 +45,7 @@ function setup_alloc_optim(port, weights, investment)
     rebalance = port.rebalance
     T = size(port.returns, 1)
 
-    fees = calc_fees(weights, latest_prices, fees, rebalance)# * T
+    fees = calc_fees(weights, latest_prices, fees, rebalance) * T
     investment -= fees
 
     long_idx = weights .>= zero(eltype(weights))
