@@ -361,7 +361,7 @@ function set_rm(port, rm::Variance, type::FRC; mu::AbstractVector{<:Real},
     W1 = model[:W1]
     @expressions(model, begin
                      frc_sigma_W, transpose(b1) * sigma * b1 * W1
-                     frc_variance_risk, trace(frc_sigma_W)
+                     frc_variance_risk, tr(frc_sigma_W)
                  end)
     a_rc = rm.a_rc
     b_rc = rm.b_rc
@@ -385,22 +385,26 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::FRC;
     model = port.model
     SDP_frc_constraints(model)
     W1 = model[:W1]
+    count = length(rms)
+    Nf = length(model[:w1])
     @expressions(model, begin
-                     frc_sigma_W, transpose(b1) * sigma * b1 * W1
-                     frc_variance_risk, trace(frc_sigma_W)
+                     frc_sigma_W[1:Nf, 1:Nf, 1:count], zero(AffExpr)
+                     frc_variance_risk[1:count], zero(AffExpr)
                  end)
 
     for (i, rm) ∈ pairs(rms)
-        use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
+        use_portfolio_sigma = (isnothing(rm.sigma) || isempty(rm.sigma))
         if !isnothing(kelly_approx_idx) && use_portfolio_sigma
             if isempty(kelly_approx_idx)
-                push!(kelly_approx_idx, 0)
+                push!(kelly_approx_idx, i)
             end
         end
-        if !use_portfolio_sigma
-            sigma_i = rm.sigma
+        sigma_i = if !use_portfolio_sigma
+            rm.sigma
+        else
+            sigma
         end
-        add_to_expression!.(view(frc_sigma_W, :, :, i), transpose(b1) * sigma * b1 * W1)
+        add_to_expression!.(view(frc_sigma_W, :, :, i), transpose(b1) * sigma_i * b1 * W1)
         add_to_expression!(frc_variance_risk[i], tr(view(frc_sigma_W, :, :, i)))
         a_rc = rm.a_rc
         b_rc = rm.b_rc
@@ -3420,7 +3424,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TurnoverRM},
     end
     return nothing
 end
-function risk_constraints(port, type::Union{Trad, RB, NOC},
+function risk_constraints(port, type::Union{Trad, FRC, RB, NOC},
                           rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
                           kelly_approx_idx = nothing; kwargs...)
     for rm ∈ rms

@@ -684,8 +684,8 @@ function Base.getproperty(nco::NCO, sym::Symbol)
     end
 end
 
-for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP),
-                     ("Trad", "RB", "RRB", "NOC", "HRP", "HERC", "NCO", "SchurHRP"))
+for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP, FRC),
+                     ("Trad", "RB", "RRB", "NOC", "HRP", "HERC", "NCO", "SchurHRP", "FRC"))
     eval(quote
              function Base.String(::$op)
                  return $name
