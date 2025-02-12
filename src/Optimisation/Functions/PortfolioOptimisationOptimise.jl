@@ -30,7 +30,8 @@ function optimise!(port::Portfolio, type::Trad)
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     scalarise_risk_expression(port, scalarisation)
     # Returns
-    expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+    expected_return_constraints(port, type, obj, kelly, mu, sigma, returns,
+                                kelly_approx_idx)
     # Objective function penalties
     L1_regularisation(port)
     L2_regularisation(port)
@@ -64,7 +65,8 @@ function optimise!(port::Portfolio, type::RB)
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     scalarise_risk_expression(port, scalarisation)
     # Returns
-    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    expected_return_constraints(port, type, nothing, kelly, mu, sigma, returns,
+                                kelly_approx_idx)
     # Objective function penalties
     L1_regularisation(port)
     L2_regularisation(port)
@@ -97,7 +99,7 @@ function optimise!(port::Portfolio, type::RRB)
     # Risk
     rrb_opt_constraints(port, version, sigma)
     # Returns
-    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, nothing)
+    expected_return_constraints(port, type, nothing, kelly, mu, sigma, returns, nothing)
     # Objective function penalties
     L1_regularisation(port)
     L2_regularisation(port)
@@ -139,7 +141,8 @@ function optimise!(port::Portfolio, type::NOC)
     risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx)
     scalarise_risk_expression(port, scalarisation)
     # Returns
-    expected_return_constraints(port, nothing, kelly, mu, sigma, returns, kelly_approx_idx)
+    expected_return_constraints(port, type, nothing, kelly, mu, sigma, returns,
+                                kelly_approx_idx)
     if flag
         # Objective function penalties
         L1_regularisation(port)

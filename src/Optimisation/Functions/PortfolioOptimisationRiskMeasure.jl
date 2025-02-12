@@ -219,6 +219,13 @@ end
 function variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
     return sqrt(ub)
 end
+function sdp_rc_variance(model, type, a_rc, b_rc)
+    rc_flag = !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+    if rc_flag
+        SDP_constraints(model, type)
+    end
+    return rc_flag
+end
 """
 ```
 set_rm(port, rm::RiskMeasure, type::Union{Trad, RB, NOC}; kwargs...)
@@ -240,15 +247,12 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC}; mu::AbstractVect
     end
     a_rc = rm.a_rc
     b_rc = rm.b_rc
-    rc_flag = !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
-    if rc_flag
-        SDP_constraints(model, type)
-        W = model[:W]
-    end
-    adjacency_constraint = get_ntwk_clust_type(port, rm.a_rc, rm.b_rc)
+    rc_flag = sdp_rc_variance(model, type, a_rc, b_rc)
+    adjacency_constraint = get_ntwk_clust_type(port, a_rc, b_rc)
     calc_variance_risk(adjacency_constraint, rm.formulation, model, mu, sigma, returns)
     variance_risk = model[:variance_risk]
     if rc_flag
+        W = model[:W]
         scale_constr = model[:scale_constr]
         @constraint(model, constr_rc_variance,
                     scale_constr * a_rc * vec(diag(sigma * W)) >=
@@ -270,10 +274,10 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
     for rm ∈ rms
         a_rc = rm.a_rc
         b_rc = rm.b_rc
-        if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+        rc_flag = sdp_rc_variance(model, type, a_rc, b_rc)
+        if rc_flag
             a_rc_flag = Tuple(1)
             b_rc_flag = Tuple(1)
-            SDP_constraints(model, type)
             break
         end
     end

@@ -72,7 +72,7 @@ function wc_return_constraints(port, mu, ::NoWC)
     @expression(model, ret, dot(mu, w) - fees)
     return nothing
 end
-function return_constraints(port, obj, kelly::NoKelly, mu, args...)
+function return_constraints(port, type, obj, kelly::NoKelly, mu, args...)
     if isempty(mu)
         return nothing
     end
@@ -83,7 +83,7 @@ function return_constraints(port, obj, kelly::NoKelly, mu, args...)
 
     return nothing
 end
-function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
+function return_constraints(port, type, ::Any, kelly::AKelly, mu, sigma, returns,
                             kelly_approx_idx)
     if isempty(mu)
         return nothing
@@ -97,8 +97,11 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
         if !haskey(model, :variance_risk)
-            calc_variance_risk(get_ntwk_clust_type(port, kelly.a_rc, kelly.b_rc),
-                               kelly.formulation, model, mu, sigma, returns)
+            a_rc = kelly.a_rc
+            b_rc = kelly.b_rc
+            sdp_rc_variance(model, type, a_rc, b_rc)
+            calc_variance_risk(get_ntwk_clust_type(port, a_rc, b_rc), kelly.formulation,
+                               model, mu, sigma, returns)
         end
         variance_risk = model[:variance_risk]
         @expression(model, ret, dot(mu, w) - fees - 0.5 * variance_risk)
@@ -112,14 +115,17 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
 
     return nothing
 end
-function return_constraints(port, obj::Sharpe, kelly::AKelly, mu, sigma, returns,
+function return_constraints(port, type, obj::Sharpe, kelly::AKelly, mu, sigma, returns,
                             kelly_approx_idx)
-    return_sharpe_akelly_constraints(port, obj, kelly,
-                                     get_ntwk_clust_type(port, kelly.a_rc, kelly.b_rc), mu,
-                                     sigma, returns, kelly_approx_idx)
+    a_rc = kelly.a_rc
+    b_rc = kelly.b_rc
+    sdp_rc_variance(port.model, type, a_rc, b_rc)
+    return_sharpe_akelly_constraints(port, type, obj, kelly,
+                                     get_ntwk_clust_type(port, a_rc, b_rc), mu, sigma,
+                                     returns, kelly_approx_idx)
     return nothing
 end
-function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
+function return_sharpe_akelly_constraints(port, type, obj::Sharpe, kelly::AKelly,
                                           adjacency_constraint::Union{NoAdj, IP}, mu, sigma,
                                           returns, kelly_approx_idx)
     if isempty(mu)
@@ -161,9 +167,9 @@ function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
 
     return nothing
 end
-function return_sharpe_akelly_constraints(port, obj::Sharpe, ::AKelly, ::SDP, ::Any, ::Any,
-                                          returns, ::Any)
-    return_constraints(port, obj, EKelly(), nothing, nothing, returns, nothing)
+function return_sharpe_akelly_constraints(port, type, obj::Sharpe, ::AKelly, ::SDP, ::Any,
+                                          ::Any, returns, ::Any)
+    return_constraints(port, type, obj, EKelly(), nothing, nothing, returns, nothing)
     return nothing
 end
 function return_sharpe_ekelly_constraints(ret, model, obj::Sharpe, k)
@@ -178,7 +184,7 @@ end
 function return_sharpe_ekelly_constraints(args...)
     return nothing
 end
-function return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
+function return_constraints(port, type, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
     model = port.model
     get_fees(model)
     scale_constr = model[:scale_constr]
@@ -197,7 +203,8 @@ function return_constraints(port, obj, ::EKelly, ::Any, ::Any, returns, ::Any)
 
     return nothing
 end
-function expected_return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
-    return_constraints(port, obj, kelly, mu, sigma, returns, kelly_approx_idx)
+function expected_return_constraints(port, type, obj, kelly, mu, sigma, returns,
+                                     kelly_approx_idx)
+    return_constraints(port, type, obj, kelly, mu, sigma, returns, kelly_approx_idx)
     return nothing
 end
