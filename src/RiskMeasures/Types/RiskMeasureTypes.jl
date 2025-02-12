@@ -644,6 +644,8 @@ See also: [`RiskMeasure`](@ref), [`Variance`](@ref), [`SD`](@ref), [`WCVariance`
 """
 abstract type RiskMeasureSigma <: RiskMeasure end
 
+abstract type RiskMeasureRCSigma <: RiskMeasureSigma end
+
 """
     abstract type RiskMeasureSkew <: RiskMeasure end
 
@@ -1018,23 +1020,38 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Port
 
 # Examples
 """
-mutable struct Variance <: RiskMeasureSigma
+mutable struct Variance <: RiskMeasureRCSigma
     settings::RMSettings
     formulation::VarianceFormulation
     sigma::Union{<:AbstractMatrix, Nothing}
+    a_rc::Union{<:AbstractMatrix, Nothing}
+    b_rc::Union{<:AbstractVector, Nothing}
 end
 function Variance(; settings::RMSettings = RMSettings(),
                   formulation::VarianceFormulation = SOC(),
-                  sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(sigma)
+                  sigma::Union{<:AbstractMatrix, Nothing} = nothing,
+                  a_rc::Union{<:AbstractMatrix, Nothing} = nothing,
+                  b_rc::Union{<:AbstractVector, Nothing} = nothing)
+    if !isnothing(sigma) && !isempty(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    return Variance(settings, formulation, sigma)
+    if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+        @smart_assert(size(a_rc, 1) == length(b_rc))
+    end
+    return Variance(settings, formulation, sigma, a_rc, b_rc)
 end
 function Base.setproperty!(obj::Variance, sym::Symbol, val)
     if sym == :sigma
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
+        end
+    elseif sym == :a_rc
+        if !isnothing(val) && !isnothing(obj.b_rc) && !isempty(val) && !isempty(obj.b_rc)
+            @smart_assert(size(val, 1) == length(obj.b_rc))
+        end
+    elseif sym == :b_rc
+        if !isnothing(val) && !isnothing(obj.a_rc) && !isempty(val) && !isempty(obj.a_rc)
+            @smart_assert(size(obj.a_rc, 1) == length(val))
         end
     end
     return setfield!(obj, sym, val)
