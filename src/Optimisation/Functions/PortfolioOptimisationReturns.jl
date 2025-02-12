@@ -97,8 +97,8 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
        isempty(kelly_approx_idx) ||
        iszero(kelly_approx_idx[1])
         if !haskey(model, :variance_risk)
-            calc_variance_risk(get_ntwk_clust_type(port, kelly.a_rc, kelly.b_rc),
-                               kelly.formulation, model, mu, sigma, returns)
+            calc_variance_risk(get_ntwk_clust_type(port), kelly.formulation, model, mu,
+                               sigma, returns)
         end
         variance_risk = model[:variance_risk]
         @expression(model, ret, dot(mu, w) - fees - 0.5 * variance_risk)
@@ -114,9 +114,8 @@ function return_constraints(port, ::Any, kelly::AKelly, mu, sigma, returns,
 end
 function return_constraints(port, obj::Sharpe, kelly::AKelly, mu, sigma, returns,
                             kelly_approx_idx)
-    return_sharpe_akelly_constraints(port, obj, kelly,
-                                     get_ntwk_clust_type(port, kelly.a_rc, kelly.b_rc), mu,
-                                     sigma, returns, kelly_approx_idx)
+    return_sharpe_akelly_constraints(port, obj, kelly, get_ntwk_clust_type(port), mu, sigma,
+                                     returns, kelly_approx_idx)
     return nothing
 end
 function return_sharpe_akelly_constraints(port, obj::Sharpe, kelly::AKelly,
