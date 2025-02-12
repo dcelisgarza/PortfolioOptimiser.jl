@@ -1104,14 +1104,14 @@ mutable struct SD <: RiskMeasureSigma
 end
 function SD(; settings::RMSettings = RMSettings(),
             sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(sigma)
+    if !isnothing(sigma) && !isempty(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
     return SD(settings, sigma)
 end
 function Base.setproperty!(obj::SD, sym::Symbol, val)
     if sym == :sigma
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end
@@ -2130,10 +2130,18 @@ function Kurt(; settings::RMSettings = RMSettings(),
               w::Union{<:AbstractWeights, Nothing} = nothing,
               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
               kt::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(kt)
+    if !isnothing(kt) && !isempty(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
     return Kurt(settings, w, mu, kt)
+end
+function Base.setproperty!(obj::Kurt, sym::Symbol, val)
+    if sym == :kt
+        if !isnothing(val) && !isempty(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
                       scale::Bool = false)
@@ -2202,10 +2210,18 @@ function SKurt(; settings::RMSettings = RMSettings(),
                w::Union{<:AbstractWeights, Nothing} = nothing,
                mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
                kt::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(kt)
+    if !isnothing(kt) && !isempty(kt)
         @smart_assert(size(kt, 1) == size(kt, 2))
     end
     return SKurt(settings, w, mu, kt)
+end
+function Base.setproperty!(obj::SKurt, sym::Symbol, val)
+    if sym == :kt
+        if !isnothing(val) && !isempty(val)
+            @smart_assert(size(val, 1) == size(val, 2))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
                         scale::Bool = false)
@@ -2668,21 +2684,21 @@ end
 function NQSkew(; settings::RMSettings = RMSettings(),
                 skew::Union{<:AbstractMatrix, Nothing} = nothing,
                 V::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(skew)
+    if !isnothing(skew) && !isempty(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
-    if !isnothing(V)
+    if !isnothing(V) && !isempty(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
     return NQSkew(settings, skew, V)
 end
 function Base.setproperty!(obj::NQSkew, sym::Symbol, val)
     if sym == :skew
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
         end
     elseif sym == :V
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end
@@ -2741,21 +2757,21 @@ end
 function NQSSkew(; settings::RMSettings = RMSettings(),
                  skew::Union{<:AbstractMatrix, Nothing} = nothing,
                  V::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(skew)
+    if !isnothing(skew) && !isempty(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
-    if !isnothing(V)
+    if !isnothing(V) && !isempty(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
     return NQSSkew(settings, skew, V)
 end
 function Base.setproperty!(obj::NQSSkew, sym::Symbol, val)
     if sym == :skew
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
         end
     elseif sym == :V
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end
@@ -2812,21 +2828,21 @@ end
 function NSkew(; settings::RMSettings = RMSettings(),
                skew::Union{<:AbstractMatrix, Nothing} = nothing,
                V::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(skew)
+    if !isnothing(skew) && !isempty(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
-    if !isnothing(V)
+    if !isnothing(V) && !isempty(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
     return NSkew(settings, skew, V)
 end
 function Base.setproperty!(obj::NSkew, sym::Symbol, val)
     if sym == :skew
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
         end
     elseif sym == :V
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end
@@ -2884,21 +2900,21 @@ end
 function NSSkew(; settings::RMSettings = RMSettings(),
                 skew::Union{<:AbstractMatrix, Nothing} = nothing,
                 V::Union{<:AbstractMatrix, Nothing} = nothing)
-    if !isnothing(skew)
+    if !isnothing(skew) && !isempty(skew)
         @smart_assert(size(skew, 1)^2 == size(skew, 2))
     end
-    if !isnothing(V)
+    if !isnothing(V) && !isempty(V)
         @smart_assert(size(V, 1) == size(V, 2))
     end
     return NSSkew(settings, skew, V)
 end
 function Base.setproperty!(obj::NSSkew, sym::Symbol, val)
     if sym == :skew
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1)^2 == size(val, 2))
         end
     elseif sym == :V
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end
@@ -3104,16 +3120,16 @@ function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WCSetMuSigma 
                     cov_u::Union{<:AbstractMatrix{<:Real}, Nothing} = nothing,
                     cov_sigma::Union{AbstractMatrix{<:Real}, Nothing} = nothing,
                     k_sigma::Real = Inf)
-    if !isnothing(sigma)
+    if !isnothing(sigma) && !isempty(sigma)
         @smart_assert(size(sigma, 1) == size(sigma, 2))
     end
-    if !isnothing(cov_l)
+    if !isnothing(cov_l) && !isempty(cov_l)
         @smart_assert(size(cov_l, 1) == size(cov_l, 2))
     end
-    if !isnothing(cov_u)
+    if !isnothing(cov_u) && !isempty(cov_u)
         @smart_assert(size(cov_u, 1) == size(cov_u, 2))
     end
-    if !isnothing(cov_sigma)
+    if !isnothing(cov_sigma) && !isempty(cov_sigma)
         @smart_assert(size(cov_sigma, 1) == size(cov_sigma, 2))
     end
     return WCVariance{typeof(k_sigma)}(settings, wc_set, sigma, cov_l, cov_u, cov_sigma,
@@ -3121,7 +3137,7 @@ function WCVariance(; settings::RMSettings = RMSettings(), wc_set::WCSetMuSigma 
 end
 function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     if sym ∈ (:sigma, :cov_l, :cov_u, :cov_mu, :cov_sigma)
-        if !isnothing(val)
+        if !isnothing(val) && !isempty(val)
             @smart_assert(size(val, 1) == size(val, 2))
         end
     end

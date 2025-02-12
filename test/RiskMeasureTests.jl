@@ -58,14 +58,10 @@ end
 
 @testset "Constructors and setters" begin
     @test_throws AssertionError SD(sigma = rand(5, 3))
-    @test_throws AssertionError SD(; sigma = Matrix(undef, 0, 1))
     rm = SD()
-    @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
 
     @test_throws AssertionError Variance(sigma = rand(5, 3))
-    @test_throws AssertionError Variance(; sigma = Matrix(undef, 0, 1))
     rm = Variance()
-    @test_throws AssertionError rm.sigma = Matrix(undef, 0, 1)
 
     rm = VaR()
     @test_throws AssertionError rm.alpha = 1

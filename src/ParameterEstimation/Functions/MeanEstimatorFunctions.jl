@@ -68,7 +68,7 @@ function StatsBase.mean(me::MuEquil, X::AbstractMatrix; kwargs...)
     l = me.l
     w = me.w
     sigma = me.sigma
-    if isnothing(sigma)
+    if isnothing(sigma) || isempty(sigma)
         sigma = X
     end
     N, M = size(sigma)
