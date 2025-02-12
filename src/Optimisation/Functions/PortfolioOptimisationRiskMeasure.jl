@@ -72,7 +72,7 @@ end
 function set_rm_risk_upper_bound(args...)
     return nothing
 end
-function set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub, key)
+function set_rm_risk_upper_bound(::Union{Trad, NOC, FRC}, model, rm_risk, ub, key)
     if isinf(ub)
         return nothing
     end
@@ -85,17 +85,36 @@ function set_rm_risk_upper_bound(::Union{Trad, NOC}, model, rm_risk, ub, key)
 end
 function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any)
     W = model[:W]
-    @expression(model, variance_risk, tr(sigma * W))
+    w = model[:w]
+    scale_constr = model[:scale_constr]
+    G = sqrt(sigma)
+    @variable(model, dev)
+    @expressions(model, begin
+                     sigma_W, sigma * W
+                     variance_risk, tr(sigma_W)
+                 end)
+    @constraint(model, constr_dev_soc,
+                [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function setup_variance_risk(::SDP, model::JuMP.Model, count::Integer)
+    @variable(model, dev[1:count])
     @expression(model, variance_risk[1:count], zero(AffExpr))
     return nothing
 end
 function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any, idx::Integer)
     W = model[:W]
     variance_risk = model[:variance_risk][idx]
-    add_to_expression!(variance_risk, tr(sigma * W))
+    sigma_W = model[Symbol("sigma_W_$(idx)")] = @expression(model, sigma * W)
+    add_to_expression!(variance_risk, tr(sigma_W))
+    G = sqrt(sigma)
+    w = model[:w]
+    dev = model[:dev][idx]
+    scale_constr = model[:scale_constr]
+    model[Symbol("constr_dev_soc_$(idx)")] = @constraint(model,
+                                                         [scale_constr * dev;
+                                                          scale_constr * G * w] ∈
+                                                         SecondOrderCone())
     return nothing
 end
 function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model, ::Any,
@@ -219,7 +238,7 @@ end
 function variance_risk_bounds_val(::Union{NoAdj, IP}, ub)
     return sqrt(ub)
 end
-function sdp_rc_variance(model, type, a_rc, b_rc)
+function sdp_rc_variance(model, type::Union{Trad, RB, NOC}, a_rc, b_rc)
     rc_flag = !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
     if rc_flag
         SDP_constraints(model, type)
@@ -253,9 +272,10 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC}; mu::AbstractVect
     variance_risk = model[:variance_risk]
     if rc_flag
         W = model[:W]
+        sigma_W = model[:sigma_W]
         scale_constr = model[:scale_constr]
         @constraint(model, constr_rc_variance,
-                    scale_constr * a_rc * vec(diag(sigma * W)) >=
+                    scale_constr * a_rc * vec(diag(sigma_W)) >=
                     scale_constr * b_rc * variance_risk)
     end
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
@@ -306,11 +326,12 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
             adjacency_constraint = get_ntwk_clust_type(port, a_rc, b_rc)
             if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
                 W = model[:W]
+                sigma_W = model[Symbol("sigma_W_$(i)")]
                 scale_constr = model[:scale_constr]
                 model[Symbol("constr_rc_variance_$(i)")] = @constraint(model,
                                                                        scale_constr *
                                                                        a_rc *
-                                                                       vec(diag(sigma_i * W)) >=
+                                                                       vec(diag(sigma_W)) >=
                                                                        scale_constr *
                                                                        b_rc *
                                                                        variance_risk[i])
@@ -319,6 +340,80 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
         ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
         set_rm_risk_upper_bound(type, model, var_bound_expr[i], ub, "$(var_bound_key)_$(i)")
         set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
+    end
+    return nothing
+end
+function set_rm(port, rm::Variance, type::FRC; mu::AbstractVector{<:Real},
+                sigma::AbstractMatrix{<:Real}, returns::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                b1::AbstractMatrix, kwargs...)
+    model = port.model
+    use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
+    if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+        if isempty(kelly_approx_idx)
+            push!(kelly_approx_idx, 0)
+        end
+    end
+    if !use_portfolio_sigma
+        sigma = rm.sigma
+    end
+    SDP_frc_constraints(model)
+    W1 = model[:W1]
+    @expressions(model, begin
+                     frc_sigma_W, transpose(b1) * sigma * b1 * W1
+                     frc_variance_risk, trace(frc_sigma_W)
+                 end)
+    a_rc = rm.a_rc
+    b_rc = rm.b_rc
+    if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+        W = model[:W1]
+        scale_constr = model[:scale_constr]
+        @constraint(model, constr_frc_variance,
+                    scale_constr * a_rc * vec(diag(frc_sigma_W)) >=
+                    scale_constr * b_rc * frc_variance_risk)
+    end
+    set_rm_risk_upper_bound(type, model, frc_variance_risk, rm.settings.ub,
+                            "frc_variance_risk")
+    set_risk_expression(model, frc_variance_risk, rm.settings.scale, rm.settings.flag)
+    return nothing
+end
+function set_rm(port, rms::AbstractVector{<:Variance}, type::FRC;
+                mu::AbstractVector{<:Real}, sigma::AbstractMatrix{<:Real},
+                returns::AbstractMatrix{<:Real},
+                kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing},
+                b1::AbstractMatrix, kwargs...)
+    model = port.model
+    SDP_frc_constraints(model)
+    W1 = model[:W1]
+    @expressions(model, begin
+                     frc_sigma_W, transpose(b1) * sigma * b1 * W1
+                     frc_variance_risk, trace(frc_sigma_W)
+                 end)
+
+    for (i, rm) ∈ pairs(rms)
+        use_portfolio_sigma = isnothing(rm.sigma) || isempty(rm.sigma)
+        if !isnothing(kelly_approx_idx) && use_portfolio_sigma
+            if isempty(kelly_approx_idx)
+                push!(kelly_approx_idx, 0)
+            end
+        end
+        if !use_portfolio_sigma
+            sigma_i = rm.sigma
+        end
+        add_to_expression!.(view(frc_sigma_W, :, :, i), transpose(b1) * sigma * b1 * W1)
+        add_to_expression!(frc_variance_risk[i], tr(view(frc_sigma_W, :, :, i)))
+        a_rc = rm.a_rc
+        b_rc = rm.b_rc
+        if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+            scale_constr = model[:scale_constr]
+            @constraint(model, constr_frc_variance,
+                        scale_constr * a_rc * vec(diag(view(frc_sigma_W, :, :, i))) >=
+                        scale_constr * b_rc * frc_variance_risk[i])
+        end
+        set_rm_risk_upper_bound(type, model, frc_variance_risk[i], rm.settings.ub,
+                                "frc_variance_risk_$(i)")
+        set_risk_expression(model, frc_variance_risk[i], rm.settings.scale,
+                            rm.settings.flag)
     end
     return nothing
 end
@@ -3327,10 +3422,10 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:TurnoverRM},
 end
 function risk_constraints(port, type::Union{Trad, RB, NOC},
                           rms::Union{RiskMeasure, AbstractVector}, mu, sigma, returns,
-                          kelly_approx_idx = nothing)
+                          kelly_approx_idx = nothing; kwargs...)
     for rm ∈ rms
         set_rm(port, rm, type; mu = mu, sigma = sigma, returns = returns,
-               kelly_approx_idx = kelly_approx_idx)
+               kelly_approx_idx = kelly_approx_idx, kwargs...)
     end
     return nothing
 end

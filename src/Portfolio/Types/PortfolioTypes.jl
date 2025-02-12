@@ -560,12 +560,12 @@ function tr_assert(tr, n::Integer)
     end
     return nothing
 end
-function adj_assert(adj, n::Integer)
+function adj_assert(adj, n::Integer, m::Integer)
     if !isa(adj, NoAdj) && !isempty(adj.A)
         if isa(adj, IP)
-            @smart_assert(size(adj.A, 2) == n)
+            @smart_assert(size(adj.A, 2) == n || size(adj.A, 2) == m)
         else
-            @smart_assert(size(adj.A) == (n, n))
+            @smart_assert(size(adj.A) == (n, n) || size(adj.A) == (m, m))
         end
     end
 end
@@ -916,8 +916,8 @@ function Portfolio(;
     # Turnover
     tr_assert(turnover, N)
     # Adjacency
-    adj_assert(network_adj, N)
-    adj_assert(cluster_adj, N)
+    adj_assert(network_adj, N, Nf)
+    adj_assert(cluster_adj, N, Nf)
     # Regularisation
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
@@ -1294,7 +1294,8 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         tr_assert(val, N)
     elseif sym ∈ (:network_adj, :cluster_adj)
         N = size(port.returns, 2)
-        adj_assert(val, N)
+        Nf = size(port.f_returns, 2)
+        adj_assert(val, N, Nf)
     elseif sym ∈ (:rebalance, :turnover)
         if isa(val, TR)
             if isa(val.val, Real)

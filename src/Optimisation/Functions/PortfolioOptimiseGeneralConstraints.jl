@@ -540,7 +540,7 @@ function get_net_portfolio_returns(model, returns)
     @expression(model, net_X, X .- fees)
     return nothing
 end
-function SDP_constraints(model, ::Trad)
+function SDP_constraints(model, ::Union{Trad, FRC})
     if haskey(model, :W)
         return nothing
     end
@@ -553,6 +553,20 @@ function SDP_constraints(model, ::Trad)
     @expression(model, M, hcat(vcat(W, transpose(w)), vcat(w, k)))
     @constraint(model, constr_M_PSD, scale_constr * M ∈ PSDCone())
 
+    return nothing
+end
+function SDP_frc_constraints(model)
+    if haskey(model, :W1)
+        return nothing
+    end
+    scale_constr = model[:scale_constr]
+    w1 = model[:w1]
+    k = model[:k]
+    Nf = length(w1)
+
+    @variable(model, W1[1:Nf, 1:Nf], Symmetric)
+    @expression(model, M1, hcat(vcat(W1, transpose(w1)), vcat(w1, k)))
+    @constraint(model, constr_M1_PSD, scale_constr * M1 ∈ PSDCone())
     return nothing
 end
 function SDP_constraints(model, ::Any)
@@ -595,6 +609,32 @@ function SDP_network_cluster_constraints(port, type)
 
     return nothing
 end
+function SDP_network_cluster_constraints(port, ::FRC)
+    network_adj = port.network_adj
+    cluster_adj = port.cluster_adj
+    ntwk_flag = isa(network_adj, SDP)
+    clst_flag = isa(cluster_adj, SDP)
+    if !(ntwk_flag || clst_flag)
+        return nothing
+    end
+
+    model = port.model
+    scale_constr = model[:scale_constr]
+    SDP_frc_constraints(model)
+    W1 = model[:W1]
+
+    if ntwk_flag
+        A = network_adj.A
+        @constraint(model, constr_ntwk_sdp, scale_constr * A .* W1 .== 0)
+    end
+
+    if clst_flag
+        A = cluster_adj.A
+        @constraint(model, constr_clst_sdp, scale_constr * A .* W1 .== 0)
+    end
+
+    return nothing
+end
 function SDP_network_cluster_penalty(port)
     model = port.model
     ntwk_flag = haskey(model, :constr_ntwk_sdp)
@@ -616,7 +656,29 @@ function SDP_network_cluster_penalty(port)
             @expression(model, cluster_penalty, penalty * tr(W))
         end
     end
+    return nothing
+end
+function SDP_frc_network_cluster_penalty(port)
+    model = port.model
+    ntwk_flag = haskey(model, :constr_ntwk_sdp)
+    clst_flag = haskey(model, :constr_clst_sdp)
+    if !(ntwk_flag || clst_flag)
+        return nothing
+    end
 
+    W1 = model[:W1]
+    if !(haskey(model, :frc_variance_risk) || haskey(model, :frc_wcvariance_risk))
+        if ntwk_flag
+            network_adj = port.network_adj
+            penalty = network_adj.penalty
+            @expression(model, network_penalty, penalty * tr(W1))
+        end
+        if clst_flag
+            cluster_adj = port.cluster_adj
+            penalty = cluster_adj.penalty
+            @expression(model, cluster_penalty, penalty * tr(W1))
+        end
+    end
     return nothing
 end
 function custom_constraint(port, ::Union{NoCustomConstraint, Nothing})

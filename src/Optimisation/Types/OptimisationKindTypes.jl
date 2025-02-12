@@ -224,6 +224,31 @@ function Trad(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
                                scalarisation, str_names, key)
 end
 
+mutable struct FRC{T1 <: AbstractVector{<:Real}} <: OptimType
+    rm::Union{AbstractVector, <:RiskMeasure}
+    obj::ObjectiveFunction
+    kelly::RetType
+    class::PortClass
+    flag::Bool
+    w_ini::T1
+    custom_constr::CustomConstraint
+    custom_obj::CustomObjective
+    scalarisation::AbstractScalarisation
+    str_names::Bool
+    key::Union{Symbol, <:AbstractString}
+end
+function FRC(; rm::Union{AbstractVector, <:RiskMeasure} = Variance(),
+             obj::ObjectiveFunction = MinRisk(), kelly::RetType = NoKelly(),
+             class::PortClass = Classic(), flag::Bool = false,
+             w_ini::AbstractVector = Vector{Float64}(undef, 0),
+             custom_constr::CustomConstraint = NoCustomConstraint(),
+             custom_obj::CustomObjective = NoCustomObjective(),
+             scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false,
+             key::Union{Symbol, <:AbstractString} = :auto)
+    return FRC{typeof(w_ini)}(rm, obj, kelly, class, flag, w_ini, custom_constr, custom_obj,
+                              scalarisation, str_names, key)
+end
+
 """
     mutable struct RB{T1} <: OptimType
 
@@ -673,4 +698,4 @@ end
 
 export Trad, RB, BasicRRB, RegRRB, RegPenRRB, RRB, NOC, HRP, HERC, NCO, NCOArgs, SchurHRP,
        SchurParams, HWF, JWF, ROJWF, RSJWF, AOJWF, ASJWF, ScalarSum, ScalarMax,
-       ScalarLogSumExp
+       ScalarLogSumExp, FRC

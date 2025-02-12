@@ -2,7 +2,7 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-function cleanup_weights(port, ::Union{Trad, NOC}, ::Any)
+function cleanup_weights(port, ::Union{Trad, NOC, FRC}, ::Any)
     val_k = value(port.model[:k])
     val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k

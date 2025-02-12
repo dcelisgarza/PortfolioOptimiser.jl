@@ -42,6 +42,43 @@ function optimise!(port::Portfolio, type::Trad)
     set_objective_function(port, obj, kelly, custom_obj)
     return optimise_portfolio_model(port, type, class)
 end
+function optimise!(port::Portfolio, type::FRC)
+    (; rm, obj, kelly, class, flag, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
+    empty!(port.fail)
+    port.model = JuMP.Model()
+    set_string_names_on_creation(port.model, str_names)
+    mu, sigma, returns = mu_sigma_returns_class(port, class)
+    set_scale_obj_constrs(port)
+    optimal_homogenisation_factor(port, mu, obj)
+    b1 = set_frc_w(port, flag, w_ini)
+    set_k(port, obj)
+    # Weight constraints
+    weight_constraints(port)
+    MIP_constraints(port)
+    SDP_network_cluster_constraints(port, type)
+    # Tracking
+    tracking_error_constraints(port, returns)
+    turnover_constraints(port)
+    # Fees
+    management_fee(port)
+    rebalance_fee(port)
+    # Risk
+    kelly_approx_idx = Int[]
+    risk_constraints(port, type, rm, mu, sigma, returns, kelly_approx_idx; b1 = b1)
+    scalarise_risk_expression(port, scalarisation)
+    # Returns
+    expected_return_constraints(port, Trad(), obj, kelly, mu, sigma, returns,
+                                kelly_approx_idx)
+    # Objective function penalties
+    L1_regularisation(port)
+    L2_regularisation(port)
+    SDP_frc_network_cluster_penalty(port)
+    # Custom constraints
+    custom_constraint(port, custom_constr)
+    # Objective function and custom penalties
+    set_objective_function(port, obj, kelly, custom_obj)
+    return optimise_portfolio_model(port, type, class)
+end
 function optimise!(port::Portfolio, type::RB)
     (; rm, kelly, class, w_ini, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
@@ -157,7 +194,7 @@ function optimise!(port::Portfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return optimise_portfolio_model(port, type, class)
 end
-function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
+function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
     old_obj = type.obj
@@ -190,7 +227,7 @@ efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                              points::Integer = 20, rf::Real = 0.0)
 ```
 """
-function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
+function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
                              points::Integer = 20, rf::Real = 0.0)

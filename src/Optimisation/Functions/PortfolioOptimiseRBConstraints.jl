@@ -59,33 +59,33 @@ function rb_opt_constraints(port::Portfolio, class::FC, w_ini)
     if class.flag
         b1, b2 = factors_b1_b2_b3(loadings, f_returns, regression_type)[1:2]
         N = size(port.returns, 2)
-        N_f = size(b1, 2)
+        Nf = size(b1, 2)
         @variables(model, begin
-                       w1[1:N_f]
-                       w2[1:(N - N_f)]
+                       w1[1:Nf]
+                       w2[1:(N - Nf)]
                    end)
         @expression(model, w, b1 * w1 + b2 * w2)
     else
         b1 = factors_b1_b2_b3(loadings, f_returns, regression_type)[1]
-        N_f = size(b1, 2)
-        @variable(model, w1[1:N_f])
+        Nf = size(b1, 2)
+        @variable(model, w1[1:Nf])
         @expression(model, w, b1 * w1)
     end
 
     set_w_ini(w1, w_ini)
 
-    if isempty(port.f_risk_budget) || length(port.f_risk_budget) != N_f
-        port.f_risk_budget = fill(inv(N_f), N_f)
+    if isempty(port.f_risk_budget) || length(port.f_risk_budget) != Nf
+        port.f_risk_budget = fill(inv(Nf), Nf)
     end
     f_risk_budget = port.f_risk_budget
     @variables(model, begin
                    k
-                   log_w[1:N_f]
+                   log_w[1:Nf]
                    c >= 0
                end)
     @constraints(model,
                  begin
-                     constr_factor_log_w[i = 1:N_f],
+                     constr_factor_log_w[i = 1:Nf],
                      [scale_constr * log_w[i], scale_constr * 1, scale_constr * w1[i]] ∈
                      MOI.ExponentialCone()
                      constr_factor_risk_budget,
