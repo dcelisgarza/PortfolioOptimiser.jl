@@ -59,9 +59,11 @@ function scalarise_risk_expression(port, ::ScalarMax)
 
     return nothing
 end
-function get_ntwk_clust_type(port)
+function get_ntwk_clust_type(port, a_rc, b_rc)
     model = port.model
-    return if haskey(model, :constr_ntwk_sdp) || haskey(model, :constr_clst_sdp)
+    return if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc) ||
+              haskey(model, :constr_ntwk_sdp) ||
+              haskey(model, :constr_clst_sdp)
         SDP()
     else
         NoAdj()
@@ -236,9 +238,22 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC}; mu::AbstractVect
     if !use_portfolio_sigma
         sigma = rm.sigma
     end
-    adjacency_constraint = get_ntwk_clust_type(port)
+    a_rc = rm.a_rc
+    b_rc = rm.b_rc
+    rc_flag = !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+    if rc_flag
+        SDP_constraints(model, type)
+        W = model[:W]
+    end
+    adjacency_constraint = get_ntwk_clust_type(port, rm.a_rc, rm.b_rc)
     calc_variance_risk(adjacency_constraint, rm.formulation, model, mu, sigma, returns)
     variance_risk = model[:variance_risk]
+    if rc_flag
+        scale_constr = model[:scale_constr]
+        @constraint(model, constr_rc_variance,
+                    scale_constr * a_rc * vec(diag(sigma * W)) >=
+                    scale_constr * b_rc * variance_risk)
+    end
     var_bound_expr, var_bound_key = variance_risk_bounds_expr(adjacency_constraint, model)
     ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
     set_rm_risk_upper_bound(type, model, var_bound_expr, ub, var_bound_key)
@@ -250,7 +265,19 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
                 returns::AbstractMatrix{<:Real},
                 kelly_approx_idx::Union{AbstractVector{<:Integer}, Nothing}, kwargs...)
     model = port.model
-    adjacency_constraint = get_ntwk_clust_type(port)
+    a_rc_flag = nothing
+    b_rc_flag = nothing
+    for rm ∈ rms
+        a_rc = rm.a_rc
+        b_rc = rm.b_rc
+        if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+            a_rc_flag = Tuple(1)
+            b_rc_flag = Tuple(1)
+            SDP_constraints(model, type)
+            break
+        end
+    end
+    adjacency_constraint = get_ntwk_clust_type(port, a_rc_flag, b_rc_flag)
     count = length(rms)
     setup_variance_risk(adjacency_constraint, model, count)
     variance_risk = model[:variance_risk]
@@ -269,6 +296,22 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
         end
         calc_variance_risk(adjacency_constraint, rm.formulation, model, mu, sigma_i,
                            returns, i)
+        if !isnothing(a_rc_flag)
+            a_rc = rm.a_rc
+            b_rc = rm.b_rc
+            adjacency_constraint = get_ntwk_clust_type(port, a_rc, b_rc)
+            if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+                W = model[:W]
+                scale_constr = model[:scale_constr]
+                model[Symbol("constr_rc_variance_$(i)")] = @constraint(model,
+                                                                       scale_constr *
+                                                                       a_rc *
+                                                                       vec(diag(sigma_i * W)) >=
+                                                                       scale_constr *
+                                                                       b_rc *
+                                                                       variance_risk[i])
+            end
+        end
         ub = variance_risk_bounds_val(adjacency_constraint, rm.settings.ub)
         set_rm_risk_upper_bound(type, model, var_bound_expr[i], ub, "$(var_bound_key)_$(i)")
         set_risk_expression(model, variance_risk[i], rm.settings.scale, rm.settings.flag)
