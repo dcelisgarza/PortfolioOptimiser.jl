@@ -92,14 +92,9 @@ function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any)
                      sigma_W, sigma * W
                      variance_risk, tr(sigma_W)
                  end)
-    # G = sqrt(sigma)
-    # @variable(model, dev)
-    # @constraint(model, constr_dev_soc,
-    #             [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function setup_variance_risk(::SDP, model::JuMP.Model, count::Integer)
-    # @variable(model, dev[1:count])
     @expression(model, variance_risk[1:count], zero(AffExpr))
     return nothing
 end
@@ -108,14 +103,6 @@ function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any, idx::Integ
     variance_risk = model[:variance_risk][idx]
     sigma_W = model[Symbol("sigma_W_$(idx)")] = @expression(model, sigma * W)
     add_to_expression!(variance_risk, tr(sigma_W))
-    G = sqrt(sigma)
-    w = model[:w]
-    dev = model[:dev][idx]
-    scale_constr = model[:scale_constr]
-    model[Symbol("constr_dev_soc_$(idx)")] = @constraint(model,
-                                                         [scale_constr * dev;
-                                                          scale_constr * G * w] ∈
-                                                         SecondOrderCone())
     return nothing
 end
 function calc_variance_risk(::Union{NoAdj, IP}, ::SOC, model::JuMP.Model, ::Any,
