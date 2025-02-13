@@ -328,6 +328,53 @@ function sharpe_ratio_info_criteria(rm::AbstractRiskMeasure, w::AbstractVector;
                       fees = fees, rebalance = rebalance)
     return sr - N / (T * sr)
 end
+function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractVector,
+                             asset_classes::DataFrame, col, date0 = nothing,
+                             date1 = nothing)
+    idx1, idx2 = if !isnothing(date0) && !isnothing(date1)
+        timestamps = timestamp(prices)
+        idx = DateTime(date0) .<= timestamps .<= DateTime(date1)
+        findfirst(idx), findlast(idx)
+    else
+        1, length(prices)
+    end
+
+    ret = vec(values(prices[idx2]) ./ values(prices[idx1]) .- 1)
+
+    # ret_w = dot(ret, w)
+    ret_b = dot(ret, wb)
+
+    classes = asset_classes[!, col]
+    unique_classes = unique(classes)
+
+    df = DataFrame(;
+                   index = ["Asset Allocation", "Security Selection", "Interaction",
+                            "Total Excess Return"])
+
+    for class_i ∈ unique_classes
+        sets_i = BitVector(undef, 0)
+        for class_j ∈ classes
+            push!(sets_i, class_i == class_j)
+        end
+
+        w_i = dot(sets_i, w)
+        wb_i = dot(sets_i, wb)
+
+        ret_i = dot(ret .* sets_i, w) / w_i
+        ret_b_i = dot(ret .* sets_i, wb) / wb_i
+
+        AA_i = (w_i - wb_i) * (ret_b_i - ret_b)
+        SS_i = wb_i * (ret_i - ret_b_i)
+        I_i = (w_i - wb_i) * (ret_i - ret_b_i)
+        TER_i = AA_i + SS_i + I_i
+
+        df[!, class_i] = [AA_i, SS_i, I_i, TER_i]
+    end
+
+    df[!, "Total"] = sum(eachcol(df[!, 2:end]))
+
+    return df
+end
 
 export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
-       sharpe_ratio_info_criteria
+       sharpe_ratio_info_criteria, brinson_attribution
