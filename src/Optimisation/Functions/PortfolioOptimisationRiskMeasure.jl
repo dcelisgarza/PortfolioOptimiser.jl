@@ -61,9 +61,10 @@ function scalarise_risk_expression(port, ::ScalarMax)
 end
 function get_ntwk_clust_type(port, a_rc, b_rc)
     model = port.model
-    return if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc) ||
-              haskey(model, :constr_ntwk_sdp) ||
-              haskey(model, :constr_clst_sdp)
+    return if haskey(model, :constr_ntwk_sdp) ||
+              haskey(model, :constr_clst_sdp) ||
+              haskey(model, :rc_variance) ||
+              !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
         SDP()
     else
         NoAdj()
@@ -87,18 +88,18 @@ function calc_variance_risk(::SDP, ::Any, model, ::Any, sigma, ::Any)
     W = model[:W]
     w = model[:w]
     scale_constr = model[:scale_constr]
-    G = sqrt(sigma)
-    @variable(model, dev)
     @expressions(model, begin
                      sigma_W, sigma * W
                      variance_risk, tr(sigma_W)
                  end)
-    @constraint(model, constr_dev_soc,
-                [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
+    # G = sqrt(sigma)
+    # @variable(model, dev)
+    # @constraint(model, constr_dev_soc,
+    #             [scale_constr * dev; scale_constr * G * w] ∈ SecondOrderCone())
     return nothing
 end
 function setup_variance_risk(::SDP, model::JuMP.Model, count::Integer)
-    @variable(model, dev[1:count])
+    # @variable(model, dev[1:count])
     @expression(model, variance_risk[1:count], zero(AffExpr))
     return nothing
 end
@@ -274,6 +275,7 @@ function set_rm(port, rm::Variance, type::Union{Trad, RB, NOC}; mu::AbstractVect
         W = model[:W]
         sigma_W = model[:sigma_W]
         scale_constr = model[:scale_constr]
+        @expression(model, rc_variance, true)
         @constraint(model, constr_rc_variance,
                     scale_constr * a_rc * vec(diag(sigma_W)) >=
                     scale_constr * b_rc * variance_risk)
@@ -325,6 +327,9 @@ function set_rm(port, rms::AbstractVector{<:Variance}, type::Union{Trad, RB, NOC
             b_rc = rm.b_rc
             adjacency_constraint = get_ntwk_clust_type(port, a_rc, b_rc)
             if !isnothing(a_rc) && !isnothing(b_rc) && !isempty(a_rc) && !isempty(b_rc)
+                if !haskey(model, :rc_variance)
+                    @expression(model, rc_variance, true)
+                end
                 W = model[:W]
                 sigma_W = model[Symbol("sigma_W_$(i)")]
                 scale_constr = model[:scale_constr]
