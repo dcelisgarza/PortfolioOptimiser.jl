@@ -363,9 +363,12 @@ function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractV
         ret_i = dot(ret .* sets_i, w) / w_i
         ret_b_i = dot(ret .* sets_i, wb) / wb_i
 
-        AA_i = (w_i - wb_i) * (ret_b_i - ret_b)
-        SS_i = wb_i * (ret_i - ret_b_i)
-        I_i = (w_i - wb_i) * (ret_i - ret_b_i)
+        w_diff_i = (w_i - wb_i)
+        ret_diff_i = (ret_i - ret_b_i)
+
+        AA_i = w_diff_i * (ret_b_i - ret_b)
+        SS_i = wb_i * ret_diff_i
+        I_i = w_diff_i * ret_diff_i
         TER_i = AA_i + SS_i + I_i
 
         df[!, class_i] = [AA_i, SS_i, I_i, TER_i]
