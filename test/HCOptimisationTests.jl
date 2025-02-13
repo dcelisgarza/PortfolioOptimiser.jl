@@ -1143,7 +1143,7 @@ end
     @test isempty(w1)
     @test haskey(portfolio.fail, :NCO_inter)
     @test haskey(portfolio.fail, :NCO_intra)
-    @test portfolio.k == size(Matrix(portfolio.fail[:inter][:Clarabel_Trad][:port]), 1)
+    @test portfolio.k == size(Matrix(portfolio.fail[:NCO_inter][:Trad_Clarabel][:port]), 1)
     @test length(keys(portfolio.fail[:NCO_intra])) == 3
     num_assets = 0
     for val ∈ values(portfolio.fail[:NCO_intra])
