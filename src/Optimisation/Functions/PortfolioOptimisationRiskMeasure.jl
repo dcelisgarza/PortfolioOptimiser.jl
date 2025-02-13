@@ -1293,13 +1293,13 @@ function set_rm(port::Portfolio, rm::EVaRRG, type::Union{Trad, RB, NOC};
     net_X = model[:net_X]
     T = size(returns, 1)
     at = rm.alpha * T
-    bt = rm.alpha * T
+    bt = rm.beta * T
     @variables(model, begin
                    t_evar_l
                    z_evar_l >= 0
                    u_evar_l[1:T]
                    t_evar_h
-                   z_evar_h >= 0
+                   z_evar_h <= 0
                    u_evar_h[1:T]
                end)
     @expressions(model, begin
@@ -1337,7 +1337,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:EVaRRG}, type::Union{Trad
                    z_evar_l[1:count] .>= 0
                    u_evar_l[1:T, 1:count]
                    t_evar_h[1:count]
-                   z_evar_h[1:count] .>= 0
+                   z_evar_h[1:count] .<= 0
                    u_evar_h[1:T, 1:count]
                end)
     @expressions(model, begin
@@ -1548,7 +1548,7 @@ function set_rm(port::Portfolio, rm::RLVaRRG, type::Union{Trad, RB, NOC};
                    theta_rlvar_l[1:T]
                    epsilon_rlvar_l[1:T]
                    t_rlvar_h
-                   z_rlvar_h >= 0
+                   z_rlvar_h <= 0
                    omega_rlvar_h[1:T]
                    psi_rlvar_h[1:T]
                    theta_rlvar_h[1:T]
@@ -1608,7 +1608,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:RLVaRRG}, type::Union{Tra
                    theta_rlvar_l[1:T, 1:count]
                    epsilon_rlvar_l[1:T, 1:count]
                    t_rlvar_h[1:count]
-                   z_rlvar_h[1:count] .>= 0
+                   z_rlvar_h[1:count] .<= 0
                    omega_rlvar_h[1:T, 1:count]
                    psi_rlvar_h[1:T, 1:count]
                    theta_rlvar_h[1:T, 1:count]
