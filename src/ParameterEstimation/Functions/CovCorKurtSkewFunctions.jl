@@ -1352,7 +1352,7 @@ function block_vec_pq(A, p, q)
 
     return A_vec
 end
-function duplication_matrix(n::Int)
+function duplication_matrix(n::Int, diag::Bool = true)
     m   = Int(n * (n + 1) / 2)
     nsq = n^2
     v   = zeros(Int, nsq)
@@ -1373,16 +1373,61 @@ function duplication_matrix(n::Int)
         a += n - i + 1
     end
 
-    return sparse(1:nsq, v, 1, nsq, m)
+    return if diag
+        sparse(1:nsq, v, 1, nsq, m)
+    else
+        filtered_cols = Vector{Int}(undef, 0)
+        filtered_rows = Vector{Int}(undef, 0)
+        m = Int(n * (n - 1) / 2)
+        rows = 1:nsq
+        counts = Dict{Int, Int}()
+        for i ∈ v
+            !haskey(counts, i) ? counts[i] = 1 : counts[i] += 1
+        end
+        display(counts)
+        display(v)
+        repeated_elem = Set{Int}()
+        for (key, value) ∈ counts
+            if value > 1
+                push!(repeated_elem, key)
+            end
+        end
+        repeated_elem = sort!(collect(repeated_elem))
+
+        cols = Dict{Int, Int}()
+        cntr = 0
+        for col ∈ repeated_elem
+            cntr += 1
+            cols[col] = cntr
+        end
+
+        for i ∈ 1:nsq
+            if !iszero(count(x -> x == v[i], repeated_elem))
+                push!(filtered_rows, rows[i])
+                push!(filtered_cols, cols[v[i]])
+            end
+        end
+
+        sparse(filtered_rows, filtered_cols, 1, nsq, m)
+    end
 end
-function elimination_matrix(n::Int)
-    m   = Int(n * (n + 1) / 2)
+function elimination_matrix(n::Int, diag::Bool = true)
     nsq = n^2
-    v   = zeros(Int, m)
     r   = 1
     a   = 1
-    b   = 0
-    for i ∈ 1:n
+
+    if diag
+        m = Int(n * (n + 1) / 2)
+        rg = 1:n
+        b = 0
+    else
+        m = Int(n * (n - 1) / 2)
+        rg = 2:n
+        b = 1
+    end
+
+    v = zeros(Int, m)
+    for i ∈ rg
         for j ∈ 0:(n - i)
             v[r] = a + j + b
             r += 1
@@ -1393,36 +1438,49 @@ function elimination_matrix(n::Int)
 
     return sparse(1:m, v, 1, m, nsq)
 end
-function summation_matrix(n::Int)
-    m = Int(n * (n + 1) / 2)
+function summation_matrix(n::Int, diag::Bool = true)
     nsq = n^2
     r = 0
     a = 1
     v1 = zeros(Int, nsq)
     v2 = zeros(Int, nsq)
     rows2 = zeros(Int, nsq)
-    cm = 0
 
-    for i ∈ 1:n
+    if diag
+        m = Int(n * (n + 1) / 2)
+        b = 0
+        rg = 1:n
+    else
+        m = Int(n * (n - 1) / 2)
+        b = 1
+        rg = 2:n
+    end
+
+    for i ∈ rg
         r += i - 1
         for j ∈ 0:(n - i)
-            v1[r + j + 1] = a + j + cm
+            v1[r + j + 1] = a + j + b
         end
         for j ∈ 1:(n - i)
-            v2[r + j + 1] = a + j + cm
+            v2[r + j + 1] = a + j + b
             rows2[r + j + 1] = a + j
         end
         r += n - i + 1
         a += n - i + 1
-        cm += i
+        b += i
     end
+
     v1 = v1[.!iszero.(v1)]
     v2 = v2[.!iszero.(v2)]
     rows2 = rows2[.!iszero.(rows2)]
 
-    a = sparse(1:m, v1, 1, m, nsq)
-    b = sparse(rows2, v2, 1, m, nsq)
-    return a + b
+    return if diag
+        a = sparse(1:m, v1, 1, m, nsq)
+        b = sparse(rows2, v2, 1, m, nsq)
+        a + b
+    else
+        sparse(1:m, v1, 2, m, nsq)
+    end
 end
 function dup_elim_sum_matrices(n::Int)
     m   = Int(n * (n + 1) / 2)
