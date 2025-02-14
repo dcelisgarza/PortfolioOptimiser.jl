@@ -60,7 +60,7 @@ pretty_table(prices[1:5]; formatters = fmt1)
 #=
 ## 2. Estimating Markowitz Portfolios
 
-### 2.1 Minimum risk portfolio
+### 2.1 Optimising portfolio
 
 For API details and options available see: [`Portfolio`](@ref), [`PortOptSolver`](@ref), [`PortfolioOptimiser.MeanEstimator`](@ref), [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref), [`asset_statistics!`](@ref), [`RiskMeasure`](@ref), [`PortfolioOptimiser.ObjectiveFunction`](@ref), [`PortfolioOptimiser.OptimType`](@ref).
 =#
@@ -107,8 +107,8 @@ points = 50
 frontier = efficient_frontier!(port, type; points = 50)
 pretty_table(frontier[:weights]; formatters = fmt2)
 
-## Plot frontier
+# Plot frontier.
 plot_frontier(port; rm = rm)
 
-## Plot frontier area
+# Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
