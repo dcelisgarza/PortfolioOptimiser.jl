@@ -1,9 +1,5 @@
 using SafeTestsets
 
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
-end
-
 @safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
 end
@@ -102,4 +98,8 @@ end
 
 @safetestset "Portfolio classes" begin
     include("PortfolioClassesTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
 end
