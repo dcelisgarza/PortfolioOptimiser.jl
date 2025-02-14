@@ -4,15 +4,7 @@
 
 function cleanup_weights(port, ::Union{Trad, NOC, FRC}, ::Any)
     val_k = value(port.model[:k])
-    val_k = val_k > 0 ? val_k : 1
     weights = value.(port.model[:w]) / val_k
-    # short = port.short
-    # budget = port.budget
-    # if short == false
-    #     sum_w = sum(abs.(weights))
-    #     sum_w = sum_w > eps() ? sum_w : 1
-    #     weights .= abs.(weights) / sum_w * budget
-    # end
     return weights
 end
 function cleanup_weights(port, ::RB, ::FC)
