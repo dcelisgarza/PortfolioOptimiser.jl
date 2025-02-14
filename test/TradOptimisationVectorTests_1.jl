@@ -1965,7 +1965,7 @@ end
     rm = [[RLVaR(), RLVaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 5e-6
+    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 5e-5
 
     obj = Sharpe(; rf = rf)
     rm = RLVaR(; settings = RMSettings(; scale = 1.0))

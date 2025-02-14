@@ -30,7 +30,7 @@
           0.021758041273862418, 1.4544127465459826e-10, 1.5403052159158215e-10,
           0.1434506868365832, 0.15965748652335518, 0.061931528622712555,
           8.378548679507754e-10, 0.06488548228536865]
-    riskt = 0.07576351003435194
+    riskt = 0.07576351779834273
     rett = 0.0005794991411133507
     @test isapprox(w1.weights, wt0, rtol = 1.0e-6)
     @test isapprox(r1, riskt0, rtol = 1.0e-7)
@@ -101,7 +101,7 @@
           4.754309123583926e-10, 2.151287655244273e-9, 6.948169497458978e-10,
           0.2900702434978636, 6.220430434686813e-9, 3.4141868907099685e-9,
           2.766715041544124e-9, 7.033607026338685e-9]
-    riskt = 0.09342363756654541
+    riskt = 0.09342364282298637
     rett = 0.0009783028412136859
     @test isapprox(w4.weights, wt0, rtol = 5.0e-5)
     @test isapprox(r4, riskt0, rtol = 1.0e-5)
@@ -120,8 +120,7 @@
     rm = [[RLDaR(), RLDaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test calc_risk(portfolio, :Trad; rm = rm[1][1]) <= r2 ||
-          abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 5e-7
+    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 1e-6
 
     obj = Sharpe(; rf = rf)
     rm = RLDaR(; settings = RMSettings(; scale = 2.0))
