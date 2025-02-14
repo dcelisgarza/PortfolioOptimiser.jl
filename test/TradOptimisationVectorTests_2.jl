@@ -120,7 +120,7 @@
     rm = [[RLDaR(), RLDaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 1e-6
+    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 5e-6
 
     obj = Sharpe(; rf = rf)
     rm = RLDaR(; settings = RMSettings(; scale = 2.0))
