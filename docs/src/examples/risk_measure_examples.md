@@ -1,14 +1,14 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
 
 ```@meta
-EditURL = "../../../examples/0_risk_measure_examples.jl"
+EditURL = "../../../examples/risk_measure_examples.jl"
 ```
 
 # Risk Measures
 
 This file contains the examples in the docstrings as runnable code.
 
-````@example 0_risk_measure_examples
+````@example risk_measure_examples
 using PortfolioOptimiser, HiGHS, Clarabel, Pajarito, JuMP, StatsBase
 
 # Randomly generated normally distributed returns.
@@ -42,7 +42,7 @@ cluster_assets!(port)
 
 # Variance, [`Variance`](@ref)
 
-````@example 0_risk_measure_examples
+````@example risk_measure_examples
 # If `sigma` is not `nothing` it must be a square matrix. This works at instantiation and runtime.
 try
     Variance(; sigma = [1 0 0;
@@ -143,7 +143,7 @@ w10 = optimise!(port, HRP(; rm = rm))
 
 # Standard Deviation, [`SD`](@ref)
 
-````@example 0_risk_measure_examples
+````@example risk_measure_examples
 # If `sigma` is not `nothing` it must be a square matrix. This works at instantiation and runtime.
 try
     SD(; sigma = [1 0 0;
@@ -184,7 +184,7 @@ w2 = optimise!(port, HRP(; rm = rm))
 
 # Mean Absolute Deviation, [`MAD`](@ref)
 
-````@example 0_risk_measure_examples
+````@example risk_measure_examples
 # Setting the mean absolute deviation upper bound to 10 (it's so high it has no effect on the optimisation).
 rm = MAD(; settings = RMSettings(; ub = 10))
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))

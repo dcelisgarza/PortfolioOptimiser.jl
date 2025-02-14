@@ -54,7 +54,7 @@ solvers = [PortOptSolver(; name = :Clarabel_1, solver = Clarabel.Optimizer,
 
 2-element Vector{PortOptSolver}:
  PortOptSolver(:Clarabel_1, Clarabel.MOIwrapper.Optimizer, (allow_local = true, allow_almost = true), Dict{String, Real}("verbose" => false, "max_step_fraction" => 0.8), true)
- PortOptSolver(:Clarabel_2, MathOptInterface.OptimizerWithAttributes(Clarabel.MOIwrapper.Optimizer, Pair{MathOptInterface.AbstractOptimizerAttribute, Any}[MathOptInterface.RawOptimizerAttribute("max_step_fraction") => 0.75]), (allow_local = true, allow_almost = true), nothing, false)
+ PortOptSolver(:Clarabel_2, MathOptInterface.OptimizerWithAttributes(Clarabel.MOIwrapper.Optimizer, Pair{MathOptInterface.AbstractOptimizerAttribute, Any}[MathOptInterface.RawOptimizerAttribute("max_step_fraction") => 0.75]), NamedTuple(), nothing, false)
 ```
 """
 mutable struct PortOptSolver
@@ -65,7 +65,7 @@ mutable struct PortOptSolver
     add_bridges::Bool
 end
 function PortOptSolver(; name::Union{Symbol, <:AbstractString} = "", solver::Any = nothing,
-                       check_sol::NamedTuple = (; allow_local = true, allow_almost = true),
+                       check_sol::NamedTuple = (;),
                        params::Union{Nothing, <:AbstractDict} = nothing,
                        add_bridges::Bool = true)
     return PortOptSolver(name, solver, check_sol, params, add_bridges)
