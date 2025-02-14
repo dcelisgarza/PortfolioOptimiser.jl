@@ -20,7 +20,7 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
         ret = vcat(zeros(1, length(weights)), ret)
         ret .+= 1
         ret = cumprod(ret; dims = 1)
-        ret = ret[2:end, :]
+        popfirst!(ret)
         if !haskey(kwargs, :label)
             kwargs = (kwargs..., label = reshape(assets, 1, :))
         end

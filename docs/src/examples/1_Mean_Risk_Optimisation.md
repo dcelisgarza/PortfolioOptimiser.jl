@@ -57,9 +57,11 @@ TimeSeries.rename!(prices, Symbol.(assets))
 pretty_table(prices[1:5]; formatters = fmt1)
 ````
 
-## 2. Estimating Markowitz Portfolios
+## 2. Estimating Mean Risk Portfolios
 
-### 2.1 Optimising portfolio
+### 2.1. Optimising portfolio
+
+This is a simple example so we will only use default parameters for computing the statistics.
 
 For API details and options available see: [`Portfolio`](@ref), [`PortOptSolver`](@ref), [`PortfolioOptimiser.MeanEstimator`](@ref), [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref), [`asset_statistics!`](@ref), [`RiskMeasure`](@ref), [`PortfolioOptimiser.ObjectiveFunction`](@ref), [`PortfolioOptimiser.OptimType`](@ref).
 
@@ -74,7 +76,7 @@ port = Portfolio(; prices = prices,
                                                solver = optimizer_with_attributes(HiGHS.Optimizer,
                                                                                   MOI.Silent() => true)))
 
-# Compute relevant portfolio statistics.
+# Compute relevant statistics.
 # Expected returns and covariance estimation methods.
 mu_type = MuSimple()
 cov_type = PortCovCor()
@@ -93,13 +95,13 @@ w1 = optimise!(port, type)
 pretty_table(w1; formatters = fmt2)
 ````
 
-### 2.2 Plotting portfolio composition.
+### 2.2. Plotting portfolio composition.
 
 ````@example 1_Mean_Risk_Optimisation
 plot_bar(port)
 ````
 
-### 2.3 Efficient frontier
+### 2.3. Efficient frontier
 
 ````@example 1_Mean_Risk_Optimisation
 points = 50
