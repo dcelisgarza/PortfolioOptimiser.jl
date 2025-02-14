@@ -1,21 +1,5 @@
 using SafeTestsets
 
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "RRB optimisation" begin
-    include("RRBOptimisationTests.jl")
-end
-
-@safetestset "RB optimisation" begin
-    include("RBOptimisationTests.jl")
-end
-
-@safetestset "Efficient frontier" begin
-    include("EfficientFrontierTests.jl")
-end
-
 @safetestset "Trad optimisation rm vector" begin
     include("TradOptimisationVectorTests.jl")
 end
@@ -102,4 +86,20 @@ end
 
 @safetestset "Trad optimisation" begin
     include("TradOptimisationTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "RRB optimisation" begin
+    include("RRBOptimisationTests.jl")
+end
+
+@safetestset "RB optimisation" begin
+    include("RBOptimisationTests.jl")
+end
+
+@safetestset "Efficient frontier" begin
+    include("EfficientFrontierTests.jl")
 end

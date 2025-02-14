@@ -1758,8 +1758,7 @@ end
     rm = [[EVaR(), EVaR()]]
     rm[1][1].settings.ub = r2
     optimise!(portfolio, Trad(; rm = rm, obj = obj))
-    @test calc_risk(portfolio, :Trad; rm = rm[1][1]) <= r2 ||
-          abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 1e-7
+    @test abs(calc_risk(portfolio, :Trad; rm = rm[1][1]) - r2) < 1e-7
 
     obj = Sharpe(; rf = rf)
     rm = EVaR(; settings = RMSettings(; scale = 2.0))
