@@ -230,7 +230,7 @@ efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
 function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
-                             points::Integer = 20, rf::Real = 0.0)
+                             points::Integer = 20, rf::Real = 0.0, ohf::Real = 1.0)
     optimal1 = deepcopy(port.optimal)
     fail1 = deepcopy(port.fail)
 
@@ -266,6 +266,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     frontier = Vector{typeof(risk1)}(undef, 0)
     optim_risk = Vector{typeof(risk1)}(undef, 0)
     optim_ret = Vector{typeof(ret1)}(undef, 0)
+    optim_sr = Vector{promote_type(typeof(ret1), typeof(risk1))}(undef, 0)
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
     old_obj = type.obj
@@ -299,25 +300,28 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
         if isempty(w)
             continue
         end
-        rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
-        rt = calc_ret(w.weights; mu = mu, X = returns, kelly = kelly, fees = fees,
-                      rebalance = rebalance)
+        rt, rk, sr = calc_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns, delta = 0,
+                                          rf = rf, kelly = kelly, fees = fees,
+                                          rebalance = rebalance)
+
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         push!(optim_ret, rt)
+        push!(optim_sr, sr)
         i += 1
     end
     rm_i.settings.ub = Inf
-    type.obj = Sharpe(; rf = rf)
+    type.obj = Sharpe(; rf = rf, ohf = ohf)
     w = optimise!(port, type)
     sharpe = false
     if !isempty(w)
-        rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
-        rt = calc_ret(w.weights; mu = mu, X = returns, kelly = kelly, fees = fees,
-                      rebalance = rebalance)
+        rt, rk, sr = calc_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns, delta = 0,
+                                          rf = rf, kelly = kelly, fees = fees,
+                                          rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         push!(optim_ret, rt)
+        push!(optim_sr, sr)
         i += 1
         sharpe = true
     end
@@ -326,8 +330,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
                                                DataFrame(reshape(frontier, length(w1), :),
                                                          string.(range(1, i)))),
                               :risks => optim_risk, :rets => optim_ret,
-                              :sharpes => (optim_ret .- rf) ./ optim_risk,
-                              :sharpe => sharpe)
+                              :sharpes => optim_sr, :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
     type.obj = old_obj

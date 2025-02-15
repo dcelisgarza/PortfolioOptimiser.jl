@@ -169,6 +169,20 @@ function sharpe_ratio(port::AbstractPortfolio, key = :Trad;
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sr
 end
+function calc_ret_risk_sharpe(port::AbstractPortfolio, key = :Trad;
+                              X::AbstractMatrix = port.returns,
+                              mu::AbstractVector = port.mu,
+                              rm::AbstractRiskMeasure = Variance(), delta::Real = 1e-6,
+                              rf::Real = 0.0, kelly::Bool = false)
+    solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
+                                                                        port.cov, port.V,
+                                                                        port.SV)
+    ret, risk, sharpe = calc_ret_risk_sharpe(rm, port.optimal[key].weights; mu = mu, X = X,
+                                             delta = delta, rf = rf, kelly = kelly,
+                                             fees = port.fees, rebalance = port.rebalance)
+    unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
+    return ret, risk, sharpe
+end
 function sharpe_ratio_info_criteria(port::AbstractPortfolio, key = :Trad;
                                     X::AbstractMatrix = port.returns,
                                     mu::AbstractVector = port.mu,

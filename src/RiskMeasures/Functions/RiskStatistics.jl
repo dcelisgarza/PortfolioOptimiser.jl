@@ -323,6 +323,16 @@ function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
     risk = calc_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
     return (ret - rf) / risk
 end
+function calc_ret_risk_sharpe(rm::AbstractRiskMeasure, w::AbstractVector;
+                              mu::AbstractVector = Vector{Float64}(undef, 0),
+                              X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                              delta::Real = 1e-6, rf::Real = 0.0,
+                              kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
+                              rebalance::AbstractTR = NoTR())
+    ret = calc_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
+    risk = calc_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
+    return ret, risk, (ret - rf) / risk
+end
 function sharpe_ratio_info_criteria(rm::AbstractRiskMeasure, w::AbstractVector;
                                     mu::AbstractVector = Vector{Float64}(undef, 0),
                                     X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
@@ -385,4 +395,4 @@ function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractV
 end
 
 export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
-       sharpe_ratio_info_criteria, brinson_attribution, calc_ret
+       sharpe_ratio_info_criteria, brinson_attribution, calc_ret, calc_ret_risk_sharpe
