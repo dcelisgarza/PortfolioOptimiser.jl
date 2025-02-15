@@ -338,6 +338,33 @@ pretty_table(w6; formatters = fmt2)
 plot_bar(port)
 ````
 
+## 4. Efficient Frontier
+
+It's possible to compute the efficient frontier with constraints. It will be different to the vanilla one in the previous tutorial because the constraints will be applied to every optimisation.
+
+````@example 2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A2
+port.b_ineq = B2
+
+points = 50
+frontier = efficient_frontier!(port, type; points = 50)
+pretty_table(frontier[:weights]; formatters = fmt2)
+````
+
+Plot frontier.
+
+````@example 2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints
+plot_frontier(port; rm = rm)
+````
+
+Plot frontier area.
+
+````@example 2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints
+plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
+````
+
 * * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
