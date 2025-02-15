@@ -20,7 +20,7 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
         ret = vcat(zeros(1, length(weights)), ret)
         ret .+= 1
         ret = cumprod(ret; dims = 1)
-        popfirst!(ret)
+        ret = ret[2:end, :]
         if !haskey(kwargs, :label)
             kwargs = (kwargs..., label = reshape(assets, 1, :))
         end
@@ -206,7 +206,9 @@ function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
     rets .*= t_factor
     rf *= t_factor
 
-    if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
+    if any(typeof(rm) .<: (Variance, WCVariance, SVariance))
+        risks .*= t_factor
+    elseif !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
         risks .*= sqrt(t_factor)
         sharpes .*= sqrt(t_factor)
     end
@@ -277,15 +279,12 @@ function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
     return plt
 end
 function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortfolio,
-                                          key = nothing;
+                                          key = :Trad;
                                           rm::PortfolioOptimiser.AbstractRiskMeasure = Variance(),
                                           rf::Real = 0.0,
                                           kelly::Union{PortfolioOptimiser.RetType, Bool} = false,
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
-    if isnothing(key)
-        key = PortfolioOptimiser.get_rm_symbol(rm)
-    end
     return PortfolioOptimiser.plot_frontier(port.frontier[key]; rf = rf, rm = rm,
                                             kelly = kelly, t_factor = t_factor,
                                             theme = theme, kwargs_f = kwargs_f,
@@ -301,7 +300,9 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
     assets = reshape(frontier[:weights][!, "tickers"], 1, :)
     weights = transpose(Matrix(frontier[:weights][!, 2:end]))
 
-    if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
+    if any(typeof(rm) .<: (Variance, WCVariance, SVariance))
+        risks .*= t_factor
+    elseif !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
         risks .*= sqrt(t_factor)
     end
 
@@ -368,12 +369,9 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
     return plt
 end
 function PortfolioOptimiser.plot_frontier_area(port::PortfolioOptimiser.AbstractPortfolio,
-                                               key = nothing; rm = SD(), t_factor = 252,
+                                               key = :Trad; rm = SD(), t_factor = 252,
                                                theme = :Spectral, kwargs_a = (;),
                                                kwargs_l = (;), show_sharpe = true)
-    if isnothing(key)
-        key = PortfolioOptimiser.get_rm_symbol(rm)
-    end
     return PortfolioOptimiser.plot_frontier_area(port.frontier[key]; rm = rm,
                                                  t_factor = t_factor, theme = theme,
                                                  kwargs_a = kwargs_a, kwargs_l = kwargs_l,

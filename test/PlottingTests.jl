@@ -27,9 +27,9 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     plt5 = plot_risk_contribution(portfolio, :RB; rm = RM, percentage = false)
     @test plt5.n == 2
     frontier = efficient_frontier!(portfolio, Trad(; rm = RM))
-    plt6 = plot_frontier(portfolio; rm = RM)
+    plt6 = plot_frontier(portfolio, :Trad; rm = RM)
     @test plt6.n == 2
-    plt7 = plot_frontier_area(portfolio; rm = RM)
+    plt7 = plot_frontier_area(portfolio, :Trad; rm = RM)
     @test plt7.n == 21
     plt8 = plot_drawdown(portfolio, :RB)
     @test plt8.n == 9

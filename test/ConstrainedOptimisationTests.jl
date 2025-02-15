@@ -574,7 +574,7 @@ end
     sr5 = sharpe_ratio(portfolio; kelly = true)
     @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio), sr4)
     @test isapprox(1 / size(portfolio.returns, 1) *
-                   sum(logp1.(portfolio.returns * w4.weights)) / calc_risk(portfolio), sr5)
+                   sum(log1p.(portfolio.returns * w4.weights)) / calc_risk(portfolio), sr5)
 
     portfolio.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise!(portfolio, Trad(; obj = MinRisk()))

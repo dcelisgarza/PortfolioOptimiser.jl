@@ -321,18 +321,18 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
         i += 1
         sharpe = true
     end
-    rmsym = get_rm_symbol(rm)
-    port.frontier[rmsym] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
-                                                 DataFrame(reshape(frontier, length(w1), :),
-                                                           string.(range(1, i)))),
-                                :risks => optim_risk, :rets => optim_ret,
-                                :sharpes => (optim_ret .- rf) ./ optim_risk,
-                                :sharpe => sharpe)
+    key = type.key == :auto ? Symbol(type) : Symbol(type.key)
+    port.frontier[key] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
+                                               DataFrame(reshape(frontier, length(w1), :),
+                                                         string.(range(1, i)))),
+                              :risks => optim_risk, :rets => optim_ret,
+                              :sharpes => (optim_ret .- rf) ./ optim_risk,
+                              :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
     type.obj = old_obj
     type.w_ini = old_w_ini
     rm_i.settings.ub = old_ub
     unset_set_rm_properties!(rm_i, solver_flag, sigma_flag, skew_flag, sskew_flag)
-    return port.frontier[rmsym]
+    return port.frontier[key]
 end

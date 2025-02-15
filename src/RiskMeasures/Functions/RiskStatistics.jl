@@ -276,7 +276,7 @@ end
 function calc_ret(w::AbstractVector; mu::AbstractVector, X::AbstractMatrix,
                   kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
                   rebalance::AbstractTR = NoTR())
-    return if isa(kelly, NoKelly) || !kelly
+    return if isa(kelly, RetType) && isa(kelly, NoKelly) || isa(kelly, Bool) && !kelly
         dot(mu, w) - calc_fees(w, fees, rebalance)
     else
         sum(log1p.(X * w)) / size(X, 1) - calc_fees(w, fees, rebalance)
