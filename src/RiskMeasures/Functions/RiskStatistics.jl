@@ -273,6 +273,15 @@ function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
 
     return rc_f
 end
+function calc_ret(w::AbstractVector; mu::AbstractVector, X::AbstractMatrix,
+                  kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
+                  rebalance::AbstractTR = NoTR())
+    return if isa(kelly, NoKelly) || !kelly
+        dot(mu, w) - calc_fees(w, fees, rebalance)
+    else
+        sum(log1p.(X * w)) / size(X, 1) - calc_fees(w, fees, rebalance)
+    end
+end
 
 """
     sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
@@ -308,13 +317,9 @@ Compute the risk-adjusted return ratio for an [`AbstractRiskMeasure`](@ref) and 
 function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       mu::AbstractVector = Vector{Float64}(undef, 0),
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-                      rf::Real = 0.0, kelly::Bool = false, fees::Fees = Fees(),
-                      rebalance::AbstractTR = NoTR())
-    ret = if !kelly
-        dot(mu, w) - calc_fees(w, fees, rebalance)
-    else
-        sum(log.(one(eltype(X)) .+ X * w)) / size(X, 1) - calc_fees(w, fees, rebalance)
-    end
+                      rf::Real = 0.0, kelly::Union{Bool, RetType} = false,
+                      fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
+    ret = calc_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
     risk = calc_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
     return (ret - rf) / risk
 end
@@ -380,4 +385,4 @@ function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractV
 end
 
 export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
-       sharpe_ratio_info_criteria, brinson_attribution
+       sharpe_ratio_info_criteria, brinson_attribution, calc_ret

@@ -131,10 +131,10 @@ First lets check out the loadings matrix in order to create feasable constraints
 pretty_table(describe(port.loadings); formatters = fmt3)
 
 # Constrain factors.
-constraints = DataFrame(; Enabled = [false, true, false, false],
+constraints = DataFrame(; Enabled = [true, true, true, true],
                         Factor = ["SIZE", "QUAL", "USMV", "MTUM"],
-                        Sign = [">=", "<=", "<=", ">="], Value = [0.2, 3, -0.7, 0.45],
-                        Relative_Factor = ["", "USMV", "", ""])
+                        Sign = [">=", ">=", "<=", ">="], Value = [0.2, 0.6, -0.7, 0.45],
+                        Relative_Factor = ["", "LRGF", "", ""])
 pretty_table(constraints)
 
 # Create linear constraint matrix and vector and optimise with these constraints.
@@ -162,3 +162,29 @@ res = GLM.lm(X, y)
 ## Generate dataframe with the factors and their regression coefficients.
 df = DataFrame(; :factors => ["const"; factors], :coefs => coef(res))
 pretty_table(df; formatters = fmt3)
+
+#=
+We can see that the constraints hold.
+
+| Factor |     Constraint     |              Value               |
+|-------:|:------------------:|:---------------------------------|
+|  SIZE  |    SIZE >= 0.2     |            0.2 >= 0.2            |
+|  QUAL  | LRGF - QUAL >= 0.6 | 1.106847 - 0.506847 = 0.6 >= 0.6 |
+|  USMV  |    USMV <= -0.7    |        -0.759046 <= -0.7         |
+|  MTUM  |    MTUM >= 0.45    |           0.45 >= 0.45           |
+=#
+
+#=
+### 3.2. Efficient Frontier
+
+We can plot the efficient frontier for the factor model. Which will look different factor model one because the constraints will have to be satisfied at every point.
+=#
+points = 50
+frontier = efficient_frontier!(port, type; points = points)
+pretty_table(frontier[:weights]; formatters = fmt3)
+
+# Plot frontier.
+plot_frontier(port; rm = rm)
+
+# Plot frontier area.
+plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))

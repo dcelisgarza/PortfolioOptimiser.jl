@@ -38,6 +38,12 @@ function calc_fees(port::AbstractPortfolio, key = :Trad;
     return calc_fees(port.optimal[key].weights, latest_prices, port.fees, port.rebalance)
 end
 
+function calc_ret(port::AbstractPortfolio, key = :Trad; mu::AbstractVector = port.mu,
+                  X::AbstractMatrix = port.returns, kelly::Union{Bool, RetType} = false)
+    return calc_ret(port.optimal[key].weights; mu = mu, X = X, kelly = kelly,
+                    fees = port.fees, rebalance = port.rebalance)
+end
+
 """
 ```
 risk_contribution(port::AbstractPortfolio; X::AbstractMatrix = port.returns,

@@ -1,15 +1,15 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
 ```@meta
-EditURL = "../../../examples/3_Mean_Risk_Optimisation_Factor_Models.jl"
+EditURL = "../../../examples/4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints.jl"
 ```
 
-# Example 3: Mean Risk Optimisation with Factor Models
+# Example 4: Mean Risk Optimisation with Factor Models with Linear Factor Constraints
 
 ## 1. Download data.
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 using PortfolioOptimiser, TimeSeries, DataFrames, PrettyTables, Clarabel, HiGHS, YFinance,
-      GraphRecipes, StatsPlots, JuMP
+      GraphRecipes, StatsPlots, JuMP, GLM
 
 # Format for pretty tables.
 fmt1 = (v, i, j) -> begin
@@ -30,7 +30,7 @@ fmt3 = (v, i, j) -> begin
     if j == 1
         return v
     else
-        return isa(v, Number) ? "$(round(v*100, digits=2)) %" : v
+        return isa(v, Number) ? "$(round(v*100, digits=4)) %" : v
     end
 end;
 
@@ -78,7 +78,7 @@ This is a simple example so we will only use default parameters for computing th
 
 [`PortfolioOptimiser.MeanEstimator`](@ref), [`PortfolioOptimiser.PortfolioOptimiserCovCor`](@ref), [`FactorType`](@ref), [`asset_statistics!`](@ref), [`factor_statistics!`](@ref).
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 # Creating the portfolio object. Internally computes the returns if you give a prices TimeArray.
 port = Portfolio(; prices = prices[Symbol.(assets)], f_prices = prices[Symbol.(factors)],
                  # Continuous solvers.
@@ -104,30 +104,84 @@ pretty_table(port.loadings; formatters = fmt2)
 
 ### 2.2. Optimise Portfolios
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 # Creating the optimisation object.
 rm = Variance() # Risk measure.
 obj = Sharpe() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
-class = Classic()
+class = FM()
 # `Trad` optimisation corresponds to the classic mean risk optimisation.
 type = Trad(; rm = rm, obj = obj, class = class)
 # Classic portfolio.
 w1 = optimise!(port, type)
 # Factor model portfolio.
-type.class = FM()
-w1.FM_weights = optimise!(port, type).weights
 pretty_table(w1; formatters = fmt3)
 ````
 
-Factor models tend to be less sensitive to noise, which makes them less prone to overfitting. There are many ways of estimating the loadings matrix, [`PortfolioOptimiser`](https://github.com/dcelisgarza/PortfolioOptimiser.jl) provides stepwise (explicit) and principal component (implicit) regression.
+## 3. Factor constraints
 
-We follow the API defined in [`MultivariateStats`](https://juliastats.org/MultivariateStats.jl/stable/), so users can extend the package's compatibility. We will explore this capability in a future, more advanced tutorial.
+### 3.1. Creating the constraints
 
-### 2.3. Efficient Frontier
+The function [`factor_constraints`](@ref) takes in two dataframes, one defining the constraints, and the loadings matrix and turns them into a matrix and vector which sets the constraints as ``\\mathbf{A} \\bm{x} >= \\bm{b}``.
 
-We can plot the efficient frontier for the factor model. Which will look different to the vanilla one.
+First lets check out the loadings matrix in order to create feasable constraints.
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
+pretty_table(describe(port.loadings); formatters = fmt3)
+````
+
+Constrain factors.
+
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
+constraints = DataFrame(; Enabled = [true, true, true, true],
+                        Factor = ["SIZE", "QUAL", "USMV", "MTUM"],
+                        Sign = [">=", ">=", "<=", ">="], Value = [0.2, 0.6, -0.7, 0.45],
+                        Relative_Factor = ["", "LRGF", "", ""])
+pretty_table(constraints)
+````
+
+Create linear constraint matrix and vector and optimise with these constraints.
+
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
+A1, B1 = factor_constraints(constraints, port.loadings)
+
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A1
+port.b_ineq = B1
+
+w2 = optimise!(port, type)
+pretty_table(w2; formatters = fmt3)
+````
+
+In order to verify that the constraints have been held, we can perform a regression.
+
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
+# Add constant term.
+X = [ones(size(port.fm_returns, 1)) port.f_returns]
+# Portfolio returns according to the factor model.
+y = port.fm_returns * w2.weights
+# Generalised linear model linking the portfolio returns to the factors in X.
+res = GLM.lm(X, y)
+# Generate dataframe with the factors and their regression coefficients.
+df = DataFrame(; :factors => ["const"; factors], :coefs => coef(res))
+pretty_table(df; formatters = fmt3)
+````
+
+We can see that the constraints hold.
+
+| Factor |     Constraint     |              Value               |
+|-------:|:------------------:|:---------------------------------|
+|  SIZE  |    SIZE >= 0.2     |            0.2 >= 0.2            |
+|  QUAL  | LRGF - QUAL >= 0.6 | 1.106847 - 0.506847 = 0.6 >= 0.6 |
+|  USMV  |    USMV <= -0.7    |        -0.759046 <= -0.7         |
+|  MTUM  |    MTUM >= 0.45    |           0.45 >= 0.45           |
+
+### 3.2. Efficient Frontier
+
+We can plot the efficient frontier for the factor model. Which will look different factor model one because the constraints will have to be satisfied at every point.
+
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 points = 50
 frontier = efficient_frontier!(port, type; points = points)
 pretty_table(frontier[:weights]; formatters = fmt3)
@@ -135,13 +189,13 @@ pretty_table(frontier[:weights]; formatters = fmt3)
 
 Plot frontier.
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 plot_frontier(port; rm = rm)
 ````
 
 Plot frontier area.
 
-````@example 3_Mean_Risk_Optimisation_Factor_Models
+````@example 4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 

@@ -245,15 +245,10 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     fees = port.fees
     rebalance = port.rebalance
 
-    if isa(kelly, NoKelly)
-        ret1 = dot(mu, w1) - calc_fees(w1, fees, rebalance)
-        ret2 = dot(mu, w2) - calc_fees(w2, fees, rebalance)
-    else
-        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) -
-               calc_fees(w1, fees, rebalance)
-        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) -
-               calc_fees(w2, fees, rebalance)
-    end
+    ret1 = calc_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+                    rebalance = rebalance)
+    ret2 = calc_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+                    rebalance = rebalance)
 
     rm_i = get_first_rm(rm)
     old_ub = rm_i.settings.ub
@@ -270,6 +265,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
 
     frontier = Vector{typeof(risk1)}(undef, 0)
     optim_risk = Vector{typeof(risk1)}(undef, 0)
+    optim_ret = Vector{typeof(ret1)}(undef, 0)
     w_ini = Vector{typeof(risk1)}(undef, 0)
 
     old_obj = type.obj
@@ -304,8 +300,11 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
             continue
         end
         rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
+        rt = calc_ret(w.weights; mu = mu, X = returns, kelly = kelly, fees = fees,
+                      rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
+        push!(optim_ret, rt)
         i += 1
     end
     rm_i.settings.ub = Inf
@@ -314,8 +313,11 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     sharpe = false
     if !isempty(w)
         rk = calc_risk(rm_i, w.weights; X = returns, fees = fees, rebalance = rebalance)
+        rt = calc_ret(w.weights; mu = mu, X = returns, kelly = kelly, fees = fees,
+                      rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
+        push!(optim_ret, rt)
         i += 1
         sharpe = true
     end
@@ -323,7 +325,9 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     port.frontier[rmsym] = Dict(:weights => hcat(DataFrame(; tickers = port.assets),
                                                  DataFrame(reshape(frontier, length(w1), :),
                                                            string.(range(1, i)))),
-                                :risks => optim_risk, :sharpe => sharpe)
+                                :risks => optim_risk, :rets => optim_ret,
+                                :sharpes => (optim_ret .- rf) ./ optim_risk,
+                                :sharpe => sharpe)
     port.optimal = optimal1
     port.fail = fail1
     type.obj = old_obj

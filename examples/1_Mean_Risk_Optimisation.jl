@@ -106,7 +106,7 @@ plot_bar(port)
 =#
 
 points = 50
-frontier = efficient_frontier!(port, type; points = 50)
+frontier = efficient_frontier!(port, type; points = points)
 pretty_table(frontier[:weights]; formatters = fmt2)
 
 # Plot frontier.

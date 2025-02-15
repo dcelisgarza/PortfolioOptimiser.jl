@@ -137,18 +137,12 @@ function noc_risk_ret(port::Portfolio, type)
     fees = port.fees
     rebalance = port.rebalance
 
-    if isa(kelly, NoKelly)
-        ret1 = dot(mu, w1) - calc_fees(w1, fees, rebalance)
-        ret2 = dot(mu, w2) - calc_fees(w2, fees, rebalance)
-        ret3 = dot(mu, w3) - calc_fees(w3, fees, rebalance)
-    else
-        ret1 = sum(log.(one(eltype(returns)) .+ returns * w1)) / size(returns, 1) -
-               calc_fees(w1, fees, rebalance)
-        ret2 = sum(log.(one(eltype(returns)) .+ returns * w2)) / size(returns, 1) -
-               calc_fees(w2, fees, rebalance)
-        ret3 = sum(log.(one(eltype(returns)) .+ returns * w3)) / size(returns, 1) -
-               calc_fees(w3, fees, rebalance)
-    end
+    ret1 = calc_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+                    rebalance = rebalance)
+    ret2 = calc_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees,
+                    rebalance = rebalance)
+    ret3 = calc_ret(w3; mu = mu, X = returns, kelly = kelly, fees = fees,
+                    rebalance = rebalance)
 
     risk1, risk2, risk3 = noc_risks(scalarisation, rm, port, returns, sigma, w1, w2, w3,
                                     fees, rebalance)

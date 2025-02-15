@@ -131,7 +131,7 @@ We can plot the efficient frontier for the factor model. Which will look differe
 =#
 
 points = 50
-frontier = efficient_frontier!(port, type; points = 50)
+frontier = efficient_frontier!(port, type; points = points)
 pretty_table(frontier[:weights]; formatters = fmt3)
 
 # Plot frontier.

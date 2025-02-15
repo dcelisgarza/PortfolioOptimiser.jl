@@ -193,29 +193,23 @@ function PortfolioOptimiser.plot_risk_contribution(port::PortfolioOptimiser.Abst
     return fig
 end
 
-function PortfolioOptimiser.plot_frontier(frontier;
-                                          X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                          mu::AbstractVector = Vector{Float64}(undef, 0),
-                                          rf::Real = 0.0,
-                                          rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
-                                          kelly::PortfolioOptimiser.RetType = NoKelly(),
+function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
+                                          rm::PortfolioOptimiser.AbstractRiskMeasure = Variance(),
+                                          kelly::Union{PortfolioOptimiser.RetType, Bool} = false,
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
     risks = copy(frontier[:risks])
+    rets = copy(frontier[:rets])
+    sharpes = copy(frontier[:sharpes])
     weights = Matrix(frontier[:weights][!, 2:end])
 
-    rets = if isa(kelly, NoKelly)
-        transpose(weights) * mu
-    else
-        1 / size(X, 1) * vec(sum(log.(1 .+ X * weights); dims = 1))
-    end
     rets .*= t_factor
+    rf *= t_factor
 
     if !any(typeof(rm) .<: (MDD, ADD, CDaR, EDaR, RLDaR, UCI))
         risks .*= sqrt(t_factor)
+        sharpes .*= sqrt(t_factor)
     end
-
-    ratios = (rets .- rf) ./ risks
 
     msg = "$(PortfolioOptimiser.get_rm_symbol(rm))"
     if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
@@ -229,7 +223,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
     end
 
     if !haskey(kwargs_f, :ylabel)
-        kwargs_f = if isa(kelly, NoKelly)
+        kwargs_f = if isa(kelly, NoKelly) || !kelly
             (kwargs_f..., ylabel = "Expected Arithmetic Return")
         else
             (kwargs_f..., ylabel = "Expected Kelly Return")
@@ -251,7 +245,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
         kwargs_f = (kwargs_f..., right_margin = 4.5 * Plots.mm)
     end
     if !haskey(kwargs_f, :marker_z)
-        kwargs_f = (kwargs_f..., marker_z = ratios)
+        kwargs_f = (kwargs_f..., marker_z = sharpes)
     end
     if !haskey(kwargs_f, :label)
         kwargs_f = (kwargs_f..., label = "")
@@ -264,7 +258,7 @@ function PortfolioOptimiser.plot_frontier(frontier;
         if !haskey(kwargs_s, :markershape)
             kwargs_s = (kwargs_s..., markershape = :star)
         end
-        colour = palette(theme, length(ratios))[findlast(x -> x < ratios[end], ratios) + 1]
+        colour = palette(theme, length(sharpes))[findlast(x -> x < sharpes[end], sharpes) + 1]
         if !haskey(kwargs_s, :color)
             kwargs_s = (kwargs_s..., color = colour)
         end
@@ -283,18 +277,17 @@ function PortfolioOptimiser.plot_frontier(frontier;
     return plt
 end
 function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortfolio,
-                                          key = nothing; X::AbstractMatrix = port.returns,
-                                          mu::AbstractVector = port.mu,
-                                          rm::PortfolioOptimiser.AbstractRiskMeasure = SD(),
+                                          key = nothing;
+                                          rm::PortfolioOptimiser.AbstractRiskMeasure = Variance(),
                                           rf::Real = 0.0,
-                                          kelly::PortfolioOptimiser.RetType = NoKelly(),
+                                          kelly::Union{PortfolioOptimiser.RetType, Bool} = false,
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
     if isnothing(key)
         key = PortfolioOptimiser.get_rm_symbol(rm)
     end
-    return PortfolioOptimiser.plot_frontier(port.frontier[key]; X = X, mu = mu, rf = rf,
-                                            rm = rm, kelly = kelly, t_factor = t_factor,
+    return PortfolioOptimiser.plot_frontier(port.frontier[key]; rf = rf, rm = rm,
+                                            kelly = kelly, t_factor = t_factor,
                                             theme = theme, kwargs_f = kwargs_f,
                                             kwargs_s = kwargs_s)
 end

@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/1_Mean_Risk_Optimisation.jl"
 ```
@@ -105,7 +104,7 @@ plot_bar(port)
 
 ````@example 1_Mean_Risk_Optimisation
 points = 50
-frontier = efficient_frontier!(port, type; points = 50)
+frontier = efficient_frontier!(port, type; points = points)
 pretty_table(frontier[:weights]; formatters = fmt2)
 ````
 
@@ -121,6 +120,7 @@ Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 
-* * *
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+
