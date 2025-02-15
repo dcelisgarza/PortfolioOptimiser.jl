@@ -306,7 +306,7 @@ function factor_constraints(constraints::DataFrame, loadings::DataFrame)
         C1 = loadings[!, row["Factor"]]
         if row["Relative_Factor"] != ""
             C2 = loadings[!, row["Relative_Factor"]]
-            C1 = C1 - C2
+            C1 = C2 - C1
         end
 
         C = vcat(C, transpose(C1) * d)
