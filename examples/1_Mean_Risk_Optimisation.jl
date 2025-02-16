@@ -86,7 +86,7 @@ cov_type = PortCovCor()
 asset_statistics!(port; mu_type = mu_type, cov_type = cov_type, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
 ## Creating the optimisation object.
-rm = Variance() # Risk measure.
+rm = SD() # Risk measure.
 obj = MinRisk() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
 ## `Trad` optimisation corresponds to the classic mean risk optimisation.
 type = Trad(; rm = rm, obj = obj)

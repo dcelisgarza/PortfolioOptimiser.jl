@@ -108,7 +108,7 @@ pretty_table(port.loadings; formatters = fmt2)
 =#
 
 ## Creating the optimisation object.
-rm = Variance() # Risk measure.
+rm = SD() # Risk measure.
 obj = Sharpe() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
 class = FM()
 ## `Trad` optimisation corresponds to the classic mean risk optimisation.
@@ -168,9 +168,9 @@ We can see that the constraints hold.
 
 | Factor |     Constraint     |              Value               |
 |-------:|:------------------:|:---------------------------------|
-|  SIZE  |    SIZE >= 0.2     |            0.2 >= 0.2            |
+|  SIZE  |    SIZE >= 0.2     |         0.395261 >= 0.2          |
 |  QUAL  | LRGF - QUAL >= 0.6 | 1.106847 - 0.506847 = 0.6 >= 0.6 |
-|  USMV  |    USMV <= -0.7    |        -0.759046 <= -0.7         |
+|  USMV  |    USMV <= -0.7    |         -0.75905 <= -0.7         |
 |  MTUM  |    MTUM >= 0.45    |           0.45 >= 0.45           |
 =#
 

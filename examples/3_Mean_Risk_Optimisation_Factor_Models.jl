@@ -108,7 +108,7 @@ pretty_table(port.loadings; formatters = fmt2)
 =#
 
 ## Creating the optimisation object.
-rm = Variance() # Risk measure.
+rm = SD() # Risk measure.
 obj = Sharpe() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
 class = Classic()
 ## `Trad` optimisation corresponds to the classic mean risk optimisation.

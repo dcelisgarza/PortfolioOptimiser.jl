@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/1_Mean_Risk_Optimisation.jl"
 ```
@@ -85,7 +84,7 @@ cov_type = PortCovCor()
 asset_statistics!(port; mu_type = mu_type, cov_type = cov_type, set_kurt = false,
                   set_skurt = false, set_skew = false, set_sskew = false)
 # Creating the optimisation object.
-rm = Variance() # Risk measure.
+rm = SD() # Risk measure.
 obj = MinRisk() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
 # `Trad` optimisation corresponds to the classic mean risk optimisation.
 type = Trad(; rm = rm, obj = obj)
@@ -121,6 +120,7 @@ Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 
-* * *
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+

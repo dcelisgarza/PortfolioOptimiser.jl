@@ -1,5 +1,4 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
-
 ```@meta
 EditURL = "../../../examples/3_Mean_Risk_Optimisation_Factor_Models.jl"
 ```
@@ -107,7 +106,7 @@ pretty_table(port.loadings; formatters = fmt2)
 
 ````@example 3_Mean_Risk_Optimisation_Factor_Models
 # Creating the optimisation object.
-rm = Variance() # Risk measure.
+rm = SD() # Risk measure.
 obj = Sharpe() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
 class = Classic()
 # `Trad` optimisation corresponds to the classic mean risk optimisation.
@@ -146,6 +145,7 @@ Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 
-* * *
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+
