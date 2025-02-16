@@ -13,7 +13,7 @@
 
 Compute the risk bounds for an [`AbstractRiskMeasure`](@ref) and pair of asset weight vectors.
 
-See also: [`AbstractRiskMeasure`](@ref), [`calc_risk`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`expected_risk`](@ref).
 
 # Inputs
 
@@ -58,10 +58,10 @@ function risk_bounds(rm::AbstractRiskMeasure, w1::AbstractVector, w2::AbstractVe
                      X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                      scale::Bool = false, fees::Fees = Fees(),
                      rebalance::AbstractTR = NoTR(), kwargs...)
-    r1 = calc_risk(rm, w1; X = X, delta = delta, scale = scale, fees = fees,
-                   rebalance = rebalance, kwargs...)
-    r2 = calc_risk(rm, w2; X = X, delta = -delta, scale = scale, fees = fees,
-                   rebalance = rebalance, kwargs...)
+    r1 = expected_risk(rm, w1; X = X, delta = delta, scale = scale, fees = fees,
+                       rebalance = rebalance, kwargs...)
+    r2 = expected_risk(rm, w2; X = X, delta = -delta, scale = scale, fees = fees,
+                       rebalance = rebalance, kwargs...)
     return r1, r2
 end
 
@@ -75,7 +75,7 @@ end
 
 Compute the asset risk contribution for an [`AbstractRiskMeasure`](@ref) and asset weight vector.
 
-See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`calc_risk`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`expected_risk`](@ref).
 
 # Inputs
 
@@ -161,7 +161,7 @@ end
 
 Compute the factor risk contribution for an [`AbstractRiskMeasure`](@ref), assets, and factors.
 
-See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`calc_risk`](@ref), [`regression`](@ref), [`RegressionType`](@ref).
+See also: [`AbstractRiskMeasure`](@ref), [`risk_bounds`](@ref), [`expected_risk`](@ref), [`regression`](@ref), [`RegressionType`](@ref).
 
 # Inputs
 
@@ -273,9 +273,9 @@ function factor_risk_contribution(rm::AbstractRiskMeasure, w::AbstractVector;
 
     return rc_f
 end
-function calc_ret(w::AbstractVector; mu::AbstractVector, X::AbstractMatrix,
-                  kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
-                  rebalance::AbstractTR = NoTR())
+function expected_ret(w::AbstractVector; mu::AbstractVector, X::AbstractMatrix,
+                      kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
+                      rebalance::AbstractTR = NoTR())
     return if isa(kelly, RetType) && isa(kelly, NoKelly) || isa(kelly, Bool) && !kelly
         dot(mu, w) - calc_fees(w, fees, rebalance)
     else
@@ -319,29 +319,40 @@ function sharpe_ratio(rm::AbstractRiskMeasure, w::AbstractVector;
                       X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
                       rf::Real = 0.0, kelly::Union{Bool, RetType} = false,
                       fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
-    ret = calc_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
-    risk = calc_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
+    ret = expected_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
+    risk = expected_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
     return (ret - rf) / risk
 end
-function calc_ret_risk_sharpe(rm::AbstractRiskMeasure, w::AbstractVector;
-                              mu::AbstractVector = Vector{Float64}(undef, 0),
-                              X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                              delta::Real = 1e-6, rf::Real = 0.0,
-                              kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
-                              rebalance::AbstractTR = NoTR())
-    ret = calc_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
-    risk = calc_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
+function expected_ret_risk_sharpe(rm::AbstractRiskMeasure, w::AbstractVector;
+                                  mu::AbstractVector = Vector{Float64}(undef, 0),
+                                  X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                  delta::Real = 1e-6, rf::Real = 0.0,
+                                  kelly::Union{Bool, RetType} = false, fees::Fees = Fees(),
+                                  rebalance::AbstractTR = NoTR())
+    ret = expected_ret(w; mu = mu, X = X, kelly = kelly, fees = fees, rebalance = rebalance)
+    risk = expected_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
     return ret, risk, (ret - rf) / risk
 end
-function sharpe_ratio_info_criteria(rm::AbstractRiskMeasure, w::AbstractVector;
-                                    mu::AbstractVector = Vector{Float64}(undef, 0),
-                                    X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
-                                    delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false,
-                                    fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
+function sric(rm::AbstractRiskMeasure, w::AbstractVector;
+              mu::AbstractVector = Vector{Float64}(undef, 0),
+              X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
+              rf::Real = 0.0, kelly::Bool = false, fees::Fees = Fees(),
+              rebalance::AbstractTR = NoTR())
     T, N = size(X)
     sr = sharpe_ratio(rm, w; mu = mu, X = X, delta = delta, rf = rf, kelly = kelly,
                       fees = fees, rebalance = rebalance)
     return sr - N / (T * sr)
+end
+function expected_ret_risk_sric(rm::AbstractRiskMeasure, w::AbstractVector;
+                                mu::AbstractVector = Vector{Float64}(undef, 0),
+                                X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false,
+                                fees::Fees = Fees(), rebalance::AbstractTR = NoTR())
+    T, N = size(X)
+    ret, risk, sr = expected_ret_risk_sharpe(rm, w; mu = mu, X = X, delta = delta, rf = rf,
+                                             kelly = kelly, fees = fees,
+                                             rebalance = rebalance)
+    return ret, risk, sr - N / (T * sr)
 end
 function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractVector,
                              asset_classes::DataFrame, col, date0 = nothing,
@@ -394,5 +405,5 @@ function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractV
     return df
 end
 
-export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
-       sharpe_ratio_info_criteria, brinson_attribution, calc_ret, calc_ret_risk_sharpe
+export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio, sric,
+       brinson_attribution, expected_ret, expected_ret_risk_sharpe

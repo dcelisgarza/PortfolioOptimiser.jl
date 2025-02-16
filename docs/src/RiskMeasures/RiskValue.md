@@ -5,5 +5,5 @@ Despite the fact that [`HCRiskMeasure`](@ref) are only compatible with , it is p
 There are similarly named higher level functions that operate at the level of [`PortfolioOptimiser.AbstractPortfolio`](@ref).
 
 ```@docs
-calc_risk
+expected_risk
 ```

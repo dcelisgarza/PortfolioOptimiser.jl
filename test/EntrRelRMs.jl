@@ -29,10 +29,10 @@ l = 2.0
     portfolio.solvers = solvers
     test_logger = TestLogger()
     with_logger(test_logger) do
-        calc_risk(portfolio; rm = EDaR())
-        calc_risk(portfolio; rm = RLDaR())
+        expected_risk(portfolio; rm = EDaR())
+        expected_risk(portfolio; rm = RLDaR())
         portfolio.solvers = solvers_mip
-        calc_risk(portfolio; rm = RLDaR())
+        expected_risk(portfolio; rm = RLDaR())
         return nothing
     end
 
@@ -62,15 +62,15 @@ end
 
     alpha = 0.05
     r1 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
-    r1t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
+    r1t = expected_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.1
     r2 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
-    r2t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
+    r2t = expected_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     alpha = 0.15
     r3 = PortfolioOptimiser.ERM(x, get_z(portfolio, EVaR()), alpha)
-    r3t = calc_risk(portfolio; rm = EVaR(; alpha = alpha))
+    r3t = expected_risk(portfolio; rm = EVaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)
     @test isapprox(r2, r2t, rtol = 3e-2)
@@ -103,15 +103,15 @@ end
 
     alpha = 0.05
     r1 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
-    r1t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
+    r1t = expected_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.1
     r2 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
-    r2t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
+    r2t = expected_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     alpha = 0.15
     r3 = PortfolioOptimiser.ERM(dd, get_z(portfolio, EDaR()), alpha)
-    r3t = calc_risk(portfolio; rm = EDaR(; alpha = alpha))
+    r3t = expected_risk(portfolio; rm = EDaR(; alpha = alpha))
 
     @test isapprox(r1, r1t, rtol = 5e-6)
     @test isapprox(r2, r2t, rtol = 5e-2)

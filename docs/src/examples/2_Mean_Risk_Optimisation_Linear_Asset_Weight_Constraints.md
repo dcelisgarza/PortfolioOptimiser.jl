@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints.jl"
 ```
@@ -364,7 +365,6 @@ Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

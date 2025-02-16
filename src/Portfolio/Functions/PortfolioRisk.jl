@@ -4,7 +4,7 @@
 
 """
 ```
-calc_risk(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
+expected_risk(port::AbstractPortfolio; X::AbstractMatrix = port.returns,
           type::Symbol = isa(port, Portfolio) || isa(port, Portfolio) ? :Trad : :HRP,
           rm::AbstractRiskMeasure = SD())
 ```
@@ -22,13 +22,14 @@ Compute the risk for an [`AbstractRiskMeasure`](@ref) for a portfolio.
 
   - `r`: risk.
 """
-function calc_risk(port::AbstractPortfolio, key = :Trad; X::AbstractMatrix = port.returns,
-                   rm::AbstractRiskMeasure = Variance())
+function expected_risk(port::AbstractPortfolio, key = :Trad;
+                       X::AbstractMatrix = port.returns,
+                       rm::AbstractRiskMeasure = Variance())
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    risk = calc_risk(rm, port.optimal[key].weights; X = X, fees = port.fees,
-                     rebalance = port.rebalance)
+    risk = expected_risk(rm, port.optimal[key].weights; X = X, fees = port.fees,
+                         rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -38,10 +39,10 @@ function calc_fees(port::AbstractPortfolio, key = :Trad;
     return calc_fees(port.optimal[key].weights, latest_prices, port.fees, port.rebalance)
 end
 
-function calc_ret(port::AbstractPortfolio, key = :Trad; mu::AbstractVector = port.mu,
-                  X::AbstractMatrix = port.returns, kelly::Union{Bool, RetType} = false)
-    return calc_ret(port.optimal[key].weights; mu = mu, X = X, kelly = kelly,
-                    fees = port.fees, rebalance = port.rebalance)
+function expected_ret(port::AbstractPortfolio, key = :Trad; mu::AbstractVector = port.mu,
+                      X::AbstractMatrix = port.returns, kelly::Union{Bool, RetType} = false)
+    return expected_ret(port.optimal[key].weights; mu = mu, X = X, kelly = kelly,
+                        fees = port.fees, rebalance = port.rebalance)
 end
 
 """
@@ -169,31 +170,29 @@ function sharpe_ratio(port::AbstractPortfolio, key = :Trad;
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sr
 end
-function calc_ret_risk_sharpe(port::AbstractPortfolio, key = :Trad;
-                              X::AbstractMatrix = port.returns,
-                              mu::AbstractVector = port.mu,
-                              rm::AbstractRiskMeasure = Variance(), delta::Real = 1e-6,
-                              rf::Real = 0.0, kelly::Bool = false)
+function expected_ret_risk_sharpe(port::AbstractPortfolio, key = :Trad;
+                                  X::AbstractMatrix = port.returns,
+                                  mu::AbstractVector = port.mu,
+                                  rm::AbstractRiskMeasure = Variance(), delta::Real = 1e-6,
+                                  rf::Real = 0.0, kelly::Bool = false)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    ret, risk, sharpe = calc_ret_risk_sharpe(rm, port.optimal[key].weights; mu = mu, X = X,
-                                             delta = delta, rf = rf, kelly = kelly,
-                                             fees = port.fees, rebalance = port.rebalance)
+    ret, risk, sharpe = expected_ret_risk_sharpe(rm, port.optimal[key].weights; mu = mu,
+                                                 X = X, delta = delta, rf = rf,
+                                                 kelly = kelly, fees = port.fees,
+                                                 rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return ret, risk, sharpe
 end
-function sharpe_ratio_info_criteria(port::AbstractPortfolio, key = :Trad;
-                                    X::AbstractMatrix = port.returns,
-                                    mu::AbstractVector = port.mu,
-                                    rm::AbstractRiskMeasure = Variance(),
-                                    delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false)
+function sric(port::AbstractPortfolio, key = :Trad; X::AbstractMatrix = port.returns,
+              mu::AbstractVector = port.mu, rm::AbstractRiskMeasure = Variance(),
+              delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    sric = sharpe_ratio_info_criteria(rm, port.optimal[key].weights; mu = mu, X = X,
-                                      delta = delta, rf = rf, kelly = kelly,
-                                      fees = port.fees, rebalance = port.rebalance)
+    sric = sric(rm, port.optimal[key].weights; mu = mu, X = X, delta = delta, rf = rf,
+                kelly = kelly, fees = port.fees, rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sric
 end

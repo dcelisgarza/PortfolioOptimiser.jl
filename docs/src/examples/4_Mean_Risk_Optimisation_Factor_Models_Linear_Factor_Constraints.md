@@ -1,4 +1,5 @@
 The source files for all examples can be found in [/examples](https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/).
+
 ```@meta
 EditURL = "../../../examples/4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints.jl"
 ```
@@ -170,12 +171,12 @@ pretty_table(df; formatters = fmt3)
 
 We can see that the constraints hold.
 
-| Factor |     Constraint     |              Value               |
-|-------:|:------------------:|:---------------------------------|
-|  SIZE  |    SIZE >= 0.2     |         0.395261 >= 0.2          |
-|  QUAL  | LRGF - QUAL >= 0.6 | 1.106847 - 0.506847 = 0.6 >= 0.6 |
-|  USMV  |    USMV <= -0.7    |         -0.75905 <= -0.7         |
-|  MTUM  |    MTUM >= 0.45    |           0.45 >= 0.45           |
+| Factor | Constraint         | Value                            |
+| ------:|:------------------:|:-------------------------------- |
+| SIZE   | SIZE >= 0.2        | 0.395261 >= 0.2                  |
+| QUAL   | LRGF - QUAL >= 0.6 | 1.106847 - 0.506847 = 0.6 >= 0.6 |
+| USMV   | USMV <= -0.7       | -0.75905 <= -0.7                 |
+| MTUM   | MTUM >= 0.45       | 0.45 >= 0.45                     |
 
 ### 3.2. Efficient Frontier
 
@@ -199,7 +200,6 @@ Plot frontier area.
 plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))
 ````
 
----
+* * *
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-

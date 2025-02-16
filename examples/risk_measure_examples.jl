@@ -62,7 +62,7 @@ end
 ## Default formulation.
 rm = Variance()
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-r1 = calc_risk(port; rm = rm)
+r1 = expected_risk(port; rm = rm)
 ## As a functor, we need to provide the covariance matrix to the risk measure directly.
 rm.sigma = port.cov
 isapprox(r1, rm(w1.weights))
@@ -98,7 +98,7 @@ port.cluster_adj = SDP(; A = B)
 
 rm = Variance()
 w5 = optimise!(port, Trad(; rm = rm, str_names = true))
-r5 = calc_risk(port; rm = rm)
+r5 = expected_risk(port; rm = rm)
 port.model[:constr_M_PSD]
 port.model[:variance_risk]
 typeof(port.model[:variance_risk])
@@ -106,7 +106,7 @@ typeof(port.model[:variance_risk])
 ## Compatible with [`NOC`](@ref)
 w6 = optimise!(port, NOC(; rm = rm, str_names = true))
 ## The risk of the [`NOC`](@ref) optimisation is higher than the optimal value.
-r6 = calc_risk(port, :NOC; rm = rm)
+r6 = expected_risk(port, :NOC; rm = rm)
 r5 <= r6
 
 ## No adjacency constraints.
@@ -137,7 +137,7 @@ port.model[:variance_risk_ub]
 ## No adjacency constraints.
 port.network_adj = NoAdj()
 
-## Optimisations which use [`calc_risk`](@ref) to compute the risk have no [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, therefore the formulation has no effect.
+## Optimisations which use [`expected_risk`](@ref) to compute the risk have no [`JuMP`](https://github.com/jump-dev/JuMP.jl) model, therefore the formulation has no effect.
 w10 = optimise!(port, HRP(; rm = rm))
 
 #=
@@ -163,7 +163,7 @@ end
 ## Setting the standard deviation upper bound to 10 (it's so high it has no effect on the optimisation).
 rm = SD(; settings = RMSettings(; ub = 10))
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-r1 = calc_risk(port; rm = rm)
+r1 = expected_risk(port; rm = rm)
 ## As a functor, we need to provide the covariance matrix to the risk measure directly.
 rm.sigma = port.cov
 isapprox(r1, rm(w1.weights))
@@ -178,7 +178,7 @@ typeof(port.model[:sd_risk])
 ## sd_risk <= 10
 port.model[:sd_risk_ub]
 
-## Optimisations which use [`calc_risk`](@ref) to compute the risk have no [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
+## Optimisations which use [`expected_risk`](@ref) to compute the risk have no [`JuMP`](https://github.com/jump-dev/JuMP.jl) model.
 w2 = optimise!(port, HRP(; rm = rm))
 
 #=
@@ -188,7 +188,7 @@ w2 = optimise!(port, HRP(; rm = rm))
 ## Setting the mean absolute deviation upper bound to 10 (it's so high it has no effect on the optimisation).
 rm = MAD(; settings = RMSettings(; ub = 10))
 w1 = optimise!(port, Trad(; rm = rm, str_names = true))
-r1 = calc_risk(port; rm = rm)
+r1 = expected_risk(port; rm = rm)
 ## As a functor.
 isapprox(r1, rm(port.returns, w1.weights))
 ## The value of :mad_risk is consistent with the risk calculation.
@@ -204,20 +204,20 @@ w2 = optimise!(port, Trad(; rm = rm, str_names = true))
 ## No effect int he optimisation.
 isequal(w1.weights, w2.weights)
 ## Risk is not consistent with the one in `:mad_risk`, because `w` is not used in the optimisation.
-r2 = calc_risk(port; rm = rm)
+r2 = expected_risk(port; rm = rm)
 isapprox(r2, value(port.model[:mad_risk]))
 ## In order to make them consistent, we can compute the value of `mu` using `w`.
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 w3 = optimise!(port, Trad(; rm = rm, str_names = true))
 isapprox(w1.weights, w3.weights)
-r3 = calc_risk(port; rm = rm)
+r3 = expected_risk(port; rm = rm)
 isapprox(r3, value(port.model[:mad_risk]))
 ## Alternatively we can provide this value of `mu` to the risk measure, which takes precedence over the value in `port`. We reset the asset statistics.
 rm = MAD(; mu = port.mu)
 ## Reset the asset statistics to show that the value in `rm` takes precedence.
 asset_statistics!(port)
 w4 = optimise!(port, Trad(; rm = rm, str_names = true))
-r4 = calc_risk(port; rm = rm)
+r4 = expected_risk(port; rm = rm)
 isapprox(r4, value(port.model[:mad_risk]))
 ## Using the value of `mu` leads to the same results as using the `w` used to compute it.
 isapprox(w3.weights, w4.weights)
@@ -226,26 +226,26 @@ isapprox(r3, r4)
 ew2 = eweights(1:size(port.returns, 1), 0.7; scale = true)
 rm = MAD(; we = ew2)
 w5 = optimise!(port, Trad(; rm = rm, str_names = true))
-r5 = calc_risk(port; rm = rm)
+r5 = expected_risk(port; rm = rm)
 isapprox(r5, value(port.model[:mad_risk]))
 ## We can use both.
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 rm = MAD(; mu = port.mu, we = ew2)
 w6 = optimise!(port, Trad(; rm = rm, str_names = true))
-r6 = calc_risk(port; rm = rm)
+r6 = expected_risk(port; rm = rm)
 isapprox(r6, value(port.model[:mad_risk]))
 
 ## Hierarchical optimisation
 asset_statistics!(port)
 rm = MAD()
 w6 = optimise!(port, HRP(; rm = rm))
-r6 = calc_risk(port; rm = rm)
+r6 = expected_risk(port; rm = rm)
 ## Using `w`.
 rm = MAD(; w = ew1)
 w7 = optimise!(port, HRP(; rm = rm))
-r7 = calc_risk(port; rm = rm)
+r7 = expected_risk(port; rm = rm)
 ## Using `mu` isntead.
 asset_statistics!(port; mu_type = MuSimple(; w = ew1))
 rm = MAD(; mu = port.mu)
 w8 = optimise!(port, HRP(; rm = rm))
-r8 = calc_risk(port; rm = rm)
+r8 = expected_risk(port; rm = rm)

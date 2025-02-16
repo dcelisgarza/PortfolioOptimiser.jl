@@ -2,6 +2,78 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
+mutable struct Fees
+    long::Union{<:Real, <:AbstractVector{<:Real}}
+    short::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
+    tol_kwargs::NamedTuple
+end
+function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              tol_kwargs::NamedTuple = (; atol = 1e-8))
+    @smart_assert(all(long .>= zero(long)))
+    @smart_assert(all(short .<= zero(short)))
+    @smart_assert(all(fixed_long .>= zero(fixed_long)))
+    @smart_assert(all(fixed_short .<= zero(fixed_short)))
+    return Fees(long, short, fixed_long, fixed_short, tol_kwargs)
+end
+function Base.setproperty!(fees::Fees, sym::Symbol, val)
+    if sym ∈ (:long, :fixed_long)
+        @smart_assert(all(val .>= zero(val)))
+    elseif sym ∈ (:short, :fixed_short)
+        @smart_assert(all(val .<= zero(val)))
+    end
+    return setfield!(fees, sym, val)
+end
+function Base.isequal(A::Fees, B::Fees)
+    for property ∈ propertynames(A)
+        prop_A = getproperty(A, property)
+        prop_B = getproperty(B, property)
+        if !isequal(prop_A, prop_B)
+            return false
+        end
+    end
+    return true
+end
+
+# ### Turnover and rebalance
+
+"""
+```
+abstract type AbstractTR end
+```
+"""
+abstract type AbstractTR end
+
+"""
+```
+struct NoTR <: AbstractTR end
+```
+"""
+struct NoTR <: AbstractTR end
+
+"""
+```
+@kwdef mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
+                         T2 <: AbstractVector{<:Real}} <: AbstractTR
+    val::T1 = 0.0
+    w::T2 = Vector{Float64}(undef, 0)
+end
+```
+"""
+mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
+                  T2 <: AbstractVector{<:Real}} <: AbstractTR
+    val::T1
+    w::T2
+end
+function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+            w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
+    return TR{typeof(val), typeof(w)}(val, w)
+end
+
 """
     mutable struct PortOptSolver
 
@@ -95,7 +167,7 @@ abstract type AbstractRMSettings end
 
 Configuration settings for concrete subtypes of [`RiskMeasure`](@ref). Having this property makes it possible for a risk measure to be used in any optimisation types that take risk measures as parameters.
 
-See also: [`RiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
+See also: [`RiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`expected_risk`](@ref).
 
 # Keyword Arguments
 
@@ -131,7 +203,7 @@ end
 
 Configuration settings for concrete subtypes of [`HCRiskMeasure`](@ref).
 
-See also: [`HCRiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`calc_risk`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`AbstractScalarisation`](@ref), [`expected_risk`](@ref).
 
 # Keyword Arguments
 
@@ -202,7 +274,7 @@ abstract type AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasureSkew`](@ref), [`RiskMeasureOWA`](@ref), [`RiskMeasureMu`](@ref), [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`calc_risk`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RiskMeasureSigma`](@ref), [`RiskMeasureSkew`](@ref), [`RiskMeasureOWA`](@ref), [`RiskMeasureMu`](@ref), [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`expected_risk`](@ref), [`set_rm`](@ref).
 
 # Implementation
 
@@ -242,10 +314,10 @@ struct MyRiskMeasure <: RiskMeasure
 end
 ```
 
-  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+  - Implement your measure's risk calculation method, [`expected_risk`](@ref). This will let the library use the risk function everywhere it needs to.
 
 ```julia
-function calc_risk(my_risk::MyRiskMeasure, w::AbstractVector; kwargs...)
+function expected_risk(my_risk::MyRiskMeasure, w::AbstractVector; kwargs...)
     # Risk measure calculation
 end
 ```
@@ -463,7 +535,7 @@ abstract type RiskMeasure <: AbstractRiskMeasure end
 
 Supertype for risk measures compatible with optimisations which accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMeasureTarget`](@ref), [`HCRMSettings`](@ref), [`calc_risk`](@ref).
+See also: [`HCRiskMeasureSolvers`](@ref), [`HCRiskMeasureMu`](@ref), [`HCRiskMeasureTarget`](@ref), [`HCRMSettings`](@ref), [`expected_risk`](@ref).
 
 # Implementation
 
@@ -503,10 +575,10 @@ struct MyHCRiskMeasure <: HCRiskMeasure
 end
 ```
 
-  - Implement your measure's risk calculation method, [`calc_risk`](@ref). This will let the library use the risk function everywhere it needs to.
+  - Implement your measure's risk calculation method, [`expected_risk`](@ref). This will let the library use the risk function everywhere it needs to.
 
 ```julia
-function calc_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
+function expected_risk(my_risk::MyHCRiskMeasure, w::AbstractVector; kwargs...)
     # Risk measure calculation
 end
 ```
@@ -570,23 +642,23 @@ abstract type HCRiskMeasure <: AbstractRiskMeasure end
 """
     abstract type NoOptRiskMeasure <: AbstractRiskMeasure end
 
-Abstract type for risk measures that cannot be used in optimisations but can be used as performance measurements via [`calc_risk`](@ref). This can be for two reasons:
+Abstract type for risk measures that cannot be used in optimisations but can be used as performance measurements via [`expected_risk`](@ref). This can be for two reasons:
 
  1. They can be negative, therefore unsuitable for optimisations that accept risk measures and do not use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
  2. They have no known optimisation formulation, therefore unsuitable for optimisations that accept risk measures and use [`JuMP`](https://github.com/jump-dev/JuMP.jl) models.
 
-See also: [`calc_risk`](@ref).
+See also: [`expected_risk`](@ref).
 
 # Implementation
 
-  - Implement: [`calc_risk`](@ref) for the type. This will let the library use the risk function everywhere it needs to.
+  - Implement: [`expected_risk`](@ref) for the type. This will let the library use the risk function everywhere it needs to.
 
 ```julia
 struct MyNoOptRiskMeasure <: NoOptRiskMeasure
     # Properties of MyNoOptRiskMeasure
 end
 
-function calc_risk(my_risk::MyNoOptRiskMeasure, w::AbstractVector; kwargs...)
+function expected_risk(my_risk::MyNoOptRiskMeasure, w::AbstractVector; kwargs...)
     # Risk measure calculation
 end
 ```
@@ -987,7 +1059,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`NOC`](@ref), [`NoAdj`](@ref), [`IP`](@ref), [`SDP`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1076,7 +1148,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`Variance`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1138,7 +1210,7 @@ Where:
   - ``\\lvert \\cdot \\rvert``: is the absolute value.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
 
 # Keyword Arguments
 
@@ -1180,8 +1252,9 @@ function MAD(; settings::RMSettings = RMSettings(),
              we::Union{<:AbstractWeights, Nothing} = nothing)
     return MAD(settings, w, mu, we)
 end
-function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                    rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     mu = calc_ret_mu(x, w, mad)
     we = mad.we
     return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
@@ -1206,7 +1279,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1244,8 +1317,9 @@ function SSD(; settings::RMSettings = RMSettings(),
              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return SSD(settings, target, w, mu)
 end
-function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                    rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     mu = calc_target_ret_mu(x, w, ssd)
     val = x .- mu
@@ -1271,7 +1345,7 @@ Where:
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1309,8 +1383,9 @@ function FLPM(; settings::RMSettings = RMSettings(),
               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return FLPM(settings, target, w, mu)
 end
-function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                      rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     target = calc_target_ret_mu(x, w, flpm)
     val = x .- target
@@ -1335,7 +1410,7 @@ Where:
 
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1383,7 +1458,7 @@ Where:
   - ``T``: is the number of observations.
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1479,7 +1554,7 @@ Where:
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`RLVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1567,7 +1642,7 @@ Where:
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1663,7 +1738,7 @@ Where:
   - ``\\mathrm{DD_{a}}(\\bm{X})`` is the Drawdown of uncompounded cumulative returns as defined in [`DaR`](@ref).
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`DaR_r`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1721,7 +1796,7 @@ Where:
   - ``T``: is the number of observations.
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1803,7 +1878,7 @@ Where:
   - ``\\alpha``: is the significance level.
   - ``T``: is the number of observations.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`EDaR`](@ref), [`RLDaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1876,7 +1951,7 @@ Where:
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j`` as defined in [`DaR`](@ref).
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -1939,7 +2014,7 @@ Where:
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
   - ``\\alpha``: is the significance level.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`DaR`](@ref), [`MDD`](@ref), [`CDaR`](@ref), [`RLDaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2016,7 +2091,7 @@ Where:
   - ``\\alpha``: is the significance level.
   - ``\\kappa``: is the relativistic deformation parameter.
 
-See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSolvers`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`WR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2091,7 +2166,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`calc_risk`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`SKurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`expected_risk`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2143,9 +2218,9 @@ function Base.setproperty!(obj::Kurt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
-                      scale::Bool = false)
-    x = X * w .- fees
+function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                      rebalance::AbstractTR = NoTR(); scale::Bool = false)
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     mu = calc_ret_mu(x, w, kurt)
     val = x .- mu
@@ -2171,7 +2246,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Kurt`](@ref), [`Kurtosis`](@ref), [`SKurtosis`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2223,9 +2298,9 @@ function Base.setproperty!(obj::SKurt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0;
-                        scale::Bool = false)
-    x = X * w .- fees
+function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                        rebalance::AbstractTR = NoTR(); scale::Bool = false)
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     mu = calc_ret_mu(x, w, skurt)
     val = x .- mu
@@ -2248,7 +2323,7 @@ Where:
 
   - ``\\bm{X}``: is the `T×1` vector of portfolio returns.
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`WR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`WR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2294,7 +2369,7 @@ Where:
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
-See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`CVaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`CVaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2359,7 +2434,7 @@ end
 
 Measures and computes the portfolio Gini Mean Difference (GMD).
 
-See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_gmd`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_gmd`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2396,7 +2471,7 @@ end
 
 Measures and computes the portfolio Tail Gini (TG).
 
-See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tg`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tg`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2467,7 +2542,7 @@ Where:
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
-See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tgrg`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`owa_tgrg`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2546,7 +2621,7 @@ Defines the generic Ordered Weight Array.
 
   - Uses a vector of ordered weights generated by [`owa_l_moment`](@ref) or [`owa_l_moment_crm`](@ref) for arbitrary L-moment optimisations.
 
-See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
+See also: [`RiskMeasureOWA`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`expected_risk(::OWA, ::AbstractVector)`](@ref), [`owa_l_moment`](@ref), [`owa_l_moment_crm`](@ref).
 
 # Properties
 
@@ -2600,7 +2675,7 @@ Where:
   - ``\\bar{a}_{\\cdot\\,\\cdot}`` and ``\\bar{b}_{\\cdot\\,\\cdot}`` : are the grand means of their respective matrices.
   - ``A_{i,\\,j}`` and ``B_{i,\\,j}`` : are doubly centered distances.
 
-See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2651,7 +2726,7 @@ Where:
   - ``\\bm{w}``: is the vector of asset weights.
   - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the coskewness.
 
-See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2724,7 +2799,7 @@ Where:
   - ``\\bm{w}``: is the vector of asset weights.
   - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the semi coskewness.
 
-See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2796,7 +2871,7 @@ Where:
   - ``\\bm{w}``: is the vector of asset weights.
   - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the coskewness.
 
-See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2868,7 +2943,7 @@ Where:
   - ``\\bm{w}``: is the vector of asset weights.
   - ``\\mathbf{V}``: is the sum of the symmetric negative spectral slices of the semi coskewness.
 
-See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2942,7 +3017,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SSD`](@ref), [`NOC`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SSD`](@ref), [`NOC`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -2983,8 +3058,9 @@ function SVariance(; settings::RMSettings = RMSettings(),
                    mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return SVariance(settings, formulation, target, w, mu)
 end
-function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                                rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
@@ -3067,7 +3143,7 @@ Where:
   - ``\\bm{w}``: is the `N×1` vector of asset weights.
   - ``\\mathbf{\\Sigma}``: is the `N×N` asset covariance matrix.
 
-See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`WCSetMuSigma`](@ref), [`Box`](@ref), [`Ellipse`](@ref), [`Variance`](@ref), [`VarianceFormulation`](@ref), [`Portfolio`](@ref), [`wc_statistics!`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`WCType`](@ref), [`WCSetMuSigma`](@ref), [`Box`](@ref), [`Ellipse`](@ref), [`Variance`](@ref), [`VarianceFormulation`](@ref), [`Portfolio`](@ref), [`wc_statistics!`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -3145,78 +3221,6 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
 end
 function (wcvariance::WCVariance)(w::AbstractVector)
     return dot(w, wcvariance.sigma, w)
-end
-
-mutable struct Fees
-    long::Union{<:Real, <:AbstractVector{<:Real}}
-    short::Union{<:Real, <:AbstractVector{<:Real}}
-    fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
-    fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
-    tol_kwargs::NamedTuple
-end
-function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              tol_kwargs::NamedTuple = (; atol = 1e-8))
-    @smart_assert(all(long .>= zero(long)))
-    @smart_assert(all(short .<= zero(short)))
-    @smart_assert(all(fixed_long .>= zero(fixed_long)))
-    @smart_assert(all(fixed_short .<= zero(fixed_short)))
-    return Fees(long, short, fixed_long, fixed_short, tol_kwargs)
-end
-function Base.setproperty!(fees::Fees, sym::Symbol, val)
-    if sym ∈ (:long, :fixed_long)
-        @smart_assert(all(val .>= zero(val)))
-    elseif sym ∈ (:short, :fixed_short)
-        @smart_assert(all(val .<= zero(val)))
-    end
-    return setfield!(fees, sym, val)
-end
-function Base.isequal(A::Fees, B::Fees)
-    for property ∈ propertynames(A)
-        prop_A = getproperty(A, property)
-        prop_B = getproperty(B, property)
-        if !isequal(prop_A, prop_B)
-            return false
-        end
-    end
-    return true
-end
-
-# ### Turnover and rebalance
-
-"""
-```
-abstract type AbstractTR end
-```
-"""
-abstract type AbstractTR end
-
-"""
-```
-struct NoTR <: AbstractTR end
-```
-"""
-struct NoTR <: AbstractTR end
-
-"""
-```
-@kwdef mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
-                         T2 <: AbstractVector{<:Real}} <: AbstractTR
-    val::T1 = 0.0
-    w::T2 = Vector{Float64}(undef, 0)
-end
-```
-"""
-mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
-                  T2 <: AbstractVector{<:Real}} <: AbstractTR
-    val::T1
-    w::T2
-end
-function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-            w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TR{typeof(val), typeof(w)}(val, w)
 end
 
 # ### Tracking
@@ -3331,7 +3335,7 @@ Defines the Value at Risk.
 \\end{align}
 ```
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::VaR, ::AbstractVector)`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::VaR, ::AbstractVector)`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3391,7 +3395,7 @@ Where:
   - ``\\alpha``: is the significance level of losses.
   - ``\\beta``: is the significance level of gains.
 
-See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`calc_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`VaR`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
@@ -3455,7 +3459,7 @@ Where:
   - ``\\mathrm{DD_{a}}(\\bm{X},\\, j)`` is the Drawdown of uncompounded cumulative returns at time ``j``.
   - ``\\mathrm{DaR_{a}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of uncompounded cumulative returns.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::DaR, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3534,7 +3538,7 @@ Where:
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j``.
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns.
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::DaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::DaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3608,7 +3612,7 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X})`` is the Drawdown of compounded cumulative returns as defined in [`DaR_r`](@ref).
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::MDD_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::MDD_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref).
 
 # Properties
 
@@ -3667,7 +3671,7 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`DaR_r`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::ADD_r, ::AbstractVector)`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`expected_risk(::ADD_r, ::AbstractVector)`](@ref), [`ADD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3748,7 +3752,7 @@ Where:
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`DaR_r`](@ref).
   - ``\\mathrm{DaR_{r}}(\\bm{X},\\, \\alpha)`` the Drawdown at Risk of compounded cumulative returns as defined in [`DaR_r`](@ref).
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::CDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::CDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3828,7 +3832,7 @@ Where:
 
   - ``\\mathrm{DD_{r}}(\\bm{X},\\, j)`` is the Drawdown of compounded cumulative returns at time ``j`` as defined in [`DaR_r`](@ref).
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`calc_risk(::UCI_r, ::AbstractVector)`](@ref), [`UCI`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`optimise!`](@ref), [`expected_risk(::UCI_r, ::AbstractVector)`](@ref), [`UCI`](@ref).
 
 # Properties
 
@@ -3889,7 +3893,7 @@ Where:
 
   - ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref), using the Drawdown of compounded cumulative returns as defined in [`DaR_r`](@ref).
 
-See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`expected_risk(::EDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR_r`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3901,7 +3905,7 @@ See also: [`HCRiskMeasure`](@ref), [`HCRMSettings`](@ref), [`Portfolio`](@ref), 
 
   - Requires solver capability for exponential cone problems.
 
-  - When computing [`calc_risk(::EDaR_r, ::AbstractVector)`](@ref):
+  - When computing [`expected_risk(::EDaR_r, ::AbstractVector)`](@ref):
 
       + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
@@ -3974,7 +3978,7 @@ Where:
 
   - ``\\mathrm{RRM}(\\mathrm{DD_{r}}(\\bm{X}),\\, \\alpha,\\, \\kappa)`` is the Relativistic Risk Measure as defined in [`RRM`](@ref), using the Drawdown of compounded cumulative returns as defined in [`DaR_r`](@ref).
 
-See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
+See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`optimise!`](@ref), [`expected_risk(::RLDaR_r, ::AbstractVector)`](@ref), [`VaR`](@ref), [`CVaR`](@ref), [`EVaR`](@ref), [`RLVaR`](@ref) [`WR`](@ref), [`DaR`](@ref), [`DaR_r`](@ref), [`CDaR`](@ref), [`CDaR_r`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`RLDaR_r`](@ref), [`MDD`](@ref), [`MDD_r`](@ref).
 
 # Properties
 
@@ -3987,7 +3991,7 @@ See also: [`RiskMeasure`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`op
 
   - Requires solver capability for 3D power cone problems.
 
-  - When computing [`calc_risk(::RLDaR_r, ::AbstractVector)`](@ref):
+  - When computing [`expected_risk(::RLDaR_r, ::AbstractVector)`](@ref):
 
       + If `solvers` is `nothing`: uses `solvers` from [`Portfolio`](@ref)/.
       + If `solvers` is provided: use the solvers.
@@ -4108,8 +4112,9 @@ function TLPM(; settings::RMSettings = RMSettings(),
               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return TLPM(settings, target, w, mu)
 end
-function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                      rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     target = calc_target_ret_mu(x, w, tlpm)
     val = x .- target
@@ -4150,8 +4155,9 @@ function FTLPM(; settings::RMSettings = RMSettings(),
                mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return FTLPM(settings, target, w, mu)
 end
-function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
-    x = X * w .- fees
+function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                        rebalance::AbstractTR = NoTR())
+    x = calc_net_returns(X, w, fees, rebalance)
     T = length(x)
     target = calc_target_ret_mu(x, w, ftlpm)
     val = x .- target

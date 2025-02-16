@@ -544,37 +544,38 @@ end
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio, Trad(; obj = MinRisk()))
-    r1 = calc_risk(portfolio)
+    r1 = expected_risk(portfolio)
     ret1 = dot(portfolio.mu, w1.weights)
     sr1 = sharpe_ratio(portfolio)
-    @test sr1 >= sharpe_ratio_info_criteria(portfolio)
+    @test sr1 >= sric(portfolio)
 
     w2 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
-    r2 = calc_risk(portfolio)
+    r2 = expected_risk(portfolio)
     ret2 = dot(portfolio.mu, w2.weights)
     sr2 = sharpe_ratio(portfolio)
-    @test sr2 >= sharpe_ratio_info_criteria(portfolio)
+    @test sr2 >= sric(portfolio)
 
     w3 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
-    r3 = calc_risk(portfolio)
+    r3 = expected_risk(portfolio)
     ret3 = dot(portfolio.mu, w3.weights)
     sr3 = sharpe_ratio(portfolio)
-    @test sr3 >= sharpe_ratio_info_criteria(portfolio)
+    @test sr3 >= sric(portfolio)
 
     w4 = optimise!(portfolio, Trad(; obj = MaxRet()))
-    r4 = calc_risk(portfolio)
+    r4 = expected_risk(portfolio)
     ret4 = dot(portfolio.mu, w4.weights)
     sr4 = sharpe_ratio(portfolio)
-    @test sr4 >= sharpe_ratio_info_criteria(portfolio)
+    @test sr4 >= sric(portfolio)
 
     @test r1 < r3 < r2 < r4
     @test ret1 < ret3 < ret2 < ret4
     @test sr4 < sr1 < sr2 < sr3
 
     sr5 = sharpe_ratio(portfolio; kelly = true)
-    @test isapprox(dot(portfolio.mu, w4.weights) / calc_risk(portfolio), sr4)
+    @test isapprox(dot(portfolio.mu, w4.weights) / expected_risk(portfolio), sr4)
     @test isapprox(1 / size(portfolio.returns, 1) *
-                   sum(log1p.(portfolio.returns * w4.weights)) / calc_risk(portfolio), sr5)
+                   sum(log1p.(portfolio.returns * w4.weights)) / expected_risk(portfolio),
+                   sr5)
 
     portfolio.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise!(portfolio, Trad(; obj = MinRisk()))
@@ -1811,19 +1812,19 @@ end
 
     rm = Variance()
     w1 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r1 = calc_risk(portfolio; rm = rm)
+    r1 = expected_risk(portfolio; rm = rm)
 
     rm.settings.ub = r1
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
     w2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r2 = calc_risk(portfolio; rm = rm)
+    r2 = expected_risk(portfolio; rm = rm)
     w3 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r3 = calc_risk(portfolio; rm = rm)
+    r3 = expected_risk(portfolio; rm = rm)
     w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r4 = calc_risk(portfolio; rm = rm)
+    r4 = expected_risk(portfolio; rm = rm)
     w5 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r5 = calc_risk(portfolio; rm = rm)
+    r5 = expected_risk(portfolio; rm = rm)
     @test r2 <= r1
     @test r3 <= r1 || abs(r3 - r1) < 5e-8
     @test r4 <= r1
@@ -1832,13 +1833,13 @@ end
     portfolio.network_adj = SDP(; A = B)
     portfolio.cluster_adj = SDP(; A = C)
     w6 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r6 = calc_risk(portfolio; rm = rm)
+    r6 = expected_risk(portfolio; rm = rm)
     w7 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r7 = calc_risk(portfolio; rm = rm)
+    r7 = expected_risk(portfolio; rm = rm)
     w8 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r8 = calc_risk(portfolio; rm = rm)
+    r8 = expected_risk(portfolio; rm = rm)
     w9 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r9 = calc_risk(portfolio; rm = rm)
+    r9 = expected_risk(portfolio; rm = rm)
     @test r6 <= r1
     @test r7 <= r1
     @test r8 <= r1
@@ -1847,13 +1848,13 @@ end
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = SDP(; A = C)
     w2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r2 = calc_risk(portfolio; rm = rm)
+    r2 = expected_risk(portfolio; rm = rm)
     w3 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r3 = calc_risk(portfolio; rm = rm)
+    r3 = expected_risk(portfolio; rm = rm)
     w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r4 = calc_risk(portfolio; rm = rm)
+    r4 = expected_risk(portfolio; rm = rm)
     w5 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r5 = calc_risk(portfolio; rm = rm)
+    r5 = expected_risk(portfolio; rm = rm)
     @test r2 <= r1
     @test r3 <= r1 || abs(r3 - r1) < 5e-8
     @test r4 <= r1
@@ -1862,13 +1863,13 @@ end
     portfolio.network_adj = SDP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
     w2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r2 = calc_risk(portfolio; rm = rm)
+    r2 = expected_risk(portfolio; rm = rm)
     w3 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r3 = calc_risk(portfolio; rm = rm)
+    r3 = expected_risk(portfolio; rm = rm)
     w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r4 = calc_risk(portfolio; rm = rm)
+    r4 = expected_risk(portfolio; rm = rm)
     w5 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r5 = calc_risk(portfolio; rm = rm)
+    r5 = expected_risk(portfolio; rm = rm)
     @test r2 <= r1
     @test r3 <= r1 || abs(r3 - r1) < 5e-8
     @test r4 <= r1
@@ -1886,19 +1887,19 @@ end
     asset_statistics!(portfolio)
     rm = [[Variance(), Variance()]]
     w10 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r10 = calc_risk(portfolio; rm = rm[1][1])
+    r10 = expected_risk(portfolio; rm = rm[1][1])
 
     rm[1][1].settings.ub = r10
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
     w11 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r11 = calc_risk(portfolio; rm = rm[1][1])
+    r11 = expected_risk(portfolio; rm = rm[1][1])
     w12 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r12 = calc_risk(portfolio; rm = rm[1][1])
+    r12 = expected_risk(portfolio; rm = rm[1][1])
     w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r13 = calc_risk(portfolio; rm = rm[1][1])
+    r13 = expected_risk(portfolio; rm = rm[1][1])
     w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r14 = calc_risk(portfolio; rm = rm[1][1])
+    r14 = expected_risk(portfolio; rm = rm[1][1])
     @test r11 <= r10
     @test r12 <= r10 || abs(r12 - r10) < 5e-7
     @test r13 <= r10 || abs(r13 - r10) < 1e-10
@@ -1907,13 +1908,13 @@ end
     portfolio.network_adj = SDP(; A = B)
     portfolio.cluster_adj = SDP(; A = C)
     w15 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r15 = calc_risk(portfolio; rm = rm[1][1])
+    r15 = expected_risk(portfolio; rm = rm[1][1])
     w16 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r16 = calc_risk(portfolio; rm = rm[1][1])
+    r16 = expected_risk(portfolio; rm = rm[1][1])
     w17 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r17 = calc_risk(portfolio; rm = rm[1][1])
+    r17 = expected_risk(portfolio; rm = rm[1][1])
     w18 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r18 = calc_risk(portfolio; rm = rm[1][1])
+    r18 = expected_risk(portfolio; rm = rm[1][1])
     @test r15 <= r10
     @test r16 <= r10
     @test abs(r17 - r10) < 1e-4
@@ -1922,13 +1923,13 @@ end
     portfolio.network_adj = SDP(; A = B)
     portfolio.cluster_adj = IP(; A = C)
     w11 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r11 = calc_risk(portfolio; rm = rm[1][1])
+    r11 = expected_risk(portfolio; rm = rm[1][1])
     w12 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r12 = calc_risk(portfolio; rm = rm[1][1])
+    r12 = expected_risk(portfolio; rm = rm[1][1])
     w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r13 = calc_risk(portfolio; rm = rm[1][1])
+    r13 = expected_risk(portfolio; rm = rm[1][1])
     w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r14 = calc_risk(portfolio; rm = rm[1][1])
+    r14 = expected_risk(portfolio; rm = rm[1][1])
     @test r11 <= r10
     @test r12 <= r10 || abs(r12 - r10) < 5e-7
     @test r13 <= r10 || abs(r13 - r10) < 1e-10
@@ -1937,13 +1938,13 @@ end
     portfolio.network_adj = IP(; A = B)
     portfolio.cluster_adj = SDP(; A = C)
     w11 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r11 = calc_risk(portfolio; rm = rm[1][1])
+    r11 = expected_risk(portfolio; rm = rm[1][1])
     w12 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r12 = calc_risk(portfolio; rm = rm[1][1])
+    r12 = expected_risk(portfolio; rm = rm[1][1])
     w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r13 = calc_risk(portfolio; rm = rm[1][1])
+    r13 = expected_risk(portfolio; rm = rm[1][1])
     w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r14 = calc_risk(portfolio; rm = rm[1][1])
+    r14 = expected_risk(portfolio; rm = rm[1][1])
     @test r11 <= r10
     @test r12 <= r10 || abs(r12 - r10) < 5e-7
     @test r13 <= r10 || abs(r13 - r10) < 1e-10
@@ -3070,18 +3071,18 @@ end
 
     rm = Variance()
     w1 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r1 = calc_risk(portfolio; rm = rm)
+    r1 = expected_risk(portfolio; rm = rm)
 
     rm.settings.ub = r1
     portfolio.network_adj = IP(; A = B)
     w2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r2 = calc_risk(portfolio; rm = rm)
+    r2 = expected_risk(portfolio; rm = rm)
     w3 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r3 = calc_risk(portfolio; rm = rm)
+    r3 = expected_risk(portfolio; rm = rm)
     w4 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r4 = calc_risk(portfolio; rm = rm)
+    r4 = expected_risk(portfolio; rm = rm)
     w5 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r5 = calc_risk(portfolio; rm = rm)
+    r5 = expected_risk(portfolio; rm = rm)
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = IP(; A = B)
     w2_2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
@@ -3100,13 +3101,13 @@ end
 
     portfolio.network_adj = SDP(; A = B)
     w6 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r6 = calc_risk(portfolio; rm = rm)
+    r6 = expected_risk(portfolio; rm = rm)
     w7 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r7 = calc_risk(portfolio; rm = rm)
+    r7 = expected_risk(portfolio; rm = rm)
     w8 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r8 = calc_risk(portfolio; rm = rm)
+    r8 = expected_risk(portfolio; rm = rm)
     w9 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r9 = calc_risk(portfolio; rm = rm)
+    r9 = expected_risk(portfolio; rm = rm)
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = SDP(; A = B)
     w6_2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
@@ -3135,18 +3136,18 @@ end
     asset_statistics!(portfolio)
     rm = [[Variance(), Variance()]]
     w10 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r10 = calc_risk(portfolio; rm = rm[1][1])
+    r10 = expected_risk(portfolio; rm = rm[1][1])
 
     rm[1][1].settings.ub = r10
     portfolio.network_adj = IP(; A = B)
     w11 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r11 = calc_risk(portfolio; rm = rm[1][1])
+    r11 = expected_risk(portfolio; rm = rm[1][1])
     w12 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r12 = calc_risk(portfolio; rm = rm[1][1])
+    r12 = expected_risk(portfolio; rm = rm[1][1])
     w13 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r13 = calc_risk(portfolio; rm = rm[1][1])
+    r13 = expected_risk(portfolio; rm = rm[1][1])
     w14 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r14 = calc_risk(portfolio; rm = rm[1][1])
+    r14 = expected_risk(portfolio; rm = rm[1][1])
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = IP(; A = B)
     w11_2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
@@ -3165,13 +3166,13 @@ end
 
     portfolio.network_adj = SDP(; A = B)
     w15 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))
-    r15 = calc_risk(portfolio; rm = rm[1][1])
+    r15 = expected_risk(portfolio; rm = rm[1][1])
     w16 = optimise!(portfolio, Trad(; obj = Utility(; l = l), rm = rm))
-    r16 = calc_risk(portfolio; rm = rm[1][1])
+    r16 = expected_risk(portfolio; rm = rm[1][1])
     w17 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf), rm = rm))
-    r17 = calc_risk(portfolio; rm = rm[1][1])
+    r17 = expected_risk(portfolio; rm = rm[1][1])
     w18 = optimise!(portfolio, Trad(; obj = MaxRet(), rm = rm))
-    r18 = calc_risk(portfolio; rm = rm[1][1])
+    r18 = expected_risk(portfolio; rm = rm[1][1])
     portfolio.network_adj = NoAdj()
     portfolio.cluster_adj = SDP(; A = B)
     w15_2 = optimise!(portfolio, Trad(; obj = MinRisk(), rm = rm))

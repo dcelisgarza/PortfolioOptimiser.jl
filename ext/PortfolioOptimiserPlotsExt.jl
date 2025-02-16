@@ -14,9 +14,11 @@ plot_returns(timestamps, assets, returns, weights; per_asset = false, kwargs...)
 ```
 """
 function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
-                                         per_asset = false, kwargs...)
+                                         per_asset = false, fees::Fees = Fees(),
+                                         rebalance::PortfolioOptimiser.AbstractTR = NoTR(),
+                                         kwargs...)
     if per_asset
-        ret = returns .* transpose(weights)
+        ret = calc_net_asset_returns(returns, weights, fees, rebalance)
         ret = vcat(zeros(1, length(weights)), ret)
         ret .+= 1
         ret = cumprod(ret; dims = 1)
@@ -25,7 +27,7 @@ function PortfolioOptimiser.plot_returns(timestamps, assets, returns, weights;
             kwargs = (kwargs..., label = reshape(assets, 1, :))
         end
     else
-        ret = returns * weights
+        ret = calc_net_returns(returns, weights, fees, rebalance)
         pushfirst!(ret, 0)
         ret .+= 1
         ret = cumprod(ret)
@@ -50,7 +52,8 @@ function PortfolioOptimiser.plot_returns(port, key = :Trad; allocated::Bool = fa
                                                port.optimal[key].weights
                                            else
                                                port.alloc_optimal[key].weights
-                                           end; per_asset = per_asset, kwargs...)
+                                           end; per_asset = per_asset, fees = port.fees,
+                                           rebalance = port.rebalance, kwargs...)
 end
 
 function PortfolioOptimiser.plot_bar(assets, data; kwargs...)
@@ -109,8 +112,8 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
     rmstr = rmstr[1:(findfirst('{', rmstr) - 1)]
     title = "Risk Contribution - $rmstr"
     if any(typeof(rm) .<:
-           (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR, CDaR_r, EDaR_r,
-            RLDaR_r))
+           (CVaR, TG, EVaR, EVaRRG, RLVaR, RLVaRRG, CVaRRG, TGRG, CDaR, EDaR, RLDaR, CDaR_r,
+            EDaR_r, RLDaR_r))
         title *= " α = $(round(rm.alpha*100, digits=2))%"
     end
     if any(typeof(rm) .<: (CVaRRG, TGRG))
@@ -146,7 +149,7 @@ function PortfolioOptimiser.plot_risk_contribution(assets::AbstractVector,
         if percentage
             erc = 1 / length(rc)
         else
-            erc = calc_risk(rm, w; X = X, fees = fees, rebalance = rebalance)
+            erc = expected_risk(rm, w; X = X, fees = fees, rebalance = rebalance)
 
             erc /= length(rc)
 
@@ -214,7 +217,8 @@ function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
     end
 
     msg = "$(PortfolioOptimiser.get_rm_symbol(rm))"
-    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
+    if any(typeof(rm) .<:
+           (CVaR, TG, EVaR, EVaRRG, RLVaR, RLVaRRG, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
     if any(typeof(rm) .<: (CVaRRG, TGRG))
@@ -314,7 +318,8 @@ function PortfolioOptimiser.plot_frontier_area(frontier;
     end
 
     msg = "$(PortfolioOptimiser.get_rm_symbol(rm))"
-    if any(typeof(rm) .<: (CVaR, TG, EVaR, RLVaR, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
+    if any(typeof(rm) .<:
+           (CVaR, TG, EVaR, EVaRRG, RLVaR, RLVaRRG, CVaRRG, TGRG, CDaR, EDaR, RLDaR))
         msg *= " α = $(round(rm.alpha*100, digits=2))%"
     end
     if any(typeof(rm) .<: (CVaRRG, TGRG))
@@ -379,13 +384,14 @@ function PortfolioOptimiser.plot_frontier_area(port::PortfolioOptimiser.Abstract
 end
 
 function PortfolioOptimiser.plot_drawdown(timestamps::AbstractVector, w::AbstractVector,
-                                          returns::AbstractMatrix; alpha::Real = 0.05,
-                                          kappa::Real = 0.3,
+                                          returns::AbstractMatrix; fees::Fees = Fees(),
+                                          rebalance::PortfolioOptimiser.AbstractTR = NoTR(),
+                                          alpha::Real = 0.05, kappa::Real = 0.3,
                                           solvers::Union{Nothing, PortOptSolver,
                                                          <:AbstractVector{PortOptSolver}} = nothing,
                                           theme = :Dark2_5, kwargs_ret = (;),
                                           kwargs_dd = (;), kwargs_risks = (;), kwargs = (;))
-    ret = returns * w
+    ret = calc_net_returns(returns, w, fees, rebalance)
 
     cret = copy(ret)
     pushfirst!(cret, 0)
@@ -483,13 +489,17 @@ function PortfolioOptimiser.plot_drawdown(port::PortfolioOptimiser.AbstractPortf
                                                 port.optimal[key].weights
                                             else
                                                 port.alloc_optimal[key].weights
-                                            end, port.returns; alpha = alpha, kappa = kappa,
-                                            solvers = port.solvers, theme = theme,
-                                            kwargs_ret = kwargs_ret, kwargs_dd = kwargs_dd,
+                                            end, port.returns; fees = port.fees,
+                                            rebalance = port.rebalance, alpha = alpha,
+                                            kappa = kappa, solvers = port.solvers,
+                                            theme = theme, kwargs_ret = kwargs_ret,
+                                            kwargs_dd = kwargs_dd,
                                             kwargs_risks = kwargs_risks, kwargs = kwargs)
 end
 
 function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix;
+                                      fees::Fees = Fees(),
+                                      rebalance::PortfolioOptimiser.AbstractTR = NoTR(),
                                       alpha_i::Real = 0.0001, alpha::Real = 0.05,
                                       a_sim::Int = 100, kappa::Real = 0.3,
                                       solvers::Union{Nothing, PortOptSolver,
@@ -498,7 +508,7 @@ function PortfolioOptimiser.plot_hist(w::AbstractVector, returns::AbstractMatrix
                                                              4 * sqrt(size(returns, 1))),
                                       theme = :Paired_10, kwargs_h = (;),
                                       kwargs_risks = (;))
-    ret = returns * w * 100
+    ret = calc_net_returns(returns, w, fees, rebalance) * 100
 
     mu = mean(ret)
     sigma = std(ret)
@@ -572,33 +582,45 @@ function PortfolioOptimiser.plot_hist(port::PortfolioOptimiser.AbstractPortfolio
                                             port.optimal[key].weights
                                         else
                                             port.alloc_optimal[key].weights
-                                        end, port.returns; alpha_i = alpha_i, alpha = alpha,
-                                        a_sim = a_sim, kappa = kappa,
+                                        end, port.returns; fees = port.fees,
+                                        rebalance = port.rebalance, alpha_i = alpha_i,
+                                        alpha = alpha, a_sim = a_sim, kappa = kappa,
                                         solvers = port.solvers, theme = theme,
                                         points = points, kwargs_h = kwargs_h,
                                         kwargs_risks = kwargs_risks)
 end
 
 function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatrix;
+                                       fees::Fees = Fees(),
+                                       rebalance::PortfolioOptimiser.AbstractTR = NoTR(),
                                        alpha_i::Real = 0.0001, alpha::Real = 0.05,
-                                       a_sim::Int = 100, beta_i::Real = alpha_i,
-                                       beta::Real = alpha, b_sim::Integer = a_sim,
+                                       kappa_a::Real = 0.3, a_sim::Int = 100,
+                                       beta_i::Real = 0.0001, beta::Real = 0.05,
+                                       kappa_b::Real = 0.3, b_sim::Integer = 100,
+                                       solvers::Union{Nothing, PortOptSolver,
+                                                      <:AbstractVector{PortOptSolver}} = nothing,
                                        theme = :Set1_5, kwargs_h = (;), kwargs_risks = (;))
     if isinf(beta)
         beta = alpha
     end
 
-    ret = returns * w * 100
+    ret = calc_net_returns(returns, w, fees, rebalance) * 100
 
-    risks = (RG()(ret), CVaRRG(; alpha = alpha, beta = beta)(ret),
+    risks = (RG()(ret),
+             RLVaRRG(; solvers = solvers, alpha = alpha, kappa_a = kappa_a, beta = beta,
+                     kappa_b = kappa_b)(ret),
+             EVaRRG(; solvers = solvers, alpha = alpha, beta = beta)(ret),
              TGRG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                  beta = beta, b_sim = b_sim)(ret))
+                  beta = beta, b_sim = b_sim)(ret),
+             CVaRRG(; alpha = alpha, beta = beta)(ret))
 
     lo_conf = 1 - alpha
     hi_conf = 1 - beta
     risk_labels = ("Range: $(round(risks[1], digits=2))%",
-                   "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
-                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%")
+                   "RLVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
+                   "EVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%",
+                   "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[4], digits=2))%",
+                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[5], digits=2))%")
 
     colours = palette(theme, length(risk_labels) + 1)
 
@@ -611,12 +633,12 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
 
     plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
 
-    bounds = [minimum(ret) -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret) -CVaR(; alpha = alpha)(ret);
-              maximum(ret) TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(-ret) CVaR(; alpha = alpha)(-ret)]
+    bounds = [minimum(ret) -RLVaR(; solvers = solvers, alpha = alpha, kappa = kappa_a)(ret) -EVaR(; solvers = solvers, alpha = alpha)(ret)    -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret) -CVaR(; alpha = alpha)(ret);
+              maximum(ret)  RLVaR(; solvers = solvers, alpha = beta, kappa = kappa_b)(-ret) EVaR(; solvers = solvers, alpha = beta)(-ret)   TG(; alpha_i = beta_i, alpha = beta, a_sim = b_sim)(-ret) CVaR(; alpha = beta)(-ret)]
 
     D = fit(Normal, ret)
     y = pdf(D, mean(D))
-    ys = (y / 4, y / 2, y * 3 / 4)
+    ys = (y / 6, y / 3, y / 2, 2 * y / 3, 5 * y / 6)
 
     if !haskey(kwargs_risks, :linewidth)
         kwargs_risks = (kwargs_risks..., linewidth = 2)
@@ -640,10 +662,12 @@ function PortfolioOptimiser.plot_range(port::PortfolioOptimiser.AbstractPortfoli
                                              port.optimal[key].weights
                                          else
                                              port.alloc_optimal[key].weights
-                                         end, port.returns; alpha_i = alpha_i,
-                                         alpha = alpha, a_sim = a_sim, beta_i = beta_i,
-                                         beta = beta, b_sim = b_sim, theme = theme,
-                                         kwargs_h = kwargs_h, kwargs_risks = kwargs_risks)
+                                         end, port.returns; solvers = port.solvers,
+                                         fees = port.fees, rebalance = port.rebalance,
+                                         alpha_i = alpha_i, alpha = alpha, a_sim = a_sim,
+                                         beta_i = beta_i, beta = beta, b_sim = b_sim,
+                                         theme = theme, kwargs_h = kwargs_h,
+                                         kwargs_risks = kwargs_risks)
 end
 
 function PortfolioOptimiser.plot_clusters(assets::AbstractVector, rho::AbstractMatrix,

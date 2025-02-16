@@ -110,7 +110,7 @@
 #         if percentage
 #             erc = 100 / length(rc)
 #         else
-#             erc = calc_risk(rm, w; X = X, V = V, SV = SV)
+#             erc = expected_risk(rm, w; X = X, V = V, SV = SV)
 
 #             erc /= length(rc)
 

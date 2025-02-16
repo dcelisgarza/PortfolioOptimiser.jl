@@ -245,10 +245,10 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     fees = port.fees
     rebalance = port.rebalance
 
-    ret1 = calc_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
-                    rebalance = rebalance)
-    ret2 = calc_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
-                    rebalance = rebalance)
+    ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+                        rebalance = rebalance)
+    ret2 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+                        rebalance = rebalance)
 
     rm_i = get_first_rm(rm)
     old_ub = rm_i.settings.ub
@@ -300,9 +300,9 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
         if isempty(w)
             continue
         end
-        rt, rk, sr = calc_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns, delta = 0,
-                                          rf = rf, kelly = kelly, fees = fees,
-                                          rebalance = rebalance)
+        rt, rk, sr = expected_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns,
+                                              delta = 0, rf = rf, kelly = kelly,
+                                              fees = fees, rebalance = rebalance)
 
         append!(frontier, w.weights)
         push!(optim_risk, rk)
@@ -315,9 +315,9 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     w = optimise!(port, type)
     sharpe = false
     if !isempty(w)
-        rt, rk, sr = calc_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns, delta = 0,
-                                          rf = rf, kelly = kelly, fees = fees,
-                                          rebalance = rebalance)
+        rt, rk, sr = expected_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns,
+                                              delta = 0, rf = rf, kelly = kelly,
+                                              fees = fees, rebalance = rebalance)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         push!(optim_ret, rt)

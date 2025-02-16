@@ -13,7 +13,7 @@ function naive_risk(rm::Union{RiskMeasure, HCRiskMeasure}, returns, fees, rebala
     for i ∈ eachindex(w)
         w .= zero(eltype(returns))
         w[i] = one(eltype(returns))
-        risk = calc_risk(rm, w; X = returns, fees = fees, rebalance = rebalance)
+        risk = expected_risk(rm, w; X = returns, fees = fees, rebalance = rebalance)
         inv_risk[i] = inv(risk)
     end
     return inv_risk / sum(inv_risk)
@@ -136,7 +136,7 @@ function cluster_risk(port, mu, sigma, returns, cluster,
     cfees, crebalance = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
     cw = naive_risk(rm, cret, cfees, crebalance)
-    crisk = calc_risk(rm, cw; X = cret, fees = cfees, rebalance = crebalance)
+    crisk = expected_risk(rm, cw; X = cret, fees = cfees, rebalance = crebalance)
     unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)

@@ -68,7 +68,7 @@ Where:
   - ``M_{\\bm{X}}\\left(t\\right)``: is the moment generating function of ``\\bm{X}``.
   - ``\\mathcal{K}_{\\mathrm{exp}}``: is the [ExponentialCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#Exponential-Cone).
 
-See also: [`EVaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`calc_risk`](@ref).
+See also: [`EVaR`](@ref), [`EDaR`](@ref), [`EDaR_r`](@ref), [`expected_risk`](@ref).
 
 # Inputs
 
@@ -149,7 +149,7 @@ Where:
   - ``T``: is the number of observations.
   - ``\\mathcal{P}_3^{c,\\, 1-c}``: is the [PowerCone](https://jump.dev/JuMP.jl/stable/tutorials/conic/tips_and_tricks/#PowerCone) parametrised by ``c \\in (0,\\,1)``.
 
-See also: [`RLVaR`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`calc_risk`](@ref).
+See also: [`RLVaR`](@ref), [`RLDaR`](@ref), [`RLDaR_r`](@ref), [`expected_risk`](@ref).
 
 # Inputs
 
@@ -253,7 +253,7 @@ function drawdown(x::AbstractVector, compound::Bool = false)
 end
 
 """
-    calc_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
+    expected_risk(::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
 
 # Description
 
@@ -282,10 +282,10 @@ w = [0.3, 0.5, 0.2]
 
 # Calculate the equal risk measure
 equal_rm = Equal()
-equal_risk = calc_risk(equal_rm, w)
+equal_risk = expected_risk(equal_rm, w)
 ```
 """
-function calc_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
+function expected_risk(equal::Equal, w::AbstractVector; delta::Real = 0, kwargs...)
     return equal(w, delta)
 end
 function calc_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
@@ -335,30 +335,87 @@ function calc_fees(w::AbstractVector, fees::Fees = Fees(), rebalance::AbstractTR
     fees_rebal = calc_fees(w, rebalance)
     return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
 end
-function calc_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, EVaRRG, RLVaR, RLVaRRG,
-                             DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r,
-                             CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG, TGRG, OWA,
-                             BDVariance, TCM, FTCM, Skewness, SSkewness, Kurtosis,
-                             SKurtosis}, w::AbstractVector; X::AbstractMatrix,
-                   fees::Fees = Fees(), rebalance::AbstractTR = NoTR(), kwargs...)
-    fees = calc_fees(w, fees, rebalance)
-    return rm(X * w .- fees)
+function calc_asset_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
+                         op::Function)
+    fees_w = zeros(eltype(w), length(w))
+    return if isa(fees, Real) && !iszero(fees)
+        idx = op(w, zero(eltype(w)))
+        fees_w[idx] .= fees * w[idx]
+    elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
+        idx = op(w, zero(eltype(w)))
+        fees_w[idx] .= fees[idx] .* w[idx]
+    else
+        fees_w
+    end
 end
-function calc_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
-                   scale::Bool = false, fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
-                   kwargs...)
-    fees = calc_fees(w, fees, rebalance)
-    return rm(X, w, fees; scale = scale)
+function calc_asset_fees(w::AbstractVector, rebalance::AbstractTR)
+    fees_w = zeros(eltype(w), length(w))
+    return if isa(rebalance, TR)
+        fees_rebal = rebalance.val
+        benchmark = rebalance.w
+        if isa(fees_rebal, Real)
+            fees_w .= fees_rebal * abs.(benchmark .- w)
+        else
+            fees_w .= fees_rebal .* abs.(benchmark .- w)
+        end
+    else
+        fees_w
+    end
 end
-function calc_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, TrackingRM},
-                   w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(),
-                   rebalance::AbstractTR = NoTR(), kwargs...)
-    fees = calc_fees(w, fees, rebalance)
-    return rm(X, w, fees)
+function calc_asset_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
+                               tol_kwargs::NamedTuple, op::Function)
+    fees_w = zeros(eltype(w), length(w))
+    return if isa(fees, Real) && !iszero(fees)
+        idx1 = op(w, zero(eltype(w)))
+        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
+        fees_w[idx1][idx2] .= fees * idx2
+    elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
+        idx1 = op(w, zero(eltype(w)))
+        idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
+        fees_w[idx1][idx2] .= fees[idx1][idx2]
+    else
+        fees_w
+    end
 end
-function calc_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, NSSkew,
-                             TurnoverRM}, w::AbstractVector; kwargs...)
+function calc_asset_fees(w::AbstractVector, fees::Fees = Fees(),
+                         rebalance::AbstractTR = NoTR())
+    fees_long = calc_asset_fees(w, fees.long, .>=)
+    fees_short = calc_asset_fees(w, fees.short, .<)
+    fees_fixed_long = calc_asset_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
+    fees_fixed_short = -calc_asset_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
+    fees_rebal = calc_asset_fees(w, rebalance)
+    return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
+end
+function calc_net_returns(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                          rebalance::AbstractTR = NoTR())
+    return X * w .- calc_fees(w, fees, rebalance)
+end
+function calc_net_asset_returns(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                                rebalance::AbstractTR = NoTR())
+    return X .* transpose(w) .- transpose(calc_asset_fees(w, fees, rebalance))
+end
+function expected_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, EVaRRG, RLVaR, RLVaRRG,
+                                 DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r,
+                                 CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG, TGRG,
+                                 OWA, BDVariance, TCM, FTCM, Skewness, SSkewness, Kurtosis,
+                                 SKurtosis}, w::AbstractVector; X::AbstractMatrix,
+                       fees::Fees = Fees(), rebalance::AbstractTR = NoTR(), kwargs...)
+    return rm(calc_net_returns(X, w, fees, rebalance))
+end
+function expected_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
+                       scale::Bool = false, fees::Fees = Fees(),
+                       rebalance::AbstractTR = NoTR(), kwargs...)
+    return rm(X, w, fees, rebalance; scale = scale)
+end
+function expected_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, TrackingRM},
+                       w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(),
+                       rebalance::AbstractTR = NoTR(), kwargs...)
+    return rm(X, w, fees, rebalance)
+end
+function expected_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, NSSkew,
+                                 TurnoverRM}, w::AbstractVector; kwargs...)
     return rm(w)
 end
 
-export calc_risk, cumulative_returns, drawdown, calc_fees, calc_fixed_fees
+export expected_risk, cumulative_returns, drawdown, calc_fees, calc_fixed_fees,
+       calc_asset_fees, calc_asset_fixed_fees, calc_net_returns, calc_net_asset_returns

@@ -36,7 +36,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     plt9 = plot_hist(portfolio, :RB)
     @test plt9.n == 12
     plt10 = plot_range(portfolio, :RB)
-    @test plt10.n == 4
+    @test plt10.n == 6
 
     cluster_assets!(portfolio; clust_alg = HAC(),
                     clust_opt = ClustOpt(; k_type = StdSilhouette()))
