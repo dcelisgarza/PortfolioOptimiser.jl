@@ -185,14 +185,18 @@ function expected_ret_risk_sharpe(port::AbstractPortfolio, key = :Trad;
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return ret, risk, sharpe
 end
-function sric(port::AbstractPortfolio, key = :Trad; X::AbstractMatrix = port.returns,
-              mu::AbstractVector = port.mu, rm::AbstractRiskMeasure = Variance(),
-              delta::Real = 1e-6, rf::Real = 0.0, kelly::Bool = false)
+function sharpe_ratio_info_criterion(port::AbstractPortfolio, key = :Trad;
+                                     X::AbstractMatrix = port.returns,
+                                     mu::AbstractVector = port.mu,
+                                     rm::AbstractRiskMeasure = Variance(),
+                                     delta::Real = 1e-6, rf::Real = 0.0,
+                                     kelly::Bool = false)
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    sric = sric(rm, port.optimal[key].weights; mu = mu, X = X, delta = delta, rf = rf,
-                kelly = kelly, fees = port.fees, rebalance = port.rebalance)
+    sric = sharpe_ratio_info_criterion(rm, port.optimal[key].weights; mu = mu, X = X,
+                                       delta = delta, rf = rf, kelly = kelly,
+                                       fees = port.fees, rebalance = port.rebalance)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sric
 end

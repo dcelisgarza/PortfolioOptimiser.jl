@@ -547,25 +547,25 @@ end
     r1 = expected_risk(portfolio)
     ret1 = dot(portfolio.mu, w1.weights)
     sr1 = sharpe_ratio(portfolio)
-    @test sr1 >= sric(portfolio)
+    @test sr1 >= sharpe_ratio_info_criterion(portfolio)
 
     w2 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
     r2 = expected_risk(portfolio)
     ret2 = dot(portfolio.mu, w2.weights)
     sr2 = sharpe_ratio(portfolio)
-    @test sr2 >= sric(portfolio)
+    @test sr2 >= sharpe_ratio_info_criterion(portfolio)
 
     w3 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     r3 = expected_risk(portfolio)
     ret3 = dot(portfolio.mu, w3.weights)
     sr3 = sharpe_ratio(portfolio)
-    @test sr3 >= sric(portfolio)
+    @test sr3 >= sharpe_ratio_info_criterion(portfolio)
 
     w4 = optimise!(portfolio, Trad(; obj = MaxRet()))
     r4 = expected_risk(portfolio)
     ret4 = dot(portfolio.mu, w4.weights)
     sr4 = sharpe_ratio(portfolio)
-    @test sr4 >= sric(portfolio)
+    @test sr4 >= sharpe_ratio_info_criterion(portfolio)
 
     @test r1 < r3 < r2 < r4
     @test ret1 < ret3 < ret2 < ret4

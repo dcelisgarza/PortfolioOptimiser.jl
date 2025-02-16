@@ -333,11 +333,12 @@ function expected_ret_risk_sharpe(rm::AbstractRiskMeasure, w::AbstractVector;
     risk = expected_risk(rm, w; X = X, delta = delta, fees = fees, rebalance = rebalance)
     return ret, risk, (ret - rf) / risk
 end
-function sric(rm::AbstractRiskMeasure, w::AbstractVector;
-              mu::AbstractVector = Vector{Float64}(undef, 0),
-              X::AbstractMatrix = Matrix{Float64}(undef, 0, 0), delta::Real = 1e-6,
-              rf::Real = 0.0, kelly::Bool = false, fees::Fees = Fees(),
-              rebalance::AbstractTR = NoTR())
+function sharpe_ratio_info_criterion(rm::AbstractRiskMeasure, w::AbstractVector;
+                                     mu::AbstractVector = Vector{Float64}(undef, 0),
+                                     X::AbstractMatrix = Matrix{Float64}(undef, 0, 0),
+                                     delta::Real = 1e-6, rf::Real = 0.0,
+                                     kelly::Bool = false, fees::Fees = Fees(),
+                                     rebalance::AbstractTR = NoTR())
     T, N = size(X)
     sr = sharpe_ratio(rm, w; mu = mu, X = X, delta = delta, rf = rf, kelly = kelly,
                       fees = fees, rebalance = rebalance)
@@ -405,5 +406,6 @@ function brinson_attribution(prices::TimeArray, w::AbstractVector, wb::AbstractV
     return df
 end
 
-export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio, sric,
-       brinson_attribution, expected_ret, expected_ret_risk_sharpe
+export risk_bounds, risk_contribution, factor_risk_contribution, sharpe_ratio,
+       sharpe_ratio_info_criterion, brinson_attribution, expected_ret,
+       expected_ret_risk_sharpe
