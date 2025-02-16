@@ -380,12 +380,11 @@ function MIP_constraints(port)
 
     return nothing
 end
-function tracking_error_benchmark(tracking::TrackWeight, returns)
+function tracking_error_benchmark(tracking::TrackWeight, X::AbstractMatrix)
     w = tracking.w
     fees = tracking.fees
     rebalance = tracking.rebalance
-    fees = calc_fees(w, fees, rebalance)
-    return returns * w .- fees
+    return calc_net_returns(X, w, fees, rebalance)
 end
 function tracking_error_benchmark(tracking::TrackRet, ::Any)
     return tracking.w

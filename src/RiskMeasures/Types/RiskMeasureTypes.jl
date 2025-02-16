@@ -3285,11 +3285,12 @@ function TrackingRM(; settings::RMSettings = RMSettings(),
                     tr::Union{TrackWeight, TrackRet} = TrackRet(;))
     return TrackingRM(settings, tr)
 end
-function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Real = 0.0)
+function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
+                                  rebalance::AbstractTR = NoTR())
     T = size(X, 1)
     tr = trackingRM.tr
     benchmark = tracking_error_benchmark(tr, X)
-    return norm(X * w - benchmark .- fees) / sqrt(T - 1)
+    return norm(calc_net_returns(X, w, fees, rebalance) - benchmark) / sqrt(T - 1)
 end
 
 """
@@ -3298,7 +3299,7 @@ mutable struct TurnoverRM <: RiskMeasure
     settings::RMSettings
     tr::TR
 end
-function TurnoverRM(; settings::RMSettings = RMSettings(), tr::TR = TR(;))
+function TurnoverRM(; settings::RMSettings = RMSettings(), tr::TR = TR())
     return TurnoverRM(settings, tr)
 end
 function (turnoverRM::TurnoverRM)(w::AbstractVector)
