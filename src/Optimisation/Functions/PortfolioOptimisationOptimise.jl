@@ -148,14 +148,13 @@ function optimise!(port::Portfolio, type::RRB)
     return optimise_portfolio_model(port, type, class)
 end
 function optimise!(port::Portfolio, type::NOC)
-    (; flag, rm, obj, kelly, class, custom_constr, custom_obj, scalarisation, str_names) = type
+    (; flag, rm, kelly, class, custom_constr, custom_obj, scalarisation, str_names) = type
     empty!(port.fail)
     w0, risk0, ret0 = noc_risk_ret(port, type)
     port.model = JuMP.Model()
     set_string_names_on_creation(port.model, str_names)
     set_scale_obj_constrs(port)
     mu, sigma, returns = mu_sigma_returns_class(port, class)
-    optimal_homogenisation_factor(port, mu, obj)
     initial_w(port, w0)
     set_k(port, nothing)
     # Weight constraints
@@ -197,6 +196,10 @@ end
 function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
+    type = Trad(; rm = type.rm, obj = type.obj, class = type.class,
+                custom_constr = type.custom_constr, custom_obj = type.custom_obj,
+                scalarisation = type.scalarisation)
+
     old_obj = type.obj
     old_w_ini = type.w_ini
 
@@ -247,7 +250,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
 
     ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
                         rebalance = rebalance)
-    ret2 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
+    ret2 = expected_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees,
                         rebalance = rebalance)
 
     rm_i = get_first_rm(rm)
@@ -260,8 +263,11 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees = fees,
                                rebalance = rebalance)
 
-    mus = range(ret1; stop = ret2, length = points)
-    risks = range(risk1; stop = risk2, length = points)
+    # mus = range(ret1; stop = ret2, length = points)
+    # risks = range(risk1; stop = risk2, length = points)
+
+    mus = range(ret1; stop = ret2 + (ret2 - ret1) / (points - 1), length = points)
+    risks = range(risk1; stop = risk2 + (risk2 - risk1) / (points - 1), length = points)
 
     frontier = Vector{typeof(risk1)}(undef, 0)
     optim_risk = Vector{typeof(risk1)}(undef, 0)

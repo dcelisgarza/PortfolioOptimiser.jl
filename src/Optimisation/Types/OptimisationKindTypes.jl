@@ -502,6 +502,7 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
              custom_obj::CustomObjective = NoCustomObjective(),
              scalarisation::AbstractScalarisation = ScalarSum(), str_names::Bool = false,
              key::Union{Symbol, <:AbstractString} = :auto)
+    @smart_assert(bins > zero(bins))
     return NOC{typeof(bins), typeof(w_opt), typeof(w_min), typeof(w_max), typeof(w_opt_ini),
                typeof(w_min_ini), typeof(w_max_ini), typeof(w_ini)}(flag, bins, w_opt,
                                                                     w_min, w_max, w_opt_ini,
@@ -511,6 +512,12 @@ function NOC(; flag::Bool = true, bins::Real = 20.0,
                                                                     custom_obj,
                                                                     scalarisation,
                                                                     str_names, key)
+end
+function Base.setproperty!(obj::NOC, sym::Symbol, val)
+    if sym == :bins
+        @smart_assert(val > zero(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 abstract type HCOptWeightFinaliser end

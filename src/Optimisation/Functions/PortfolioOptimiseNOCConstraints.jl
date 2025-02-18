@@ -8,6 +8,10 @@ function noc_constraints(port::Portfolio, risk0, ret0)
     scale_constr = model[:scale_constr]
     risk = model[:risk]
     ret = model[:ret]
+    long_ub = port.long_ub
+    if isa(long_ub, Real)
+        long_ub = range(long_ub; stop = long_ub, length = length(w))
+    end
     N = length(w)
     @variables(model, begin
                    log_ret
@@ -28,7 +32,7 @@ function noc_constraints(port::Portfolio, risk0, ret0)
                      MOI.ExponentialCone()
                      constr_log_1mw[i = 1:N],
                      [scale_constr * log_1mw[i], scale_constr * 1,
-                      scale_constr * (1 - w[i])] ∈ MOI.ExponentialCone()
+                      scale_constr * (long_ub[i] - w[i])] ∈ MOI.ExponentialCone()
                  end)
     return nothing
 end
@@ -111,20 +115,37 @@ function noc_risk_ret(port::Portfolio, type)
 
     mu, sigma, returns = mu_sigma_returns_class(port, class)
     w1 = if isempty(w_min)
+        old_mu_min = port.mu_l
+        port.mu_l = Inf
         _w_min = optimise!(port,
                            Trad(; rm = rm, obj = MinRisk(), kelly = kelly, class = class,
                                 w_ini = w_min_ini, custom_constr = custom_constr,
                                 custom_obj = custom_obj, scalarisation = scalarisation))
+        port.mu_l = old_mu_min
         !isempty(_w_min) ? _w_min.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_min
     end
 
     w2 = if isempty(w_max)
+        old_ubs = Vector{Pair{Int, eltype(port.returns)}}(undef, 0)
+        rm_flat = reduce(vcat, rm)
+        for (i, r) ∈ enumerate(rm_flat)
+            ub = r.settings.ub
+            if isfinite(ub)
+                push!(old_ubs, Pair(i, ub))
+                r.settings.ub = Inf
+            end
+        end
         _w_max = optimise!(port,
                            Trad(; rm = rm, obj = MaxRet(), kelly = kelly, class = class,
                                 w_ini = w_max_ini, custom_constr = custom_constr,
                                 custom_obj = custom_obj, scalarisation = scalarisation))
+        for old_ub ∈ old_ubs
+            i = old_ub.first
+            ub = old_ub.second
+            rm_flat[i].settings.ub = ub
+        end
         !isempty(_w_max) ? _w_max.weights : Vector{eltype(returns)}(undef, 0)
     else
         w_max

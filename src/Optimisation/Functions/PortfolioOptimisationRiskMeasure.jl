@@ -73,7 +73,7 @@ end
 function set_rm_risk_upper_bound(args...)
     return nothing
 end
-function set_rm_risk_upper_bound(::Union{Trad, NOC, FRC}, model, rm_risk, ub, key)
+function set_rm_risk_upper_bound(::Union{Trad, FRC}, model, rm_risk, ub, key)
     if isinf(ub)
         return nothing
     end

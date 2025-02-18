@@ -1077,7 +1077,7 @@ See also: [`RiskMeasureSigma`](@ref), [`RMSettings`](@ref), [`SD`](@ref), [`Port
   - Requires a solver capable of handling quadratic expressions.
   - Defines the variance risk, `:variance_risk`, as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr).
   - If it exists, the upper bound is defined via the portfolio standard deviation with the key, `:dev_ub`.
-  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
 
 ## [`SDP`](@ref) network and/or cluster constraints
 
@@ -2743,7 +2743,7 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 
   - The NQSkew risk is defined as an [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nqskew_risk = t_nqskew^2`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:t_nqskew_ub`.
-  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
 
 # Functor
 
@@ -2816,7 +2816,7 @@ See also: See also: [`RiskMeasureSkew`](@ref), [`RMSettings`](@ref), [`Portfolio
 
   - The NQSSkew risk is defined as an [`AffExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#AffExpr) with the key, `:nqsskew_risk = t_nqsskew^2`.
   - If it exists, the upper bound is defined via the portfolio variance with the key, `:t_nqsskew_ub`.
-  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
 
 # Functor
 
@@ -3034,7 +3034,7 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
   - The SVariance risk is defined as a [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) with the key, `:svariance_risk`.
   - If it exists, the upper bound is defined via the portfolio semi standard deviation with the key, `:sdev_ub`.
-  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are strictly not convex.
+  - Incompatible with [`NOC`](@ref) (Near Optimal Centering) optimisations because [`QuadExpr`](https://jump.dev/JuMP.jl/stable/api/JuMP/#QuadExpr) are not strictly convex.
 
 # Functor
 

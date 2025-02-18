@@ -264,7 +264,7 @@ function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
         if !haskey(kwargs_s, :markershape)
             kwargs_s = (kwargs_s..., markershape = :star)
         end
-        colour = palette(theme, length(sharpes))[findlast(x -> x < sharpes[end], sharpes) + 1]
+        colour = cgrad(theme)[sharpes[end] / maximum(sharpes)]
         if !haskey(kwargs_s, :color)
             kwargs_s = (kwargs_s..., color = colour)
         end
