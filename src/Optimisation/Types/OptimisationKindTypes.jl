@@ -683,6 +683,27 @@ function Base.getproperty(nco::NCO, sym::Symbol)
         getfield(nco, sym)
     end
 end
+function Base.setproperty!(nco::NCO, sym::Symbol, val)
+    if sym ∈
+       (:rm, :obj, :kelly, :class, :scalarisation, :w_ini, :custom_constr, :custom_obj,
+        :str_names, :key)
+        type = nco.internal.type
+        isa(type, NCO) ? setproperty!(type, sym, val) : setfield!(type, sym, val)
+    elseif sym ∈
+           (:rm_o, :obj_o, :kelly_o, :class_o, :scalarisation_o, :w_ini_o, :custom_constr_o,
+            :custom_obj_o, :str_names_o, :key_o)
+        type = nco.external.type
+        if isa(type, NCO)
+            setproperty!(type, sym, val)
+        else
+            str_sym = string(sym)
+            sym = contains(str_sym, "_o") ? Symbol(str_sym[1:(end - 2)]) : sym
+            setfield!(type, sym, val)
+        end
+    else
+        setfield!(nco, sym, val)
+    end
+end
 
 for (op, name) ∈ zip((Trad, RB, RRB, NOC, HRP, HERC, NCO, SchurHRP, FRC),
                      ("Trad", "RB", "RRB", "NOC", "HRP", "HERC", "NCO", "SchurHRP", "FRC"))
