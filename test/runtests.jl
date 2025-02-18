@@ -1,27 +1,11 @@
 using SafeTestsets
 
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "RRB optimisation" begin
-    include("RRBOptimisationTests.jl")
-end
-
-@safetestset "RB optimisation" begin
-    include("RBOptimisationTests.jl")
-end
-
 @safetestset "Efficient frontier" begin
     include("EfficientFrontierTests.jl")
+end
+
+@safetestset "Plotting" begin
+    include("PlottingTests.jl")
 end
 
 @safetestset "Trad optimisation rm vector" begin
@@ -92,14 +76,30 @@ end
     include("RiskMeasureTests.jl")
 end
 
-@safetestset "Plotting" begin
-    include("PlottingTests.jl")
-end
-
 @safetestset "Objective scalarisation tests" begin
     include("ObjectiveScalarisationTests.jl")
 end
 
 @safetestset "Portfolio classes" begin
     include("PortfolioClassesTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "RRB optimisation" begin
+    include("RRBOptimisationTests.jl")
+end
+
+@safetestset "RB optimisation" begin
+    include("RBOptimisationTests.jl")
 end

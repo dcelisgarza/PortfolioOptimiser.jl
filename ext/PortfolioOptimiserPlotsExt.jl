@@ -198,7 +198,6 @@ end
 
 function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
                                           rm::PortfolioOptimiser.AbstractRiskMeasure = Variance(),
-                                          kelly::Union{PortfolioOptimiser.RetType, Bool} = false,
                                           t_factor = 252, theme = :Spectral, kwargs_f = (;),
                                           kwargs_s = (;))
     risks = copy(frontier[:risks])
@@ -229,7 +228,7 @@ function PortfolioOptimiser.plot_frontier(frontier; rf::Real = 0.0,
     end
 
     if !haskey(kwargs_f, :ylabel)
-        kwargs_f = if isa(kelly, NoKelly) || !kelly
+        kwargs_f = if !frontier[:kelly]
             (kwargs_f..., ylabel = "Expected Arithmetic Return")
         else
             (kwargs_f..., ylabel = "Expected Kelly Return")
@@ -285,14 +284,11 @@ end
 function PortfolioOptimiser.plot_frontier(port::PortfolioOptimiser.AbstractPortfolio,
                                           key = :Trad;
                                           rm::PortfolioOptimiser.AbstractRiskMeasure = Variance(),
-                                          rf::Real = 0.0,
-                                          kelly::Union{PortfolioOptimiser.RetType, Bool} = false,
-                                          t_factor = 252, theme = :Spectral, kwargs_f = (;),
-                                          kwargs_s = (;))
+                                          rf::Real = 0.0, t_factor = 252, theme = :Spectral,
+                                          kwargs_f = (;), kwargs_s = (;))
     return PortfolioOptimiser.plot_frontier(port.frontier[key]; rf = rf, rm = rm,
-                                            kelly = kelly, t_factor = t_factor,
-                                            theme = theme, kwargs_f = kwargs_f,
-                                            kwargs_s = kwargs_s)
+                                            t_factor = t_factor, theme = theme,
+                                            kwargs_f = kwargs_f, kwargs_s = kwargs_s)
 end
 
 function PortfolioOptimiser.plot_frontier_area(frontier;

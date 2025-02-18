@@ -196,7 +196,7 @@ end
 function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
-    type = Trad(; rm = type.rm, obj = type.obj, class = type.class,
+    type = Trad(; rm = type.rm, obj = type.obj, kelly = type.kelly, class = type.class,
                 custom_constr = type.custom_constr, custom_obj = type.custom_obj,
                 scalarisation = type.scalarisation)
 
@@ -333,7 +333,8 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
                                                DataFrame(reshape(frontier, length(w1), :),
                                                          string.(range(1, i)))),
                               :risks => optim_risk, :rets => optim_ret,
-                              :sharpes => optim_sr, :sharpe => sharpe)
+                              :sharpes => optim_sr, :sharpe => sharpe,
+                              :kelly => !isa(kelly, NoKelly))
     port.optimal = optimal1
     port.fail = fail1
     type.obj = old_obj
