@@ -263,11 +263,8 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} =
     risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees = fees,
                                rebalance = rebalance)
 
-    # mus = range(ret1; stop = ret2, length = points)
-    # risks = range(risk1; stop = risk2, length = points)
-
-    mus = range(ret1; stop = ret2 + (ret2 - ret1) / (points - 1), length = points)
-    risks = range(risk1; stop = risk2 + (risk2 - risk1) / (points - 1), length = points)
+    mus = range(ret1; stop = ret2, length = points)
+    risks = range(risk1; stop = risk2, length = points)
 
     frontier = Vector{typeof(risk1)}(undef, 0)
     optim_risk = Vector{typeof(risk1)}(undef, 0)

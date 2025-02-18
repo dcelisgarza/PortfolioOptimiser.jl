@@ -712,7 +712,7 @@ function set_rm(port::Portfolio, rm::SVariance, type::Union{Trad, RB, NOC};
                      [scale_constr * sdev; scale_constr * svariance] ∈ SecondOrderCone()
                  end)
     svariance_risk = model[:svariance_risk]
-    set_rm_risk_upper_bound(type, model, sdev, sqrt(rm.settings.ub) * srtTm1, "sdev_")
+    set_rm_risk_upper_bound(type, model, sdev, sqrt(rm.settings.ub) * srtTm1, "sdev")
     set_risk_expression(model, svariance_risk, rm.settings.scale, rm.settings.flag)
 
     return nothing
