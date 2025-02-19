@@ -118,6 +118,66 @@ l = 2.0
     @test portfolio.V == V
     @test portfolio.SV == SV
 
+    @test_throws AssertionError Portfolio(prices = prices, w_min = 0.2,
+                                          w_max = fill(0.1, N))
+    portfolio = Portfolio(; prices = prices, w_min = 0.2, w_max = fill(0.2, N))
+    @test all(isapprox.(portfolio.w_min, portfolio.w_max))
+
+    @test_throws AssertionError Portfolio(prices = prices, w_max = 0.1,
+                                          w_min = fill(0.2, N))
+    portfolio = Portfolio(; prices = prices, w_max = 0.2, w_min = fill(0.2, N))
+    @test all(isapprox.(portfolio.w_max, portfolio.w_min))
+
+    portfolio.w_min = zeros(N)
+    portfolio.w_max = 1
+
+    portfolio.long_ub = 0.7
+    portfolio.budget_lb = 0.7
+    portfolio.budget = Inf
+    portfolio.budget_lb = Inf
+    @test isone(portfolio.budget)
+
+    portfolio.short = true
+    portfolio.short_budget_ub = -0.1
+    portfolio.short_lb = -0.1
+    portfolio.short_budget = -Inf
+    portfolio.short_budget_ub = -Inf
+    @test isapprox(portfolio.short_budget, -0.2)
+
+    portfolio.short_budget_lb = -0.1
+    portfolio.short_lb = -0.1
+    portfolio.short_budget = -Inf
+    portfolio.short_budget_lb = -Inf
+    @test isapprox(portfolio.short_budget, -0.2)
+
+    A = rand(3, N)
+    B = rand(3)
+    portfolio.a_card_eq = A
+    @test isapprox(portfolio.a_card_eq, A)
+    portfolio.b_card_eq = B
+    @test isapprox(portfolio.b_card_eq, B)
+    @test_throws AssertionError portfolio.a_card_eq = rand(3, N + 1)
+    @test_throws AssertionError portfolio.a_card_eq = rand(4, N)
+    @test_throws AssertionError portfolio.b_card_eq = rand(4)
+
+    l, s, fl, fs = rand(N), -rand(N), rand(N), -rand(N)
+    portfolio.fees = Fees(; long = l, short = s, fixed_long = fl, fixed_short = fs)
+    @test isequal(portfolio.fees,
+                  Fees(; long = l, short = s, fixed_long = fl, fixed_short = fs))
+    @test_throws AssertionError portfolio.fees = Fees(; long = rand(5), short = s,
+                                                      fixed_long = fl, fixed_short = fs)
+    @test_throws AssertionError portfolio.fees = Fees(; long = 5, short = -rand(2),
+                                                      fixed_long = fl, fixed_short = fs)
+    @test_throws AssertionError portfolio.fees = Fees(; long = 5, short = -2,
+                                                      fixed_long = rand(7),
+                                                      fixed_short = fs)
+    @test_throws AssertionError portfolio.fees = Fees(; long = 5, short = -2,
+                                                      fixed_long = 7,
+                                                      fixed_short = -rand(1))
+
+    @test_throws AssertionError portfolio.scale_constr = -1
+    @test_throws AssertionError portfolio.scale_obj = -1
+
     M = size(portfolio_copy.returns, 1)
     kurt = rand(N^2, N^2)
     skurt = rand(N^2, N^2)

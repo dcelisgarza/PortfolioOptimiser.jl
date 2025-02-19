@@ -230,7 +230,7 @@ efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, NCO} = Trad();
                              points::Integer = 20, rf::Real = 0.0)
 ```
 """
-function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
+function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad();
                              w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                              w_max_ini::AbstractVector = Vector{Float64}(undef, 0),
                              points::Integer = 20, rf::Real = 0.0, ohf::Real = 1.0)

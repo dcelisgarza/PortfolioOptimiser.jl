@@ -544,27 +544,19 @@ end
     asset_statistics!(portfolio)
 
     w1 = optimise!(portfolio, Trad(; obj = MinRisk()))
-    r1 = expected_risk(portfolio)
-    ret1 = dot(portfolio.mu, w1.weights)
-    sr1 = sharpe_ratio(portfolio)
+    r1, ret1, sr1 = expected_ret_risk_sharpe(portfolio, :Trad)
     @test sr1 >= sharpe_ratio_info_criterion(portfolio)
 
     w2 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
-    r2 = expected_risk(portfolio)
-    ret2 = dot(portfolio.mu, w2.weights)
-    sr2 = sharpe_ratio(portfolio)
+    r2, ret2, sr2 = expected_ret_risk_sharpe(portfolio, :Trad)
     @test sr2 >= sharpe_ratio_info_criterion(portfolio)
 
     w3 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
-    r3 = expected_risk(portfolio)
-    ret3 = dot(portfolio.mu, w3.weights)
-    sr3 = sharpe_ratio(portfolio)
+    r3, ret3, sr3 = expected_ret_risk_sharpe(portfolio, :Trad)
     @test sr3 >= sharpe_ratio_info_criterion(portfolio)
 
     w4 = optimise!(portfolio, Trad(; obj = MaxRet()))
-    r4 = expected_risk(portfolio)
-    ret4 = dot(portfolio.mu, w4.weights)
-    sr4 = sharpe_ratio(portfolio)
+    r4, ret4, sr4 = expected_ret_risk_sharpe(portfolio, :Trad)
     @test sr4 >= sharpe_ratio_info_criterion(portfolio)
 
     @test r1 < r3 < r2 < r4

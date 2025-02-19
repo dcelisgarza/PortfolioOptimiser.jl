@@ -922,10 +922,10 @@ function Portfolio(;
     @smart_assert(l1 >= zero(l1))
     @smart_assert(l2 >= zero(l2))
     # Fees
-    real_or_vector_len_assert(fees.long, N, :fees_long)
-    real_or_vector_len_assert(fees.short, N, :fees_short)
-    real_or_vector_len_assert(fees.fixed_long, N, :fees_fixed_long)
-    real_or_vector_len_assert(fees.fixed_short, N, :fees_fixed_short)
+    real_or_vector_len_assert(fees.long, N, :long)
+    real_or_vector_len_assert(fees.short, N, :short)
+    real_or_vector_len_assert(fees.fixed_long, N, :fixed_long)
+    real_or_vector_len_assert(fees.fixed_short, N, :fixed_short)
 
     tr_assert(rebalance, N)
     # Constraint and objective scales
@@ -1127,12 +1127,6 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         T, N = size(port.returns)
         matrix_assert(val, T, N, sym)
         val = convert(typeof(getfield(port, sym)), val)
-    elseif sym == :f_ret
-        if !isempty(val)
-            T = size(port.returns, 1)
-            @smart_assert(size(port.returns, 1) == size(val, 1))
-        end
-        val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :max_num_assets_kurt_scale
         N = size(port.returns, 2)
         val = clamp(val, 1, N)
@@ -1268,7 +1262,7 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :b_card_eq
         N = size(port.returns, 2)
-        linear_constraint_assert(port.a_card_eq, :b_card_eq, N, "card_eq")
+        linear_constraint_assert(port.a_card_eq, val, N, "card_eq")
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym == :a_ineq
         N = size(port.returns, 2)
@@ -1310,10 +1304,10 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         end
     elseif sym == :fees
         N = size(port.returns, 2)
-        real_or_vector_len_assert(port.fees.long, N, :fees_long)
-        real_or_vector_len_assert(port.fees.short, N, :fees_short)
-        real_or_vector_len_assert(port.fees.fixed_long, N, :fees_fixed_long)
-        real_or_vector_len_assert(port.fees.fixed_short, N, :fees_fixed_short)
+        real_or_vector_len_assert(val.long, N, :long)
+        real_or_vector_len_assert(val.short, N, :short)
+        real_or_vector_len_assert(val.fixed_long, N, :fixed_long)
+        real_or_vector_len_assert(val.fixed_short, N, :fixed_short)
         val = convert(typeof(getfield(port, sym)), val)
     elseif sym ∈ (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))

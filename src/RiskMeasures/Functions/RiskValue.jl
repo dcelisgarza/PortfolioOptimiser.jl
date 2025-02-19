@@ -306,8 +306,11 @@ function calc_fees(w::AbstractVector, rebalance::AbstractTR)
         benchmark = rebalance.w
         if isa(fees_rebal, Real)
             sum(fees_rebal * abs.(benchmark .- w))
-        else
+        elseif isa(fees_rebal, AbstractVector) &&
+               !(isempty(fees_rebal) || all(iszero.(fees_rebal)))
             dot(fees_rebal, abs.(benchmark .- w))
+        else
+            zero(eltype(w))
         end
     else
         zero(eltype(w))

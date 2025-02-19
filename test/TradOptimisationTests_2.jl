@@ -11,7 +11,7 @@
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [2.8612942682723194e-12, 0.22119703870515675, 2.828265759908966e-12,
           2.1208855227168895e-12, 3.697781891063451e-12, 3.24353226480368e-12,
           0.02918541183751788, 4.420452260557843e-12, 2.3374667530908414e-12,
@@ -48,7 +48,7 @@
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [4.619204869507631e-11, 0.2211970401400894, 4.3701774419007517e-11,
           8.353407625940733e-11, 1.358657025936017e-10, 1.0578194758385017e-10,
           0.029185412435982716, 1.8405841561907286e-10, 3.740225068356339e-11,
@@ -85,7 +85,7 @@
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [6.957399908772388e-9, 2.039271731107526e-8, 5.497898695084438e-9,
           1.1584017088731345e-8, 0.3797661371235164, 1.9162230097305403e-9,
           0.17660512608552742, 1.0666210782547244e-8, 1.0225338760635262e-8,
@@ -122,7 +122,7 @@
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [1.5566238289527526e-9, 1.570956878493887e-9, 1.608762274371583e-9,
           1.6258884417989995e-9, 1.4600423065623333e-7, 1.0857056194353091e-9,
           0.9999998292073036, 1.3820011237558862e-9, 1.5713320679343279e-9,
@@ -245,7 +245,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [3.4835106277243952e-12, 0.12689181906634667, 6.919061275326071e-12,
           0.2504942755637169, 1.6084529746393874e-11, 1.4834264958811167e-11,
           1.7580530855156377e-12, 0.1053793586345684, 3.0155464926527536e-12,
@@ -282,7 +282,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [2.818778936301644e-13, 0.1268918192291803, 8.441768433371781e-13,
           0.25049427565136034, 2.4865354889173847e-12, 3.866580247555462e-12,
           4.71832585931689e-14, 0.10537935870826316, 2.5951255443382816e-13,
@@ -319,7 +319,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [6.09724566157312e-10, 1.2600001874338616e-9, 1.1376809473114097e-9,
           0.3052627178260572, 0.25494610585828753, 1.8310456179966306e-10,
           0.09576793051248834, 3.7212437966398855e-9, 1.284058570384776e-9,
@@ -356,7 +356,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [3.1787004844637487e-10, 3.170154234348516e-10, 3.369759520528265e-10,
           3.3317156263838264e-10, 1.159467049603122e-8, 2.0869446614742875e-10,
           0.9999999834622247, 2.7142446908769163e-10, 3.1716632434310177e-10,
@@ -482,7 +482,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [9.965769176302831e-11, 0.04242033378148941, 9.902259604479418e-11,
           2.585550936025974e-10, 0.007574028506215674, 1.1340405766435789e-10,
           1.3814642470526227e-11, 0.09464947974750273, 4.637745432335755e-11,
@@ -519,7 +519,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [3.59415027814126e-12, 0.03635916778167782, 3.552811195795529e-12,
           1.2653345986437583e-11, 0.017177347037601237, 3.337778093941137e-12,
           2.5795636217644956e-13, 0.09164255461978174, 1.734150257351883e-12,
@@ -556,7 +556,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [2.305962223730381e-9, 3.061529980299523e-9, 3.6226755773356135e-9,
           1.968988878444111e-9, 0.562845489616387, 6.289605285168684e-10,
           0.044341929816432854, 5.465596947274736e-9, 3.128822366888805e-9,
@@ -593,7 +593,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [1.2979096100520238e-8, 1.3939595287583712e-8, 1.6664693909263272e-8,
           1.6061904799427314e-8, 2.5289048640527673e-7, 1.0111632690844616e-8,
           0.9999995079388162, 1.1387303215317185e-8, 1.4887953777768852e-8,
@@ -719,7 +719,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [0.022526773522155673, 0.02205967648382663, 2.319996990805667e-11,
           0.029966893048161407, 0.006773557016985066, 0.021160245217902482,
           5.016724411235469e-13, 0.11191320782878157, 2.6370102192581807e-12,
@@ -756,7 +756,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [0.02575961059250994, 0.02352898917138473, 4.482663003519851e-11,
           0.030973036309681387, 0.004266952200873158, 0.016564945623396735,
           4.944858444416546e-14, 0.11212820247498569, 4.9680569601583026e-12,
@@ -803,7 +803,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [4.9839432322477e-10, 8.448693289397689e-10, 1.173858895147354e-9,
           9.375514999679668e-10, 0.573440952697266, 7.451535889801865e-11,
           0.05607344635024722, 1.8370189606252853e-9, 8.256113918546924e-10,
@@ -840,7 +840,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [1.831302064629739e-9, 1.8517749307082367e-9, 1.912037493612443e-9,
           1.9163167053743124e-9, 1.4740990018868178e-7, 1.2501876054188206e-9,
           0.9999998235090382, 1.6133782010204823e-9, 1.846635679461269e-9,
@@ -968,7 +968,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [1.2499826781822536e-8, 0.156787226085346, 1.0361005526500631e-8,
           0.01670866262973488, 1.501251914178308e-8, 6.063048580835151e-8,
           0.01445034775454195, 0.15571000766431406, 9.522723692791286e-9,
@@ -1005,7 +1005,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [1.4475965511299271e-8, 0.15139053006670328, 1.2531364593722484e-8,
           0.02042309439335846, 2.1361563540103295e-8, 4.012521850613263e-8,
           0.01722100416172815, 0.1532392038577736, 1.1517423032461546e-8,
@@ -1042,7 +1042,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [1.0750748140777434e-8, 3.269490337304986e-8, 1.1161941451849754e-8,
           1.3795466025857643e-8, 0.5351874067614019, 2.6718249477546367e-9,
           0.1390764348877217, 1.41282558079161e-8, 1.0656060597300996e-8,
@@ -1079,7 +1079,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [3.4349721061540534e-9, 3.654412215248722e-9, 4.5795242614345734e-9,
           4.166579635738961e-9, 2.721474418332461e-7, 1.6176234392665889e-9,
           0.9999996718661417, 2.521138576067204e-9, 3.865486493372323e-9,
@@ -1202,7 +1202,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [2.9011562828420932e-9, 0.21104909961445562, 3.0362234152151692e-9,
           1.4601652402579654e-8, 9.630449468543852e-9, 4.174132697781354e-9,
           0.03667005994803319, 0.06104489061665261, 2.327887043076066e-9,
@@ -1239,7 +1239,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [8.228671862587609e-9, 0.21291612525433196, 9.212632024402435e-9,
           6.77271672761038e-8, 5.647944186841271e-8, 9.525583076397586e-9,
           0.03942301849563698, 0.05652834541257296, 7.053510326818946e-9,
@@ -1276,7 +1276,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [9.496500669050249e-9, 2.64615310020192e-8, 7.273118042494954e-9,
           1.4049587952157727e-8, 0.5059944415194525, 2.377003832919441e-9,
           0.17234053237874894, 1.8314836691951746e-8, 1.2375544635066102e-8,
@@ -1313,7 +1313,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [3.831289441927501e-8, 4.0774049973893135e-8, 5.116921734398324e-8,
           4.653543598014566e-8, 3.0359943766315674e-6, 1.8025259997572137e-8,
           0.9999963392770433, 2.8089814289843758e-8, 4.3130715980449956e-8,
@@ -1471,7 +1471,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [0.03773810166130732, 3.1042180168905816e-13, 1.0258595030881142e-12,
           1.1524205933253063e-13, 0.06767028645381183, 2.3552606686958265e-12,
           2.7134510397943923e-12, 1.3306981320913463e-10, 5.401808545795961e-13,
@@ -1508,7 +1508,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [0.037738101174196806, 9.355145740311047e-13, 4.1393537116826914e-13,
           1.2878100359065746e-12, 0.06767028675828049, 1.827529427308177e-12,
           2.538883782386595e-13, 1.3319672681881275e-10, 4.843334443164101e-13,
@@ -1545,7 +1545,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [5.9506536559648336e-9, 3.055041148244886e-9, 8.889333776832732e-7,
           1.1881054676532963e-9, 0.28539561079025444, 4.893744003117352e-10,
           6.719698385711209e-10, 0.0796418958781452, 7.605101498417779e-10,
@@ -1582,7 +1582,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [1.5745374972510783e-8, 1.6795267715474693e-8, 3.9226126821313444e-8,
           1.9658214817464465e-8, 7.384947979194602e-5, 7.74865444801044e-9,
           0.9999258711672797, 1.1978367888341456e-8, 1.8633310016734365e-8,
@@ -1706,7 +1706,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [7.448857883265971e-10, 0.04441277893847923, 0.1587788958800634,
           1.8957054590408488e-10, 0.06789474999629158, 4.389817844482217e-10,
           2.1768311051594684e-10, 0.06198838865063388, 2.882880177850258e-10,
@@ -1743,7 +1743,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [5.798366327372061e-10, 0.042412234114840804, 0.15457815348085807,
           1.2703441532476687e-10, 0.06853004949414504, 2.734517473068476e-10,
           1.4089105561436528e-10, 0.06477888113569304, 2.0457866358009126e-10,
@@ -1780,7 +1780,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [1.691669135998654e-10, 1.1631413826126582e-9, 0.22302886349067164,
           2.711714483929198e-10, 0.23131321830818175, 6.588409097827075e-11,
           0.0024130708498912596, 0.0693827788407185, 2.059607953371255e-10,
@@ -1817,7 +1817,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [1.5476499595124018e-8, 1.6411063538766305e-8, 1.9985512029725137e-8,
           1.8783105810200402e-8, 5.723523093249718e-5, 7.295678963955699e-9,
           0.9999425164590651, 1.1600868184476528e-8, 1.766048206305046e-8,
@@ -1941,7 +1941,7 @@ end
     obj = MinRisk()
     w1 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r1 = expected_risk(portfolio, :Trad; rm = rm)
-    ret1 = dot(portfolio.mu, w1.weights)
+    ret1 = expected_ret(portfolio, :Trad)
     wt = [9.222285452584206e-10, 0.02501218530242097, 0.09201946209452846,
           1.3682085300046153e-10, 0.01940475597034475, 2.725276389927591e-10,
           5.2162763718278294e-11, 0.06508427427484158, 5.393438835014886e-10,
@@ -1978,7 +1978,7 @@ end
     obj = Utility(; l = l)
     w4 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r2 = expected_risk(portfolio, :Trad; rm = rm)
-    ret2 = dot(portfolio.mu, w4.weights)
+    ret2 = expected_ret(portfolio, :Trad)
     wt = [6.103005918866347e-10, 0.02399478084068091, 0.09614466390677545,
           1.3554508229876816e-11, 0.019578507639319558, 7.842894822380073e-11,
           1.6816731087609036e-10, 0.06625943266894467, 3.008423757485725e-10,
@@ -2015,7 +2015,7 @@ end
     obj = Sharpe(; rf = rf)
     w7 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r3 = expected_risk(portfolio, :Trad; rm = rm)
-    ret3 = dot(portfolio.mu, w7.weights)
+    ret3 = expected_ret(portfolio, :Trad)
     wt = [9.846697842152917e-9, 2.43304437706785e-8, 0.20539739244782326,
           1.1079920282116377e-8, 0.2857551395628918, 2.872382424528247e-9,
           1.221245322708047e-8, 0.1435288044479327, 9.552129263357414e-9,
@@ -2052,7 +2052,7 @@ end
     obj = MaxRet()
     w10 = optimise!(portfolio, Trad(; rm = rm, kelly = NoKelly(), obj = obj))
     r4 = expected_risk(portfolio, :Trad; rm = rm)
-    ret4 = dot(portfolio.mu, w10.weights)
+    ret4 = expected_ret(portfolio, :Trad)
     wt = [8.66299431970518e-10, 9.208815443410697e-10, 1.085583564551527e-9,
           1.0469228572790014e-9, 3.030697646530977e-6, 4.1236774249357805e-10,
           0.9999969562915909, 6.499218355634898e-10, 9.87329384691622e-10,
