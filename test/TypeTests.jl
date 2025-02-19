@@ -378,4 +378,19 @@ l = 2.0
                       params = Dict("verbose" => false, "max_step_fraction" => 0.76))
 
     @test A != B
+
+    detone = Detone()
+    detone.mkt_comp = 5
+    @test detone.mkt_comp == 5
+    @test_throws AssertionError detone.mkt_comp = -5
+
+    gdm = GenDistMLP()
+    gdm.power = 2
+    @test gdm.power == 2
+    @test_throws AssertionError gdm.power = 0
+
+    gdm = GenDistDistMLP()
+    gdm.power = 2
+    @test gdm.power == 2
+    @test_throws AssertionError gdm.power = 0
 end
