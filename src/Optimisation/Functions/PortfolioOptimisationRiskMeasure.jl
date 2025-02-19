@@ -589,15 +589,14 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
-    if !(isnothing(rm.mu) || isempty(rm.mu))
-        mu = rm.mu
-    end
+    target = calc_rm_target(rm, mu, w, k)
     @variable(model, mad[1:T] .>= 0)
     we = rm.we
-    @expression(model, mar_mad, net_X .- dot(mu, w) .+ mad)
+    @expression(model, mar_mad, net_X .- target .+ mad)
     if isnothing(we)
         @expression(model, mad_risk, mean(mad + mar_mad))
     else
@@ -613,6 +612,7 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     model = port.model
     scale_constr = model[:scale_constr]
     w = model[:w]
+    k = model[:k]
     T = size(returns, 1)
     get_net_portfolio_returns(model, returns)
     net_X = model[:net_X]
@@ -621,12 +621,8 @@ function set_rm(port::Portfolio, rms::AbstractVector{<:MAD}, type::Union{Trad, R
     @expression(model, mar_mad[1:T, 1:count], zero(AffExpr))
     @expression(model, mad_risk[1:count], zero(AffExpr))
     for (i, rm) ∈ pairs(rms)
-        mu_i = if !(isnothing(rm.mu) || isempty(rm.mu))
-            rm.mu
-        else
-            mu
-        end
-        mar_mad[:, i] .= @expression(model, net_X .- dot(mu_i, w) .+ view(mad, :, i))
+        target = calc_rm_target(rm, mu, w, k)
+        mar_mad[:, i] .= @expression(model, net_X .- target .+ view(mad, :, i))
         model[Symbol("constr_mar_mad_$(i)")] = @constraint(model,
                                                            scale_constr *
                                                            view(mar_mad, :, i) .>= 0)

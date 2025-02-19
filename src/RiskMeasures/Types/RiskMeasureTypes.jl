@@ -1194,29 +1194,40 @@ function (sd::SD)(w::AbstractVector)
 end
 
 """
-    mutable struct MAD <: RiskMeasureMu
+    mutable struct MAD <: RiskMeasureTarget
 
-Measures and computes the portfolio Mean Absolute Deviation (MAD). In other words, it is the expected value of the absolute deviation from the expected value of the returns vector. This is a generalisation to accomodate the use of weighted means.
+Measures and computes the portfolio Mean Absolute Deviation (MAD). In other words, it is the expected value of the absolute deviation from a target return of the returns vector. This is a generalisation to accomodate the use of weighted means, and predefined targets rather than forcing the MAD to be computed from the expected returns vector.
 
 ```math
 \\begin{align}
-\\mathrm{MAD}(\\bm{X}) &= \\mathbb{E}\\left(\\left\\lvert \\bm{X} - \\mathbb{E}\\left(\\bm{X}\\right) \\right\\rvert\\right)\\,.
+\\mathrm{MAD}(\\bm{X}) &= \\mathbb{E}\\left(\\left\\lvert \\bm{X} - r, \\bm{w_{e}}\\right\\rvert\\right)\\,.
 \\end{align}
 ```
 
 Where:
 
-  - ``\\bm{X}``: is the `T×1` portfolio returns vector.
-  - ``\\lvert \\cdot \\rvert``: is the absolute value.
-  - ``\\mathbb{E}(\\cdot)``: is the expected value.
+  - ``\\mathbb{E}(\\cdot, \\bm{w})``: is the optionally weighted expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref), [`calc_ret_mu`](@ref).
+      + If ``\\bm{w}`` is not provided it is the expected value.
+
+  - ``\\bm{X}``: is the `T×1` portfolio returns vector.
+  - ``\\bm{w_{e}}``: is an optional weights vector for computing the MAD.
+  - ``\\lvert \\cdot \\rvert``: is the absolute value.
+  - ``r``: is the target return value. Defaults to ``\\mathbb{E}(\\bm{X},\\, \\bm{w})``.
+
+      + ``\\bm{w}``: is an optional weights vector used for computing the expected value.
+
+See also: [`RiskMeasureTarget`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`PortClass`](@ref), [`OptimType`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`calc_target_ret_mu`](@ref), [`calc_ret_mu`](@ref), [`calc_rm_target`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
   - `settings::RMSettings = RMSettings()`: risk measure configuration settings.
 
-  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector (internal expected value) via [`calc_ret_mu`](@ref).
+  - `target::target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing`:
+
+      + If `isnothing(target)`: Its value can be computed via [`calc_target_ret_mu`](@ref) or [`calc_rm_target`](@ref).
+      + else: directly provides the target return for computing the deviation.
+  - `w::Union{<:AbstractWeights, Nothing} = nothing`: (optional, functor-exclusive) `T×1` vector of weights for computing the expected value of the returns vector (internal expected value) via [`calc_target_ret_mu`](@ref).
   - `we::Union{<:AbstractWeights, Nothing} = nothing`: (optional) `T×1` vector of weights for computing the expected value of the absolute deviation (external expected value).
 
       + If `isnothing(we)`: computes the unweighted mean.
@@ -1240,22 +1251,24 @@ See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`
 
 # Examples
 """
-mutable struct MAD <: RiskMeasureMu
+mutable struct MAD <: RiskMeasureTarget
     settings::RMSettings
+    target::Union{<:Real, <:AbstractVector{<:Real}, Nothing}
     w::Union{<:AbstractWeights, Nothing}
     mu::Union{<:AbstractVector{<:Real}, Nothing}
     we::Union{<:AbstractWeights, Nothing}
 end
 function MAD(; settings::RMSettings = RMSettings(),
+             target::Union{<:Real, <:AbstractVector{<:Real}, Nothing} = nothing,
              w::Union{<:AbstractWeights, Nothing} = nothing,
              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing,
              we::Union{<:AbstractWeights, Nothing} = nothing)
-    return MAD(settings, w, mu, we)
+    return MAD(settings, target, w, mu, we)
 end
 function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
                     rebalance::AbstractTR = NoTR())
     x = calc_net_returns(X, w, fees, rebalance)
-    mu = calc_ret_mu(x, w, mad)
+    mu = calc_target_ret_mu(x, w, mad)
     we = mad.we
     return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
 end
@@ -1279,7 +1292,7 @@ Where:
   - ``X_{t}``: is the `t`-th value of the portfolio returns vector.
   - ``\\mathbb{E}(\\cdot)``: is the expected value.
 
-See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`set_rm`](@ref).
+See also: [`RiskMeasureMu`](@ref), [`RMSettings`](@ref), [`Portfolio`](@ref), [`SD`](@ref), [`Variance`](@ref), [`SVariance`](@ref), [`expected_risk`](@ref), [`optimise!`](@ref), [`calc_target_ret_mu`](@ref), [`calc_ret_mu`](@ref), [`calc_rm_target`](@ref), [`set_rm`](@ref).
 
 # Keyword Arguments
 
