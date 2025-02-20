@@ -32,31 +32,32 @@ function finilise_fees(port, weights)
     model = port.model
     fees = Dict{Symbol, eltype(weights)}()
     total_fees = zero(eltype(weights))
+    p_fees = port.fees
 
     if haskey(model, :fees_long)
-        fees_long = calc_fees(weights, port.fees.long, .>=)
+        fees_long = calc_fees(weights, p_fees.long, .>=)
         total_fees += fees_long
         fees[:fees_long] = fees_long
     end
     if haskey(model, :fees_short)
-        fees_short = calc_fees(weights, port.fees.short, .<)
+        fees_short = calc_fees(weights, p_fees.short, .<)
         total_fees += fees_short
         fees[:fees_short] = fees_short
     end
     if haskey(model, :fees_fixed_long)
-        fees_fixed_long = calc_fixed_fees(weights, port.fees.fixed_long,
-                                          port.fees.tol_kwargs, .>=)
+        fees_fixed_long = calc_fixed_fees(weights, p_fees.fixed_long, p_fees.tol_kwargs,
+                                          .>=)
         total_fees += fees_fixed_long
         fees[:fees_fixed_long] = fees_fixed_long
     end
     if haskey(model, :fees_fixed_short)
-        fees_fixed_short = -calc_fixed_fees(weights, port.fees.fixed_short,
-                                            port.fees.tol_kwargs, .<)
+        fees_fixed_short = -calc_fixed_fees(weights, p_fees.fixed_short, p_fees.tol_kwargs,
+                                            .<)
         total_fees += fees_fixed_short
         fees[:fees_fixed_short] = fees_fixed_short
     end
     if haskey(model, :fees_rebalance)
-        fees_rebal = calc_fees(weights, port.rebalance)
+        fees_rebal = calc_fees(weights, p_fees.rebalance)
         total_fees += fees_rebal
         fees[:fees_rebal] = fees_rebal
     end

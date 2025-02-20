@@ -383,8 +383,7 @@ end
 function tracking_error_benchmark(tracking::TrackWeight, X::AbstractMatrix)
     w = tracking.w
     fees = tracking.fees
-    rebalance = tracking.rebalance
-    return calc_net_returns(X, w, fees, rebalance)
+    return calc_net_returns(X, w, fees)
 end
 function tracking_error_benchmark(tracking::TrackRet, ::Any)
     return tracking.w
@@ -470,7 +469,7 @@ function management_fee(port)
     return nothing
 end
 function rebalance_fee(port)
-    rebalance = port.rebalance
+    rebalance = port.fees.rebalance
     if isa(rebalance, NoTR) ||
        isa(rebalance.val, Real) && iszero(rebalance.val) ||
        isa(rebalance.val, AbstractVector) &&

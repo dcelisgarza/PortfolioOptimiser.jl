@@ -569,10 +569,10 @@ end
                    sum(log1p.(portfolio.returns * w4.weights)) / expected_risk(portfolio),
                    sr5)
 
-    portfolio.rebalance = TR(; val = 0, w = w3.weights)
+    portfolio.fees.rebalance = TR(; val = 0, w = w3.weights)
     w5 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test isapprox(w1.weights, w5.weights)
-    portfolio.rebalance.w = w1.weights
+    portfolio.fees.rebalance.w = w1.weights
     w6 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
     w7 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     w8 = optimise!(portfolio, Trad(; obj = MaxRet()))
@@ -580,10 +580,10 @@ end
     @test isapprox(w3.weights, w7.weights)
     @test isapprox(w4.weights, w8.weights)
 
-    portfolio.rebalance = TR(; val = 1, w = w3.weights)
+    portfolio.fees.rebalance = TR(; val = 1, w = w3.weights)
     w9 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test isapprox(w9.weights, w1.weights, rtol = 0.0005)
-    portfolio.rebalance.w = w1.weights
+    portfolio.fees.rebalance.w = w1.weights
     w10 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
     w11 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     w12 = optimise!(portfolio, Trad(; obj = MaxRet()))
@@ -591,11 +591,11 @@ end
     @test isapprox(w11.weights, w1.weights)
     @test isapprox(w12.weights, w1.weights)
 
-    portfolio.rebalance = TR(; val = 1e-4, w = w3.weights)
+    portfolio.fees.rebalance = TR(; val = 1e-4, w = w3.weights)
     w13 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test !isapprox(w13.weights, w1.weights)
     @test !isapprox(w13.weights, w3.weights)
-    portfolio.rebalance.w = w1.weights
+    portfolio.fees.rebalance.w = w1.weights
     w14 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
     w15 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     w16 = optimise!(portfolio, Trad(; obj = MaxRet()))
@@ -606,22 +606,22 @@ end
     @test !isapprox(w16.weights, w1.weights)
     @test !isapprox(w16.weights, w4.weights)
 
-    portfolio.rebalance = TR(;
-                             val = [0.0005174248858061537, 0.0001378289720696607,
-                                    1.182008035855453e-5, 0.0009118233964947257,
-                                    0.0008043804574686568, 0.0005568104999737413,
-                                    0.0001433167617425195, 0.0008152431443894213,
-                                    0.0006805053356229013, 8.922295760840915e-5,
-                                    0.0008525847915972609, 0.0009046977862414844,
-                                    0.0009820771255260512, 0.0005494961009926494,
-                                    3.971977944267568e-5, 0.0006942164994964002,
-                                    0.000742647266054625, 0.0004077250418932119,
-                                    0.00031612114608380824, 0.00028833648463458153],
-                             w = w3.weights)
+    portfolio.fees.rebalance = TR(;
+                                  val = [0.0005174248858061537, 0.0001378289720696607,
+                                         1.182008035855453e-5, 0.0009118233964947257,
+                                         0.0008043804574686568, 0.0005568104999737413,
+                                         0.0001433167617425195, 0.0008152431443894213,
+                                         0.0006805053356229013, 8.922295760840915e-5,
+                                         0.0008525847915972609, 0.0009046977862414844,
+                                         0.0009820771255260512, 0.0005494961009926494,
+                                         3.971977944267568e-5, 0.0006942164994964002,
+                                         0.000742647266054625, 0.0004077250418932119,
+                                         0.00031612114608380824, 0.00028833648463458153],
+                                  w = w3.weights)
     w13 = optimise!(portfolio, Trad(; obj = MinRisk()))
     @test !isapprox(w13.weights, w3.weights)
     @test !isapprox(w13.weights, w1.weights)
-    portfolio.rebalance.w = w1.weights
+    portfolio.fees.rebalance.w = w1.weights
     w14 = optimise!(portfolio, Trad(; obj = Utility(; l = l)))
     w15 = optimise!(portfolio, Trad(; obj = Sharpe(; rf = rf)))
     w16 = optimise!(portfolio, Trad(; obj = MaxRet()))
@@ -632,10 +632,10 @@ end
     @test !isapprox(w16.weights, w1.weights)
     @test !isapprox(w16.weights, w4.weights)
 
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; val = 1:21)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:19)
-    @test_throws AssertionError portfolio.rebalance = TR(; w = 1:21)
+    @test_throws AssertionError portfolio.fees = Fees(; rebalance = TR(; val = 1:19))
+    @test_throws AssertionError portfolio.fees = Fees(; rebalance = TR(; val = 1:21))
+    @test_throws AssertionError portfolio.fees = Fees(; rebalance = TR(; w = 1:19))
+    @test_throws AssertionError portfolio.fees = Fees(; rebalance = TR(; w = 1:21))
 end
 
 @testset "Cluster + Network and Dendrogram non variance Short" begin

@@ -28,21 +28,20 @@ function expected_risk(port::AbstractPortfolio, key = :Trad;
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm, port.solvers,
                                                                         port.cov, port.V,
                                                                         port.SV)
-    risk = expected_risk(rm, port.optimal[key].weights; X = X, fees = port.fees,
-                         rebalance = port.rebalance)
+    risk = expected_risk(rm, port.optimal[key].weights; X = X, fees = port.fees)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
 
 function calc_fees(port::AbstractPortfolio, key = :Trad;
                    latest_prices::AbstractVector = port.latest_prices)
-    return calc_fees(port.optimal[key].weights, latest_prices, port.fees, port.rebalance)
+    return calc_fees(port.optimal[key].weights, latest_prices, port.fees)
 end
 
 function expected_ret(port::AbstractPortfolio, key = :Trad; mu::AbstractVector = port.mu,
                       X::AbstractMatrix = port.returns, kelly::Union{Bool, RetType} = false)
     return expected_ret(port.optimal[key].weights; mu = mu, X = X, kelly = kelly,
-                        fees = port.fees, rebalance = port.rebalance)
+                        fees = port.fees)
 end
 
 """
@@ -81,8 +80,7 @@ function risk_contribution(port::AbstractPortfolio, key = :Trad;
                                                                         port.SV)
 
     risk = risk_contribution(rm, port.optimal[key].weights; X = X, delta = delta,
-                             marginal = marginal, fees = port.fees,
-                             rebalance = port.rebalance)
+                             marginal = marginal, fees = port.fees)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -122,8 +120,7 @@ function factor_risk_contribution(port::AbstractPortfolio, key = :Trad;
                                     assets = port.assets, F = F, f_assets = port.f_assets,
                                     B = port.loadings,
                                     regression_type = port.regression_type, delta = delta,
-                                    fees = port.fees, rebalance = port.rebalance,
-                                    scale = true)
+                                    fees = port.fees, scale = true)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return risk
 end
@@ -166,7 +163,7 @@ function sharpe_ratio(port::AbstractPortfolio, key = :Trad;
                                                                         port.cov, port.V,
                                                                         port.SV)
     sr = sharpe_ratio(rm, port.optimal[key].weights; mu = mu, X = X, delta = delta, rf = rf,
-                      kelly = kelly, fees = port.fees, rebalance = port.rebalance)
+                      kelly = kelly, fees = port.fees)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sr
 end
@@ -180,8 +177,7 @@ function expected_ret_risk_sharpe(port::AbstractPortfolio, key = :Trad;
                                                                         port.SV)
     ret, risk, sharpe = expected_ret_risk_sharpe(rm, port.optimal[key].weights; mu = mu,
                                                  X = X, delta = delta, rf = rf,
-                                                 kelly = kelly, fees = port.fees,
-                                                 rebalance = port.rebalance)
+                                                 kelly = kelly, fees = port.fees)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return ret, risk, sharpe
 end
@@ -196,7 +192,7 @@ function sharpe_ratio_info_criterion(port::AbstractPortfolio, key = :Trad;
                                                                         port.SV)
     sric = sharpe_ratio_info_criterion(rm, port.optimal[key].weights; mu = mu, X = X,
                                        delta = delta, rf = rf, kelly = kelly,
-                                       fees = port.fees, rebalance = port.rebalance)
+                                       fees = port.fees)
     unset_set_rm_properties!(rm, solver_flag, sigma_flag, skew_flag, sskew_flag)
     return sric
 end

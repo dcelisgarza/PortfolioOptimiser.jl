@@ -6,7 +6,7 @@ function get_cluster_fees(port, cluster)
     fees = port.fees
     fees_long = fees.long
     fees_fixed_long = fees.fixed_long
-    rebalance = port.rebalance
+    rebalance = fees.rebalance
     flag = false
 
     if isa(fees_long, AbstractVector) && !(isempty(fees_long) || all(iszero.(fees_long)))
@@ -20,10 +20,6 @@ function get_cluster_fees(port, cluster)
         flag = true
     end
 
-    if flag
-        fees = Fees(; long = fees_long, fixed_long = fees_fixed_long)
-    end
-
     if isa(rebalance, TR)
         fees_rebal = rebalance.val
         benchmark = rebalance.w
@@ -31,9 +27,14 @@ function get_cluster_fees(port, cluster)
             fees_rebal = view(fees_rebal, cluster)
         end
         rebalance = TR(; val = fees_rebal, w = view(benchmark, cluster))
+        flag = true
     end
 
-    return fees, rebalance
+    if flag
+        fees = Fees(; long = fees_long, fixed_long = fees_fixed_long, rebalance = rebalance)
+    end
+
+    return fees
 end
 function naive_risk(port::AbstractPortfolio, mu, sigma, returns, cluster,
                     rm::Union{RiskMeasure, HCRiskMeasure})
@@ -43,9 +44,9 @@ function naive_risk(port::AbstractPortfolio, mu, sigma, returns, cluster,
     old_tr = set_tracking_rm!(rm, cluster)
     old_to = set_turnover_rm!(rm, cluster)
     cret = view(returns, :, cluster)
-    cfees, crebalance = get_cluster_fees(port, cluster)
+    cfees = get_cluster_fees(port, cluster)
     old_V, old_skew = gen_cluster_skew_sskew(rm, port, cluster)
-    crisk = naive_risk(rm, cret, cfees, crebalance)
+    crisk = naive_risk(rm, cret, cfees)
     unset_set_hc_rm_mu_w!(rm, old_mu, old_target)
     unset_hc_rm_sigma!(rm, old_sigma)
     unset_hc_rm_skew!(rm, old_V, old_skew)

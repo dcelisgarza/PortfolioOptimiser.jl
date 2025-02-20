@@ -246,12 +246,9 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad
     w2 = fl.w_max
 
     fees = port.fees
-    rebalance = port.rebalance
 
-    ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
-                        rebalance = rebalance)
-    ret2 = expected_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees,
-                        rebalance = rebalance)
+    ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees)
+    ret2 = expected_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees)
 
     rm_i = get_first_rm(rm)
     old_ub = rm_i.settings.ub
@@ -260,8 +257,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad
     solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(rm_i, port.solvers,
                                                                         sigma, port.V,
                                                                         port.SV)
-    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees = fees,
-                               rebalance = rebalance)
+    risk1, risk2 = risk_bounds(rm_i, w1, w2; X = returns, delta = 0, fees = fees)
 
     mus = range(ret1; stop = ret2, length = points)
     risks = range(risk1; stop = risk2, length = points)
@@ -305,7 +301,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad
         end
         rt, rk, sr = expected_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns,
                                               delta = 0, rf = rf, kelly = kelly,
-                                              fees = fees, rebalance = rebalance)
+                                              fees = fees)
 
         append!(frontier, w.weights)
         push!(optim_risk, rk)
@@ -320,7 +316,7 @@ function efficient_frontier!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad
     if !isempty(w)
         rt, rk, sr = expected_ret_risk_sharpe(rm_i, w.weights; mu = mu, X = returns,
                                               delta = 0, rf = rf, kelly = kelly,
-                                              fees = fees, rebalance = rebalance)
+                                              fees = fees)
         append!(frontier, w.weights)
         push!(optim_risk, rk)
         push!(optim_ret, rt)

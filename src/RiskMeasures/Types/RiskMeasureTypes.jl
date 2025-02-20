@@ -2,45 +2,6 @@
 # Author: Daniel Celis Garza <daniel.celis.garza@gmail.com>
 # SPDX-License-Identifier: MIT
 
-mutable struct Fees
-    long::Union{<:Real, <:AbstractVector{<:Real}}
-    short::Union{<:Real, <:AbstractVector{<:Real}}
-    fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
-    fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
-    tol_kwargs::NamedTuple
-end
-function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
-              tol_kwargs::NamedTuple = (; atol = 1e-8))
-    @smart_assert(all(long .>= zero(long)))
-    @smart_assert(all(short .<= zero(short)))
-    @smart_assert(all(fixed_long .>= zero(fixed_long)))
-    @smart_assert(all(fixed_short .<= zero(fixed_short)))
-    return Fees(long, short, fixed_long, fixed_short, tol_kwargs)
-end
-function Base.setproperty!(fees::Fees, sym::Symbol, val)
-    if sym ∈ (:long, :fixed_long)
-        @smart_assert(all(val .>= zero(val)))
-    elseif sym ∈ (:short, :fixed_short)
-        @smart_assert(all(val .<= zero(val)))
-    end
-    return setfield!(fees, sym, val)
-end
-function Base.isequal(A::Fees, B::Fees)
-    for property ∈ propertynames(A)
-        prop_A = getproperty(A, property)
-        prop_B = getproperty(B, property)
-        if !isequal(prop_A, prop_B)
-            return false
-        end
-    end
-    return true
-end
-
-# ### Turnover and rebalance
-
 """
 ```
 abstract type AbstractTR end
@@ -72,6 +33,44 @@ end
 function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
             w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
     return TR{typeof(val), typeof(w)}(val, w)
+end
+
+mutable struct Fees
+    long::Union{<:Real, <:AbstractVector{<:Real}}
+    short::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_long::Union{<:Real, <:AbstractVector{<:Real}}
+    fixed_short::Union{<:Real, <:AbstractVector{<:Real}}
+    rebalance::AbstractTR
+    tol_kwargs::NamedTuple
+end
+function Fees(; long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_long::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              fixed_short::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
+              rebalance::AbstractTR = NoTR(), tol_kwargs::NamedTuple = (; atol = 1e-8))
+    @smart_assert(all(long .>= zero(long)))
+    @smart_assert(all(short .<= zero(short)))
+    @smart_assert(all(fixed_long .>= zero(fixed_long)))
+    @smart_assert(all(fixed_short .<= zero(fixed_short)))
+    return Fees(long, short, fixed_long, fixed_short, rebalance, tol_kwargs)
+end
+function Base.setproperty!(fees::Fees, sym::Symbol, val)
+    if sym ∈ (:long, :fixed_long)
+        @smart_assert(all(val .>= zero(val)))
+    elseif sym ∈ (:short, :fixed_short)
+        @smart_assert(all(val .<= zero(val)))
+    end
+    return setfield!(fees, sym, val)
+end
+function Base.isequal(A::Fees, B::Fees)
+    for property ∈ propertynames(A)
+        prop_A = getproperty(A, property)
+        prop_B = getproperty(B, property)
+        if !isequal(prop_A, prop_B)
+            return false
+        end
+    end
+    return true
 end
 
 """
@@ -1265,9 +1264,8 @@ function MAD(; settings::RMSettings = RMSettings(),
              we::Union{<:AbstractWeights, Nothing} = nothing)
     return MAD(settings, target, w, mu, we)
 end
-function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                    rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (mad::MAD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     mu = calc_target_ret_mu(x, w, mad)
     we = mad.we
     return isnothing(we) ? mean(abs.(x .- mu)) : mean(abs.(x .- mu), we)
@@ -1330,9 +1328,8 @@ function SSD(; settings::RMSettings = RMSettings(),
              mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return SSD(settings, target, w, mu)
 end
-function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                    rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (ssd::SSD)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     mu = calc_target_ret_mu(x, w, ssd)
     val = x .- mu
@@ -1396,9 +1393,8 @@ function FLPM(; settings::RMSettings = RMSettings(),
               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return FLPM(settings, target, w, mu)
 end
-function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                      rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (flpm::FLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     target = calc_target_ret_mu(x, w, flpm)
     val = x .- target
@@ -2231,9 +2227,9 @@ function Base.setproperty!(obj::Kurt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                      rebalance::AbstractTR = NoTR(); scale::Bool = false)
-    x = calc_net_returns(X, w, fees, rebalance)
+function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees();
+                      scale::Bool = false)
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     mu = calc_ret_mu(x, w, kurt)
     val = x .- mu
@@ -2311,9 +2307,9 @@ function Base.setproperty!(obj::SKurt, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                        rebalance::AbstractTR = NoTR(); scale::Bool = false)
-    x = calc_net_returns(X, w, fees, rebalance)
+function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees();
+                        scale::Bool = false)
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     mu = calc_ret_mu(x, w, skurt)
     val = x .- mu
@@ -3071,9 +3067,8 @@ function SVariance(; settings::RMSettings = RMSettings(),
                    mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return SVariance(settings, formulation, target, w, mu)
 end
-function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                                rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
@@ -3298,12 +3293,11 @@ function TrackingRM(; settings::RMSettings = RMSettings(),
                     tr::Union{TrackWeight, TrackRet} = TrackRet(;))
     return TrackingRM(settings, tr)
 end
-function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                                  rebalance::AbstractTR = NoTR())
+function (trackingRM::TrackingRM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
     T = size(X, 1)
     tr = trackingRM.tr
     benchmark = tracking_error_benchmark(tr, X)
-    return norm(calc_net_returns(X, w, fees, rebalance) - benchmark) / sqrt(T - 1)
+    return norm(calc_net_returns(X, w, fees) - benchmark) / sqrt(T - 1)
 end
 
 """
@@ -4126,9 +4120,8 @@ function TLPM(; settings::RMSettings = RMSettings(),
               mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return TLPM(settings, target, w, mu)
 end
-function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                      rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (tlpm::TLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     target = calc_target_ret_mu(x, w, tlpm)
     val = x .- target
@@ -4169,9 +4162,8 @@ function FTLPM(; settings::RMSettings = RMSettings(),
                mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return FTLPM(settings, target, w, mu)
 end
-function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(),
-                        rebalance::AbstractTR = NoTR())
-    x = calc_net_returns(X, w, fees, rebalance)
+function (ftlpm::FTLPM)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     target = calc_target_ret_mu(x, w, ftlpm)
     val = x .- target

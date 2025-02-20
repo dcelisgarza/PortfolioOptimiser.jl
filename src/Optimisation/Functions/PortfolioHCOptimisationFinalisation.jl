@@ -131,14 +131,14 @@ function finalise_weights(type::HCOptimType, port, weights, w_min, w_max, finali
     weights = opt_weight_bounds(port, w_min, w_max, weights, finaliser)
     weights ./= sum(weights)
     if any(.!isfinite.(weights)) || all(iszero.(weights))
-        fees = calc_fees(weights, port.fees, port.rebalance)
+        fees = calc_fees(weights, port.fees)
         if !isempty(fees)
             port.fail[Symbol("$(key)_fees")] = fees
         end
         port.fail[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
         port.optimal[Symbol(key)] = DataFrame()
     else
-        fees = calc_fees(weights, port.fees, port.rebalance)
+        fees = calc_fees(weights, port.fees)
         if !isempty(fees)
             port.optimal[Symbol("$(key)_fees")] = fees
         end
@@ -150,14 +150,14 @@ function finalise_weights(type::NCO, port, weights, w_min, w_max, finaliser)
     key = type.key == :auto ? String(type) : String(type.key)
     weights = opt_weight_bounds(port, w_min, w_max, weights, finaliser)
     if any(.!isfinite.(weights)) || all(iszero.(weights))
-        fees = calc_fees(weights, port.fees, port.rebalance)
+        fees = calc_fees(weights, port.fees)
         if !isempty(fees)
             port.fail[Symbol("$(key)_fees")] = fees
         end
         port.fail[Symbol(key)] = DataFrame(; tickers = port.assets, weights = weights)
         port.optimal[Symbol(key)] = DataFrame()
     else
-        fees = calc_fees(weights, port.fees, port.rebalance)
+        fees = calc_fees(weights, port.fees)
         if !isempty(fees)
             port.optimal[Symbol("$(key)_fees")] = fees
         end

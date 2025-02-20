@@ -30,13 +30,12 @@ function calc_fees(w::AbstractVector, latest_prices::AbstractVector, rebalance::
         zero(eltype(w))
     end
 end
-function calc_fees(w::AbstractVector, latest_prices::AbstractVector, fees::Fees = Fees(),
-                   rebalance::AbstractTR = NoTR())
+function calc_fees(w::AbstractVector, latest_prices::AbstractVector, fees::Fees = Fees())
     fees_long = calc_fees(w, latest_prices, fees.long, .>=)
     fees_short = calc_fees(w, latest_prices, fees.short, .<)
     fees_fixed_long = calc_fixed_fees(w, fees.fixed_long, fees.tol_kwargs, .>=)
     fees_fixed_short = -calc_fixed_fees(w, fees.fixed_short, fees.tol_kwargs, .<)
-    fees_rebal = calc_fees(w, latest_prices, rebalance)
+    fees_rebal = calc_fees(w, latest_prices, fees.rebalance)
     return fees_long + fees_short + fees_fixed_long + fees_fixed_short + fees_rebal
 end
 function setup_alloc_optim(port, weights, investment)
@@ -45,10 +44,9 @@ function setup_alloc_optim(port, weights, investment)
     short_budget = port.short_budget
     latest_prices = port.latest_prices
     fees = port.fees
-    rebalance = port.rebalance
     T = size(port.returns, 1)
 
-    fees = calc_fees(weights, latest_prices, fees, rebalance) * T
+    fees = calc_fees(weights, latest_prices, fees) * T
     investment -= fees
 
     long_idx = weights .>= zero(eltype(weights))

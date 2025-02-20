@@ -36,7 +36,7 @@ function noc_constraints(port::Portfolio, risk0, ret0)
                  end)
     return nothing
 end
-function noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3, fees, rebalance)
+function noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3, fees)
     rm = reduce(vcat, rm)
     risk1 = zero(eltype(returns))
     risk2 = zero(eltype(returns))
@@ -46,18 +46,15 @@ function noc_risks(::ScalarSum, rm, port, returns, sigma, w1, w2, w3, fees, reba
         solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(r, port.solvers,
                                                                             sigma, port.V,
                                                                             port.SV)
-        risk1 += expected_risk(r, w1; X = returns, fees = fees, rebalance = rebalance) *
-                 scale
-        risk2 += expected_risk(r, w2; X = returns, fees = fees, rebalance = rebalance) *
-                 scale
-        risk3 += expected_risk(r, w3; X = returns, fees = fees, rebalance = rebalance) *
-                 scale
+        risk1 += expected_risk(r, w1; X = returns, fees = fees) * scale
+        risk2 += expected_risk(r, w2; X = returns, fees = fees) * scale
+        risk3 += expected_risk(r, w3; X = returns, fees = fees) * scale
         unset_set_rm_properties!(r, solver_flag, sigma_flag, skew_flag, sskew_flag)
     end
     return risk1, risk2, risk3
 end
 function noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1, w2, w3,
-                   fees, rebalance)
+                   fees)
     rm = reduce(vcat, rm)
     risk1 = zero(eltype(returns))
     risk2 = zero(eltype(returns))
@@ -68,12 +65,9 @@ function noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1,
         solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(r, port.solvers,
                                                                             sigma, port.V,
                                                                             port.SV)
-        risk1 += exp(expected_risk(r, w1; X = returns, fees = fees, rebalance = rebalance) *
-                     scale)
-        risk2 += exp(expected_risk(r, w2; X = returns, fees = fees, rebalance = rebalance) *
-                     scale)
-        risk3 += exp(expected_risk(r, w3; X = returns, fees = fees, rebalance = rebalance) *
-                     scale)
+        risk1 += exp(expected_risk(r, w1; X = returns, fees = fees) * scale)
+        risk2 += exp(expected_risk(r, w2; X = returns, fees = fees) * scale)
+        risk3 += exp(expected_risk(r, w3; X = returns, fees = fees) * scale)
         unset_set_rm_properties!(r, solver_flag, sigma_flag, skew_flag, sskew_flag)
     end
     risk1 = log(risk1) / gamma
@@ -81,7 +75,7 @@ function noc_risks(scalarisation::ScalarLogSumExp, rm, port, returns, sigma, w1,
     risk3 = log(risk3) / gamma
     return risk1, risk2, risk3
 end
-function noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3, fees, rebalance)
+function noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3, fees)
     rm = reduce(vcat, rm)
     risk1 = -Inf
     risk2 = -Inf
@@ -91,12 +85,9 @@ function noc_risks(::ScalarMax, rm, port, returns, sigma, w1, w2, w3, fees, reba
         solver_flag, sigma_flag, skew_flag, sskew_flag = set_rm_properties!(r, port.solvers,
                                                                             sigma, port.V,
                                                                             port.SV)
-        risk1_i = expected_risk(r, w1; X = returns, fees = fees, rebalance = rebalance) *
-                  scale
-        risk2_i = expected_risk(r, w2; X = returns, fees = fees, rebalance = rebalance) *
-                  scale
-        risk3_i = expected_risk(r, w3; X = returns, fees = fees, rebalance = rebalance) *
-                  scale
+        risk1_i = expected_risk(r, w1; X = returns, fees = fees) * scale
+        risk2_i = expected_risk(r, w2; X = returns, fees = fees) * scale
+        risk3_i = expected_risk(r, w3; X = returns, fees = fees) * scale
         if risk1_i >= risk1
             risk1 = risk1_i
         end
@@ -162,17 +153,13 @@ function noc_risk_ret(port::Portfolio, type)
     end
 
     fees = port.fees
-    rebalance = port.rebalance
 
-    ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees,
-                        rebalance = rebalance)
-    ret2 = expected_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees,
-                        rebalance = rebalance)
-    ret3 = expected_ret(w3; mu = mu, X = returns, kelly = kelly, fees = fees,
-                        rebalance = rebalance)
+    ret1 = expected_ret(w1; mu = mu, X = returns, kelly = kelly, fees = fees)
+    ret2 = expected_ret(w2; mu = mu, X = returns, kelly = kelly, fees = fees)
+    ret3 = expected_ret(w3; mu = mu, X = returns, kelly = kelly, fees = fees)
 
     risk1, risk2, risk3 = noc_risks(scalarisation, rm, port, returns, sigma, w1, w2, w3,
-                                    fees, rebalance)
+                                    fees)
 
     d_ret = (ret2 - ret1) / bins
     d_risk = (risk2 - risk1) / bins

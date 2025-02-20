@@ -36,7 +36,6 @@ mutable struct Portfolio{ast, dat, r, tfa, tfdat, tretf, l, lo, s, us, ul, nal, 
     num_assets_u_scale::naus
     max_num_assets_kurt::mnak
     max_num_assets_kurt_scale::mnaks
-    rebalance::rb
     turnover::to
     tracking_err::kte
     bl_bench_weights::blbw
@@ -119,7 +118,6 @@ Structure for defining a traditional portfolio. `Na` is the number of assets, an
 
       + if `> 0`: the approximate model will be used if the number of assets in the portfolio exceeds `max_number_assets_kurt`.
   - `max_num_assets_kurt_scale`: multipies `Na` to find the number of eigenvalues when computing the approximate kurtosis model, must be `∈ [1, Na]`.
-  - `rebalance`: [`AbstractTR`](@ref) for defining the portfolio rebalancing penalty.
 
     ```math
     \\begin{align}
@@ -312,10 +310,10 @@ mutable struct Portfolio{
                          T_card_scale, T_card, T_a_card_ineq, T_b_card_ineq, T_a_card_eq,
                          T_b_card_eq, T_nea, T_a_ineq, T_b_ineq, T_a_eq, T_b_eq, T_tracking,
                          T_turnover, T_network_adj, T_cluster_adj, T_l1, T_l2, T_fees,
-                         T_rebalance, T_constraint_scale, T_scale_obj, T_model, T_solvers,
-                         T_optimal, T_fail, T_limits, T_frontier, T_alloc_model,
-                         T_alloc_solvers, T_alloc_optimal, T_alloc_leftover,
-                         T_alloc_fail} <: AbstractPortfolio
+                         T_constraint_scale, T_scale_obj, T_model, T_solvers, T_optimal,
+                         T_fail, T_limits, T_frontier, T_alloc_model, T_alloc_solvers,
+                         T_alloc_optimal, T_alloc_leftover, T_alloc_fail} <:
+               AbstractPortfolio
     # Assets and factors
     assets::T_assets
     timestamps::T_timestamps
@@ -406,8 +404,6 @@ mutable struct Portfolio{
     l2::T_l2
     # Fees
     fees::T_fees
-    # Rebalance cost
-    rebalance::T_rebalance
     # Solution
     scale_constr::T_constraint_scale
     scale_obj::T_scale_obj
@@ -648,7 +644,7 @@ Portfolio(; prices::TimeArray = TimeArray(TimeType[], []),
             short::Bool = false, short_lb::Real = 0.2, long_ub::Real = 1.0,
             num_assets_l::Integer = 0, num_assets_u::Integer = 0,
             num_assets_u_scale::Real = 100_000.0, max_num_assets_kurt::Integer = 0,
-            max_num_assets_kurt_scale::Integer = 2, rebalance::AbstractTR = NoTR(),
+            max_num_assets_kurt_scale::Integer = 2, 
             turnover::AbstractTR = NoTR(), tracking_err::TrackingErr = NoTracking(),
             bl_bench_weights::AbstractVector{<:Real} = Vector{Float64}(undef, 0),
             a_mtx_ineq::AbstractMatrix{<:Real} = Matrix{Float64}(undef, 0, 0),
@@ -805,7 +801,7 @@ function Portfolio(;
                    # Regularisation
                    l1::Real = 0.0, l2::Real = 0.0,
                    # Fees
-                   fees::Fees = Fees(), rebalance::AbstractTR = NoTR(),
+                   fees::Fees = Fees(),
                    # Solution
                    scale_constr::Real = 1.0, scale_obj::Real = 1.0,
                    model::JuMP.Model = JuMP.Model(),
@@ -926,8 +922,7 @@ function Portfolio(;
     real_or_vector_len_assert(fees.short, N, :short)
     real_or_vector_len_assert(fees.fixed_long, N, :fixed_long)
     real_or_vector_len_assert(fees.fixed_short, N, :fixed_short)
-
-    tr_assert(rebalance, N)
+    tr_assert(fees.rebalance, N)
     # Constraint and objective scales
     @smart_assert(scale_constr > zero(scale_constr))
     @smart_assert(scale_obj > zero(scale_obj))
@@ -977,8 +972,6 @@ function Portfolio(;
                      typeof(l1), typeof(l2),
                      # Fees
                      typeof(fees),
-                     # Rebalance cost
-                     AbstractTR,
                      # Solution
                      typeof(scale_constr), typeof(scale_obj), typeof(model),
                      Union{PortOptSolver, <:AbstractVector{PortOptSolver}}, typeof(optimal),
@@ -1075,8 +1068,6 @@ function Portfolio(;
                                                                                         l2,
                                                                                         # Fees
                                                                                         fees,
-                                                                                        # Rebalance cost
-                                                                                        rebalance,
                                                                                         # Solution
                                                                                         scale_constr,
                                                                                         scale_obj,
@@ -1290,25 +1281,13 @@ function Base.setproperty!(port::Portfolio, sym::Symbol, val)
         N = size(port.returns, 2)
         Nf = size(port.f_returns, 2)
         adj_assert(val, N, Nf)
-    elseif sym ∈ (:rebalance, :turnover)
-        if isa(val, TR)
-            if isa(val.val, Real)
-                @smart_assert(val.val >= zero(val.val))
-            elseif isa(val.val, AbstractVector) && !isempty(val.val)
-                @smart_assert(length(val.val) == size(port.returns, 2) &&
-                              all(val.val .>= zero(val.val)))
-            end
-            if !isempty(val.w)
-                @smart_assert(length(val.w) == size(port.returns, 2))
-            end
-        end
     elseif sym == :fees
         N = size(port.returns, 2)
         real_or_vector_len_assert(val.long, N, :long)
         real_or_vector_len_assert(val.short, N, :short)
         real_or_vector_len_assert(val.fixed_long, N, :fixed_long)
         real_or_vector_len_assert(val.fixed_short, N, :fixed_short)
-        val = convert(typeof(getfield(port, sym)), val)
+        tr_assert(val.rebalance, N)
     elseif sym ∈ (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))
         val = convert(typeof(getfield(port, sym)), val)
@@ -1372,8 +1351,6 @@ function Base.deepcopy(port::Portfolio)
                      typeof(port.l1), typeof(port.l2),
                      # Fees
                      typeof(port.fees),
-                     # Rebalance cost
-                     AbstractTR,
                      # Solution
                      typeof(port.scale_constr), typeof(port.scale_obj), typeof(port.model),
                      Union{PortOptSolver, <:AbstractVector{PortOptSolver}},
@@ -1453,8 +1430,6 @@ function Base.deepcopy(port::Portfolio)
                                               deepcopy(port.l1), deepcopy(port.l2),
                                               # Fees
                                               deepcopy(port.fees),
-                                              # Rebalance cost
-                                              deepcopy(port.rebalance),
                                               # Solution
                                               deepcopy(port.scale_constr),
                                               deepcopy(port.scale_obj), copy(port.model),

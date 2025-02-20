@@ -69,9 +69,9 @@ l = 2.0
     portfolio = Portfolio(; prices = prices, network_adj = IP(; A = A),
                           cluster_adj = IP(; A = A))
     portfolio = Portfolio(; prices = prices, f_prices = factors,
-                          fees = Fees(; long = fill(1, N), short = fill(-3, N)),
+                          fees = Fees(; rebalance = TR(; val = 3, w = fill(inv(N), N)),
+                                      long = fill(1, N), short = fill(-3, N)),
                           bl_bench_weights = 2 * (1:N),
-                          rebalance = TR(; val = 3, w = fill(inv(N), N)),
                           turnover = TR(; val = 5, w = fill(inv(2 * N), N)),
                           tracking = TrackWeight(; err = 11, w = fill(inv(3 * N), N)),
                           network_adj = SDP(; A = A), cluster_adj = IP(; A = A),
@@ -86,8 +86,8 @@ l = 2.0
     portfolio.returns = 2 * portfolio.returns
     @test portfolio.fees.long == fill(1, N)
     @test portfolio.fees.short == fill(-3, N)
-    @test portfolio.rebalance.val == 3
-    @test portfolio.rebalance.w == fill(inv(N), N)
+    @test portfolio.fees.rebalance.val == 3
+    @test portfolio.fees.rebalance.w == fill(inv(N), N)
     @test portfolio.turnover.val == 5
     @test portfolio.turnover.w == fill(inv(2 * N), N)
     @test portfolio.tracking.err == 11
@@ -185,7 +185,7 @@ l = 2.0
     kurt = rand(N^2, N^2)
     skurt = rand(N^2, N^2)
     portfolio = Portfolio(; prices = prices, f_prices = factors, kurt = kurt, skurt = skurt,
-                          rebalance = TR(; val = fill(inv(N), N)),
+                          fees = Fees(; rebalance = TR(; val = fill(inv(N), N))),
                           turnover = TR(; val = fill(inv(2 * N), N)), w_min = 0.01:0.01:0.2,
                           w_max = 0.02:0.01:0.21, risk_budget = collect(1.0:N),
                           bl_bench_weights = collect(2 * (1:N)),
@@ -193,7 +193,7 @@ l = 2.0
                           tracking = TrackRet(; err = 11, w = fill(inv(100 * M), M)))
     @test portfolio.w_min == 0.01:0.01:0.2
     @test portfolio.w_max == 0.02:0.01:0.21
-    @test portfolio.rebalance.val == fill(inv(N), N)
+    @test portfolio.fees.rebalance.val == fill(inv(N), N)
     @test portfolio.turnover.val == fill(inv(2 * N), N)
     @test portfolio.risk_budget == collect(1:N)
     @test portfolio.bl_bench_weights == collect(2 * (1:N))
@@ -202,7 +202,8 @@ l = 2.0
     @test portfolio.tracking.w == fill(inv(100 * M), M)
     @test portfolio.kurt == kurt
     @test portfolio.skurt == skurt
-    @test_throws AssertionError Portfolio(; prices = prices, rebalance = TR(; val = -eps()))
+    @test_throws AssertionError Portfolio(; prices = prices,
+                                          fees = Fees(; rebalance = TR(; val = -eps())))
     @test_throws AssertionError Portfolio(; prices = prices, long_t = fill(0, 19))
     @test_throws AssertionError Portfolio(; prices = prices, long_t = -1)
     @test_throws AssertionError Portfolio(; prices = prices, long_t = fill(-1, 20))

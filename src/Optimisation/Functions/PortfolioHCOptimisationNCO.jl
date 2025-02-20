@@ -578,7 +578,8 @@ function get_cluster_fees(x::Fees, idx)
     return Fees(; long = get_cluster_real_or_vector(x.long, idx),
                 short = get_cluster_real_or_vector(x.short, idx),
                 fixed_long = get_cluster_real_or_vector(x.fixed_long, idx),
-                fixed_short = get_cluster_real_or_vector(x.fixed_short, idx))
+                fixed_short = get_cluster_real_or_vector(x.fixed_short, idx),
+                rebalance = get_cluster_tr(x.rebalance, idx))
 end
 function get_cluster_tr(x::NoTR, ::Any)
     return x
@@ -617,7 +618,8 @@ function get_external_fees(x::Fees, w)
     return Fees(; long = get_external_real_or_vector(x.long, w),
                 short = get_external_real_or_vector(x.short, w),
                 fixed_long = get_external_real_or_vector(x.fixed_long, w),
-                fixed_short = get_external_real_or_vector(x.fixed_short, w))
+                fixed_short = get_external_real_or_vector(x.fixed_short, w),
+                rebalance = get_external_tr(x.rebalance, w))
 end
 function get_external_tr(x::NoTR, ::Any)
     return x
@@ -657,7 +659,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, cor, dist, k, max_num_assets_kurt, max_num_assets_kurt_scale, kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma, w_min, w_max, risk_budget, f_risk_budget, short, long_t, long_ub, short_t, short_lb, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, fees, rebalance, solvers) = port
+    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, cor, dist, k, max_num_assets_kurt, max_num_assets_kurt_scale, kurt, skurt, L_2, S_2, skew, V, sskew, SV, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, cov_l, cov_u, cov_mu, cov_sigma, d_mu, k_mu, k_sigma, w_min, w_max, risk_budget, f_risk_budget, short, long_t, long_ub, short_t, short_lb, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, fees, solvers) = port
 
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
@@ -799,7 +801,6 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
         tracking = get_cluster_tracking(tracking, cidx)
         turnover = get_cluster_tr(turnover, cidx)
         fees = get_cluster_fees(fees, cidx)
-        rebalance = get_cluster_tr(rebalance, cidx)
     else
         long_t = 0.0
         long_ub = 1.0
@@ -808,7 +809,6 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
         tracking = NoTracking()
         turnover = NoTR()
         fees = Fees()
-        rebalance = NoTR()
     end
 
     intra_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
@@ -832,8 +832,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                            short_budget_ub = short_budget_ub, short_budget = short_budget,
                            short_budget_lb = short_budget_lb, card_scale = card_scale,
                            card = card, nea = nea, tracking = tracking, turnover = turnover,
-                           l1 = l1, l2 = l2, fees = fees, rebalance = rebalance,
-                           solvers = solvers, port_kwargs...)
+                           l1 = l1, l2 = l2, fees = fees, solvers = solvers, port_kwargs...)
 
     pre_mod_output = pre_modify_intra_port!(pre_modify, intra_port, internal_args, i,
                                             cluster, cidx, idx_sq, Nc, special_rm_idx)
@@ -1253,7 +1252,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_t, long_ub, short_t, short_lb, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, fees, rebalance, solvers) = port
+    (; assets, returns, f_assets, f_returns, loadings, regression_type, mu_l, mu, cov, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, fm_returns, fm_mu, fm_cov, bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov, w_min, w_max, risk_budget, f_risk_budget, short, long_t, long_ub, short_t, short_lb, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, tracking, turnover, l1, l2, fees, solvers) = port
 
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
@@ -1338,7 +1337,6 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         tracking = get_external_cluster_tracking(tracking, wi)
         turnover = get_external_tr(turnover, wi)
         fees = get_external_fees(fees, wi)
-        rebalance = get_external_tr(rebalance, wi)
     else
         long_t = 0.0
         long_ub = 1.0
@@ -1347,7 +1345,6 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
         tracking = NoTracking()
         turnover = NoTR()
         fees = Fees()
-        rebalance = NoTR()
     end
 
     inter_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
@@ -1366,8 +1363,7 @@ function get_external_portfolio(port, wi, external_args, special_rm_idx)
                            short_budget_ub = short_budget_ub, short_budget = short_budget,
                            short_budget_lb = short_budget_lb, card_scale = card_scale,
                            card = card, nea = nea, tracking = tracking, turnover = turnover,
-                           l1 = l1, l2 = l2, fees = fees, rebalance = rebalance,
-                           solvers = solvers, port_kwargs...)
+                           l1 = l1, l2 = l2, fees = fees, solvers = solvers, port_kwargs...)
 
     pre_mod_output = pre_modify_inter_port!(pre_modify, inter_port, wi, external_args,
                                             special_rm_idx)
