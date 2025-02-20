@@ -147,6 +147,7 @@ function Base.setproperty!(obj::OWAJTypes, sym::Symbol, val)
         @smart_assert(zero(val) < val < one(val))
     elseif sym in (:scale_constr, :scale_obj)
         @smart_assert(val > zero(val))
+        val = convert(typeof(getfield(obj, sym)), val)
     end
     return setfield!(obj, sym, val)
 end

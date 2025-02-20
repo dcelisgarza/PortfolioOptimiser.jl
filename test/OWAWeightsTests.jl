@@ -32,6 +32,18 @@ end
     @test isapprox(w1, w2)
 end
 
+@testset "OWA RG" begin
+    w = owa_rg(5)
+    @test w[1] == -1
+    @test w[5] == 1
+    @test all(iszero.(w[2:4]))
+end
+
+@testset "OWA CVaRRG" begin
+    w = owa_cvarrg(100; alpha = 0.3, beta = 0.2)
+    @test w == owa_cvar(100, 0.3) .- reverse(owa_cvar(100, 0.2))
+end
+
 @testset "OWA L-Moment" begin
     solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
                             check_sol = (; allow_local = true, allow_almost = true),

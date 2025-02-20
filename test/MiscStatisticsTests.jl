@@ -59,6 +59,44 @@ l = 2.0
     @test isapprox(d5, dt5)
     @test isapprox(d6, dt6)
 
+    dd1 = PortfolioOptimiser.elimination_matrix(1, false)
+    dd2 = PortfolioOptimiser.elimination_matrix(2, false)
+    dd3 = PortfolioOptimiser.elimination_matrix(3, false)
+    dd4 = PortfolioOptimiser.elimination_matrix(5, false)
+    dd5 = PortfolioOptimiser.elimination_matrix(7, false)
+    dd6 = PortfolioOptimiser.elimination_matrix(13, false)
+
+    tdd1 = sparse(Int64[], Int64[], Int64[], 0, 1)
+    tdd2 = sparse([1], [2], [1], 1, 4)
+    tdd3 = sparse([1, 2, 3], [2, 3, 6], [1, 1, 1], 3, 9)
+    tdd4 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 3, 4, 5, 8, 9, 10, 14, 15, 20],
+                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 10, 25)
+    tdd5 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21],
+                  [2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 18, 19, 20, 21, 26, 27, 28, 34, 35,
+                   42], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 21,
+                  49)
+    tdd6 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                   39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
+                   57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                   75, 76, 77, 78],
+                  [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21, 22, 23,
+                   24, 25, 26, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 44, 45, 46, 47, 48,
+                   49, 50, 51, 52, 58, 59, 60, 61, 62, 63, 64, 65, 72, 73, 74, 75, 76, 77,
+                   78, 86, 87, 88, 89, 90, 91, 100, 101, 102, 103, 104, 114, 115, 116, 117,
+                   128, 129, 130, 142, 143, 156],
+                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1], 78, 169)
+    @test isapprox(dd1, tdd1)
+    @test isapprox(dd2, tdd2)
+    @test isapprox(dd3, tdd3)
+    @test isapprox(dd4, tdd4)
+    @test isapprox(dd5, tdd5)
+    @test isapprox(dd6, tdd6)
+
     l1 = PortfolioOptimiser.elimination_matrix(1)
     l2 = PortfolioOptimiser.elimination_matrix(2)
     l3 = PortfolioOptimiser.elimination_matrix(3)
@@ -99,6 +137,45 @@ l = 2.0
     @test isapprox(l4, lt4)
     @test isapprox(l5, lt5)
     @test isapprox(l6, lt6)
+
+    ld1 = PortfolioOptimiser.elimination_matrix(1, false)
+    ld2 = PortfolioOptimiser.elimination_matrix(2, false)
+    ld3 = PortfolioOptimiser.elimination_matrix(3, false)
+    ld4 = PortfolioOptimiser.elimination_matrix(5, false)
+    ld5 = PortfolioOptimiser.elimination_matrix(7, false)
+    ld6 = PortfolioOptimiser.elimination_matrix(13, false)
+
+    ldt1 = sparse(Int64[], Int64[], Int64[], 0, 1)
+    ldt2 = sparse([1], [2], [1], 1, 4)
+    ldt3 = sparse([1, 2, 3], [2, 3, 6], [1, 1, 1], 3, 9)
+    ldt4 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 3, 4, 5, 8, 9, 10, 14, 15, 20],
+                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 10, 25)
+    ldt5 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21],
+                  [2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 18, 19, 20, 21, 26, 27, 28, 34, 35,
+                   42], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 21,
+                  49)
+    ldt6 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                   39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
+                   57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                   75, 76, 77, 78],
+                  [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21, 22, 23,
+                   24, 25, 26, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 44, 45, 46, 47, 48,
+                   49, 50, 51, 52, 58, 59, 60, 61, 62, 63, 64, 65, 72, 73, 74, 75, 76, 77,
+                   78, 86, 87, 88, 89, 90, 91, 100, 101, 102, 103, 104, 114, 115, 116, 117,
+                   128, 129, 130, 142, 143, 156],
+                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                   1, 1, 1, 1, 1, 1], 78, 169)
+
+    @test isapprox(ld1, ldt1)
+    @test isapprox(ld2, ldt2)
+    @test isapprox(ld3, ldt3)
+    @test isapprox(ld4, ldt4)
+    @test isapprox(ld5, ldt5)
+    @test isapprox(ld6, ldt6)
 
     s1 = PortfolioOptimiser.summation_matrix(1)
     s2 = PortfolioOptimiser.summation_matrix(2)
@@ -145,6 +222,45 @@ l = 2.0
     @test isapprox(s4, st4)
     @test isapprox(s5, st5)
     @test isapprox(s6, st6)
+
+    sd1 = PortfolioOptimiser.summation_matrix(1, false)
+    sd2 = PortfolioOptimiser.summation_matrix(2, false)
+    sd3 = PortfolioOptimiser.summation_matrix(3, false)
+    sd4 = PortfolioOptimiser.summation_matrix(5, false)
+    sd5 = PortfolioOptimiser.summation_matrix(7, false)
+    sd6 = PortfolioOptimiser.summation_matrix(13, false)
+
+    sdt1 = sparse(Int64[], Int64[], Int64[], 0, 1)
+    sdt2 = sparse([1], [2], [2], 1, 4)
+    sdt3 = sparse([1, 2, 3], [2, 3, 6], [2, 2, 2], 3, 9)
+    sdt4 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [2, 3, 4, 5, 8, 9, 10, 14, 15, 20],
+                  [2, 2, 2, 2, 2, 2, 2, 2, 2, 2], 10, 25)
+    sdt5 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21],
+                  [2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 18, 19, 20, 21, 26, 27, 28, 34, 35,
+                   42], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], 21,
+                  49)
+    sdt6 = sparse([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+                   39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56,
+                   57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
+                   75, 76, 77, 78],
+                  [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 21, 22, 23,
+                   24, 25, 26, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 44, 45, 46, 47, 48,
+                   49, 50, 51, 52, 58, 59, 60, 61, 62, 63, 64, 65, 72, 73, 74, 75, 76, 77,
+                   78, 86, 87, 88, 89, 90, 91, 100, 101, 102, 103, 104, 114, 115, 116, 117,
+                   128, 129, 130, 142, 143, 156],
+                  [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                   2, 2, 2, 2, 2, 2], 78, 169)
+
+    @test isapprox(sd1, sdt1)
+    @test isapprox(sd2, sdt2)
+    @test isapprox(sd3, sdt3)
+    @test isapprox(sd4, sdt4)
+    @test isapprox(sd5, sdt5)
+    @test isapprox(sd6, sdt6)
 
     N = rand([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
               73, 79, 83, 89, 97], 5)

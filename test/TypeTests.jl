@@ -408,4 +408,15 @@ l = 2.0
     @test msqd.max_phi == 0.7
     @test_throws AssertionError msqd.max_phi = 0
     @test_throws AssertionError msqd.max_phi = 1
+    msqd.scale_constr = 5
+    @test msqd.scale_constr == 5
+    @test_throws AssertionError msqd.scale_constr = 0
+    msqd.scale_obj = 7
+    @test msqd.scale_obj == 7
+    @test_throws AssertionError msqd.scale_obj = 0
+
+    ddvi = DistDistVarInfo()
+    ddvi.bins = 5
+    @test ddvi.bins == 5
+    @test_throws AssertionError ddvi.bins = 0
 end
