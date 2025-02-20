@@ -75,7 +75,7 @@ end
 function set_rm_sigma!(args...)
     return false
 end
-function set_rm_skew!(rm::NQSkew, V)
+function set_rm_skew!(rm::Union{NQSkew, NSkew}, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -83,7 +83,7 @@ function set_rm_skew!(rm::NQSkew, V)
     end
     return flag
 end
-function set_rm_sskew!(rm::NQSSkew, V)
+function set_rm_sskew!(rm::Union{NQSSkew, NSSkew}, V)
     flag = false
     if isnothing(rm.V) || isempty(rm.V)
         rm.V = V
@@ -143,12 +143,12 @@ end
 function unset_rm_sigma!(args...)
     return nothing
 end
-function unset_rm_skew!(rm::NQSkew, flag)
+function unset_rm_skew!(rm::Union{NQSkew, NSkew}, flag)
     if flag
         rm.V = nothing
     end
 end
-function unset_rm_sskew!(rm::NQSSkew, flag)
+function unset_rm_sskew!(rm::Union{NQSSkew, NSSkew}, flag)
     if flag
         rm.V = nothing
     end

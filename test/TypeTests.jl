@@ -420,4 +420,7 @@ l = 2.0
     ddvi.bins = 5
     @test ddvi.bins == 5
     @test_throws AssertionError ddvi.bins = 0
+
+    @test !isequal(Fees(; long = 2), Fees())
+    @test !isequal(PortOptSolver(; name = "test"), PortOptSolver())
 end

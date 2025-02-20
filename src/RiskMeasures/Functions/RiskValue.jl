@@ -410,9 +410,13 @@ function expected_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, Trackin
                        w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(), kwargs...)
     return rm(X, w, fees)
 end
-function expected_risk(rm::Union{SD, Variance, WCVariance, NQSkew, NQSSkew, NSkew, NSSkew,
-                                 TurnoverRM}, w::AbstractVector; kwargs...)
+function expected_risk(rm::Union{SD, NSkew, NSSkew, TurnoverRM}, w::AbstractVector;
+                       kwargs...)
     return rm(w)
+end
+function expected_risk(rm::Union{Variance, WCVariance, NQSkew, NQSSkew}, w::AbstractVector;
+                       scale::Bool = false, kwargs...)
+    return rm(w; scale = scale)
 end
 
 export expected_risk, cumulative_returns, drawdown, calc_fees, calc_fixed_fees,

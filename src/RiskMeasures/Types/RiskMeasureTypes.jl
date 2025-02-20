@@ -1127,8 +1127,8 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (variance::Variance)(w::AbstractVector)
-    return dot(w, variance.sigma, w)
+function (variance::Variance)(w::AbstractVector; scale::Bool = false)
+    return !scale ? dot(w, variance.sigma, w) : 0.5 * dot(w, variance.sigma, w)
 end
 
 """
@@ -2788,8 +2788,8 @@ function Base.setproperty!(obj::NQSkew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (nqskew::NQSkew)(w::AbstractVector)
-    return dot(w, nqskew.V, w)
+function (nqskew::NQSkew)(w::AbstractVector; scale::Bool = false)
+    return !scale ? dot(w, nqskew.V, w) : 0.5 * dot(w, nqskew.V, w)
 end
 
 """
@@ -2861,8 +2861,8 @@ function Base.setproperty!(obj::NQSSkew, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (nqsskew::NQSSkew)(w::AbstractVector)
-    return dot(w, nqsskew.V, w)
+function (nqsskew::NQSSkew)(w::AbstractVector; scale::Bool = false)
+    return !scale ? dot(w, nqsskew.V, w) : 0.5 * dot(w, nqsskew.V, w)
 end
 """
     mutable struct NSkew <: RiskMeasureSkew
@@ -3227,8 +3227,8 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-function (wcvariance::WCVariance)(w::AbstractVector)
-    return dot(w, wcvariance.sigma, w)
+function (wcvariance::WCVariance)(w::AbstractVector; scale::Bool = false)
+    return !scale ? dot(w, wcvariance.sigma, w) : 0.5 * dot(w, wcvariance.sigma, w)
 end
 
 # ### Tracking

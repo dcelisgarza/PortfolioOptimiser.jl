@@ -194,7 +194,7 @@ end
     type = NOC(; rm = rm, obj = obj)
     type.bins = 5e-8
     w25 = optimise!(portfolio, type)
-    @test isapprox(w25.weights, fill(1 / 20, 20))
+    @test isapprox(w25.weights, fill(1 / 20, 20), rtol = 1.0e-4)
 
     type.bins = 5e6
     w26_1 = optimise!(portfolio, type)

@@ -1038,6 +1038,90 @@ end
     @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
 end
 
+@testset "NSkew" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+    asset_statistics!(portfolio)
+
+    rm = NSkew()
+
+    portfolio.risk_budget = []
+    w1 = optimise!(portfolio, RB(; rm = rm))
+    rc1 = risk_contribution(portfolio, :RB; rm = rm)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = optimise!(portfolio, RB(; rm = rm))
+    rc2 = risk_contribution(portfolio, :RB; rm = rm)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [0.045910073532209425, 0.07415047614953636, 0.03239979548401373,
+           0.029665101811637274, 0.047749013099121496, 0.035267167794179315,
+           0.02131726133247818, 0.08111822060302758, 0.028885699456390034,
+           0.030723562074470124, 0.06275964558105403, 0.047503814649396764,
+           0.0434831955142538, 0.052071973570327966, 0.0752356121626045, 0.0681382209382538,
+           0.048717860610549314, 0.07088750773059563, 0.0353405607871108,
+           0.06867523711878984]
+    w2t = [0.0046939853704044306, 0.016538123281706636, 0.009745982478562116,
+           0.011298111299650738, 0.02403187854476901, 0.01950400840486707,
+           0.014430097856796815, 0.06054331324231829, 0.023193757303274904,
+           0.027901106356866275, 0.06527716931021105, 0.04853667828255306,
+           0.05038691469856121, 0.06541824735657238, 0.09579665078973, 0.09374181854739079,
+           0.0771211775916935, 0.11140068402944099, 0.05985787674975387,
+           0.12058241850487683]
+    @test isapprox(w1.weights, w1t, rtol = 1.0e-6)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-5)
+    @test isapprox(hrc1 / lrc1, 1, rtol = 0.001)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.005)
+end
+
+@testset "NSSkew" begin
+    portfolio = Portfolio(; prices = prices,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  solver = Clarabel.Optimizer,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+    asset_statistics!(portfolio)
+
+    rm = NSSkew()
+
+    portfolio.risk_budget = []
+    w1 = optimise!(portfolio, RB(; rm = rm))
+    rc1 = risk_contribution(portfolio, :RB; rm = rm)
+    lrc1, hrc1 = extrema(rc1)
+
+    portfolio.risk_budget = 1:size(portfolio.returns, 2)
+    w2 = optimise!(portfolio, RB(; rm = rm))
+    rc2 = risk_contribution(portfolio, :RB; rm = rm)
+    lrc2, hrc2 = extrema(rc2)
+
+    w1t = [0.04763215042593522, 0.05278058284044659, 0.04314225182716693,
+           0.040732454041686184, 0.04654810123402994, 0.05132957974377287,
+           0.028823353846908997, 0.07956763509160936, 0.03761479245033394,
+           0.04381032853543102, 0.08399613063765406, 0.03702648958209248,
+           0.03335568353659549, 0.060200302096660885, 0.04042934244165321,
+           0.050437127985559126, 0.049303714075055946, 0.07085919906693036,
+           0.043805399333189, 0.058605381207288476]
+    w2t = [0.004763893978286952, 0.01049262974925795, 0.012900716605281852,
+           0.016255343960466274, 0.023313382656499154, 0.029196177243964682,
+           0.020188943585025407, 0.05923899242704388, 0.03132673446584586,
+           0.04080715354304821, 0.08737882907012125, 0.040162710768433064,
+           0.038616650284872045, 0.07706522191685543, 0.05211683070183856,
+           0.07136152674818134, 0.08035541491077709, 0.1175583475411344,
+           0.07696742425311039, 0.10993307558995623]
+    @test isapprox(w1.weights, w1t, rtol = 0.0001)
+    @test isapprox(w2.weights, w2t, rtol = 1.0e-4)
+    @test isapprox(hrc1 / lrc1, 1, rtol = 0.0005)
+    @test isapprox(hrc2 / lrc2, 20, rtol = 0.0005)
+end
+
 @testset "DVaR" begin
     portfolio = Portfolio(; prices = prices[(end - 50):end],
                           solvers = PortOptSolver(; name = :Clarabel,
