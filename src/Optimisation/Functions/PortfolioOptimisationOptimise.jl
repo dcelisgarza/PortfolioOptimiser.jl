@@ -193,7 +193,7 @@ function optimise!(port::Portfolio, type::NOC)
     set_objective_function(port, type, custom_obj)
     return optimise_portfolio_model(port, type, class)
 end
-function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, FRC, NCO} = Trad();
+function frontier_limits!(port::Portfolio, type::Union{Trad, NOC, FRC} = Trad();
                           w_min_ini::AbstractVector = Vector{Float64}(undef, 0),
                           w_max_ini::AbstractVector = Vector{Float64}(undef, 0))
     type = Trad(; rm = type.rm, obj = type.obj, kelly = type.kelly, class = type.class,

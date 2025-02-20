@@ -190,6 +190,17 @@ end
     @test isapprox(w15, w22.weights, rtol = 0.05)
     @test isapprox(w15, w23.weights, rtol = 0.005)
     @test isapprox(w15, w24.weights, rtol = 0.0005)
+
+    type = NOC(; rm = rm, obj = obj)
+    type.bins = 5e-8
+    w25 = optimise!(portfolio, type)
+    @test isapprox(w25.weights, fill(1 / 20, 20))
+
+    type.bins = 5e6
+    w26_1 = optimise!(portfolio, type)
+    w26_2 = optimise!(portfolio, Trad(; rm = SD(), obj = obj))
+
+    @test isapprox(w26_1.weights, w26_2.weights, rtol = 0.0001)
 end
 
 @testset "NOC scale and vec" begin
