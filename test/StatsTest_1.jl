@@ -5661,6 +5661,23 @@ end
     @test isapprox(portfolio.mu, mut)
 
     asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = MuEquil())
+    @test isapprox(portfolio.mu, cov(portfolio.returns) * fill(1 / 20, 20))
+    mu_type = MuEquil()
+    mu_type.l = 2.3
+    w = [0.9333891976613848, 0.9873277733322922, 0.9314570605339451, 0.10518728077168571,
+         0.3992786906224347, 0.12480317453978063, 0.3088402158785869, 0.663202531061074,
+         0.19945230585530704, 0.9062786048038358, 0.3685983756799146, 0.9264813157733335,
+         0.4857314915793761, 0.06778022578329179, 0.5950875283124395, 0.5853357530780138,
+         0.6525975248687915, 0.6385924642086811, 0.9455455815657327, 0.358565412245195]
+    w ./= sum(w)
+    mu_type.w = w
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
+                      set_skew = false, set_sskew = false, mu_type = mu_type)
+    @test isapprox(portfolio.mu, 2.3 * cov(portfolio.returns) * w)
+    @test isapprox(portfolio.mu, vec(mean(mu_type, cov(portfolio.returns))))
+
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_cov = false,
                       set_skew = false, set_sskew = false, mu_type = MuJS(; target = VW()))
     mut = [0.0005962555831924731, 0.0006415098938267391, 0.0007819818843870742,
            0.0007274900136324297, 0.00135606390484416, -0.00030003512981584604,

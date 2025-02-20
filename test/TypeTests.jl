@@ -174,7 +174,10 @@ l = 2.0
     @test_throws AssertionError portfolio.fees = Fees(; long = 5, short = -2,
                                                       fixed_long = 7,
                                                       fixed_short = -rand(1))
-
+    portfolio.scale_constr = 5
+    @test portfolio.scale_constr == 5
+    portfolio.scale_obj = 7
+    @test portfolio.scale_obj == 7
     @test_throws AssertionError portfolio.scale_constr = -1
     @test_throws AssertionError portfolio.scale_obj = -1
 
@@ -393,4 +396,16 @@ l = 2.0
     gdm.power = 2
     @test gdm.power == 2
     @test_throws AssertionError gdm.power = 0
+
+    crra = CRRA()
+    crra.g = 0.2
+    @test crra.g == 0.2
+    @test_throws AssertionError crra.g = 0
+    @test_throws AssertionError crra.g = 1
+
+    msqd = MinSqDist()
+    msqd.max_phi = 0.7
+    @test msqd.max_phi == 0.7
+    @test_throws AssertionError msqd.max_phi = 0
+    @test_throws AssertionError msqd.max_phi = 1
 end

@@ -8,8 +8,8 @@
 function dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
                                power = de.power
-                               scaler = isodd(power) ? 0.5 : 1.0
-                               clamp!((one(eltype(X)) .- X .^ power) * scaler,
+                               scale = isodd(power) ? 0.5 : 1.0
+                               clamp!((one(eltype(X)) .- X .^ power) * scale,
                                       zero(eltype(X)), one(eltype(X)))
                            else
                                power = de.power
@@ -18,18 +18,8 @@ function dist(de::GenDistMLP, X::AbstractMatrix, ::Any)
                            end))
 end
 function dist(de::GenDistDistMLP, X::AbstractMatrix, ::Any)
-    _X = Symmetric(sqrt.(if !de.absolute
-                             power = de.power
-                             scaler = isodd(power) ? 0.5 : 1.0
-                             clamp!((one(eltype(X)) .- X .^ power) * scaler,
-                                    zero(eltype(X)), one(eltype(X)))
-                         else
-                             power = de.power
-                             clamp!(one(eltype(X)) .- abs.(X) .^ power, zero(eltype(X)),
-                                    one(eltype(X)))
-                         end))
-
-    return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
+    D = dist(GenDistMLP(; absolute = de.absolute, power = de.power), X, nothing)
+    return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
 function dist(de::DistMLP, X::AbstractMatrix, ::Any)
     return Symmetric(sqrt.(if !de.absolute
@@ -40,13 +30,8 @@ function dist(de::DistMLP, X::AbstractMatrix, ::Any)
                            end))
 end
 function dist(de::DistDistMLP, X::AbstractMatrix, ::Any)
-    _X = sqrt.(if !de.absolute
-                   clamp!((one(eltype(X)) .- X) / 2, zero(eltype(X)), one(eltype(X)))
-               else
-                   clamp!(one(eltype(X)) .- X, zero(eltype(X)), one(eltype(X)))
-               end)
-
-    return Symmetric(Distances.pairwise(de.distance, _X, de.args...; de.kwargs...))
+    D = dist(DistMLP(; absolute = de.absolute), X, nothing)
+    return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
 function dist(::DistLog, X::AbstractMatrix, ::Any)
     return Symmetric(-log.(X))
@@ -59,7 +44,7 @@ function dist(de::DistVarInfo, ::Any, Y::AbstractMatrix)
     return variation_info(Y, de.bins, de.normalise)
 end
 function dist(de::DistDistVarInfo, ::Any, Y::AbstractMatrix)
-    D = dist(de.de, nothing, Y)
+    D = dist(DistVarInfo(; bins = de.bins, normalise = de.normalise), nothing, Y)
     return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
 function dist(::DistCor, X::AbstractMatrix, ::Any)
@@ -69,10 +54,10 @@ function dist(de::DistDistCor, X::AbstractMatrix, ::Any)
     D = dist(DistCor(), X, nothing)
     return Symmetric(Distances.pairwise(de.distance, D, de.args...; de.kwargs...))
 end
-function set_absolute_dist!(dist_type::AbsoluteDist, cor_type::PortCovCor)
+function set_absolute_dist!(dist_type::AbsoluteDistType, cor_type::PortCovCor)
     return set_absolute_dist!(dist_type, cor_type.ce)
 end
-function set_absolute_dist!(dist_type::AbsoluteDist, cor_type::AbsoluteCovCor)
+function set_absolute_dist!(dist_type::AbsoluteDistType, cor_type::AbsoluteCovCor)
     overwrite = dist_type.overwrite
     if overwrite
         dist_type.absolute = cor_type.absolute
@@ -106,9 +91,7 @@ function default_dist(dist_type::DistDistCanonical, cor_type::PortCovCor)
     return default_dist(dist_type, cor_type.ce)
 end
 function default_dist(dist::DistDistCanonical, cor_type::CovMutualInfo)
-    return DistDistVarInfo(;
-                           de = DistVarInfo(; bins = cor_type.bins,
-                                            normalise = cor_type.normalise),
+    return DistDistVarInfo(; bins = cor_type.bins, normalise = cor_type.normalise,
                            distance = dist.distance, args = dist.args, kwargs = dist.kwargs)
 end
 function default_dist(dist::DistDistCanonical, ::CovLTD)

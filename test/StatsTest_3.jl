@@ -1,5 +1,59 @@
 @testset "Correlation and Distance Estimation Unweighted" begin
     portfolio = Portfolio(; prices = prices)
+    de = GenDistMLP()
+    de.power = 3
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist, sqrt.((1 .- portfolio.cor .^ 3) / 2))
+
+    de.power = 4
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist, sqrt.((1 .- portfolio.cor .^ 4)))
+
+    de.overwrite = false
+    de.absolute = true
+    de.power = 3
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist, sqrt.((1 .- abs.(portfolio.cor) .^ 3)))
+
+    de.power = 4
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist, sqrt.((1 .- abs.(portfolio.cor) .^ 4)))
+
+    de = GenDistDistMLP()
+    de.power = 3
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist,
+                   pairwise(de.distance, sqrt.((1 .- portfolio.cor .^ 3) / 2), de.args...;
+                            de.kwargs...))
+
+    de.power = 4
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist,
+                   pairwise(de.distance, sqrt.((1 .- portfolio.cor .^ 4)), de.args...;
+                            de.kwargs...))
+
+    de.overwrite = false
+    de.absolute = true
+    de.power = 3
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist,
+                   pairwise(de.distance, sqrt.((1 .- abs.(portfolio.cor) .^ 3)), de.args...;
+                            de.kwargs...))
+
+    de.power = 4
+    asset_statistics!(portfolio; set_kurt = false, set_skurt = false, set_mu = false,
+                      set_skew = false, set_sskew = false, dist_type = de)
+    @test isapprox(portfolio.dist,
+                   pairwise(de.distance, sqrt.((1 .- abs.(portfolio.cor) .^ 4)), de.args...;
+                            de.kwargs...))
+
     de = DistDistCanonical()
 
     c1 = PortCovCor(; ce = CovDistance())

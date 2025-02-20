@@ -173,9 +173,16 @@ mutable struct MuEquil{T1} <: MeanSigmaEstimator
     w::Union{<:AbstractVector, Nothing}
     sigma::Union{<:AbstractMatrix, Nothing}
 end
-function MuEquiv(; l::Real = 1.0, w::Union{<:AbstractVector, Nothing} = nothing,
+function MuEquil(; l::Real = 1.0, w::Union{<:AbstractVector, Nothing} = nothing,
                  sigma::Union{<:AbstractMatrix, Nothing} = nothing)
-    return MuEquiv{typeof(l)}(l, w, sigma)
+    @smart_assert(l > zero(l))
+    return MuEquil{typeof(l)}(l, w, sigma)
+end
+function Base.setproperty!(obj::MuEquil, sym::Symbol, val)
+    if sym == :l
+        @smart_assert(val > zero(val))
+    end
+    return setfield!(obj, sym, val)
 end
 
 function set_mean_sigma!(mu_type::MeanSigmaEstimator, sigma)
@@ -197,4 +204,4 @@ function unset_mean_sigma!(args...)
     return nothing
 end
 
-export GM, VW, MSE, MuSimple, MuJS, MuBS, MuBOP
+export GM, VW, MSE, MuSimple, MuJS, MuBS, MuBOP, MuEquil

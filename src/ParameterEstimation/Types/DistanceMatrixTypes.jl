@@ -11,9 +11,11 @@ Abstract type for subtyping types for computing distance matrices from correlati
 """
 abstract type DistType end
 
+abstract type AbsoluteDistType <: DistType end
+
 """
 ```
-@kwdef mutable struct DistMLP <: DistType
+@kwdef mutable struct DistMLP <: AbsoluteDistType
     absolute::Bool = false
 end
 ```
@@ -45,7 +47,7 @@ Where:
 
       + if `true`: the correlation being used is absolute.
 """
-mutable struct DistMLP <: DistType
+mutable struct DistMLP <: AbsoluteDistType
     overwrite::Bool
     absolute::Bool
 end
@@ -54,9 +56,9 @@ function DistMLP(; overwrite::Bool = true, absolute::Bool = false)
 end
 
 """
-    mutable struct GenDistMLP{T1} <: DistType
+    mutable struct GenDistMLP{T1} <: AbsoluteDistType
 """
-mutable struct GenDistMLP{T1} <: DistType
+mutable struct GenDistMLP{T1} <: AbsoluteDistType
     overwrite::Bool
     absolute::Bool
     power::T1
@@ -74,7 +76,7 @@ end
 
 """
 ```
-@kwdef mutable struct DistDistMLP <: DistType
+@kwdef mutable struct DistDistMLP <: AbsoluteDistType
     absolute::Bool = false
     distance::Distances.Metric = Distances.Euclidean()
     args::Tuple = ()
@@ -110,7 +112,7 @@ Where:
   - `args`: args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
   - `kwargs`: key word args for the [`Distances.pairwise`](https://github.com/JuliaStats/Distances.jl?tab=readme-ov-file#computing-pairwise-distances) function.
 """
-mutable struct DistDistMLP <: DistType
+mutable struct DistDistMLP <: AbsoluteDistType
     overwrite::Bool
     absolute::Bool
     distance::Distances.Metric
@@ -124,9 +126,9 @@ function DistDistMLP(; overwrite::Bool = true, absolute::Bool = false,
 end
 
 """
-    mutable struct GenDistDistMLP{T1} <: DistType
+    mutable struct GenDistDistMLP{T1} <: AbsoluteDistType
 """
-mutable struct GenDistDistMLP{T1} <: DistType
+mutable struct GenDistDistMLP{T1} <: AbsoluteDistType
     overwrite::Bool
     absolute::Bool
     power::T1
@@ -147,8 +149,6 @@ function Base.setproperty!(obj::GenDistDistMLP, sym::Symbol, val)
     end
     return setfield!(obj, sym, val)
 end
-
-const AbsoluteDist = Union{DistMLP, GenDistMLP, DistDistMLP, GenDistDistMLP}
 
 """
 ```
@@ -377,15 +377,28 @@ Defines the variation of information distance of distances matrix.
       + if `true`: normalise the mutual information.
 """
 mutable struct DistDistVarInfo <: DistType
-    de::DistVarInfo
+    bins::Union{<:Integer, <:AbstractBins}
+    normalise::Bool
     distance::Distances.Metric
     args::Tuple
     kwargs::NamedTuple
 end
-function DistDistVarInfo(; de::DistVarInfo = DistVarInfo(),
+function DistDistVarInfo(; bins::Union{<:Integer, <:AbstractBins} = HGR(),
+                         normalise::Bool = true,
                          distance::Distances.Metric = Distances.Euclidean(),
                          args::Tuple = (), kwargs::NamedTuple = (;))
-    return DistDistVarInfo(de, distance, args, kwargs)
+    if isa(bins, Integer)
+        @smart_assert(bins > zero(bins))
+    end
+    return DistDistVarInfo(bins, normalise, distance, args, kwargs)
+end
+function Base.setproperty!(obj::DistDistVarInfo, sym::Symbol, val)
+    if sym == :bins
+        if isa(val, Integer)
+            @smart_assert(val > zero(val))
+        end
+    end
+    return setfield!(obj, sym, val)
 end
 
 """
