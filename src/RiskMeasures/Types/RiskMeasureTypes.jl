@@ -1128,7 +1128,8 @@ function Base.setproperty!(obj::Variance, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (variance::Variance)(w::AbstractVector; scale::Bool = false)
-    return !scale ? dot(w, variance.sigma, w) : 0.5 * dot(w, variance.sigma, w)
+    val = dot(w, variance.sigma, w)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -2233,8 +2234,8 @@ function (kurt::Kurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees();
     T = length(x)
     mu = calc_ret_mu(x, w, kurt)
     val = x .- mu
-    kurt = sqrt(sum(val .^ 4) / T)
-    return !scale ? kurt : kurt / 2
+    val = sqrt(sum(val .^ 4) / T)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -2313,8 +2314,8 @@ function (skurt::SKurt)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees(
     T = length(x)
     mu = calc_ret_mu(x, w, skurt)
     val = x .- mu
-    skurt = sqrt(sum(val[val .<= zero(eltype(val))] .^ 4) / T)
-    return !scale ? skurt : skurt / 2
+    val = sqrt(sum(val[val .<= zero(eltype(val))] .^ 4) / T)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -2709,14 +2710,17 @@ function BDVariance(; settings::RMSettings = RMSettings(),
                     formulation::BDVarianceFormulation = BDVAbsVal())
     return BDVariance(settings, formulation)
 end
-function (bdvariance::BDVariance)(x::AbstractVector)
+function (bdvariance::BDVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees();
+                                  scale::Bool = false)
+    x = calc_net_returns(X, w, fees)
     T = length(x)
     iT2 = inv(T^2)
     D = Matrix{eltype(x)}(undef, T, T)
     D .= x
     D .-= transpose(x)
     D .= abs.(D)
-    return iT2 * (dot(D, D) + iT2 * sum(D)^2)
+    val = iT2 * (dot(D, D) + iT2 * sum(D)^2)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -2789,7 +2793,8 @@ function Base.setproperty!(obj::NQSkew, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (nqskew::NQSkew)(w::AbstractVector; scale::Bool = false)
-    return !scale ? dot(w, nqskew.V, w) : 0.5 * dot(w, nqskew.V, w)
+    val = dot(w, nqskew.V, w)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -2862,7 +2867,8 @@ function Base.setproperty!(obj::NQSSkew, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (nqsskew::NQSSkew)(w::AbstractVector; scale::Bool = false)
-    return !scale ? dot(w, nqsskew.V, w) : 0.5 * dot(w, nqsskew.V, w)
+    val = dot(w, nqsskew.V, w)
+    return !scale ? val : 0.5 * val
 end
 """
     mutable struct NSkew <: RiskMeasureSkew
@@ -3074,7 +3080,8 @@ function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees
     mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
-    return !scale ? dot(val, val) / (T - 1) : 0.5 * dot(val, val) / (T - 1)
+    val = dot(val, val) / (T - 1)
+    return !scale ? val : 0.5 * val
 end
 
 """
@@ -3229,7 +3236,8 @@ function Base.setproperty!(obj::WCVariance, sym::Symbol, val)
     return setfield!(obj, sym, val)
 end
 function (wcvariance::WCVariance)(w::AbstractVector; scale::Bool = false)
-    return !scale ? dot(w, wcvariance.sigma, w) : 0.5 * dot(w, wcvariance.sigma, w)
+    val = dot(w, wcvariance.sigma, w)
+    return !scale ? val : 0.5 * val
 end
 
 # ### Tracking

@@ -397,12 +397,11 @@ end
 function expected_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, EVaRRG, RLVaR, RLVaRRG,
                                  DaR, MDD, ADD, CDaR, UCI, EDaR, RLDaR, DaR_r, MDD_r, ADD_r,
                                  CDaR_r, UCI_r, EDaR_r, RLDaR_r, GMD, RG, CVaRRG, TG, TGRG,
-                                 OWA, BDVariance, TCM, FTCM, Skewness, SSkewness, Kurtosis,
-                                 SKurtosis}, w::AbstractVector; X::AbstractMatrix,
-                       fees::Fees = Fees(), kwargs...)
+                                 OWA, TCM, FTCM, Skewness, SSkewness, Kurtosis, SKurtosis},
+                       w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(), kwargs...)
     return rm(calc_net_returns(X, w, fees))
 end
-function expected_risk(rm::Union{Kurt, SKurt, SVariance}, w::AbstractVector;
+function expected_risk(rm::Union{Kurt, SKurt, SVariance, BDVariance}, w::AbstractVector;
                        X::AbstractMatrix, scale::Bool = false, fees::Fees = Fees(),
                        kwargs...)
     return rm(X, w, fees; scale = scale)

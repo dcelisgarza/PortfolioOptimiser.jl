@@ -14,7 +14,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                                                                 "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
-    rm = SVariance()
+    rm = SD()
     w = optimise!(portfolio, RB(; rm = rm))
     plt1 = plot_returns(portfolio, :RB; per_asset = true)
     @test plt1.n == 20
