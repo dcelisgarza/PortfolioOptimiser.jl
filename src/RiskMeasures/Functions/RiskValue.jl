@@ -402,11 +402,12 @@ function expected_risk(rm::Union{WR, VaR, VaRRG, CVaR, DRCVaR, EVaR, EVaRRG, RLV
                        fees::Fees = Fees(), kwargs...)
     return rm(calc_net_returns(X, w, fees))
 end
-function expected_risk(rm::Union{Kurt, SKurt}, w::AbstractVector; X::AbstractMatrix,
-                       scale::Bool = false, fees::Fees = Fees(), kwargs...)
+function expected_risk(rm::Union{Kurt, SKurt, SVariance}, w::AbstractVector;
+                       X::AbstractMatrix, scale::Bool = false, fees::Fees = Fees(),
+                       kwargs...)
     return rm(X, w, fees; scale = scale)
 end
-function expected_risk(rm::Union{MAD, SVariance, SSD, FLPM, TLPM, FTLPM, TrackingRM},
+function expected_risk(rm::Union{MAD, SSD, FLPM, TLPM, FTLPM, TrackingRM},
                        w::AbstractVector; X::AbstractMatrix, fees::Fees = Fees(), kwargs...)
     return rm(X, w, fees)
 end

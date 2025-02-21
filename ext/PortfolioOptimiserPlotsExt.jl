@@ -597,7 +597,8 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
              EVaRRG(; solvers = solvers, alpha = alpha, beta = beta)(ret),
              TGRG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim, beta_i = beta_i,
                   beta = beta, b_sim = b_sim)(ret),
-             CVaRRG(; alpha = alpha, beta = beta)(ret))
+             CVaRRG(; alpha = alpha, beta = beta)(ret),
+             VaRRG(; alpha = alpha, beta = beta)(ret))
 
     lo_conf = 1 - alpha
     hi_conf = 1 - beta
@@ -605,7 +606,8 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
                    "RLVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[2], digits=2))%",
                    "EVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[3], digits=2))%",
                    "Tail Gini Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[4], digits=2))%",
-                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[5], digits=2))%")
+                   "CVaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[5], digits=2))%",
+                   "VaR Range ($(round(lo_conf,digits=2)), $(round(hi_conf,digits=2))): $(round(risks[6], digits=2))%")
 
     colours = palette(theme, length(risk_labels) + 1)
 
@@ -618,12 +620,12 @@ function PortfolioOptimiser.plot_range(w::AbstractVector, returns::AbstractMatri
 
     plt = histogram(ret; normalize = :pdf, label = "", color = colours[1], kwargs_h...)
 
-    bounds = [minimum(ret) -RLVaR(; solvers = solvers, alpha = alpha, kappa = kappa_a)(ret) -EVaR(; solvers = solvers, alpha = alpha)(ret)    -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret) -CVaR(; alpha = alpha)(ret);
-              maximum(ret)  RLVaR(; solvers = solvers, alpha = beta, kappa = kappa_b)(-ret) EVaR(; solvers = solvers, alpha = beta)(-ret)   TG(; alpha_i = beta_i, alpha = beta, a_sim = b_sim)(-ret) CVaR(; alpha = beta)(-ret)]
+    bounds = [minimum(ret) -RLVaR(; solvers = solvers, alpha = alpha, kappa = kappa_a)(ret) -EVaR(; solvers = solvers, alpha = alpha)(ret)    -TG(; alpha_i = alpha_i, alpha = alpha, a_sim = a_sim)(ret) -CVaR(; alpha = alpha)(ret) -VaR(; alpha = alpha)(ret);
+              maximum(ret)  RLVaR(; solvers = solvers, alpha = beta, kappa = kappa_b)(-ret) EVaR(; solvers = solvers, alpha = beta)(-ret)   TG(; alpha_i = beta_i, alpha = beta, a_sim = b_sim)(-ret) CVaR(; alpha = beta)(-ret) VaR(; alpha = beta)(-ret)]
 
     D = fit(Normal, ret)
     y = pdf(D, mean(D))
-    ys = (y / 6, y / 3, y / 2, 2 * y / 3, 5 * y / 6)
+    ys = (y / 7, 2 * y / 7, 3 * y / 7, 4 * y / 7, 5 * y / 7, 6 * y / 7)
 
     if !haskey(kwargs_risks, :linewidth)
         kwargs_risks = (kwargs_risks..., linewidth = 2)

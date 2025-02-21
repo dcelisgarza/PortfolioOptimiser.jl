@@ -3067,13 +3067,14 @@ function SVariance(; settings::RMSettings = RMSettings(),
                    mu::Union{<:AbstractVector{<:Real}, Nothing} = nothing)
     return SVariance(settings, formulation, target, w, mu)
 end
-function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees())
+function (svariance::SVariance)(X::AbstractMatrix, w::AbstractVector, fees::Fees = Fees();
+                                scale::Bool = false)
     x = calc_net_returns(X, w, fees)
     T = length(x)
     mu = calc_target_ret_mu(x, w, svariance)
     val = x .- mu
     val = val[val .<= zero(eltype(val))]
-    return dot(val, val) / (T - 1)
+    return !scale ? dot(val, val) / (T - 1) : 0.5 * dot(val, val) / (T - 1)
 end
 
 """

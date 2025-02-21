@@ -14,7 +14,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
                                                                 "max_step_fraction" => 0.75)))
 
     asset_statistics!(portfolio)
-    rm = SD()
+    rm = SVariance()
     w = optimise!(portfolio, RB(; rm = rm))
     plt1 = plot_returns(portfolio, :RB; per_asset = true)
     @test plt1.n == 20
@@ -36,7 +36,7 @@ prices = TimeArray(CSV.File(path); timestamp = :date)
     plt9 = plot_hist(portfolio, :RB)
     @test plt9.n == 12
     plt10 = plot_range(portfolio, :RB)
-    @test plt10.n == 6
+    @test plt10.n == 7
 
     cluster_assets!(portfolio; clust_alg = HAC(),
                     clust_opt = ClustOpt(; k_type = StdSilhouette()))
