@@ -1,5 +1,25 @@
 using SafeTestsets
 
+@safetestset "Portfolio classes" begin
+    include("PortfolioClassesTests.jl")
+end
+
+@safetestset "HC optimisation" begin
+    include("HCOptimisationTests.jl")
+end
+
+@safetestset "Trad optimisation" begin
+    include("TradOptimisationTests.jl")
+end
+
+@safetestset "WC optimisation" begin
+    include("WCOptimisationTests.jl")
+end
+
+@safetestset "RRB optimisation" begin
+    include("RRBOptimisationTests.jl")
+end
+
 @safetestset "NOC optimisation" begin
     include("NOCOptimisationTests.jl")
 end
@@ -82,24 +102,4 @@ end
 
 @safetestset "Objective scalarisation tests" begin
     include("ObjectiveScalarisationTests.jl")
-end
-
-@safetestset "Portfolio classes" begin
-    include("PortfolioClassesTests.jl")
-end
-
-@safetestset "HC optimisation" begin
-    include("HCOptimisationTests.jl")
-end
-
-@safetestset "Trad optimisation" begin
-    include("TradOptimisationTests.jl")
-end
-
-@safetestset "WC optimisation" begin
-    include("WCOptimisationTests.jl")
-end
-
-@safetestset "RRB optimisation" begin
-    include("RRBOptimisationTests.jl")
 end
