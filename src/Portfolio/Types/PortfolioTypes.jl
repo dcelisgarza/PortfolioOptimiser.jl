@@ -293,8 +293,9 @@ mutable struct Portfolio{
                          T_a_eq_constraints, T_a_card_ineq_constraints,
                          T_a_card_eq_constraints, T_f_ineq_constraints, T_f_eq_constraints,
                          T_f_card_ineq_constraints, T_f_card_eq_constraints,
-                         T_hrp_constraints, T_rb_constraints, T_to_constraints, T_a_views,
-                         T_f_views, T_loadings, T_regression_type,
+                         T_hrp_constraints, T_rb_constraints, T_frb_constraints,
+                         T_to_constraints, T_a_views, T_f_views, T_loadings,
+                         T_regression_type,
                          # Statistics
                          T_mu_l, T_mu, T_cov, T_cor, T_dist, T_clusters, T_k,
                          T_min_cluster_size, T_max_num_assets_kurt,
@@ -337,8 +338,9 @@ mutable struct Portfolio{
     f_eq_constraints::T_f_eq_constraints
     f_card_ineq_constraints::T_f_card_ineq_constraints
     f_card_eq_constraints::T_f_card_eq_constraints
-    hrp_constraints::T_hrp_constraints
+    hc_constraints::T_hrp_constraints
     rb_constraints::T_rb_constraints
+    frb_constraints::T_frb_constraints
     to_constraints::T_to_constraints
     a_views::T_a_views
     f_views::T_f_views
@@ -758,8 +760,9 @@ function Portfolio(;
                    f_eq_constraints::DataFrame = DataFrame(),
                    f_card_ineq_constraints::DataFrame = DataFrame(),
                    f_card_eq_constraints::DataFrame = DataFrame(),
-                   hrp_constraints::DataFrame = DataFrame(),
+                   hc_constraints::DataFrame = DataFrame(),
                    rb_constraints::DataFrame = DataFrame(),
+                   frb_constraints::DataFrame = DataFrame(),
                    to_constraints::DataFrame = DataFrame(),
                    a_views::DataFrame = DataFrame(), f_views::DataFrame = DataFrame(),
                    loadings::DataFrame = DataFrame(),
@@ -971,9 +974,10 @@ function Portfolio(;
                      typeof(a_eq_constraints), typeof(a_card_ineq_constraints),
                      typeof(a_card_eq_constraints), typeof(f_ineq_constraints),
                      typeof(f_eq_constraints), typeof(f_card_ineq_constraints),
-                     typeof(f_card_eq_constraints), typeof(hrp_constraints),
-                     typeof(rb_constraints), typeof(to_constraints), typeof(a_views),
-                     typeof(f_views), typeof(loadings), Union{<:RegressionType, Nothing},
+                     typeof(f_card_eq_constraints), typeof(hc_constraints),
+                     typeof(rb_constraints), typeof(frb_constraints),
+                     typeof(to_constraints), typeof(a_views), typeof(f_views),
+                     typeof(loadings), Union{<:RegressionType, Nothing},
                      # Statistics
                      typeof(mu_l), typeof(mu), typeof(cov), typeof(cor), typeof(dist),
                      typeof(clusters), typeof(k), typeof(min_cluster_size),
@@ -1038,8 +1042,9 @@ function Portfolio(;
                                                                                         f_eq_constraints,
                                                                                         f_card_ineq_constraints,
                                                                                         f_card_eq_constraints,
-                                                                                        hrp_constraints,
+                                                                                        hc_constraints,
                                                                                         rb_constraints,
+                                                                                        frb_constraints,
                                                                                         to_constraints,
                                                                                         a_views,
                                                                                         f_views,
@@ -1367,9 +1372,10 @@ function Base.deepcopy(port::Portfolio)
                      typeof(port.a_eq_constraints), typeof(port.a_card_ineq_constraints),
                      typeof(port.a_card_eq_constraints), typeof(port.f_ineq_constraints),
                      typeof(port.f_eq_constraints), typeof(port.f_card_ineq_constraints),
-                     typeof(port.f_card_eq_constraints), typeof(port.hrp_constraints),
-                     typeof(port.rb_constraints), typeof(port.to_constraints),
-                     typeof(port.a_views), typeof(port.f_views), typeof(port.loadings),
+                     typeof(port.f_card_eq_constraints), typeof(port.hc_constraints),
+                     typeof(port.rb_constraints), typeof(port.frb_constraints),
+                     typeof(port.to_constraints), typeof(port.a_views),
+                     typeof(port.f_views), typeof(port.loadings),
                      Union{<:RegressionType, Nothing},
                      # Statistics
                      typeof(port.mu_l), typeof(port.mu), typeof(port.cov), typeof(port.cor),
@@ -1442,8 +1448,9 @@ function Base.deepcopy(port::Portfolio)
                                               deepcopy(port.f_eq_constraints),
                                               deepcopy(port.f_card_ineq_constraints),
                                               deepcopy(port.f_card_eq_constraints),
-                                              deepcopy(port.hrp_constraints),
+                                              deepcopy(port.hc_constraints),
                                               deepcopy(port.rb_constraints),
+                                              deepcopy(port.frb_constraints),
                                               deepcopy(port.to_constraints),
                                               deepcopy(port.a_views),
                                               deepcopy(port.f_views),

@@ -700,7 +700,7 @@ end
                             "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
                             "Weight" => [0.05, 0.71, 0.02, 0.93, 0.07, 0.57, 0.2])
 
-    w_min, w_max = hrp_constraints(constraints, asset_sets)
+    w_min, w_max = calc_hc_constraints(constraints, asset_sets)
 
     w_mint = [0.02, 0.02, 0.02, 0.02, 0.02, 0.07, 0.02, 0.05, 0.07, 0.07, 0.07, 0.02, 0.02,
               0.07, 0.07, 0.02, 0.02, 0.02, 0.07, 0.02]
@@ -756,20 +756,20 @@ end
                                         4, 2, 2])
     constraints = DataFrame("Enabled" => [true], "Type" => ["All Assets"],
                             "Position" => [""], "Weight" => [""])
-    w1 = rb_constraints(constraints, asset_sets)
+    w1 = calc_rb_constraints(constraints, asset_sets)
     constraints = DataFrame("Enabled" => [true], "Type" => ["All Subsets"],
                             "Set" => ["G2ward"], "Weight" => [""])
-    w2 = rb_constraints(constraints, asset_sets)
+    w2 = calc_rb_constraints(constraints, asset_sets)
     constraints = DataFrame("Enabled" => [true], "Type" => ["All Subsets"],
                             "Set" => ["G2DBHT"], "Weight" => [""])
-    w3 = rb_constraints(constraints, asset_sets)
+    w3 = calc_rb_constraints(constraints, asset_sets)
 
     constraints = DataFrame("Enabled" => [true, true, true, true, false],
                             "Type" => ["Asset", "Asset", "Subset", "Subset", "All Assets"],
                             "Position" => ["GOOG", "FB", 2, 4, ""],
                             "Weight" => [0.15, "", 0.3, "", ""],
                             "Set" => ["", "", "G2ward", "G2ward", ""])
-    w4 = rb_constraints(constraints, asset_sets)
+    w4 = calc_rb_constraints(constraints, asset_sets)
 
     w1t = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]

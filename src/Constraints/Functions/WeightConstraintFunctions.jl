@@ -389,7 +389,7 @@ end
 
 """
 ```julia
-hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
+calc_hc_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
 
 Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
@@ -437,10 +437,10 @@ constraints = DataFrame("Enabled" => [true, true, true, true, true, true],
                         "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
                         "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
                         "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
-w_min, w_max = hrp_constraints(constraints, asset_sets)
+w_min, w_max = calc_hc_constraints(constraints, asset_sets)
 ```
 """
-function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
+function calc_hc_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     w = Matrix(undef, N, 2)
     w .= 0
@@ -485,8 +485,8 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
 end
 """
 ```julia
-rb_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
-               class_col::Union{String, Symbol, Nothing} = nothing)
+calc_rb_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
+                    class_col::Union{String, Symbol, Nothing} = nothing)
 ```
 
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RB` and `:RRB` types of [`PortTypes`]()).
@@ -513,11 +513,11 @@ asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "
                        "Class 2" => ["Technology", "Technology", "Technology", "Financial",
                                      "Financial", "Treasury", "Treasury"])
 
-rw_a = rb_constraints(asset_sets, :Asset)
-rw_c = rb_constraints(asset_sets, :Subset, "Class 2")
+rw_a = calc_rb_constraints(asset_sets, :Asset)
+rw_c = calc_rb_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
-function rb_constraints(constraints::DataFrame, asset_sets::DataFrame)
+function calc_rb_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     inv_N = 1 / N
     rw = fill(inv_N, N)
@@ -598,5 +598,5 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-export asset_constraints, factor_constraints, hrp_constraints, rb_constraints,
+export asset_constraints, factor_constraints, calc_hc_constraints, calc_rb_constraints,
        turnover_constraints

@@ -772,7 +772,7 @@ end
                             "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
                             "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
                             "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
-    w_min, w_max = hrp_constraints(constraints, asset_sets)
+    w_min, w_max = calc_hc_constraints(constraints, asset_sets)
     N = length(w_min)
 
     portfolio.w_min = w_min

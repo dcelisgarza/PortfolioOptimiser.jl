@@ -549,7 +549,7 @@ end
 function get_cluster_returns(x::AbstractMatrix, idx)
     return !isempty(x) ? x[:, idx] : x
 end
-function get_cluster_loadings(x::DataFrame, idx)
+function get_cluster_df(x::DataFrame, idx)
     return !isempty(x) ? x[idx, :] : x
 end
 function gen_cluster_skew(skew::AbstractMatrix, cluster, Nc, idx)
@@ -654,7 +654,7 @@ function reset_intra_port!(pre_modify::NoNCOModify, pre_mod_output::Nothing,
 end
 function get_cluster_portfolio_asset_stats(port, internal_args, i, cluster, cidx, idx_sq,
                                            Nc, special_rm_idx)
-    (; assets, returns, mu, cov, cor, dist, kurt, skurt, L_2, S_2, skew, V, sskew, SV) = port
+    (; assets, returns, asset_sets, loadings, mu, cov, cor, dist, kurt, skurt, L_2, S_2, skew, V, sskew, SV) = port
     (; cov_idx, kurt_idx, skurt_idx, skew_idx, sskew_idx, wc_idx) = special_rm_idx
     type = internal_args[i].type
     kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
@@ -668,6 +668,10 @@ function get_cluster_portfolio_asset_stats(port, internal_args, i, cluster, cidx
 
     assets = get_cluster_vector(assets, cidx)
     returns = get_cluster_returns(returns, cidx)
+
+    asset_sets = get_cluster_df(asset_sets, cidx)
+    loadings = get_cluster_df(loadings, cidx)
+
     mu = get_cluster_vector(mu, cidx)
 
     cov = cov_flag ? get_cluster_matrix(cov, cidx) : Matrix{eltype(returns)}(undef, 0, 0)
@@ -709,7 +713,8 @@ function get_cluster_portfolio_asset_stats(port, internal_args, i, cluster, cidx
         Matrix{eltype(returns)}(undef, 0, 0), Matrix{eltype(returns)}(undef, 0, 0)
     end
 
-    return assets, returns, mu, cov, cor, dist, kurt, skurt, L_2, S_2, skew, V, sskew, SV
+    return assets, returns, asset_sets, loadings, mu, cov, cor, dist, kurt, skurt, L_2, S_2,
+           skew, V, sskew, SV
 end
 function get_cluster_portfolio_factor_stats(port, internal_args, i, cluster, cidx, idx_sq,
                                             Nc, special_rm_idx)
@@ -733,12 +738,10 @@ function get_cluster_portfolio_factor_stats(port, internal_args, i, cluster, cid
         else
             Matrix{eltype(fm_returns)}(undef, 0, 0)
         end
-        loadings = get_cluster_loadings(loadings, cidx)
     else
         fm_returns = Matrix{eltype(fm_returns)}(undef, 0, 0)
         fm_mu = Vector{eltype(fm_returns)}(undef, 0)
         fm_cov = Matrix{eltype(fm_returns)}(undef, 0, 0)
-        loadings = DataFrame()
     end
     return fm_returns, fm_mu, fm_cov, loadings
 end
@@ -860,40 +863,35 @@ function get_cluster_portfolio_general_constraints(port, internal_args, i, clust
 
     return long_t, long_ub, short_t, short_lb, tracking, turnover, fees
 end
-
 function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                special_rm_idx)
     (; type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs, factor_kwargs, cluster_kwargs) = internal_args[i]
 
-    kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; f_assets, f_returns, asset_sets, a_ineq_constraints, a_eq_constraints, a_card_ineq_constraints, a_card_eq_constraints, f_ineq_constraints, f_eq_constraints, f_card_ineq_constraints, f_card_eq_constraints, hrp_constraints, rb_constraints, to_constraints, a_views, f_views, regression_type, mu_l, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, k_mu, k_sigma, f_risk_budget, short, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, l1, l2, solvers) = port
+    (; f_assets, f_returns, a_ineq_constraints, a_eq_constraints, a_card_ineq_constraints, a_card_eq_constraints, f_ineq_constraints, f_eq_constraints, f_card_ineq_constraints, f_card_eq_constraints, hc_constraints, rb_constraints, frb_constraints, to_constraints, a_views, f_views, regression_type, mu_l, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, k_mu, k_sigma, f_risk_budget, short, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, l1, l2, solvers) = port
 
     (; cov_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
     factor_flag = isa(class, Union{FM, FC})
     hc_flag = isa(type, HCOptimType)
 
-    assets, returns, mu, cov, cor, dist, kurt, skurt, L_2, S_2, skew, V, sskew, SV = get_cluster_portfolio_asset_stats(port,
-                                                                                                                       internal_args,
-                                                                                                                       i,
-                                                                                                                       cluster,
-                                                                                                                       cidx,
-                                                                                                                       idx_sq,
-                                                                                                                       Nc,
-                                                                                                                       special_rm_idx)
+    assets, returns, asset_sets, loadings, mu, cov, cor, dist, kurt, skurt, L_2, S_2, skew, V, sskew, SV = get_cluster_portfolio_asset_stats(port,
+                                                                                                                                             internal_args,
+                                                                                                                                             i,
+                                                                                                                                             cluster,
+                                                                                                                                             cidx,
+                                                                                                                                             idx_sq,
+                                                                                                                                             Nc,
+                                                                                                                                             special_rm_idx)
+    fm_returns, fm_mu, fm_cov = get_cluster_portfolio_factor_stats(port, internal_args, i,
+                                                                   cluster, cidx, idx_sq,
+                                                                   Nc, special_rm_idx)
     cov_l, cov_u, cov_mu, cov_sigma, d_mu = get_cluster_portfolio_wc_stats(port,
                                                                            internal_args, i,
                                                                            cluster, cidx,
                                                                            idx_sq, Nc,
                                                                            special_rm_idx)
-    fm_returns, fm_mu, fm_cov, loadings = get_cluster_portfolio_factor_stats(port,
-                                                                             internal_args,
-                                                                             i, cluster,
-                                                                             cidx, idx_sq,
-                                                                             Nc,
-                                                                             special_rm_idx)
     bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov = get_cluster_portfolio_bl_stats(port,
                                                                                         internal_args,
                                                                                         i,
@@ -916,7 +914,20 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                                                                                                              special_rm_idx)
 
     intra_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
-                           f_ret = f_returns, loadings = loadings,
+                           f_ret = f_returns, asset_sets = asset_sets,
+                           a_ineq_constraints = a_ineq_constraints,
+                           a_eq_constraints = a_eq_constraints,
+                           a_card_ineq_constraints = a_card_ineq_constraints,
+                           a_card_eq_constraints = a_card_eq_constraints,
+                           f_ineq_constraints = f_ineq_constraints,
+                           f_eq_constraints = f_eq_constraints,
+                           f_card_ineq_constraints = f_card_ineq_constraints,
+                           f_card_eq_constraints = f_card_eq_constraints,
+                           hc_constraints = port.hc_constraints,
+                           rb_constraints = port.rb_constraints,
+                           frb_constraints = port.frb_constraints,
+                           to_constraints = port.to_constraints, a_views = port.a_views,
+                           f_views = port.f_views, loadings = loadings,
                            regression_type = regression_type, mu_l = mu_l, mu = mu,
                            cov = cov, cor = cor, dist = dist, k = k,
                            max_num_assets_kurt = max_num_assets_kurt,
@@ -952,7 +963,24 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
     end
     if hc_flag
         cluster_assets!(intra_port; cluster_kwargs...)
+        calc_hc_constraints!(intra_port)
     end
+
+    calc_linear_constraints!(intra_port)
+    if isa(type, Union{RB, RRB})
+        if !factor_flag
+            calc_rb_constraints!(intra_port)
+        else
+            calc_frb_constraints!(intra_port)
+        end
+    end
+
+    # Turnover
+    # Black Litterman (views)
+    # Black Litterman factors (factor views)
+    # Connection matrix
+    # Cluster matrix
+    # Centrality vector
 
     post_mod_output = post_modify_intra_port!(post_modify, intra_port, internal_args, i,
                                               cluster, cidx, idx_sq, Nc, special_rm_idx)
