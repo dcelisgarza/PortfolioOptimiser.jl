@@ -638,6 +638,8 @@ mutable struct NCOArgs
     stats_kwargs::NamedTuple
     wc_kwargs::NamedTuple
     factor_kwargs::NamedTuple
+    bl_kwargs::NamedTuple
+    blf_kwargs::NamedTuple
     cluster_kwargs::NamedTuple
 end
 function NCOArgs(; type::AbstractOptimType = Trad(),
@@ -645,9 +647,10 @@ function NCOArgs(; type::AbstractOptimType = Trad(),
                  post_modify::AbstractNCOModify = NoNCOModify(),
                  port_kwargs::NamedTuple = (;), stats_kwargs::NamedTuple = (;),
                  wc_kwargs::NamedTuple = (;), factor_kwargs::NamedTuple = (;),
+                 bl_kwargs::NamedTuple = (;), blf_kwargs::NamedTuple = (;),
                  cluster_kwargs::NamedTuple = (;))
     return NCOArgs(type, pre_modify, post_modify, port_kwargs, stats_kwargs, wc_kwargs,
-                   factor_kwargs, cluster_kwargs)
+                   factor_kwargs, bl_kwargs, blf_kwargs, cluster_kwargs)
 end
 """
 ```
