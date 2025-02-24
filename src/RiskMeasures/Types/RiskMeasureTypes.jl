@@ -27,12 +27,21 @@ end
 """
 mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
                   T2 <: AbstractVector{<:Real}} <: AbstractTR
-    val::T1
+    val::Union{<:Real, <:AbstractVector{<:Real}}
     w::T2
 end
 function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
             w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    return TR{typeof(val), typeof(w)}(val, w)
+    if isa(val, AbstractVector)
+        @smart_assert(length(val) == length(w))
+    end
+    return TR{typeof(w)}(val, w)
+end
+function Base.setproperty!(obj::TR, sym::Symbol, val)
+    if sym == :val
+        @smart_assert(length(val) == length(obj.w))
+    end
+    return setfield!(obj, sym, val)
 end
 
 mutable struct Fees

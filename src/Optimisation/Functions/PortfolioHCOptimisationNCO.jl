@@ -747,13 +747,14 @@ function get_cluster_portfolio_factor_stats(port, internal_args, i, cluster, cid
 end
 function get_cluster_portfolio_bl_stats(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                         special_rm_idx)
+    (; asset_sets, views, f_views, loadings) = port
     (; type, bl_kwargs, blf_kwargs) = internal_args[i]
     class = hasproperty(type, :class) ? type.class : Classic()
     bl_flag = isa(class, BL)
     blfm_flag = isa(class, BLFM)
     returns = port.returns
 
-    bl_bench_weights = if bl_flag && isempty(bl_kwargs) || blfm_flag && isempty(blf_kwargs)
+    bl_bench_weights = if bl_flag || blfm_flag
         (; cov_idx, wc_idx) = special_rm_idx
         kelly = hasproperty(type, :kelly) ? type.kelly : NoKelly()
         wc_flag = !isempty(wc_idx)
@@ -764,7 +765,7 @@ function get_cluster_portfolio_bl_stats(port, internal_args, i, cluster, cidx, i
         Vector{eltype(returns)}(undef, 0)
     end
 
-    if bl_flag && isempty(bl_kwargs)
+    if bl_flag && isempty(asset_sets) && isempty(views)
         (; bl_mu, bl_cov) = port
         bl_mu = get_cluster_vector(bl_mu, cidx)
         bl_cov = if cov_flag
@@ -777,7 +778,7 @@ function get_cluster_portfolio_bl_stats(port, internal_args, i, cluster, cidx, i
         bl_cov = Matrix{eltype(returns)}(undef, 0, 0)
     end
 
-    if blfm_flag && isempty(blf_kwargs)
+    if blfm_flag && isempty(f_views) && isempty(loadings)
         (; blfm_mu, blfm_cov) = port
         blfm_mu = get_cluster_vector(blfm_mu, cidx)
         blfm_cov = if cov_flag
@@ -791,6 +792,33 @@ function get_cluster_portfolio_bl_stats(port, internal_args, i, cluster, cidx, i
     end
 
     return bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov
+end
+function calc_bl_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
+    (; type, bl_kwargs, blf_kwargs) = internal_args[i]
+    class = hasproperty(type, :class) ? type.class : Classic()
+    bl_flag = isa(class, BL)
+    blfm_flag = isa(class, BLFM)
+    if !bl_flag && !blfm_flag
+        return nothing
+    end
+
+    (; asset_sets, views) = port
+    if !isempty(asset_sets) && !isempty(views)
+        if bl_flag
+            P, Q = asset_views(views, asset_sets)
+            black_litterman_statistics!(port; P = P, Q = Q, bl_kwargs...)
+        end
+        if blfm_flag
+            (; f_views, loadings) = port
+            if !isempty(f_views) && !isempty(loadings)
+                P, Q = asset_views(views, asset_sets)
+                f_P, f_Q = factor_views(f_views, loadings)
+                black_litterman_factor_statistics!(port; P = P, Q = Q, f_P = f_P, f_Q = f_Q,
+                                                   blf_kwargs...)
+            end
+        end
+    end
+    return nothing
 end
 function get_cluster_portfolio_wc_stats(port, internal_args, i, cluster, cidx, idx_sq, Nc,
                                         special_rm_idx)
@@ -869,7 +897,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
 
     class = hasproperty(type, :class) ? type.class : Classic()
 
-    (; f_assets, f_returns, a_ineq_constraints, a_eq_constraints, a_card_ineq_constraints, a_card_eq_constraints, f_ineq_constraints, f_eq_constraints, f_card_ineq_constraints, f_card_eq_constraints, hc_constraints, rb_constraints, frb_constraints, to_constraints, a_views, f_views, regression_type, mu_l, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, k_mu, k_sigma, f_risk_budget, short, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, l1, l2, solvers) = port
+    (; f_assets, f_returns, ineq_constraints, eq_constraints, card_ineq_constraints, card_eq_constraints, f_ineq_constraints, f_eq_constraints, f_card_ineq_constraints, f_card_eq_constraints, hc_constraints, rb_constraints, frb_constraints, to_constraints, views, f_views, regression_type, mu_l, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, k_mu, k_sigma, f_risk_budget, short, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, l1, l2, solvers) = port
 
     (; cov_idx, wc_idx) = special_rm_idx
     wc_flag = !isempty(wc_idx)
@@ -915,10 +943,10 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
 
     intra_port = Portfolio(; assets = assets, ret = returns, f_assets = f_assets,
                            f_ret = f_returns, asset_sets = asset_sets,
-                           a_ineq_constraints = a_ineq_constraints,
-                           a_eq_constraints = a_eq_constraints,
-                           a_card_ineq_constraints = a_card_ineq_constraints,
-                           a_card_eq_constraints = a_card_eq_constraints,
+                           ineq_constraints = ineq_constraints,
+                           eq_constraints = eq_constraints,
+                           card_ineq_constraints = card_ineq_constraints,
+                           card_eq_constraints = card_eq_constraints,
                            f_ineq_constraints = f_ineq_constraints,
                            f_eq_constraints = f_eq_constraints,
                            f_card_ineq_constraints = f_card_ineq_constraints,
@@ -926,7 +954,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                            hc_constraints = port.hc_constraints,
                            rb_constraints = port.rb_constraints,
                            frb_constraints = port.frb_constraints,
-                           to_constraints = port.to_constraints, a_views = port.a_views,
+                           to_constraints = port.to_constraints, views = port.views,
                            f_views = port.f_views, loadings = loadings,
                            regression_type = regression_type, mu_l = mu_l, mu = mu,
                            cov = cov, cor = cor, dist = dist, k = k,
@@ -975,9 +1003,8 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
         end
     end
 
-    # Turnover
-    # Black Litterman (views)
-    # Black Litterman factors (factor views)
+    calc_to_constraints!(intra_port)
+    calc_bl_stats!(intra_port, internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
     # Connection matrix
     # Cluster matrix
     # Centrality vector
