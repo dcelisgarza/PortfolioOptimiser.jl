@@ -793,7 +793,8 @@ function get_cluster_portfolio_bl_stats(port, internal_args, i, cluster, cidx, i
 
     return bl_bench_weights, bl_mu, bl_cov, blfm_mu, blfm_cov
 end
-function calc_bl_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
+function calc_bl_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                                special_rm_idx)
     (; type, bl_kwargs, blf_kwargs) = internal_args[i]
     class = hasproperty(type, :class) ? type.class : Classic()
     bl_flag = isa(class, BL)
@@ -816,6 +817,39 @@ function calc_bl_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc, speci
                 black_litterman_factor_statistics!(port; P = P, Q = Q, f_P = f_P, f_Q = f_Q,
                                                    blf_kwargs...)
             end
+        end
+    end
+    return nothing
+end
+function calc_cent_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                                  special_rm_idx)
+    (; type, cent_eq_kwargs, cent_ineq_kwargs) = internal_args[i]
+    if isempty(cent_ineq_kwargs) && isempty(cent_ineq_kwargs)
+        return nothing
+    end
+    class = hasproperty(type, :class) ? type.class : Classic()
+
+    returns = mu_sigma_returns_class(port, class)[3]
+
+    if !isempty(cent_ineq_kwargs)
+        A, B = centrality_constraint(returns; cent_ineq_kwargs...)
+        if !isempty(port.a_ineq)
+            append!(port.b_ineq, B)
+            port.a_ineq = vcat(port.a_ineq, transpose(A))
+        else
+            port.a_ineq = transpose(A)
+            port.b_ineq = B
+        end
+    end
+
+    if !isempty(cent_eq_kwargs)
+        A, B = centrality_constraint(returns; cent_eq_kwargs...)
+        if !isempty(port.a_eq)
+            append!(port.b_eq, B)
+            port.a_eq = vcat(port.a_eq, transpose(A))
+        else
+            port.a_eq = transpose(A)
+            port.b_eq = B
         end
     end
     return nothing
@@ -1004,16 +1038,17 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
     end
 
     calc_to_constraints!(intra_port)
-    calc_bl_stats!(intra_port, internal_args, i, cluster, cidx, idx_sq, Nc, special_rm_idx)
+    calc_bl_cluster_stats!(intra_port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                           special_rm_idx)
+    calc_cent_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                             special_rm_idx)
     # Connection matrix
     # Cluster matrix
-    # Centrality vector
 
     post_mod_output = post_modify_intra_port!(post_modify, intra_port, internal_args, i,
                                               cluster, cidx, idx_sq, Nc, special_rm_idx)
 
     w = optimise!(intra_port, type)
-    display(w)
     if !isempty(w)
         w = w.weights
     else

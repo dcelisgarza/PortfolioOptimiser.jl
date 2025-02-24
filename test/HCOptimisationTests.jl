@@ -738,266 +738,249 @@ end
     @test n14 <= n11_1
 end
 
-@testset "Weight bounds" begin
-    portfolio = Portfolio(; prices = prices,
-                          solvers = PortOptSolver(; name = :Clarabel,
-                                                  check_sol = (; allow_local = true,
-                                                               allow_almost = true),
-                                                  solver = Clarabel.Optimizer,
-                                                  params = Dict("verbose" => false,
-                                                                "max_step_fraction" => 0.75)))
+# @testset "Weight bounds" begin
+portfolio = Portfolio(; prices = prices,
+                      solvers = PortOptSolver(; name = :Clarabel,
+                                              check_sol = (; allow_local = true,
+                                                           allow_almost = true),
+                                              solver = Clarabel.Optimizer,
+                                              params = Dict("verbose" => false,
+                                                            "max_step_fraction" => 0.75)))
 
-    asset_statistics!(portfolio)
-    clust_alg = HAC()
-    clust_opt = ClustOpt()
+asset_statistics!(portfolio)
+clust_alg = HAC()
+clust_opt = ClustOpt()
 
-    asset_sets = DataFrame("Asset" => portfolio.assets,
-                           "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2,
-                                       3, 1],
-                           "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1,
-                                        4, 2, 1],
-                           "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2,
-                                       2, 1],
-                           "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1,
-                                        2, 2, 1],
-                           "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2,
-                                        3, 4, 1],
-                           "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1,
-                                        4, 2, 2])
-    constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
-                            "Type" => ["Asset", "Asset", "All Assets", "All Assets",
-                                       "Each Asset in Subset", "Each Asset in Subset",
-                                       "Asset"],
-                            "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
-                            "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
-                            "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
-                            "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
-    w_min, w_max = calc_hc_constraints(constraints, asset_sets)
-    N = length(w_min)
+asset_sets = DataFrame("Asset" => portfolio.assets,
+                       "PDBHT" => [1, 2, 1, 1, 1, 3, 2, 2, 3, 3, 3, 4, 4, 3, 3, 4, 2, 2, 3,
+                                   1],
+                       "SPDBHT" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 3, 3, 2, 3, 3, 3, 3, 1, 4, 2,
+                                    1],
+                       "Pward" => [1, 1, 1, 1, 1, 2, 3, 2, 2, 2, 2, 4, 4, 2, 3, 4, 1, 2, 2,
+                                   1],
+                       "SPward" => [1, 1, 1, 1, 1, 2, 2, 3, 2, 2, 2, 4, 3, 2, 2, 3, 1, 2, 2,
+                                    1],
+                       "G2DBHT" => [1, 2, 1, 1, 1, 3, 2, 3, 4, 3, 4, 3, 3, 4, 4, 3, 2, 3, 4,
+                                    1],
+                       "G2ward" => [1, 1, 1, 1, 1, 2, 3, 4, 2, 2, 4, 2, 3, 3, 3, 2, 1, 4, 2,
+                                    2])
+constraints = DataFrame("Enabled" => [true, true, true, true, true, true, false],
+                        "Type" => ["Asset", "Asset", "All Assets", "All Assets",
+                                   "Each Asset in Subset", "Each Asset in Subset", "Asset"],
+                        "Set" => ["", "", "", "", "PDBHT", "Pward", ""],
+                        "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
+                        "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
+                        "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
+w_min, w_max = calc_hc_constraints(constraints, asset_sets)
+N = length(w_min)
 
-    portfolio.w_min = w_min
-    portfolio.w_max = w_max
-    cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
+portfolio.w_min = w_min
+portfolio.w_max = w_max
+cluster_assets!(portfolio; clust_alg = clust_alg, clust_opt = clust_opt)
 
-    w1 = optimise!(portfolio, HRP(; rm = CDaR()))
-    wt = [0.05927474378621105, 0.050096081527465364, 0.057435012961977804,
-          0.033075532524845755, 0.06999999999999999, 0.039999999999999994,
-          0.03361343145360156, 0.04999999999999999, 0.039999999999999994,
-          0.054959447747864446, 0.039999999999999994, 0.019999999999999997,
-          0.019999999999999997, 0.06999999999999999, 0.039999999999999994,
-          0.06816457729305708, 0.06999999999999999, 0.06999999999999999,
-          0.04338117270497694, 0.06999999999999999]
-    @test isapprox(w1.weights, wt, rtol = 0.001)
-    @test all(w1.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w1.weights .<= w_max .+ sqrt(eps()) * N)
+w1 = optimise!(portfolio, HRP(; rm = CDaR()))
+wt = [0.05927474378621105, 0.050096081527465364, 0.057435012961977804, 0.033075532524845755,
+      0.06999999999999999, 0.039999999999999994, 0.03361343145360156, 0.04999999999999999,
+      0.039999999999999994, 0.054959447747864446, 0.039999999999999994,
+      0.019999999999999997, 0.019999999999999997, 0.06999999999999999, 0.039999999999999994,
+      0.06816457729305708, 0.06999999999999999, 0.06999999999999999, 0.04338117270497694,
+      0.06999999999999999]
+@test isapprox(w1.weights, wt, rtol = 0.001)
+@test all(w1.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w1.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w1_1 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = ROJWF())))
-    wt = [0.0699999955113408, 0.04727872130012514, 0.05697281708956848,
-          0.031215392670285426, 0.07000000042435879, 0.03999999989232963,
-          0.03172304062599841, 0.05000000010823203, 0.039999999870180866,
-          0.05186857920340135, 0.04000000048200124, 0.01999999983736234,
-          0.019999999905450372, 0.06999999975022839, 0.03999999988912165,
-          0.06999999953348054, 0.07000000043404352, 0.0700000004734982, 0.04094145261427832,
-          0.07000000038471464]
-    @test isapprox(w1_1.weights, wt)
-    @test all(w1_1.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w1_1.weights .<= w_max .+ sqrt(eps()) * N)
+w1_1 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = ROJWF())))
+wt = [0.0699999955113408, 0.04727872130012514, 0.05697281708956848, 0.031215392670285426,
+      0.07000000042435879, 0.03999999989232963, 0.03172304062599841, 0.05000000010823203,
+      0.039999999870180866, 0.05186857920340135, 0.04000000048200124, 0.01999999983736234,
+      0.019999999905450372, 0.06999999975022839, 0.03999999988912165, 0.06999999953348054,
+      0.07000000043404352, 0.0700000004734982, 0.04094145261427832, 0.07000000038471464]
+@test isapprox(w1_1.weights, wt)
+@test all(w1_1.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w1_1.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w1_2 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = RSJWF())))
-    wt = [0.05968793997944266, 0.04995503884836061, 0.057722733480619286,
-          0.032382091987901866, 0.06999999499105145, 0.039999999886375995,
-          0.032927994132740473, 0.050000003282147244, 0.039999999465947005,
-          0.055089747927454406, 0.04000000020988046, 0.02000000150415533,
-          0.01999999952239743, 0.0699999736687402, 0.03999999953466318, 0.06928599178691963,
-          0.06999999522555336, 0.06999999628285072, 0.042948506934650264,
-          0.06999999134814851]
-    @test isapprox(w1_2.weights, wt)
-    @test all(w1_2.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w1_2.weights .<= w_max .+ sqrt(eps()) * N)
+w1_2 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = RSJWF())))
+wt = [0.05968793997944266, 0.04995503884836061, 0.057722733480619286, 0.032382091987901866,
+      0.06999999499105145, 0.039999999886375995, 0.032927994132740473, 0.050000003282147244,
+      0.039999999465947005, 0.055089747927454406, 0.04000000020988046, 0.02000000150415533,
+      0.01999999952239743, 0.0699999736687402, 0.03999999953466318, 0.06928599178691963,
+      0.06999999522555336, 0.06999999628285072, 0.042948506934650264, 0.06999999134814851]
+@test isapprox(w1_2.weights, wt)
+@test all(w1_2.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w1_2.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w1_3 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = AOJWF())))
-    wt = [0.057364912846114065, 0.048752191394273905, 0.05564151063694583,
-          0.03278388203530661, 0.0700000009978663, 0.04180146612390559, 0.03328620020944123,
-          0.05173717215728229, 0.04182990540805701, 0.05336997481187418,
-          0.04000000116060582, 0.021884926824836937, 0.021860455167492077,
-          0.06912766742554988, 0.04188898670906466, 0.06557792195238114,
-          0.07000000099529383, 0.07000000104674822, 0.043092821182330106,
-          0.07000000091463027]
-    @test isapprox(w1_3.weights, wt)
-    @test all(w1_3.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w1_3.weights .<= w_max .+ sqrt(eps()) * N)
+w1_3 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = AOJWF())))
+wt = [0.057364912846114065, 0.048752191394273905, 0.05564151063694583, 0.03278388203530661,
+      0.0700000009978663, 0.04180146612390559, 0.03328620020944123, 0.05173717215728229,
+      0.04182990540805701, 0.05336997481187418, 0.04000000116060582, 0.021884926824836937,
+      0.021860455167492077, 0.06912766742554988, 0.04188898670906466, 0.06557792195238114,
+      0.07000000099529383, 0.07000000104674822, 0.043092821182330106, 0.07000000091463027]
+@test isapprox(w1_3.weights, wt)
+@test all(w1_3.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w1_3.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w1_4 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = AOJWF())))
-    wt = [0.057364912846114065, 0.048752191394273905, 0.05564151063694583,
-          0.03278388203530661, 0.0700000009978663, 0.04180146612390559, 0.03328620020944123,
-          0.05173717215728229, 0.04182990540805701, 0.05336997481187418,
-          0.04000000116060582, 0.021884926824836937, 0.021860455167492077,
-          0.06912766742554988, 0.04188898670906466, 0.06557792195238114,
-          0.07000000099529383, 0.07000000104674822, 0.043092821182330106,
-          0.07000000091463027]
-    @test isapprox(w1_4.weights, wt)
-    @test all(w1_4.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w1_4.weights .<= w_max .+ sqrt(eps()) * N)
+w1_4 = optimise!(portfolio, HRP(; rm = CDaR(), finaliser = JWF(; version = AOJWF())))
+wt = [0.057364912846114065, 0.048752191394273905, 0.05564151063694583, 0.03278388203530661,
+      0.0700000009978663, 0.04180146612390559, 0.03328620020944123, 0.05173717215728229,
+      0.04182990540805701, 0.05336997481187418, 0.04000000116060582, 0.021884926824836937,
+      0.021860455167492077, 0.06912766742554988, 0.04188898670906466, 0.06557792195238114,
+      0.07000000099529383, 0.07000000104674822, 0.043092821182330106, 0.07000000091463027]
+@test isapprox(w1_4.weights, wt)
+@test all(w1_4.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w1_4.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w2 = optimise!(portfolio, HERC(; rm = CDaR()))
-    wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.02, 0.05, 0.04, 0.04, 0.04, 0.02, 0.02,
-          0.04, 0.04, 0.059848065481384424, 0.07, 0.06015193451861548, 0.04, 0.07]
-    @test isapprox(w2.weights, wt, rtol = 0.05)
-    @test all(w2.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w2.weights .<= w_max .+ sqrt(eps()) * N)
+w2 = optimise!(portfolio, HERC(; rm = CDaR()))
+wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.02, 0.05, 0.04, 0.04, 0.04, 0.02, 0.02, 0.04,
+      0.04, 0.059848065481384424, 0.07, 0.06015193451861548, 0.04, 0.07]
+@test isapprox(w2.weights, wt, rtol = 0.05)
+@test all(w2.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w2.weights .<= w_max .+ sqrt(eps()) * N)
 
-    w3 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
-    wt = [0.07, 0.027692307692307686, 0.07, 0.027692307692307686, 0.027692307692307686,
-          0.05538461538461537, 0.027692307692307686, 0.06923076923076922,
-          0.05538461538461537, 0.05538461538461537, 0.04, 0.027692307692307686,
-          0.027692307692307686, 0.05538461538461537, 0.05538461538461537,
-          0.027692307692307686, 0.07, 0.07, 0.07, 0.07]
-    @test isapprox(w3.weights, wt)
-    @test all(w3.weights .>= w_min .- sqrt(eps()) * N)
-    @test all(w3.weights .<= w_max .+ sqrt(eps()) * N)
+w3 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
+wt = [0.07, 0.027692307692307686, 0.07, 0.027692307692307686, 0.027692307692307686,
+      0.05538461538461537, 0.027692307692307686, 0.06923076923076922, 0.05538461538461537,
+      0.05538461538461537, 0.04, 0.027692307692307686, 0.027692307692307686,
+      0.05538461538461537, 0.05538461538461537, 0.027692307692307686, 0.07, 0.07, 0.07,
+      0.07]
+@test isapprox(w3.weights, wt)
+@test all(w3.weights .>= w_min .- sqrt(eps()) * N)
+@test all(w3.weights .<= w_max .+ sqrt(eps()) * N)
 
-    portfolio.w_min = 0.03
-    portfolio.w_max = 0.07
-    w4 = optimise!(portfolio, HRP(; rm = CDaR()))
-    wt = [0.05751902789250354, 0.04861223729749336, 0.0557337898326743, 0.03209583637708745,
-          0.07, 0.03, 0.0326178027578793, 0.04184798638718673, 0.03, 0.053331550775954466,
-          0.07, 0.03, 0.03, 0.07, 0.03, 0.0661455448334159, 0.07, 0.07, 0.04209622384580504,
-          0.07]
-    @test isapprox(w4.weights, wt, rtol = 0.0001)
-    @test all(w4.weights .>= 0.03 .- sqrt(eps()) * N)
-    @test all(w4.weights .<= 0.07 .+ sqrt(eps()) * N)
+portfolio.w_min = 0.03
+portfolio.w_max = 0.07
+w4 = optimise!(portfolio, HRP(; rm = CDaR()))
+wt = [0.05751902789250354, 0.04861223729749336, 0.0557337898326743, 0.03209583637708745,
+      0.07, 0.03, 0.0326178027578793, 0.04184798638718673, 0.03, 0.053331550775954466, 0.07,
+      0.03, 0.03, 0.07, 0.03, 0.0661455448334159, 0.07, 0.07, 0.04209622384580504, 0.07]
+@test isapprox(w4.weights, wt, rtol = 0.0001)
+@test all(w4.weights .>= 0.03 .- sqrt(eps()) * N)
+@test all(w4.weights .<= 0.07 .+ sqrt(eps()) * N)
 
-    w5 = optimise!(portfolio, HERC(; rm = CDaR()))
-    wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.03923076923076922, 0.07,
-          0.03923076923076922, 0.03923076923076922, 0.07]
-    @test isapprox(w5.weights, wt)
-    @test all(w5.weights .>= 0.03 .- sqrt(eps()) * N)
-    @test all(w5.weights .<= 0.07 .+ sqrt(eps()) * N)
+w5 = optimise!(portfolio, HERC(; rm = CDaR()))
+wt = [0.07, 0.07, 0.07, 0.07, 0.07, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.07, 0.03923076923076922, 0.03923076923076922, 0.07]
+@test isapprox(w5.weights, wt)
+@test all(w5.weights .>= 0.03 .- sqrt(eps()) * N)
+@test all(w5.weights .<= 0.07 .+ sqrt(eps()) * N)
 
-    w6 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
-    wt = [0.07, 0.03923076923076922, 0.07, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.07, 0.03923076923076922,
-          0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
-          0.03923076923076922, 0.07, 0.07, 0.07, 0.07]
-    @test isapprox(w6.weights, wt)
-    @test all(w6.weights .>= 0.03 .- sqrt(eps()) * N)
-    @test all(w6.weights .<= 0.07 .+ sqrt(eps()) * N)
+w6 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
+wt = [0.07, 0.03923076923076922, 0.07, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.03923076923076922, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.07, 0.03923076923076922, 0.03923076923076922,
+      0.03923076923076922, 0.03923076923076922, 0.03923076923076922, 0.07, 0.07, 0.07, 0.07]
+@test isapprox(w6.weights, wt)
+@test all(w6.weights .>= 0.03 .- sqrt(eps()) * N)
+@test all(w6.weights .<= 0.07 .+ sqrt(eps()) * N)
 
-    portfolio.w_min = 0
-    portfolio.w_max = 1
-    w7 = optimise!(portfolio, HRP(; rm = CDaR()))
-    w8 = optimise!(portfolio, HERC(; rm = CDaR()))
-    w9 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
+portfolio.w_min = 0
+portfolio.w_max = 1
+w7 = optimise!(portfolio, HRP(; rm = CDaR()))
+w8 = optimise!(portfolio, HERC(; rm = CDaR()))
+w9 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
 
-    portfolio.w_min = Float64[]
-    portfolio.w_max = Float64[]
-    w10 = optimise!(portfolio, HRP(; rm = CDaR()))
-    w11 = optimise!(portfolio, HERC(; rm = CDaR()))
-    w12 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
+portfolio.w_min = Float64[]
+portfolio.w_max = Float64[]
+w10 = optimise!(portfolio, HRP(; rm = CDaR()))
+w11 = optimise!(portfolio, HERC(; rm = CDaR()))
+w12 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
 
-    @test isapprox(w7.weights, w10.weights)
-    @test isapprox(w8.weights, w11.weights)
-    @test isapprox(w9.weights, w12.weights)
+@test isapprox(w7.weights, w10.weights)
+@test isapprox(w8.weights, w11.weights)
+@test isapprox(w9.weights, w12.weights)
 
-    portfolio.short = true
-    portfolio.w_min = -0.03
-    portfolio.w_max = 0.15
-    w13 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
-    wt = [0.14999999999999997, -0.029999999999999995, 0.14999999999999997,
-          -0.029999999999999995, -0.029999999999999995, 0.08531350787535882,
-          -0.029999999999999995, 0.06666858517236564, -0.029999999999999995,
-          0.02877758773517308, 0.14999999999999997, -0.029999999999999995,
-          0.011366859578601332, -0.029999999999999995, -0.002126540361498923,
-          -0.029999999999999995, 0.14999999999999997, 0.14999999999999997,
-          0.14999999999999997, 0.14999999999999997]
-    @test isapprox(w13.weights, wt)
-    @test all(w13.weights .>= -0.03 .- sqrt(eps()) * N)
-    @test all(w13.weights .<= 0.15 .+ sqrt(eps()) * N)
+portfolio.short = true
+portfolio.w_min = -0.03
+portfolio.w_max = 0.15
+w13 = optimise!(portfolio, NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR()))))
+wt = [0.14999999999999997, -0.029999999999999995, 0.14999999999999997,
+      -0.029999999999999995, -0.029999999999999995, 0.08531350787535882,
+      -0.029999999999999995, 0.06666858517236564, -0.029999999999999995,
+      0.02877758773517308, 0.14999999999999997, -0.029999999999999995, 0.011366859578601332,
+      -0.029999999999999995, -0.002126540361498923, -0.029999999999999995,
+      0.14999999999999997, 0.14999999999999997, 0.14999999999999997, 0.14999999999999997]
+@test isapprox(w13.weights, wt)
+@test all(w13.weights .>= -0.03 .- sqrt(eps()) * N)
+@test all(w13.weights .<= 0.15 .+ sqrt(eps()) * N)
 
-    w13_1 = optimise!(portfolio,
-                      NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
-                          finaliser = JWF(; version = ROJWF())))
-    wt = [0.14999999964859664, 0.040370839007783065, 0.15000000073197584,
-          -0.02178769216507173, -0.023260205089099935, 0.033031224830834156,
-          -0.0164904095128501, 0.02581238398129523, -0.02790858030435506,
-          0.011141951519275791, 0.15000000127972346, -0.015621800729896732,
-          0.004400959505832409, -0.0300000006984973, -0.0008233424499980418,
-          -0.028865334196442202, 0.15000000135442945, 0.15000000063290642,
-          0.1500000012930362, 0.1500000013605241]
-    @test isapprox(w13_1.weights, wt)
-    @test all(w13_1.weights .>= -0.03 .- sqrt(eps()) * N)
-    @test all(w13_1.weights .<= 0.15 .+ sqrt(eps()) * N)
+w13_1 = optimise!(portfolio,
+                  NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
+                      finaliser = JWF(; version = ROJWF())))
+wt = [0.14999999964859664, 0.040370839007783065, 0.15000000073197584, -0.02178769216507173,
+      -0.023260205089099935, 0.033031224830834156, -0.0164904095128501, 0.02581238398129523,
+      -0.02790858030435506, 0.011141951519275791, 0.15000000127972346,
+      -0.015621800729896732, 0.004400959505832409, -0.0300000006984973,
+      -0.0008233424499980418, -0.028865334196442202, 0.15000000135442945,
+      0.15000000063290642, 0.1500000012930362, 0.1500000013605241]
+@test isapprox(w13_1.weights, wt)
+@test all(w13_1.weights .>= -0.03 .- sqrt(eps()) * N)
+@test all(w13_1.weights .<= 0.15 .+ sqrt(eps()) * N)
 
-    w13_2 = optimise!(portfolio,
-                      NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
-                          finaliser = JWF(; version = RSJWF())))
-    wt = [0.13676723172008057, -0.01814258524880257, 0.15000000091672347,
-          -0.015969227439151374, -0.01662868456316418, 0.04640430587383024,
-          -0.013157308466385966, 0.0339789313130122, -0.018361692436895456,
-          0.01266356855846837, 0.15000000199165217, -0.012630585063809275,
-          0.004638358134100107, -0.020094631031805647, -0.0008150335191599346,
-          -0.01865265779471798, 0.15000000215459158, 0.15000000079998788,
-          0.15000000198042754, 0.15000000212101786]
-    @test isapprox(w13_2.weights, wt)
-    @test all(w13_2.weights .>= -0.03 .- sqrt(eps()) * N)
-    @test all(w13_2.weights .<= 0.15 .+ sqrt(eps()) * N)
+w13_2 = optimise!(portfolio,
+                  NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
+                      finaliser = JWF(; version = RSJWF())))
+wt = [0.13676723172008057, -0.01814258524880257, 0.15000000091672347, -0.015969227439151374,
+      -0.01662868456316418, 0.04640430587383024, -0.013157308466385966, 0.0339789313130122,
+      -0.018361692436895456, 0.01266356855846837, 0.15000000199165217,
+      -0.012630585063809275, 0.004638358134100107, -0.020094631031805647,
+      -0.0008150335191599346, -0.01865265779471798, 0.15000000215459158,
+      0.15000000079998788, 0.15000000198042754, 0.15000000212101786]
+@test isapprox(w13_2.weights, wt)
+@test all(w13_2.weights .>= -0.03 .- sqrt(eps()) * N)
+@test all(w13_2.weights .<= 0.15 .+ sqrt(eps()) * N)
 
-    w13_3 = optimise!(portfolio,
-                      NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
-                          finaliser = JWF(; version = AOJWF())))
-    wt = [0.07838596818283826, -0.006187041798976532, 0.12177627795109004,
-          -0.0032051818156493862, -0.003615734268447658, 0.03949767754142414,
-          -0.0013308304367659017, 0.032465424447549365, -0.004639591503695699,
-          0.01853613665854565, 0.15000000066240204, -0.0009597608731757931,
-          0.01252119349577821, -0.005646339312839102, 0.008216174275317654,
-          -0.004804737712312188, 0.15000000074763667, 0.11899036229938285,
-          0.15000000066671793, 0.15000000079317793]
-    @test isapprox(w13_3.weights, wt)
-    @test all(w13_3.weights .>= -0.03 .- sqrt(eps()) * N)
-    @test all(w13_3.weights .<= 0.15 .+ sqrt(eps()) * N)
+w13_3 = optimise!(portfolio,
+                  NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
+                      finaliser = JWF(; version = AOJWF())))
+wt = [0.07838596818283826, -0.006187041798976532, 0.12177627795109004,
+      -0.0032051818156493862, -0.003615734268447658, 0.03949767754142414,
+      -0.0013308304367659017, 0.032465424447549365, -0.004639591503695699,
+      0.01853613665854565, 0.15000000066240204, -0.0009597608731757931, 0.01252119349577821,
+      -0.005646339312839102, 0.008216174275317654, -0.004804737712312188,
+      0.15000000074763667, 0.11899036229938285, 0.15000000066671793, 0.15000000079317793]
+@test isapprox(w13_3.weights, wt)
+@test all(w13_3.weights .>= -0.03 .- sqrt(eps()) * N)
+@test all(w13_3.weights .<= 0.15 .+ sqrt(eps()) * N)
 
-    w13_4 = optimise!(portfolio,
-                      NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
-                          finaliser = JWF(; version = ASJWF())))
-    wt = [0.08733749701146554, -0.029999998790760967, 0.13151207133940515,
-          -0.006893196150548155, -0.008365701783481633, 0.04792568071491608,
-          -0.0015959420419500764, 0.040706832292976836, -0.01301405232550986,
-          0.026036380233699363, 0.15000000170124103, -0.0007273381878140592,
-          0.01929537991901988, -0.020936402501242252, 0.014071075235170587,
-          -0.01397079992208166, 0.1500000018747393, 0.12861850782574158,
-          0.15000000167230898, 0.1500000018827043]
-    @test isapprox(w13_4.weights, wt)
-    @test all(w13_4.weights .>= -0.03 .- sqrt(eps()) * N)
-    @test all(w13_4.weights .<= 0.15 .+ sqrt(eps()) * N)
+w13_4 = optimise!(portfolio,
+                  NCO(; internal = NCOArgs(; type = Trad(; rm = CDaR())),
+                      finaliser = JWF(; version = ASJWF())))
+wt = [0.08733749701146554, -0.029999998790760967, 0.13151207133940515,
+      -0.006893196150548155, -0.008365701783481633, 0.04792568071491608,
+      -0.0015959420419500764, 0.040706832292976836, -0.01301405232550986,
+      0.026036380233699363, 0.15000000170124103, -0.0007273381878140592,
+      0.01929537991901988, -0.020936402501242252, 0.014071075235170587,
+      -0.01397079992208166, 0.1500000018747393, 0.12861850782574158, 0.15000000167230898,
+      0.1500000018827043]
+@test isapprox(w13_4.weights, wt)
+@test all(w13_4.weights .>= -0.03 .- sqrt(eps()) * N)
+@test all(w13_4.weights .<= 0.15 .+ sqrt(eps()) * N)
 
-    portfolio = Portfolio(; prices = prices,
-                          solvers = PortOptSolver(; name = :Clarabel,
-                                                  check_sol = (; allow_local = true,
-                                                               allow_almost = true),
-                                                  solver = Clarabel.Optimizer,
-                                                  params = Dict("verbose" => false,
-                                                                "max_step_fraction" => 0.75)))
+portfolio = Portfolio(; prices = prices,
+                      solvers = PortOptSolver(; name = :Clarabel,
+                                              check_sol = (; allow_local = true,
+                                                           allow_almost = true),
+                                              solver = Clarabel.Optimizer,
+                                              params = Dict("verbose" => false,
+                                                            "max_step_fraction" => 0.75)))
 
-    asset_statistics!(portfolio)
-    clust_alg = HAC()
-    clust_opt = ClustOpt()
-    cluster_assets!(portfolio)
+asset_statistics!(portfolio)
+clust_alg = HAC()
+clust_opt = ClustOpt()
+cluster_assets!(portfolio)
 
-    w1 = optimise!(portfolio, NCO())
+w1 = optimise!(portfolio, NCO())
 
-    # portfolio.asset_sets = asset_sets
-    # portfolio.ineq_constraints = DataFrame("Enabled" => [true], "Type" => ["Asset"],
-    #                                        "Set" => [""], "Position" => ["T"], "Sign" => [">="],
-    #                                        "Relative_Type" => ["Asset"],
-    #                                        "Relative_Position" => ["PFE"], "Weight" => [""],
-    #                                        "Factor" => [10])
-    # w2 = optimise!(portfolio, NCO())
+portfolio.asset_sets = asset_sets
+portfolio.ineq_constraints = DataFrame("Enabled" => [true], "Type" => ["Asset"],
+                                       "Set" => [""], "Position" => ["T"], "Sign" => ["<="],
+                                       "Relative_Type" => ["Asset"],
+                                       "Relative_Position" => ["PFE"], "Weight" => [""],
+                                       "Factor" => [0.5])
+w2 = optimise!(portfolio, NCO())
 
-end
+# end
 
 @testset "Schur HRP" begin
     portfolio = Portfolio(; prices = prices,
