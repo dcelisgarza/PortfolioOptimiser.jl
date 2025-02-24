@@ -821,10 +821,10 @@ function calc_bl_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, N
     end
     return nothing
 end
-function calc_cent_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
-                                  special_rm_idx)
-    (; type, cent_eq_kwargs, cent_ineq_kwargs) = internal_args[i]
-    if isempty(cent_ineq_kwargs) && isempty(cent_ineq_kwargs)
+function calc_cent_cluster_constraints!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                                        special_rm_idx)
+    (; type, cent_ineq_kwargs, cent_eq_kwargs) = internal_args[i]
+    if isempty(cent_ineq_kwargs) && isempty(cent_eq_kwargs)
         return nothing
     end
     class = hasproperty(type, :class) ? type.class : Classic()
@@ -852,6 +852,32 @@ function calc_cent_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq,
             port.b_eq = B
         end
     end
+    return nothing
+end
+function calc_network_cluster_cluster_constraints!(port, internal_args, i, cluster, cidx,
+                                                   idx_sq, Nc, special_rm_idx)
+    (; type, clst_constr_kwargs, ntwk_constr_kwargs) = internal_args[i]
+    if isempty(clst_constr_kwargs) && isempty(ntwk_constr_kwargs)
+        return nothing
+    end
+    class = hasproperty(type, :class) ? type.class : Classic()
+    returns = mu_sigma_returns_class(port, class)[3]
+
+    if !isempty(clst_constr_kwargs) &&
+       haskey(clst_constr_kwargs, :type) &&
+       isa(clst_constr_kwargs.type, Union{SDP, IP})
+        type = clst_constr_kwargs.type
+        type.A = connection_matrix(returns; clst_constr_kwargs...)
+        port.cluster_adj = type
+    end
+    if !isempty(ntwk_constr_kwargs) &&
+       haskey(ntwk_constr_kwargs, :type) &&
+       isa(ntwk_constr_kwargs.type, Union{SDP, IP})
+        type = ntwk_constr_kwargs.type
+        type.A = cluster_matrix(returns; ntwk_constr_kwargs...)
+        port.network_adj = type
+    end
+
     return nothing
 end
 function get_cluster_portfolio_wc_stats(port, internal_args, i, cluster, cidx, idx_sq, Nc,
@@ -933,7 +959,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
 
     (; f_assets, f_returns, ineq_constraints, eq_constraints, card_ineq_constraints, card_eq_constraints, f_ineq_constraints, f_eq_constraints, f_card_ineq_constraints, f_card_eq_constraints, hc_constraints, rb_constraints, frb_constraints, to_constraints, views, f_views, regression_type, mu_l, k, max_num_assets_kurt, max_num_assets_kurt_scale, f_mu, f_cov, k_mu, k_sigma, f_risk_budget, short, budget_lb, budget, budget_ub, short_budget_ub, short_budget, short_budget_lb, card_scale, card, nea, l1, l2, solvers) = port
 
-    (; cov_idx, wc_idx) = special_rm_idx
+    wc_idx = special_rm_idx.wc_idx
     wc_flag = !isempty(wc_idx)
     factor_flag = isa(class, Union{FM, FC})
     hc_flag = isa(type, HCOptimType)
@@ -985,11 +1011,10 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                            f_eq_constraints = f_eq_constraints,
                            f_card_ineq_constraints = f_card_ineq_constraints,
                            f_card_eq_constraints = f_card_eq_constraints,
-                           hc_constraints = port.hc_constraints,
-                           rb_constraints = port.rb_constraints,
-                           frb_constraints = port.frb_constraints,
-                           to_constraints = port.to_constraints, views = port.views,
-                           f_views = port.f_views, loadings = loadings,
+                           hc_constraints = hc_constraints, rb_constraints = rb_constraints,
+                           frb_constraints = frb_constraints,
+                           to_constraints = to_constraints, views = views,
+                           f_views = f_views, loadings = loadings,
                            regression_type = regression_type, mu_l = mu_l, mu = mu,
                            cov = cov, cor = cor, dist = dist, k = k,
                            max_num_assets_kurt = max_num_assets_kurt,
@@ -1040,10 +1065,10 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
     calc_to_constraints!(intra_port)
     calc_bl_cluster_stats!(intra_port, internal_args, i, cluster, cidx, idx_sq, Nc,
                            special_rm_idx)
-    calc_cent_cluster_stats!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
-                             special_rm_idx)
-    # Connection matrix
-    # Cluster matrix
+    calc_cent_cluster_constraints!(port, internal_args, i, cluster, cidx, idx_sq, Nc,
+                                   special_rm_idx)
+    calc_network_cluster_cluster_constraints!(port, internal_args, i, cluster, cidx, idx_sq,
+                                              Nc, special_rm_idx)
 
     post_mod_output = post_modify_intra_port!(post_modify, intra_port, internal_args, i,
                                               cluster, cidx, idx_sq, Nc, special_rm_idx)

@@ -55,7 +55,7 @@ end
 function connection_matrix(X::AbstractMatrix;
                            cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                            dist_type::DistType = DistCanonical(),
-                           network_type::NetworkType = MST())
+                           network_type::NetworkType = MST(), kwargs...)
     A = calc_adjacency(network_type, X, cor_type, dist_type)
 
     A_p = similar(Matrix(A))
@@ -103,7 +103,7 @@ end
 function cluster_matrix(X::AbstractMatrix;
                         cor_type::PortfolioOptimiserCovCor = PortCovCor(),
                         dist_type::DistType = DistCanonical(), clust_alg::ClustAlg = HAC(),
-                        clust_opt::ClustOpt = ClustOpt())
+                        clust_opt::ClustOpt = ClustOpt(), kwargs...)
     clusters = cluster_assets(X; cor_type = cor_type, dist_type = dist_type,
                               clust_alg = clust_alg, clust_opt = clust_opt)[1]
 
