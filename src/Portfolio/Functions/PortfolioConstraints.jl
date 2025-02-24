@@ -32,13 +32,13 @@ function calc_linear_constraints!(port::AbstractPortfolio;
         port.ineq_constraints = ineq_constraints
         A, B = asset_constraints(ineq_constraints, asset_sets)
         A_ineq = vcat(A_ineq, A)
-        push!(B_ineq, B)
+        append!(B_ineq, B)
     end
     if !loadings_flag && !isempty(f_ineq_constraints)
         port.f_ineq_constraints = f_ineq_constraints
         A, B = factor_constraints(f_ineq_constraints, loadings)
         A_ineq = vcat(A_ineq, A)
-        push!(B_ineq, B)
+        append!(B_ineq, B)
     end
     if !isempty(A_ineq)
         port.a_ineq, port.b_ineq = A_ineq, B_ineq
@@ -50,13 +50,13 @@ function calc_linear_constraints!(port::AbstractPortfolio;
         port.eq_constraints = eq_constraints
         A, B = asset_constraints(eq_constraints, asset_sets)
         A_eq = vcat(A_eq, A)
-        push!(B_eq, B)
+        append!(B_eq, B)
     end
     if !loadings_flag && !isempty(f_eq_constraints)
         port.f_eq_constraints = f_eq_constraints
         A, B = factor_constraints(f_eq_constraints, loadings)
         A_eq = vcat(A_eq, A)
-        push!(B_eq, B)
+        append!(B_eq, B)
     end
     if !isempty(A_eq)
         port.a_eq, port.b_eq = A_eq, B_eq
@@ -68,13 +68,13 @@ function calc_linear_constraints!(port::AbstractPortfolio;
         port.card_ineq_constraints = card_ineq_constraints
         A, B = asset_constraints(card_ineq_constraints, asset_sets)
         A_card_ineq = vcat(A_card_ineq, A)
-        push!(B_card_ineq, B)
+        append!(B_card_ineq, B)
     end
     if !loadings_flag && !isempty(f_card_ineq_constraints)
         port.f_card_ineq_constraints = f_card_ineq_constraints
         A, B = factor_constraints(f_card_ineq_constraints, loadings)
         A_card_ineq = vcat(A_card_ineq, A)
-        push!(B_card_ineq, B)
+        append!(B_card_ineq, B)
     end
     if !isempty(A_card_ineq)
         port.a_card_ineq, port.b_card_ineq = A_card_ineq, B_card_ineq
@@ -86,13 +86,13 @@ function calc_linear_constraints!(port::AbstractPortfolio;
         port.card_eq_constraints = card_eq_constraints
         A, B = asset_constraints(card_eq_constraints, asset_sets)
         A_card_eq = vcat(A_card_eq, A)
-        push!(B_card_eq, B)
+        append!(B_card_eq, B)
     end
     if !loadings_flag && !isempty(f_card_eq_constraints)
         port.f_card_eq_constraints = f_card_eq_constraints
         A, B = factor_constraints(f_card_eq_constraints, loadings)
         A_card_eq = vcat(A_card_eq, A)
-        push!(B_card_eq, B)
+        append!(B_card_eq, B)
     end
     if !isempty(A_card_eq)
         port.a_card_eq, port.b_card_eq = A_card_eq, B_card_eq

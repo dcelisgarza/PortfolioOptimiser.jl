@@ -973,6 +973,30 @@ end
     @test isapprox(w13_4.weights, wt)
     @test all(w13_4.weights .>= -0.03 .- sqrt(eps()) * N)
     @test all(w13_4.weights .<= 0.15 .+ sqrt(eps()) * N)
+
+    portfolio = Portfolio(; prices = prices,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+
+    asset_statistics!(portfolio)
+    clust_alg = HAC()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio)
+
+    w1 = optimise!(portfolio, NCO())
+
+    # portfolio.asset_sets = asset_sets
+    # portfolio.ineq_constraints = DataFrame("Enabled" => [true], "Type" => ["Asset"],
+    #                                        "Set" => [""], "Position" => ["T"], "Sign" => [">="],
+    #                                        "Relative_Type" => ["Asset"],
+    #                                        "Relative_Position" => ["PFE"], "Weight" => [""],
+    #                                        "Factor" => [10])
+    # w2 = optimise!(portfolio, NCO())
+
 end
 
 @testset "Schur HRP" begin

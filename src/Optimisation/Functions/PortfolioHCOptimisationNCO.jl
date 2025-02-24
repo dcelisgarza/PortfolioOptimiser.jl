@@ -1013,6 +1013,7 @@ function get_cluster_portfolio(port, internal_args, i, cluster, cidx, idx_sq, Nc
                                               cluster, cidx, idx_sq, Nc, special_rm_idx)
 
     w = optimise!(intra_port, type)
+    display(w)
     if !isempty(w)
         w = w.weights
     else
