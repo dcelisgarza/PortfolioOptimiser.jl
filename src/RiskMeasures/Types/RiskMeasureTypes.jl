@@ -25,10 +25,9 @@ struct NoTR <: AbstractTR end
 end
 ```
 """
-mutable struct TR{T1 <: Union{<:Real, <:AbstractVector{<:Real}},
-                  T2 <: AbstractVector{<:Real}} <: AbstractTR
+mutable struct TR{T1 <: AbstractVector{<:Real}} <: AbstractTR
     val::Union{<:Real, <:AbstractVector{<:Real}}
-    w::T2
+    w::T1
 end
 function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
             w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
