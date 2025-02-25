@@ -31,14 +31,20 @@ mutable struct TR{T1 <: AbstractVector{<:Real}} <: AbstractTR
 end
 function TR(; val::Union{<:Real, <:AbstractVector{<:Real}} = 0.0,
             w::AbstractVector{<:Real} = Vector{Float64}(undef, 0))
-    if isa(val, AbstractVector)
+    if isa(val, AbstractVector) && !isempty(val) && !isempty(w)
         @smart_assert(length(val) == length(w))
     end
     return TR{typeof(w)}(val, w)
 end
 function Base.setproperty!(obj::TR, sym::Symbol, val)
     if sym == :val
-        @smart_assert(length(val) == length(obj.w))
+        if isa(val, AbstractVector) && !isempty(val) && !isempty(obj.w)
+            @smart_assert(length(val) == length(obj.w))
+        end
+    elseif sym == :w
+        if !isempty(val) && isa(obj.val, AbstractVector) && !isempty(obj.val)
+            @smart_assert(length(val) == length(obj.val))
+        end
     end
     return setfield!(obj, sym, val)
 end
