@@ -100,7 +100,7 @@ function black_litterman_statistics(X, mu, sigma; P::AbstractMatrix, Q::Abstract
     return w, bl_mu, bl_cov, bl_w
 end
 function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
-                         B::AbstractMatrix, P_f::AbstractMatrix, Q_f::AbstractVector,
+                         B::AbstractMatrix, f_P::AbstractMatrix, f_Q::AbstractVector,
                          cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                          mu_type::MeanEstimator = MuSimple(), kwargs...)
     f_sigma, f_mu = sigma_mu(F, cov_type, mu_type)
@@ -127,14 +127,14 @@ function black_litterman(bl::BBLType, X::AbstractMatrix; F::AbstractMatrix,
         sigma .+= D
     end
 
-    omega_f = calc_omega(P_f, tau * f_sigma)
+    omega_f = calc_omega(f_P, tau * f_sigma)
 
     inv_sigma = sigma \ I
     inv_sigma_f = f_sigma \ I
     inv_omega_f = omega_f \ I
-    tpf_invof = transpose(P_f) * inv_omega_f
-    inv_sigma_hat = (inv_sigma_f + tpf_invof * P_f)
-    Pi_hat = (inv_sigma_hat \ I) * (inv_sigma_f * f_mu + tpf_invof * Q_f)
+    tpf_invof = transpose(f_P) * inv_omega_f
+    inv_sigma_hat = (inv_sigma_f + tpf_invof * f_P)
+    Pi_hat = (inv_sigma_hat \ I) * (inv_sigma_f * f_mu + tpf_invof * f_Q)
     inv_sigma_b = inv_sigma * B
     tb = transpose(B)
     iish_b_is_b = (inv_sigma_hat + tb * inv_sigma_b) \ I
@@ -159,9 +159,9 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
                          F::Union{AbstractMatrix, Nothing}    = nothing,
                          B::Union{AbstractMatrix, Nothing}    = nothing,
                          P::Union{AbstractMatrix, Nothing}    = nothing,
-                         P_f::Union{AbstractMatrix, Nothing}  = nothing,
+                         f_P::Union{AbstractMatrix, Nothing}  = nothing,
                          Q::Union{AbstractVector, Nothing}    = nothing,
-                         Q_f::Union{AbstractVector, Nothing}  = nothing,
+                         f_Q::Union{AbstractVector, Nothing}  = nothing,
                          cov_type::PortfolioOptimiserCovCor   = PortCovCor(;),
                          mu_type::MeanEstimator               = MuSimple(;),
                          f_cov_type::PortfolioOptimiserCovCor = PortCovCor(;),
@@ -172,19 +172,19 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
     @smart_assert(any_asset_provided == all_asset_provided,
                   "If any of P or Q is provided, then both must be provided.")
 
-    factor_tuple = (!isnothing(P_f), !isnothing(Q_f))
+    factor_tuple = (!isnothing(f_P), !isnothing(f_Q))
     any_factor_provided = any(factor_tuple)
     all_factor_provided = all(factor_tuple)
     @smart_assert(any_factor_provided == all_factor_provided,
-                  "If any of P_f or Q_f is provided, then both must be provided.")
+                  "If any of f_P or f_Q is provided, then both must be provided.")
 
     if all_factor_provided
         @smart_assert(!isnothing(B) && !isnothing(F),
-                      "If P_f and Q_f are provided, then B and F must be provided.")
+                      "If f_P and f_Q are provided, then B and F must be provided.")
     end
 
     if !all_asset_provided && !all_factor_provided
-        throw(AssertionError("Please provide either:\n- P and Q,\n- B, F, P_f and Q_f, or\n- P, Q, B, F, P_f and Q_f."))
+        throw(AssertionError("Please provide either:\n- P and Q,\n- B, F, f_P and f_Q, or\n- P, Q, B, F, f_P and f_Q."))
     end
 
     if all_asset_provided
@@ -212,21 +212,21 @@ function black_litterman(bl::ABLType, X::AbstractMatrix; w::AbstractVector,
         Pi_a = calc_Pi(bl.eq, bl.delta, sigma_a, w, mu, bl.rf)
     elseif !all_asset_provided && all_factor_provided
         sigma_a = f_sigma
-        P_a = P_f
-        Q_a = Q_f
+        P_a = f_P
+        Q_a = f_Q
         omega_a = calc_omega(P_a, tau * sigma_a)
         Pi_a = calc_Pi(bl.eq, bl.delta, sigma_a * transpose(B), w, f_mu, bl.rf)
     elseif all_asset_provided && all_factor_provided
         sigma_a = hcat(vcat(sigma, f_sigma * transpose(B)), vcat(B * f_sigma, f_sigma))
 
-        zeros_1 = zeros(size(P_f, 1), size(P, 2))
-        zeros_2 = zeros(size(P, 1), size(P_f, 2))
+        zeros_1 = zeros(size(f_P, 1), size(P, 2))
+        zeros_2 = zeros(size(P, 1), size(f_P, 2))
 
-        P_a = hcat(vcat(P, zeros_1), vcat(zeros_2, P_f))
-        Q_a = vcat(Q, Q_f)
+        P_a = hcat(vcat(P, zeros_1), vcat(zeros_2, f_P))
+        Q_a = vcat(Q, f_Q)
 
         omega = calc_omega(P, tau * sigma)
-        omega_f = calc_omega(P_f, tau * f_sigma)
+        omega_f = calc_omega(f_P, tau * f_sigma)
 
         zeros_3 = zeros(size(omega, 1), size(omega_f, 1))
 
@@ -259,9 +259,9 @@ function black_litterman_factor_statistics(assets, X, mu, sigma, f_assets, F;
                                            w::AbstractVector = Vector{Float64}(undef, 0),
                                            B::Union{DataFrame, Nothing} = nothing,
                                            P::Union{AbstractMatrix, Nothing} = nothing,
-                                           P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                           f_P::Union{AbstractMatrix, Nothing} = nothing,
                                            Q::Union{AbstractVector, Nothing} = nothing,
-                                           Q_f::Union{AbstractVector, Nothing} = nothing,
+                                           f_Q::Union{AbstractVector, Nothing} = nothing,
                                            factor_type::FactorType = FactorType(),
                                            cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                            mu_type::MeanEstimator = MuSimple(),
@@ -286,7 +286,7 @@ function black_litterman_factor_statistics(assets, X, mu, sigma, f_assets, F;
     blfm_mu, blfm_cov, blfm_w = black_litterman(bl_type, X; w = w, F = F,
                                                 B = Matrix(B[!,
                                                              setdiff(namesB, ("tickers",))]),
-                                                P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+                                                P = P, f_P = f_P, Q = Q, f_Q = f_Q,
                                                 cov_type = cov_type, mu_type = mu_type,
                                                 f_cov_type = f_cov_type,
                                                 f_mu_type = f_mu_type)

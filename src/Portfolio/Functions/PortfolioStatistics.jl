@@ -247,9 +247,9 @@ black_litterman_factor_statistics!(port::AbstractPortfolio;
                                    w::AbstractVector = port.bl_bench_weights,
                                    B::Union{DataFrame, Nothing} = port.loadings,
                                    P::Union{AbstractMatrix, Nothing} = nothing,
-                                   P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                   f_P::Union{AbstractMatrix, Nothing} = nothing,
                                    Q::Union{AbstractVector, Nothing} = nothing,
-                                   Q_f::Union{AbstractVector, Nothing} = nothing,
+                                   f_Q::Union{AbstractVector, Nothing} = nothing,
                                    factor_type::FactorType = FactorType(),
                                    cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                    mu_type::MeanEstimator = MuSimple(),
@@ -269,9 +269,9 @@ Compute the Black Litterman factor model statistics. `Na` is the number of asset
 
       + if `isempty(B)`: computes the loadings matrix using `factor_type`.
   - `P`: `Nva×Na` matrix of asset views.
-  - `P_f`: `Nvf×Nf` matrix of factor views.
+  - `f_P`: `Nvf×Nf` matrix of factor views.
   - `Q`: `Nva×1` vector of asset views.
-  - `Q_f`: `Nvf×1` vector of factor views.
+  - `f_Q`: `Nvf×1` vector of factor views.
   - `factor_type`: factor statistics estimator [`FactorType`](@ref).
   - `cov_type`: asset covariance estimator [`PortfolioOptimiserCovCor`](@ref).
   - `mu_type`: asset expected returns estimator [`MeanEstimator`](@ref).
@@ -283,9 +283,9 @@ function black_litterman_factor_statistics!(port::AbstractPortfolio;
                                             w::AbstractVector = port.bl_bench_weights,
                                             B::Union{DataFrame, Nothing} = port.loadings,
                                             P::Union{AbstractMatrix, Nothing} = nothing,
-                                            P_f::Union{AbstractMatrix, Nothing} = nothing,
+                                            f_P::Union{AbstractMatrix, Nothing} = nothing,
                                             Q::Union{AbstractVector, Nothing} = nothing,
-                                            Q_f::Union{AbstractVector, Nothing} = nothing,
+                                            f_Q::Union{AbstractVector, Nothing} = nothing,
                                             factor_type::FactorType = FactorType(),
                                             cov_type::PortfolioOptimiserCovCor = PortCovCor(),
                                             mu_type::MeanEstimator = MuSimple(),
@@ -301,9 +301,9 @@ function black_litterman_factor_statistics!(port::AbstractPortfolio;
                                                                                                           w = w,
                                                                                                           B = B,
                                                                                                           P = P,
-                                                                                                          P_f = P_f,
+                                                                                                          f_P = f_P,
                                                                                                           Q = Q,
-                                                                                                          Q_f = Q_f,
+                                                                                                          f_Q = f_Q,
                                                                                                           factor_type = factor_type,
                                                                                                           cov_type = cov_type,
                                                                                                           mu_type = mu_type,

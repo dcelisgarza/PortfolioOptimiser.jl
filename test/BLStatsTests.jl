@@ -347,13 +347,13 @@ end
                               "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE",
                                                     "QUAL", ""])
 
-    P_f, Q_f = factor_views(views_factors, loadings)
+    f_P, f_Q = factor_views(views_factors, loadings)
     Q ./= 252
-    Q_f ./= 252
+    f_Q ./= 252
 
     asset_statistics!(portfolio)
     bl_type = BBLType(; delta = nothing)
-    black_litterman_factor_statistics!(portfolio; P = P, P_f = P_f, Q = Q, Q_f = Q_f,
+    black_litterman_factor_statistics!(portfolio; P = P, f_P = f_P, Q = Q, f_Q = f_Q,
                                        bl_type = bl_type)
 
     blfm_mut = [0.0005447777320220783, 0.0009009255450430647, 0.001037774539033381,
@@ -671,9 +671,9 @@ end
                               "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE",
                                                     "QUAL", ""])
 
-    P_f, Q_f = factor_views(views_factors, loadings)
+    f_P, f_Q = factor_views(views_factors, loadings)
     Q ./= 252
-    Q_f ./= 252
+    f_Q ./= 252
 
     asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
@@ -978,13 +978,13 @@ end
                               "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE",
                                                     "QUAL", ""])
 
-    P_f, Q_f = factor_views(views_factors, loadings)
+    f_P, f_Q = factor_views(views_factors, loadings)
     Q ./= 252
-    Q_f ./= 252
+    f_Q ./= 252
 
     asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
-    black_litterman_factor_statistics!(portfolio; P_f = P_f, Q_f = Q_f, bl_type = bl_type)
+    black_litterman_factor_statistics!(portfolio; f_P = f_P, f_Q = f_Q, bl_type = bl_type)
     blfm_mut = [0.000603932629829369, 0.0008964903239153136, 0.0010572452079626881,
                 0.0007531135364743434, 0.0017407455529343334, -0.0006815015917490989,
                 0.0014873477773678552, 0.00038674925910267793, 0.0009189732413442589,
@@ -1290,13 +1290,13 @@ end
                               "Relative_Factor" => ["", "", "", "", "MTUM", "USMV", "VLUE",
                                                     "QUAL", ""])
 
-    P_f, Q_f = factor_views(views_factors, loadings)
+    f_P, f_Q = factor_views(views_factors, loadings)
     Q ./= 252
-    Q_f ./= 252
+    f_Q ./= 252
 
     asset_statistics!(portfolio)
     bl_type = ABLType(; delta = nothing)
-    black_litterman_factor_statistics!(portfolio; P = P, Q = Q, P_f = P_f, Q_f = Q_f,
+    black_litterman_factor_statistics!(portfolio; P = P, Q = Q, f_P = f_P, f_Q = f_Q,
                                        bl_type = bl_type)
     blfm_mut = [0.004021061243001632, 0.0029024489093301955, 0.007924586475317387,
                 0.005003799073505964, 0.00433341373838738, -0.0013842148732269247,

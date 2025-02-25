@@ -97,6 +97,7 @@ A, B = asset_constraints(constraints, asset_sets)
 function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     asset_list = asset_sets[!, "Asset"]
+    set_list = setdiff(names(asset_sets), ("Asset",))
 
     A = Matrix(undef, 0, N)
     B = Vector(undef, 0)
@@ -114,21 +115,33 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
 
         if row["Type"] == "Asset"
             idx = findfirst(x -> x == row["Position"], asset_list)
+            if isnothing(idx)
+                continue
+            end
             A1 = zeros(N)
             if row["Weight"] != ""
                 A1[idx] = d
                 push!(B, row["Weight"] * d)
             else
-                A1[idx] = 1
                 if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx2 = findfirst(x -> x == row["Relative_Position"], asset_list)
+                    if isnothing(idx2)
+                        continue
+                    end
                     A2 = zeros(N)
                     A2[idx2] = 1
                 elseif row["Relative_Type"] == "Subset" &&
                        row["Relative_Set"] != "" &&
+                       row["Relative_Set"] ∈ set_list &&
                        row["Relative_Position"] != ""
                     A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
+                    if all(iszero.(A2))
+                        continue
+                    end
+                else
+                    continue
                 end
+                A1[idx] = 1
                 A1 = (A1 - A2 * row["Factor"]) * d
                 push!(B, 0)
             end
@@ -136,69 +149,111 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
         elseif row["Type"] == "All Assets"
             A1 = I(N)
             if row["Weight"] != ""
-                A1 *= d
+                A1 = A1 * d
                 B1 = d * row["Weight"]
                 B = vcat(B, fill(B1, N))
             else
                 if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                    if isnothing(idx)
+                        continue
+                    end
                     A2 = zeros(N, N)
                     A2[:, idx] .= 1
                 elseif row["Relative_Type"] == "Subset" &&
                        row["Relative_Set"] != "" &&
+                       row["Relative_Set"] ∈ set_list &&
                        row["Relative_Position"] != ""
                     A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
+                    if all(iszero.(A2))
+                        continue
+                    end
                     A2 = ones(N, N) .* transpose(A2)
+                else
+                    continue
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 B = vcat(B, zeros(N))
             end
             A = vcat(A, A1)
-        elseif row["Type"] == "Subset"
+        elseif row["Type"] == "Subset" && row["Set"] ∈ set_list
             A1 = asset_sets[!, row["Set"]] .== row["Position"]
+            if all(iszero.(A1))
+                continue
+            end
             if row["Weight"] != ""
                 A1 = A1 * d
                 push!(B, row["Weight"] * d)
             else
                 if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                     idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                    if isnothing(idx)
+                        continue
+                    end
                     A2 = zeros(N)
                     A2[idx] = 1
                 elseif row["Relative_Type"] == "Subset" &&
                        row["Relative_Set"] != "" &&
+                       row["Relative_Set"] ∈ set_list &&
                        row["Relative_Position"] != ""
                     A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
+                    if all(iszero.(A2))
+                        continue
+                    end
+                else
+                    continue
                 end
                 A1 = (A1 - A2 * row["Factor"]) * d
                 push!(B, 0)
             end
             A = vcat(A, transpose(A1))
-        elseif row["Type"] == "All Subsets"
+        elseif row["Type"] == "All Subsets" && row["Set"] ∈ set_list
             if row["Weight"] != ""
                 for val ∈ sort!(unique(asset_sets[!, row["Set"]]))
-                    A1 = (asset_sets[!, row["Set"]] .== val) * d
+                    A1 = asset_sets[!, row["Set"]] .== val
+                    if all(iszero.(A1))
+                        continue
+                    end
+                    A1 = A1 * d
                     A = vcat(A, transpose(A1))
                     push!(B, row["Weight"] * d)
                 end
-            else
+            elseif row["Weight"] == ""
                 for val ∈ sort!(unique(asset_sets[!, row["Set"]]))
                     A1 = asset_sets[!, row["Set"]] .== val
+                    if all(iszero.(A1))
+                        continue
+                    end
                     if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                         idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                        if isnothing(idx)
+                            continue
+                        end
                         A2 = zeros(N)
                         A2[idx] = 1
                     elseif row["Relative_Type"] == "Subset" &&
                            row["Relative_Set"] != "" &&
+                           row["Relative_Set"] ∈ set_list &&
                            row["Relative_Position"] != ""
                         A2 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
+                        if all(iszero.(A2))
+                            continue
+                        end
+                    else
+                        continue
                     end
                     A1 = (A1 - A2 * row["Factor"]) * d
                     A = vcat(A, transpose(A1))
                     push!(B, 0)
                 end
+            else
+                continue
             end
-        elseif row["Type"] == "Each Asset in Subset"
+        elseif row["Type"] == "Each Asset in Subset" && row["Set"] ∈ set_list
             A1 = asset_sets[!, row["Set"]] .== row["Position"]
+            if all(iszero.(A1))
+                continue
+            end
             if row["Weight"] != ""
                 for (i, j) ∈ pairs(A1)
                     if !j
@@ -218,23 +273,36 @@ function asset_constraints(constraints::DataFrame, asset_sets::DataFrame)
                     A2[i] = 1
                     if row["Relative_Type"] == "Asset" && row["Relative_Position"] != ""
                         idx = findfirst(x -> x == row["Relative_Position"], asset_list)
+                        if isnothing(idx)
+                            continue
+                        end
                         A3 = zeros(N)
                         A3[idx] = 1
                     elseif row["Relative_Type"] == "Subset" &&
                            row["Relative_Set"] != "" &&
+                           row["Relative_Set"] ∈ set_list &&
                            row["Relative_Position"] != ""
                         A3 = asset_sets[!, row["Relative_Set"]] .== row["Relative_Position"]
+                        if all(iszero.(A3))
+                            continue
+                        end
+                    else
+                        continue
                     end
                     A2 = (A2 - A3 * row["Factor"]) * d
                     A = vcat(A, transpose(A2))
                     push!(B, 0)
                 end
             end
+        else
+            continue
         end
     end
 
-    A = convert.(typeof(promote(A...)[1]), A)
-    B = convert.(typeof(promote(B...)[1]), B)
+    if !isempty(A)
+        A = convert.(typeof(promote(A...)[1]), A)
+        B = convert.(typeof(promote(B...)[1]), B)
+    end
 
     return A, B
 end
@@ -321,7 +389,7 @@ end
 
 """
 ```julia
-hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
+calc_hc_constraints(constraints::DataFrame, asset_sets::DataFrame)
 ```
 
 Create the upper and lower bounds constraints for hierarchical risk parity portfolios.
@@ -369,10 +437,10 @@ constraints = DataFrame("Enabled" => [true, true, true, true, true, true],
                         "Position" => ["BAC", "FB", "", "", "Fixed Income", "Financial"],
                         "Sign" => [">=", "<=", "<=", ">=", "<=", "<="],
                         "Weight" => [0.02, 0.085, 0.09, 0.01, 0.07, 0.06])
-w_min, w_max = hrp_constraints(constraints, asset_sets)
+w_min, w_max = calc_hc_constraints(constraints, asset_sets)
 ```
 """
-function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
+function calc_hc_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     w = Matrix(undef, N, 2)
     w .= 0
@@ -417,8 +485,8 @@ function hrp_constraints(constraints::DataFrame, asset_sets::DataFrame)
 end
 """
 ```julia
-rb_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
-               class_col::Union{String, Symbol, Nothing} = nothing)
+calc_rb_constraints(asset_sets::DataFrame; type::Symbol = :Asset,
+                    class_col::Union{String, Symbol, Nothing} = nothing)
 ```
 
 Constructs risk contribution constraint vector for the risk parity optimisation (`:RB` and `:RRB` types of [`PortTypes`]()).
@@ -445,11 +513,11 @@ asset_sets = DataFrame("Asset" => ["FB", "GOOGL", "NTFX", "BAC", "WFC", "TLT", "
                        "Class 2" => ["Technology", "Technology", "Technology", "Financial",
                                      "Financial", "Treasury", "Treasury"])
 
-rw_a = rb_constraints(asset_sets, :Asset)
-rw_c = rb_constraints(asset_sets, :Subset, "Class 2")
+rw_a = calc_rb_constraints(asset_sets, :Asset)
+rw_c = calc_rb_constraints(asset_sets, :Subset, "Class 2")
 ```
 """
-function rb_constraints(constraints::DataFrame, asset_sets::DataFrame)
+function calc_rb_constraints(constraints::DataFrame, asset_sets::DataFrame)
     N = nrow(asset_sets)
     inv_N = 1 / N
     rw = fill(inv_N, N)
@@ -530,5 +598,5 @@ function turnover_constraints(constraints::DataFrame, asset_sets::DataFrame)
     return turnover
 end
 
-export asset_constraints, factor_constraints, hrp_constraints, rb_constraints,
+export asset_constraints, factor_constraints, calc_hc_constraints, calc_rb_constraints,
        turnover_constraints

@@ -772,7 +772,7 @@ end
                             "Position" => ["WMT", "T", "", "", 3, 2, "AAPL"],
                             "Sign" => [">=", "<=", ">=", "<=", ">=", "<=", ">="],
                             "Weight" => [0.05, 0.04, 0.02, 0.07, 0.04, 0.08, 0.2])
-    w_min, w_max = hrp_constraints(constraints, asset_sets)
+    w_min, w_max = calc_hc_constraints(constraints, asset_sets)
     N = length(w_min)
 
     portfolio.w_min = w_min
@@ -973,6 +973,30 @@ end
     @test isapprox(w13_4.weights, wt)
     @test all(w13_4.weights .>= -0.03 .- sqrt(eps()) * N)
     @test all(w13_4.weights .<= 0.15 .+ sqrt(eps()) * N)
+
+    portfolio = Portfolio(; prices = prices,
+                          solvers = PortOptSolver(; name = :Clarabel,
+                                                  check_sol = (; allow_local = true,
+                                                               allow_almost = true),
+                                                  solver = Clarabel.Optimizer,
+                                                  params = Dict("verbose" => false,
+                                                                "max_step_fraction" => 0.75)))
+
+    asset_statistics!(portfolio)
+    clust_alg = HAC()
+    clust_opt = ClustOpt()
+    cluster_assets!(portfolio)
+
+    w1 = optimise!(portfolio, NCO())
+
+    portfolio.asset_sets = asset_sets
+    portfolio.ineq_constraints = DataFrame("Enabled" => [true], "Type" => ["Asset"],
+                                           "Set" => [""], "Position" => ["T"],
+                                           "Sign" => ["<="], "Relative_Type" => ["Asset"],
+                                           "Relative_Position" => ["PFE"], "Weight" => [""],
+                                           "Factor" => [0.5])
+    w2 = optimise!(portfolio, NCO())
+    @test w2.weights[11] <= w2.weights[18] * 0.5
 end
 
 @testset "Schur HRP" begin
