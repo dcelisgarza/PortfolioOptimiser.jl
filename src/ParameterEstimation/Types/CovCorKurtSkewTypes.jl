@@ -958,14 +958,14 @@ PortfolioOptimiser covariance and correlation estimator.
   - `logo`: type for computing the LoGo portfolio covariance or correlation matrix [`AbstractLoGo`](@ref).
 """
 mutable struct PortCovCor <: PortfolioOptimiserCovCor
-    ce::CovarianceEstimator
+    ce::StatsBase.CovarianceEstimator
     posdef::AbstractPosdefFix
     denoise::AbstractDenoise
     detone::AbstractDetone
     logo::AbstractLoGo
     custom::AbstractCustomMtxProcess
 end
-function PortCovCor(; ce::CovarianceEstimator = CovFull(;),
+function PortCovCor(; ce::StatsBase.CovarianceEstimator = CovFull(;),
                     posdef::AbstractPosdefFix = PosdefNearest(;),
                     denoise::AbstractDenoise = NoDenoise(;),
                     detone::AbstractDetone = NoDetone(), logo::AbstractLoGo = NoLoGo(;),
