@@ -23,7 +23,7 @@ function posdef_fix!(type::PosdefNearest, X::AbstractMatrix)
         X
     end
 
-    NearestCorrelationMatrix.nearest_cor!(_X, type)
+    NearestCorrelationMatrix.nearest_cor!(_X, type.type)
 
     if !isposdef(_X)
         @warn("Matrix could not be made positive definite.")
