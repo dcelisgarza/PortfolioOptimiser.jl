@@ -370,11 +370,11 @@ function calc_asset_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:R
     if isa(fees, Real) && !iszero(fees)
         idx1 = op(w, zero(eltype(w)))
         idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
-        fees_w[idx1][idx2] .= fees * idx2
+        fees_w[idx1] .= fees * idx2
     elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
         idx1 = op(w, zero(eltype(w)))
         idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
-        fees_w[idx1][idx2] .= fees[idx1][idx2]
+        fees_w[idx1] .= fees[idx1][idx2]
     end
     return fees_w
 end
