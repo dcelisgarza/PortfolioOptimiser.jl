@@ -341,34 +341,33 @@ end
 function calc_asset_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
                          op::Function)
     fees_w = zeros(eltype(w), length(w))
-    return if isa(fees, Real) && !iszero(fees)
+    if isa(fees, Real) && !iszero(fees)
         idx = op(w, zero(eltype(w)))
         fees_w[idx] .= fees * w[idx]
     elseif isa(fees, AbstractVector) && !(isempty(fees) || all(iszero.(fees)))
         idx = op(w, zero(eltype(w)))
         fees_w[idx] .= fees[idx] .* w[idx]
-    else
-        fees_w
     end
+    return fees_w
 end
 function calc_asset_fees(w::AbstractVector, rebalance::AbstractTR)
     fees_w = zeros(eltype(w), length(w))
-    return if isa(rebalance, TR)
+    if isa(rebalance, TR)
         fees_rebal = rebalance.val
         benchmark = rebalance.w
         if isa(fees_rebal, Real)
             fees_w .= fees_rebal * abs.(benchmark .- w)
-        else
+        elseif isa(fees_rebal, AbstractVector) &&
+               !(isempty(fees_rebal) || all(iszero.(fees_rebal)))
             fees_w .= fees_rebal .* abs.(benchmark .- w)
         end
-    else
-        fees_w
     end
+    return fees_w
 end
 function calc_asset_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:Real}, Real},
                                tol_kwargs::NamedTuple, op::Function)
     fees_w = zeros(eltype(w), length(w))
-    return if isa(fees, Real) && !iszero(fees)
+    if isa(fees, Real) && !iszero(fees)
         idx1 = op(w, zero(eltype(w)))
         idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
         fees_w[idx1][idx2] .= fees * idx2
@@ -376,9 +375,8 @@ function calc_asset_fixed_fees(w::AbstractVector, fees::Union{AbstractVector{<:R
         idx1 = op(w, zero(eltype(w)))
         idx2 = .!isapprox.(w[idx1], zero(eltype(w)); tol_kwargs...)
         fees_w[idx1][idx2] .= fees[idx1][idx2]
-    else
-        fees_w
     end
+    return fees_w
 end
 function calc_asset_fees(w::AbstractVector, fees::Fees = Fees())
     fees_long = calc_asset_fees(w, fees.long, .>=)
