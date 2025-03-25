@@ -390,7 +390,7 @@ function tracking_error_benchmark(tracking::TrackRet, ::Any)
 end
 function tracking_error_constraints(port, returns)
     tracking = port.tracking
-    if isa(tracking, NoTracking) || isempty(isempty(tracking.w)) || isinf(tracking.err)
+    if isa(tracking, NoTracking) || isempty(tracking.w) || isinf(tracking.err)
         return nothing
     end
 
