@@ -120,8 +120,10 @@ function herc_scalarise_risk_i(port, mu, sigma, returns, rm, cluster, ::ScalarMa
         solver_flag = set_rm_solvers!(r, port.solvers)
         scale = r.settings.scale
         risk_n = naive_risk(port, mu, sigma, returns, cluster, r) * scale
-        if sum(risk_n) > trisk
+        irisk = sum(risk_n)
+        if sum(irisk) > trisk
             risk .= risk_n
+            trisk = irisk
         end
         unset_rm_solvers!(r, solver_flag)
     end
