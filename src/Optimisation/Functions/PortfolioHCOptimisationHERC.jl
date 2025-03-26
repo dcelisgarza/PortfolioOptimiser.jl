@@ -72,7 +72,7 @@ function herc_scalarise_risk_o(port, mu, sigma, returns, rm, cluster,
     crisk = zero(eltype(returns))
     for r ∈ rm
         solver_flag = set_rm_solvers!(r, port.solvers)
-        scale = r.settings.scale
+        scale = r.settings.scale * gamma
         crisk += cluster_risk(port, mu, sigma, returns, cluster, r) * scale
         unset_rm_solvers!(r, solver_flag)
     end
