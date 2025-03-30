@@ -26,13 +26,13 @@ end
 function calc_centrality(type::StressCentrality, G)
     return Graphs.stress_centrality(G, type.args...; type.kwargs...)
 end
-function clac_mst(type::KruskalTree, G)
+function calc_mst(type::KruskalTree, G)
     return Graphs.kruskal_mst(G, type.args...; type.kwargs...)
 end
-function clac_mst(type::BoruvkaTree, G)
+function calc_mst(type::BoruvkaTree, G)
     return Graphs.boruvka_mst(G, type.args...; type.kwargs...)[1]
 end
-function clac_mst(type::PrimTree, G)
+function calc_mst(type::PrimTree, G)
     return Graphs.prim_mst(G, type.args...; type.kwargs...)
 end
 function calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
@@ -42,7 +42,7 @@ function calc_adjacency(nt::TMFG, rho::AbstractMatrix, delta::AbstractMatrix)
 end
 function calc_adjacency(nt::MST, ::Any, delta::AbstractMatrix)
     G = SimpleWeightedGraph(delta)
-    tree = clac_mst(nt.tree, G)
+    tree = calc_mst(nt.tree, G)
     return adjacency_matrix(SimpleGraph(G[tree]))
 end
 function calc_adjacency(nt::NetworkType, X::AbstractMatrix,
