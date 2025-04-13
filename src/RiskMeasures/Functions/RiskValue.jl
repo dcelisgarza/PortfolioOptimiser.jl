@@ -114,7 +114,7 @@ function ERM(x::AbstractVector{<:Real},
         objective_value(model)
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.ERM))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        @warn("$funcname: Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         NaN
     end
 end
@@ -233,7 +233,7 @@ function RRM(x::AbstractVector,
             objective_value(model)
         else
             funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.RRM))"
-            @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+            @warn("$funcname: Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
             NaN
         end
     end

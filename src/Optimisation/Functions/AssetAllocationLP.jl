@@ -61,7 +61,7 @@ function optimise_allocation(port, key, tickers, latest_prices)
         shares, cost, weights, available_funds = resolve_model(model, latest_prices)
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.lp_sub_allocation!))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
+        @warn("$funcname: Model could not be optimised satisfactorily.\nSolvers: $solvers_tried.")
         port.alloc_fail[Symbol(key)] = solvers_tried
 
         (String[], Vector{eltype(latest_prices)}(undef, 0),

@@ -40,11 +40,11 @@ l = 2.0
     @test test_logger.logs[2].level == Warn
     @test test_logger.logs[3].level == Warn
     @test contains(test_logger.logs[1].message,
-                   "PortfolioOptimiser.ERM: model could not be optimised satisfactorily.")
+                   "PortfolioOptimiser.ERM: Model could not be optimised satisfactorily.")
     @test contains(test_logger.logs[2].message,
-                   "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
+                   "PortfolioOptimiser.RRM: Model could not be optimised satisfactorily.")
     @test contains(test_logger.logs[3].message,
-                   "PortfolioOptimiser.RRM: model could not be optimised satisfactorily.")
+                   "PortfolioOptimiser.RRM: Model could not be optimised satisfactorily.")
 end
 
 @testset "EVaR ERM" begin

@@ -93,7 +93,7 @@ function opt_weight_bounds(port, w_min, w_max, weights, finaliser::JWF)
         value.(model[:w])
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.opt_weight_bounds))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nVersion: $version\nSolvers: $solvers_tried.\nReverting to Heuristic type.")
+        @warn("$funcname: Model could not be optimised satisfactorily.\nVersion: $version\nSolvers: $solvers_tried.\nReverting to Heuristic type.")
         opt_weight_bounds(nothing, w_min, w_max, weights, HWF())
     end
 end

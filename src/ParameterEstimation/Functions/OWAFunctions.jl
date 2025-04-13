@@ -367,7 +367,7 @@ function owa_model_solve(model, weights, type, k)
         w = weights * phis
     else
         funcname = "$(fullname(PortfolioOptimiser)[1]).$(nameof(PortfolioOptimiser.owa_l_moment_crm))"
-        @warn("$funcname: model could not be optimised satisfactorily.\nType: $type\nReverting to crra type.")
+        @warn("$funcname: Model could not be optimised satisfactorily.\nType: $type\nReverting to crra type.")
         w = crra_weights(weights, k, 0.5)
     end
 end
