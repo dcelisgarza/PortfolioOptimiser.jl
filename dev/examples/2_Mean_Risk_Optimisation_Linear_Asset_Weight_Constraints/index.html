@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints · PortfolioOptimiser.jl</title><meta name="title" content="Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints · PortfolioOptimiser.jl"/><meta property="og:title" content="Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints · PortfolioOptimiser.jl"/><meta property="twitter:title" content="Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints · PortfolioOptimiser.jl"/><meta name="description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="twitter:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints/"/><meta property="twitter:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints/"/><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PortfolioOptimiser.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../1_Mean_Risk_Optimisation/">Example 1: Mean Risk Optimisation</a></li><li class="is-active"><a class="tocitem" href>Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints</a><ul class="internal"><li><a class="tocitem" href="#1.-Download-data."><span>1. Download data.</span></a></li><li><a class="tocitem" href="#2.-Estimating-Mean-Risk-Portfolios"><span>2. Estimating Mean Risk Portfolios</span></a></li><li><a class="tocitem" href="#3.-Asset-and-asset-set-constraints"><span>3. Asset and asset set constraints</span></a></li><li><a class="tocitem" href="#4.-Efficient-Frontier"><span>4. Efficient Frontier</span></a></li></ul></li><li><a class="tocitem" href="../3_Mean_Risk_Optimisation_Factor_Models/">Example 3: Mean Risk Optimisation with Factor Models</a></li><li><a class="tocitem" href="../4_Mean_Risk_Optimisation_Factor_Models_Linear_Factor_Constraints/">Example 4: Mean Risk Optimisation with Factor Models with Linear Factor Constraints</a></li><li><a class="tocitem" href="../5_Black_Litterman_Mean_Risk_Optimisation/">Example 5: Black Litterman Mean Risk Optimisation</a></li><li><a class="tocitem" href="../6_Black_Litterman_Factors_Mean_Risk_Optimisation/">Example 6: Black Litterman Factors Mean Risk Optimisation</a></li><li><a class="tocitem" href="../7_Near_Optimal_Centering_Mean_Risk_Optimisation/">Example 7: Near Optimal Centering (NOC) Mean Risk Optimisation</a></li><li><a class="tocitem" href="../risk_measure_examples/">Risk Measures</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../../Solvers/">Solvers</a></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Risk</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-2-1" type="checkbox"/><label class="tocitem" for="menuitem-3-2-1"><span class="docs-label">Measures</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-2-1-1" type="checkbox"/><label class="tocitem" for="menuitem-3-2-1-1"><span class="docs-label">Util</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures1-1/">Generalities</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures1-2/">Specifics</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2-1-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2-1-2"><span class="docs-label">RiskMeasure</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-1/">Dispersion</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-2/">Downside dispersion</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-3/">Downside</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-4/">Drawdown</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-5/">Linear moments</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures2-6/">Tracking and Turnover</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2-1-3" type="checkbox"/><label class="tocitem" for="menuitem-3-2-1-3"><span class="docs-label">HCRiskMeasure</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures3-1/">Dispersion</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures3-2/">Downside dispersion</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures3-3/">Downside</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures3-4/">Drawdown</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures3-5/">Equal Risk Contribution</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2-1-4" type="checkbox"/><label class="tocitem" for="menuitem-3-2-1-4"><span class="docs-label">NoOptRiskMeasure</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures4-1/">Dispersion</a></li></ul></li></ul></li><li><a class="tocitem" href="../../RiskMeasures/RiskValue/">Risk value</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskStatistics/">Risk statistics</a></li><li><a class="tocitem" href="../../RiskMeasures/MiscRiskMeasureFunctions/">Miscelaneous Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Parameter Estimation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../ParameterEstimation/PosdefFix/">Fixing non-positive definite matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/MatrixDenoising/">Matrix denoising</a></li><li><a class="tocitem" href="../../ParameterEstimation/DetoneMatrix/">Detone matrix</a></li><li><a class="tocitem" href="../../ParameterEstimation/LoGoMatrix/">Detone matrix</a></li><li><a class="tocitem" href="../../ParameterEstimation/DistanceMatrices/">Distance matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/Clustering/">Clustering</a></li><li><a class="tocitem" href="../../ParameterEstimation/CovCorKurtSkew/">Covariance, correlation, cokurtosis and coskewness</a></li><li><a class="tocitem" href="../../ParameterEstimation/MeanEstimators/">Expected returns</a></li><li><a class="tocitem" href="../../ParameterEstimation/WorstCase/">Worst case mean variance sets</a></li><li><a class="tocitem" href="../../ParameterEstimation/Regression/">Regression</a></li><li><a class="tocitem" href="../../ParameterEstimation/BlackLitterman/">Black Litterman models</a></li><li><a class="tocitem" href="../../ParameterEstimation/OWA/">Ordered Weight Arrays</a></li><li><a class="tocitem" href="../../ParameterEstimation/ParameterEstimationMisc/">Miscelaneous</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Constraints</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Constraints/WeightConstraints/">Weight constraints</a></li><li><a class="tocitem" href="../../Constraints/ViewsConstraints/">Views constraints</a></li><li><a class="tocitem" href="../../Constraints/NetworkConstraints/">Network constraints</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">(HC)Portfolio</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Portfolio/PortfolioTypes/">Types</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioStatistics/">Statistics</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioRisk/">Risk</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioClustering/">Clustering</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioNetwork/">Network</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-6" type="checkbox"/><label class="tocitem" for="menuitem-3-6"><span class="docs-label">Optimisation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Optimisation/OptimisationKinds/">Optimisation kinds</a></li><li><a class="tocitem" href="../../Optimisation/ObjectiveFunctions/">Objective functions</a></li><li><a class="tocitem" href="../../Optimisation/PortfolioClasses/">Portfolio classes</a></li><li><a class="tocitem" href="../../Optimisation/AssetAllocation/">Asset allocation</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationConstraints/">Constraints</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationSetup/">Setup functions</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationRiskMeasures/">Risk measures</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationGetZ/">Entropic and relativistic moments</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationFinalisation/">Finalisation functions</a></li></ul></li><li><a class="tocitem" href="../../PlotsExtension/">Plots Extension</a></li><li><a class="tocitem" href="../../References/">References</a></li><li><a class="tocitem" href="../../Contents/">Index</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/2_Mean_Risk_Optimisation_Linear_Asset_Weight_Constraints.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><p>The source files for all examples can be found in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/">/examples</a>.</p><h1 id="Example-2:-Mean-Risk-Optimisation-with-Linear-Asset-Weight-Constraints"><a class="docs-heading-anchor" href="#Example-2:-Mean-Risk-Optimisation-with-Linear-Asset-Weight-Constraints">Example 2: Mean Risk Optimisation with Linear Asset Weight Constraints</a><a id="Example-2:-Mean-Risk-Optimisation-with-Linear-Asset-Weight-Constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2:-Mean-Risk-Optimisation-with-Linear-Asset-Weight-Constraints" title="Permalink"></a></h1><h2 id="1.-Download-data."><a class="docs-heading-anchor" href="#1.-Download-data.">1. Download data.</a><a id="1.-Download-data.-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Download-data." title="Permalink"></a></h2><pre><code class="language-julia hljs">using PortfolioOptimiser, TimeSeries, DataFrames, PrettyTables, Clarabel, HiGHS, YFinance,
+      GraphRecipes, StatsPlots, JuMP
+
+# Format for pretty tables.
+fmt1 = (v, i, j) -&gt; begin
+    if j == 1
+        return Date(v)
+    else
+        return v
+    end
+end;
+fmt2 = (v, i, j) -&gt; begin
+    if j == 1
+        return v
+    else
+        return isa(v, Number) ? &quot;$(round(v*100, digits=3)) %&quot; : v
+    end
+end;
+
+# Convert prices to time array.
+function stock_price_to_time_array(x)
+    # Only get the keys that are not ticker or datetime.
+    coln = collect(keys(x))[3:end]
+    # Convert the dictionary into a matrix.
+    m = hcat([x[k] for k ∈ coln]...)
+    return TimeArray(x[&quot;timestamp&quot;], m, Symbol.(coln), x[&quot;ticker&quot;])
+end
+
+# Asset tickers.
+assets = sort!([&quot;AAPL&quot;, &quot;ADI&quot;, &quot;ADP&quot;, &quot;AMGN&quot;, &quot;AMZN&quot;, &quot;BKNG&quot;, &quot;CMCSA&quot;, &quot;COST&quot;, &quot;CSCO&quot;,
+                &quot;GILD&quot;, &quot;GOOG&quot;, &quot;GOOGL&quot;, &quot;HON&quot;, &quot;ISRG&quot;, &quot;LIN&quot;, &quot;MAR&quot;, &quot;META&quot;, &quot;MRK&quot;, &quot;MSFT&quot;,
+                &quot;NFLX&quot;, &quot;NVDA&quot;, &quot;ORLY&quot;, &quot;PANW&quot;, &quot;QCOM&quot;, &quot;SBUX&quot;, &quot;T&quot;, &quot;TMUS&quot;, &quot;TSLA&quot;, &quot;TXN&quot;,
+                &quot;VRTX&quot;])
+
+# Prices date range.
+Date_0 = &quot;2019-01-01&quot;
+Date_1 = &quot;2025-01-31&quot;
+
+# Download the price data using YFinance.
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
+prices = hcat(prices...)
+cidx = colnames(prices)[occursin.(r&quot;adj&quot;, string.(colnames(prices)))]
+prices = prices[cidx]
+TimeSeries.rename!(prices, Symbol.(assets))
+pretty_table(prices[1:5]; formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌────────────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐
+│<span class="sgr1">      timestamp </span>│<span class="sgr1">    AAPL </span>│<span class="sgr1">     ADI </span>│<span class="sgr1">     ADP </span>│<span class="sgr1">    AMGN </span>│<span class="sgr1">    AMZN </span>│<span class="sgr1">    BKNG </span>│<span class="sgr1">   CMCSA </span>│<span class="sgr1">    COST </span>│<span class="sgr1">    CSCO </span>│<span class="sgr1">    GILD </span>│<span class="sgr1">    GOOG </span>│<span class="sgr1">   GOOGL </span>│<span class="sgr1">     HON </span>│<span class="sgr1">    ISRG </span>│<span class="sgr1">     LIN </span>│<span class="sgr1">     MAR </span>│<span class="sgr1">    META </span>│<span class="sgr1">     MRK </span>│<span class="sgr1">    MSFT </span>│<span class="sgr1">    NFLX </span>│<span class="sgr1">    NVDA </span>│<span class="sgr1">    ORLY </span>│<span class="sgr1">    PANW </span>│<span class="sgr1">    QCOM </span>│<span class="sgr1">    SBUX </span>│<span class="sgr1">       T </span>│<span class="sgr1">    TMUS </span>│<span class="sgr1">    TSLA </span>│<span class="sgr1">     TXN </span>│<span class="sgr1">    VRTX </span>│
+│<span class="sgr90"> Dates.DateTime </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90"> Float64 </span>│
+├────────────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┤
+│     2019-01-02 │ 37.6672 │  76.502 │ 114.096 │ 158.586 │ 76.9565 │ 1703.08 │ 29.3779 │ 186.145 │ 35.2657 │ 49.4591 │  52.046 │ 52.4831 │ 115.883 │ 155.343 │ 142.983 │ 102.526 │ 135.044 │  59.732 │ 95.1198 │  267.66 │ 3.37778 │  341.15 │  30.535 │ 49.2806 │ 56.4324 │ 13.7452 │ 63.8184 │ 20.6747 │ 79.3542 │  164.08 │
+│     2019-01-03 │ 33.9153 │ 71.8809 │ 110.651 │ 156.173 │  75.014 │ 1645.13 │ 29.6086 │ 182.199 │ 33.9831 │ 50.8702 │ 50.5635 │ 51.0295 │ 114.336 │  150.08 │ 138.517 │ 97.0689 │ 131.122 │ 58.5072 │ 91.6205 │   271.2 │  3.1737 │  346.13 │   29.95 │ 47.8211 │ 53.9846 │ 13.7638 │ 63.5837 │  20.024 │ 74.6745 │  163.73 │
+│     2019-01-04 │ 35.3631 │ 73.6261 │ 115.061 │ 161.512 │ 78.7695 │ 1698.97 │ 30.6087 │  187.49 │ 35.5139 │ 53.2091 │ 53.2831 │  53.647 │ 118.336 │ 157.227 │ 142.465 │  102.86 │ 137.303 │ 60.2693 │ 95.8818 │  297.57 │ 3.37704 │  341.82 │ 30.7317 │ 48.5938 │ 55.7744 │ 14.1174 │ 65.9992 │ 21.1793 │  78.052 │   172.7 │
+│     2019-01-07 │ 35.2844 │ 74.0891 │ 114.438 │ 163.685 │ 81.4755 │ 1693.31 │ 30.2839 │ 188.181 │ 35.7538 │ 53.4507 │ 53.1677 │   53.54 │ 118.995 │  159.48 │ 142.338 │ 103.051 │ 137.402 │ 59.6056 │  96.004 │  315.34 │ 3.55582 │  339.69 │  31.225 │ 48.4564 │ 55.7744 │ 14.3734 │ 66.9282 │ 22.3307 │ 79.3962 │  175.85 │
+│     2019-01-08 │  35.957 │ 75.8966 │ 115.113 │ 165.784 │  82.829 │ 1668.68 │ 30.5318 │  189.59 │ 36.0434 │ 53.0843 │ 53.5603 │ 54.0103 │ 118.749 │ 160.997 │ 143.848 │ 104.721 │ 141.861 │ 60.0481 │ 96.7001 │  320.27 │ 3.46729 │  336.07 │ 31.7383 │ 48.0357 │ 55.8183 │ 14.5548 │  66.273 │ 22.3567 │ 79.2954 │  178.19 │
+└────────────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘</code></pre><h2 id="2.-Estimating-Mean-Risk-Portfolios"><a class="docs-heading-anchor" href="#2.-Estimating-Mean-Risk-Portfolios">2. Estimating Mean Risk Portfolios</a><a id="2.-Estimating-Mean-Risk-Portfolios-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Estimating-Mean-Risk-Portfolios" title="Permalink"></a></h2><h3 id="2.1.-Optimising-portfolio"><a class="docs-heading-anchor" href="#2.1.-Optimising-portfolio">2.1. Optimising portfolio</a><a id="2.1.-Optimising-portfolio-1"></a><a class="docs-heading-anchor-permalink" href="#2.1.-Optimising-portfolio" title="Permalink"></a></h3><p>This is a simple example so we will only use default parameters for computing the statistics.</p><p>For API details and options available see: <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>, <a href="../../Solvers/#PortfolioOptimiser.PortOptSolver"><code>PortOptSolver</code></a>, <a href="../../ParameterEstimation/MeanEstimators/#PortfolioOptimiser.MeanEstimator"><code>PortfolioOptimiser.MeanEstimator</code></a>, <a href="../../ParameterEstimation/CovCorKurtSkew/#PortfolioOptimiser.PortfolioOptimiserCovCor"><code>PortfolioOptimiser.PortfolioOptimiserCovCor</code></a>, <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.asset_statistics!-Tuple{PortfolioOptimiser.AbstractPortfolio}"><code>asset_statistics!</code></a>, <a href="../../RiskMeasures/RiskMeasures1-1/#PortfolioOptimiser.RiskMeasure"><code>RiskMeasure</code></a>, <a href="../../Optimisation/ObjectiveFunctions/#PortfolioOptimiser.ObjectiveFunction"><code>PortfolioOptimiser.ObjectiveFunction</code></a>, <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.OptimType"><code>PortfolioOptimiser.OptimType</code></a>.</p><pre><code class="language-julia hljs"># Creating the portfolio object. Internally computes the returns if you give a prices TimeArray.
+port = Portfolio(; prices = prices,
+                 # Continuous solvers.
+                 solvers = PortOptSolver(; name = :Clarabel, solver = Clarabel.Optimizer,
+                                         params = Dict(&quot;verbose&quot; =&gt; false)),
+                 # Discrete solvers (for discrete allocation).
+                 alloc_solvers = PortOptSolver(; name = :HiGHS,
+                                               solver = optimizer_with_attributes(HiGHS.Optimizer,
+                                                                                  MOI.Silent() =&gt; true)))
+
+# Compute relevant statistics.
+# Expected returns and covariance estimation methods.
+mu_type = MuSimple()
+cov_type = PortCovCor()
+
+# Only compute `mu` and `cov`.
+asset_statistics!(port; mu_type = mu_type, cov_type = cov_type, set_kurt = false,
+                  set_skurt = false, set_skew = false, set_sskew = false)
+# Creating the optimisation object.
+rm = SD() # Risk measure.
+obj = MinRisk() # Objective function. Can be `MinRisk()`, `Utility()`, `Sharpe()`, `MaxRet()`.
+# `Trad` optimisation corresponds to the classic mean risk optimisation.
+type = Trad(; rm = rm, obj = obj)
+
+# Optimise portfolio.
+w1 = optimise!(port, type)
+pretty_table(w1; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    0.0 % │
+│     ADI │    0.0 % │
+│     ADP │    0.0 % │
+│    AMGN │  3.899 % │
+│    AMZN │  1.763 % │
+│    BKNG │    0.0 % │
+│   CMCSA │   1.12 % │
+│    COST │ 20.153 % │
+│    CSCO │    0.0 % │
+│    GILD │ 15.177 % │
+│    GOOG │    0.0 % │
+│   GOOGL │    0.0 % │
+│     HON │  0.799 % │
+│    ISRG │    0.0 % │
+│     LIN │  1.821 % │
+│     MAR │  3.428 % │
+│    META │    0.0 % │
+│     MRK │ 23.127 % │
+│    MSFT │    0.0 % │
+│    NFLX │  0.404 % │
+│    NVDA │    0.0 % │
+│    ORLY │  6.395 % │
+│    PANW │  3.037 % │
+│    QCOM │    0.0 % │
+│    SBUX │    0.0 % │
+│       T │ 13.091 % │
+│    TMUS │  5.785 % │
+│    TSLA │    0.0 % │
+│     TXN │    0.0 % │
+│    VRTX │    0.0 % │
+└─────────┴──────────┘</code></pre><h3 id="2.2.-Plotting-portfolio-composition."><a class="docs-heading-anchor" href="#2.2.-Plotting-portfolio-composition.">2.2. Plotting portfolio composition.</a><a id="2.2.-Plotting-portfolio-composition.-1"></a><a class="docs-heading-anchor-permalink" href="#2.2.-Plotting-portfolio-composition." title="Permalink"></a></h3><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="3c1f36cf.svg" alt="Example block output"/><h2 id="3.-Asset-and-asset-set-constraints"><a class="docs-heading-anchor" href="#3.-Asset-and-asset-set-constraints">3. Asset and asset set constraints</a><a id="3.-Asset-and-asset-set-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Asset-and-asset-set-constraints" title="Permalink"></a></h2><h3 id="3.1.-Creating-the-constraints"><a class="docs-heading-anchor" href="#3.1.-Creating-the-constraints">3.1. Creating the constraints</a><a id="3.1.-Creating-the-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#3.1.-Creating-the-constraints" title="Permalink"></a></h3><p>The function <a href="../../Constraints/WeightConstraints/#PortfolioOptimiser.asset_constraints-Tuple{DataFrames.DataFrame, DataFrames.DataFrame}"><code>asset_constraints</code></a> takes in two dataframes, one defining the asset sets, and another defining the constraints and turns them into a matrix and vector which sets the constraints as <span>$\\mathbf{A} \\bm{x} &gt;= \\bm{b}$</span>.</p><pre><code class="language-julia hljs">asset_sets = DataFrame(;
+                       Asset = [&quot;AAPL&quot;, &quot;ADI&quot;, &quot;ADP&quot;, &quot;AMGN&quot;, &quot;AMZN&quot;, &quot;BKNG&quot;, &quot;CMCSA&quot;,
+                                &quot;COST&quot;, &quot;CSCO&quot;, &quot;GILD&quot;, &quot;GOOG&quot;, &quot;GOOGL&quot;, &quot;HON&quot;, &quot;ISRG&quot;,
+                                &quot;LIN&quot;, &quot;MAR&quot;, &quot;META&quot;, &quot;MRK&quot;, &quot;MSFT&quot;, &quot;NFLX&quot;, &quot;NVDA&quot;, &quot;ORLY&quot;,
+                                &quot;PANW&quot;, &quot;QCOM&quot;, &quot;SBUX&quot;, &quot;T&quot;, &quot;TMUS&quot;, &quot;TSLA&quot;, &quot;TXN&quot;, &quot;VRTX&quot;],
+                       Sector = [&quot;Technology&quot;, &quot;Technology&quot;, &quot;Technology&quot;, &quot;Health Care&quot;,
+                                 &quot;Consumer Discretionary&quot;, &quot;Consumer Discretionary&quot;,
+                                 &quot;Telecommunications&quot;, &quot;Consumer Discretionary&quot;,
+                                 &quot;Telecommunications&quot;, &quot;Health Care&quot;, &quot;Technology&quot;,
+                                 &quot;Technology&quot;, &quot;Industrials&quot;, &quot;Health Care&quot;, &quot;Industrials&quot;,
+                                 &quot;Consumer Discretionary&quot;, &quot;Technology&quot;, &quot;Health Care&quot;,
+                                 &quot;Technology&quot;, &quot;Consumer Discretionary&quot;, &quot;Technology&quot;,
+                                 &quot;Consumer Discretionary&quot;, &quot;Technology&quot;, &quot;Technology&quot;,
+                                 &quot;Consumer Discretionary&quot;, &quot;Telecommunications&quot;,
+                                 &quot;Telecommunications&quot;, &quot;Consumer Discretionary&quot;,
+                                 &quot;Technology&quot;, &quot;Health Care&quot;],
+                       Industry = [&quot;Computer Manufacturing&quot;, &quot;Semiconductors&quot;,
+                                   &quot;EDP Services&quot;,
+                                   &quot;Biotechnology: Biological Products (No Diagnostic Substances)&quot;,
+                                   &quot;Catalog/Specialty Distribution&quot;,
+                                   &quot;Transportation Services&quot;,
+                                   &quot;Cable &amp; Other Pay Television Services&quot;,
+                                   &quot;Department/Specialty Retail Stores&quot;,
+                                   &quot;Computer Communications Equipment&quot;,
+                                   &quot;Biotechnology: Biological Products (No Diagnostic Substances)&quot;,
+                                   &quot;Computer Software: Programming Data Processing&quot;,
+                                   &quot;Computer Software: Programming Data Processing&quot;,
+                                   &quot;Aerospace&quot;, &quot;Industrial Specialties&quot;, &quot;Major Chemicals&quot;,
+                                   &quot;Hotels/Resorts&quot;,
+                                   &quot;Computer Software: Programming Data Processing&quot;,
+                                   &quot;Biotechnology: Pharmaceutical Preparations&quot;,
+                                   &quot;Computer Software: Prepackaged Software&quot;,
+                                   &quot;Consumer Electronics/Video Chains&quot;, &quot;Semiconductors&quot;,
+                                   &quot;Auto &amp; Home Supply Stores&quot;,
+                                   &quot;Computer peripheral equipment&quot;,
+                                   &quot;Radio And Television Broadcasting And Communications Equipment&quot;,
+                                   &quot;Restaurants&quot;, &quot;Telecommunications Equipment&quot;,
+                                   &quot;Telecommunications Equipment&quot;, &quot;Auto Manufacturing&quot;,
+                                   &quot;Semiconductors&quot;,
+                                   &quot;Biotechnology: Pharmaceutical Preparations&quot;])
+pretty_table(asset_sets)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌────────┬────────────────────────┬────────────────────────────────────────────────────────────────┐
+│<span class="sgr1">  Asset </span>│<span class="sgr1">                 Sector </span>│<span class="sgr1">                                                       Industry </span>│
+│<span class="sgr90"> String </span>│<span class="sgr90">                 String </span>│<span class="sgr90">                                                         String </span>│
+├────────┼────────────────────────┼────────────────────────────────────────────────────────────────┤
+│   AAPL │             Technology │                                         Computer Manufacturing │
+│    ADI │             Technology │                                                 Semiconductors │
+│    ADP │             Technology │                                                   EDP Services │
+│   AMGN │            Health Care │  Biotechnology: Biological Products (No Diagnostic Substances) │
+│   AMZN │ Consumer Discretionary │                                 Catalog/Specialty Distribution │
+│   BKNG │ Consumer Discretionary │                                        Transportation Services │
+│  CMCSA │     Telecommunications │                          Cable &amp; Other Pay Television Services │
+│   COST │ Consumer Discretionary │                             Department/Specialty Retail Stores │
+│   CSCO │     Telecommunications │                              Computer Communications Equipment │
+│   GILD │            Health Care │  Biotechnology: Biological Products (No Diagnostic Substances) │
+│   GOOG │             Technology │                 Computer Software: Programming Data Processing │
+│  GOOGL │             Technology │                 Computer Software: Programming Data Processing │
+│    HON │            Industrials │                                                      Aerospace │
+│   ISRG │            Health Care │                                         Industrial Specialties │
+│    LIN │            Industrials │                                                Major Chemicals │
+│    MAR │ Consumer Discretionary │                                                 Hotels/Resorts │
+│   META │             Technology │                 Computer Software: Programming Data Processing │
+│    MRK │            Health Care │                     Biotechnology: Pharmaceutical Preparations │
+│   MSFT │             Technology │                        Computer Software: Prepackaged Software │
+│   NFLX │ Consumer Discretionary │                              Consumer Electronics/Video Chains │
+│   NVDA │             Technology │                                                 Semiconductors │
+│   ORLY │ Consumer Discretionary │                                      Auto &amp; Home Supply Stores │
+│   PANW │             Technology │                                  Computer peripheral equipment │
+│   QCOM │             Technology │ Radio And Television Broadcasting And Communications Equipment │
+│   SBUX │ Consumer Discretionary │                                                    Restaurants │
+│      T │     Telecommunications │                                   Telecommunications Equipment │
+│   TMUS │     Telecommunications │                                   Telecommunications Equipment │
+│   TSLA │ Consumer Discretionary │                                             Auto Manufacturing │
+│    TXN │             Technology │                                                 Semiconductors │
+│   VRTX │            Health Care │                     Biotechnology: Pharmaceutical Preparations │
+└────────┴────────────────────────┴────────────────────────────────────────────────────────────────┘</code></pre><p>We will create different sets of constraints because it makes demonstrations easier.</p><p>It&#39;s also worth noting that constraints may make problems infeasable, for example constraining all <code>N</code> assets to have weights greater than <code>1/(N-1)</code>, or it may be impossible to simultaneously satisfy multiple constraints, for example constraining all assets to have weights greater than or equal to 0.1, and requiring one asset to have a weight smaller than or equal to 0.05.</p><p>Constrain individual assets.</p><pre><code class="language-julia hljs">constraints_1 = DataFrame(; Enabled = [true, true, true, true, true, true],
+                          Type = [&quot;Asset&quot;, &quot;Asset&quot;, &quot;Asset&quot;, &quot;Asset&quot;, &quot;Asset&quot;, &quot;Asset&quot;],
+                          Set = [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Position = [&quot;COST&quot;, &quot;AAPL&quot;, &quot;ADP&quot;, &quot;T&quot;, &quot;GILD&quot;, &quot;GOOG&quot;],
+                          Sign = [&quot;&lt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;],
+                          Weight = [0.13, 0.04, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Relative_Type = [&quot;&quot;, &quot;&quot;, &quot;Asset&quot;, &quot;Asset&quot;, &quot;Subset&quot;, &quot;Subset&quot;],
+                          Relative_Set = [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;Sector&quot;, &quot;Industry&quot;],
+                          Relative_Position = [&quot;&quot;, &quot;&quot;, &quot;MAR&quot;, &quot;MRK&quot;, &quot;Telecommunications&quot;,
+                                               &quot;Telecommunications Equipment&quot;],
+                          Factor = [&quot;&quot;, &quot;&quot;, 2, 0.7, 0.3, 1])
+pretty_table(constraints_1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬────────┬────────┬──────────┬────────┬────────┬───────────────┬──────────────┬──────────────────────────────┬────────┐
+│<span class="sgr1"> Enabled </span>│<span class="sgr1">   Type </span>│<span class="sgr1">    Set </span>│<span class="sgr1"> Position </span>│<span class="sgr1">   Sign </span>│<span class="sgr1"> Weight </span>│<span class="sgr1"> Relative_Type </span>│<span class="sgr1"> Relative_Set </span>│<span class="sgr1">            Relative_Position </span>│<span class="sgr1"> Factor </span>│
+│<span class="sgr90">    Bool </span>│<span class="sgr90"> String </span>│<span class="sgr90"> String </span>│<span class="sgr90">   String </span>│<span class="sgr90"> String </span>│<span class="sgr90">    Any </span>│<span class="sgr90">        String </span>│<span class="sgr90">       String </span>│<span class="sgr90">                       String </span>│<span class="sgr90">    Any </span>│
+├─────────┼────────┼────────┼──────────┼────────┼────────┼───────────────┼──────────────┼──────────────────────────────┼────────┤
+│    true │  Asset │        │     COST │     &lt;= │   0.13 │               │              │                              │        │
+│    true │  Asset │        │     AAPL │     &gt;= │   0.04 │               │              │                              │        │
+│    true │  Asset │        │      ADP │     &lt;= │        │         Asset │              │                          MAR │      2 │
+│    true │  Asset │        │        T │     &gt;= │        │         Asset │              │                          MRK │    0.7 │
+│    true │  Asset │        │     GILD │     &lt;= │        │        Subset │       Sector │           Telecommunications │    0.3 │
+│    true │  Asset │        │     GOOG │     &gt;= │        │        Subset │     Industry │ Telecommunications Equipment │      1 │
+└─────────┴────────┴────────┴──────────┴────────┴────────┴───────────────┴──────────────┴──────────────────────────────┴────────┘</code></pre><p>Create linear constraint matrix and vector and optimise with these constraints.</p><pre><code class="language-julia hljs">A1, B1 = asset_constraints(constraints_1, asset_sets)
+
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A1
+port.b_ineq = B1
+
+w2 = optimise!(port, type)
+pretty_table(w2; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90"> Float64 </span>│
+├─────────┼─────────┤
+│    AAPL │   4.0 % │
+│     ADI │   0.0 % │
+│     ADP │   0.0 % │
+│    AMGN │ 9.452 % │
+│    AMZN │   0.0 % │
+│    BKNG │   0.0 % │
+│   CMCSA │ 5.517 % │
+│    COST │  13.0 % │
+│    CSCO │ 1.091 % │
+│    GILD │ 5.993 % │
+│    GOOG │ 13.37 % │
+│   GOOGL │   0.0 % │
+│     HON │ 0.025 % │
+│    ISRG │   0.0 % │
+│     LIN │ 3.188 % │
+│     MAR │ 0.815 % │
+│    META │   0.0 % │
+│     MRK │  19.1 % │
+│    MSFT │   0.0 % │
+│    NFLX │   0.0 % │
+│    NVDA │   0.0 % │
+│    ORLY │ 9.215 % │
+│    PANW │ 1.854 % │
+│    QCOM │   0.0 % │
+│    SBUX │   0.0 % │
+│       T │ 13.37 % │
+│    TMUS │   0.0 % │
+│    TSLA │   0.0 % │
+│     TXN │   0.0 % │
+│    VRTX │ 0.011 % │
+└─────────┴─────────┘</code></pre><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="fe2ef20e.svg" alt="Example block output"/><p>Constrain all assets.</p><pre><code class="language-julia hljs">constraints_2 = DataFrame(; Enabled = [true, true, true, true, true, true],
+                          Type = [&quot;All Assets&quot;, &quot;All Assets&quot;, &quot;All Assets&quot;, &quot;All Assets&quot;,
+                                  &quot;All Assets&quot;, &quot;All Assets&quot;],
+                          Set = [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Position = [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Sign = [&quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;],
+                          Weight = [0.01, 0.2, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Relative_Type = [&quot;&quot;, &quot;&quot;, &quot;Subset&quot;, &quot;Subset&quot;, &quot;Asset&quot;, &quot;Asset&quot;],
+                          Relative_Set = [&quot;&quot;, &quot;&quot;, &quot;Sector&quot;, &quot;Industry&quot;, &quot;&quot;, &quot;&quot;],
+                          Relative_Position = [&quot;&quot;, &quot;&quot;, &quot;Consumer Discretionary&quot;,
+                                               &quot;Biotechnology: Pharmaceutical Preparations&quot;,
+                                               &quot;TMUS&quot;, &quot;META&quot;],
+                          Factor = [&quot;&quot;, &quot;&quot;, 0.1, 2.1, 0.5, 1.3])
+pretty_table(constraints_2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬────────────┬────────┬──────────┬────────┬────────┬───────────────┬──────────────┬────────────────────────────────────────────┬────────┐
+│<span class="sgr1"> Enabled </span>│<span class="sgr1">       Type </span>│<span class="sgr1">    Set </span>│<span class="sgr1"> Position </span>│<span class="sgr1">   Sign </span>│<span class="sgr1"> Weight </span>│<span class="sgr1"> Relative_Type </span>│<span class="sgr1"> Relative_Set </span>│<span class="sgr1">                          Relative_Position </span>│<span class="sgr1"> Factor </span>│
+│<span class="sgr90">    Bool </span>│<span class="sgr90">     String </span>│<span class="sgr90"> String </span>│<span class="sgr90">   String </span>│<span class="sgr90"> String </span>│<span class="sgr90">    Any </span>│<span class="sgr90">        String </span>│<span class="sgr90">       String </span>│<span class="sgr90">                                     String </span>│<span class="sgr90">    Any </span>│
+├─────────┼────────────┼────────┼──────────┼────────┼────────┼───────────────┼──────────────┼────────────────────────────────────────────┼────────┤
+│    true │ All Assets │        │          │     &gt;= │   0.01 │               │              │                                            │        │
+│    true │ All Assets │        │          │     &lt;= │    0.2 │               │              │                                            │        │
+│    true │ All Assets │        │          │     &gt;= │        │        Subset │       Sector │                     Consumer Discretionary │    0.1 │
+│    true │ All Assets │        │          │     &lt;= │        │        Subset │     Industry │ Biotechnology: Pharmaceutical Preparations │    2.1 │
+│    true │ All Assets │        │          │     &gt;= │        │         Asset │              │                                       TMUS │    0.5 │
+│    true │ All Assets │        │          │     &lt;= │        │         Asset │              │                                       META │    1.3 │
+└─────────┴────────────┴────────┴──────────┴────────┴────────┴───────────────┴──────────────┴────────────────────────────────────────────┴────────┘</code></pre><p>Create linear constraint matrix and vector and optimise with these constraints.</p><pre><code class="language-julia hljs">A2, B2 = asset_constraints(constraints_2, asset_sets)
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A2
+port.b_ineq = B2
+
+w3 = optimise!(port, type)
+pretty_table(w3; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    1.0 % │
+│     ADI │    1.0 % │
+│     ADP │    1.0 % │
+│    AMGN │ 13.337 % │
+│    AMZN │    1.0 % │
+│    BKNG │    1.0 % │
+│   CMCSA │  2.004 % │
+│    COST │    3.0 % │
+│    CSCO │    1.0 % │
+│    GILD │ 13.337 % │
+│    GOOG │    1.0 % │
+│   GOOGL │    1.0 % │
+│     HON │  3.879 % │
+│    ISRG │    1.0 % │
+│     LIN │  5.023 % │
+│     MAR │    1.0 % │
+│    META │ 10.259 % │
+│     MRK │ 13.337 % │
+│    MSFT │    1.0 % │
+│    NFLX │    1.0 % │
+│    NVDA │    1.0 % │
+│    ORLY │    1.0 % │
+│    PANW │  1.485 % │
+│    QCOM │    1.0 % │
+│    SBUX │    1.0 % │
+│       T │ 13.337 % │
+│    TMUS │    2.0 % │
+│    TSLA │    1.0 % │
+│     TXN │    1.0 % │
+│    VRTX │    1.0 % │
+└─────────┴──────────┘</code></pre><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="f5f13ece.svg" alt="Example block output"/><p>Constrain asset sets.</p><pre><code class="language-julia hljs">constraints_3 = DataFrame(; Enabled = [true, true, true, true, true, true],
+                          Type = [&quot;Subset&quot;, &quot;Subset&quot;, &quot;Subset&quot;, &quot;Subset&quot;, &quot;Subset&quot;,
+                                  &quot;Subset&quot;],
+                          Set = [&quot;Sector&quot;, &quot;Sector&quot;, &quot;Sector&quot;, &quot;Industry&quot;, &quot;Industry&quot;,
+                                 &quot;Industry&quot;],
+                          Position = [&quot;Technology&quot;, &quot;Consumer Discretionary&quot;, &quot;Health Care&quot;,
+                                      &quot;Semiconductors&quot;,
+                                      &quot;Biotechnology: Pharmaceutical Preparations&quot;,
+                                      &quot;Biotechnology: Biological Products (No Diagnostic Substances)&quot;],
+                          Sign = [&quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;, &quot;&gt;=&quot;],
+                          Weight = [0.13, 0.25, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Relative_Type = [&quot;&quot;, &quot;&quot;, &quot;Asset&quot;, &quot;Asset&quot;, &quot;Subset&quot;, &quot;Subset&quot;],
+                          Relative_Set = [&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;Sector&quot;, &quot;Industry&quot;],
+                          Relative_Position = [&quot;&quot;, &quot;&quot;, &quot;MAR&quot;, &quot;MRK&quot;, &quot;Telecommunications&quot;,
+                                               &quot;Telecommunications Equipment&quot;],
+                          Factor = [&quot;&quot;, &quot;&quot;, 2, 0.7, 0.1, 0.3])
+pretty_table(constraints_3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬────────┬──────────┬───────────────────────────────────────────────────────────────┬────────┬────────┬───────────────┬──────────────┬──────────────────────────────┬────────┐
+│<span class="sgr1"> Enabled </span>│<span class="sgr1">   Type </span>│<span class="sgr1">      Set </span>│<span class="sgr1">                                                      Position </span>│<span class="sgr1">   Sign </span>│<span class="sgr1"> Weight </span>│<span class="sgr1"> Relative_Type </span>│<span class="sgr1"> Relative_Set </span>│<span class="sgr1">            Relative_Position </span>│<span class="sgr1"> Factor </span>│
+│<span class="sgr90">    Bool </span>│<span class="sgr90"> String </span>│<span class="sgr90">   String </span>│<span class="sgr90">                                                        String </span>│<span class="sgr90"> String </span>│<span class="sgr90">    Any </span>│<span class="sgr90">        String </span>│<span class="sgr90">       String </span>│<span class="sgr90">                       String </span>│<span class="sgr90">    Any </span>│
+├─────────┼────────┼──────────┼───────────────────────────────────────────────────────────────┼────────┼────────┼───────────────┼──────────────┼──────────────────────────────┼────────┤
+│    true │ Subset │   Sector │                                                    Technology │     &gt;= │   0.13 │               │              │                              │        │
+│    true │ Subset │   Sector │                                        Consumer Discretionary │     &lt;= │   0.25 │               │              │                              │        │
+│    true │ Subset │   Sector │                                                   Health Care │     &lt;= │        │         Asset │              │                          MAR │      2 │
+│    true │ Subset │ Industry │                                                Semiconductors │     &gt;= │        │         Asset │              │                          MRK │    0.7 │
+│    true │ Subset │ Industry │                    Biotechnology: Pharmaceutical Preparations │     &lt;= │        │        Subset │       Sector │           Telecommunications │    0.1 │
+│    true │ Subset │ Industry │ Biotechnology: Biological Products (No Diagnostic Substances) │     &gt;= │        │        Subset │     Industry │ Telecommunications Equipment │    0.3 │
+└─────────┴────────┴──────────┴───────────────────────────────────────────────────────────────┴────────┴────────┴───────────────┴──────────────┴──────────────────────────────┴────────┘</code></pre><p>Create linear constraint matrix and vector and optimise with these constraints.</p><pre><code class="language-julia hljs">A3, B3 = asset_constraints(constraints_3, asset_sets)
+
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A3
+port.b_ineq = B3
+
+w4 = optimise!(port, type)
+pretty_table(w4; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    0.0 % │
+│     ADI │    0.0 % │
+│     ADP │  1.608 % │
+│    AMGN │  2.208 % │
+│    AMZN │    0.0 % │
+│    BKNG │    0.0 % │
+│   CMCSA │  1.864 % │
+│    COST │ 13.862 % │
+│    CSCO │  1.784 % │
+│    GILD │ 13.492 % │
+│    GOOG │  3.895 % │
+│   GOOGL │    0.0 % │
+│     HON │    0.0 % │
+│    ISRG │    0.0 % │
+│     LIN │  7.196 % │
+│     MAR │  9.627 % │
+│    META │    0.0 % │
+│     MRK │  3.555 % │
+│    MSFT │  0.001 % │
+│    NFLX │    0.0 % │
+│    NVDA │    0.0 % │
+│    ORLY │  1.511 % │
+│    PANW │  5.007 % │
+│    QCOM │    0.0 % │
+│    SBUX │    0.0 % │
+│       T │ 21.067 % │
+│    TMUS │ 10.835 % │
+│    TSLA │    0.0 % │
+│     TXN │  2.488 % │
+│    VRTX │    0.0 % │
+└─────────┴──────────┘</code></pre><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="282b76c1.svg" alt="Example block output"/><p>Constrain all asset subsets.</p><pre><code class="language-julia hljs">constraints_4 = DataFrame(; Enabled = [true, true, true],
+                          Type = [&quot;All Subsets&quot;, &quot;All Subsets&quot;, &quot;All Subsets&quot;],
+                          Set = [&quot;Industry&quot;, &quot;Industry&quot;, &quot;Sector&quot;], Position = [&quot;&quot;, &quot;&quot;, &quot;&quot;],
+                          Sign = [&quot;&gt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;], Weight = [0.01, &quot;&quot;, &quot;&quot;],
+                          Relative_Type = [&quot;&quot;, &quot;Asset&quot;, &quot;Subset&quot;],
+                          Relative_Set = [&quot;&quot;, &quot;&quot;, &quot;Industry&quot;],
+                          Relative_Position = [&quot;&quot;, &quot;T&quot;, &quot;Semiconductors&quot;],
+                          Factor = [&quot;&quot;, 0.7, 1.3])
+pretty_table(constraints_4)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬─────────────┬──────────┬──────────┬────────┬────────┬───────────────┬──────────────┬───────────────────┬────────┐
+│<span class="sgr1"> Enabled </span>│<span class="sgr1">        Type </span>│<span class="sgr1">      Set </span>│<span class="sgr1"> Position </span>│<span class="sgr1">   Sign </span>│<span class="sgr1"> Weight </span>│<span class="sgr1"> Relative_Type </span>│<span class="sgr1"> Relative_Set </span>│<span class="sgr1"> Relative_Position </span>│<span class="sgr1"> Factor </span>│
+│<span class="sgr90">    Bool </span>│<span class="sgr90">      String </span>│<span class="sgr90">   String </span>│<span class="sgr90">   String </span>│<span class="sgr90"> String </span>│<span class="sgr90">    Any </span>│<span class="sgr90">        String </span>│<span class="sgr90">       String </span>│<span class="sgr90">            String </span>│<span class="sgr90">    Any </span>│
+├─────────┼─────────────┼──────────┼──────────┼────────┼────────┼───────────────┼──────────────┼───────────────────┼────────┤
+│    true │ All Subsets │ Industry │          │     &gt;= │   0.01 │               │              │                   │        │
+│    true │ All Subsets │ Industry │          │     &gt;= │        │         Asset │              │                 T │    0.7 │
+│    true │ All Subsets │   Sector │          │     &lt;= │        │        Subset │     Industry │    Semiconductors │    1.3 │
+└─────────┴─────────────┴──────────┴──────────┴────────┴────────┴───────────────┴──────────────┴───────────────────┴────────┘</code></pre><p>Create linear constraint matrix and vector and optimise with these constraints.</p><pre><code class="language-julia hljs">A4, B4 = asset_constraints(constraints_4, asset_sets)
+
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A4
+port.b_ineq = B4
+
+w5 = optimise!(port, type)
+pretty_table(w5; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    1.0 % │
+│     ADI │    0.0 % │
+│     ADP │    1.0 % │
+│    AMGN │    0.0 % │
+│    AMZN │    1.0 % │
+│    BKNG │    1.0 % │
+│   CMCSA │   3.78 % │
+│    COST │ 13.561 % │
+│    CSCO │    1.0 % │
+│    GILD │  7.884 % │
+│    GOOG │    1.0 % │
+│   GOOGL │    0.0 % │
+│     HON │  2.954 % │
+│    ISRG │    1.0 % │
+│     LIN │  2.075 % │
+│     MAR │    1.0 % │
+│    META │    0.0 % │
+│     MRK │ 17.116 % │
+│    MSFT │    1.0 % │
+│    NFLX │    1.0 % │
+│    NVDA │    0.0 % │
+│    ORLY │  6.439 % │
+│    PANW │    1.0 % │
+│    QCOM │    1.0 % │
+│    SBUX │    1.0 % │
+│       T │  1.429 % │
+│    TMUS │ 10.762 % │
+│    TSLA │    1.0 % │
+│     TXN │   20.0 % │
+│    VRTX │    0.0 % │
+└─────────┴──────────┘</code></pre><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="6e103d6b.svg" alt="Example block output"/><p>Constrain each asset in subset.</p><pre><code class="language-julia hljs">constraints_5 = DataFrame(; Enabled = [true, true, true],
+                          Type = [&quot;Each Asset in Subset&quot;, &quot;Each Asset in Subset&quot;,
+                                  &quot;Each Asset in Subset&quot;],
+                          Set = [&quot;Sector&quot;, &quot;Industry&quot;, &quot;Sector&quot;],
+                          Position = [&quot;Telecommunications&quot;,
+                                      &quot;Biotechnology: Biological Products (No Diagnostic Substances)&quot;,
+                                      &quot;Consumer Discretionary&quot;], Sign = [&quot;&gt;=&quot;, &quot;&gt;=&quot;, &quot;&lt;=&quot;],
+                          Weight = [0.03, &quot;&quot;, &quot;&quot;], Relative_Type = [&quot;&quot;, &quot;Asset&quot;, &quot;Subset&quot;],
+                          Relative_Set = [&quot;&quot;, &quot;&quot;, &quot;Industry&quot;],
+                          Relative_Position = [&quot;&quot;, &quot;T&quot;, &quot;Semiconductors&quot;],
+                          Factor = [&quot;&quot;, 0.7, 1.3])
+pretty_table(constraints_5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────────────────┬──────────┬───────────────────────────────────────────────────────────────┬────────┬────────┬───────────────┬──────────────┬───────────────────┬────────┐
+│<span class="sgr1"> Enabled </span>│<span class="sgr1">                 Type </span>│<span class="sgr1">      Set </span>│<span class="sgr1">                                                      Position </span>│<span class="sgr1">   Sign </span>│<span class="sgr1"> Weight </span>│<span class="sgr1"> Relative_Type </span>│<span class="sgr1"> Relative_Set </span>│<span class="sgr1"> Relative_Position </span>│<span class="sgr1"> Factor </span>│
+│<span class="sgr90">    Bool </span>│<span class="sgr90">               String </span>│<span class="sgr90">   String </span>│<span class="sgr90">                                                        String </span>│<span class="sgr90"> String </span>│<span class="sgr90">    Any </span>│<span class="sgr90">        String </span>│<span class="sgr90">       String </span>│<span class="sgr90">            String </span>│<span class="sgr90">    Any </span>│
+├─────────┼──────────────────────┼──────────┼───────────────────────────────────────────────────────────────┼────────┼────────┼───────────────┼──────────────┼───────────────────┼────────┤
+│    true │ Each Asset in Subset │   Sector │                                            Telecommunications │     &gt;= │   0.03 │               │              │                   │        │
+│    true │ Each Asset in Subset │ Industry │ Biotechnology: Biological Products (No Diagnostic Substances) │     &gt;= │        │         Asset │              │                 T │    0.7 │
+│    true │ Each Asset in Subset │   Sector │                                        Consumer Discretionary │     &lt;= │        │        Subset │     Industry │    Semiconductors │    1.3 │
+└─────────┴──────────────────────┴──────────┴───────────────────────────────────────────────────────────────┴────────┴────────┴───────────────┴──────────────┴───────────────────┴────────┘</code></pre><p>Create linear constraint matrix and vector and optimise with these constraints.</p><pre><code class="language-julia hljs">A5, B5 = asset_constraints(constraints_5, asset_sets)
+
+# Clear the arrays because the code asserts the dimensions.
+port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A5
+port.b_ineq = B5
+
+w6 = optimise!(port, type)
+pretty_table(w6; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  weights </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┤
+│    AAPL │    0.0 % │
+│     ADI │    0.0 % │
+│     ADP │    0.0 % │
+│    AMGN │  7.404 % │
+│    AMZN │  2.877 % │
+│    BKNG │    0.0 % │
+│   CMCSA │    3.0 % │
+│    COST │  6.636 % │
+│    CSCO │    3.0 % │
+│    GILD │ 14.822 % │
+│    GOOG │    0.0 % │
+│   GOOGL │    0.0 % │
+│     HON │  0.508 % │
+│    ISRG │    0.0 % │
+│     LIN │  2.082 % │
+│     MAR │  2.395 % │
+│    META │    0.0 % │
+│     MRK │ 24.233 % │
+│    MSFT │    0.0 % │
+│    NFLX │  0.505 % │
+│    NVDA │    0.0 % │
+│    ORLY │  6.636 % │
+│    PANW │  3.297 % │
+│    QCOM │    0.0 % │
+│    SBUX │    0.0 % │
+│       T │ 10.578 % │
+│    TMUS │  6.923 % │
+│    TSLA │    0.0 % │
+│     TXN │  5.105 % │
+│    VRTX │    0.0 % │
+└─────────┴──────────┘</code></pre><pre><code class="language-julia hljs">plot_bar(port)</code></pre><img src="7b0485df.svg" alt="Example block output"/><h2 id="4.-Efficient-Frontier"><a class="docs-heading-anchor" href="#4.-Efficient-Frontier">4. Efficient Frontier</a><a id="4.-Efficient-Frontier-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Efficient-Frontier" title="Permalink"></a></h2><p>It&#39;s possible to compute the efficient frontier with constraints. It will be different to the vanilla one in the previous tutorial because the constraints will be applied to every optimisation.</p><pre><code class="language-julia hljs">port.a_ineq = Matrix(undef, 0, 0)
+port.b_ineq = Vector(undef, 0)
+port.a_ineq = A2
+port.b_ineq = B2
+
+points = 50
+frontier = efficient_frontier!(port, type; points = points)
+pretty_table(frontier[:weights]; formatters = fmt2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬─────────┬──────────┬──────────┬──────────┬──────────┬─────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬─────────┬──────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">        1 </span>│<span class="sgr1">        2 </span>│<span class="sgr1">        3 </span>│<span class="sgr1">        4 </span>│<span class="sgr1">        5 </span>│<span class="sgr1">        6 </span>│<span class="sgr1">        7 </span>│<span class="sgr1">       8 </span>│<span class="sgr1">        9 </span>│<span class="sgr1">       10 </span>│<span class="sgr1">       11 </span>│<span class="sgr1">       12 </span>│<span class="sgr1">      13 </span>│<span class="sgr1">       14 </span>│<span class="sgr1">       15 </span>│<span class="sgr1">       16 </span>│<span class="sgr1">       17 </span>│<span class="sgr1">       18 </span>│<span class="sgr1">       19 </span>│<span class="sgr1">       20 </span>│<span class="sgr1">       21 </span>│<span class="sgr1">       22 </span>│<span class="sgr1">       23 </span>│<span class="sgr1">       24 </span>│<span class="sgr1">       25 </span>│<span class="sgr1">       26 </span>│<span class="sgr1">       27 </span>│<span class="sgr1">       28 </span>│<span class="sgr1">       29 </span>│<span class="sgr1">       30 </span>│<span class="sgr1">       31 </span>│<span class="sgr1">       32 </span>│<span class="sgr1">       33 </span>│<span class="sgr1">       34 </span>│<span class="sgr1">       35 </span>│<span class="sgr1">       36 </span>│<span class="sgr1">       37 </span>│<span class="sgr1">       38 </span>│<span class="sgr1">       39 </span>│<span class="sgr1">       40 </span>│<span class="sgr1">       41 </span>│<span class="sgr1">       42 </span>│<span class="sgr1">       43 </span>│<span class="sgr1">       44 </span>│<span class="sgr1">       45 </span>│<span class="sgr1">       46 </span>│<span class="sgr1">       47 </span>│<span class="sgr1">       48 </span>│<span class="sgr1">       49 </span>│<span class="sgr1">      50 </span>│<span class="sgr1">       51 </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90"> Float64 </span>│<span class="sgr90">  Float64 </span>│
+├─────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼─────────┼──────────┼──────────┼──────────┼──────────┼─────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼─────────┼──────────┤
+│    AAPL │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │ 1.021 % │  1.323 % │  1.619 % │  1.903 % │  2.181 % │ 2.686 % │  3.264 % │   3.88 % │  4.216 % │  4.592 % │  4.923 % │  5.175 % │  5.423 % │  5.666 % │  5.905 % │   6.14 % │  6.371 % │    6.6 % │  6.789 % │  6.965 % │  7.141 % │  7.285 % │   7.38 % │  7.473 % │  7.557 % │  7.642 % │  7.725 % │  7.807 % │  7.893 % │  7.851 % │  7.788 % │  7.958 % │  8.719 % │  9.467 % │ 10.201 % │ 10.921 % │ 11.629 % │ 12.325 % │ 13.012 % │ 11.683 % │  9.661 % │  6.811 % │ 4.476 % │  7.731 % │
+│     ADI │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│     ADP │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    AMGN │ 13.337 % │  8.299 % │  7.553 % │  6.928 % │  6.353 % │  5.814 % │  5.304 % │ 4.819 % │  4.341 % │  3.881 % │  3.435 % │  3.004 % │ 1.917 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    AMZN │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    BKNG │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│   CMCSA │  2.004 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    COST │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │   3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │ 2.663 % │  2.204 % │  1.614 % │  1.272 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    CSCO │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    GILD │ 13.337 % │ 12.642 % │ 12.437 % │ 12.263 % │ 12.102 % │ 11.951 % │ 11.808 % │ 11.67 % │ 11.508 % │ 11.353 % │ 11.202 % │ 11.056 % │ 11.23 % │ 11.453 % │ 11.614 % │ 11.911 % │  12.21 % │ 12.575 % │ 12.945 % │ 13.309 % │ 13.666 % │ 14.018 % │ 14.364 % │ 14.705 % │ 15.041 % │ 14.915 % │ 14.561 % │ 14.217 % │ 13.829 % │ 13.392 % │ 12.973 % │ 12.554 % │ 12.141 % │ 11.728 % │ 11.323 % │ 10.918 % │ 10.182 % │  9.397 % │  8.531 % │  7.453 % │  6.395 % │  5.358 % │  4.341 % │  3.339 % │  2.353 % │   1.38 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │ 11.704 % │
+│    GOOG │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│   GOOGL │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│     HON │  3.879 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    ISRG │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│     LIN │  5.023 % │  9.548 % │  9.325 % │  9.076 % │  8.849 % │  8.637 % │  8.436 % │ 8.242 % │  8.013 % │  7.792 % │   7.58 % │  7.372 % │  6.85 % │  6.135 % │  5.114 % │  4.657 % │  4.163 % │  3.809 % │  3.578 % │  3.352 % │   3.13 % │  2.912 % │  2.697 % │  2.484 % │  2.276 % │  1.972 % │  1.592 % │  1.203 % │  1.001 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│     MAR │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    META │ 10.259 % │  9.724 % │  9.567 % │  9.433 % │  9.309 % │  9.193 % │  9.083 % │ 8.977 % │  8.853 % │  8.733 % │  8.617 % │  8.505 % │ 8.638 % │   8.81 % │  8.934 % │  9.162 % │  9.393 % │  9.673 % │  9.958 % │ 10.238 % │ 10.513 % │ 10.783 % │ 11.049 % │ 11.311 % │  11.57 % │ 11.865 % │ 12.176 % │ 12.483 % │ 12.779 % │ 13.056 % │ 13.322 % │ 13.584 % │ 13.845 % │ 14.102 % │ 14.359 % │ 14.611 % │ 14.894 % │  15.18 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 15.385 % │ 17.665 % │  20.0 % │ 14.117 % │
+│     MRK │ 13.337 % │ 12.642 % │ 12.437 % │ 12.263 % │ 12.102 % │ 11.951 % │ 11.808 % │ 11.67 % │ 11.508 % │ 11.353 % │ 11.202 % │ 11.056 % │ 11.23 % │ 11.453 % │ 11.614 % │ 11.911 % │  12.21 % │ 11.661 % │ 10.885 % │ 10.125 % │  9.377 % │  8.642 % │  7.919 % │  7.205 % │    6.5 % │  6.345 % │  6.537 % │  6.727 % │   6.91 % │  6.939 % │  6.862 % │  6.764 % │  6.681 % │   6.59 % │  6.519 % │  6.425 % │  6.251 % │  6.061 % │  5.763 % │  5.187 % │  4.623 % │  4.069 % │  3.523 % │  2.989 % │  2.463 % │  1.949 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │  6.587 % │
+│    MSFT │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    NFLX │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    NVDA │    1.0 % │    1.0 % │  2.319 % │  3.548 % │  4.684 % │  5.747 % │  6.753 % │ 7.704 % │  8.541 % │  9.345 % │ 10.122 % │ 10.876 % │ 11.23 % │ 11.453 % │ 11.614 % │ 11.911 % │  12.21 % │ 12.575 % │ 12.945 % │ 13.309 % │ 13.666 % │ 14.018 % │ 14.364 % │ 14.705 % │ 15.041 % │ 15.424 % │ 15.828 % │ 16.227 % │ 16.612 % │ 16.973 % │ 17.318 % │  17.66 % │ 17.998 % │ 18.333 % │ 18.667 % │ 18.994 % │ 19.363 % │ 19.734 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │   20.0 % │  20.0 % │ 18.352 % │
+│    ORLY │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    PANW │  1.485 % │  7.575 % │  7.853 % │  8.039 % │  8.211 % │  8.373 % │  8.526 % │  8.67 % │  8.778 % │  8.882 % │  8.982 % │  9.079 % │ 9.294 % │  9.565 % │  9.913 % │ 10.118 % │ 10.341 % │ 10.538 % │ 10.695 % │ 10.849 % │   11.0 % │ 11.148 % │ 11.295 % │ 11.439 % │ 11.582 % │ 11.699 % │ 11.809 % │ 11.919 % │ 12.018 % │ 12.092 % │ 12.156 % │  12.22 % │ 12.284 % │ 12.347 % │ 12.407 % │ 12.468 % │ 12.489 % │ 12.503 % │ 12.602 % │  12.92 % │ 13.229 % │ 13.532 % │  13.83 % │ 14.124 % │ 14.413 % │ 14.699 % │ 16.547 % │ 19.431 % │   20.0 % │  20.0 % │ 12.348 % │
+│    QCOM │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    SBUX │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│       T │ 13.337 % │ 12.642 % │ 12.437 % │ 12.263 % │ 12.102 % │ 11.951 % │ 11.808 % │ 11.67 % │ 11.508 % │ 11.353 % │ 11.202 % │ 11.056 % │ 11.23 % │ 11.453 % │ 11.524 % │ 10.732 % │   9.88 % │  9.247 % │  8.817 % │  8.396 % │  7.982 % │  7.574 % │  7.173 % │  6.779 % │   6.39 % │  5.992 % │  5.532 % │  5.082 % │  4.565 % │  4.025 % │  3.512 % │  3.016 % │   2.52 % │  2.036 % │  1.547 % │  1.071 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │  2.008 % │
+│    TMUS │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │   2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │   2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │    2.0 % │  1.861 % │    1.0 % │    1.0 % │   1.0 % │    2.0 % │
+│    TSLA │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │ 1.337 % │  1.796 % │  2.386 % │  2.728 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │    3.0 % │   3.0 % │    3.0 % │
+│     TXN │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │   1.0 % │    1.0 % │
+│    VRTX │    1.0 % │  1.929 % │  2.071 % │  2.186 % │  2.288 % │  2.383 % │  2.473 % │ 2.558 % │  2.626 % │  2.691 % │  2.754 % │  2.814 % │ 2.697 % │  2.414 % │  1.792 % │  1.383 % │  1.001 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │    1.0 % │  1.001 % │  1.143 % │  1.385 % │  1.645 % │   1.89 % │   2.14 % │   2.37 % │   2.62 % │  2.969 % │  3.336 % │  3.761 % │  4.337 % │  4.901 % │  5.455 % │    6.0 % │  6.534 % │  7.061 % │  7.575 % │  8.524 % │  8.524 % │  8.524 % │ 8.524 % │  2.152 % │
+└─────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴─────────┴──────────┴──────────┴──────────┴──────────┴─────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴─────────┴──────────┘</code></pre><p>Plot frontier.</p><pre><code class="language-julia hljs">plot_frontier(port; rm = rm)</code></pre><img src="fefdfbaf.svg" alt="Example block output"/><p>Plot frontier area.</p><pre><code class="language-julia hljs">plot_frontier_area(port; rm = rm, kwargs_a = (; legendfontsize = 7))</code></pre><img src="e44ae942.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../1_Mean_Risk_Optimisation/">« Example 1: Mean Risk Optimisation</a><a class="docs-footer-nextpage" href="../3_Mean_Risk_Optimisation_Factor_Models/">Example 3: Mean Risk Optimisation with Factor Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.2 on <span class="colophon-date" title="Saturday 26 April 2025 12:07">Saturday 26 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

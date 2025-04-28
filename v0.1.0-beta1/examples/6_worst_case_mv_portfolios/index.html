@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 6: Worst case Mean-Variance · PortfolioOptimiser.jl</title><meta name="title" content="Example 6: Worst case Mean-Variance · PortfolioOptimiser.jl"/><meta property="og:title" content="Example 6: Worst case Mean-Variance · PortfolioOptimiser.jl"/><meta property="twitter:title" content="Example 6: Worst case Mean-Variance · PortfolioOptimiser.jl"/><meta name="description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="twitter:description" content="Documentation for PortfolioOptimiser.jl."/><meta property="og:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/6_worst_case_mv_portfolios/"/><meta property="twitter:url" content="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/6_worst_case_mv_portfolios/"/><link rel="canonical" href="https://dcelisgarza.github.io/PortfolioOptimiser.jl/examples/6_worst_case_mv_portfolios/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.svg" alt="PortfolioOptimiser.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PortfolioOptimiser.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../0_not_financial_advice/">Example 0: Not financial advice</a></li><li><a class="tocitem" href="../1_basic_use/">Example 1: Basic use</a></li><li><a class="tocitem" href="../2_asset_statistics/">Example 2: Asset statistics</a></li><li><a class="tocitem" href="../3_shorting_portfolios/">Example 3: Shorting and leveraged portfolios</a></li><li><a class="tocitem" href="../4_hrp_portfolios/">Example 4: Hierarchical risk parity</a></li><li><a class="tocitem" href="../5_risk_parity_portfolios/">Example 5: Risk parity</a></li><li class="is-active"><a class="tocitem" href>Example 6: Worst case Mean-Variance</a><ul class="internal"><li><a class="tocitem" href="#6.1-Downloading-the-data"><span>6.1 Downloading the data</span></a></li><li><a class="tocitem" href="#6.2-Instantiating-an-instance-of-[Portfolio](@ref)."><span>6.2 Instantiating an instance of <code>Portfolio</code>.</span></a></li><li><a class="tocitem" href="#6.3-Worst-case-statistics"><span>6.3 Worst case statistics</span></a></li><li><a class="tocitem" href="#6.4-Optimising-the-portfolio"><span>6.4 Optimising the portfolio</span></a></li></ul></li><li><a class="tocitem" href="../7_worst_case_statistics/">Example 7: Worst case statistics</a></li><li><a class="tocitem" href="../8_relaxed_risk_parity_variance_portfolios/">-</a></li></ul></li><li><span class="tocitem">API</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Risk Measures</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../RiskMeasures/RiskMeasures/">Types</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskValue/">Risk value</a></li><li><a class="tocitem" href="../../RiskMeasures/RiskStatistics/">Risk statistics</a></li><li><a class="tocitem" href="../../RiskMeasures/MiscRiskMeasureFunctions/">Miscelaneous Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Parameter Estimation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../ParameterEstimation/PosdefFix/">Fixing non-positive definite matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/MatrixDenoising/">Matrix denoising</a></li><li><a class="tocitem" href="../../ParameterEstimation/DistanceMatrices/">Distance matrices</a></li><li><a class="tocitem" href="../../ParameterEstimation/Clustering/">Clustering</a></li><li><a class="tocitem" href="../../ParameterEstimation/CovCorKurtSkew/">Covariance, correlation, cokurtosis and coskewness</a></li><li><a class="tocitem" href="../../ParameterEstimation/MeanEstimators/">Expected returns</a></li><li><a class="tocitem" href="../../ParameterEstimation/WorstCase/">Worst case mean variance sets</a></li><li><a class="tocitem" href="../../ParameterEstimation/Regression/">Regression</a></li><li><a class="tocitem" href="../../ParameterEstimation/BlackLitterman/">Black Litterman models</a></li><li><a class="tocitem" href="../../ParameterEstimation/OWA/">Ordered Weight Arrays</a></li><li><a class="tocitem" href="../../ParameterEstimation/ParameterEstimationMisc/">Miscelaneous</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Constraints</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Constraints/WeightConstraints/">Weight constraints</a></li><li><a class="tocitem" href="../../Constraints/ViewsConstraints/">Views constraints</a></li><li><a class="tocitem" href="../../Constraints/NetworkConstraints/">Network constraints</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">(HC)Portfolio</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Portfolio/PortfolioTypes/">Types</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioStatistics/">Statistics</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioRisk/">Risk</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioClustering/">Clustering</a></li><li><a class="tocitem" href="../../Portfolio/PortfolioNetwork/">Network</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Optimisation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Optimisation/OptimisationKinds/">Optimisation kinds</a></li><li><a class="tocitem" href="../../Optimisation/ObjectiveFunctions/">Objective functions</a></li><li><a class="tocitem" href="../../Optimisation/PortfolioClasses/">Portfolio classes</a></li><li><a class="tocitem" href="../../Optimisation/AssetAllocation/">Asset allocation</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationConstraints/">Constraints</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationSetup/">Setup functions</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationRiskMeasures/">Risk measures</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationGetZ/">Entropic and relativistic moments</a></li><li><a class="tocitem" href="../../Optimisation/OptimisationFinalisation/">Finalisation functions</a></li></ul></li><li><a class="tocitem" href="../../PlotsExtension/">Plots Extension</a></li><li><a class="tocitem" href="../../References/">References</a></li><li><a class="tocitem" href="../../Contents/">Index</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 6: Worst case Mean-Variance</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 6: Worst case Mean-Variance</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/blob/main/examples/6_worst_case_mv_portfolios.jl#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><p>The source files for all examples can be found in <a href="https://github.com/dcelisgarza/PortfolioOptimiser.jl/tree/main/examples/">/examples</a>.</p><h1 id="Example-6:-Worst-case-Mean-Variance"><a class="docs-heading-anchor" href="#Example-6:-Worst-case-Mean-Variance">Example 6: Worst case Mean-Variance</a><a id="Example-6:-Worst-case-Mean-Variance-1"></a><a class="docs-heading-anchor-permalink" href="#Example-6:-Worst-case-Mean-Variance" title="Permalink"></a></h1><p>This example follows from previous ones. If something in the preamble is confusing, it is explained there.</p><p>This example focuses on the <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.WC"><code>WC</code></a> optimisation type of <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</p><h2 id="6.1-Downloading-the-data"><a class="docs-heading-anchor" href="#6.1-Downloading-the-data">6.1 Downloading the data</a><a id="6.1-Downloading-the-data-1"></a><a class="docs-heading-anchor-permalink" href="#6.1-Downloading-the-data" title="Permalink"></a></h2><pre><code class="language-julia hljs"># using Pkg
+# Pkg.add.([&quot;StatsPlots&quot;, &quot;GraphRecipes&quot;, &quot;YFinance&quot;, &quot;Clarabel&quot;, &quot;HiGHS&quot;, &quot;CovarianceEstimation&quot;, &quot;SparseArrays&quot;])
+using Clarabel, CovarianceEstimation, DataFrames, Dates, GraphRecipes, HiGHS, YFinance,
+      PortfolioOptimiser, Statistics, StatsBase, StatsPlots, TimeSeries, LinearAlgebra,
+      PrettyTables, Random
+
+fmt1 = (v, i, j) -&gt; begin
+    if j == 1
+        return v
+    else
+        return if isa(v, Number)
+            &quot;$(round(v*100, digits=3)) %&quot;
+        else
+            v
+        end
+    end
+end;
+
+function stock_price_to_time_array(x)
+    coln = collect(keys(x))[3:end] # only get the keys that are not ticker or datetime
+    m = hcat([x[k] for k ∈ coln]...) #Convert the dictionary into a matrix
+    return TimeArray(x[&quot;timestamp&quot;], m, Symbol.(coln), x[&quot;ticker&quot;])
+end
+assets = [&quot;AAL&quot;, &quot;AAPL&quot;, &quot;AMC&quot;, &quot;BB&quot;, &quot;BBY&quot;, &quot;DELL&quot;, &quot;DG&quot;, &quot;DRS&quot;, &quot;GME&quot;, &quot;INTC&quot;, &quot;LULU&quot;,
+          &quot;MARA&quot;, &quot;MCI&quot;, &quot;MSFT&quot;, &quot;NKLA&quot;, &quot;NVAX&quot;, &quot;NVDA&quot;, &quot;PARA&quot;, &quot;PLNT&quot;, &quot;SAVE&quot;, &quot;SBUX&quot;,
+          &quot;SIRI&quot;, &quot;STX&quot;, &quot;TLRY&quot;, &quot;TSLA&quot;]
+Date_0 = &quot;2019-01-01&quot;
+Date_1 = &quot;2023-01-01&quot;
+prices = get_prices.(assets; startdt = Date_0, enddt = Date_1)
+prices = stock_price_to_time_array.(prices)
+prices = hcat(prices...)
+cidx = colnames(prices)[occursin.(r&quot;adj&quot;, string.(colnames(prices)))]
+prices = prices[cidx]
+TimeSeries.rename!(prices, Symbol.(assets));</code></pre><h2 id="6.2-Instantiating-an-instance-of-[Portfolio](@ref)."><a class="docs-heading-anchor" href="#6.2-Instantiating-an-instance-of-[Portfolio](@ref).">6.2 Instantiating an instance of <a href="../../Portfolio/PortfolioTypes/#PortfolioOptimiser.Portfolio"><code>Portfolio</code></a>.</a><a id="6.2-Instantiating-an-instance-of-[Portfolio](@ref).-1"></a><a class="docs-heading-anchor-permalink" href="#6.2-Instantiating-an-instance-of-[Portfolio](@ref)." title="Permalink"></a></h2><p>We&#39;ll compute basic statistics for this.</p><pre><code class="language-julia hljs">portfolio = Portfolio(; prices = prices,
+                      # Continuous optimiser.
+                      solvers = Dict(:Clarabel =&gt; Dict(:solver =&gt; Clarabel.Optimizer,
+                                                       :check_sol =&gt; (allow_local = true,
+                                                                      allow_almost = true),
+                                                       :params =&gt; Dict(&quot;verbose&quot; =&gt; false))),
+                      # MIP optimiser for the discrete allocation.
+                      alloc_solvers = Dict(:HiGHS =&gt; Dict(:solver =&gt; HiGHS.Optimizer,
+                                                          :check_sol =&gt; (allow_local = true,
+                                                                         allow_almost = true),
+                                                          :params =&gt; Dict(&quot;log_to_console&quot; =&gt; false))));
+
+asset_statistics!(portfolio)</code></pre><h2 id="6.3-Worst-case-statistics"><a class="docs-heading-anchor" href="#6.3-Worst-case-statistics">6.3 Worst case statistics</a><a id="6.3-Worst-case-statistics-1"></a><a class="docs-heading-anchor-permalink" href="#6.3-Worst-case-statistics" title="Permalink"></a></h2><p>In order to perform a worst case mean variance optimisation we need to compute uncertainty sets for the expected returns vector and covariance matrix. We can do this via <a href="../../Portfolio/PortfolioStatistics/#PortfolioOptimiser.wc_statistics!-Tuple{Portfolio}"><code>wc_statistics!</code></a>.</p><p>For the purposes of this tutorial we&#39;ll use the defaults. We will explore the other options one can sue for computing the uncertainty sets in a subsequent tutorial.</p><pre><code class="language-julia hljs"># Set random seed for reproducible results.
+Random.seed!(123)
+wc_statistics!(portfolio)</code></pre><h2 id="6.4-Optimising-the-portfolio"><a class="docs-heading-anchor" href="#6.4-Optimising-the-portfolio">6.4 Optimising the portfolio</a><a id="6.4-Optimising-the-portfolio-1"></a><a class="docs-heading-anchor-permalink" href="#6.4-Optimising-the-portfolio" title="Permalink"></a></h2><p>Having computed our worst case statistics, we can optimise the portfolio. The <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.WC"><code>WC</code></a> struct defines which set types to use in the worst case mean variance optimisation. <a href="../../Optimisation/OptimisationKinds/#PortfolioOptimiser.WC"><code>WC</code></a> defaults to using <a href="../../ParameterEstimation/WorstCase/#PortfolioOptimiser.Box"><code>Box</code></a> constraints for both the expected returns vector and covariance matrix.</p><p>User-provided risk measures have no effect on this type of optimisation will only perform a mean variance optimisation with uncertainty sets.</p><p>This type of optimisation can take any <a href="../../Optimisation/ObjectiveFunctions/#PortfolioOptimiser.ObjectiveFunction"><code>PortfolioOptimiser.ObjectiveFunction</code></a>.</p><pre><code class="language-julia hljs"># User-provided risk measures have no effect.
+rm = CVaR()
+# Worst case mean-variance optimisation using default set types.
+type = WC()
+# We&#39;ll maximise the risk-adjusted return ratio.
+obj = Sharpe(; rf = 3.5 / 100 / 252)
+
+# Box uncertainty set for the expected returns vector and covariance matrix.
+w1 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Ellipse uncertainty set for the expected returns vector and box uncertainty set for the covariance matrix.
+type.mu = Ellipse()
+w2 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Box uncertainty set for the expected returns vector and ellipse uncertainty set for the covariance matrix.
+type.mu = Box()
+type.cov = Ellipse()
+w3 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Ellipse uncertainty set for the expected returns vector and ellipse uncertainty set for the covariance matrix.
+type.mu = Ellipse()
+w4 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+pretty_table(DataFrame(; tickers = w1.tickers, box_box = w1.weights, ellip_box = w2.weights,
+                       box_ellip = w3.weights, ellip_ellip = w4.weights); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┬───────────┬───────────┬─────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  box_box </span>│<span class="sgr1"> ellip_box </span>│<span class="sgr1"> box_ellip </span>│<span class="sgr1"> ellip_ellip </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│
+├─────────┼──────────┼───────────┼───────────┼─────────────┤
+│     AAL │  0.017 % │   1.549 % │   0.053 % │     0.938 % │
+│    AAPL │ 93.781 % │   4.148 % │  90.063 % │     4.515 % │
+│     AMC │  0.014 % │   0.635 % │    0.04 % │     0.391 % │
+│      BB │  0.018 % │   1.902 % │   0.057 % │     1.942 % │
+│     BBY │  0.041 % │   2.866 % │   0.192 % │     1.553 % │
+│    DELL │  0.043 % │   3.509 % │   0.208 % │       3.4 % │
+│      DG │  0.274 % │  21.259 % │   1.079 % │    19.082 % │
+│     DRS │  0.164 % │   3.753 % │   0.753 % │     4.743 % │
+│     GME │  0.125 % │   0.963 % │   0.627 % │     0.535 % │
+│    INTC │  0.023 % │   3.437 % │   0.082 % │     2.922 % │
+│    LULU │  0.075 % │   2.781 % │   0.391 % │      1.55 % │
+│    MARA │  0.038 % │   0.462 % │    0.16 % │     0.451 % │
+│     MCI │  0.038 % │  18.265 % │   0.181 % │    18.228 % │
+│    MSFT │  0.145 % │   4.774 % │   0.702 % │       5.4 % │
+│    NKLA │  0.014 % │   1.968 % │   0.039 % │     2.302 % │
+│    NVAX │  0.017 % │   1.527 % │   0.051 % │      1.28 % │
+│    NVDA │   0.33 % │   1.019 % │   1.141 % │     1.596 % │
+│    PARA │  0.018 % │   2.203 % │   0.057 % │     1.275 % │
+│    PLNT │  0.033 % │   1.817 % │   0.135 % │     0.478 % │
+│    SAVE │  0.016 % │   0.975 % │   0.049 % │     1.156 % │
+│    SBUX │  0.049 % │    5.73 % │   0.253 % │     8.266 % │
+│    SIRI │  0.032 % │   7.822 % │   0.144 % │    11.842 % │
+│     STX │  0.041 % │   4.284 % │   0.192 % │     5.287 % │
+│    TLRY │   0.01 % │   1.027 % │   0.025 % │      0.77 % │
+│    TSLA │  4.648 % │   1.324 % │   3.327 % │       0.1 % │
+└─────────┴──────────┴───────────┴───────────┴─────────────┘</code></pre><p>As you can see, the type of constraint used can have a large impact on the results of the optimisation. This is accentuated by the fact that we maximised the risk-adjusted return ratio. We&#39;ll now minimise the risk, on which the uncertainty set for the expected returns vector has a smaller impact.</p><pre><code class="language-julia hljs">type = WC()
+# We&#39;ll maximise the risk-adjusted return ratio.
+obj = MinRisk()
+
+# Box uncertainty set for the expected returns vector and covariance matrix.
+w5 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Ellipse uncertainty set for the expected returns vector and box uncertainty set for the covariance matrix.
+type.mu = Ellipse()
+w6 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Box uncertainty set for the expected returns vector and ellipse uncertainty set for the covariance matrix.
+type.mu = Box()
+type.cov = Ellipse()
+w7 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+# Ellipse uncertainty set for the expected returns vector and ellipse uncertainty set for the covariance matrix.
+type.mu = Ellipse()
+w8 = optimise!(portfolio; type = type, rm = rm, obj = obj)
+
+pretty_table(DataFrame(; tickers = w5.tickers, box_box = w5.weights, ellip_box = w6.weights,
+                       box_ellip = w7.weights, ellip_ellip = w8.weights); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬──────────┬───────────┬───────────┬─────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1">  box_box </span>│<span class="sgr1"> ellip_box </span>│<span class="sgr1"> box_ellip </span>│<span class="sgr1"> ellip_ellip </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">  Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│
+├─────────┼──────────┼───────────┼───────────┼─────────────┤
+│     AAL │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    AAPL │  0.004 % │     0.0 % │     0.0 % │     0.001 % │
+│     AMC │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│      BB │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│     BBY │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    DELL │  0.001 % │     0.0 % │     0.0 % │       0.0 % │
+│      DG │ 39.707 % │  39.685 % │   38.92 % │    38.922 % │
+│     DRS │  0.891 % │    0.89 % │   2.369 % │     2.369 % │
+│     GME │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    INTC │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    LULU │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    MARA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│     MCI │ 30.623 % │  30.632 % │  30.632 % │    30.632 % │
+│    MSFT │  1.219 % │   1.233 % │   0.509 % │      0.51 % │
+│    NKLA │    0.0 % │     0.0 % │   0.844 % │     0.844 % │
+│    NVAX │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    NVDA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    PARA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    PLNT │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    SAVE │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    SBUX │  8.911 % │   8.918 % │    8.28 % │     8.279 % │
+│    SIRI │ 16.239 % │  16.246 % │  14.769 % │    14.769 % │
+│     STX │  2.404 % │   2.396 % │   3.676 % │     3.675 % │
+│    TLRY │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+│    TSLA │    0.0 % │     0.0 % │     0.0 % │       0.0 % │
+└─────────┴──────────┴───────────┴───────────┴─────────────┘</code></pre><p>It&#39;s also posible to disable the worst set constraint for the expected returns vector and covariance matrix independently. We&#39;ll disable them both and see that we recover the traditional mean variance optimisation.</p><pre><code class="language-julia hljs">type = WC(; mu = NoWC(), cov = NoWC())
+
+obj = MinRisk()
+w9 = optimise!(portfolio; type = type, obj = obj)
+w10 = optimise!(portfolio; type = Trad(), obj = obj)
+
+obj = Sharpe(; rf = 3.5 / 100 / 252)
+w11 = optimise!(portfolio; type = type, obj = obj)
+w12 = optimise!(portfolio; type = Trad(), obj = obj)
+
+pretty_table(DataFrame(; tickers = w9.tickers, nowc_risk = w9.weights,
+                       trad_risk = w10.weights, nowc_sharpe = w11.weights,
+                       trad_sharpe = w12.weights); formatters = fmt1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌─────────┬───────────┬───────────┬─────────────┬─────────────┐
+│<span class="sgr1"> tickers </span>│<span class="sgr1"> nowc_risk </span>│<span class="sgr1"> trad_risk </span>│<span class="sgr1"> nowc_sharpe </span>│<span class="sgr1"> trad_sharpe </span>│
+│<span class="sgr90">  String </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">   Float64 </span>│<span class="sgr90">     Float64 </span>│<span class="sgr90">     Float64 </span>│
+├─────────┼───────────┼───────────┼─────────────┼─────────────┤
+│     AAL │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    AAPL │   0.011 % │   0.011 % │    16.267 % │     16.26 % │
+│     AMC │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│      BB │   0.002 % │   0.002 % │       0.0 % │       0.0 % │
+│     BBY │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    DELL │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│      DG │   38.92 % │   38.92 % │    40.262 % │    40.251 % │
+│     DRS │   2.369 % │   2.369 % │    17.995 % │    17.998 % │
+│     GME │     0.0 % │     0.0 % │     9.794 % │     9.796 % │
+│    INTC │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    LULU │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    MARA │     0.0 % │     0.0 % │      4.75 % │     4.752 % │
+│     MCI │  30.632 % │  30.632 % │       0.0 % │       0.0 % │
+│    MSFT │   0.501 % │   0.501 % │       0.0 % │       0.0 % │
+│    NKLA │   0.843 % │   0.843 % │       0.0 % │       0.0 % │
+│    NVAX │   0.001 % │   0.001 % │     0.434 % │     0.444 % │
+│    NVDA │     0.0 % │     0.0 % │     0.001 % │       0.0 % │
+│    PARA │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    PLNT │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    SAVE │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    SBUX │   8.279 % │   8.279 % │       0.0 % │       0.0 % │
+│    SIRI │  14.768 % │  14.768 % │       0.0 % │       0.0 % │
+│     STX │   3.674 % │   3.674 % │       0.0 % │       0.0 % │
+│    TLRY │     0.0 % │     0.0 % │       0.0 % │       0.0 % │
+│    TSLA │     0.0 % │     0.0 % │    10.496 % │    10.499 % │
+└─────────┴───────────┴───────────┴─────────────┴─────────────┘</code></pre><p>We don&#39;t recover the weights of the sharpe ratio exactly because one of the risk-adjusted return constraints is slightly relaxed with respect to the traditional optimisation.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../5_risk_parity_portfolios/">« Example 5: Risk parity</a><a class="docs-footer-nextpage" href="../7_worst_case_statistics/">Example 7: Worst case statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Sunday 10 November 2024 14:14">Sunday 10 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
