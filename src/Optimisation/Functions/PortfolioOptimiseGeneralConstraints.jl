@@ -307,8 +307,9 @@ function MIP_constraints(port)
         if fees_fixed_flag
             @expressions(model,
                          begin
-                             fees_fixed_long, sum(fees_fixed_long .* is_invested_long)
-                             fees_fixed_short, -sum(fees_fixed_short .* is_invested_short)
+                             fees_fixed_long, sum(fees_fixed_long .* is_invested_long_bool)
+                             fees_fixed_short,
+                             -sum(fees_fixed_short .* is_invested_short_bool)
                          end)
         end
     else
@@ -335,7 +336,7 @@ function MIP_constraints(port)
                         scale_constr * w .>= scale_constr * is_invested .* long_t)
         end
         if fees_fixed_long_flag
-            @expression(model, fees_fixed_long, sum(fees_fixed_long .* is_invested))
+            @expression(model, fees_fixed_long, sum(fees_fixed_long .* is_invested_bool))
         end
         if haskey(model, :short_w)
             @constraint(model, constr_w_mip_lb,
