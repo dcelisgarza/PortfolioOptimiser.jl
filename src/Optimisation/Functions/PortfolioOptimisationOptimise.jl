@@ -166,8 +166,10 @@ function optimise!(port::Portfolio, type::NOC)
         tracking_error_constraints(port, returns)
         turnover_constraints(port)
     else
+        old_mu_l = port.mu_l
         custom_constr = NoCustomConstraint()
         custom_obj = NoCustomObjective()
+        port.mu_l = Inf
     end
     # Fees
     management_fee(port)
@@ -184,6 +186,8 @@ function optimise!(port::Portfolio, type::NOC)
         L1_regularisation(port)
         L2_regularisation(port)
         SDP_network_cluster_penalty(port)
+    else
+        port.mu_l = old_mu_l
     end
     # NOC constraints
     noc_constraints(port, risk0, ret0)
