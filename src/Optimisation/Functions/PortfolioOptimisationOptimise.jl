@@ -88,7 +88,7 @@ function optimise!(port::Portfolio, type::RB)
     set_scale_obj_constrs(port)
     rb_opt_constraints(port, class, w_ini)
     # Weight constraints
-    weight_constraints(port, isa(class, FC) ? true : false)
+    weight_constraints(port, false)
     MIP_constraints(port)
     SDP_network_cluster_constraints(port, nothing)
     # Tracking
