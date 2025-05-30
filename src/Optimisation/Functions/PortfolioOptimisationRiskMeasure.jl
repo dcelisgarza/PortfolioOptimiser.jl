@@ -596,13 +596,12 @@ function set_rm(port::Portfolio, rm::MAD, type::Union{Trad, RB, NOC};
     target = calc_rm_target(rm, mu, w, k)
     @variable(model, mad[1:T] .>= 0)
     we = rm.we
-    @expression(model, mar_mad, net_X .- target .+ mad)
     if isnothing(we)
-        @expression(model, mad_risk, mean(mad + mar_mad))
+        @expression(model, mad_risk, mean(2 * mad))
     else
-        @expression(model, mad_risk, mean(mad + mar_mad, we))
+        @expression(model, mad_risk, mean(2 * mad, we))
     end
-    @constraint(model, constr_mar_mad, scale_constr * mar_mad .>= 0)
+    @constraint(model, constr_mar_mad, scale_constr * (net_X .- target .+ mad) .>= 0)
     set_rm_risk_upper_bound(type, model, mad_risk, rm.settings.ub, "mad_risk")
     set_risk_expression(model, mad_risk, rm.settings.scale, rm.settings.flag)
     return nothing
