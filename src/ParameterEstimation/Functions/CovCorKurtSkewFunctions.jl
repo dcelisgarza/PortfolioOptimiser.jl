@@ -1384,8 +1384,6 @@ function duplication_matrix(n::Int, diag::Bool = true)
         for i ∈ v
             !haskey(counts, i) ? counts[i] = 1 : counts[i] += 1
         end
-        display(counts)
-        display(v)
         repeated_elem = Set{Int}()
         for (key, value) ∈ counts
             if value > 1
