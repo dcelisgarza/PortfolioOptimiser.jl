@@ -26,8 +26,8 @@ function PMFG_T2s(W::AbstractMatrix{<:Real}, nargout::Integer = 3)
     N = size(W, 1)
 
     @smart_assert(N >= 9)
-    @assert(all(W .>= zero(eltype(W))),
-            "All entries in matrix must be greater than or equal to 0.")
+    @smart_assert(all(W .>= zero(eltype(W))),
+                  "All entries in matrix must be greater than or equal to 0.")
 
     A = spzeros(N, N)  # Initialize adjacency matrix
     in_v = zeros(Int, N)    # Initialize list of inserted vertices
@@ -1073,8 +1073,8 @@ Perform Direct Bubble Hierarchical Tree clustering, a deterministic clustering a
 """
 function DBHTs(D::AbstractMatrix{<:Real}, S::AbstractMatrix{<:Real};
                branchorder::Symbol = :optimal, type::DBHTRootType = UniqueDBHT())
-    @assert(issymmetric(D), "Distance matrix should be symmetric.")
-    @assert(issymmetric(S), "Similarity matrix should be symmetric.")
+    @smart_assert(issymmetric(D), "Distance matrix should be symmetric.")
+    @smart_assert(issymmetric(S), "Similarity matrix should be symmetric.")
 
     Rpm = PMFG_T2s(S)[1]
     Apm = copy(Rpm)
