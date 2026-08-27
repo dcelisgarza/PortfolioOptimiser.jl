@@ -1,5 +1,18 @@
 # THIS PACKAGE IS NOW DEPRECATED, USE [PortfolioOptimisers.jl](https://github.com/dcelisgarza/PortfolioOptimisers.jl) instead
 
+This package is archived and gets no further work.
+**[PortfolioOptimisers.jl](https://github.com/dcelisgarza/PortfolioOptimisers.jl)** replaces it.
+The name is plural: `PortfolioOptimisers`, not `PortfolioOptimiser`.
+
+PortfolioOptimisers.jl is a Julia portfolio optimisation library. It holds all further work on
+this code.
+
+- **Install:** `using Pkg; Pkg.add("PortfolioOptimisers")`
+- **Documentation:** <https://dcelisgarza.github.io/PortfolioOptimisers.jl/stable/>
+- **Repository:** <https://github.com/dcelisgarza/PortfolioOptimisers.jl>
+
+The text below describes the archived package. It stays for its history and for its inbound links.
+
 ## PortfolioOptimiser
 
 | Category | Badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
